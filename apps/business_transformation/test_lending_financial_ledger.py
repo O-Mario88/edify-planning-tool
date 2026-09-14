@@ -881,7 +881,10 @@ class LendingFinancialLedgerTests(TestCase):
             ia_verified_at=timezone.now(),
         )
         assessment = self.loan.impact_assessments.get()
-        lending_impact.verify_loan_impact(
+        # IA review (2026-09-13): the conclusion is prepared by Business
+        # Transformation and verified by Impact Assessment — never both in
+        # one act by one person.
+        lending_impact.prepare_loan_impact(
             assessment.id,
             {
                 "classification": "positive",
@@ -889,8 +892,11 @@ class LendingFinancialLedgerTests(TestCase):
                 "limitations": "Observed after financing; no causal counterfactual.",
                 "evidenceReferences": ["SITE-VISIT-1", "FOLLOWUP-REGISTER"],
             },
-            self.ia,
+            self.bt,
         )
+        with self.assertRaises(Forbidden):
+            lending_impact.verify_loan_impact(assessment.id, {}, self.bt)
+        lending_impact.verify_loan_impact(assessment.id, {}, self.ia)
 
         summary = lending_impact.impact_summary(self.ia)
         output_summary = lending_impact.purpose_output_summary(self.ia)

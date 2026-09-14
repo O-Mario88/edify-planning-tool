@@ -34,7 +34,6 @@ EXPECTED_PL_SIDEBAR = [
     (
         "MY WORK",
         [
-            ("Today", "/today"),
             ("Dashboard", "/dashboard"),
             ("My Plan", "/my-plan"),
             ("Calendar", "/calendar"),

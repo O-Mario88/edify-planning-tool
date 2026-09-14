@@ -27,8 +27,8 @@
           <th scope="row" data-record-title>{{ r.school_name }}</th>
           <td><strong>{{ r.name }}</strong>{% if r.purpose %}<small class="block edify-text-muted">{{ r.purpose }}</small>{% endif %}</td>
           <td>{{ r.focus_intervention|default:"Not linked" }}</td>
-          <td>{{ r.programme_delivery_mode|default:r.responsibility_type }}</td>
-          <td>{{ r.responsible_person|default:r.responsible }}{% if r.partner_name %}<small class="block edify-text-muted">{{ r.partner_name }}</small>{% endif %}</td>
+          <td>{% firstof r.programme_delivery_mode r.responsibility_type %}</td>
+          <td>{% firstof r.responsible_person r.responsible %}{% if r.partner_name %}<small class="block edify-text-muted">{{ r.partner_name }}</small>{% endif %}</td>
           {% elif section.key == 'cluster' %}
           <th scope="row" data-record-title>{{ r.programme_activity_type }}{% if r.name != r.programme_activity_type %}<small class="block edify-text-muted">{{ r.name }}</small>{% endif %}</th>
           <td>{{ r.cluster_name }}</td>

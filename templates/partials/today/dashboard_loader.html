@@ -1,0 +1,14 @@
+{% comment %}
+The Dashboard's Today view as it first paints: the workbench arrives from
+/today/panel a moment later, so the dashboard never waits on the To-Do queue
+(apps.frontend.views.today_views.today_panel).
+{% endcomment %}
+<div class="today-workbench space-y-3" data-dashboard-today-panel hx-get="/today/panel" hx-trigger="load" hx-swap="outerHTML" aria-busy="true">
+  <p class="edify-text-caption font-semibold text-slate-500" role="status">Loading your day…</p>
+  <div class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 space-y-2" aria-hidden="true">
+    <div class="h-3 w-32 rounded bg-slate-100"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+  </div>
+</div>

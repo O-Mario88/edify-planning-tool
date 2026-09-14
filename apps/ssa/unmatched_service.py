@@ -119,15 +119,24 @@ def compute_suggested_match(school_name_raw: str | None, district_raw: str | Non
 
 
 def get_unmatched_queue(
-    filters: dict | None = None, page=1, page_size: int = DEFAULT_PAGE_SIZE
+    filters: dict | None = None,
+    page=1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    base=None,
 ):
     """Filtered, paginated UnmatchedSSARecord queryset — a Django Page
     object. select_related covers suggested_school/batch so rendering the
-    page issues zero additional per-row queries."""
+    page issues zero additional per-row queries.
+
+    `base` bounds the queue to the rows a reader may see (the country-bound
+    `apps.analytics.ia_collection.unmatched_rows_in_reach`, IA review
+    2026-09-13); None keeps every row."""
     from apps.schools.models import UnmatchedSSARecord
 
     filters = filters or {}
     qs = UnmatchedSSARecord.objects.select_related("batch", "suggested_school")
+    if base is not None:
+        qs = qs.filter(id__in=base.values("id"))
 
     status = (filters.get("status") or "").strip()
     if status:
@@ -164,13 +173,16 @@ def get_unmatched_queue(
     return paginator.get_page(page_number)
 
 
-def batch_options():
+def batch_options(base=None):
     """(id, label) pairs for the upload-batch filter dropdown — only
-    batches that actually have unmatched rows."""
+    batches that actually have unmatched rows (in `base`, when given)."""
     from apps.schools.models import SSAImportBatch
 
+    batches = SSAImportBatch.objects.all()
+    if base is not None:
+        batches = batches.filter(id__in=base.values("batch_id"))
     return list(
-        SSAImportBatch.objects.filter(unmatched_records__isnull=False)
+        batches.filter(unmatched_records__isnull=False)
         .distinct()
         .order_by("-created_at")
         .values_list("id", "file_name")

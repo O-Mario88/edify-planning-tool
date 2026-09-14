@@ -524,6 +524,20 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                     # Delivery partners carry no BUSINESS TRANSFORMATION
                     # group at all (owner, 2026-08-19).
                     self.assertEqual(sidebar_bt_urls, set())
+                elif role == EdifyRole.IMPACT_ASSESSMENT:
+                    # Impact Assessment reads loans as lending evidence, so its
+                    # Loans door sits in ANALYSIS & LEARNING (IA review,
+                    # 2026-09-13), still once.
+                    self.assertEqual(sidebar_bt_urls, set())
+                    self.assertIn(
+                        "/loans",
+                        {
+                            item["url"]
+                            for section in build_sidebar_for_user(user, "/loans")
+                            if section["label"] == "ANALYSIS & LEARNING"
+                            for item in section["items"]
+                        },
+                    )
                 else:
                     self.assertEqual(sidebar_bt_urls, {"/loans"})
 

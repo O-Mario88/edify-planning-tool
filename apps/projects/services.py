@@ -280,6 +280,16 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
 
     if updates:
         assignment.save(update_fields=[*updates, "updated_at"])
+
+    # A school enrolled after the project already delivered verified work
+    # there would otherwise wait for the next assessment or delivery before
+    # its measurement rule is stamped and its window set (IA review,
+    # 2026-09-13). One outbox insert, riding this transaction; the handler
+    # stamps the rule of the delivered activity and never re-stamps.
+    if assignment.baseline_score is not None and assignment.mapping_id is None:
+        from apps.projects.signals import enqueue_impact_refresh
+
+        enqueue_impact_refresh(school.id, f"enrolment:{assignment.id}")
     return {"ok": True, "projectId": project_id, "schoolId": school.school_id}
 
 

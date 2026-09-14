@@ -65,7 +65,7 @@
         <li>
           <span class="sp-rank">{{ forloop.counter }}</span>
           <span class="sp-intervention-name">{{ intervention.label }}</span>
-          <span class="sp-meter" aria-hidden="true"><i style="width:{{ intervention.width }}%; background:{{ intervention.band.color }}"></i></span>
+          <span class="sp-meter" aria-hidden="true">{% if intervention.width is not None %}<i style="width:{{ intervention.width }}%; background:{{ intervention.band.color }}"></i>{% endif %}</span>
           <strong>{% if intervention.average != None %}{{ intervention.average }}{% else %}—{% endif %}</strong>
           <span class="sp-band" data-tone="{{ intervention.band.tone }}">{{ intervention.band.label }}</span>
         </li>

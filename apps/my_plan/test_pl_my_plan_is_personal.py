@@ -91,6 +91,19 @@ class PlMyPlanTest(TestCase):
 
         self.assertNotIn(theirs.id, self.plan_ids(self.pl_user))
 
+    def test_the_my_plan_page_holds_no_supervised_work_either(self):
+        """The page's own builder, not only the API feed: it used to add the
+        lead's supervisees and offered actions the lead could not take."""
+        mine = self._activity(responsible_staff_id=self.pl.id)
+        theirs = self._activity(responsible_staff_id=self.cceo.id)
+
+        context = my_plan.get_frontend_context(
+            self.pl_user, {"fy": self.fy, "period": "fy"}
+        )
+        rendered = repr(context)
+        self.assertIn(mine.id, rendered)
+        self.assertNotIn(theirs.id, rendered)
+
     def test_partner_work_managed_by_the_cceo_is_not_in_the_program_leads_plan(self):
         """The delivery belongs to the CCEO who has to review its evidence."""
         partner_work = self._activity(

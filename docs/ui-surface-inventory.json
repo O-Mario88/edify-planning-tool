@@ -1539,17 +1539,6 @@
       "header": "shared"
     },
     {
-      "template": "pages/ia/attribution.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/ia/attribution.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/ia/compare_evidence.html",
       "family": "workspace",
       "inheritance": [
@@ -1565,6 +1554,72 @@
       "family": "workspace",
       "inheritance": [
         "pages/ia/duplicate_review.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/framework.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/framework.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/impact_reports.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/impact_reports.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/impact_reports_brief.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/impact_reports_brief.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/impact_reports_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/impact_reports_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/learning.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/learning.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/lending_evidence.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/lending_evidence.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -1634,6 +1689,28 @@
       ],
       "shared_design_system": true,
       "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/ia/school_evidence.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/school_evidence.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/stories.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/stories.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
     },
     {
       "template": "pages/ia/verification_analytics.html",
@@ -2350,6 +2427,17 @@
       "header": "shared"
     },
     {
+      "template": "pages/ssa/upload_history.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/upload_history.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
       "template": "pages/ssa/upload_preview.html",
       "family": "workspace",
       "inheritance": [
@@ -2486,6 +2574,6 @@
     "embedded fragment": 5,
     "print document": 2,
     "public or authentication": 9,
-    "workspace": 211
+    "workspace": 219
   }
 }

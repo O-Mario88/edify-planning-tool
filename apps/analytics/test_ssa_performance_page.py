@@ -149,8 +149,20 @@ class SsaPerformancePageTest(TestCase):
                     ["SSA Performance"],
                 )
                 # Whatever the workspace entry is called for this role, it is
-                # the thing highlighted while the user is on /ssa.
-                self.assertTrue(active_sidebar)
+                # the thing highlighted while the user is on /ssa. Impact
+                # Assessment reaches /ssa from its own strip instead of the
+                # Analytics door (IA review, 2026-09-13).
+                if role == EdifyRole.IMPACT_ASSESSMENT:
+                    from apps.core.navigation import build_workspace
+
+                    workspace = build_workspace(user, "/ssa")
+                    self.assertEqual(workspace["key"], "ia")
+                    self.assertEqual(
+                        [s["label"] for s in workspace["sections"] if s["active"]],
+                        ["SSA Performance"],
+                    )
+                else:
+                    self.assertTrue(active_sidebar)
                 client.force_login(user)
                 self.assertEqual(client.get("/ssa").status_code, 200)
                 client.logout()

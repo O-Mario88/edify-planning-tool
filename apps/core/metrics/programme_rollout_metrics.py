@@ -114,7 +114,7 @@ PROGRAMME_ROLLOUT_METRIC_ROWS: tuple[dict, ...] = (
         numerator="portfolio schools in trained_school_ids for the FY",
         models=_ACTIVITY + _ATTENDANCE,
         service="trainings_rollout",
-        category="outcome",
+        category="scale",
     ),
     _row(
         "Teachers and Leaders Trained",

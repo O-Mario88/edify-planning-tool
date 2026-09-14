@@ -4,7 +4,8 @@ responsibilities (owner, 2026-09-13). On a tab click the filter form's hidden
 view field is updated out of band, so a year change keeps the tab.
 {% endcomment %}
 {% if dashboard_tabs_inner %}<input type="hidden" id="pl-filter-view" name="view" value="{{ dashboard_view }}" hx-swap-oob="outerHTML">{% endif %}
-{% if dashboard_view == "map" %}{% include "partials/dashboards/pl/map_view.html" %}
+{% if dashboard_view == "today" %}{% include "partials/today/dashboard_loader.html" %}
+{% elif dashboard_view == "map" %}{% include "partials/dashboards/pl/map_view.html" %}
 {% elif dashboard_view == "priorities" %}{% include "partials/dashboards/pl/priorities_view.html" %}
 {% elif dashboard_view == "team" %}{% include "partials/dashboards/pl/team_view.html" %}
 {% elif dashboard_view == "coaching" %}{% include "partials/dashboards/pl/coaching_view.html" %}

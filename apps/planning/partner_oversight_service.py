@@ -152,6 +152,45 @@ class PartnerOversightItem:
         return "scheduled"
 
 
+def _assignment_team_q(scope):
+    """Which handovers a team lens reads, as one filter (None for the country).
+
+    The page's list and the handover drawer both ask this, so every row the
+    page shows opens (Program Lead walk, 2026-09-14: the drawer checked the
+    responsible officer and the supervising lead only, and returned 404 for
+    handovers at team schools monitored by someone else).
+    """
+    if scope["is_country"]:
+        return None
+    ids = scope["staff_ids"]
+    # School ownership is the third arm, and it is not redundant.
+    # `monitoring_staff_id` is nullable — every assignment written before
+    # that column existed has none, and falls back to the *assigner*. So a
+    # partner handed off by a PL to a CCEO's school resolves to the PL on
+    # those older rows, and the CCEO who owns the school would open this
+    # page to a blank list. Owning the school is the durable claim: it does
+    # not depend on who clicked Handoff or on when the row was written.
+    return (
+        Q(monitoring_staff_id__in=ids)
+        | Q(assigning_staff_id__in=ids)
+        | Q(school__account_owner_id__in=ids)
+    )
+
+
+def assignment_in_scope(principal, assignment_id: str) -> bool:
+    """Whether this principal's lens reads the handover, by the list's rule."""
+    from apps.partners.models import PartnerAssignment
+
+    scope = _resolve_scope(principal)
+    if scope["kind"] == "team" and not scope["staff_ids"]:
+        return False
+    qs = PartnerAssignment.objects.filter(id=assignment_id)
+    team_q = _assignment_team_q(scope)
+    if team_q is not None:
+        qs = qs.filter(team_q)
+    return qs.exists()
+
+
 def build_items(
     principal,
     *,
@@ -184,20 +223,9 @@ def build_items(
             "school", "school__district", "cluster", "partner", "scheduled_activity"
         )
     )
-    if not scope["is_country"]:
-        ids = scope["staff_ids"]
-        # School ownership is the third arm, and it is not redundant.
-        # `monitoring_staff_id` is nullable — every assignment written before
-        # that column existed has none, and falls back to the *assigner*. So a
-        # partner handed off by a PL to a CCEO's school resolves to the PL on
-        # those older rows, and the CCEO who owns the school would open this
-        # page to a blank list. Owning the school is the durable claim: it does
-        # not depend on who clicked Handoff or on when the row was written.
-        qs = qs.filter(
-            Q(monitoring_staff_id__in=ids)
-            | Q(assigning_staff_id__in=ids)
-            | Q(school__account_owner_id__in=ids)
-        )
+    team_q = _assignment_team_q(scope)
+    if team_q is not None:
+        qs = qs.filter(team_q)
     if partner_id:
         qs = qs.filter(partner_id=partner_id)
 

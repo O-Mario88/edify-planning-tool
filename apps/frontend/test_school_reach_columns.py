@@ -43,7 +43,7 @@ class SchoolReachColumnsTest(SimpleTestCase):
         for path, marker in (
             (
                 "apps/frontend/views/ia_views.py",
-                '"schools_planned": len(planned_schools_by_district',
+                "planned_by_district.setdefault(district_id, set()).add(school_id)",
             ),
             (
                 "apps/analytics/cd_dashboard_service.py",

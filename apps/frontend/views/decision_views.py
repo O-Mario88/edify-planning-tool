@@ -159,20 +159,48 @@ def declining_schools_view(request):
     trends but ranked neither: the only school-identified queue sorted by
     absolute low score, so a strong school in freefall stayed invisible while
     perennially-weak schools filled the list.
+
+    IA review (owner, 2026-09-13): both columns follow the one definition of
+    declined (apps.ssa.change_rules) and the page names the rule; interventions
+    carry their labels and the owner's abbreviations; a school row opens the
+    school where the reader may see school detail; and a financial year that is
+    not one of the platform's options (a typed ?fy=abc used to raise) falls back
+    to the current year, with every year on offer in the select.
     """
-    from apps.analytics.decline_service import MATERIAL_DROP, declining_schools
+    from apps.analytics.decline_service import SEVERE_DROP, declining_schools
+    from apps.core.fy import fy_options
+    from apps.core.interventions import INTERVENTION_LABELS, intervention_abbr
 
     from apps.frontend.views.analytics_render import render_analytics_section
 
-    fy = request.GET.get("fy") or get_operational_fy()
+    # FY2025 is the platform's first year: it has no year before it to compare.
+    options = [option for option in fy_options() if int(option) > 2025]
+    fy = (request.GET.get("fy") or "").strip()
+    if fy and fy not in options:
+        # The workspace around this panel reads ?fy= too (its scope tiles), so
+        # an unusable year is replaced in the address rather than only here.
+        query = request.GET.copy()
+        query["fy"] = get_operational_fy()
+        return local_redirect(f"{request.path}?{query.urlencode()}")
+    if fy not in options:
+        fy = get_operational_fy()
     data = declining_schools(request.user, {"fy": fy})
+    for row in data.get("interventions", []):
+        row["label"] = INTERVENTION_LABELS.get(row["intervention"], row["intervention"])
+        row["abbr"] = intervention_abbr(row["intervention"])
+    for row in data.get("schools", []):
+        code = row.get("worstIntervention") or ""
+        row["worstLabel"] = INTERVENTION_LABELS.get(code, code)
+    weakest = data.get("weakestIntervention") or ""
+    data["weakestLabel"] = INTERVENTION_LABELS.get(weakest, "")
+    data["weakestAbbr"] = intervention_abbr(weakest) if weakest else ""
     return render_analytics_section(
         request,
         "partials/analytics/panels/declining_schools.html",
         {
             "d": data,
-            "fy_options": [fy, str(int(fy) - 1)],
-            "material_drop": MATERIAL_DROP,
+            "fy_options": sorted(set(options) | {fy}, reverse=True),
+            "severe_drop": SEVERE_DROP,
         },
         section_key="declining_schools",
         panel_title="Declining Schools",

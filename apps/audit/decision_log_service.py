@@ -76,6 +76,20 @@ DECISION_ACTIONS = {
         "escalation_acknowledge",
         "escalation_resolve",
     ],
+    # Impact reports reviewed and released (IA review, 2026-09-13).
+    "Impact": [
+        "ia.report.submitted",
+        "ia.report.reviewed",
+        "ia.report.returned",
+        "ia.report.released",
+        "ia.report.donor_requested",
+        "ia.report.donor_released",
+        "ia.report.donor_declined",
+        "ia.report.recommendation_responded",
+        "ia.report.school_brief_shared",
+        "ia.report.correction_started",
+        "ia.report.superseded",
+    ],
 }
 
 # Human labels. An audit action name is a developer's word; a decision log is
@@ -119,6 +133,17 @@ ACTION_LABELS = {
     "escalation_raise": "Escalated to the RVP",
     "escalation_acknowledge": "Acknowledged an escalation",
     "escalation_resolve": "Decided an escalation",
+    "ia.report.submitted": "Submitted an impact report for review",
+    "ia.report.reviewed": "Reviewed an impact report",
+    "ia.report.returned": "Returned an impact report",
+    "ia.report.released": "Released an impact report to country leadership",
+    "ia.report.donor_requested": "Requested a donor version of an impact report",
+    "ia.report.donor_released": "Approved a donor version of an impact report",
+    "ia.report.donor_declined": "Declined a donor version of an impact report",
+    "ia.report.recommendation_responded": "Responded to an impact recommendation",
+    "ia.report.school_brief_shared": "Shared impact findings with a school",
+    "ia.report.correction_started": "Started a corrected impact report",
+    "ia.report.superseded": "Superseded an impact report",
 }
 
 ALL_DECISION_ACTIONS = [a for group in DECISION_ACTIONS.values() for a in group]

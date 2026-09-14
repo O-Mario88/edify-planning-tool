@@ -26,11 +26,11 @@
 
 <div class="flex-1 space-y-1 min-w-0">
 <div class="flex items-center justify-between gap-4">
-<span class="font-semibold text-slate-800 text-[14px] truncate">{{ alert.title }}</span>
+<span class="font-semibold text-slate-800 text-[14px] truncate">{% if alert.target_route %}<a class="edify-primary-text" href="{{ alert.target_route }}">{{ alert.title }}</a>{% else %}{{ alert.title }}{% endif %}</span>
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider shrink-0">{{ alert.created_at|date:"M d, H:i" }}</span>
 </div>
 <p class="text-[12px] text-slate-500 leading-relaxed font-semibold">
-{{ alert.message }}
+{{ alert.body|default:"" }}
 </p>
 </div>
 </div>

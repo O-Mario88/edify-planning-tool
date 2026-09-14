@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 
 from .models import (
     MilestoneDefinitionStatus,
@@ -32,7 +32,60 @@ def _assert_priority_not_published(milestone) -> None:
         )
 
 
+#: The audit action a milestone definition writes; approval reads it back to
+#: find who defined the milestone (IA review, 2026-09-13).
+MILESTONE_DEFINED = "priorities.milestone.defined"
+MILESTONE_APPROVED = "priorities.milestone.approved"
+
+
+def _actor_id(principal) -> str:
+    return str(
+        getattr(principal, "id", None) or getattr(principal, "user_id", None) or ""
+    )
+
+
+def _definition_payload(metric) -> dict:
+    if metric is None:
+        return {}
+    return {
+        "metric_key": metric.metric_key,
+        "canonical_label": metric.canonical_label,
+        "canonical_service": metric.canonical_service,
+        "numerator": metric.numerator_definition,
+        "denominator": metric.denominator_definition,
+        "date_basis": metric.date_basis,
+        "counting_basis": metric.counting_basis,
+        "quality_gate": metric.quality_gate,
+    }
+
+
+def defined_by(milestone) -> str:
+    """Who last defined `milestone`, from its audit trail ("" when unknown —
+    a seed or management command defines without a person)."""
+    from apps.audit.models import AuditLog
+
+    return (
+        AuditLog.objects.filter(
+            action=MILESTONE_DEFINED,
+            subject_kind="PriorityMilestone",
+            subject_id=str(milestone.pk),
+        )
+        .order_by("-created_at")
+        .values_list("actor_id", flat=True)
+        .first()
+        or ""
+    )
+
+
 def define_milestone(milestone, *, data: dict, principal):
+    """Define a milestone's measure.
+
+    IA review (2026-09-13): the definition is audited with its actor and the
+    before/after of the shared metric definition — a metric key is shared, so
+    redefining it for one milestone changes it for every milestone that uses
+    the key, and the audit row names how many do. Approval reads the actor
+    back: whoever defined a milestone does not approve it.
+    """
     milestone = (
         PriorityMilestone.objects.select_for_update(of=("self",))
         .select_related("priority")
@@ -70,6 +123,11 @@ def define_milestone(milestone, *, data: dict, principal):
     if data["measurementType"] in RATE_MEASUREMENT_TYPES and not denominator:
         raise BadRequest("Percentage and ratio milestones require a denominator.")
 
+    before = _definition_payload(
+        MilestoneMetricDefinition.objects.filter(
+            metric_key=data["metricKey"].strip()
+        ).first()
+    )
     metric, _ = MilestoneMetricDefinition.objects.update_or_create(
         metric_key=data["metricKey"].strip(),
         defaults={
@@ -110,6 +168,25 @@ def define_milestone(milestone, *, data: dict, principal):
     milestone.active = False
     milestone.version += 1
     milestone.save()
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=MILESTONE_DEFINED,
+        subject_kind="PriorityMilestone",
+        subject_id=str(milestone.pk),
+        actor_id=_actor_id(principal) or None,
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "version": milestone.version,
+            "before": before,
+            "after": _definition_payload(metric),
+            "shared_with_milestones": PriorityMilestone.objects.filter(
+                metric_definition=metric
+            )
+            .exclude(pk=milestone.pk)
+            .count(),
+        },
+    )
     return milestone
 
 
@@ -130,6 +207,15 @@ def approve_milestone(milestone, *, principal):
         or not milestone.role_applicability
     ):
         raise BadRequest("Only a complete, defined milestone may be approved.")
+    approver = _actor_id(principal)
+    definer = defined_by(milestone)
+    if approver and definer and approver == definer:
+        # The same separation as every other definition on the platform: the
+        # person who decided how a milestone is measured is not the person
+        # who approves that decision.
+        raise Forbidden(
+            "You defined this milestone, so someone else approves its definition."
+        )
     milestone.definition_status = MilestoneDefinitionStatus.APPROVED
     milestone.active = True
     milestone.save(
@@ -138,6 +224,16 @@ def approve_milestone(milestone, *, principal):
             "active",
             "updated_at",
         ]
+    )
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=MILESTONE_APPROVED,
+        subject_kind="PriorityMilestone",
+        subject_id=str(milestone.pk),
+        actor_id=approver or None,
+        actor_role=getattr(principal, "active_role", None),
+        payload={"version": milestone.version, "defined_by": definer},
     )
     return milestone
 

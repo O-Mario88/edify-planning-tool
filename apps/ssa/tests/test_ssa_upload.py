@@ -2,8 +2,9 @@
 File-upload tests for the SSA upload endpoint.
 
 Authenticated (IA), isolated test DB. Valid rows save + link to an existing
-school and flip its SSA status to done; invalid school ids and missing/non-numeric
-scores fail those rows truthfully.
+school and land pending until a verifier other than the uploader confirms them
+(IA review, owner, 2026-09-13), when the school's SSA status flips to done;
+invalid school ids and missing/non-numeric scores fail those rows truthfully.
 """
 
 from __future__ import annotations
@@ -80,9 +81,27 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(data["createdRows"], 1)
         record = SsaRecord.objects.get(school=self.school)
         self.assertEqual(record.scores.count(), 8)
+        self.assertEqual(record.verification_status, "pending")
+        self.assertIsNone(record.verified_by_user_id)
+        self.school.refresh_from_db()
+        self.assertNotEqual(self.school.current_fy_ssa_status, "done")
+
+        from apps.ssa.services import verify_record
+
+        verify_record(record, self._second_ia())
         self.school.refresh_from_db()
         self.assertEqual(self.school.current_fy_ssa_status, "done")
         self.assertEqual(self.school.planning_readiness, "requires_cluster")
+
+    def _second_ia(self):
+        return User.objects.create_user(
+            email="ia2@ssa.test",
+            name="Second Verifier",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            password="x",
+            is_active=True,
+        )
 
     def test_upload_request_imports_without_a_second_action(self):
         body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
@@ -91,13 +110,18 @@ class SsaUploadTest(APITestCase):
 
         self.assertEqual(res.status_code, 200, res.content)
         self.assertTrue(SsaRecord.objects.filter(school=self.school).exists())
-        self.assertFalse(
-            DataQualityIssue.objects.filter(
-                school=self.school,
-                status="open",
-                issue_type="no_ssa",
-            ).exists()
+        # Imported, not yet confirmed: the school still has no SSA that counts.
+        open_no_ssa = DataQualityIssue.objects.filter(
+            school=self.school,
+            status="open",
+            issue_type="no_ssa",
         )
+        self.assertTrue(open_no_ssa.exists())
+
+        from apps.ssa.services import verify_record
+
+        verify_record(SsaRecord.objects.get(school=self.school), self._second_ia())
+        self.assertFalse(open_no_ssa.exists())
 
     def test_first_current_fy_file_upload_is_allowed_as_the_baseline(self):
         from apps.core.fy import get_operational_fy

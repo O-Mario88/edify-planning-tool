@@ -454,43 +454,91 @@ def _activities_in_scope(
     if date_end:
         qs = qs.filter(planned_date__lt=date_end)
 
+    if scope.is_region and not scope.region_ids:
+        return []
+    scope_q = _activity_scope_q(scope)
+    if scope_q is not None:
+        qs = qs.filter(scope_q)
+    return list(qs)
+
+
+def _activity_scope_q(scope: OversightScope):
+    """Which activities this lens reads, as one filter (None for the country).
+
+    The page's list and the record drawer both ask this, so an item the page
+    shows is an item its drawer opens (Program Lead walk, 2026-09-14: the drawer used
+    to check the responsible officer only and returned 404 for team-school
+    work owned by someone outside the team).
+    """
+    if scope.is_country:
+        return None
     if scope.is_region:
         # Geography, not the reporting line: a region's oversight is every
         # activity delivered at a school in it, plus the cluster work whose
         # district sits in it. That covers partner-delivered work, which
         # carries no responsible staff member at all.
-        if not scope.region_ids:
-            return []
-        return list(
-            qs.filter(
-                Q(school__region_id__in=scope.region_ids)
-                | Q(cluster__district__region_id__in=scope.region_ids)
-            )
+        return Q(school__region_id__in=scope.region_ids) | Q(
+            cluster__district__region_id__in=scope.region_ids
         )
-    if not scope.is_country:
-        ids = scope.team_ids
-        # Ownership of the school and of the cluster are the third and fourth
-        # arms, and they are what make partner work visible.
-        #
-        # A partner-delivered activity carries NO responsible staff member by
-        # construction (_partner_schedule_from_assignment sets it to None), and
-        # `monitored_by_staff_id` records whoever happened to be resolved at
-        # handoff. So on the first two arms alone a school's own CCEO saw 6 of
-        # the 233 partner activities running in their portfolio, and a Program
-        # Lead — who supervises rather than owns — saw none of them at all.
-        #
-        # partner_oversight_service.build_items already reached this
-        # conclusion for handovers: owning the school is the durable claim
-        # because it does not depend on who clicked Handoff. The same holds
-        # for the activity that handover became, and the cluster arm carries
-        # the trainings, which have no school at all.
-        qs = qs.filter(
-            Q(responsible_staff_id__in=ids)
-            | Q(monitored_by_staff_id__in=ids)
-            | Q(school__account_owner_id__in=ids)
-            | Q(cluster__responsible_staff_id__in=ids)
+    ids = scope.team_ids
+    # Ownership of the school and of the cluster are the third and fourth
+    # arms, and they are what make partner work visible.
+    #
+    # A partner-delivered activity carries NO responsible staff member by
+    # construction (_partner_schedule_from_assignment sets it to None), and
+    # `monitored_by_staff_id` records whoever happened to be resolved at
+    # handoff. So on the first two arms alone a school's own CCEO saw 6 of
+    # the 233 partner activities running in their portfolio, and a Program
+    # Lead — who supervises rather than owns — saw none of them at all.
+    #
+    # partner_oversight_service.build_items already reached this
+    # conclusion for handovers: owning the school is the durable claim
+    # because it does not depend on who clicked Handoff. The same holds
+    # for the activity that handover became, and the cluster arm carries
+    # the trainings, which have no school at all.
+    return (
+        Q(responsible_staff_id__in=ids)
+        | Q(monitored_by_staff_id__in=ids)
+        | Q(school__account_owner_id__in=ids)
+        | Q(cluster__responsible_staff_id__in=ids)
+    )
+
+
+def _assignment_scope_q(scope: OversightScope):
+    """Which unscheduled partner assignments this lens reads (None: country)."""
+    if scope.is_country:
+        return None
+    if scope.is_region:
+        return Q(school__region_id__in=scope.region_ids) | Q(
+            cluster__district__region_id__in=scope.region_ids
         )
-    return list(qs)
+    ids = scope.team_ids
+    return Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids)
+
+
+def record_in_scope(
+    scope: OversightScope,
+    *,
+    activity_id: str | None = None,
+    assignment_id: str | None = None,
+) -> bool:
+    """Whether the lens reads this one record, by the list's own rule."""
+    from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+
+    if scope.is_region and not scope.region_ids:
+        return False
+    if activity_id:
+        qs = Activity.objects.filter(id=activity_id, deleted_at__isnull=True)
+        scope_q = _activity_scope_q(scope)
+    elif assignment_id:
+        qs = PartnerAssignment.objects.filter(id=assignment_id)
+        scope_q = _assignment_scope_q(scope)
+    else:
+        return False
+    if scope_q is not None:
+        qs = qs.filter(scope_q)
+    return qs.exists()
 
 
 def _unscheduled_assignments_in_scope(
@@ -545,18 +593,11 @@ def _unscheduled_assignments_in_scope(
             "partner__name",
         )
     )
-    if scope.is_region:
-        if not scope.region_ids:
-            return []
-        return list(
-            qs.filter(
-                Q(school__region_id__in=scope.region_ids)
-                | Q(cluster__district__region_id__in=scope.region_ids)
-            )
-        )
-    if not scope.is_country:
-        ids = scope.team_ids
-        qs = qs.filter(Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids))
+    if scope.is_region and not scope.region_ids:
+        return []
+    scope_q = _assignment_scope_q(scope)
+    if scope_q is not None:
+        qs = qs.filter(scope_q)
     rows = list(qs)
 
     # The assignment has no fiscal year column; its period comes from the date

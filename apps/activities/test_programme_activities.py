@@ -534,13 +534,15 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         response = client.get(f"/work-plan?fy={FY}&view=fy")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
+        # A programme activity is non-school work: the Work Plan's non-school
+        # ledger (templates/partials/work_plan/detail_tables.html, 2026-09-14).
         for heading in (
-            "Activity date",
-            "SSA intervention",
-            "Scale",
-            "Responsible party",
-            "Venue &amp; mode",
-            "Status &amp; action",
+            '<th scope="col">Activity Date</th>',
+            '<th scope="col">Activity</th>',
+            '<th scope="col">Venue</th>',
+            '<th scope="col">Cost</th>',
+            '<th scope="col">Status</th>',
+            '<th scope="col">Action</th>',
         ):
             self.assertIn(heading, html)
         self.assertIn("Submit completed plan to RVP", html)

@@ -117,7 +117,7 @@ workspace, so the roles differ only where their work differs.
           <div class="fund-panel__row"><dt>{{ row.name }}</dt><dd class="fund-panel__figure fund-panel__figure--{{ row.tone }}">{{ row.figure }}</dd></div>
           {% endfor %}
         </dl>
-        <a href="{{ side.month.link }}" class="fund-panel__link">{{ side.month.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>
+        {% if side.month.link %}<a href="{{ side.month.link }}" class="fund-panel__link">{{ side.month.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>{% endif %}
       </section>
 
       <section class="fund-side__section">

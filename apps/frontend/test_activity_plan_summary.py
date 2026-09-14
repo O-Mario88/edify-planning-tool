@@ -264,6 +264,22 @@ class ActivityPlanSummaryTest(TestCase):
         for tab in response.context["view_tabs"]:
             self.assertIn("scope=team", tab["url"])
 
+    def test_my_activity_plan_keeps_the_team_plan_format_when_it_is_empty(self):
+        """Both PL scopes show the same Summary and Details tables (owner,
+        2026-09-14): an empty own plan is not a different page."""
+        self.client.force_login(self.pl)
+        own = self.client.get(
+            "/work-plan", {"fy": "2026", "view": "fy", "scope": "own"}
+        )
+        body = own.content.decode()
+        self.assertEqual(body.count("Number of Activities"), 2)
+        self.assertIn("School Activities subtotal", body)
+        self.assertIn("Non-School Activities subtotal", body)
+        self.assertIn('<th scope="col">Visit Date</th>', body)
+        self.assertIn("School visits", body)
+        self.assertIn("Non-school activities", body)
+        self.assertNotIn("No activities in this period", body)
+
     def test_export_uses_the_same_scope_totals_and_detail_groups(self):
         self.activity(owner=self.pl, amount=42)
         self.activity(amount=75)

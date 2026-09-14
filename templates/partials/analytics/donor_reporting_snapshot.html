@@ -1,12 +1,17 @@
 {% load frontend_filters %}
+{% comment %}
+Reach and delivery outputs (IA review, 2026-09-13). This card was headed "Donor
+Reporting Snapshot · Traceable official KPI report for donor funding" with a
+"downloadable audit log snapshot" tooltip, yet it offers no download and no
+trace, and its figures are outputs no one reviewed as impact. It now says what
+it contains. Donor-facing impact figures come only from a released impact
+report (/ia/impact-reports/), with small cells suppressed.
+{% endcomment %}
 <div class="edify-surface rounded-surface  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
-<span>Donor Reporting Snapshot</span>
-<span class="edify-text-caption text-slate-400 cursor-help" title="Downloadable audit log snapshot of official key performance metrics">ℹ️</span>
-</h3>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Traceable official KPI report for donor funding</p>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reach and delivery (outputs)</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Counts of delivered work and the schools it reached, not change in schools</p>
 </div>
 </div>
 
@@ -20,7 +25,7 @@
 <span class="font-semibold text-slate-800">{{ donor_snapshot.leaders_trained }}</span>
 </div>
 <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
-<span>Students Impacted (current enrollment)</span>
+<span>Students in reached schools (current enrolment)</span>
 <span class="font-semibold text-slate-800">
 {% if donor_snapshot.students_impacted >= 1000000 %}
 {{ donor_snapshot.students_impacted|divide:1000000|floatformat:2 }}M
@@ -36,7 +41,7 @@
 <span class="font-semibold text-slate-800">{{ donor_snapshot.districts_covered }}</span>
 </div>
 <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
-<span>Schools Impacted</span>
+<span>Schools reached</span>
 <span class="font-semibold text-slate-800">{{ donor_snapshot.schools_impacted }}</span>
 </div>
 </div>

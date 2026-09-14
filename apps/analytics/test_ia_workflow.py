@@ -8,8 +8,8 @@ from apps.analytics.ia_workflow import evidence_row, outcome_workspace
 from apps.core.scoping import UserScope
 from apps.frontend.test_dashboard_views_shell import _user
 from apps.frontend.views.ia_outcome_views import impact_report_download
-from apps.projects.models import ProjectSchoolAssignment
-from apps.projects.test_ssa_impact import ImpactFixture
+from apps.projects.models import Project, ProjectSchoolAssignment
+from apps.projects.test_ssa_impact import INTERVENTION, ImpactFixture
 
 
 class IAWorkflowTests(ImpactFixture):
@@ -155,3 +155,62 @@ class IAWorkflowTests(ImpactFixture):
         self.assertEqual(
             self.client.post("/ia/impact-report/download").status_code, 403
         )
+
+
+class IAOutcomeCohortTests(ImpactFixture):
+    """Project cohorts on the Outcomes view (IA review, owner, 2026-09-13)."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = _user("ia.cohorts@edify.test", "ImpactAssessment")
+
+    def _enrol(self, school, classification, before, after):
+        return ProjectSchoolAssignment.objects.create(
+            project=self.project,
+            school=school,
+            baseline_ssa=self._ssa(school, date(2025, 1, 1), before),
+            baseline_score=before,
+            follow_up_ssa=self._ssa(school, date(2026, 1, 1), after),
+            follow_up_score=after,
+            impact_classification=classification,
+        )
+
+    def test_no_change_is_neutral_and_kept_strong_stays_out_of_the_change(self):
+        from apps.analytics.ia_workflow import _cohort_domains
+
+        kept = self._enrol(self.school, "maintained_strong", 8, 9)
+        row = evidence_row(kept, date.today())
+        self.assertEqual(row["tone"], "neutral")
+        rows = [row] + [
+            {**row, "school_id": f"s{i}", "state": "improved", "delta": 1.0}
+            for i in range(8)
+        ]
+        domain = next(d for d in _cohort_domains(rows) if d["code"] == INTERVENTION)
+        self.assertEqual(domain["pairs"], 9)
+        self.assertEqual(domain["maintained"], 1)
+        # The kept-strong enrolment's +1 is not a movement; eight +1.0s are.
+        self.assertEqual(domain["delta"], 1.0)
+        self.assertEqual(domain["improved_pct"], 89)
+
+    def test_unique_schools_sit_beside_enrolments_and_tiles_say_not_measured(self):
+        second = Project.objects.create(
+            name="EdTech", code="EDT", intervention=INTERVENTION
+        )
+        ProjectSchoolAssignment.objects.create(project=self.project, school=self.school)
+        ProjectSchoolAssignment.objects.create(project=second, school=self.school)
+        with patch(
+            "apps.analytics.ia_workflow.resolve_user_scope",
+            return_value=UserScope(
+                user_id=self.user.id,
+                active_role="ImpactAssessment",
+                school_ids=[self.school.id],
+            ),
+        ):
+            workspace = outcome_workspace(self.user, {})
+        self.assertEqual(workspace["total"], 2)
+        self.assertEqual(workspace["unique_schools"], 1)
+        tiles = {t["label"]: t for t in workspace["cohort_tiles"]}
+        self.assertEqual(
+            tiles["Project Enrolments Improved"]["display_value"], "Not measured"
+        )
+        self.assertFalse(tiles["Project Enrolments Improved"]["is_measured"])

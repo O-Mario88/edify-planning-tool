@@ -1,17 +1,24 @@
 {% extends "layouts/shell.html" %}
-{% load table_pagination %}
+{% load school_identity %}
 
 {% block title %}IA SSA Verification Queue — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="verification">
+{% comment %}
+SSA Verification (apps/frontend/views/ssa_views.py ssa_verification_queue_view).
+Every SSA lands pending until a verifier other than its collector confirms it
+(IA review, owner, 2026-09-13). Readers see the records in their reach; the
+Confirm and Return actions appear only on rows the reader may decide. Return
+opens a one-column drawer for the reason, which the collector is sent.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-mobile-family="verification" data-ssa-verification>
 
 <header class="edify-page-header">
 <div class="flex flex-wrap items-start justify-between gap-3">
-<div class="lg:max-w-[560px] edify-page-header__lead">
+<div class="lg:max-w-[620px] edify-page-header__lead">
 <p class="edify-page-eyebrow">Quality & Insights</p>
 <h1 class="edify-page-title edify-page-header__title">SSA Verification</h1>
-<p class="edify-page-header__description">Approve or return collected SSA records to ensure they meet quality and audit requirements.</p>
+<p class="edify-page-header__description">Every SSA waits here until a verifier other than the person who collected or uploaded it confirms it: an Impact Assessment officer in the school's country, or the Country Director for scores Impact Assessment collected. Only confirmed scores count in outcomes, targets and planning.</p>
 </div>
 {% include "partials/_back_link.html" with back_href="/admin-panel/data-quality-center" back_label="Quality Center" %}
 </div>
@@ -19,81 +26,92 @@
 
 {% include "partials/_section_nav.html" %}
 
-{% if messages %}
-<div class="space-y-2">
-{% for message in messages %}
-<div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %} border rounded-surface text-[12px] font-bold">
-{{ message }}
-</div>
-{% endfor %}
-</div>
-{% endif %}
+{% if messages %}{% for message in messages %}
+<div class="edify-note" data-tone="{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %}" role="status">{{ message }}</div>
+{% endfor %}{% endif %}
 
-<!-- Table -->
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
-<div class="overflow-x-auto">
-{% paginate records "records_page" as records_pager %}
-<table class="w-full text-[12px] border-collapse text-left">
-<thead>
-<tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">ID</th>
-<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School</th>
-<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Collector Type</th>
-<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Date of SSA</th>
-<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Average Score</th>
-<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 font-medium">
-{% for r in records_pager.rows %}
-<tr class="hover:bg-slate-50/20">
-<td class="px-5 py-4 tabular-nums text-slate-500">{{ r.school.school_id }}</td>
-<td class="px-4 py-4">
-<span class="font-semibold text-slate-900 block leading-tight">{{ r.school.name }}</span>
-</td>
-<td class="px-4 py-4 text-slate-600 font-semibold capitalize">{{ r.collector_type }}</td>
-<td class="px-4 py-4 text-slate-500 font-semibold">{{ r.date_of_ssa|date:"N j, Y" }}</td>
-<td class="px-4 py-4 font-bold text-slate-800">
-<span class="edify-primary-text font-semibold">{{ r.average_score }}</span> / 10
-</td>
-<td class="px-5 py-4 text-right">
-{% if can_verify %}
-<div class="flex items-center justify-end gap-2">
-<form method="post" action="" class="inline m-0">
-{% csrf_token %}
-<input type="hidden" name="record_id" value="{{ r.id }}">
-<input type="hidden" name="action" value="verify">
-<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-control shadow-sm transition-all">
-Verify &amp; Confirm
-</button>
-</form>
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ssa-queue-title">
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ssa-queue-title" class="rpl-card__title">{{ status_label }}</h2>
+      <span class="rpl-card__subtitle">{{ counts.pending }} pending · {{ counts.returned }} returned{% if can_verify %} · {{ counts.decidable }} awaiting your verification{% endif %}</span>
+    </div>
+  </header>
 
-<form method="post" action="" class="inline m-0">
-{% csrf_token %}
-<input type="hidden" name="record_id" value="{{ r.id }}">
-<input type="hidden" name="action" value="return">
-<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-control transition-all">
-Return for Correction
-</button>
-</form>
-</div>
-{% else %}
-<span class="edify-text-caption text-slate-400 font-semibold">Awaiting Impact Assessment</span>
-{% endif %}
-</td>
-</tr>
-{% empty %}
-<tr>
-<td colspan="6" class="px-5 py-10 text-center text-slate-400 font-semibold">
-No pending SSA verification records in queue.
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-{% include "components/table_pager.html" with pager=records_pager param="records_page" %}
-</div>
-</div>
+  <form method="get" class="edify-filter-bar" aria-label="SSA verification filters" x-data>
+    <label class="cce-filter">
+      <span class="cce-filter__label">Records</span>
+      <select name="status" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        <option value="pending"{% if status == "pending" %} selected{% endif %}>Waiting for verification</option>
+        <option value="returned"{% if status == "returned" %} selected{% endif %}>Returned for correction</option>
+      </select>
+    </label>
+    <label class="cce-filter">
+      <span class="cce-filter__label">Collected by</span>
+      <select name="mine" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        <option value="">Anyone</option>
+        <option value="1"{% if mine %} selected{% endif %}>Me</option>
+      </select>
+    </label>
+  </form>
+
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA records; scroll sideways for more columns">
+    <table class="rpl-table edify-record-table" data-mobile-table="scroll">
+      <caption class="sr-only">SSA records {{ status_label|lower }}</caption>
+      {% if rows %}
+      <thead>
+        <tr>
+          <th scope="col">School</th>
+          <th scope="col">District</th>
+          <th scope="col">Collected by</th>
+          <th scope="col">How it arrived</th>
+          <th scope="col">Date of SSA</th>
+          <th scope="col">Average</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <th scope="row" data-record-title><span><a href="{{ r.school_url }}" class="edify-primary-text">{% school_identity r.school r.school_id %}</a> · {{ r.school_id }}</span></th>
+          <td data-label="District">{{ r.district }}</td>
+          <td data-label="Collected by">{{ r.collector }}</td>
+          <td data-label="How it arrived">{{ r.source }}</td>
+          <td data-label="Date of SSA" class="tabular-nums">{{ r.date|date:"j M Y"|default:"—" }}</td>
+          <td data-label="Average" class="tabular-nums">{% if r.average is not None %}{{ r.average }} / 10{% else %}—{% endif %}</td>
+          <td data-label="Status"><span data-tone="{{ r.tone }}">{{ r.state }}</span></td>
+          <td class="is-end" data-record-action data-label="Actions">
+            {% if r.visit_url %}<a href="{{ r.visit_url }}" class="rpl-row-link rounded-control">Open visit</a>{% endif %}
+            {% if r.can_decide %}
+            <form method="post" action="/ssa/verification/" class="ia-sample-form">
+              {% csrf_token %}
+              <input type="hidden" name="record_id" value="{{ r.id }}">
+              <input type="hidden" name="action" value="verify">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="rpl-row-link rounded-control">Confirm</button>
+            </form>
+            <button type="button" class="rpl-row-link rounded-control" hx-get="/ssa/verification/{{ r.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% if status == "returned" %}
+            {% include "components/empty_state.html" with message="No returned SSA records" hint="Scores a verifier sends back appear here until they are re-keyed." compact="true" %}
+            {% else %}
+            {% include "components/empty_state.html" with message="No pending SSA verification records in queue." hint="Keyed, imported and partner scores appear here until a different verifier confirms them." compact="true" %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=pager param="records_page" %}
+</section>
 
 </div>
 {% endblock %}

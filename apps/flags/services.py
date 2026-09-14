@@ -130,6 +130,22 @@ def flags_visible_to(principal):
     """
     qs = CdFlag.objects.all().order_by("-created_at")
     role = getattr(principal, "active_role", "")
+    if role == EdifyRole.IMPACT_ASSESSMENT.value:
+        # Impact Assessment is country-bound (IA review, 2026-09-13): flags
+        # raised by Country Directors in the reader's country. A reader with no
+        # country on file keeps the deployment-wide view.
+        from apps.accounts.models import StaffProfile
+
+        country = (
+            StaffProfile.objects.filter(user_id=_actor_id(principal))
+            .values_list("country", flat=True)
+            .first()
+            or ""
+        ).strip()
+        if country:
+            raisers = StaffProfile.objects.filter(country=country).values("user_id")
+            return qs.filter(raised_by_user_id__in=raisers)
+        return qs
     if role in _FLAG_MONITOR_ROLES:
         return qs
     user_id = _actor_id(principal)

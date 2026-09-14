@@ -17,6 +17,7 @@ from urllib.parse import urlencode
 from django.db.models import Q, Sum
 
 from apps.core.enums import ActivityStatus, ActivityType, SsaIntervention
+from apps.ssa import change_rules
 from apps.core.fy import fy_options, get_fy_date_range, get_operational_fy
 from apps.analytics.platform_engine import (
     describe_numeric,
@@ -65,14 +66,22 @@ def _clean_choice(value, allowed, default=""):
     return value if value in allowed else default
 
 
-def _collect_ssa_deltas(school_ids, interventions, fy):
+def _collect_ssa_deltas(school_ids, interventions, fy, *, book=None):
     """Annual verified before/after movement for school × intervention pairs.
 
     Baseline is the most recent confirmed score before the FY, falling back to
     the first confirmed score within the FY. Latest must be a later confirmed
     score inside the selected FY. This prevents old, unrelated movement from
     being presented as the selected year's project impact.
+
+    Improved and declined come from apps.ssa.change_rules (IA review,
+    2026-09-13): each pair is judged by the published IA rule in the school's
+    country, pairs less than MIN_INTERVAL_DAYS apart are not compared, and a
+    school is improved or declined — never both — by its mean movement across
+    comparable pairs. It replaced a page-local ±0.05 that put one school in
+    both sets. `book` is a change_rules.RuleBook shared across calls.
     """
+    from apps.ssa import change_rules
     from apps.ssa.models import SsaScore
 
     school_ids = set(school_ids or [])
@@ -104,15 +113,17 @@ def _collect_ssa_deltas(school_ids, interventions, fy):
             "intervention",
             "score",
             "ssa_record__date_of_ssa",
+            "ssa_record__school__region__country",
         )
         .order_by("ssa_record__date_of_ssa")
     )
     grouped = defaultdict(list)
-    for school_id, intervention, score, collected_at in rows:
+    countries = {}
+    for school_id, intervention, score, collected_at, country in rows:
         grouped[(school_id, intervention)].append((collected_at, float(score)))
+        countries[school_id] = country or ""
 
-    pairs = []
-    improved, declined = set(), set()
+    candidates = []
     for (school_id, intervention), scores in grouped.items():
         before = [item for item in scores if item[0] < fy_start]
         within = [item for item in scores if fy_start <= item[0] < fy_end]
@@ -122,19 +133,44 @@ def _collect_ssa_deltas(school_ids, interventions, fy):
         latest = within[-1]
         if latest[0] <= baseline[0]:
             continue
-        delta = latest[1] - baseline[1]
-        pair = {
-            "school_id": school_id,
-            "intervention": intervention,
-            "baseline": baseline[1],
-            "latest": latest[1],
-            "delta": delta,
+        candidates.append(
+            {
+                "school_id": school_id,
+                "intervention": intervention,
+                "prev_score": baseline[1],
+                "curr_score": latest[1],
+                "window_start": baseline[0],
+                "window_end": latest[0],
+            }
+        )
+    book = book or change_rules.RuleBook()
+    classified = change_rules.classify_pairs(
+        candidates, book=book, country_for=lambda sid: countries.get(sid, "")
+    )
+    pairs = [
+        {
+            "school_id": pair["school_id"],
+            "intervention": pair["intervention"],
+            "baseline": pair["prev_score"],
+            "latest": pair["curr_score"],
+            "delta": pair["curr_score"] - pair["prev_score"],
+            "classification": pair["classification"],
         }
-        pairs.append(pair)
-        if delta > 0.05:
-            improved.add(school_id)
-        elif delta < -0.05:
-            declined.add(school_id)
+        for pair in classified
+    ]
+    verdicts = change_rules.school_verdicts(
+        classified, book=book, country_for=lambda sid: countries.get(sid, "")
+    )
+    improved = {
+        sid
+        for sid, v in verdicts.items()
+        if v["classification"] == change_rules.IMPROVED
+    }
+    declined = {
+        sid
+        for sid, v in verdicts.items()
+        if v["classification"] == change_rules.DECLINED
+    }
 
     if not pairs:
         return empty
@@ -150,20 +186,54 @@ def _collect_ssa_deltas(school_ids, interventions, fy):
     }
 
 
-def _classify_project(delta, delivery_rate, measurable_schools):
+#: A project whose schools improved by at least this much on average is
+#: "Great" rather than "Positive": a magnitude tier on top of the change rule,
+#: not a second definition of improved.
+GREAT_IMPACT_DELTA = 1.5
+
+
+def _classify_project(
+    delta, delivery_rate, measurable_schools, *, interventions=(), book=None
+):
+    """The project's verdict from its SSA movement alone.
+
+    Positive and Negative follow apps.ssa.change_rules on the project's mean
+    movement (IA review, 2026-09-13) — the ±0.5 this used to apply was an
+    eighth definition of improved. Delivery rate no longer decides impact:
+    delivering 85% of planned work is an output, reported beside the verdict
+    as its own measure, and a project cannot earn "Great Impact" by it.
+    `delivery_rate` is kept in the signature for callers; `interventions` and
+    `book` name the domain rules the mean is judged by.
+    """
+    from apps.ssa import change_rules
+
     if measurable_schools == 0:
         return "Not Measurable Yet"
     if measurable_schools < MIN_MEASURABLE_SCHOOLS:
         return "Insufficient Data"
     if delta is None:
         return "Not Measurable Yet"
-    if delta >= 1.5 and delivery_rate >= 0.85:
-        return "Great Impact"
-    if delta >= 0.5:
-        return "Positive Impact"
-    if delta <= -0.5:
+    verdict = change_rules.school_change(delta, list(interventions or ()), book=book)[
+        "classification"
+    ]
+    if verdict == change_rules.IMPROVED:
+        return "Great Impact" if delta >= GREAT_IMPACT_DELTA else "Positive Impact"
+    if verdict == change_rules.DECLINED:
         return "Negative Impact"
     return "No Measurable Impact"
+
+
+def _change_tone(delta, interventions, book) -> str:
+    """success / danger / neutral for a mean movement, by the change rule."""
+    from apps.ssa import change_rules
+
+    if delta is None:
+        return "neutral"
+    verdict = change_rules.school_change(delta, list(interventions), book=book)
+    return {
+        change_rules.IMPROVED: "success",
+        change_rules.DECLINED: "danger",
+    }.get(verdict["classification"], "neutral")
 
 
 def _impact_score(delta, delivery_rate, measurable):
@@ -361,6 +431,8 @@ def get_analytics(
             if activity.assigned_partner_id == selected_partner
         ]
 
+    # One rule book for every SSA comparison on the page (apps.ssa.change_rules).
+    rule_book = change_rules.RuleBook()
     schools_by_project = defaultdict(set)
     school_objects = {}
     for assignment in assignments:
@@ -424,14 +496,22 @@ def get_analytics(
         interventions = declared | delivered_focus
         if selected_intervention:
             interventions &= {selected_intervention}
-        ssa = _collect_ssa_deltas(supported_ids, interventions, selected_fy)
+        ssa = _collect_ssa_deltas(
+            supported_ids, interventions, selected_fy, book=rule_book
+        )
         delivery_rate = len(delivered) / len(planned) if planned else 0
         classification = _classify_project(
-            ssa["delta"], delivery_rate, ssa["measurable_schools"]
+            ssa["delta"],
+            delivery_rate,
+            ssa["measurable_schools"],
+            interventions=interventions,
+            book=rule_book,
         )
         intervention_details = []
         for code in sorted(interventions):
-            detail = _collect_ssa_deltas(supported_ids, {code}, selected_fy)
+            detail = _collect_ssa_deltas(
+                supported_ids, {code}, selected_fy, book=rule_book
+            )
             intervention_details.append(
                 {
                     "code": code,
@@ -554,9 +634,7 @@ def get_analytics(
                 "delta": delta,
                 "baseline_pct": round((baseline or 0) * 10),
                 "latest_pct": round((latest or 0) * 10),
-                "tone": "success"
-                if (delta or 0) >= 0.5
-                else ("danger" if (delta or 0) <= -0.5 else "neutral"),
+                "tone": _change_tone(delta, [code], rule_book),
             }
         )
     interventions.sort(
@@ -644,7 +722,7 @@ def get_analytics(
                 for activity in partner_acts
                 if activity.focus_intervention
             }
-            ssa = _collect_ssa_deltas(supported_ids, focus, selected_fy)
+            ssa = _collect_ssa_deltas(supported_ids, focus, selected_fy, book=rule_book)
             score = _partner_score(
                 ssa["delta"],
                 delivery_rate,
@@ -853,7 +931,8 @@ def get_analytics(
             if (
                 len(school_acts) >= 2
                 and evidence_rate >= 0.8
-                and (school_delta or 0) >= 0.5
+                and _change_tone(school_delta, row["intervention_codes"], rule_book)
+                == "success"
             ):
                 adoption, tone = "High", "success"
             elif school_acts and evidence_rate > 0:
@@ -915,7 +994,9 @@ def get_analytics(
                 if by_project[row["id"]]
                 else set()
             )
-            result = _collect_ssa_deltas(supported, row["intervention_codes"], year_fy)
+            result = _collect_ssa_deltas(
+                supported, row["intervention_codes"], year_fy, book=rule_book
+            )
             if result["measurable_schools"]:
                 assessed += 1
                 year_improved |= result["improved_schools"]
@@ -1056,6 +1137,10 @@ def get_analytics(
     if include_regional_map:
         map_context = country_map_context(selected_fy)
     return {
+        # The rule every improved/declined figure on the page used
+        # (apps.ssa.change_rules), for the page to show beside them.
+        "improvement_rule_label": change_rules.rule_label_for(rule_book),
+        "improvement_rule_sentence": change_rules.RULE_SENTENCE,
         "has_projects": bool(scoped_project_ids),
         "has_results": bool(project_payloads),
         "fy_options": fy_options(),

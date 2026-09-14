@@ -45,9 +45,22 @@ class TodayWorkbenchTests(TestCase):
         )
         StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=school.id)
 
+    def test_the_dashboard_opens_on_today_and_the_old_door_leads_there(self):
+        self.client.force_login(self.cceo)
+        self.assertRedirects(
+            self.client.get("/today"),
+            "/dashboard?view=today",
+            fetch_redirect_response=False,
+        )
+        response = self.client.get("/dashboard")
+        self.assertEqual(response.context["dashboard_view"], "today")
+        # The panel fetches the workbench once the dashboard has painted.
+        self.assertContains(response, 'hx-get="/today/panel"')
+        self.assertContains(self.client.get("/today/panel"), "Your next activity")
+
     def test_a_field_role_gets_the_workbench(self):
         self.client.force_login(self.cceo)
-        response = self.client.get("/today")
+        response = self.client.get("/today/panel")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Your next activity")
         self.assertContains(response, "Exceptions requiring attention")
@@ -67,8 +80,9 @@ class TodayWorkbenchTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         plan = ProposedPlan.objects.get(staff=self.cceo_sp)
-        self.assertContains(response, "Today School")
-        self.assertContains(response, "Accept week")
+        panel = self.client.get("/today/panel")
+        self.assertContains(panel, "Today School")
+        self.assertContains(panel, "Accept week")
 
         response = self.client.post(
             "/today/action",
@@ -120,10 +134,10 @@ class TodayWorkbenchTests(TestCase):
             responsible_staff_id=self.cceo_sp.id,
         )
         self.client.force_login(self.cceo)
-        response = self.client.get("/today")
+        response = self.client.get("/today/panel")
         self.assertEqual(response.status_code, 200)
-        waiting = response.context["waiting"]
-        exceptions = response.context["exceptions"]
+        waiting = response.context["today"]["waiting"]
+        exceptions = response.context["today"]["exceptions"]
         rows = list(waiting) + list(exceptions)
         self.assertTrue(rows, "a planned activity must produce a To-Do row")
         for row in rows:
@@ -131,15 +145,17 @@ class TodayWorkbenchTests(TestCase):
             self.assertIn("action_url", row)
             self.assertContains(response, row["action_url"])
 
-    def test_the_sidebar_offers_today_to_field_roles_only(self):
+    def test_today_and_dashboard_are_one_sidebar_link(self):
+        # Owner, 2026-09-14: "merge today and dashboard as dashboard".
         from apps.core.navigation import build_sidebar_for_user
 
         cceo_items = [
             item["label"]
-            for section in build_sidebar_for_user(self.cceo, "/today")
+            for section in build_sidebar_for_user(self.cceo, "/dashboard")
             for item in section["items"]
         ]
-        self.assertIn("Today", cceo_items)
+        self.assertIn("Dashboard", cceo_items)
+        self.assertNotIn("Today", cceo_items)
         accountant_items = [
             item["label"]
             for section in build_sidebar_for_user(self.accountant, "/dashboard")
@@ -210,12 +226,12 @@ class ProgramLeadTodayTests(TestCase):
         self._activity(self.officer_sp, self.team_school)
         self._activity(self.stranger_sp, self.stranger_school)
         self.client.force_login(self.pl)
-        response = self.client.get("/today")
+        response = self.client.get("/today/panel")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertLess(html.index("data-today-waiting"), html.index("data-today-team"))
         self.assertLess(html.index("data-today-team"), html.index("Your next activity"))
-        team = response.context["team_today"]
+        team = response.context["today"]["team_today"]
         self.assertEqual(
             [
                 (g["name"], [a["where"] for a in g["activities"]])
@@ -229,9 +245,9 @@ class ProgramLeadTodayTests(TestCase):
 
     def test_a_lead_without_schools_gets_one_line_instead_of_route_and_week(self):
         self.client.force_login(self.pl)
-        response = self.client.get("/today")
-        self.assertFalse(response.context["has_own_portfolio"])
-        self.assertIsNone(response.context["proposal"])
+        response = self.client.get("/today/panel")
+        self.assertFalse(response.context["today"]["has_own_portfolio"])
+        self.assertIsNone(response.context["today"]["proposal"])
         self.assertContains(response, "data-today-no-portfolio")
         self.assertNotContains(response, "Your proposed week")
         self.assertNotContains(response, "Your route ·")
@@ -242,8 +258,8 @@ class ProgramLeadTodayTests(TestCase):
         )
         StaffSchoolAssignment.objects.create(staff=self.pl_sp, school_id=own.id)
         self.client.force_login(self.pl)
-        response = self.client.get("/today")
-        self.assertTrue(response.context["has_own_portfolio"])
+        response = self.client.get("/today/panel")
+        self.assertTrue(response.context["today"]["has_own_portfolio"])
         self.assertContains(response, "Your proposed week")
         self.assertNotContains(response, "data-today-no-portfolio")
 
@@ -268,7 +284,7 @@ class ProgramLeadTodayTests(TestCase):
             return_value={"todos": rows, "total": 9},
         ):
             self.client.force_login(self.pl)
-            response = self.client.get("/today")
+            response = self.client.get("/today/panel")
         self.assertContains(response, 'href="/todos"')
         self.assertContains(response, "View all 9")
 

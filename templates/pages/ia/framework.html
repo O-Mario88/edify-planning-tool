@@ -1,0 +1,66 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Measurement Framework · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Impact Assessment's Measurement Framework (IA review, owner, 2026-09-13):
+outcome areas, indicators, measurement rules and loan purposes, each drafted
+by one IA officer and reviewed by another (the Country Director acknowledges
+where the country has one officer). The view
+(apps/frontend/views/ia_framework_views.py) hands the page registered KPI
+tiles, the active tab's rows of plain-text cells with a tone, the drawer each
+row action opens, and filters that each reach the view.
+
+The tabs are real links (?tab=…): a deep link, the back button and a To-Do all
+land on the same register. `autoload_drawer` opens the drawer a To-Do or
+notification asked for (?open=…).
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-framework>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Framework &amp; strategy</p>
+      <h1 class="edify-page-title edify-page-header__title">Measurement Framework</h1>
+      <p class="edify-page-header__description">What success means in partner schools, and how each programme step is judged: from counting activities to measuring lasting change.</p>
+    </div>
+    {% if header_actions %}
+    <div class="edify-page-header__controls">
+      {% for action in header_actions %}
+      <button type="button" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title="Measurement framework at a glance" %}
+
+  <nav class="edify-section-nav" aria-label="Measurement framework registers" data-ia-framework-tabs>
+    <div class="edify-section-nav__inner">
+      {% for item in tabs %}
+      <a href="{{ item.url }}" class="edify-section-nav__link{% if item.active %} is-active{% endif %}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <p class="edify-page-header__description" data-ia-framework-description>{{ description }}</p>
+
+  {% if notice %}
+  <div class="edify-note" data-tone="{{ notice.tone|default:'info' }}" role="status">
+    {{ notice.text }}
+    {% if notice.post %}
+    <form method="post" action="{{ notice.post }}" class="mt-2">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary h-8">{{ notice.post_label }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% include "partials/ia/framework_register.html" %}
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-framework-autoload></div>{% endif %}
+</div>
+{% endblock %}

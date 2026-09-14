@@ -512,7 +512,18 @@ def assert_ssa_visit_is_verifiable(activity) -> None:
         # refused the partner SSA monitor-completion flow, which records the
         # scores and confirms in one transaction, dated exactly on the visit.
         records = records.filter(date_of_ssa__date__gte=anchor)
-    if not records.exists():
+    # IA review (owner, 2026-09-13): scores keyed on the visit land pending
+    # until a verifier other than their collector confirms them, and they are
+    # linked to the visit (`SsaRecord.source_activity`). "The scores are
+    # entered" is what SSA-01 asks, so the visit's own linked record counts
+    # while it waits — confirmed or pending, never returned. Whether the
+    # scores themselves count in outcomes is the SSA's own verification.
+    linked = SsaRecord.objects.filter(
+        source_activity_id=activity.id,
+        deleted_at__isnull=True,
+        verification_status__in=("pending", "confirmed"),
+    )
+    if not records.exists() and not linked.exists():
         reason = (activity.ssa_not_collected_reason or "").strip()
         detail = f' The recorded reason was: "{reason}".' if reason else ""
         raise BadRequest(

@@ -176,8 +176,9 @@ class DeepLinkTests(TestCase):
         )
         self.assertEqual(
             route,
-            "/ia/dashboard/",
-            "/pl/review-queue is gated on `planning`, which IA does not hold",
+            "/ia/verification/a1/",
+            "/pl/review-queue is gated on `planning`, which IA does not hold; "
+            "the record itself, not the dashboard (IA review, 2026-09-13)",
         )
 
     def test_project_coordinator_is_routed(self):

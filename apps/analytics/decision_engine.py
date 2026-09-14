@@ -15,16 +15,22 @@ from __future__ import annotations
 
 from django.db.models import Avg, Count
 
+from django.db.models import Max
+
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import resolve_user_scope, scoped_school_queryset
 from apps.schools.models import School
+from apps.ssa import change_rules
 
 from .platform_engine import describe_numeric, engine_metadata
 
 
-# Configurable improvement thresholds (a school "improved" if delta > +0.3,
-# "declined" if delta < -0.3; within ±0.3 = "no_change").
+# The contribution-analysis noise band the impact engine's statistical
+# families still use for their "worse/better than typical" wording. It no
+# longer decides whether a school improved or declined: that is
+# apps.ssa.change_rules, the one definition every SSA surface shares
+# (IA review, 2026-09-13).
 IMPROVEMENT_THRESHOLD = 0.3
 DECLINE_THRESHOLD = -0.3
 
@@ -32,15 +38,20 @@ ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
 
 
 def _scoped_school_ids(principal) -> list[str]:
-    """Resolve the in-scope school PKs for a principal."""
+    """Resolve the in-scope school PKs for a principal.
+
+    The platform's one analytics rule (scoped_school_queryset): a country role
+    reads its own country's schools — it used to read every school in the
+    deployment — summary-only roles their regions, everyone else their
+    portfolio.
+    """
     scope = resolve_user_scope(principal)
-    if scope.country_scope or scope.can_view_summary_only:
-        return list(
-            School.objects.filter(deleted_at__isnull=True).values_list("id", flat=True)
-        )
-    if scope.school_ids:
-        return scope.school_ids
-    return []
+    schools = scoped_school_queryset(
+        scope, School.objects.filter(deleted_at__isnull=True)
+    )
+    if schools is None:
+        return []
+    return list(schools.values_list("id", flat=True))
 
 
 # ── SSA improvement (per-school delta) ───────────────────────────────────────
@@ -49,9 +60,12 @@ def _scoped_school_ids(principal) -> list[str]:
 def ssa_improvement(principal, query: dict) -> dict:
     """Per-school SSA improvement: current FY average vs previous FY average.
 
-    For each school with ≥2 SSA records (one current, one previous), compute:
+    For each school with a confirmed SSA in both years, compute
       delta = current_avg - previous_avg
-      status = improved (delta > +0.3) | declined (delta < -0.3) | no_change
+    and classify it with apps.ssa.change_rules — the published IA rules for the
+    SSA domains in the school's country, the one fallback (any change) where
+    none is approved, and no comparison when the two years' latest readings
+    are less than MIN_INTERVAL_DAYS apart.
 
     Returns overall stats + the improved/declined school lists (with drilldown
     school IDs so the frontend can show exactly those schools)."""
@@ -63,58 +77,64 @@ def ssa_improvement(principal, query: dict) -> dict:
     if not school_ids:
         return _empty_improvement(fy)
 
+    def _by_school(year):
+        return {
+            row["school_id"]: row
+            for row in SsaRecord.objects.filter(
+                school_id__in=school_ids,
+                fy=year,
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .values("school_id")
+            .annotate(avg=Avg("average_score"), latest=Max("date_of_ssa"))
+        }
+
     # Current + previous FY averages per school (one query each, grouped).
-    curr = dict(
-        SsaRecord.objects.filter(
-            school_id__in=school_ids,
-            fy=fy,
-            deleted_at__isnull=True,
-            verification_status="confirmed",
+    curr = _by_school(fy)
+    prev = _by_school(prev_fy)
+    paired = [sid for sid in curr if sid in prev]
+    schools = {
+        row["id"]: row
+        for row in School.objects.filter(id__in=paired).values(
+            "id", "school_id", "name", "district__name", "region__country"
         )
-        .values("school_id")
-        .annotate(avg=Avg("average_score"))
-        .values_list("school_id", "avg")
-    )
-    prev = dict(
-        SsaRecord.objects.filter(
-            school_id__in=school_ids,
-            fy=prev_fy,
-            deleted_at__isnull=True,
-            verification_status="confirmed",
-        )
-        .values("school_id")
-        .annotate(avg=Avg("average_score"))
-        .values_list("school_id", "avg")
-    )
+    }
+    book = change_rules.RuleBook()
+    domains = list(ALL_INTERVENTIONS)
 
     improved, declined, no_change = [], [], []
     deltas = []
-    for sid in school_ids:
-        if sid not in curr or sid not in prev:
+    for sid in paired:
+        if curr[sid]["avg"] is None or prev[sid]["avg"] is None:
             continue
-        delta = round(curr[sid] - prev[sid], 2)
-        deltas.append(delta)
-        school = (
-            School.objects.filter(id=sid)
-            .values("school_id", "name", "district__name")
-            .first()
+        if not change_rules.comparable(prev[sid]["latest"], curr[sid]["latest"]):
+            continue
+        delta = round(curr[sid]["avg"] - prev[sid]["avg"], 2)
+        school = schools.get(sid)
+        verdict = change_rules.school_change(
+            delta,
+            domains,
+            book=book,
+            country=(school or {}).get("region__country") or "",
         )
+        deltas.append(delta)
         entry = {
             "schoolId": school["school_id"] if school else sid,
             "schoolName": school["name"] if school else "Unknown",
             "district": school["district__name"] if school else None,
-            "currentScore": round(curr[sid], 2),
-            "previousScore": round(prev[sid], 2),
+            "currentScore": round(curr[sid]["avg"], 2),
+            "previousScore": round(prev[sid]["avg"], 2),
             "delta": delta,
         }
-        if delta > IMPROVEMENT_THRESHOLD:
+        if verdict["classification"] == change_rules.IMPROVED:
             improved.append(entry)
-        elif delta < DECLINE_THRESHOLD:
+        elif verdict["classification"] == change_rules.DECLINED:
             declined.append(entry)
         else:
             no_change.append(entry)
 
-    delta_summary = describe_numeric(deltas, target=IMPROVEMENT_THRESHOLD)
+    delta_summary = describe_numeric(deltas)
     avg_delta = delta_summary["mean"] or 0
     return {
         "fy": fy,
@@ -128,6 +148,8 @@ def ssa_improvement(principal, query: dict) -> dict:
         "declined": sorted(declined, key=lambda x: x["delta"])[:50],
         "improvedSchoolIds": [e["schoolId"] for e in improved],
         "declinedSchoolIds": [e["schoolId"] for e in declined],
+        "ruleLabel": change_rules.rule_label_for(book),
+        "ruleSentence": change_rules.RULE_SENTENCE,
         "analytics": {
             "delta": delta_summary,
             "engine": engine_metadata(
@@ -150,8 +172,10 @@ def _empty_improvement(fy: str) -> dict:
         "declined": [],
         "improvedSchoolIds": [],
         "declinedSchoolIds": [],
+        "ruleLabel": change_rules.FALLBACK_LABEL,
+        "ruleSentence": change_rules.RULE_SENTENCE,
         "analytics": {
-            "delta": describe_numeric([], target=IMPROVEMENT_THRESHOLD),
+            "delta": describe_numeric([]),
             "engine": engine_metadata(
                 "ssa_improvement", record_count=0, confirmed_only=True
             ),

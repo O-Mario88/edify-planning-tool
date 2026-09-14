@@ -286,6 +286,12 @@ def feedback_visible_to(principal):
     The Programme Lead reads feedback shared with them, their Country Director
     reads the feedback shared on their country, the lead reads their own and
     Admin reads all. Unshared drafts stay with the lead who wrote them.
+
+    Impact Assessment reads the shared observations of its own country, read
+    only (IA review, owner, 2026-09-13): Programme Learning uses the rubric as
+    evidence of training delivery quality beside the SSA outcome, never as an
+    outcome itself. An officer with no country on file reads none, and an
+    observation with no country reaches nobody but its author and Admin.
     """
     role = _role(principal)
     qs = RegionalEngagement.objects.filter(
@@ -306,6 +312,11 @@ def feedback_visible_to(principal):
     if role == COUNTRY_DIRECTOR:
         country = _staff_country(principal)
         return shared.filter(country=country) if country else qs.none()
+    # ── IA review · IA-L ──
+    if role == "ImpactAssessment":
+        country = _staff_country(principal)
+        return shared.filter(country=country) if country else qs.none()
+    # ── end IA-L ──
     return qs.none()
 
 

@@ -43,45 +43,23 @@ def refresh_school_impact(school_id: str) -> int:
     `refresh_follow_up` has nothing to measure against and says so itself;
     they are already reported as `baseline_missing`, which is a different
     finding with its own To-Do.
+
+    Each enrolment is measured under the rule stamped on it at its first
+    verified delivery (IA review, 2026-09-13): `stamp_measurement_rule` writes
+    it once, from the delivered activity's catalogue item and the school's
+    country, and a later republish never reaches an enrolment already stamped.
     """
     from apps.projects.models import ProjectSchoolAssignment
-    from apps.projects.ssa_impact import refresh_follow_up
+    from apps.projects.ssa_impact import refresh_follow_up, stamp_measurement_rule
 
     assignments = list(
         ProjectSchoolAssignment.objects.filter(
             school_id=school_id, baseline_score__isnull=False
-        ).select_related("project")
+        ).select_related("project", "mapping", "baseline_ssa", "school__region")
     )
     for assignment in assignments:
-        refresh_follow_up(assignment, mapping=_mapping_for(assignment))
+        region = getattr(assignment.school, "region", None)
+        country = (getattr(region, "country", "") or "").strip()
+        rule = stamp_measurement_rule(assignment, country=country)
+        refresh_follow_up(assignment, mapping=rule)
     return len(assignments)
-
-
-def _mapping_for(assignment):
-    """The published rules this intervention is measured under, if any.
-
-    `refresh_follow_up` accepts None and falls back to its own defaults — no
-    window, improve, no threshold — which is exactly what it did for the
-    tests that were the function's only callers. Passing the governed mapping
-    where one exists is what makes the follow-up window and the meaningful-
-    change threshold real rather than notional.
-    """
-    from apps.activity_catalogue.models import (
-        ActivityInterventionMapping,
-        MappingStatus,
-    )
-
-    intervention = assignment.matched_intervention or (
-        assignment.project.intervention or ""
-    )
-    if not intervention:
-        return None
-    return (
-        ActivityInterventionMapping.objects.filter(
-            intervention=intervention,
-            active=True,
-            status=MappingStatus.PUBLISHED,
-        )
-        .order_by("-is_primary", "-version")
-        .first()
-    )

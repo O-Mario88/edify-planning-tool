@@ -510,4 +510,4 @@ class ReviewNotificationLandsOnTheCompletionTest(TestCase):
         ia_route, _ = NotificationLinkResolver.resolve(
             "activity_submitted_for_review", "Activity", "act-42", "ImpactAssessment"
         )
-        self.assertEqual(ia_route, "/ia/dashboard/")
+        self.assertEqual(ia_route, "/ia/verification/act-42/")

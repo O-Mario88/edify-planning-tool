@@ -265,7 +265,7 @@ Program Leads table, verification, risk, field intelligence and actions.
       <h2 id="cd-verification-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
         <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="shield" %}</span>Verification &amp; Data Quality
       </h2>
-      <a href="/ia/dashboard/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open verification analytics →</a>
+      <a href="/ia/analytics/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open verification analytics →</a>
     </div>
     {% kpi_strip %}
       {% kpi_metric %}
@@ -304,6 +304,9 @@ Program Leads table, verification, risk, field intelligence and actions.
     <p class="edify-text-caption edify-text-muted">No open data-quality checks.</p>
     {% endif %}
   </section>
+
+  {# ── Impact findings (IA review, owner, 2026-09-13) ── #}
+  {% if impact_findings %}{% include "partials/dashboards/cd/_impact_findings.html" %}{% endif %}
 
   {# ── Operational Risk & Backlog | School & SSA Intelligence ───────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5" data-cd-school-ssa-cards>

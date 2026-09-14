@@ -29,7 +29,11 @@ from urllib.parse import urlencode
 
 from django.db.models import Q
 
-from apps.frontend.work_plan_tables import detail_fields, grouped_tables, work_plan_action
+from apps.frontend.work_plan_tables import (
+    detail_fields,
+    grouped_tables,
+    work_plan_action,
+)
 from apps.activities.models import Activity
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -589,9 +593,15 @@ def build_work_plan_context(user, params) -> dict:
                 "description": "",
             }
 
-        recipient_id = a.monitored_by_staff_id if a.delivery_type == "partner" else a.responsible_staff_id
+        recipient_id = (
+            a.monitored_by_staff_id
+            if a.delivery_type == "partner"
+            else a.responsible_staff_id
+        )
         table_action = work_plan_action(
-            a, owned=owned, enabled=actions_enabled,
+            a,
+            owned=owned,
+            enabled=actions_enabled,
             recipient=recipient_map.get(recipient_id),
             recipient_name=name_map.get(recipient_id, "responsible person"),
         )
@@ -737,8 +747,6 @@ def build_work_plan_context(user, params) -> dict:
         calendar.monthrange(today.year, today.month)[1],
     )
     activities_this_month = base_qs.filter(_window_q(month_start, month_end)).count()
-
-
 
     # Every tile is bound to its registry entry (apps.core.metrics): the
     # definition, unit, period and drilldown live with the metric, not in this

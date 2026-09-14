@@ -241,16 +241,175 @@ class NotificationLinkResolver:
             return "/partners", "Open Partners"
         # ── end S2 ──
         # ── IA review · IA-N ──
+        # Impact Assessment's handoffs open the record or the queue that
+        # resolves them (IA review, 2026-09-13). They used to land on
+        # /ia/dashboard/, which opens on Outcomes, so "Verify Activity" or
+        # "SSA Verification" dropped the verifier on a school-change table.
+        # Partner work is verified — Salesforce entry included — in Partner
+        # Evidence, never the staff review workspace; its notices say so with
+        # the context type "partner_activity".
+        if role == "impactassessment":
+            kind = (context_type or "").lower()
+            if event_type in (
+                "activity_submitted_for_review",
+                "activity_submitted_for_verification",
+            ):
+                if kind == "partner_activity" and context_id:
+                    return (
+                        f"/ia/partner-evidence/{context_id}/",
+                        "Review Partner Evidence",
+                    )
+                if kind == "activity" and context_id:
+                    return f"/ia/verification/{context_id}/", "Verify Activity"
+                return "/ia/verification/", "Open Verification Queue"
+            if event_type == "critical_school_ssa":
+                return "/ssa/verification/", "SSA Verification"
+            if event_type == "evidence_returned":
+                return "/ia/returned/", "Open Returned Activities"
         # ── end IA-N ──
         # ── IA review · IA-F ──
+        # Measurement framework reviews: a rule, outcome area or indicator
+        # waiting for a second reviewer (the country's other IA officer, or the
+        # Country Director as fallback), and the decision back to its author.
+        # Both open the Measurement Framework on the record's tab with its
+        # drawer (?open=), which applies the reader's own permission.
+        if event_type in (
+            "ia.framework.review_requested",
+            "ia.framework.review_decided",
+        ):
+            if role not in ("impactassessment", "countrydirector", "admin"):
+                return "/dashboard", "View Dashboard"
+            kind = (context_type or "").lower()
+            label = (
+                "Review Definition"
+                if event_type == "ia.framework.review_requested"
+                else "Open Framework"
+            )
+            if kind == "activityinterventionmapping" and context_id:
+                return f"/ia/framework/?tab=rules&open=rule-{context_id}", label
+            if kind == "outcomearea" and context_id:
+                return f"/ia/framework/?tab=areas&open=area-{context_id}", label
+            if kind == "indicatordefinition" and context_id:
+                return (
+                    f"/ia/framework/?tab=indicators&open=indicator-{context_id}",
+                    label,
+                )
+            return "/ia/framework/", label
         # ── end IA-F ──
         # ── IA review · IA-C ──
+        # A verifier returned SSA scores to the person who keyed them. Scores
+        # collected on a visit are corrected on that visit (re-keying them
+        # sends the same record back to verification); scores keyed without
+        # a visit are re-entered from the school's SSA timeline.
+        if event_type == "ssa_returned":
+            kind = (context_type or "").lower()
+            if kind == "activity" and context_id:
+                return f"/my-plan/{context_id}", "Correct SSA Scores"
+            if kind == "school" and context_id:
+                return f"/schools/{context_id}#ssa-timeline", "Open School SSA"
+            return "/ssa/verification/?status=returned&mine=1", "Open Returned SSA"
         # ── end IA-C ──
         # ── IA review · IA-P ──
+        # School evidence returned to its recorder: a OneTest visit's class
+        # results are corrected from the visit (context "OneTestActivity"),
+        # everything else on the School Evidence register with its drawer.
+        # A reviewed change story opens its author's My Targets, where it
+        # counts once approved.
+        if event_type == "ia.school_evidence.returned":
+            kind = (context_type or "").lower()
+            if kind == "onetestactivity" and context_id:
+                return (
+                    f"/my-plan/{context_id}?learning_results=1",
+                    "Correct Results",
+                )
+            tab_kind = {
+                "learningassessmentresult": ("learning", "learning"),
+                "discipleshipindicatorrecord": ("discipleship", "discipleship"),
+                "edtechdeployment": ("edtech", "edtech"),
+                "edtechcheck": ("edtech", "check"),
+            }.get(kind)
+            if tab_kind and context_id:
+                tab, record_kind = tab_kind
+                return (
+                    f"/ia/school-evidence/?tab={tab}&status=returned"
+                    f"&open={record_kind}-{context_id}",
+                    "Correct Evidence",
+                )
+            return "/ia/school-evidence/?status=returned", "Open School Evidence"
+        if event_type == "mscs.story_reviewed":
+            return "/my-targets", "Open My Targets"
         # ── end IA-P ──
         # ── IA review · IA-L ──
+        # Impact findings: a reviewer (the country's second IA officer, or its
+        # Country Director as fallback) opens the finding's review drawer on
+        # Programme Learning; the author opens it to read the decision. Loan
+        # impact conclusions: the verifier lands on the conclusions awaiting
+        # verification with the drawer open; a returned conclusion reaches its
+        # preparer — Business Transformation on its Impact & Reports page,
+        # Impact Assessment on Lending Evidence. Each page applies the reader's
+        # own permission to the drawer it opens.
+        if event_type in ("ia.finding.review_requested", "ia.finding.review_decided"):
+            if role not in ("impactassessment", "countrydirector", "admin"):
+                return "/dashboard", "View Dashboard"
+            if not context_id:
+                return "/ia/learning/?view=findings", "Open Findings"
+            if event_type == "ia.finding.review_requested":
+                return (
+                    f"/ia/learning/?view=findings&status=in_review&open={context_id}",
+                    "Review Finding",
+                )
+            return f"/ia/learning/?view=findings&open={context_id}", "Open Finding"
+        if event_type in ("bt.loan.impact_prepared", "bt.loan.impact_returned"):
+            state = (
+                "awaiting" if event_type == "bt.loan.impact_prepared" else "returned"
+            )
+            open_part = f"&open={context_id}" if context_id else ""
+            if role in ("impactassessment", "countrydirector", "admin"):
+                return (
+                    f"/ia/lending-evidence/?tab=conclusions&state={state}{open_part}",
+                    "Verify Conclusion"
+                    if state == "awaiting"
+                    else "Correct Conclusion",
+                )
+            if role == "businesstransformationofficer":
+                return (
+                    "/business-transformation/impact-reports",
+                    "Open Impact & Reports",
+                )
         # ── end IA-L ──
         # ── IA review · IA-R ──
+        # Impact reports open the report itself, where the page applies the
+        # reader's own rights: the reviewer reviews, the Country Director reads
+        # a release and answers its recommendations, the author reads the
+        # decision or the response. A donor version waiting for approval opens
+        # the report's releases. A school brief opens the brief page for the
+        # account owner who shares it; field roles cannot open /ia/ pages.
+        if event_type.startswith("ia.report."):
+            if event_type == "ia.report.school_brief":
+                if context_id:
+                    return f"/impact-briefs/{context_id}/", "Open School Brief"
+                return "/todos", "Open To-Do"
+            if role not in (
+                "impactassessment",
+                "countrydirector",
+                "regionalvicepresident",
+                "admin",
+            ):
+                return "/dashboard", "View Dashboard"
+            if context_id and (context_type or "").lower() == "impactreport":
+                anchor = {
+                    "ia.report.released": "#recommendations",
+                    "ia.report.recommendation_responded": "#recommendations",
+                    "ia.report.donor_decided": "#releases",
+                    "ia.report.donor_approval_requested": "#releases",
+                }.get(event_type, "")
+                label = {
+                    "ia.report.review_requested": "Review Report",
+                    "ia.report.donor_approval_requested": "Review Donor Version",
+                    "ia.report.released": "Read Report",
+                }.get(event_type, "Open Report")
+                return f"/ia/impact-reports/{context_id}/{anchor}", label
+            return "/ia/impact-reports/", "Open Impact Reports"
         # ── end IA-R ──
 
         # Platform-operations events resolve to the exact affected record, not

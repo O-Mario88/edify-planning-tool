@@ -185,69 +185,43 @@ Not specified
 
 {% include "partials/schools/business_transformation.html" %}
 
-<!-- SSA Intervention Impact Tracking -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--edify-border)] flex items-center justify-between">
-<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Intervention Impact Timeline</h3>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-slate-100 text-slate-600">
-Improved: {{ impact_data.improvedCount }}
-</span>
+<!-- SSA change between confirmed assessments (IA review, owner, 2026-09-13) -->
+{% comment %}
+Change is read between the school's confirmed assessments of consecutive
+financial years, by the one rule every SSA surface shares
+(apps.ssa.change_rules), once per pair of readings. Each pair names the
+verified activities delivered between the two readings — support received,
+not proof it caused the change. Built by apps.analytics.ia_workflow.school_progress.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="school-ssa-change-title" data-school-ssa-change>
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 id="school-ssa-change-title" class="text-[15px] font-semibold text-slate-800 tracking-tight">SSA change between confirmed assessments</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{% if ssa_progress.pairs %}{{ ssa_progress.improved_pairs }} improved · {{ ssa_progress.declined_pairs }} declined across {{ ssa_progress.pairs|length }} year-on-year comparison{{ ssa_progress.pairs|length|pluralize }}{% else %}Not measured{% endif %}</p>
 </div>
-
-<div class="px-4 sm:px-6 py-5 space-y-6">
-{% if impact_data.activities %}
-<div class="relative pl-6 border-l border-slate-100 space-y-6">
-{% for act in impact_data.activities %}
-<div class="relative">
-<!-- Bullet point on timeline -->
-<div class="absolute -left-[30px] top-1 h-5 w-5 rounded-pill border-4 border-white bg-slate-300 {% if act.impact.status == 'Improved' %}bg-emerald-500{% elif act.impact.status == 'Declined' %}bg-rose-500{% endif %}"></div>
-
-<div class="bg-slate-50/50 rounded-surface border border-slate-100 p-4 space-y-3">
-<div class="flex items-center justify-between">
+<div class="px-4 sm:px-6 py-5 space-y-4">
+{% for pair in ssa_progress.pairs %}
+<article class="rounded-surface border border-slate-100 p-4 space-y-3">
+<div class="flex flex-wrap items-center justify-between gap-2">
 <div>
-<h4 class="text-[14px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
+<h4 class="text-[14px] font-semibold text-slate-800">FY{{ pair.before.fy }} vs FY{{ pair.after.fy }}</h4>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ pair.before.date_of_ssa|date:"j M Y" }} → {{ pair.after.date_of_ssa|date:"j M Y" }} · {{ pair.interval_days }} days apart{% if pair.rule_label %} · {{ pair.rule_label }}{% endif %}</p>
 </div>
-<span class="inline-flex items-center gap-1.5 text-[12px] font-semibold">
-{% if act.impact.status == 'Improved' %}
-<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
-<span>Improved</span>
-{% elif act.impact.status == 'Declined' %}
-<span class="w-1.5 h-1.5 rounded-pill bg-rose-500"></span>
-<span>Declined</span>
-{% else %}
-<span class="w-1.5 h-1.5 rounded-pill bg-slate-400"></span>
-<span>No Change</span>
+<span class="text-[12px] font-semibold" data-tone="{{ pair.tone }}">{{ pair.classification_label }}{% if pair.mean_delta is not None %} ({{ pair.mean_delta|floatformat:"+2" }}){% endif %}</span>
+</div>
+{% if pair.domains %}
+<div class="overflow-x-auto"><table class="w-full text-left text-[12px]" data-mobile-table="scroll">
+<caption class="sr-only">SSA domain change FY{{ pair.before.fy }} to FY{{ pair.after.fy }}</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">Result</th></tr></thead>
+<tbody>{% for d in pair.domains|slice:":8" %}<tr><td>{{ d.name }}</td><td class="tabular-nums">{{ d.before }}</td><td class="tabular-nums">{{ d.after }}</td><td class="tabular-nums">{{ d.delta|floatformat:"+2" }}</td><td><span data-tone="{{ d.tone }}">{{ d.classification }}</span></td></tr>{% endfor %}</tbody>
+</table></div>
 {% endif %}
-</span>
-</div>
-
-<!-- Impact details row -->
-<div class="grid grid-cols-3 gap-4 border-t border-slate-100/50 pt-2 text-center text-[12px]">
-<div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Pre-Score</p>
-<p class="font-semibold mt-0.5">{{ act.impact.pre_score|default:"-" }}</p>
-</div>
-<div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Post-Score</p>
-<p class="font-semibold mt-0.5">{{ act.impact.post_score|default:"-" }}</p>
-</div>
-<div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Delta</p>
-<p class="font-semibold mt-0.5 {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
-{% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
-</p>
-</div>
-</div>
-</div>
-</div>
+<p class="edify-text-caption text-slate-500 font-semibold">Verified support between the readings: {% if pair.support_count %}{{ pair.support_count }} activit{{ pair.support_count|pluralize:"y,ies" }} — {{ pair.support|join:", " }}{% if pair.support_count > pair.support|length %} …{% endif %}{% else %}none recorded{% endif %}.</p>
+</article>
+{% empty %}
+<p class="text-[12px] text-slate-500 font-semibold py-2">Not measured: this school does not yet have confirmed SSAs in two consecutive financial years.</p>
 {% endfor %}
 </div>
-{% else %}
-<p class="text-center edify-danger-text text-[12px] font-semibold py-4">No completed intervention visits found for this school.</p>
-{% endif %}
-</div>
-</div>
+</section>
 
 {% if visit_feedback %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="school-visit-feedback-title">
@@ -414,25 +388,26 @@ would read as free work rather than unpriced work.
 {% endif %}
 </div>
 
-<!-- Latest SSA Scorecard -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
-<div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+<!-- Latest confirmed SSA (IA review, owner, 2026-09-13) -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4" id="ssa-timeline" data-school-ssa-latest>
+<div class="border-b border-slate-100 pb-3 flex items-center justify-between gap-2">
 <div>
-<h3 class="text-[15px] font-semibold text-slate-800">Current SSA Assessment</h3>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">FY: {{ latest_ssa.fy }} &bull; Q: {{ latest_ssa.quarter }}</p>
+<h3 class="text-[15px] font-semibold text-slate-800">Current confirmed SSA</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{% if latest_ssa %}{{ latest_ssa.date_of_ssa|date:"j M Y" }} &bull; FY{{ latest_ssa.fy }}{% if latest_ssa.quarter %} &bull; {{ latest_ssa.quarter }}{% endif %}{% else %}No confirmed assessment{% endif %}</p>
 </div>
-{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Average SSA{% endkpi_label %}{{ latest_ssa.average_score|floatformat:1|default:"-" }}{% endkpi_metric %}{% endkpi_strip %}
+<p class="text-right"><span class="block edify-text-caption text-slate-400 font-semibold">Average SSA</span><strong class="text-[18px] tabular-nums">{% if latest_ssa and latest_ssa.average_score is not None %}{{ latest_ssa.average_score|floatformat:1 }}{% else %}Not measured{% endif %}</strong></p>
 </div>
-
-{% if ssa_scores %}
+{% if ssa_progress.newer_unconfirmed %}
+<p class="edify-note" data-tone="warning" role="note">{{ ssa_progress.newer_unconfirmed|length }} newer assessment{{ ssa_progress.newer_unconfirmed|length|pluralize }} {{ ssa_progress.newer_unconfirmed|length|pluralize:"is,are" }} not confirmed yet and {{ ssa_progress.newer_unconfirmed|length|pluralize:"is,are" }} not counted.</p>
+{% endif %}
+{% if ssa_progress.latest_scores %}
 <div class="space-y-3">
-{% for sc in ssa_scores %}
+{% for sc in ssa_progress.latest_scores %}
 <div>
 <div class="flex items-center justify-between text-[12px] font-semibold">
-<span class="truncate">{{ sc.get_intervention_display }}</span>
-<span class="font-semibold">{{ sc.score }}</span>
+<span class="truncate">{{ sc.label }}</span>
+<span class="font-semibold tabular-nums">{{ sc.score }}</span>
 </div>
-<!-- Progress bar -->
 <div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
 <div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ sc.score|multiply:10 }}%"></div>
 </div>
@@ -440,44 +415,43 @@ would read as free work rather than unpriced work.
 {% endfor %}
 </div>
 {% else %}
-<p class="text-[12px] text-slate-400 font-semibold py-2">No SSA assessment recorded for this school in the current FY.</p>
+<p class="text-[12px] text-slate-400 font-semibold py-2">No confirmed SSA scores for this school yet.</p>
 {% endif %}
 </div>
 
-<!-- Year-over-Year SSA Progress Tracker -->
-{% if ssa_progress_history %}
+{% if ssa_progress.progress_by_fy %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Annual SSA Progress</h3>
+<p class="edify-text-caption text-slate-400 font-semibold">Latest confirmed assessment of each financial year.</p>
 <div class="space-y-3">
-{% for item in ssa_progress_history %}
+{% for item in ssa_progress.progress_by_fy %}
 <div class="space-y-1">
 <div class="flex items-center justify-between text-[12px] font-semibold">
 <span>FY{{ item.fy }}</span>
-<span class="font-bold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
+<span class="font-bold text-slate-800">{% if item.avg_score is not None %}{{ item.avg_score|floatformat:1 }} / 10.0{% else %}Not measured{% endif %}</span>
 </div>
+{% if item.avg_score is not None %}
 <div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
 <div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg_score|multiply:10 }}%"></div>
 </div>
+{% endif %}
 </div>
 {% endfor %}
 </div>
 </div>
 {% endif %}
 
-<!-- Historical Assessments -->
-{% if historical_ssas %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
-<h3 class="text-[15px] font-semibold text-slate-800">Historical Averages</h3>
+{% if ssa_progress.history %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4" data-school-ssa-history>
+<h3 class="text-[15px] font-semibold text-slate-800">SSA history</h3>
 <div class="space-y-2.5">
-{% for h_ssa in historical_ssas %}
-<div class="flex items-center justify-between text-[12px]">
+{% for h in ssa_progress.history %}
+<div class="flex items-center justify-between gap-2 text-[12px]">
 <div>
-<p class="font-bold">SSA Date: {{ h_ssa.date_of_ssa|date:"Y-m-d" }}</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">FY{{ h_ssa.fy }} &bull; Quarter {{ h_ssa.quarter }}</p>
+<p class="font-bold">{{ h.record.date_of_ssa|date:"j M Y" }} &bull; FY{{ h.record.fy }}</p>
+<p class="edify-text-caption font-semibold mt-0.5"><span data-tone="{{ h.tone }}">{{ h.status_label }}</span>{% if not h.counted %} &bull; not counted{% endif %}</p>
 </div>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-slate-50 border border-slate-200">
-{{ h_ssa.average_score|floatformat:1 }}
-</span>
+<span class="tabular-nums font-semibold">{% if h.record.average_score is not None %}{{ h.record.average_score|floatformat:1 }}{% else %}—{% endif %}</span>
 </div>
 {% endfor %}
 </div>

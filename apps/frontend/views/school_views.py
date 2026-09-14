@@ -28,7 +28,6 @@ from apps.core.enums import SchoolType, PlanningReadiness
 from apps.schools.upload_service import upload_school_file
 from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
-from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.accounts.staff_matching import OWNER_ROLES, on_staff
 from apps.clusters.eligibility import (
@@ -831,6 +830,11 @@ def school_directory_view(request):
         in ("Admin", "CountryDirector", "ImpactAssessment"),
         "can_schedule": RolePermissionService.can_schedule_activity(user),
         "can_upload_schools": _may_upload_schools(request),
+        # The upload doors lead to the Upload Center, which a Programme Lead
+        # cannot open (Programme Lead walk, 2026-09-14).
+        "can_open_upload_center": RolePermissionService.can_view_page(
+            request.user, "uploads"
+        ),
         "can_add_ssa": _may_upload_ssa(request),
         # The Regional Programme Lead reads the directory and works none of it,
         # so the row selection, bulk bar and per-row assign buttons are not
@@ -1461,29 +1465,18 @@ def school_detail_view(request, school_id):
     school.assigned_staff = (
         school.account_owner_name_raw or school.account_owner_id or "Unassigned"
     )
-    latest_ssa = (
-        school.ssa_records.filter(deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
-        .first()
-    )
-    ssa_scores_list = []
-    if latest_ssa:
-        ssa_scores_list = list(latest_ssa.scores.all().order_by("-score"))
+    # The SSA panel (IA review, owner, 2026-09-13). The headline is the newest
+    # CONFIRMED assessment — a pending or returned upload used to stand as the
+    # school's "Average SSA" — and change is read between confirmed
+    # assessments by the one rule (apps.ssa.change_rules), once per pair of
+    # readings rather than once per activity delivered around them.
+    from apps.analytics.ia_workflow import school_progress
 
-    historical_ssas = school.ssa_records.filter(deleted_at__isnull=True).order_by(
-        "-date_of_ssa"
-    )[1:]
+    ssa_progress = school_progress(school)
+    latest_ssa = ssa_progress["latest"]
     activities = school.activities.filter(deleted_at__isnull=True).order_by(
         "-planned_date"
     )
-    # `school.school_id`, not the raw URL value: the route accepts either
-    # identifier, and this helper resolves the directory one.
-    impact_data = school_impact(school.school_id, request.user)
-
-    from apps.ssa.services import get_ssa_progress_by_fy
-    from apps.schools.models import School
-
-    ssa_progress_history = get_ssa_progress_by_fy(School.objects.filter(id=school.id))
 
     # The ring carries the same four states the status pill does, so the two
     # cannot disagree about what "Needs Cleanup" looks like.
@@ -1543,12 +1536,9 @@ def school_detail_view(request, school_id):
         "partner_support": partner_support,
         "business_transformation": business_transformation,
         "latest_ssa": latest_ssa,
-        "ssa_scores": ssa_scores_list,
-        "historical_ssas": historical_ssas,
-        "ssa_progress_history": ssa_progress_history,
+        "ssa_progress": ssa_progress,
         "activities": activities,
         "visit_feedback": visit_feedback,
-        "impact_data": impact_data,
         "quality_gauge": quality_gauge,
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).

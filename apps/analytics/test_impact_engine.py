@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.test import Client, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import (
@@ -678,3 +678,139 @@ class ImpactPortfolioScopeTest(TestCase):
         self.assertEqual(dashboard["filters"]["group_by"], "pl")
         names = {row["name"] for row in dashboard["grouped_drivers"]}
         self.assertIn(self.pl.name, names)
+
+
+class ImpactEvidenceHonestyTest(ImpactEngineStatsTest):
+    """IA review (2026-09-13): corrected verdicts, verified dosage and gaps
+    drawn as gaps. Reuses the two-arm world above."""
+
+    def test_per_intervention_verdicts_are_holm_corrected_and_graded(self):
+        school_ids = [s.id for s in self.treated + self.untreated]
+        imp = impact_engine.improvement_frame(school_ids, self.fy)
+        acts = impact_engine.activity_frame(imp, school_ids)
+        visits = impact_engine.dosage_impact(imp, acts, "visit")
+        tested = [r for r in visits["per_intervention"] if r["p"] is not None]
+        self.assertTrue(tested)
+        for row in visits["per_intervention"]:
+            with self.subTest(row["key"]):
+                self.assertIn("p_adjusted", row)
+                self.assertEqual(row["tests_run"], len(tested))
+                self.assertEqual(
+                    row["verdict"], impact_engine._verdict(row["p_adjusted"])
+                )
+                self.assertIn(
+                    row["grade"]["grade"],
+                    ("insufficient", "descriptive", "associational"),
+                )
+                if row["p"] is not None:
+                    self.assertGreaterEqual(row["p_adjusted"], row["p"])
+        focus = next(r for r in visits["per_intervention"] if r["key"] == FOCUS)
+        self.assertEqual(focus["grade"]["grade"], "associational")
+
+    def test_legacy_unverified_completed_work_is_not_dosage(self):
+        school = self.untreated[0]
+        _visit(school, self.fy, days_ago=40, status="completed")
+        school_ids = [s.id for s in self.treated + self.untreated]
+        imp = impact_engine.improvement_frame(school_ids, self.fy)
+        acts = impact_engine.activity_frame(imp, school_ids)
+        self.assertTrue(acts[acts["school_id"] == school.id].empty)
+
+    def test_activity_frame_names_the_programme_delivered(self):
+        school_ids = [s.id for s in self.treated + self.untreated]
+        imp = impact_engine.improvement_frame(school_ids, self.fy)
+        acts = impact_engine.activity_frame(imp, school_ids)
+        row = acts.iloc[0]
+        for column in (
+            "catalogue_item_id",
+            "catalogue_name",
+            "programme_category",
+            "delivery_mode",
+            "partner_id",
+            "project_code",
+        ):
+            self.assertIn(column, acts.columns)
+        self.assertEqual(row["delivery_mode"], "in_school")
+
+    def test_an_empty_dosage_bucket_is_a_gap_not_zero(self):
+        import json as _json
+
+        dashboard = impact_engine.build_dashboard(self.admin, {})
+        medians = _json.loads(dashboard["charts"]["visit_bucket_medians"])
+        labels = _json.loads(dashboard["charts"]["bucket_labels"])
+        self.assertIsNone(medians[labels.index("3+")])
+        self.assertEqual(
+            dashboard["methodology"]["per_intervention_adjustment"], "Holm"
+        )
+
+
+class HolmAdjustmentTest(SimpleTestCase):
+    def test_step_down_adjustment_is_monotone_and_skips_untested_rows(self):
+        adjusted = impact_engine.holm_adjust([0.01, 0.04, None, 0.03])
+        self.assertEqual(adjusted, [0.03, 0.06, None, 0.06])
+
+    def test_a_raw_significant_row_can_lose_significance(self):
+        rows = [
+            {"p": 0.04, "verdict": "significant"},
+            {"p": 0.03, "verdict": "significant"},
+        ]
+        impact_engine.apply_holm(rows)
+        self.assertEqual(rows[0]["raw_verdict"], "significant")
+        self.assertEqual(rows[0]["p_adjusted"], 0.06)
+        self.assertEqual(rows[0]["verdict"], "suggestive")
+        self.assertEqual(rows[1]["tests_run"], 2)
+
+
+class ImpactCountryBoundaryTest(TestCase):
+    """IA, the Country Director and the Accountant are held to their country
+    on /impact; Admin and a country role with no country stay wide."""
+
+    def setUp(self):
+        self.fy = get_operational_fy()
+        uganda = Region.objects.create(name="Boundary Uganda", country="Uganda")
+        kenya = Region.objects.create(name="Boundary Kenya", country="Kenya")
+        self.ug_school = School.objects.create(
+            school_id="IMP-BND-UG",
+            name="Uganda School",
+            region=uganda,
+            district=District.objects.create(name="Boundary UG", region=uganda),
+        )
+        self.ke_school = School.objects.create(
+            school_id="IMP-BND-KE",
+            name="Kenya School",
+            region=kenya,
+            district=District.objects.create(name="Boundary KE", region=kenya),
+        )
+        for school in (self.ug_school, self.ke_school):
+            _paired_ssa(school, self.fy, {FOCUS: 4.0}, {FOCUS: 5.0})
+
+    def _with_country(self, email, role, country):
+        user = _user(email, role)
+        StaffProfile.objects.create(user=user, title=role, country=country)
+        return User.objects.select_related("staff_profile").get(pk=user.pk)
+
+    def test_country_roles_see_only_their_country(self):
+        for role in (
+            EdifyRole.IMPACT_ASSESSMENT.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.PROGRAM_ACCOUNTANT.value,
+        ):
+            with self.subTest(role=role):
+                user = self._with_country(f"bnd-{role.lower()}@t.org", role, "Uganda")
+                dashboard = impact_engine.build_dashboard(user, {})
+                self.assertEqual(dashboard["coverage"]["schools_in_scope"], 1)
+                self.assertEqual(dashboard["coverage"]["schools_paired"], 1)
+        kenya_ia = self._with_country(
+            "bnd-ke-ia@t.org", EdifyRole.IMPACT_ASSESSMENT.value, "Kenya"
+        )
+        schools, _scope = impact_engine._scoped_schools(kenya_ia)
+        self.assertEqual(
+            list(schools.values_list("id", flat=True)), [self.ke_school.id]
+        )
+
+    def test_admin_and_a_country_role_without_a_country_stay_deployment_wide(self):
+        admin = _user("bnd-admin@t.org", EdifyRole.ADMIN.value)
+        no_country = _user("bnd-ia-none@t.org", EdifyRole.IMPACT_ASSESSMENT.value)
+        for user in (admin, no_country):
+            with self.subTest(user=user.email):
+                dashboard = impact_engine.build_dashboard(user, {})
+                self.assertEqual(dashboard["coverage"]["schools_in_scope"], 2)

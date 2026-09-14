@@ -140,6 +140,22 @@ class SsaSequentialValidationTest(APITestCase):
         result = ssa_services.upload(data, self.user)
         self.assertIsNotNone(result["id"])
         self.assertEqual(result["fy"], "2026")
+        # Keyed scores wait for a different verifier and count only once
+        # confirmed (IA review, owner, 2026-09-13).
+        self.assertEqual(result["verificationStatus"], "pending")
+        progress = get_ssa_progress_by_fy(School.objects.filter(id=self.school.id))
+        self.assertEqual([row["fy"] for row in progress], ["2025"])
+        second_verifier = User.objects.create_user(
+            email="tester.val2@edify.test",
+            name="Val Second",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            password="pwd",
+            is_active=True,
+        )
+        ssa_services.verify_record(
+            SsaRecord.objects.get(id=result["id"]), second_verifier
+        )
 
         # 3. Verify get_ssa_progress_by_fy tracks correct progression
         progress = get_ssa_progress_by_fy(School.objects.filter(id=self.school.id))

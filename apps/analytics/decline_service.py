@@ -18,10 +18,13 @@ from __future__ import annotations
 from apps.core.enums import ssa_score_band
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+from apps.ssa import change_rules
 
 
-# A drop worth a leader's attention. Below this, normal assessment noise
-# dominates and a queue full of -0.1s would train people to ignore it.
+# Kept for importers only (IA review, 2026-09-13). A school no longer declines
+# at a page-local -0.5: both columns of this page ask apps.ssa.change_rules,
+# the one definition every SSA surface shares, and the payload carries the
+# rule's label ("ruleLabel") for the page to show.
 MATERIAL_DROP = 0.5
 
 # A school whose overall average fell by at least this much is in freefall
@@ -42,7 +45,9 @@ def declining_schools(principal, query: dict | None = None) -> dict:
         return _empty(fy, scope)
 
     school_rows = list(
-        schools.values("id", "name", "school_id", "district_id", "region_id")
+        schools.values(
+            "id", "name", "school_id", "district_id", "region_id", "region__country"
+        )
     )
     if not school_rows:
         return _empty(fy, scope)
@@ -54,30 +59,46 @@ def declining_schools(principal, query: dict | None = None) -> dict:
     meta = {s["id"]: s for s in school_rows}
     district_names = _district_names({s["district_id"] for s in school_rows})
 
-    # Per-school overall movement, plus its worst single intervention.
-    overall = (
-        frame.groupby("school_id")
-        .agg(
-            prev=("prev_score", "mean"),
-            curr=("curr_score", "mean"),
-            delta=("delta", "mean"),
-        )
-        .reset_index()
-    )
-    worst_idx = frame.groupby("school_id")["delta"].idxmin()
-    worst = frame.loc[worst_idx].set_index("school_id")
+    # One definition of declined (apps.ssa.change_rules): each domain pair is
+    # judged by its published rule in the school's country, pairs taken too
+    # close together are not compared, and a school declines when its mean
+    # movement across comparable domains classifies as declined.
+    book = change_rules.RuleBook()
 
-    declining = overall[overall["delta"] <= -MATERIAL_DROP].sort_values("delta")
+    def country_for(school_id):
+        return (meta.get(school_id) or {}).get("region__country") or ""
+
+    pairs = change_rules.classify_pairs(
+        frame.to_dict("records"), book=book, country_for=country_for
+    )
+    if not pairs:
+        return _empty(fy, scope, no_pairs=True)
+    verdicts = change_rules.school_verdicts(pairs, book=book, country_for=country_for)
+    by_school: dict[str, list[dict]] = {}
+    for pair in pairs:
+        by_school.setdefault(pair["school_id"], []).append(pair)
+
+    declining = sorted(
+        (
+            (sid, verdict)
+            for sid, verdict in verdicts.items()
+            if verdict["classification"] == change_rules.DECLINED
+        ),
+        key=lambda item: item[1]["mean_delta"],
+    )
 
     rows = []
-    for record in declining.to_dict("records"):
-        sid = record["school_id"]
+    for sid, verdict in declining:
         info = meta.get(sid, {})
-        worst_row = worst.loc[sid] if sid in worst.index else None
+        school_pairs = by_school.get(sid, [])
+        prev = sum(p["prev_score"] for p in school_pairs) / len(school_pairs)
+        curr = sum(p["curr_score"] for p in school_pairs) / len(school_pairs)
+        worst_row = min(school_pairs, key=lambda p: p["delta"])
         # ssa_score_band returns (label, hex, tone) — take the label; rendering
         # the tuple puts raw Python in front of a director.
-        prev_band = ssa_score_band(record["prev"])[0]
-        curr_band = ssa_score_band(record["curr"])[0]
+        prev_band = ssa_score_band(prev)[0]
+        curr_band = ssa_score_band(curr)[0]
+        delta = float(verdict["mean_delta"])
         rows.append(
             {
                 "schoolId": sid,
@@ -85,50 +106,43 @@ def declining_schools(principal, query: dict | None = None) -> dict:
                 "code": info.get("school_id"),
                 "districtId": info.get("district_id"),
                 "district": district_names.get(info.get("district_id"), "—"),
-                "prevScore": round(float(record["prev"]), 2),
-                "currScore": round(float(record["curr"]), 2),
-                "delta": round(float(record["delta"]), 2),
+                "prevScore": round(float(prev), 2),
+                "currScore": round(float(curr), 2),
+                "delta": round(delta, 2),
                 "prevBand": prev_band,
                 "currBand": curr_band,
                 # A band drop is the signal that survives being explained away
                 # as measurement noise.
                 "bandDropped": prev_band != curr_band,
-                "severe": float(record["delta"]) <= -SEVERE_DROP,
-                "worstIntervention": (
-                    worst_row["intervention"] if worst_row is not None else None
-                ),
-                "worstDelta": (
-                    round(float(worst_row["delta"]), 2)
-                    if worst_row is not None
-                    else None
-                ),
+                "severe": delta <= -SEVERE_DROP,
+                "worstIntervention": worst_row["intervention"],
+                "worstDelta": round(float(worst_row["delta"]), 2),
+                "ruleLabel": verdict["rule_label"],
             }
         )
 
     # Which interventions are failing across the whole scope — the second half
     # of the question, and the part that tells a CD what to actually change.
-    by_intervention = (
-        frame.groupby("intervention")
-        .agg(
-            avg_delta=("delta", "mean"),
-            declining=("delta", lambda s: int((s < 0).sum())),
-            n=("delta", "size"),
+    # The same rule as the school list: a pair counts as declining when it
+    # classifies as declined, not whenever its delta is below zero.
+    by_intervention: dict[str, list[dict]] = {}
+    for pair in pairs:
+        by_intervention.setdefault(pair["intervention"], []).append(pair)
+    intervention_rows = []
+    for intervention, group in by_intervention.items():
+        declined = sum(1 for p in group if p["classification"] == change_rules.DECLINED)
+        n = len(group)
+        intervention_rows.append(
+            {
+                "intervention": intervention,
+                "avgDelta": round(sum(p["delta"] for p in group) / n, 2),
+                "decliningCount": declined,
+                "assessedCount": n,
+                "decliningPct": round(100 * declined / n, 1) if n else 0.0,
+                "ruleLabel": book.rule(intervention)["rule_label"],
+            }
         )
-        .reset_index()
-        .sort_values("avg_delta")
-    )
-    intervention_rows = [
-        {
-            "intervention": r["intervention"],
-            "avgDelta": round(float(r["avg_delta"]), 2),
-            "decliningCount": int(r["declining"]),
-            "assessedCount": int(r["n"]),
-            "decliningPct": (
-                round(100 * float(r["declining"]) / float(r["n"]), 1) if r["n"] else 0.0
-            ),
-        }
-        for r in by_intervention.to_dict("records")
-    ]
+    intervention_rows.sort(key=lambda r: r["avgDelta"])
 
     # District rollup — the RVP's view, and a useful lens for the CD too.
     district_rollup = _district_rollup(rows)
@@ -144,7 +158,9 @@ def declining_schools(principal, query: dict | None = None) -> dict:
         "totalDeclining": len(rows),
         "severeCount": sum(1 for r in rows if r["severe"]),
         "bandDropCount": sum(1 for r in rows if r["bandDropped"]),
-        "assessedPairs": int(frame["school_id"].nunique()),
+        "assessedPairs": len(verdicts),
+        "ruleLabel": change_rules.rule_label_for(book),
+        "ruleSentence": change_rules.RULE_SENTENCE,
         "weakestIntervention": (
             intervention_rows[0]["intervention"] if intervention_rows else None
         ),
@@ -209,6 +225,8 @@ def _empty(fy: str, scope, no_pairs: bool = False) -> dict:
         "weakestIntervention": None,
         "empty": True,
         "noPairedCycles": no_pairs,
+        "ruleLabel": change_rules.FALLBACK_LABEL,
+        "ruleSentence": change_rules.RULE_SENTENCE,
     }
 
 

@@ -40,7 +40,13 @@ from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
-PAGES = ("/dashboard", "/today", "/planning", "/fund-requests/weekly")
+PAGES = (
+    "/dashboard?view=operations",
+    "/dashboard?view=today",
+    "/today/panel",
+    "/planning",
+    "/fund-requests/weekly",
+)
 
 # Measured on 2026-09-04 against the fixture below, at 6 scheduled activities
 # and again at 12. Each ceiling is the measured count plus at most ten per
@@ -49,14 +55,21 @@ PAGES = ("/dashboard", "/today", "/planning", "/fund-requests/weekly")
 # stopped being computed, and 29 before monthly_urgent_schools joined the
 # district it reads per row.
 #
-#   page                    @6    @12   ceiling
-#   /dashboard              25     25   27
-#   /today                  78     78   85
+# On 2026-09-14 Today became the Dashboard's first view (owner: "merge today
+# and dashboard as dashboard"): the week is ?view=operations, and the Today
+# view paints the dashboard's fixed part and fetches the old /today workbench
+# from /today/panel, so the dashboard never waits on the To-Do queue.
+#
+#   page                          @6    @12   ceiling
+#   /dashboard?view=operations    27     27   27
+#   /dashboard?view=today         26     26   29
+#   /today/panel                  78     78   85
 #   /planning               38     38   41
 #   /fund-requests/weekly   71     72   79
 CEILINGS = {
-    "/dashboard": 27,
-    "/today": 85,
+    "/dashboard?view=operations": 27,
+    "/dashboard?view=today": 29,
+    "/today/panel": 85,
     "/planning": 41,
     "/fund-requests/weekly": 79,
 }
@@ -65,7 +78,12 @@ CEILINGS = {
 # /fund-requests/weekly is not among them: it measured one query more at 12
 # activities than at 6 (an extra advance_request read in the fund-requests
 # workspace, outside this module's remit), so it is held to its ceiling only.
-FLAT = ("/dashboard", "/today", "/planning")
+FLAT = (
+    "/dashboard?view=operations",
+    "/dashboard?view=today",
+    "/today/panel",
+    "/planning",
+)
 
 
 @override_settings(

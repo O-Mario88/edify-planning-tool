@@ -11,6 +11,10 @@ their Today opens on what waits on them — leadership handoffs ahead of their
 own field chores — and their team in the field, and folds the route and the
 proposed week into one line when no schools are assigned to them directly.
 The CCEO's and Project Coordinator's workbench is unchanged.
+
+Today and Dashboard are one page for the CCEO, the Program Lead and the
+Project Coordinator (owner, 2026-09-14): the workbench is the Dashboard's
+Today view, opened first, and one "Dashboard" link replaces the two.
 """
 
 from functools import wraps
@@ -175,9 +179,23 @@ def _debrief_done_today(user) -> bool:
     ).exists()
 
 
-@require_page_permission("today")
-@_staff_guard
-def today_page(request):
+# Roles whose Today lives inside the Dashboard, as its Today view (owner,
+# 2026-09-14: "merge today and dashboard as dashboard"). /today still answers
+# for bookmarks and older notification links by opening that view.
+DASHBOARD_TODAY_ROLES = ("CCEO", "Program Lead", "ProjectCoordinator")
+DASHBOARD_TODAY_URL = "/dashboard?view=today"
+
+
+def today_home_url(user) -> str:
+    """Where the Today workbench lives for this user."""
+    if getattr(user, "active_role", "") in DASHBOARD_TODAY_ROLES:
+        return DASHBOARD_TODAY_URL
+    return "/today"
+
+
+def build_today_context(request) -> dict:
+    """Everything the Today workbench renders (partials/today/workbench.html),
+    for the Dashboard's Today view and the standalone page alike."""
     from apps.autopilot.services import live_proposal_for
     from apps.my_plan.day_package import build_day_package
 
@@ -213,24 +231,42 @@ def today_page(request):
         for activity in activities
         if activity["status"] not in ("planned", "scheduled")
     )
+    return {
+        "package": package,
+        "next_activity": next_activity,
+        "waiting": waiting,
+        "exceptions": exceptions,
+        "queue_total": queue_total,
+        "is_program_lead": is_program_lead,
+        "team_today": team_today,
+        "has_own_portfolio": has_own_portfolio,
+        "proposal": proposal,
+        "debrief_done": _debrief_done_today(request.user),
+        "done_count": done_count,
+        "today_label": timezone.localdate().strftime("%A, %d %B %Y"),
+    }
+
+
+@require_page_permission("today")
+@_staff_guard
+def today_panel(request):
+    """The Dashboard's Today view, fetched by the panel once the dashboard has
+    painted: the workbench reads the To-Do queue, which grows with the estate,
+    so the dashboard response never waits for it (scale gate, 2026-09-14)."""
     return render(
         request,
-        "pages/today/index.html",
-        {
-            "package": package,
-            "next_activity": next_activity,
-            "waiting": waiting,
-            "exceptions": exceptions,
-            "queue_total": queue_total,
-            "is_program_lead": is_program_lead,
-            "team_today": team_today,
-            "has_own_portfolio": has_own_portfolio,
-            "proposal": proposal,
-            "debrief_done": _debrief_done_today(request.user),
-            "done_count": done_count,
-            "today_label": timezone.localdate().strftime("%A, %d %B %Y"),
-        },
+        "partials/today/dashboard_view.html",
+        {"today": build_today_context(request)},
     )
+
+
+@require_page_permission("today")
+@_staff_guard
+def today_page(request):
+    home = today_home_url(request.user)
+    if home != "/today":
+        return redirect(home)
+    return render(request, "pages/today/index.html", build_today_context(request))
 
 
 @require_page_permission("today")
@@ -286,4 +322,4 @@ def today_action(request):
             raise BadRequest("Unknown action.")
     except BadRequest as exc:
         messages.error(request, str(exc))
-    return redirect("/today")
+    return redirect(today_home_url(request.user))

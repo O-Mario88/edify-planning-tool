@@ -146,6 +146,16 @@
         This activity is complete. Nothing further is required here.
       </p>
       {% endif %}
+      {% comment %}IA review · IA-P (2026-09-13): a delivered OneTest visit records each class's
+      learning results here, pending until Impact Assessment confirms them.{% endcomment %}
+      {% if onetest_results_drawer %}
+      <div class="ad-actions" data-onetest-results>
+        <button type="button" hx-get="{{ onetest_results_drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" class="ad-action ad-action--primary">
+          <span><strong>Record learning results</strong><em>Class results from this OneTest visit</em></span>
+        </button>
+      </div>
+      {% if onetest_results_autoload %}<div hidden hx-get="{{ onetest_results_drawer }}?completed=1" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-onetest-autoload></div>{% endif %}
+      {% endif %}
     </section>
 
     {# ── Verification evidence ─────────────────────────────────────────── #}

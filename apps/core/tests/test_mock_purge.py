@@ -207,10 +207,13 @@ class UploadWiringTest(TestCase):
         self.assertEqual(SsaRecord.objects.count(), 1)
         self.assertEqual(SsaScore.objects.count(), 8)
         school.refresh_from_db()
-        # Staff-collected SSA is confirmed; an unclustered school still cannot
-        # enter support planning until canonical cluster membership is set.
+        # Every SSA lands pending until a different verifier confirms it (IA
+        # review, owner, 2026-09-13), so the school's current-FY SSA is not
+        # done yet; an unclustered school still cannot enter support planning
+        # until canonical cluster membership is set.
+        self.assertEqual(record["verificationStatus"], "pending")
         self.assertEqual(school.planning_readiness, "requires_cluster")
-        self.assertEqual(school.current_fy_ssa_status, "done")
+        self.assertNotEqual(school.current_fy_ssa_status, "done")
 
 
 class ProductionBlockingTest(TestCase):

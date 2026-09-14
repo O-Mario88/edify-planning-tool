@@ -221,23 +221,31 @@
     </div>
   </section>
 
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-label="Intervention-level treatment effects">
+  {% comment %}
+  IA review (2026-09-13): these tables compare the median SSA change of weak-baseline
+  schools that received focused work with weak-baseline schools that did not. They are
+  associations, not "treatment effects": eight tests per table are Holm-corrected and the
+  verdict reads the corrected p-value; each row carries the shared evidence grade. Plain
+  text with data-tone, never coloured numbers.
+  {% endcomment %}
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-label="Difference in median change, focused vs not focused (weak-baseline schools)">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <div>
-        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Focused visits: treated vs untreated schools with weak initial SSA scores</h3>
-        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Among schools starting below 7.0 on each intervention — did focused visits move the score more than no visits?</p>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Difference in median change, focused vs not focused (weak-baseline schools) · visits</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Schools starting below 7.0 on each intervention: median change where a verified visit focused on it, against schools with no such visit. Holm-corrected across the interventions tested; association, not proof.</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-[12px]">
-          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Treated</th><th class="py-1.5 pr-2">Untreated</th><th class="py-1.5 pr-2">Effect</th><th class="py-1.5">Verdict</th></tr></thead>
+          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Focused</th><th class="py-1.5 pr-2">Not focused</th><th class="py-1.5 pr-2">Difference</th><th class="py-1.5 pr-2">Verdict (corrected)</th><th class="py-1.5">Evidence</th></tr></thead>
           <tbody>
             {% for row in dashboard.visits.per_intervention %}
             <tr class="border-t border-slate-100">
               <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_untreated is not None %}{{ row.median_untreated }} (n {{ row.n_untreated }}){% else %}—{% endif %}</td>
-              <td class="py-1.5 pr-2 font-semibold {% if row.effect is not None and row.effect > 0 %}text-emerald-600{% elif row.effect is not None and row.effect < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
-              <td class="py-1.5"><span class="edify-text-caption font-semibold {% if row.verdict == 'significant' %}text-emerald-600{% elif row.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ row.verdict }}{% if row.p is not None %} · p {{ row.p }}{% endif %}</span></td>
+              <td class="py-1.5 pr-2 text-slate-600">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2"><span class="edify-text-caption font-semibold" data-tone="{% if row.verdict == 'significant' %}info{% elif row.verdict == 'suggestive' %}warning{% else %}neutral{% endif %}">{{ row.verdict }}{% if row.p_adjusted is not None %} · p {{ row.p_adjusted }} (raw {{ row.p }}){% endif %}</span></td>
+              <td class="py-1.5"><span class="edify-text-caption" title="{{ row.grade.reasons|join:' ' }}">{{ row.grade.label }}</span></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -247,20 +255,21 @@
 
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <div>
-        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Focused trainings: treated vs untreated schools with weak initial SSA scores</h3>
-        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Same design as visits — training-type activities focused on the intervention.</p>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Difference in median change, focused vs not focused (weak-baseline schools) · trainings</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Same design as visits, for verified training-type activities focused on the intervention.</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-[12px]">
-          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Treated</th><th class="py-1.5 pr-2">Untreated</th><th class="py-1.5 pr-2">Effect</th><th class="py-1.5">Verdict</th></tr></thead>
+          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Focused</th><th class="py-1.5 pr-2">Not focused</th><th class="py-1.5 pr-2">Difference</th><th class="py-1.5 pr-2">Verdict (corrected)</th><th class="py-1.5">Evidence</th></tr></thead>
           <tbody>
             {% for row in dashboard.trainings.per_intervention %}
             <tr class="border-t border-slate-100">
               <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_untreated is not None %}{{ row.median_untreated }} (n {{ row.n_untreated }}){% else %}—{% endif %}</td>
-              <td class="py-1.5 pr-2 font-semibold {% if row.effect is not None and row.effect > 0 %}text-emerald-600{% elif row.effect is not None and row.effect < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
-              <td class="py-1.5"><span class="edify-text-caption font-semibold {% if row.verdict == 'significant' %}text-emerald-600{% elif row.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ row.verdict }}{% if row.p is not None %} · p {{ row.p }}{% endif %}</span></td>
+              <td class="py-1.5 pr-2 text-slate-600">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2"><span class="edify-text-caption font-semibold" data-tone="{% if row.verdict == 'significant' %}info{% elif row.verdict == 'suggestive' %}warning{% else %}neutral{% endif %}">{{ row.verdict }}{% if row.p_adjusted is not None %} · p {{ row.p_adjusted }} (raw {{ row.p }}){% endif %}</span></td>
+              <td class="py-1.5"><span class="edify-text-caption" title="{{ row.grade.reasons|join:' ' }}">{{ row.grade.label }}</span></td>
             </tr>
             {% endfor %}
           </tbody>

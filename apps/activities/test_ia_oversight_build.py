@@ -111,7 +111,14 @@ class MorningDigestTest(IaOversightFixture):
             self.ia, code="SF-5", age_hours=2
         )  # Ida's own: not hers to verify
         created = _do_ia_verification_digest()
-        self.assertEqual(created, 2)  # Ida and Ivan; Kip has nothing in Kenya
+        # Ida and Ivan; Kip has nothing in Kenya. The Country Director is told
+        # about Ida's own visit, which only a colleague or the CD may verify
+        # (IA review, 2026-09-13).
+        self.assertEqual(created, 3)
+        dan = Notification.objects.get(
+            recipient_id=self.cd.id, source_event_type="ia_verification_digest"
+        )
+        self.assertIn("1 IA officers' submissions waiting for you", dan.title)
         ida = Notification.objects.get(
             recipient_id=self.ia.id, source_event_type="ia_verification_digest"
         )
@@ -227,13 +234,19 @@ class IaTargetsAndCoverageTest(IaOversightFixture):
 
 
 class AttributionTest(IaOversightFixture):
+    """Intervention contribution, merged into Programme Learning by the IA
+    review (2026-09-13): confirmed assessments only, IA-verified delivery
+    inside each school's window, withheld below the evidence floor, and the
+    old page lands on the Training tab."""
+
     def test_movement_is_read_from_confirmed_assessments_only(self):
         from apps.analytics.attribution_service import attribution
+        from apps.analytics.evidence_strength import MIN_N
         from apps.ssa.models import SsaRecord, SsaScore
 
-        def rec(fy, status, score, day):
+        def rec(school, fy, status, score, day):
             r = SsaRecord.objects.create(
-                school=self.school,
+                school=school,
                 date_of_ssa=timezone.make_aware(
                     timezone.datetime(int(fy), 3, day, 9, 0)
                 ),
@@ -247,16 +260,35 @@ class AttributionTest(IaOversightFixture):
             )
             return r
 
-        rec("2025", "confirmed", 4.0, 1)
-        rec("2026", "confirmed", 6.0, 1)
-        rec("2026", "pending", 9.0, 2)  # unconfirmed: never read
-        self._activity(
-            self.cceo,
-            status="completed",
-            code="SF-A1",
-            activity_type="cluster_training",
-            focus_intervention="christlike_behaviour",
-        )
+        schools = [self.school] + [
+            School.objects.create(
+                name=f"OB Extra {i}",
+                school_id=f"OB-UG-X{i}",
+                region=self.region,
+                district=self.district,
+            )
+            for i in range(MIN_N - 1)
+        ]
+        for school in schools:
+            rec(school, "2025", "confirmed", 4.0, 1)
+            rec(school, "2026", "confirmed", 6.0, 1)
+        rec(self.school, "2026", "pending", 9.0, 2)  # unconfirmed: never read
+
+        def training(status, code):
+            return Activity.objects.create(
+                activity_type="cluster_training",
+                status=status,
+                fy="2026",
+                planned_date=date(2026, 2, 1),
+                responsible_staff_id=self.cceo.staff_profile.id,
+                salesforce_activity_id=code,
+                attended_school_ids=[s.id for s in schools],
+                focus_intervention="christlike_behaviour",
+            )
+
+        training("ia_verified", "SF-A1")
+        training("completed", "SF-A2")  # legacy, unverified: not delivery
+
         data = attribution(self.ia, fy="2026")
         row = next(
             r for r in data["rows"] if r["intervention"] == "christlike_behaviour"
@@ -264,16 +296,23 @@ class AttributionTest(IaOversightFixture):
         self.assertEqual(
             (
                 row["schools_measured"],
-                row["avg_prior"],
-                row["avg_latest"],
-                row["movement"],
+                row["median_prior"],
+                row["median_latest"],
+                row["median_change"],
             ),
-            (1, 4.0, 6.0, 2.0),
+            (MIN_N, 4.0, 6.0, 2.0),
         )
         self.assertEqual(row["trainings"], 1)
-        self.assertEqual(data["confirmed_share"], 50)
+        self.assertEqual(data["confirmed_share"], round(MIN_N / (MIN_N + 1) * 100))
+        # Below the floor a movement is withheld, never printed.
+        thin = next(r for r in data["rows"] if r["intervention"] == "leadership")
+        self.assertIsNone(thin["median_change"])
+        # Another country's officer reads none of it.
+        self.assertEqual(attribution(self.ke_ia, fy="2026")["schools_in_scope"], 0)
         self.client.force_login(self.ia)
-        self.assertEqual(self.client.get("/ia/attribution/?fy=2026").status_code, 200)
+        response = self.client.get("/ia/attribution/?fy=2026")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/ia/learning/?view=training&fy=2026")
 
 
 class LedgerPolishTest(IaOversightFixture):

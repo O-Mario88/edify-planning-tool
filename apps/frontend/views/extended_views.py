@@ -1327,7 +1327,7 @@ def reports_view(request):
         "partials/analytics/panels/reports.html",
         context,
         section_key="reports",
-        panel_title="Reports & Performance",
+        panel_title="Programme Output Reports",
         frame={
             "question": (
                 "Are verified results accumulating fast enough to meet the "
@@ -3092,7 +3092,7 @@ def project_assign_school_action_view(request, project_id):
 @require_page_permission("quality_checks")
 def quality_checks_view(request):
     """Quality checks — the CD-raised / PL-assigned flag handoff (apps.flags).
-    IA/Admin get the global monitoring view; the CD sees (and raises) the
+    IA monitors its own country's flags and Admin every flag; the CD sees (and raises) the
     flags they raised; the PL sees (and acts on) the flags assigned to them.
     Reuses apps.flags.services — the same logic the /api/flags/* endpoints
     use — rather than re-implementing the raise/acknowledge/resolve rules.
@@ -3155,6 +3155,22 @@ def quality_checks_view(request):
         return redirect("frontend:quality_checks")
 
     qs = flag_services.flags_visible_to(request.user)
+    if role == EdifyRole.IMPACT_ASSESSMENT.value:
+        # Country-bound (IA review, 2026-09-13): Impact Assessment monitors the
+        # flags Country Directors of its own country raised, never another
+        # country's accountability record. An officer with no country on file
+        # keeps the deployment view (owner rule, 2026-09-03); Admin is
+        # unaffected.
+        from apps.accounts.models import StaffProfile
+        from apps.impact.reports import reader_country
+
+        country = reader_country(request.user)
+        if country:
+            qs = qs.filter(
+                raised_by_user_id__in=StaffProfile.objects.filter(
+                    country=country, deleted_at__isnull=True
+                ).values("user_id")
+            )
 
     resolve_id = (request.GET.get("resolve") or "").strip()
     autoload_drawer = ""
@@ -3431,6 +3447,20 @@ def admin_school_upload_history_view(request):
         batch_id = request.POST.get("rollback_id")
         from apps.schools.upload_service import mark_upload_batch_inactive
 
+        from django.http import Http404
+
+        from apps.core.scoping import person_country_q, resolve_user_scope
+
+        if (
+            request.user.active_role != "Admin"
+            and not UploadBatch.objects.filter(id=batch_id)
+            .filter(
+                person_country_q(resolve_user_scope(request.user), "uploaded_by")
+                | Q(uploaded_by=request.user.user_id)
+            )
+            .exists()
+        ):
+            raise Http404("Upload batch not found.")
         batch = mark_upload_batch_inactive(batch_id, request.user)
         if batch:
             from django.contrib import messages
@@ -3444,7 +3474,18 @@ def admin_school_upload_history_view(request):
             )
         return redirect("/admin-panel/school-upload-history")
 
-    batches = list(UploadBatch.objects.all().order_by("-created_at")[:50])
+    # Country-bound (IA review, 2026-09-13): an Impact Assessment officer reads
+    # the batches uploaded by staff in their own country, and their own; Admin
+    # and an officer with no country on file keep the deployment.
+    from apps.core.scoping import person_country_q, resolve_user_scope
+
+    history = UploadBatch.objects.all()
+    if request.user.active_role != "Admin":
+        history = history.filter(
+            person_country_q(resolve_user_scope(request.user), "uploaded_by")
+            | Q(uploaded_by=request.user.user_id)
+        )
+    batches = list(history.order_by("-created_at")[:50])
     # Batches store the uploader's user id; the page shows the person's name.
     from django.contrib.auth import get_user_model
 
@@ -3893,15 +3934,32 @@ def unmatched_ssa_queue_view(request):
                     {"intervention": intervention, "score": score}
                     for intervention, score in (rec.scores or {}).items()
                 ],
-                "collectorType": "staff",
+                # Keyed by whoever resolves the row, and pending until a
+                # different verifier confirms it (IA review, 2026-09-13).
+                "collectorType": "ia"
+                if request.user.active_role == "ImpactAssessment"
+                else "staff",
             },
             request.user,
         )
 
+    # Country-bound (IA review, 2026-09-13): unmatched rows are placed in the
+    # country of whoever uploaded their batch (else of the suggested school),
+    # matches go only to schools in the reader's reach, and a new school is
+    # filed only under a district of the reader's country.
+    from apps.analytics.ia_collection import unmatched_rows_in_reach
+    from apps.core.scoping import country_bound, resolve_user_scope
+
+    scope = resolve_user_scope(request.user)
+    in_reach = unmatched_rows_in_reach(request.user, statuses=None)
+
     if request.method == "POST":
         record_id = request.POST.get("record_id")
         action = request.POST.get("action")
-        rec = get_object_or_404(UnmatchedSSARecord, id=record_id)
+        rec = get_object_or_404(
+            UnmatchedSSARecord.objects.filter(id__in=in_reach.values("id")),
+            id=record_id,
+        )
 
         if action == "match":
             school_pk = request.POST.get("school_id")
@@ -3945,9 +4003,10 @@ def unmatched_ssa_queue_view(request):
             # (or null geography on an empty one), corrupting the directory.
             district_obj = None
             if rec.district_raw:
-                district_obj = District.objects.filter(
-                    name__icontains=rec.district_raw
-                ).first()
+                districts = District.objects.filter(name__icontains=rec.district_raw)
+                if country_bound(scope):
+                    districts = districts.filter(region__country=scope.country)
+                district_obj = districts.first()
             if not district_obj:
                 messages.error(
                     request,
@@ -4033,15 +4092,22 @@ def unmatched_ssa_queue_view(request):
     except (TypeError, ValueError):
         page_number = 1
 
-    records_page = unmatched_service.get_unmatched_queue(filters, page=page_number)
-    schools_list = active_schools().order_by("name")
+    records_page = unmatched_service.get_unmatched_queue(
+        filters, page=page_number, base=in_reach
+    )
+    from apps.core.scoping import school_queryset
+
+    reachable = school_queryset(scope)
+    schools_list = (
+        reachable.order_by("name") if reachable is not None else active_schools().none()
+    )
 
     context = {
         "records_page": records_page,
         "records": records_page.object_list,
         "schools": schools_list,
         "filters": filters,
-        "batch_options": unmatched_service.batch_options(),
+        "batch_options": unmatched_service.batch_options(base=in_reach),
         "status_choices": UnmatchedSSARecord.STATUSES,
     }
     return render(request, "pages/admin/unmatched_ssa_queue.html", context)

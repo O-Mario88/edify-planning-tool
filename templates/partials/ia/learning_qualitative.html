@@ -1,0 +1,86 @@
+{% comment %}
+Programme Learning's qualitative panel (IA review, 2026-09-13). What the field says
+beside the figures: coded debrief challenge types, the newest visit feedback, and per
+tab the Regional Lead's training observations (delivery quality, never an outcome),
+verified loan impact conclusions or EdTech check issues. Lists, not tiles.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-learning-qualitative" data-ia-learning-qualitative>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ia-learning-qualitative" class="rpl-card__title">What the field says</h2>
+      <span class="rpl-card__subtitle">Qualitative evidence beside the figures</span>
+    </div>
+  </header>
+  <div class="p-4 grid gap-4 md:grid-cols-2">
+    <div>
+      <h3 class="text-[12px] font-bold edify-text">Field challenges reported</h3>
+      <ul class="mt-1 space-y-1">
+        {% for theme in qualitative.themes %}
+        <li class="text-[12px] edify-text-muted">{{ theme.theme }} · {{ theme.n }}</li>
+        {% empty %}
+        <li class="text-[12px] edify-text-muted">No coded challenges in debriefs linked to this work.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-[12px] font-bold edify-text">Latest visit feedback</h3>
+      <ul class="mt-1 space-y-2">
+        {% for item in qualitative.feedback %}
+        <li class="text-[12px] edify-text-muted"><span class="font-semibold edify-text">{{ item.school }}</span> · {{ item.on|date:"j M Y" }}: {{ item.finding|truncatechars:220 }}{% if item.improvements %} <span class="edify-text-caption">({{ item.improvements }})</span>{% endif %}</li>
+        {% empty %}
+        <li class="text-[12px] edify-text-muted">No visit feedback recorded on this work.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% if view == "training" %}
+    <div data-ia-learning-observations>
+      <h3 class="text-[12px] font-bold edify-text">Regional Lead training observations</h3>
+      <ul class="mt-1 space-y-1">
+        <li class="text-[12px] edify-text-muted">{{ qualitative.quality.observed }} shared observation{{ qualitative.quality.observed|pluralize }}{% if qualitative.quality.mean_rubric is not None %} · mean rubric {{ qualitative.quality.mean_rubric }} of 4{% endif %}</li>
+        {% if qualitative.quality.recommendations %}<li class="text-[12px] edify-text-muted">Recommendations: {{ qualitative.quality.recommendations }}</li>{% endif %}
+        <li class="text-[12px] edify-text-muted">{{ qualitative.quality_note }}</li>
+      </ul>
+    </div>
+    {% endif %}
+    {% if view == "lending" %}
+    <div data-ia-learning-conclusions>
+      <h3 class="text-[12px] font-bold edify-text">Verified loan impact conclusions</h3>
+      <ul class="mt-1 space-y-1">
+        {% for row in qualitative.classifications %}
+        <li class="text-[12px] edify-text-muted">{{ row.classification }} · {{ row.n }}</li>
+        {% empty %}
+        <li class="text-[12px] edify-text-muted">No conclusion verified yet.</li>
+        {% endfor %}
+        <li class="text-[12px] edify-text-muted">Verified enrolment: {% if qualitative.enrolment.median_change_pct is not None %}median change {{ qualitative.enrolment.median_change_pct }}% across {{ qualitative.enrolment.loans }} loans{% else %}{{ qualitative.enrolment.loans }} loans with a verified baseline and follow-up{% endif %} · {{ qualitative.enrolment.grade.label }}</li>
+      </ul>
+      <ul class="mt-2 space-y-2">
+        {% for item in qualitative.narratives %}
+        <li class="text-[12px] edify-text-muted"><span class="font-semibold edify-text">{{ item.school }}</span> · {{ item.classification }}: {{ item.narrative|truncatechars:200 }} <span class="edify-text-caption">Limitations: {{ item.limitations|truncatechars:120 }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if view == "edtech" %}
+    <div data-ia-learning-edtech-checks>
+      <h3 class="text-[12px] font-bold edify-text">EdTech checks</h3>
+      <ul class="mt-1 space-y-1">
+        <li class="text-[12px] edify-text-muted">{{ view_data.checks.checked }} of {{ view_data.checks.deployments }} confirmed deployments checked · {% if view_data.checks.functional_pct is not None %}{{ view_data.checks.units_functional }} of {{ view_data.checks.units_checked }} units working ({{ view_data.checks.functional_pct }}%){% else %}units working not measured{% endif %}</li>
+        <li class="text-[12px] edify-text-muted">At the last check: {{ view_data.checks.teachers_using }} teachers and {{ view_data.checks.learners_using }} learners using the technology</li>
+        {% for item in view_data.checks.issues %}
+        <li class="text-[12px] edify-text-muted"><span class="font-semibold edify-text">{{ item.school }}</span> · {{ item.on|date:"j M Y" }}: {{ item.issues|truncatechars:180 }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if view == "visits" %}
+    <div data-ia-learning-visit-effectiveness>
+      <h3 class="text-[12px] font-bold edify-text">School Visit Effectiveness cohort</h3>
+      <ul class="mt-1 space-y-1">
+        <li class="text-[12px] edify-text-muted">{{ view_data.effectiveness.comparable_schools }} comparable schools, {{ view_data.effectiveness.baseline_fy }} → {{ view_data.effectiveness.followup_fy }}{% if view_data.effectiveness.excluded_fys %} ({{ view_data.effectiveness.excluded_fys }} excluded){% endif %}</li>
+        <li class="text-[12px] edify-text-muted">Visits and SSA change: {{ view_data.effectiveness.verdict }}{% if view_data.effectiveness.r is not None %} (r {{ view_data.effectiveness.r }}, p {{ view_data.effectiveness.p }}, n {{ view_data.effectiveness.n }}){% endif %} · {{ view_data.effectiveness.grade.label }}</li>
+        <li class="text-[12px]"><a href="/analytics/visit-effectiveness" class="edify-primary-text">Open School Visit Effectiveness</a></li>
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</section>

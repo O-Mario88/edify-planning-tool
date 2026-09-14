@@ -1,9 +1,22 @@
 """
 SSA service — ports the legacy ssa.service business logic.
 
-Upload (with FY/quarter derivation, staff-vs-partner QA provenance, readiness
+Upload (with FY/quarter derivation, collection provenance, readiness
 recompute), school history, the two-weakest-intervention recommendation, and the
 10% client-portfolio verification requirements/summary.
+
+Every SSA lands PENDING (IA review, owner, 2026-09-13). Scores keyed by field
+staff, by Impact Assessment or through a file import used to be born
+"confirmed" with the keyer recorded as their own verifier — 1,006 of 1,009
+records on the dev database — so nobody but the collector had ever looked at
+the numbers every outcome, target and planning gate reads. A record now waits
+for a DIFFERENT verifier: an Impact Assessment officer in the school's
+country, or the Country Director for scores an IA officer collected
+(`verify_record`). Only confirmed records count, so the confirmed-only
+consumers (planning readiness, recommendations, project baselines, outcomes,
+targets) see a keyed assessment after its verification, not at keying: that
+lag is the point of the rule, and the SSA Verification queue and the IA To-Dos
+exist to keep it short.
 """
 
 from __future__ import annotations
@@ -25,6 +38,20 @@ from .models import SsaRecord, SsaScore
 
 # All 8 SSA interventions.
 ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
+
+#: How a pending record's scores reached the platform (`verification_source`).
+#: None of them is a verification: the verifier is recorded separately when a
+#: different person confirms the record.
+SOURCE_STAFF_KEYED = "staff_keyed"
+SOURCE_IA_KEYED = "ia_keyed"
+SOURCE_FILE_IMPORT = "file_import"
+SOURCE_PARTNER = "partner_submitted"
+
+#: The two ways a verifier may confirm or return a record.
+BASIS_IA = "ia"
+BASIS_CD_FALLBACK = "cd_fallback"
+
+EVENT_SSA_RETURNED = "ssa_returned"
 
 
 def _parse_date(value) -> datetime:
@@ -106,8 +133,12 @@ def _recompute_readiness(school: School) -> None:
 
 
 def upload(data: dict, principal) -> dict:
-    """Upload 8 intervention scores for a school. Collection provenance drives
-    QA: staff/IA auto-verified; partner-collected lands pending."""
+    """Record 8 intervention scores for a school, pending verification.
+
+    `collectorType` records who keyed them (staff, ia or partner) and
+    `sourceActivityId`, when given, the visit they were collected on. Every
+    record lands pending until a different verifier confirms it (see the
+    module docstring)."""
     school_id = str(data.get("schoolId") or "").strip()
     school = School.objects.filter(school_id=school_id).first()
     if not school:
@@ -179,6 +210,13 @@ def upload(data: dict, principal) -> dict:
     stored_collector_type = (
         "partner" if partner_collected else "ia" if collector_type == "ia" else "staff"
     )
+    source = (
+        SOURCE_PARTNER
+        if partner_collected
+        else SOURCE_IA_KEYED
+        if stored_collector_type == "ia"
+        else SOURCE_STAFF_KEYED
+    )
 
     if data.get("newEnrollment") not in ("", None):
         raise BadRequest(
@@ -187,35 +225,78 @@ def upload(data: dict, principal) -> dict:
             "Upload file or the School Profile."
         )
 
+    source_activity_id = str(data.get("sourceActivityId") or "").strip() or None
+
     with transaction.atomic():
         # Serialize writes for one school so two simultaneous submissions
         # cannot save the same assessment twice. Multiple assessment dates in
         # one FY remain valid for before/after and monitoring trends.
         school = School.objects.select_for_update().get(pk=school.pk)
-        if SsaRecord.objects.filter(school=school, date_of_ssa=date).exists():
+
+        # Scores collected on a visit belong to that visit (IA review,
+        # 2026-09-13). A second submission for the same visit — a retried
+        # completion, or the collector correcting scores a verifier returned —
+        # re-keys that one record instead of minting a duplicate, and sends it
+        # back to the verification queue. Confirmed scores are never
+        # overwritten from the field: a verifier returns them first.
+        existing = (
+            SsaRecord.objects.filter(
+                source_activity_id=source_activity_id, deleted_at__isnull=True
+            ).first()
+            if source_activity_id
+            else None
+        )
+        if existing is not None and existing.school_id != school.id:
+            raise BadRequest(
+                "These scores belong to a visit at another school. Record them "
+                "on that school's visit."
+            )
+        if (
+            existing is not None
+            and existing.verification_status == VerificationStatus.CONFIRMED.value
+        ):
+            raise BadRequest(
+                "The SSA scores recorded on this visit are already confirmed. "
+                "Ask Impact Assessment to return them if they need correcting."
+            )
+        duplicates = SsaRecord.objects.filter(school=school, date_of_ssa=date)
+        if existing is not None:
+            duplicates = duplicates.exclude(pk=existing.pk)
+        if duplicates.exists():
             raise BadRequest(
                 f"SSA score for {date.date().isoformat()} already exists for "
                 f"{school.name}. "
                 "Open the existing record instead of creating a duplicate."
             )
 
-        record = SsaRecord.objects.create(
-            school=school,
-            date_of_ssa=date,
-            fy=fy,
-            quarter=quarter,
-            average_score=average,
-            uploaded_by=principal.user_id,
-            collector_type=stored_collector_type,
-            collected_by_user_id=principal.user_id,
-            collected_by_partner_id=data.get("collectedByPartnerId"),
-            verification_status="pending" if partner_collected else "confirmed",
-            verification_source="partner_submitted"
-            if partner_collected
-            else "staff_self_verified",
-            verified_by_user_id=None if partner_collected else principal.user_id,
-            verified_at=None if partner_collected else timezone.now(),
-        )
+        fields = {
+            "date_of_ssa": date,
+            "fy": fy,
+            "quarter": quarter,
+            "average_score": average,
+            "uploaded_by": principal.user_id,
+            "collector_type": stored_collector_type,
+            "collected_by_user_id": principal.user_id,
+            "collected_by_partner_id": data.get("collectedByPartnerId"),
+            # Pending for every source: a different verifier confirms it.
+            "verification_status": VerificationStatus.PENDING.value,
+            "verification_source": source,
+            "verified_by_user_id": None,
+            "verified_at": None,
+            "return_reason": "",
+            "returned_by_user_id": None,
+            "returned_at": None,
+        }
+        if existing is not None:
+            for name, value in fields.items():
+                setattr(existing, name, value)
+            existing.save()
+            existing.scores.all().delete()
+            record = existing
+        else:
+            record = SsaRecord.objects.create(
+                school=school, source_activity_id=source_activity_id, **fields
+            )
         SsaScore.objects.bulk_create(
             [
                 SsaScore(
@@ -229,18 +310,43 @@ def upload(data: dict, principal) -> dict:
         # intervention above is only a 0-10 SSA performance score. Actual
         # pupil headcount is sourced from School Upload / School Profile.
 
-        # SSA done + verified -> school's current-FY SSA status becomes done,
-        # but ONLY when the record actually belongs to the current operational
-        # FY — prior-FY baseline uploads must not mark this FY complete.
-        if (
-            record.verification_status == "confirmed"
-            and record.fy == get_operational_fy()
-        ):
-            school.current_fy_ssa_status = "done"
-            school.save(update_fields=["current_fy_ssa_status", "updated_at"])
+        # A pending record makes the school's current-FY status "awaiting
+        # confirmation"; it becomes done when a verifier confirms it
+        # (`verify_record`), and only for a record of the current FY.
         _recompute_readiness(school)
 
+        if existing is not None:
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="ssa_rekeyed",
+                subject_kind="SsaRecord",
+                subject_id=record.id,
+                actor_id=getattr(principal, "user_id", None),
+                actor_role=getattr(principal, "active_role", None),
+                payload={
+                    "schoolId": school.id,
+                    "sourceActivityId": source_activity_id,
+                },
+            )
+
     return _serialize_record(record)
+
+
+def visit_assessment_date(activity):
+    """The date scores collected on `activity` were taken.
+
+    The visit's delivery date, else the day its execution started, else its
+    planned date — never the moment someone pressed submit, which misdated
+    every offline or late completion (IA review, 2026-09-13).
+    """
+    if getattr(activity, "actual_delivery_date", None):
+        return activity.actual_delivery_date
+    if getattr(activity, "execution_started_at", None):
+        return timezone.localdate(activity.execution_started_at)
+    if getattr(activity, "planned_date", None):
+        return activity.planned_date
+    return timezone.localdate()
 
 
 def _serialize_record(record: SsaRecord) -> dict:
@@ -254,6 +360,7 @@ def _serialize_record(record: SsaRecord) -> dict:
         "collectorType": record.collector_type,
         "verificationStatus": record.verification_status,
         "verificationSource": record.verification_source,
+        "sourceActivityId": record.source_activity_id,
         "scores": [
             {"intervention": s.intervention, "score": s.score}
             for s in record.scores.all()
@@ -455,7 +562,12 @@ def verification_summary(principal, query: dict) -> dict:
     from apps.accounts.models import StaffProfile
 
     if scope.country_scope or scope.can_view_summary_only:
-        staff_ids = list(StaffProfile.objects.values_list("id", flat=True))
+        # A country role reads its own country's staff, never the deployment's
+        # (IA review, 2026-09-13).
+        staff = StaffProfile.objects.all()
+        if scope.country_scope and scope.country:
+            staff = staff.filter(country=scope.country)
+        staff_ids = list(staff.values_list("id", flat=True))
     elif principal.active_role == "Program Lead":
         staff_ids = list({*scope.supervised_staff_ids, *(scope.staff_ids or [])})
     else:
@@ -525,18 +637,134 @@ __all__ = [
 # ── Verification: the one place an SSA record changes verification state ─────
 
 
-def _assert_ia_authority(principal) -> None:
-    """Confirming an SSA is Impact Assessment's authority.
+def _ia_user_ids():
+    """User ids holding the Impact Assessment role, unevaluated."""
+    from apps.accounts.models import User
+    from apps.core.rbac import EdifyRole
+
+    return User.objects.filter(
+        roles__contains=[EdifyRole.IMPACT_ASSESSMENT.value]
+    ).values("id")
+
+
+def ia_collected_q():
+    """Records an Impact Assessment officer collected or keyed: the ones the
+    Country Director confirms when no IA colleague can (owner, 2026-09-13)."""
+    from django.db.models import Q
+
+    ia_ids = _ia_user_ids()
+    return (
+        Q(collector_type="ia")
+        | Q(collected_by_user_id__in=ia_ids)
+        | Q(uploaded_by__in=ia_ids)
+    )
+
+
+def readable_records(principal):
+    """SSA records `principal` may read in the verification queue.
+
+    Country roles read their country's schools — the queue used to narrow only
+    portfolio roles, so an Impact Assessment officer or a Country Director saw
+    and could act on every country's assessments — and portfolio roles read
+    their own schools. A summary-only reader without a portfolio reads none.
+    """
+    from apps.core.scoping import school_country_q
+
+    scope = resolve_user_scope(principal)
+    records = SsaRecord.objects.filter(deleted_at__isnull=True)
+    if scope.country_scope:
+        return records.filter(school_country_q(scope, "school__"))
+    if scope.school_ids:
+        return records.filter(school_id__in=list(scope.school_ids))
+    return records.none()
+
+
+def verifiable_records(principal):
+    """Pending records `principal` may confirm or return, unevaluated.
+
+    Impact Assessment: every pending record in their country except the ones
+    they collected or uploaded. Country Director: the pending records an IA
+    officer collected, except their own. Anyone else: none. One queryset, so
+    the queue's buttons, the To-Dos and the service all agree.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import EdifyRole, Permission
+    from apps.core.scoping import owner_ids
+
+    records = readable_records(principal).filter(
+        verification_status=VerificationStatus.PENDING.value
+    )
+    if has_permission(principal, Permission.IA_VERIFY.value):
+        pass
+    elif getattr(principal, "active_role", "") == EdifyRole.COUNTRY_DIRECTOR.value:
+        records = records.filter(ia_collected_q())
+    else:
+        return records.none()
+    own = [str(i) for i in owner_ids(principal) if i]
+    if own:
+        records = records.exclude(collected_by_user_id__in=own).exclude(
+            uploaded_by__in=own
+        )
+    return records
+
+
+def verifier_basis(principal, record) -> str | None:
+    """How `principal` may decide `record`: BASIS_IA, BASIS_CD_FALLBACK, or
+    None when they may not."""
+    try:
+        return _assert_may_decide(principal, record)
+    except Forbidden:
+        return None
+
+
+def _assert_may_decide(principal, record) -> str:
+    """Confirming or returning an SSA is a verifier's act, never the keyer's.
 
     Stated once, here, rather than at each call site. The scoring, targets and
     impact stack all rest on which records are confirmed, so "this role can
     open the queue" must never be the same question as "this role may confirm".
-    """
-    from apps.core.permissions import has_permission
-    from apps.core.rbac import Permission
 
-    if not has_permission(principal, Permission.IA_VERIFY.value):
+    - The person who collected or uploaded the scores may not decide them
+      (`apps.core.permissions.verifies_own_ssa`).
+    - The record's school must be in the verifier's country.
+    - Impact Assessment (ia.verify) decides; the Country Director decides only
+      records an Impact Assessment officer collected — the fallback verifier
+      for IA's own work, as for activities (`is_ia_fallback_verifier`).
+    """
+    from apps.core.permissions import has_permission, verifies_own_ssa
+    from apps.core.rbac import EdifyRole, Permission
+    from apps.core.scoping import country_bound, school_country_q
+
+    is_ia = has_permission(principal, Permission.IA_VERIFY.value)
+    is_cd = getattr(principal, "active_role", "") == EdifyRole.COUNTRY_DIRECTOR.value
+    if not (is_ia or is_cd):
         raise Forbidden("Only Impact Assessment may confirm or return an SSA record.")
+    if verifies_own_ssa(principal, record):
+        raise Forbidden(
+            "You collected or uploaded these SSA scores, so a different verifier "
+            "confirms them: another Impact Assessment officer, or the Country "
+            "Director for scores Impact Assessment collected."
+        )
+    scope = resolve_user_scope(principal)
+    if (
+        country_bound(scope)
+        and not School.objects.filter(pk=record.school_id)
+        .filter(school_country_q(scope))
+        .exists()
+    ):
+        raise Forbidden("This SSA belongs to a school outside your country.")
+    if is_ia:
+        return BASIS_IA
+    if SsaRecord.objects.filter(pk=record.pk).filter(ia_collected_q()).exists():
+        return BASIS_CD_FALLBACK
+    raise Forbidden(
+        "The Country Director confirms only SSA scores an Impact Assessment "
+        "officer collected; Impact Assessment verifies the rest."
+    )
+
+
+def _actor_id(principal):
+    return getattr(principal, "user_id", None) or getattr(principal, "id", None)
 
 
 @transaction.atomic
@@ -552,21 +780,31 @@ def verify_record(record, principal):
     """
     from apps.audit.services import log as audit_log
 
-    _assert_ia_authority(principal)
+    basis = _assert_may_decide(principal, record)
     if record.verification_status == VerificationStatus.CONFIRMED.value:
         # Idempotent: a double-submitted form re-confirms nothing and writes no
         # second audit row.
         return record
 
     record.verification_status = VerificationStatus.CONFIRMED.value
-    record.verified_by_user_id = getattr(principal, "user_id", None) or getattr(
-        principal, "id", None
-    )
+    record.verified_by_user_id = _actor_id(principal)
     record.verified_at = timezone.now()
+    # A save with update_fields still fires post_save, which is what carries a
+    # confirmation to Business Transformation, recommendations and project
+    # measurement (apps.business_transformation.signals, apps.projects.signals).
     record.save(
-        update_fields=["verification_status", "verified_by_user_id", "verified_at"]
+        update_fields=[
+            "verification_status",
+            "verified_by_user_id",
+            "verified_at",
+            "updated_at",
+        ]
     )
     _recompute_readiness(record.school)
+
+    from apps.projects.baselines import enqueue_baseline_capture
+
+    enqueue_baseline_capture(record.school_id, version=f"ssa:{record.id}:confirmed")
 
     audit_log(
         action="ssa_verify",
@@ -574,22 +812,49 @@ def verify_record(record, principal):
         subject_id=record.id,
         actor_id=getattr(principal, "user_id", None),
         actor_role=getattr(principal, "active_role", None),
-        payload={"schoolId": record.school_id, "schoolName": record.school.name},
+        payload={
+            "schoolId": record.school_id,
+            "schoolName": record.school.name,
+            "basis": basis,
+            "collectedBy": record.collected_by_user_id,
+            "sourceActivityId": record.source_activity_id,
+        },
     )
     return record
 
 
 @transaction.atomic
 def return_record(record, principal, reason: str = ""):
-    """Send one SSA record back for correction."""
+    """Send one SSA record back to its collector for correction.
+
+    The reason is stored on the record and the collector is told (event
+    `ssa_returned`): a return used to write the reason to the audit log alone,
+    so the person who had to fix the scores never learned what was wrong.
+    A returned record counts nowhere until it is re-keyed and confirmed.
+    """
     from apps.audit.services import log as audit_log
 
-    _assert_ia_authority(principal)
+    basis = _assert_may_decide(principal, record)
     if record.verification_status == VerificationStatus.RETURNED.value:
         return record
+    reason = (reason or "").strip()
+    if not reason:
+        raise BadRequest("Say what needs correcting before returning the SSA.")
 
+    was_confirmed = record.verification_status == VerificationStatus.CONFIRMED.value
     record.verification_status = VerificationStatus.RETURNED.value
-    record.save(update_fields=["verification_status"])
+    record.return_reason = reason
+    record.returned_by_user_id = _actor_id(principal)
+    record.returned_at = timezone.now()
+    record.save(
+        update_fields=[
+            "verification_status",
+            "return_reason",
+            "returned_by_user_id",
+            "returned_at",
+            "updated_at",
+        ]
+    )
     _recompute_readiness(record.school)
 
     audit_log(
@@ -598,7 +863,45 @@ def return_record(record, principal, reason: str = ""):
         subject_id=record.id,
         actor_id=getattr(principal, "user_id", None),
         actor_role=getattr(principal, "active_role", None),
-        reason=reason or None,
-        payload={"schoolId": record.school_id, "schoolName": record.school.name},
+        reason=reason,
+        payload={
+            "schoolId": record.school_id,
+            "schoolName": record.school.name,
+            "basis": basis,
+            "wasConfirmed": was_confirmed,
+            "sourceActivityId": record.source_activity_id,
+        },
     )
+    _notify_returned(record, principal, reason)
     return record
+
+
+def _notify_returned(record, principal, reason: str) -> None:
+    """Tell the collector what to fix, on the visit the scores came from when
+    there is one, else on the school's SSA timeline."""
+    from apps.notifications.services import WorkflowNotificationService
+
+    recipient = record.collected_by_user_id or record.uploaded_by
+    if not recipient or str(recipient) == str(_actor_id(principal)):
+        return
+    school = record.school
+    when = timezone.localtime(record.date_of_ssa).date() if record.date_of_ssa else None
+    context_type, context_id = (
+        ("Activity", record.source_activity_id)
+        if record.source_activity_id
+        else ("School", record.school_id)
+    )
+    WorkflowNotificationService.trigger(
+        event_type=EVENT_SSA_RETURNED,
+        category="ssa",
+        priority="high",
+        title=f"SSA returned: {school.name}",
+        body=(
+            f"The SSA scores for {school.name}"
+            + (f" dated {when:%-d %b %Y}" if when else "")
+            + f" were returned for correction: {reason}"
+        ),
+        context_type=context_type,
+        context_id=str(context_id),
+        recipients=[recipient],
+    )

@@ -1,71 +1,133 @@
 {% extends "layouts/shell.html" %}
 {% load school_identity %}
-{% load table_pagination %}
 
 {% block title %}Sample Checks · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+{% comment %}
+Sample checks (apps/frontend/views/ia_views.py ia_samples_view). Verified
+activities and confirmed SSA records drawn for a second look, per country
+(IA review, 2026-09-13). Plain-text states with a tone; row actions are forms
+and links in the action cell. A field back-check opens the schedule drawer,
+which files an owner-approved visit request — nothing is scheduled here.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-ia-samples>
 
   <div class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Verification</p>
       <h1 class="edify-page-title edify-page-header__title">Sample Checks</h1>
-      <p class="edify-page-header__description">A second look at {{ share_pct }}% of last week's verified work, drawn every Monday. A verifier other than the original one confirms or disputes each certification; the outcome counts against the original verifier.</p>
+      <p class="edify-page-header__description">A second look at {{ share_pct }}% of last week's verified activities and confirmed SSA records in your country, drawn every Monday. A verifier other than the original one confirms or disputes each; a disputed SSA returns to its collector and a disputed activity leaves analytics until the dispute is resolved.</p>
     </div>
     <div class="edify-page-header__controls">
       {% if can_draw %}
       <form method="post" action="/ia/samples/draw">{% csrf_token %}
-        <button type="submit" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors">Draw this week now</button>
+        <button type="submit" class="btn btn-primary h-8">Draw this week now</button>
       </form>
       {% endif %}
     </div>
   </div>
 
+  {% include "partials/_section_nav.html" %}
+
   {% if messages %}{% for message in messages %}
-  <div class="p-3.5 rounded-surface border text-[12px] font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">{{ message }}</div>
+  <div class="edify-note" data-tone="{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}info{% endif %}" role="status">{{ message }}</div>
   {% endfor %}{% endif %}
 
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Waiting for a second look · {{ pending_count }}</h2>
-    {% if samples %}
-    <div class="overflow-x-auto">
-      <table class="edify-record-table w-full text-[12px] font-semibold">
-        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr>
-          <th class="px-6 py-4 text-left">Activity</th><th class="px-6 py-4 text-left">Original verifier</th><th class="px-6 py-4 text-left">Drawn</th><th class="px-6 py-4 text-left">Outcome</th><th class="px-6 py-4 text-left">Second look</th>
-        </tr></thead>
-        <tbody class="divide-y divide-slate-100">
-          {% paginate samples "samples_page" as samples_pager %}
-{% for s in samples_pager.rows %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-samples-title">
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-samples-title" class="rpl-card__title">Samples</h2>
+        <span class="rpl-card__subtitle">{{ pending_count }} waiting for a second look · {{ pager.total }} shown</span>
+      </div>
+    </header>
+
+    <form method="get" class="edify-filter-bar" aria-label="Sample filters" x-data>
+      <label class="cce-filter">
+        <span class="cce-filter__label">Outcome</span>
+        <select name="status" @change="$el.form.requestSubmit()" class="cce-filter__select">
+          <option value="">All outcomes</option>
+          <option value="pending"{% if status == "pending" %} selected{% endif %}>Pending</option>
+          <option value="confirmed"{% if status == "confirmed" %} selected{% endif %}>Confirmed</option>
+          <option value="disputed"{% if status == "disputed" %} selected{% endif %}>Disputed</option>
+        </select>
+      </label>
+      <label class="cce-filter">
+        <span class="cce-filter__label">Record</span>
+        <select name="subject" @change="$el.form.requestSubmit()" class="cce-filter__select">
+          <option value="">Activities and SSA</option>
+          <option value="activity"{% if subject == "activity" %} selected{% endif %}>Verified activities</option>
+          <option value="ssa_record"{% if subject == "ssa_record" %} selected{% endif %}>Confirmed SSA</option>
+        </select>
+      </label>
+    </form>
+
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Samples; scroll sideways for more columns">
+      <table class="rpl-table edify-record-table" data-mobile-table="scroll">
+        <caption class="sr-only">Sample checks</caption>
+        {% if samples %}
+        <thead>
           <tr>
-            <td class="px-6 py-3" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{% school_identity s.school s.school_code %}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
-            <td class="px-6 py-3" data-label="Original verifier">{{ s.original_verifier }}</td>
-            <td class="px-6 py-3 tabular-nums" data-label="Drawn">{{ s.sampled_at|date:"d M Y" }}</td>
-            <td class="px-6 py-3" data-label="Outcome">
-              {% if s.status_key == 'confirmed' %}<span class="edify-status-badge success">Confirmed</span>{% elif s.status_key == 'disputed' %}<span class="edify-status-badge danger">Disputed</span>{% else %}<span class="edify-status-badge warning">Pending</span>{% endif %}
-              {% if s.outcome_note %}<p class="edify-text-caption text-slate-500 mt-0.5">{{ s.outcome_note }}</p>{% endif %}
-              {% if s.checked_by %}<p class="edify-text-caption text-slate-400">by {{ s.checked_by }} · {{ s.checked_at|date:"d M" }}</p>{% endif %}
+            <th scope="col">School</th>
+            <th scope="col">Record</th>
+            <th scope="col">Original verifier</th>
+            <th scope="col">Drawn</th>
+            <th scope="col">Check</th>
+            <th scope="col">Outcome</th>
+            <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        {% endif %}
+        <tbody>
+          {% for s in samples %}
+          <tr>
+            <th scope="row" data-record-title><span>{% if s.record_url %}<a href="{{ s.record_url }}" class="edify-primary-text">{% school_identity s.school s.school_code %}</a>{% else %}{% school_identity s.school s.school_code %}{% endif %}</span></th>
+            <td data-label="Record">{{ s.subject }}</td>
+            <td data-label="Original verifier">{{ s.original_verifier }}</td>
+            <td data-label="Drawn" class="tabular-nums">{{ s.sampled_at|date:"d M Y" }}</td>
+            <td data-label="Check">{{ s.method }}</td>
+            <td data-label="Outcome"><span data-tone="{{ s.tone }}">{{ s.status }}</span>{% if s.outcome_note %} · {{ s.outcome_note|linebreaksbr }}{% endif %}{% if s.checked_by %} · by {{ s.checked_by }}, {{ s.checked_at|date:"d M" }}{% endif %}</td>
+            <td class="is-end" data-record-action data-label="Actions">
+              {% if s.may_grade %}
+              <form method="post" action="/ia/samples/{{ s.id }}/outcome" class="ia-sample-form">{% csrf_token %}
+                <label class="sr-only" for="note-{{ s.id }}">What you found</label>
+                <input id="note-{{ s.id }}" type="text" name="note" placeholder="What you found" class="rounded-control ia-sample-form__note">
+                <button type="submit" name="status" value="confirmed" class="rpl-row-link rounded-control">Confirm</button>
+                <button type="submit" name="status" value="disputed" class="rpl-row-link rounded-control">Dispute</button>
+              </form>
+              {% if s.may_field_check and s.method_key != "field" %}
+              <form method="post" action="/ia/samples/{{ s.id }}/field-check" class="ia-sample-form">{% csrf_token %}
+                <button type="submit" class="rpl-row-link rounded-control">Field back-check</button>
+              </form>
+              {% elif s.may_field_check %}
+              <a href="/ia/samples/?status=pending&amp;visit={{ s.school_code|urlencode }}" class="rpl-row-link rounded-control">Request visit</a>
+              {% endif %}
+              {% elif s.may_resolve %}
+              <form method="post" action="/ia/samples/{{ s.id }}/resolve" class="ia-sample-form">{% csrf_token %}
+                <label class="sr-only" for="resolve-{{ s.id }}">What was corrected</label>
+                <input id="resolve-{{ s.id }}" type="text" name="note" required placeholder="What was corrected" class="rounded-control ia-sample-form__note">
+                <button type="submit" class="rpl-row-link rounded-control">Resolve</button>
+              </form>
+              {% elif s.status_key == "pending" %}
+              {{ s.refusal }}
+              {% else %}
+              Done
+              {% endif %}
             </td>
-            <td class="px-6 py-3" data-label="Second look">
-              {% if s.status_key == 'pending' %}
-                {% if s.is_own %}<span class="edify-text-caption text-slate-400">Your own certification — a colleague grades it.</span>{% else %}
-                <form method="post" action="/ia/samples/{{ s.id }}/outcome" class="flex flex-col gap-1.5 sm:flex-row sm:items-center">{% csrf_token %}
-                  <label class="sr-only" for="note-{{ s.id }}">Note</label>
-                  <input id="note-{{ s.id }}" type="text" name="note" placeholder="What you found" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none w-full">
-                  <button type="submit" name="status" value="confirmed" class="h-8 px-3 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold">Confirm</button>
-                  <button type="submit" name="status" value="disputed" class="h-8 px-3 rounded-control bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-bold">Dispute</button>
-                </form>
-                {% endif %}
-              {% else %}<span class="edify-text-caption text-slate-400">Done</span>{% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="rpl-table__empty">
+              {% include "components/empty_state.html" with message="No samples drawn yet" hint="The first sample is drawn on Monday, or draw this week now." compact="true" %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
-{% include "components/table_pager.html" with pager=samples_pager param="samples_page" %}
     </div>
-    {% else %}{% include "components/empty_state.html" with title="No samples drawn yet" message="The first sample is drawn on Monday, or draw this week now." %}{% endif %}
-  </div>
+    {% include "components/table_pager.html" with pager=pager param="samples_page" %}
+  </section>
 
+  {% if visit_school %}<div hidden hx-get="/planning/schedule-modal?school_id={{ visit_school|urlencode }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-sample-visit></div>{% endif %}
 </div>
 {% endblock %}

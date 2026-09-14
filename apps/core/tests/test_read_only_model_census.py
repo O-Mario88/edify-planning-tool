@@ -282,6 +282,58 @@ def _admin_registered():
     return {name.split(".")[-1] for name in registered if name}
 
 
+def _dispatch_table_writes(tree, models) -> set[str]:
+    """4. dispatch table: `MODELS = {"kind": Model}` then `MODELS[kind].objects.create`.
+
+    A module that records several registers through one code path picks the
+    model from a table (apps/impact/evidence_services.py). The table counts as
+    a writer only when the same module subscripts it into a variable or
+    expression that a persist call is then made on.
+    """
+    tables: dict[str, set[str]] = {}
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)):
+            continue
+        names = {v.id for v in node.value.values if isinstance(v, ast.Name)}
+        if names and names <= set(models):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    tables[target.id] = names
+    if not tables:
+        return set()
+    aliases: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Subscript)
+            and isinstance(node.value.value, ast.Name)
+            and node.value.value.id in tables
+        ):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    aliases[target.id] = node.value.value.id
+    written: set[str] = set()
+    for node in ast.walk(tree):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in PERSIST
+        ):
+            continue
+        receiver = node.func.value
+        while isinstance(receiver, ast.Attribute):
+            receiver = receiver.value
+        if isinstance(receiver, ast.Subscript) and isinstance(receiver.value, ast.Name):
+            table = receiver.value.id if receiver.value.id in tables else None
+        elif isinstance(receiver, ast.Name):
+            table = aliases.get(receiver.id)
+        else:
+            table = None
+        if table:
+            written |= tables[table]
+    return written
+
+
 def _writers_and_readers(models, related):
     writers: dict[str, set[str]] = collections.defaultdict(set)
     readers: dict[str, set[str]] = collections.defaultdict(set)
@@ -298,6 +350,8 @@ def _writers_and_readers(models, related):
                 readers[model].add(rel)
         if own_models:
             continue
+        for model in _dispatch_table_writes(tree, models):
+            writers[model].add(rel)
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue

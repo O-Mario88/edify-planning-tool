@@ -178,13 +178,34 @@ def _do_daily_digest() -> int:
     return created
 
 
+def _ia_digest_id(today, recipient_id) -> str:
+    # 30-char source_event_id: 4 + 10 + 1 + 14 hex = 29. The recipient is part
+    # of the key, so one person's digest never stands in for another's.
+    recipient_hash = hashlib.blake2s(
+        str(recipient_id).encode(), digest_size=7
+    ).hexdigest()
+    digest_id = f"iad-{today.isoformat()}-{recipient_hash}"
+    assert len(digest_id) <= 30, digest_id
+    return digest_id
+
+
 def _do_ia_verification_digest() -> int:
     """One morning line per verifier: what is waiting, and what is past the
     24-hour SLA (2026-09-03). Bounded to the verifier's country and never
-    counting their own submissions, which they may not verify."""
+    counting their own submissions, which they may not verify.
+
+    The Country Director gets the same line for the work Impact Assessment
+    officers ran themselves (IA review, 2026-09-13): the one case the officers
+    cannot verify for themselves and the CD verifies as fallback. The CD was
+    told once, at submission, and never again — not even once the work was
+    past its SLA. Partner submissions are named, because they are verified in
+    Partner Evidence rather than the staff queue."""
     from datetime import timedelta
 
+    from django.db.models import Count, Q
+
     from apps.activities.models import Activity
+    from apps.core.permissions import ia_officer_staff_ids
     from apps.core.rbac import EdifyRole
     from apps.core.scoping import activity_country_q, owner_ids, resolve_user_scope
     from apps.notifications.models import Notification
@@ -196,41 +217,67 @@ def _do_ia_verification_digest() -> int:
     today = timezone.now().date()
     cutoff = timezone.now() - timedelta(hours=24)
     created = 0
-    for verifier in role_recipients(EdifyRole.IMPACT_ASSESSMENT.value):
-        scope = resolve_user_scope(verifier)
-        own = [i for i in owner_ids(verifier) if i]
-        waiting = (
-            Activity.objects.filter(
-                deleted_at__isnull=True, status="awaiting_ia_verification"
-            )
-            .filter(activity_country_q(scope))
-            .exclude(responsible_staff_id__in=own)
+
+    def _send(recipient, waiting, *, body, fallback=False):
+        nonlocal created
+        counts = waiting.aggregate(
+            n=Count("id"),
+            overdue=Count("id", filter=Q(submitted_to_ia_at__lte=cutoff)),
+            partner=Count("id", filter=Q(delivery_type="partner")),
         )
-        n = waiting.count()
-        if n == 0:
-            continue
-        overdue = waiting.filter(submitted_to_ia_at__lte=cutoff).count()
-        # 30-char source_event_id: 4 + 10 + 1 + 14 hex = 29.
-        recipient_hash = hashlib.blake2s(
-            str(verifier.id).encode(), digest_size=7
-        ).hexdigest()
-        digest_id = f"iad-{today.isoformat()}-{recipient_hash}"
-        assert len(digest_id) <= 30, digest_id
+        if counts["n"] == 0:
+            return
+        digest_id = _ia_digest_id(today, recipient.id)
         if Notification.objects.filter(
-            recipient_id=verifier.id, source_event_id=digest_id
+            recipient_id=recipient.id, source_event_id=digest_id
         ).exists():
-            continue
+            return
+        noun = "officers' submissions" if fallback else "waiting for verification"
+        title = (
+            f"{counts['n']} IA {noun} waiting for you"
+            if fallback
+            else f"{counts['n']} {noun}"
+        )
+        if counts["overdue"]:
+            title += f" · {counts['overdue']} past 24h"
+        if counts["partner"]:
+            title += f" · {counts['partner']} from partners"
         WorkflowNotificationService.trigger(
             event_type="ia_verification_digest",
             category="verification",
-            priority="high" if overdue else "normal",
-            title=f"{n} waiting for verification"
-            + (f" · {overdue} past 24h" if overdue else ""),
-            body="Your morning verification digest.",
+            priority="high" if counts["overdue"] else "normal",
+            title=title,
+            body=body,
             context_id=digest_id,
-            recipients=[verifier],
+            recipients=[recipient],
         )
         created += 1
+
+    waiting_base = Activity.objects.filter(
+        deleted_at__isnull=True, status="awaiting_ia_verification"
+    )
+    for verifier in role_recipients(EdifyRole.IMPACT_ASSESSMENT.value):
+        scope = resolve_user_scope(verifier)
+        own = [i for i in owner_ids(verifier) if i]
+        waiting = waiting_base.filter(activity_country_q(scope)).exclude(
+            responsible_staff_id__in=own
+        )
+        _send(verifier, waiting, body="Your morning verification digest.")
+
+    for director in role_recipients(EdifyRole.COUNTRY_DIRECTOR.value):
+        scope = resolve_user_scope(director)
+        waiting = waiting_base.filter(activity_country_q(scope)).filter(
+            responsible_staff_id__in=ia_officer_staff_ids(scope.country or None)
+        )
+        _send(
+            director,
+            waiting,
+            body=(
+                "Work Impact Assessment officers ran themselves, which you "
+                "verify as fallback verifier."
+            ),
+            fallback=True,
+        )
     return created
 
 

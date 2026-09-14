@@ -206,16 +206,25 @@ class PLDashboardTest(TestCase):
         return set(re.findall(r'href="(/[^"#]*)', html))
 
     # ── Views: the rail, the alias and building only what is shown ──────────
-    def test_views_are_the_map_and_the_five_responsibilities(self):
+    def test_views_are_today_the_map_and_the_five_responsibilities(self):
+        # Today and Dashboard are one page, Today first (owner, 2026-09-14).
         self.assertEqual(
             [key for key, _label, _hint in dashboard_module.VIEW_TABS],
-            ["map", "priorities", "team", "coaching", "programmes", "collaboration"],
+            [
+                "today",
+                "map",
+                "priorities",
+                "team",
+                "coaching",
+                "programmes",
+                "collaboration",
+            ],
         )
-        self.assertEqual(dashboard_module.DEFAULT_VIEW, "map")
+        self.assertEqual(dashboard_module.DEFAULT_VIEW, "today")
         self.assertEqual(normalise_view("operations"), "team")
         self.assertEqual(normalise_view("Coaching"), "coaching")
-        self.assertEqual(normalise_view("funding"), "map")
-        self.assertEqual(normalise_view(None), "map")
+        self.assertEqual(normalise_view("funding"), "today")
+        self.assertEqual(normalise_view(None), "today")
 
     def test_only_the_fixed_part_and_the_chosen_view_are_built(self):
         other_views = {

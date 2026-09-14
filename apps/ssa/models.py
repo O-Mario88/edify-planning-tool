@@ -1,9 +1,10 @@
 """
 SSA (School Self-Assessment) models — ports of SsaRecord, SsaScore.
 
-An SSA record holds 8 intervention scores (0–10) for a school on a date. The
-collection source drives QA: staff/IA-collected is auto-verified; partner-
-collected lands `pending` until staff/IA confirm.
+An SSA record holds 8 intervention scores (0–10) for a school on a date. Every
+record lands `pending` whoever keyed it — field staff, Impact Assessment, a
+file import or a partner — and counts only once a verifier other than its
+collector confirms it (IA review, owner, 2026-09-13; apps.ssa.services).
 """
 
 from __future__ import annotations
@@ -56,7 +57,9 @@ class SsaRecord(SoftDeleteModel):
     new_enrollment = models.IntegerField(null=True, blank=True)
     average_score = models.FloatField(null=True, blank=True)
 
-    # Salesforce-ready verification of the SSA itself.
+    # A Salesforce reference for the SSA. Nothing writes it and nothing syncs
+    # it: Salesforce use is manual, and no page may present this column as a
+    # synchronised record (IA review, 2026-09-13).
     salesforce_id = models.CharField(max_length=128, null=True, blank=True)
     verification_status = models.CharField(
         max_length=32,

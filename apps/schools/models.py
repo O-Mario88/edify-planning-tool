@@ -133,7 +133,10 @@ class School(SoftDeleteModel):
     data_quality_score = models.IntegerField(default=100)
     data_quality_status = models.CharField(max_length=64, default="Clean")
 
-    # Salesforce-ready (not integrated yet).
+    # Salesforce reference, entered manually (IA review, 2026-09-13). There is
+    # no Salesforce integration: the account id is typed in at onboarding, and
+    # the sync columns below are never written by a sync — no page may show
+    # them as a sync status or a last-synced time.
     salesforce_account_id = models.CharField(max_length=128, null=True, blank=True)
     salesforce_sync_status = models.CharField(
         max_length=32,

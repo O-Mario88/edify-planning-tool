@@ -180,26 +180,30 @@ class MobileNavDestinationTests(SimpleTestCase):
                 self.assertIn("/messages", {i["url"] for i in nav_for(role)})
 
     def test_lead_destination_for_every_role(self):
-        # The Today workbench (roadmap Phase 5) leads for the roles whose
-        # phone is the field device; a partner's phone opens on their
-        # Assigned Schools intake; every other role opens on the dashboard.
-        today_first = {CCEO, PL, PROJECT_COORDINATOR}
+        # Every staff role's phone opens on its dashboard — for the field
+        # roles that is the Today workbench, since Today and Dashboard are one
+        # page (owner, 2026-09-14); a partner's phone opens on their Assigned
+        # Schools intake.
         for role in ROLE_LABELS:
             with self.subTest(role=role):
-                if role in today_first:
-                    expected = "/today"
-                elif role == PARTNER:
+                if role == PARTNER:
                     expected = "/partner/assigned-schools"
+                elif role == IA:
+                    # Impact Assessment's home is its own dashboard, not a
+                    # redirect to it (IA review, 2026-09-13).
+                    expected = "/ia/dashboard/"
                 else:
                     expected = "/dashboard"
                 self.assertEqual(nav_for(role)[0]["url"], expected)
 
-    def test_ia_reaches_the_ssa_verification_queue(self):
-        # ssa lives in IA_SECTIONS, not SIDEBAR_ITEMS, so it never appears in
-        # build_sidebar_for_user output — it arrives via _MOBILE_NAV_STANDALONE.
+    def test_ia_phone_leads_with_the_days_queue(self):
+        # IA review (2026-09-13): Dashboard, To-Do, the verification queue and
+        # Messages. SSA Verification and Partner Evidence are one tap away in
+        # the Impact Assessment workspace strip.
         urls = [item["url"] for item in nav_for(IA)]
-        self.assertIn("/ia/verification/", urls)
-        self.assertIn("/ssa/verification/", urls)
+        self.assertEqual(
+            urls, ["/ia/dashboard/", "/todos", "/ia/verification/", "/messages"]
+        )
 
     def test_non_ia_roles_get_the_plain_ssa_page(self):
         # role_urls sends only IA to the verification queue.
@@ -219,14 +223,20 @@ class MobileNavActiveStateTests(SimpleTestCase):
         # A field role's bar leads with Today, which the root path does not
         # highlight — the root-active contract belongs to a role whose bar
         # still carries the dashboard first.
-        nav = nav_for(IA, path="/")
+        # Impact Assessment's bar leads with its own dashboard since the IA
+        # review (2026-09-13), so the Country Director carries the contract.
+        nav = nav_for(CD, path="/")
         self.assertEqual(nav[0]["url"], "/dashboard")
         self.assertTrue(nav[0]["active"])
 
-    def test_today_is_active_on_today(self):
-        nav = nav_for(CCEO, path="/today")
-        active = [item for item in nav if item["active"]]
-        self.assertEqual([i["url"] for i in active], ["/today"])
+    def test_the_field_bar_leads_with_the_dashboard_that_holds_today(self):
+        # Today and Dashboard are one page (owner, 2026-09-14): no Today slot.
+        for role in (CCEO, PL, PROJECT_COORDINATOR):
+            with self.subTest(role=role):
+                urls = [item["url"] for item in nav_for(role, path="/dashboard")]
+                self.assertEqual(urls[0], "/dashboard")
+                self.assertNotIn("/today", urls)
+                self.assertTrue(nav_for(role, path="/dashboard")[0]["active"])
 
     def test_messages_is_active_on_a_thread_page(self):
         nav = nav_for(CCEO, path="/messages/42")

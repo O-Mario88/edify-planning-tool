@@ -2373,7 +2373,6 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/analytics(?:/|)recruitment-recommendation",
@@ -5147,7 +5146,6 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5165,7 +5163,6 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5183,7 +5180,6 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5201,7 +5197,6 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5251,7 +5246,6 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
-    "ImpactAssessment",
     "Accountant",
     "HumanResources",
     "Admin"
@@ -5850,7 +5844,6 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
-    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/planning(?:/|)recompute/<str:school_id>",
@@ -6786,7 +6779,6 @@
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
-    "ImpactAssessment",
     "Admin"
    ],
    "route": "/api/system-health(?:/|)",
@@ -10469,6 +10461,19 @@
    "view": "apps.frontend.views.ia_views.ia_attribution_view"
   },
   {
+   "page_permission": "ia_dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/collection/<str:school_pk>/ask-owner",
+   "route_name": "ia_collection_ask_owner",
+   "view": "apps.frontend.views.ssa_views.ia_collection_ask_owner_action"
+  },
+  {
    "page_permission": "ia_compare",
    "required_permissions": [],
    "role_exclusive": false,
@@ -10518,6 +10523,214 @@
    "view": "apps.frontend.views.ia_views.ia_duplicate_action"
   },
   {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/",
+   "route_name": "ia_framework",
+   "view": "apps.frontend.views.ia_framework_views.framework_page"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/<str:kind>/<str:record_id>/review",
+   "route_name": "ia_framework_review_drawer",
+   "view": "apps.frontend.views.ia_framework_views.review_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/<str:kind>/<str:record_id>/review/save",
+   "route_name": "ia_framework_review",
+   "view": "apps.frontend.views.ia_framework_views.review_action"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/<str:kind>/<str:record_id>/submit",
+   "route_name": "ia_framework_submit_drawer",
+   "view": "apps.frontend.views.ia_framework_views.submit_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/<str:kind>/<str:record_id>/submit/save",
+   "route_name": "ia_framework_submit",
+   "view": "apps.frontend.views.ia_framework_views.submit_action"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/areas/<str:area_id>/",
+   "route_name": "ia_framework_area_drawer",
+   "view": "apps.frontend.views.ia_framework_views.area_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/areas/<str:area_id>/save",
+   "route_name": "ia_framework_area_save",
+   "view": "apps.frontend.views.ia_framework_views.area_save"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/areas/new",
+   "route_name": "ia_framework_area_new",
+   "view": "apps.frontend.views.ia_framework_views.area_new_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/areas/propose",
+   "route_name": "ia_framework_areas_propose",
+   "view": "apps.frontend.views.ia_framework_views.areas_propose"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/areas/save",
+   "route_name": "ia_framework_area_create",
+   "view": "apps.frontend.views.ia_framework_views.area_save"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/indicators/<str:indicator_id>/",
+   "route_name": "ia_framework_indicator_drawer",
+   "view": "apps.frontend.views.ia_framework_views.indicator_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/indicators/<str:indicator_id>/save",
+   "route_name": "ia_framework_indicator_save",
+   "view": "apps.frontend.views.ia_framework_views.indicator_save"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/indicators/new",
+   "route_name": "ia_framework_indicator_new",
+   "view": "apps.frontend.views.ia_framework_views.indicator_new_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/indicators/save",
+   "route_name": "ia_framework_indicator_create",
+   "view": "apps.frontend.views.ia_framework_views.indicator_save"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/purposes/<str:purpose_id>/",
+   "route_name": "ia_framework_purpose_drawer",
+   "view": "apps.frontend.views.ia_framework_views.purpose_drawer"
+  },
+  {
+   "page_permission": "ia_framework",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/framework/purposes/<str:purpose_id>/save",
+   "route_name": "ia_framework_purpose_save",
+   "view": "apps.frontend.views.ia_framework_views.purpose_save"
+  },
+  {
    "page_permission": "ia_history",
    "required_permissions": [],
    "role_exclusive": false,
@@ -10541,6 +10754,621 @@
    "route": "/ia/impact-report/download",
    "route_name": "ia_impact_report_download",
    "view": "apps.frontend.views.ia_outcome_views.impact_report_download"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/",
+   "route_name": "ia_impact_reports",
+   "view": "apps.frontend.views.impact_report_views.register_page"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/",
+   "route_name": "ia_impact_report",
+   "view": "apps.frontend.views.impact_report_views.report_detail"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/annex.csv",
+   "route_name": "ia_impact_report_annex",
+   "view": "apps.frontend.views.impact_report_views.annex_download"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/correct",
+   "route_name": "ia_impact_report_correct",
+   "view": "apps.frontend.views.impact_report_views.report_correct"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/edit",
+   "route_name": "ia_impact_report_edit",
+   "view": "apps.frontend.views.impact_report_views.report_edit_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/",
+   "route_name": "ia_impact_report_recommendation",
+   "view": "apps.frontend.views.impact_report_views.recommendation_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/remove",
+   "route_name": "ia_impact_report_recommendation_remove",
+   "view": "apps.frontend.views.impact_report_views.recommendation_remove"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/respond",
+   "route_name": "ia_impact_report_recommendation_respond",
+   "view": "apps.frontend.views.impact_report_views.recommendation_respond"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/recommendations/create",
+   "route_name": "ia_impact_report_recommendation_create",
+   "view": "apps.frontend.views.impact_report_views.recommendation_create"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/recommendations/new",
+   "route_name": "ia_impact_report_recommendation_new",
+   "view": "apps.frontend.views.impact_report_views.recommendation_new_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/release/donor",
+   "route_name": "ia_impact_report_release_donor",
+   "view": "apps.frontend.views.impact_report_views.donor_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/release/donor/request",
+   "route_name": "ia_impact_report_release_donor_request",
+   "view": "apps.frontend.views.impact_report_views.donor_request"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/release/leadership",
+   "route_name": "ia_impact_report_release_leadership",
+   "view": "apps.frontend.views.impact_report_views.release_leadership"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/release/schools",
+   "route_name": "ia_impact_report_release_schools",
+   "view": "apps.frontend.views.impact_report_views.schools_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/release/schools/save",
+   "route_name": "ia_impact_report_release_schools_save",
+   "view": "apps.frontend.views.impact_report_views.schools_release"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/releases/<str:release_id>/",
+   "route_name": "ia_impact_report_release",
+   "view": "apps.frontend.views.impact_report_views.release_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/releases/<str:release_id>/decide",
+   "route_name": "ia_impact_report_release_decide",
+   "view": "apps.frontend.views.impact_report_views.release_decide"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/releases/<str:release_id>/download",
+   "route_name": "ia_impact_report_release_download",
+   "view": "apps.frontend.views.impact_report_views.release_download"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/review",
+   "route_name": "ia_impact_report_review",
+   "view": "apps.frontend.views.impact_report_views.review_drawer"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/review/save",
+   "route_name": "ia_impact_report_review_save",
+   "view": "apps.frontend.views.impact_report_views.review_save"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/submit",
+   "route_name": "ia_impact_report_submit",
+   "view": "apps.frontend.views.impact_report_views.report_submit"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/update",
+   "route_name": "ia_impact_report_update",
+   "view": "apps.frontend.views.impact_report_views.report_update"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/<str:report_id>/withdraw",
+   "route_name": "ia_impact_report_withdraw",
+   "view": "apps.frontend.views.impact_report_views.report_withdraw"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/create",
+   "route_name": "ia_impact_report_create",
+   "view": "apps.frontend.views.impact_report_views.report_create"
+  },
+  {
+   "page_permission": "impact_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-reports/new",
+   "route_name": "ia_impact_report_new",
+   "view": "apps.frontend.views.impact_report_views.report_new_drawer"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/",
+   "route_name": "ia_learning",
+   "view": "apps.frontend.views.ia_learning_views.learning_page"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/<str:finding_id>/",
+   "route_name": "ia_learning_finding",
+   "view": "apps.frontend.views.ia_learning_views.finding_drawer"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/<str:finding_id>/review",
+   "route_name": "ia_learning_finding_review",
+   "view": "apps.frontend.views.ia_learning_views.finding_review"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/<str:finding_id>/revise",
+   "route_name": "ia_learning_finding_revise",
+   "view": "apps.frontend.views.ia_learning_views.finding_revise"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/<str:finding_id>/update",
+   "route_name": "ia_learning_finding_update",
+   "view": "apps.frontend.views.ia_learning_views.finding_update"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/new",
+   "route_name": "ia_learning_finding_new",
+   "view": "apps.frontend.views.ia_learning_views.finding_new_drawer"
+  },
+  {
+   "page_permission": "ia_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/learning/findings/save",
+   "route_name": "ia_learning_finding_create",
+   "view": "apps.frontend.views.ia_learning_views.finding_create"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/",
+   "route_name": "ia_lending_evidence",
+   "view": "apps.frontend.views.ia_lending_views.lending_evidence_page"
+  },
+  {
+   "page_permission": "business_transformation_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/conclusions/<str:assessment_id>/",
+   "route_name": "ia_lending_conclusion",
+   "view": "apps.frontend.views.ia_lending_views.conclusion_drawer"
+  },
+  {
+   "page_permission": "business_transformation_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/conclusions/<str:assessment_id>/prepare",
+   "route_name": "ia_lending_conclusion_prepare",
+   "view": "apps.frontend.views.ia_lending_views.conclusion_prepare"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/conclusions/<str:assessment_id>/verify",
+   "route_name": "ia_lending_conclusion_verify",
+   "view": "apps.frontend.views.ia_lending_views.conclusion_verify"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/enrolment/<str:snapshot_id>/",
+   "route_name": "ia_lending_enrolment",
+   "view": "apps.frontend.views.ia_lending_views.enrolment_drawer"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/enrolment/<str:snapshot_id>/verify",
+   "route_name": "ia_lending_enrolment_verify",
+   "view": "apps.frontend.views.ia_lending_views.enrolment_verify"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/outputs/<str:output_id>/",
+   "route_name": "ia_lending_output",
+   "view": "apps.frontend.views.ia_lending_views.output_drawer"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/outputs/<str:output_id>/verify",
+   "route_name": "ia_lending_output_verify",
+   "view": "apps.frontend.views.ia_lending_views.output_verify"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/teachers/<str:beneficiary_id>/",
+   "route_name": "ia_lending_teacher",
+   "view": "apps.frontend.views.ia_lending_views.teacher_drawer"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/teachers/<str:beneficiary_id>/verify",
+   "route_name": "ia_lending_teacher_verify",
+   "view": "apps.frontend.views.ia_lending_views.teacher_verify"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/use/<str:allocation_id>/",
+   "route_name": "ia_lending_use",
+   "view": "apps.frontend.views.ia_lending_views.use_drawer"
+  },
+  {
+   "page_permission": "ia_lending_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/lending-evidence/use/<str:allocation_id>/verify",
+   "route_name": "ia_lending_use_verify",
+   "view": "apps.frontend.views.ia_lending_views.use_verify"
   },
   {
    "page_permission": "ia_notifications",
@@ -10660,6 +11488,19 @@
     "ImpactAssessment",
     "Admin"
    ],
+   "route": "/ia/samples/<str:sample_id>/field-check",
+   "route_name": "ia_sample_field_check",
+   "view": "apps.frontend.views.ia_views.ia_sample_field_check_action"
+  },
+  {
+   "page_permission": "ia_samples",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
    "route": "/ia/samples/<str:sample_id>/outcome",
    "route_name": "ia_sample_outcome",
    "view": "apps.frontend.views.ia_views.ia_sample_outcome_action"
@@ -10673,9 +11514,191 @@
     "ImpactAssessment",
     "Admin"
    ],
+   "route": "/ia/samples/<str:sample_id>/resolve",
+   "route_name": "ia_sample_resolve",
+   "view": "apps.frontend.views.ia_views.ia_sample_resolve_action"
+  },
+  {
+   "page_permission": "ia_samples",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
    "route": "/ia/samples/draw",
    "route_name": "ia_sample_draw",
    "view": "apps.frontend.views.ia_views.ia_sample_draw_action"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/",
+   "route_name": "ia_school_evidence",
+   "view": "apps.frontend.views.ia_school_evidence_views.school_evidence_page"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/<str:kind>/<str:record_id>/",
+   "route_name": "ia_school_evidence_record",
+   "view": "apps.frontend.views.ia_school_evidence_views.record_drawer"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/<str:kind>/<str:record_id>/correct",
+   "route_name": "ia_school_evidence_correct",
+   "view": "apps.frontend.views.ia_school_evidence_views.correct_action"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/<str:kind>/<str:record_id>/decide",
+   "route_name": "ia_school_evidence_decide",
+   "view": "apps.frontend.views.ia_school_evidence_views.decide_action"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/<str:kind>/new",
+   "route_name": "ia_school_evidence_new",
+   "view": "apps.frontend.views.ia_school_evidence_views.new_drawer"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/<str:kind>/save",
+   "route_name": "ia_school_evidence_create",
+   "view": "apps.frontend.views.ia_school_evidence_views.create_action"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/edtech/<str:deployment_id>/check",
+   "route_name": "ia_school_evidence_check_drawer",
+   "view": "apps.frontend.views.ia_school_evidence_views.check_drawer"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/edtech/<str:deployment_id>/check/save",
+   "route_name": "ia_school_evidence_check_create",
+   "view": "apps.frontend.views.ia_school_evidence_views.check_create_action"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/learning/template.csv",
+   "route_name": "ia_school_evidence_learning_template",
+   "view": "apps.frontend.views.ia_school_evidence_views.learning_template_csv"
+  },
+  {
+   "page_permission": "ia_school_evidence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/school-evidence/learning/upload",
+   "route_name": "ia_school_evidence_learning_upload",
+   "view": "apps.frontend.views.ia_school_evidence_views.learning_upload_action"
+  },
+  {
+   "page_permission": "ia_stories",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/stories/",
+   "route_name": "ia_stories",
+   "view": "apps.frontend.views.ia_stories_views.stories_page"
+  },
+  {
+   "page_permission": "ia_stories",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/stories/<str:story_id>/",
+   "route_name": "ia_story_drawer",
+   "view": "apps.frontend.views.ia_stories_views.story_drawer"
+  },
+  {
+   "page_permission": "ia_stories",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/stories/<str:story_id>/decide",
+   "route_name": "ia_story_decide",
+   "view": "apps.frontend.views.ia_stories_views.story_decide"
   },
   {
    "page_permission": "ia_verification_queue",
@@ -10747,6 +11770,40 @@
    "route": "/impact",
    "route_name": "impact_analytics",
    "view": "apps.frontend.views.impact_views.impact_analytics_view"
+  },
+  {
+   "page_permission": "schools",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/impact-briefs/<str:release_id>/",
+   "route_name": "impact_brief",
+   "view": "apps.frontend.views.impact_report_views.brief_page"
+  },
+  {
+   "page_permission": "schools",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/impact-briefs/<str:release_id>/shared",
+   "route_name": "impact_brief_shared",
+   "view": "apps.frontend.views.impact_report_views.brief_shared"
   },
   {
    "page_permission": "personal_time_off",
@@ -12046,6 +13103,44 @@
    "route": "/my-plan/<str:activity_id>/confirm-reimbursement-receipt",
    "route_name": "confirm_reimbursement_receipt_action",
    "view": "apps.frontend.views.my_plan_views.confirm_reimbursement_receipt_action"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/<str:activity_id>/learning-results",
+   "route_name": "onetest_results_drawer",
+   "view": "apps.frontend.views.ia_school_evidence_views.onetest_results_drawer"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/<str:activity_id>/learning-results/save",
+   "route_name": "onetest_results_save",
+   "view": "apps.frontend.views.ia_school_evidence_views.onetest_results_save"
   },
   {
    "page_permission": "my_plan",
@@ -14275,17 +15370,14 @@
    "view": "apps.frontend.views.target_distribution_views.priorities_master_page"
   },
   {
-   "page_permission": "priorities_master",
+   "page_permission": "ssa_mapping",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
-    "RegionalProgramLead",
     "ImpactAssessment",
-    "HumanResources",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -14294,17 +15386,14 @@
    "view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_page"
   },
   {
-   "page_permission": "priorities_master",
+   "page_permission": "ssa_mapping",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
-    "RegionalProgramLead",
     "ImpactAssessment",
-    "HumanResources",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -14313,23 +15402,68 @@
    "view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_drawer"
   },
   {
-   "page_permission": "priorities_master",
+   "page_permission": "ssa_mapping",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
-    "RegionalProgramLead",
     "ImpactAssessment",
-    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/ssa-mapping/<str:item_id>/history",
+   "route_name": "ssa_mapping_history",
+   "view": "apps.frontend.views.ssa_mapping_views.rule_history_drawer"
+  },
+  {
+   "page_permission": "ssa_mapping",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
    "route": "/priorities/ssa-mapping/<str:item_id>/save",
    "route_name": "ssa_mapping_action",
    "view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_action"
+  },
+  {
+   "page_permission": "ssa_mapping",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/ssa-mapping/rules/<str:mapping_id>/review",
+   "route_name": "ssa_mapping_rule_review_drawer",
+   "view": "apps.frontend.views.ssa_mapping_views.rule_review_drawer"
+  },
+  {
+   "page_permission": "ssa_mapping",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/ssa-mapping/rules/<str:mapping_id>/review/save",
+   "route_name": "ssa_mapping_rule_review",
+   "view": "apps.frontend.views.ssa_mapping_views.rule_review_action"
   },
   {
    "page_permission": "priorities_master",
@@ -15569,6 +16703,18 @@
    "view": "apps.frontend.views.ssa_views.ssa_upload_result_view"
   },
   {
+   "page_permission": "ia_upload_center",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ssa/upload/history/",
+   "route_name": "ssa_upload_history",
+   "view": "apps.frontend.views.ssa_views.ssa_upload_history_view"
+  },
+  {
    "page_permission": "ssa",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15599,6 +16745,22 @@
    "route": "/ssa/verification/",
    "route_name": "ssa_verification_queue",
    "view": "apps.frontend.views.ssa_views.ssa_verification_queue_view"
+  },
+  {
+   "page_permission": "ssa",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ssa/verification/<str:record_id>/return-drawer",
+   "route_name": "ssa_return_drawer",
+   "view": "apps.frontend.views.ssa_views.ssa_return_drawer_view"
   },
   {
    "page_permission": "staff_directory",
@@ -16238,6 +17400,20 @@
    "view": "apps.frontend.views.today_views.today_action"
   },
   {
+   "page_permission": "today",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/today/panel",
+   "route_name": "today_panel",
+   "view": "apps.frontend.views.today_views.today_panel"
+  },
+  {
    "page_permission": "todos",
    "required_permissions": [],
    "role_exclusive": false,
@@ -16413,27 +17589,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 398,
-  "Admin": 896,
-  "BusinessTransformationOfficer": 228,
-  "CCEO": 508,
-  "CountryDirector": 658,
-  "HumanResources": 329,
-  "ImpactAssessment": 519,
+  "Accountant": 402,
+  "Admin": 982,
+  "BusinessTransformationOfficer": 230,
+  "CCEO": 513,
+  "CountryDirector": 742,
+  "HumanResources": 328,
+  "ImpactAssessment": 596,
   "MfiLoanOfficer": 126,
   "MfiPartnerAdmin": 129,
-  "PartnerAdmin": 213,
-  "PartnerFieldOfficer": 213,
-  "Program Lead": 587,
-  "ProjectCoordinator": 424,
-  "RegionalProgramLead": 299,
-  "RegionalVicePresident": 332
+  "PartnerAdmin": 217,
+  "PartnerFieldOfficer": 217,
+  "Program Lead": 596,
+  "ProjectCoordinator": 434,
+  "RegionalProgramLead": 300,
+  "RegionalVicePresident": 363
  },
  "summary": {
-  "page_keys_declared": 164,
-  "page_keys_in_navigation": 188,
-  "routes_guarded": 993,
-  "routes_total": 1182,
+  "page_keys_declared": 172,
+  "page_keys_in_navigation": 189,
+  "routes_guarded": 1079,
+  "routes_total": 1268,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

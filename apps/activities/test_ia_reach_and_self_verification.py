@@ -78,6 +78,14 @@ class IaReachAndSelfVerificationTest(TestCase):
         for url in (
             "/ia/verification/",
             "/ia/dashboard/",
+            # Every view of the dashboard, not just the default one (IA
+            # review, 2026-09-13): the border test used to exercise only the
+            # view the page opened on, and that became Outcomes.
+            "/ia/dashboard/?view=collection",
+            "/ia/dashboard/?view=reports",
+            "/ia/dashboard/?view=map",
+            "/ia/dashboard/?view=operations",
+            "/ia/verification/?sf_id=missing",
             "/ia/returned/",
             "/ia/history/",
         ):
@@ -86,6 +94,22 @@ class IaReachAndSelfVerificationTest(TestCase):
             self.assertNotContains(response, "IA Nairobi Primary", msg_prefix=url)
         queue = self.client.get("/ia/verification/")
         self.assertContains(queue, "IA Kampala Primary")
+        # The counts stop at the border too, not only the names: Ida may
+        # verify the CCEO's work, not her own and not Kenya's.
+        dashboard = self.client.get("/ia/dashboard/?view=operations")
+        self.assertEqual(dashboard.context["kpis"]["waiting"], 1)
+        self.assertEqual(
+            [item["id"] for item in dashboard.context["queue_items"]],
+            [self.cceo_work.id],
+        )
+        districts = {
+            row["name"]
+            for row in self.client.get("/ia/dashboard/?view=map").context[
+                "district_performance"
+            ]
+        }
+        self.assertIn("IA Wakiso", districts)
+        self.assertNotIn("IA Kiambu", districts)
         self.assertEqual(
             self.client.get(f"/ia/verification/{self.ke_work.id}/").status_code, 404
         )

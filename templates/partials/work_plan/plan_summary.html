@@ -28,7 +28,6 @@ See Details
 {% for section in plan_summary_sections %}
 <div>
 <h3 class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500 mb-2">{{ section.label }}</h3>
-{% if section.rows %}
 <div class="overflow-x-auto">
 <table class="edify-record-table edify-data-table w-full text-[12px]">
 <caption class="sr-only">{{ section.label }} summary — {{ period_label }}</caption>
@@ -48,6 +47,10 @@ See Details
 <td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}</td>
 <td class="text-right tabular-nums font-bold text-slate-800">{{ row.cost|intcomma }}</td>
 </tr>
+{% empty %}
+<tr class="edify-data-row">
+<td colspan="4" class="text-left edify-text-caption font-semibold text-slate-400">No {{ section.label|lower }} planned in this period.</td>
+</tr>
 {% endfor %}
 <tr class="bg-slate-50/70">
 <td class="font-extrabold text-slate-800">{{ section.label }} subtotal</td>
@@ -58,9 +61,6 @@ See Details
 </tbody>
 </table>
 </div>
-{% else %}
-<p class="edify-text-caption font-semibold text-slate-400">No {{ section.label|lower }} planned in this period.</p>
-{% endif %}
 </div>
 {% endfor %}
 

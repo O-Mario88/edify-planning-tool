@@ -13,9 +13,9 @@
 <p class="edify-page-eyebrow">Quality & Insights</p>
 <h1 class="edify-page-title edify-page-header__title">Import Result Summary</h1>
 {% if created %}
-<p class="edify-page-header__description">Valid SSA assessments were linked to their matching School IDs. Review any unmatched or invalid rows below.</p>
+<p class="edify-page-header__description">Valid SSA assessments were linked to their matching School IDs. They count once a verifier other than you confirms them; rows that could not be imported are listed below with the reason.</p>
 {% else %}
-<p class="text-[12px] text-rose-600 font-semibold mt-0.5">No SSA assessments were imported. Review the unmatched and invalid row counts below.</p>
+<p class="text-[12px] text-rose-600 font-semibold mt-0.5">No SSA assessments were imported. The refused rows and their reasons are listed below.</p>
 {% endif %}
 </div>
 <a href="/ssa/upload/" class="px-4 py-2 edify-primary-solid edify-primary-hover text-white font-semibold text-[12px] rounded-surface shadow transition-colors">
@@ -43,18 +43,53 @@ Upload Another File
 {% endkpi_metric %}
 {% endkpi_strip %}
 
+{% if blocked.total %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ssa-blocked-title">
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ssa-blocked-title" class="rpl-card__title">Rows not imported</h2>
+      <span class="rpl-card__subtitle">{{ blocked.total }} row{{ blocked.total|pluralize }} refused · correct them in the file and upload it again</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Rows not imported; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Rows not imported and why</caption>
+      <thead>
+        <tr>
+          <th scope="col">Row</th>
+          <th scope="col">School ID</th>
+          <th scope="col">Assessment date</th>
+          <th scope="col">Why it was refused</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in blocked.rows %}
+        <tr>
+          <th scope="row" data-record-title class="tabular-nums"><span>{{ row.row_number }}</span></th>
+          <td data-label="School ID">{{ row.school_id }}</td>
+          <td data-label="Assessment date">{{ row.date }}</td>
+          <td data-label="Why it was refused"><span data-tone="danger">{{ row.errors }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=blocked param="blocked_page" %}
+</section>
+{% endif %}
+
 <!-- Action Queues Grid -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800">Next Action Steps</h3>
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <a href="/ssa/verification/" class="p-4 bg-slate-50 border border-slate-200/60 rounded-surface hover:bg-slate-100/50 transition-colors flex items-center gap-3 group">
 <div class="p-2.5 edify-primary-soft edify-primary-text rounded-surface group-hover:scale-105 transition-transform">
 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
 </div>
 <div>
 <h4 class="text-[14px] font-semibold text-slate-800">SSA Verification Queue &rarr;</h4>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Review any manually entered SSA records that are still awaiting verification.</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ pending_verification }} imported record{{ pending_verification|pluralize }} wait{{ pending_verification|pluralize:"s," }} for a verifier other than you before they count.</p>
 </div>
 </a>
 
@@ -68,13 +103,23 @@ Upload Another File
 </div>
 </a>
 
-<a href="/planning" class="p-4 bg-slate-50 border border-slate-200/60 rounded-surface hover:bg-slate-100/50 transition-colors flex items-center gap-3 group col-span-2">
+<a href="/ia/dashboard/?view=collection" class="p-4 bg-slate-50 border border-slate-200/60 rounded-surface hover:bg-slate-100/50 transition-colors flex items-center gap-3 group">
 <div class="p-2.5 edify-primary-soft edify-primary-text rounded-surface group-hover:scale-105 transition-transform">
-<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
 </div>
 <div>
-<h4 class="text-[14px] font-semibold text-slate-800">Open Planning Board &rarr;</h4>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Start scheduling support visits for schools whose SSA scores are now imported.</p>
+<h4 class="text-[14px] font-semibold text-slate-800">Open Collection Worklist &rarr;</h4>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">See which schools in your country still need a baseline or this year's follow-up.</p>
+</div>
+</a>
+
+<a href="/ssa/upload/history/" class="p-4 bg-slate-50 border border-slate-200/60 rounded-surface hover:bg-slate-100/50 transition-colors flex items-center gap-3 group">
+<div class="p-2.5 edify-primary-soft edify-primary-text rounded-surface group-hover:scale-105 transition-transform">
+<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+</div>
+<div>
+<h4 class="text-[14px] font-semibold text-slate-800">SSA Upload History &rarr;</h4>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Every SSA import in your country and what each one did.</p>
 </div>
 </a>
 </div>

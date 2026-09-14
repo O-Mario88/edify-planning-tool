@@ -1,0 +1,83 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Impact brief · {{ release.school.name }} · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+A partner school's impact brief (IA review, owner, 2026-09-13): the school's
+own before-and-after results from a released impact report, its findings and
+limitations with every other school's name and every staff name removed
+(apps/impact/redaction.py). The school's account owner opens it from the
+TeamAction that delivered it, shares it on a visit and records here what the
+school said, which closes the action. It prints from the browser as it stands.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-impact-brief>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Impact findings for the school</p>
+      <h1 class="edify-page-title edify-page-header__title">{{ payload.school.name }}</h1>
+      <p class="edify-page-header__description">{{ payload.report.title }} · {{ payload.report.period_start }} to {{ payload.report.period_end }}</p>
+    </div>
+  </div>
+
+  {% if action %}
+  {% if action.state == "resolved" %}
+  <div class="edify-note" data-tone="success" role="status" data-ia-brief-shared>{{ action.manual_resolution_reason }}</div>
+  {% else %}
+  <div class="edify-note" data-tone="info" role="note">Share this brief with the school on your next visit, then record what the school said below. Due {{ action.due_date|date:"j M Y" }}.</div>
+  {% endif %}
+  {% endif %}
+
+  {% include "partials/ia/impact_reports_table.html" with table=results %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-brief-findings">
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-brief-findings" class="rpl-card__title">What Impact Assessment found</h2>
+        <span class="rpl-card__subtitle">Across the schools the report covers</span>
+      </div>
+    </header>
+    <div class="p-4">
+      <dl class="hr-drawer-facts">
+        <div class="hr-drawer-facts__row"><dt>Findings</dt><dd>{{ payload.narrative.findings|default:"—"|linebreaksbr }}</dd></div>
+        <div class="hr-drawer-facts__row"><dt>Limitations</dt><dd>{{ payload.narrative.limitations|default:"—"|linebreaksbr }}</dd></div>
+        {% for text in payload.limitations %}<div class="hr-drawer-facts__row"><dt>How to read the scores</dt><dd>{{ text }}</dd></div>{% endfor %}
+      </dl>
+    </div>
+  </section>
+
+  {% if may_record %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-brief-record" data-ia-brief-record>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-brief-record" class="rpl-card__title">Record that the findings were shared</h2>
+        <span class="rpl-card__subtitle">Impact Assessment reads what the school said</span>
+      </div>
+    </header>
+    <form method="post" action="/impact-briefs/{{ release.id }}/shared" class="hr-drawer-form p-4">
+      {% csrf_token %}
+      <div class="hr-drawer-form__field">
+        <label for="ia-brief-shared-on">Date shared <span aria-hidden="true">*</span></label>
+        <input id="ia-brief-shared-on" type="date" name="shared_on" required max="{{ today }}" value="{{ today }}">
+      </div>
+      {% if visits %}
+      <div class="hr-drawer-form__field">
+        <label for="ia-brief-visit">Visit it was shared on</label>
+        <select id="ia-brief-visit" name="visit">
+          <option value="">Not during a recorded visit</option>
+          {% for value, label in visits %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="hr-drawer-form__field">
+        <label for="ia-brief-response">What the school said <span aria-hidden="true">*</span></label>
+        <textarea id="ia-brief-response" name="school_response" rows="4" maxlength="2000" required></textarea>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="btn btn-primary h-8">Record as shared</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

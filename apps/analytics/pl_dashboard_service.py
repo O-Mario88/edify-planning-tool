@@ -84,13 +84,26 @@ CCEO_WEEKLY_ACTIVITY_CAPACITY = 12
 SF_ID_OVERDUE_DAYS = 7
 
 # ── The views under the fixed part ───────────────────────────────────────────
-# Map stays the default (owner, 2026-09-05: leadership dashboards open on the
-# map). "operations" was the second view until 2026-09-13; a remembered cookie
+# Today opens first: Today and Dashboard are one page (owner, 2026-09-14),
+# with Map the first of the dashboard's own views. "operations" was the second view until 2026-09-13; a remembered cookie
 # or a bookmark carrying it lands on Team, the view that inherited its work.
-DEFAULT_VIEW = "map"
-VIEWS = ("map", "priorities", "team", "coaching", "programmes", "collaboration")
+DEFAULT_VIEW = "today"
+VIEWS = (
+    "today",
+    "map",
+    "priorities",
+    "team",
+    "coaching",
+    "programmes",
+    "collaboration",
+)
 VIEW_ALIASES = {"operations": "team"}
 VIEW_TABS = (
+    (
+        "today",
+        "Today",
+        "What waits on you, your team in the field today, then your own day",
+    ),
     ("map", "Map", "Your team's districts shaded by delivery"),
     (
         "priorities",
@@ -133,7 +146,9 @@ DEVELOPMENT_URL = "/cpd-learning"
 TEAM_TARGETS_URL = "/team-targets"
 EVIDENCE_URL = "/evidence/"
 PRIORITIES_URL = "/priorities/master"
-TARGET_DISTRIBUTION_URL = "/target-distribution"
+# A Programme Lead distributes on the My Team tab of Priorities; the country
+# distribution workspace is IA's, the CD's and Admin's (walk, 2026-09-14).
+TARGET_DISTRIBUTION_URL = "/target-distribution/team"
 TEAM_GUIDANCE_URL = "/priorities/guidance"
 PROGRAMME_ROLLOUT_URL = "/programme-rollout"
 TRAINING_FEEDBACK_URL = "/cce-leadership/feedback"
@@ -453,6 +468,9 @@ class ProgramLeadDashboardService:
                     ProgramLeadDashboardService.leadership_attention(ctx)
                 )
             builders = {
+                # The Today workbench is built per request by the view
+                # (apps.frontend.views.today_views), never cached here.
+                "today": lambda: {},
                 "map": lambda: {},
                 "priorities": lambda: ProgramLeadDashboardService.priorities_view(ctx),
                 "team": lambda: ProgramLeadDashboardService.team_view(ctx),
@@ -2256,6 +2274,7 @@ class ProgramLeadDashboardService:
             rows.append(
                 {
                     "type": a.get_activity_type_display(),
+                    "school_id": a.school_id,
                     "school": a.school.name if a.school_id else "—",
                     "owner": name_by.get(
                         a.responsible_staff_id or a.monitored_by_staff_id, "—"

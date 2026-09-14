@@ -1028,7 +1028,7 @@ def cd_analytics_drilldown_view(request):
 @require_page_permission("cd_analytics")
 @require_export_permission
 def cd_analytics_export_view(request):
-    """One of the CD's four country CSVs, for the cockpit's current period.
+    """One of the CD's five country CSVs, for the cockpit's current period.
 
     ``?set=delivery|risk|finance|core`` picks the dataset; the FY, quarter,
     month and filters are the ones the page is showing. Read-only; respects

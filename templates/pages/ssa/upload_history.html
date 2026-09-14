@@ -1,0 +1,96 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}SSA Upload History — Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+SSA upload history (apps/frontend/views/ssa_views.py ssa_upload_history_view,
+IA review 2026-09-13): every SSA import batch in the reader's country with the
+rows it imported, left unmatched and refused, each opening its result page
+where the refused rows are listed with their reasons.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-mobile-family="upload" data-ssa-upload-history>
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Baseline & Field Data</p>
+      <h1 class="edify-page-title edify-page-header__title">SSA Upload History</h1>
+      <p class="edify-page-header__description">Every SSA import in your country and what it did. Imported records wait for a verifier other than the uploader; refused rows are listed on each batch's result page.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/ssa/upload/" class="btn btn-primary h-8">Upload SSA file</a>
+    </div>
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ssa-history-title">
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ssa-history-title" class="rpl-card__title">Import batches</h2>
+        <span class="rpl-card__subtitle">{{ pager.total }} batch{{ pager.total|pluralize:"es" }}</span>
+      </div>
+    </header>
+
+    <form method="get" class="edify-filter-bar" aria-label="Upload history filters" x-data>
+      <label class="cce-filter">
+        <span class="cce-filter__label">Batches</span>
+        <select name="has_blocked" @change="$el.form.requestSubmit()" class="cce-filter__select">
+          <option value="">All batches</option>
+          <option value="1"{% if has_blocked %} selected{% endif %}>With refused rows</option>
+        </select>
+      </label>
+      <label class="cce-filter">
+        <span class="cce-filter__label">Uploaded by</span>
+        <select name="mine" @change="$el.form.requestSubmit()" class="cce-filter__select">
+          <option value="">Anyone</option>
+          <option value="1"{% if mine %} selected{% endif %}>Me</option>
+        </select>
+      </label>
+    </form>
+
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Import batches; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">SSA import batches</caption>
+        {% if pager.rows %}
+        <thead>
+          <tr>
+            <th scope="col">File</th>
+            <th scope="col">Uploaded by</th>
+            <th scope="col">Uploaded</th>
+            <th scope="col">Status</th>
+            <th scope="col">Rows</th>
+            <th scope="col">Imported</th>
+            <th scope="col">Unmatched</th>
+            <th scope="col">Refused</th>
+            <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        {% endif %}
+        <tbody>
+          {% for b in pager.rows %}
+          <tr>
+            <th scope="row" data-record-title><span>{{ b.file_name }}</span></th>
+            <td data-label="Uploaded by">{{ b.uploaded_by }}</td>
+            <td data-label="Uploaded" class="tabular-nums">{{ b.uploaded_on|date:"j M Y, H:i" }}</td>
+            <td data-label="Status">{{ b.status }}</td>
+            <td data-label="Rows" class="tabular-nums">{{ b.total }}</td>
+            <td data-label="Imported" class="tabular-nums">{{ b.ready }}</td>
+            <td data-label="Unmatched" class="tabular-nums">{{ b.unmatched }}</td>
+            <td data-label="Refused" class="tabular-nums">{% if b.blocked_tone %}<span data-tone="{{ b.blocked_tone }}">{{ b.blocked }}</span>{% else %}{{ b.blocked }}{% endif %}</td>
+            <td class="is-end" data-record-action data-label="Actions"><a href="{{ b.url }}" class="rpl-row-link rounded-control">Open result</a></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="rpl-table__empty">
+              {% include "components/empty_state.html" with message="No SSA imports yet" hint="Batches appear here once an SSA file is uploaded." compact="true" %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=pager param="history_page" %}
+  </section>
+</div>
+{% endblock %}

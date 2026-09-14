@@ -1,0 +1,96 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Programme Learning · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Impact Assessment's Programme Learning (IA review, owner, 2026-09-13): what works
+across Christian training, lending, EdTech and school visits, and the findings IA
+draws from it (apps/frontend/views/ia_learning_views.py over
+apps/analytics/programme_effectiveness.py and apps/impact/findings.py).
+
+Each programme tab: outputs tiles ("delivery, not impact"), the outcome table, the
+qualitative panel and the caveats. Tables are plain text with data-tone (the shared
+partials/ia/evidence_table.html card); every filter drawn reaches the view and a
+filter with nothing to choose is not drawn. Tabs are links (?view=…); the old
+/ia/attribution/ address lands on ?view=training.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-learning data-ia-learning-view="{{ view }}">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Analysis &amp; learning</p>
+      <h1 class="edify-page-title edify-page-header__title">Programme Learning</h1>
+      <p class="edify-page-header__description">Which programmes are associated with school change, how strong that evidence is, and what Impact Assessment concludes from it.</p>
+    </div>
+    {% if may_record %}
+    <div class="edify-page-header__controls">
+      <button type="button" class="btn btn-secondary h-8" hx-get="/ia/learning/findings/new?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">Record finding</button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  <nav class="edify-section-nav" aria-label="Programme learning tabs" data-ia-learning-tabs>
+    <div class="edify-section-nav__inner">
+      {% for item in tabs %}
+      <a href="{{ item.url }}" class="edify-section-nav__link{% if item.active %} is-active{% endif %}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <form method="get" class="edify-filter-bar" aria-label="Programme learning filters" x-data>
+    <input type="hidden" name="view" value="{{ filters.view }}">
+    {% for field in filters.fields %}
+    {% if field.options %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% endfor %}
+  </form>
+
+  <div class="edify-note" data-tone="info" role="note" data-ia-learning-description>{{ description }}</div>
+
+  {% if view == "findings" %}
+    {% include "components/context_metrics.html" with items=metrics variant="executive" title="Impact findings" %}
+    {% include "partials/ia/evidence_table.html" with table=register %}
+  {% else %}
+    <section aria-labelledby="ia-learning-outputs" data-ia-learning-outputs>
+      <h2 id="ia-learning-outputs" class="sr-only">Outputs</h2>
+      {% include "components/context_metrics.html" with items=metrics variant="executive" title=outputs_note %}
+    </section>
+
+    {% include "partials/ia/evidence_table.html" with table=outcomes %}
+
+    {% for caveat in caveats %}
+    <div class="edify-note" data-tone="warning" role="note" data-ia-learning-caveat>{{ caveat }}</div>
+    {% endfor %}
+
+    {% if contribution %}
+    {% include "partials/ia/evidence_table.html" with table=contribution %}
+    {% endif %}
+
+    {% include "partials/ia/learning_qualitative.html" %}
+
+    <details class="analytics-evidence-disclosure" data-ia-learning-method>
+      <summary><span><strong>How these figures are made</strong><small>Pairs, exposure, comparison, correction and grades</small></span></summary>
+      <div class="analytics-evidence-disclosure__body">
+        <ul class="space-y-1">
+          <li class="text-[12px] edify-text-muted">Pairs: a confirmed SSA in FY{{ view_data.prev_fy }} and FY{{ view_data.fy }} for the same school, at least 120 days apart ({{ coverage.schools_paired }} of {{ coverage.schools_in_scope }} schools in scope{% if coverage.pairs_too_close %}; {{ coverage.pairs_too_close }} assessed too close together are not compared{% endif %}).</li>
+          <li class="text-[12px] edify-text-muted">Exposure: IA-verified work, a disbursed loan or a confirmed deployment dated between the school's two readings.</li>
+          <li class="text-[12px] edify-text-muted">Comparison: schools that started below 7.0 on the outcome domain, with no exposure of the same kind on it. Groups under 8 schools on either side say "insufficient data".</li>
+          <li class="text-[12px] edify-text-muted">Each table is one family of tests: p-values are Holm-corrected and the verdict reads the corrected value.</li>
+          <li class="text-[12px] edify-text-muted">Evidence grades: insufficient (under 8 schools), descriptive (before and after, or a weakened comparison) and association (a sound comparison). No grade is causal.</li>
+        </ul>
+      </div>
+    </details>
+  {% endif %}
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-learning-autoload></div>{% endif %}
+</div>
+{% endblock %}

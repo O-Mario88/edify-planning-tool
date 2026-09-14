@@ -1,0 +1,83 @@
+{% comment %}
+The IA dashboard's Impact reports view (IA review, owner, 2026-09-13), under the
+fixed header and strip. apps.impact.reports.dashboard_reports_context gives it
+`ia_reports` (registered tiles, the latest reports, whether the reader writes
+reports); apps/frontend/views/ia_views.py gives it the outcome workspace
+(`ia_outcomes`) whose project cohort the live annex and a new report start from.
+
+A report is started here or on the register and lives on its own page
+(/ia/impact-reports/<id>/). The live evidence annex is today's data for a
+period, labelled a draft: a submitted report freezes its own annex.
+{% endcomment %}
+<div class="space-y-4" data-ia-outcome-workspace data-ia-reports-view>
+  {% if ia_outcomes.projects|length > 0 %}
+  <form id="ia-report-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="edify-filter-bar" aria-label="Impact report filters" x-data>
+    <input type="hidden" name="view" value="reports">
+    <label class="cce-filter"><span class="cce-filter__label">Project cohort</span>
+      <select name="project" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        <option value="">All accessible projects</option>
+        {% for project in ia_outcomes.projects %}<option value="{{ project.project_id }}"{% if ia_outcomes.project == project.project_id %} selected{% endif %}>{{ project.project__name }}</option>{% endfor %}
+      </select>
+    </label>
+    <a class="btn btn-ghost h-8" href="/ia/dashboard/?view=reports">Reset</a>
+  </form>
+  {% endif %}
+
+  {% if ia_reports %}
+  {% include "components/context_metrics.html" with items=ia_reports.tiles variant="executive" title="Impact reports" %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-dashboard-reports-title" data-ia-dashboard-reports>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-dashboard-reports-title" class="rpl-card__title">Latest impact reports</h2>
+        <span class="rpl-card__subtitle">Draft → review by a second reader → released to leadership, schools and donors</span>
+      </div>
+      <div class="flex items-center gap-2">
+        {% if ia_reports.may_author %}<button type="button" class="rpl-row-link rounded-control" hx-get="/ia/impact-reports/new?project={{ ia_outcomes.project }}" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-start-report>Start report</button>{% endif %}
+        <a class="rpl-row-link rounded-control" href="/ia/impact-reports/">Open Impact Reports</a>
+      </div>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Latest impact reports; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">The latest impact reports in your reach</caption>
+        <thead><tr><th scope="col">Report</th><th scope="col">Period</th><th scope="col">Version</th><th scope="col">Author</th><th scope="col">Status</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+          {% for entry in ia_reports.rows|slice:":8" %}
+          <tr>
+            <th scope="row" data-record-title><span>{{ entry.report.title }}</span></th>
+            <td data-label="Period">{{ entry.period }}</td>
+            <td data-label="Version" class="tabular-nums">{{ entry.report.version }}</td>
+            <td data-label="Author">{{ entry.author }}</td>
+            <td data-label="Status"><span data-tone="{{ entry.status_tone }}">{{ entry.status_label }}</span></td>
+            <td class="is-end" data-record-action data-label="Actions"><a class="rpl-row-link rounded-control" href="/ia/impact-reports/{{ entry.report.id }}/">{% if entry.can_review %}Review{% elif entry.can_edit %}Continue draft{% elif entry.can_release %}Release{% else %}Open{% endif %}</a></td>
+          </tr>
+          {% empty %}
+          <tr><td class="rpl-table__empty" colspan="6">{% include "components/empty_state.html" with message="No impact reports yet" hint="Start a report: its evidence is frozen when you submit it for review." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4" aria-labelledby="ia-live-annex-title" data-ia-live-annex>
+    <h2 id="ia-live-annex-title" class="text-[15px] font-bold edify-text tracking-tight">Live evidence annex (draft)</h2>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">Today's project cohort evidence for a period — measured and missing evidence, assessment references and mapping versions — with who generated it and a hash of its rows. It is not a report: a submitted report freezes its own annex.</p>
+    {% if ia_can_export %}
+    <form method="post" action="{% url 'frontend:ia_impact_report_download' %}" class="edify-filter-bar" aria-label="Evidence annex period">
+      {% csrf_token %}<input type="hidden" name="project" value="{{ ia_outcomes.project }}">
+      {% if ia_reports.fy_options %}
+      <label class="cce-filter"><span class="cce-filter__label">Financial year</span>
+        <select name="fy" class="cce-filter__select">
+          <option value="">All recorded enrolments</option>
+          {% for option in ia_reports.fy_options %}<option value="{{ option }}"{% if option == ia_reports.fy %} selected{% endif %}>FY{{ option }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <label class="cce-filter"><span class="cce-filter__label">From</span><input type="date" name="period_start" class="cce-filter__select"></label>
+      <label class="cce-filter"><span class="cce-filter__label">To</span><input type="date" name="period_end" class="cce-filter__select"></label>
+      <button type="submit" class="btn btn-secondary h-8">Download annex (CSV)</button>
+    </form>
+    {% else %}<p class="edify-text-caption edify-text-muted leading-relaxed">The annex download requires export permission.</p>{% endif %}
+  </section>
+</div>

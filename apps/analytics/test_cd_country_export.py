@@ -1,4 +1,4 @@
-"""One period, four country CSVs (owner, 2026-09-03).
+"""One period, five country CSVs (owner, 2026-09-03; impact added 2026-09-13).
 
 The CD used to get one export: the PL roster. Risk, finance and core health
 lived on screen only, so any figure carried into a board meeting was typed
@@ -49,7 +49,7 @@ class CountryExportSetTest(TestCase):
             first_line = response.content.decode().splitlines()[0]
             self.assertTrue(first_line, dataset)
 
-    def test_the_four_datasets_carry_distinct_headers(self):
+    def test_the_five_datasets_carry_distinct_headers(self):
         seen = set()
         for dataset in DATASETS:
             slug, header, rows = country_export(
@@ -57,14 +57,14 @@ class CountryExportSetTest(TestCase):
             )
             self.assertIsInstance(rows, list)
             seen.add((slug, tuple(header)))
-        self.assertEqual(len(seen), 4)
+        self.assertEqual(len(seen), 5)
 
     def test_an_unknown_set_falls_back_to_delivery(self):
         self.assertEqual(normalise_dataset("wat"), "delivery")
         self.assertEqual(normalise_dataset(None), "delivery")
         self.assertEqual(normalise_dataset(" Risk "), "risk")
 
-    def test_the_page_offers_all_four_links_and_a_cceo_gets_nothing(self):
+    def test_the_page_offers_all_five_links_and_a_cceo_gets_nothing(self):
         self.client.force_login(self.cd)
         page = self.client.get("/analytics/country-director")
         self.assertEqual(page.status_code, 200)

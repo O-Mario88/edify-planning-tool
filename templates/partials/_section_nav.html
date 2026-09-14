@@ -19,7 +19,7 @@ because they are tabs.
 {% endcomment %}
 {% if workspace %}
 <nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
-{% if workspace.key == "analytics" %}
+{% if workspace.key == "analytics" or workspace.key == "ia" %}
 <div class="edify-section-nav__workspace">
   {% if workspace.groups|length > 1 %}
   <div class="edify-section-nav__clusters">

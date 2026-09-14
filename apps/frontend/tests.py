@@ -136,7 +136,8 @@ class FrontendViewsTestCase(TestCase):
             planned_date=_tz.now(),
         )
         self.client.force_login(self.cceo_user)
-        response = self.client.get("/dashboard")
+        # The week is the dashboard's Operations view; Today opens first.
+        response = self.client.get("/dashboard?view=operations")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
         self.assertContains(response, "Schools Needing Urgent Attention")

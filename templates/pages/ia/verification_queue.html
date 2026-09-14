@@ -77,6 +77,10 @@ filtered on a value no row has ever carried and emptied the queue.
 <input id="ia-filter-district" type="text" name="district" value="{{ filters.district|default:'' }}" placeholder="Kampala, Masaka…" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 </div>
 
+{% comment %}A headline tile's drill-down travels with every filter change, or
+choosing a district would silently drop the "overdue" the reader came for.{% endcomment %}
+{% for chip in drilldowns %}<input type="hidden" name="{{ chip.key }}" value="{{ chip.value }}">{% endfor %}
+
 <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.advancedFilters.showModal()">Advanced filters{% if filters.quarter or filters.staff or filters.core_school %} · Applied{% endif %}</button>
 
 <dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="ia-advanced-filter-title">

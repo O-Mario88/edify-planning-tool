@@ -207,9 +207,44 @@ class SsaVerificationAuthorityTests(TestCase):
         self.client = Client()
 
     def test_cd_cannot_post_a_verification(self):
+        """The Country Director is the fallback verifier for SSA scores an
+        Impact Assessment officer collected, and for nothing else (IA review,
+        owner, 2026-09-13): a partner-submitted record stays Impact
+        Assessment's to confirm. A PL or CCEO is refused before any lookup."""
+        from datetime import date
+
+        from apps.geography.models import District, Region
+        from apps.schools.models import School
+        from apps.ssa.models import SsaRecord
+
         cd = _user("cd-ssa@t.org", "CD", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=cd, title="CD", country="Uganda")
+        region = Region.objects.create(name="Spine SSA Region", country="Uganda")
+        school = School.objects.create(
+            school_id="SPINE-SSA-1",
+            name="Spine SSA Primary",
+            region=region,
+            district=District.objects.create(name="Spine SSA District", region=region),
+        )
+        record = SsaRecord.objects.create(
+            school=school,
+            date_of_ssa=date(2026, 5, 1),
+            fy="2026",
+            collector_type="partner",
+            verification_status="pending",
+            uploaded_by="partner-user",
+            collected_by_user_id="partner-user",
+        )
         self.client.force_login(cd)
+        resp = self.client.post(
+            "/ssa/verification/", {"record_id": record.id, "action": "verify"}
+        )
+        self.assertNotEqual(resp.status_code, 302)
+        record.refresh_from_db()
+        self.assertEqual(record.verification_status, "pending")
+
+        pl = _user("pl-ssa@t.org", "PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.client.force_login(pl)
         resp = self.client.post(
             "/ssa/verification/", {"record_id": "nonexistent", "action": "verify"}
         )

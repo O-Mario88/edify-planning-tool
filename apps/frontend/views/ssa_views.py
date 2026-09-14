@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden
-from django.db.models import Q
+from django.db.models import Count, Q
 from apps.core.redirects import local_redirect
 from apps.core.permissions import (
     has_permission,
@@ -226,17 +226,24 @@ def _visible_batches(request):
     The preview and result pages took a batch id straight from the URL, so
     anyone holding the page key could read — and, through the preview's
     finalise form, reach — somebody else's import by guessing its id. Impact
-    Assessment and Admin run the imports and keep every batch; anyone else who
-    uploads sees their own (Programme Lead alignment, 2026-09-13).
+    Assessment and Admin run the imports; anyone else who uploads sees their
+    own (Programme Lead alignment, 2026-09-13). Impact Assessment reads the
+    batches uploaded by staff in its own country, never another country's
+    (IA review, 2026-09-13); Admin and an officer with no country on file keep
+    the deployment.
     """
     from apps.core.rbac import EdifyRole
+    from apps.core.scoping import person_country_q
 
     batches = SSAImportBatch.objects.all()
-    if request.user.active_role in (
-        EdifyRole.IMPACT_ASSESSMENT.value,
-        EdifyRole.ADMIN.value,
-    ):
+    role = request.user.active_role
+    if role == EdifyRole.ADMIN.value:
         return batches
+    if role == EdifyRole.IMPACT_ASSESSMENT.value:
+        scope = resolve_user_scope(request.user)
+        return batches.filter(
+            person_country_q(scope, "uploaded_by") | Q(uploaded_by=request.user.user_id)
+        )
     return batches.filter(uploaded_by=request.user.user_id)
 
 
@@ -291,7 +298,8 @@ def ssa_manual_entry_view(request):
                 request,
                 (
                     f"SSA score saved for {form.school.name}. "
-                    f"FY {result['fy']} average: {result['averageScore']:.1f}."
+                    f"FY {result['fy']} average: {result['averageScore']:.1f}. "
+                    "It counts once a different verifier confirms it."
                 ),
             )
             return local_redirect(f"/schools/{form.school.id}#ssa-timeline")
@@ -387,7 +395,7 @@ def ssa_upload_preview_view(request, batch_id):
         result = import_ssa_batch(batch, request.user)
         messages.success(
             request,
-            f"Import finalized: {result['created']} records verified, {result['unmatched']} unmatched rows queued.",
+            f"Import finalized: {result['created']} records wait for verification, {result['unmatched']} unmatched rows queued.",
         )
         return local_redirect(f"/ssa/upload/{batch.id}/result/")
 
@@ -414,73 +422,187 @@ def ssa_upload_preview_view(request, batch_id):
 
 @require_page_permission("ssa")
 def ssa_upload_result_view(request, batch_id):
+    """What an import did, row by row where it matters.
+
+    The page used to show four counts and tell the reader to "review any
+    unmatched or invalid rows below" with nothing below, then send them to the
+    planning board, which Impact Assessment cannot plan into. It now lists the
+    blocked rows with the reason each was refused, and links the collection
+    worklist and the verification queue the imported records wait in.
+    """
+    from apps.analytics.ia_collection import db_page
+
     if not _may_upload_ssa(request):
         return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
     batch = get_object_or_404(_visible_batches(request), id=batch_id)
     rows = batch.rows.all()
-
+    counts = {
+        row["status"]: row["n"]
+        for row in rows.order_by().values("status").annotate(n=Count("id"))
+    }
+    blocked = db_page(
+        rows.filter(status="blocked").order_by("row_number"),
+        request.GET.get("blocked_page"),
+    )
+    blocked["rows"] = [
+        {
+            "row_number": row.row_number,
+            "school_id": row.school_id or "—",
+            "date": row.date_of_ssa or "—",
+            "errors": "; ".join(row.validation_errors or []) or "Refused",
+        }
+        for row in blocked["rows"]
+    ]
+    created = counts.get("ready", 0)
     context = {
         "batch": batch,
-        "processed": rows.count(),
-        "created": rows.filter(status="ready").count(),
-        "unmatched": rows.filter(status="unmatched").count(),
-        "failed": rows.filter(status="blocked").count(),
-        "pending_verification": rows.filter(
-            status="ready"
-        ).count(),  # since they land as pending
+        "processed": sum(counts.values()),
+        "created": created,
+        "unmatched": counts.get("unmatched", 0),
+        "failed": counts.get("blocked", 0),
+        # Imported records land pending until a verifier other than the
+        # uploader confirms them (IA review, 2026-09-13).
+        "pending_verification": created,
+        "blocked": blocked,
     }
     return render(request, "pages/ssa/upload_result.html", context)
 
 
+@require_page_permission("ia_upload_center")
+def ssa_upload_history_view(request):
+    """Every SSA import this reader may open, with what each one did.
+
+    Upload history used to be the School upload history's global last fifty
+    (`UploadBatch.objects.all()`), outside the Impact Assessment navigation.
+    This lists SSAImportBatch rows in the reader's country, counted in one
+    query, paged in the database, each opening its result page.
+    """
+    from apps.analytics.ia_collection import db_page
+
+    if not _may_upload_ssa(request):
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
+    batches = _visible_batches(request).annotate(
+        ready_n=Count("rows", filter=Q(rows__status="ready")),
+        unmatched_n=Count("rows", filter=Q(rows__status="unmatched")),
+        blocked_n=Count("rows", filter=Q(rows__status="blocked")),
+    )
+    has_blocked = request.GET.get("has_blocked") == "1"
+    mine = request.GET.get("mine") == "1"
+    if has_blocked:
+        batches = batches.filter(blocked_n__gt=0)
+    if mine:
+        batches = batches.filter(uploaded_by=request.user.user_id)
+    page = db_page(
+        batches.order_by("-created_at", "-id"), request.GET.get("history_page")
+    )
+    from django.contrib.auth import get_user_model
+
+    names = dict(
+        get_user_model()
+        .objects.filter(id__in={b.uploaded_by for b in page["rows"] if b.uploaded_by})
+        .values_list("id", "name")
+    )
+    page["rows"] = [
+        {
+            "id": batch.id,
+            "file_name": batch.file_name or "SSA import",
+            "uploaded_by": names.get(batch.uploaded_by, "Unknown user"),
+            "uploaded_on": timezone.localtime(batch.created_at),
+            "status": (batch.status or "").replace("_", " ").capitalize(),
+            "total": batch.total_rows or 0,
+            "ready": batch.ready_n,
+            "unmatched": batch.unmatched_n,
+            "blocked": batch.blocked_n,
+            "blocked_tone": "danger" if batch.blocked_n else "",
+            "url": f"/ssa/upload/{batch.id}/result/",
+        }
+        for batch in page["rows"]
+    ]
+    return render(
+        request,
+        "pages/ssa/upload_history.html",
+        {"pager": page, "has_blocked": has_blocked, "mine": mine},
+    )
+
+
+#: The two lists the verification queue shows.
+QUEUE_STATUSES = {
+    "pending": "Waiting for verification",
+    "returned": "Returned for correction",
+}
+QUEUE_URL = "/ssa/verification/"
+
+
+def _collector_label(record, names) -> str:
+    who = names.get(record.collected_by_user_id or record.uploaded_by, "")
+    kind = {"ia": "Impact Assessment", "partner": "Partner", "staff": "Staff"}.get(
+        record.collector_type, (record.collector_type or "").title()
+    )
+    return f"{who} ({kind})" if who else kind
+
+
+def _source_label(record) -> str:
+    from apps.ssa import services as svc
+
+    return {
+        svc.SOURCE_STAFF_KEYED: "Keyed on a visit"
+        if record.source_activity_id
+        else "Keyed by staff",
+        svc.SOURCE_IA_KEYED: "Keyed by Impact Assessment",
+        svc.SOURCE_FILE_IMPORT: "File import",
+        svc.SOURCE_PARTNER: "Partner submission",
+    }.get(record.verification_source or "", "Recorded")
+
+
 @require_page_permission("ssa")
 def ssa_verification_queue_view(request):
-    # The "ssa" page permission is role-only. Without a scope filter this
-    # listed every pending SSA record country-wide, and the POST branch below
-    # accepted verify/return on any id -- so a CCEO could confirm or reject
-    # another region's assessments, which then feed that region's
-    # recommendations and impact numbers.
-    scope = resolve_user_scope(request.user)
-    records = (
-        SsaRecord.objects.filter(
-            deleted_at__isnull=True,
-            verification_status=VerificationStatus.PENDING.value,
-        )
-        .select_related("school")
-        .order_by("-date_of_ssa")
-    )
-    if not scope.country_scope:
-        records = (
-            records.filter(school_id__in=list(scope.school_ids or []))
-            if scope.school_ids
-            else records.none()
-        )
+    """SSA records waiting for a verifier other than their collector.
 
-    # Confirming an SSA is the QA control the entire scoring, targets and
-    # impact stack rests on — it is Impact Assessment's authority, not a
-    # by-product of being able to open the page. Everyone else (CD/PL/CCEO)
-    # reads the queue; only ia.verify holders may act on it.
-    can_verify = has_permission(request.user, Permission.IA_VERIFY.value)
+    Everyone with the page reads the records in their reach — the country for
+    country roles, the portfolio for field roles; the queue used to narrow
+    portfolio roles only, so Impact Assessment and the Country Director saw
+    every country's assessments. Only a verifier acts, and only on records
+    `apps.ssa.services.verifiable_records` offers them: never scores they
+    collected or uploaded, and for the Country Director only scores Impact
+    Assessment collected (IA review, owner, 2026-09-13).
+    """
+    from apps.analytics.ia_collection import db_page
+    from apps.core.exceptions import Forbidden
+    from apps.core.scoping import owner_ids
+    from apps.ssa.services import (
+        readable_records,
+        return_record,
+        verifiable_records,
+        verify_record,
+    )
 
     if request.method == "POST":
-        if not can_verify:
+        # Confirming an SSA is the QA control the scoring, targets and impact
+        # stack rests on. Everyone else with the page reads the queue; a role
+        # that verifies nothing is refused before any record is looked up.
+        if not (
+            has_permission(request.user, Permission.IA_VERIFY.value)
+            or request.user.active_role == "CountryDirector"
+        ):
             return render_access_denied(
                 request,
                 "Only Impact Assessment may confirm or return an SSA record.",
             )
         record_id = request.POST.get("record_id")
         action = request.POST.get("action")
-        # Re-derive from the scoped queryset: taking the id straight from
+        # Re-derive from the reader's own records: taking the id straight from
         # POST would let a caller act on a record the list never showed them.
-        rec = records.filter(id=record_id).first()
+        rec = (
+            readable_records(request.user)
+            .select_related("school")
+            .filter(id=record_id)
+            .first()
+        )
         if rec is None:
             raise Http404("SSA record not found.")
-
         # The transition itself lives in apps.ssa.services: the authority
         # check, the readiness recompute and the audit row belong to it, not
         # to whichever page happens to be rendering the queue.
-        from apps.core.exceptions import Forbidden
-        from apps.ssa.services import return_record, verify_record
-
         try:
             if action == "verify":
                 verify_record(rec, request.user)
@@ -491,16 +613,259 @@ def ssa_verification_queue_view(request):
             elif action == "return":
                 return_record(rec, request.user, request.POST.get("reason", ""))
                 messages.warning(
-                    request, f"SSA for '{rec.school.name}' returned for correction."
+                    request,
+                    f"SSA for '{rec.school.name}' returned for correction; "
+                    "the collector has been told why.",
                 )
         except Forbidden as exc:
             return render_access_denied(request, str(exc))
+        except BadRequest as exc:
+            messages.error(request, str(getattr(exc, "detail", exc)))
+        from apps.frontend.views.hr_programme_views import _back
 
-        return redirect("/ssa/verification/")
+        return _back(request, QUEUE_URL)
 
+    status = request.GET.get("status", "")
+    status = status if status in QUEUE_STATUSES else "pending"
+    mine = request.GET.get("mine") == "1"
+    own = [str(i) for i in owner_ids(request.user) if i]
+    readable = readable_records(request.user)
+    decidable = verifiable_records(request.user)
+    records = readable.filter(verification_status=status)
+    if mine:
+        records = (
+            records.filter(collected_by_user_id__in=own) if own else records.none()
+        )
+    page = db_page(
+        records.select_related(
+            "school", "school__district", "source_activity"
+        ).order_by("-date_of_ssa", "id"),
+        request.GET.get("records_page"),
+    )
+    page_records = page["rows"]
+    decidable_ids = set(
+        decidable.filter(id__in=[r.id for r in page_records]).values_list(
+            "id", flat=True
+        )
+    )
+    from django.contrib.auth import get_user_model
+
+    names = dict(
+        get_user_model()
+        .objects.filter(
+            id__in={
+                value
+                for r in page_records
+                for value in (
+                    r.collected_by_user_id,
+                    r.uploaded_by,
+                    r.returned_by_user_id,
+                )
+                if value
+            }
+        )
+        .values_list("id", "name")
+    )
+    rows = []
+    for record in page_records:
+        is_own = bool(
+            own and {record.collected_by_user_id, record.uploaded_by} & set(own)
+        )
+        can_decide = record.id in decidable_ids and status == "pending"
+        if status == "returned":
+            state = f"Returned by {names.get(record.returned_by_user_id, 'a verifier')}: {record.return_reason or 'no reason recorded'}"
+            tone = "danger"
+        elif can_decide:
+            state, tone = "Awaiting your verification", "warning"
+        elif is_own:
+            state, tone = "Your scores: a different verifier confirms them", "neutral"
+        else:
+            state, tone = "Awaiting a verifier", "neutral"
+        visit_url = ""
+        visit = record.source_activity
+        if visit is not None:
+            # The door the reader decides the visit through: a verifier opens
+            # staff work in its review workspace and partner work in Partner
+            # Evidence; the collector opens their own plan.
+            if request.user.active_role in ("ImpactAssessment", "CountryDirector"):
+                visit_url = (
+                    f"/ia/partner-evidence/{visit.id}/"
+                    if visit.delivery_type == "partner"
+                    else f"/ia/verification/{visit.id}/"
+                )
+            else:
+                visit_url = f"/my-plan/{visit.id}"
+        rows.append(
+            {
+                "id": record.id,
+                "school": record.school.name,
+                "school_id": record.school.school_id,
+                "school_url": f"/schools/{record.school_id}#ssa-timeline",
+                "district": getattr(record.school.district, "name", "") or "—",
+                "collector": _collector_label(record, names),
+                "source": _source_label(record),
+                "date": timezone.localtime(record.date_of_ssa).date()
+                if record.date_of_ssa
+                else None,
+                "average": record.average_score,
+                "state": state,
+                "tone": tone,
+                "can_decide": can_decide,
+                "visit_url": visit_url,
+            }
+        )
     context = {
-        "records": records,
-        "total_pending": records.count(),
-        "can_verify": can_verify,
+        "rows": rows,
+        "pager": page,
+        "status": status,
+        "status_label": QUEUE_STATUSES[status],
+        "mine": mine,
+        "counts": {
+            "pending": readable.filter(verification_status="pending").count(),
+            "returned": readable.filter(verification_status="returned").count(),
+            "decidable": decidable.count(),
+        },
+        # Kept for templates and tests that ask whether the reader may verify
+        # anything at all.
+        "can_verify": has_permission(request.user, Permission.IA_VERIFY.value)
+        or request.user.active_role == "CountryDirector",
+        "total_pending": page["total"] if status == "pending" else None,
     }
     return render(request, "pages/ssa/verification_queue.html", context)
+
+
+@require_page_permission("ssa")
+def ssa_return_drawer_view(request, record_id):
+    """One-column drawer: the reason a verifier returns an SSA record."""
+    from apps.frontend.views.hr_programme_views import _drawer, _field
+    from apps.ssa.services import verifiable_records
+
+    record = (
+        verifiable_records(request.user)
+        .select_related("school")
+        .filter(id=record_id)
+        .first()
+    )
+    if record is None:
+        return _drawer(
+            request,
+            title="Return SSA",
+            subtitle="Not available",
+            empty=(
+                "This SSA is not waiting for your verification: it was decided "
+                "already, it is outside your country, or you collected it."
+            ),
+        )
+    when = timezone.localtime(record.date_of_ssa).date() if record.date_of_ssa else None
+    return _drawer(
+        request,
+        title="Return SSA for correction",
+        subtitle=record.school.name,
+        action=QUEUE_URL,
+        facts=[
+            {
+                "label": "School",
+                "value": f"{record.school.name} ({record.school.school_id})",
+            },
+            {"label": "Assessment date", "value": f"{when:%-d %b %Y}" if when else "—"},
+            {"label": "Average score", "value": record.average_score},
+            {"label": "How it arrived", "value": _source_label(record)},
+        ],
+        fields=[
+            _field("record_id", "", type="hidden", value=record.id),
+            _field("action", "", type="hidden", value="return"),
+            _field(
+                "reason",
+                "What needs correcting",
+                type="textarea",
+                required=True,
+                rows=4,
+                maxlength=2000,
+                help="The collector is notified with this reason.",
+            ),
+        ],
+        submit="Return SSA",
+        note="A returned SSA counts nowhere until it is re-keyed and confirmed.",
+        note_tone="warning",
+    )
+
+
+@require_page_permission("ia_dashboard")
+def ia_collection_ask_owner_action(request, school_pk):
+    """Ask a school's owner to collect its SSA (IA review, owner, 2026-09-13).
+
+    Impact Assessment never plans into a CCEO or Programme Lead portfolio. It
+    sends the owner the `no_ssa` TeamAction instead — the same record a
+    Programme Lead's "Send" creates, deduplicated by condition, notified,
+    threaded and audited by `apps.planning.action_service.send_action` — and
+    the action closes itself when a confirmed SSA for this financial year
+    exists. Only Impact Assessment sends; the Country Director reads the
+    worklist.
+    """
+    from apps.core.fy import get_operational_fy
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views.hr_programme_views import _back
+    from apps.analytics.ia_collection import collection_schools
+    from apps.planning.action_service import ActionError, send_action
+    from apps.planning.urgent_attention import condition_key
+
+    fallback = "/ia/dashboard/?view=collection"
+    if request.method != "POST":
+        return local_redirect(fallback)
+    if request.user.active_role != EdifyRole.IMPACT_ASSESSMENT.value:
+        return render_access_denied(
+            request, "Only Impact Assessment asks a school's owner to collect an SSA."
+        )
+    school = collection_schools(request.user).filter(id=school_pk).first()
+    if school is None:
+        raise Http404("School not found in your country.")
+    fy = get_operational_fy()
+    if SsaRecord.objects.filter(
+        school=school,
+        fy=fy,
+        verification_status=VerificationStatus.CONFIRMED.value,
+        deleted_at__isnull=True,
+    ).exists():
+        messages.info(request, f"{school.name} already has a confirmed SSA for FY{fy}.")
+        return _back(request, fallback)
+    issue = {
+        "key": "no_ssa",
+        "label": "No SSA",
+        "severity": "critical",
+        "detail": "Current verified SSA is required before intervention performance "
+        "can be determined.",
+        "condition_key": condition_key(school.id, "no_ssa", fy),
+    }
+    # The owner the worklist names: the school's account owner, in the
+    # StaffProfile space (apps.clusters.eligibility); `send_action` falls back
+    # to the portfolio assignment when no account owner is matched.
+    from apps.accounts.models import StaffProfile
+    from apps.clusters.eligibility import portfolio_owner_profile_id
+
+    owner_id = portfolio_owner_profile_id(school)
+    recipient = (
+        StaffProfile.objects.select_related("user").filter(id=owner_id).first()
+        if owner_id
+        else None
+    )
+    try:
+        action = send_action(
+            sender=request.user,
+            school=school,
+            issue=issue,
+            fy=fy,
+            recipient_staff=recipient,
+            note=(request.POST.get("note") or "").strip()
+            or "Impact Assessment asks for this school's SSA to be collected.",
+        )
+    except ActionError as exc:
+        messages.error(request, str(exc))
+        return _back(request, fallback)
+    from apps.planning.action_service import _name_of
+
+    messages.success(
+        request,
+        f"Asked {_name_of(action.recipient_id)} to collect the SSA for {school.name}. "
+        "The request closes itself when a confirmed SSA lands.",
+    )
+    return _back(request, fallback)

@@ -144,11 +144,15 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         record = SsaRecord.objects.get(school=school)
         self.assertEqual(record.scores.count(), 8)
         self.assertEqual(record.collector_type, "ia")
-        self.assertEqual(record.verification_status, "confirmed")
+        # Keyed by Impact Assessment, confirmed by somebody else (IA review,
+        # owner, 2026-09-13): the record waits, and the school's SSA is not
+        # done until it is confirmed.
+        self.assertEqual(record.verification_status, "pending")
+        self.assertEqual(record.verification_source, "ia_keyed")
         self.assertIsNone(record.new_enrollment)
         self.assertEqual(record.average_score, 4.5)
         school.refresh_from_db()
-        self.assertEqual(school.current_fy_ssa_status, "done")
+        self.assertNotEqual(school.current_fy_ssa_status, "done")
 
     def test_manual_ssa_form_prefills_school_and_renders_all_scores(self):
         school = School.objects.create(

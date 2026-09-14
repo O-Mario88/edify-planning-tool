@@ -76,6 +76,22 @@ class IAPerformanceTestBase(TestCase):
             is_active=True,
         )
         self.ia_sp = StaffProfile.objects.create(user=self.ia, title="IA")
+        # The field officer whose work the queue holds. It used to be the IA
+        # officer's own staff profile, which nobody may verify for themselves
+        # (2026-09-03) and the queue no longer lists (IA review, 2026-09-13).
+        officer = User.objects.create_user(
+            email="ia-perf-officer@edify.test",
+            name="IA Perf Officer",
+            roles=[EdifyRole.PROJECT_COORDINATOR.value],
+            active_role=EdifyRole.PROJECT_COORDINATOR.value,
+            password="x",
+            is_active=True,
+        )
+        # Not a CCEO or Programme Lead, so the leadership roll-ups the
+        # dashboard tests count stay exactly the monitored people they create.
+        self.officer_sp = StaffProfile.objects.create(
+            user=officer, title="Project Coordinator"
+        )
         self.client.force_login(self.ia)
         self._settle_session()
 
@@ -111,7 +127,7 @@ class IAPerformanceTestBase(TestCase):
             activity_type="school_visit",
             delivery_type="staff",
             status="awaiting_ia_verification",
-            responsible_staff_id=self.ia_sp.id,
+            responsible_staff_id=self.officer_sp.id,
             fy=FY,
             quarter="Q3",
             planned_date=date(2026, 4, 10),
@@ -178,15 +194,18 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         )
 
         response = self.client.get("/ia/dashboard/?view=operations")
+        # Regional performance and district monitoring are the Map view's
+        # tables since each view builds only what it renders (2026-09-13).
+        map_context = self.client.get("/ia/dashboard/?view=map").context
 
         district = next(
             row
-            for row in response.context["district_performance"]
+            for row in map_context["district_performance"]
             if row["name"] == self.district.name
         )
         region = next(
             row
-            for row in response.context["region_performance"]
+            for row in map_context["region_performance"]
             if row["name"] == self.region.name
         )
         leaders = {
@@ -200,7 +219,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
 
         # The district sits under its sub-region group, and the CCEO under the
         # Program Lead who supervises them (owner, 2026-09-05).
-        groups = response.context["district_groups"]
+        groups = map_context["district_groups"]
         home = next(
             g
             for g in groups

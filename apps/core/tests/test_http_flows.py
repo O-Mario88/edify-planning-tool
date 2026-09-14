@@ -162,9 +162,13 @@ class CceoJourneyFlowTest(BaseFlowTest):
         r = self.client.get("/evidence/")
         self.assertEqual(r.status_code, 200)
 
-    def test_today_renders_for_cceo(self):
+    def test_today_opens_the_dashboard_today_view_for_cceo(self):
         r = self.client.get("/today")
+        self.assertRedirects(r, "/dashboard?view=today", fetch_redirect_response=False)
+        r = self.client.get("/dashboard?view=today")
         self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'hx-get="/today/panel"')
+        self.assertEqual(self.client.get("/today/panel").status_code, 200)
 
     def test_calendar_renders_for_cceo(self):
         r = self.client.get("/calendar")

@@ -869,8 +869,10 @@ def _workspace_panels(principal, cceos, fy, month, week_base, plans):
                     "tone": "success",
                 },
             ],
-            "link": "/accounts/approval-history",
-            "link_label": "View all activity",
+            # Approval history is the money desk's page; a Programme Lead
+            # cannot open it (Programme Lead walk, 2026-09-14).
+            "link": None,
+            "link_label": "",
         },
         "progress": progress_panel(
             f"{month_name} Plan & Budget Approval",
@@ -903,7 +905,7 @@ def _workspace_panels(principal, cceos, fy, month, week_base, plans):
                 )[:200]
             ],
         ),
-        "recent_link": "/accounts/approval-history",
+        "recent_link": None,
     }
 
 

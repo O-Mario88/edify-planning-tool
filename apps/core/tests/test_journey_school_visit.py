@@ -471,11 +471,14 @@ class SchoolVisitSpineJourneyTest(TestCase):
             },
             who=self.cceo,
         )
+        # The scores are linked to the visit and wait for a verifier other
+        # than the CCEO who keyed them (IA review, owner, 2026-09-13); the
+        # visit itself is verifiable because its scores are entered.
         self.assertTrue(
             SsaRecord.objects.filter(
                 school=self.school,
-                verification_status="confirmed",
-                date_of_ssa__date__gte=timezone.localdate(),
+                verification_status="pending",
+                source_activity=activity,
             ).exists(),
             "completing an SSA collection visit recorded no assessment",
         )

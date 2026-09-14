@@ -83,66 +83,210 @@ def _recent_fy_labels(count: int = 4) -> list[str]:
 #: and those two numbers disagreeing would be worse than either being absent.
 IA_VERIFICATION_SLA_HOURS = 24
 
+#: The activity types the queue ranks first: core package delivery and the
+#: baseline assessment visit, whose verification gates finance and outcomes.
+IA_CRITICAL_ACTIVITY_TYPES = ("core_visit", "core_training", "baseline_ssa_visit")
+
+#: Statuses of work that has been delivered and should carry a Salesforce ID.
+#: Local on purpose, and NOT the platform's ACHIEVED_STATUSES: this asks "what
+#: work has been done and is therefore reconcilable", which includes
+#: `completed` work that has not yet reached IA and excludes
+#: accountant_confirmed, a finance state IA does not act on.
+IA_REVIEWABLE_STATUSES = ("completed", "ia_verified", "closed")
+
+
+# ── What a verifier's pages count (IA review, owner, 2026-09-13) ─────────────
+# Impact Assessment is country-bound, and nobody verifies their own work. Every
+# count, list and roll-up on the queue and the dashboard is read through these
+# helpers, so a number on a tile and the rows it drills into can never come from
+# two different populations.
+
+
+def _ia_scope(request):
+    """The reader's resolved scope, once per request."""
+    scope = getattr(request, "_ia_scope", None)
+    if scope is None:
+        scope = resolve_user_scope(request.user)
+        request._ia_scope = scope
+    return scope
+
+
+def _ia_own_ids(request) -> list[str]:
+    """Both ids the reader's own field work can be recorded against."""
+    from apps.core.scoping import owner_ids
+
+    return [str(i) for i in owner_ids(request.user) if i]
+
+
+def _ia_school_scope(request):
+    """The schools this reader's verification pages aggregate over: the
+    country for a country-bound verifier or Country Director, the portfolio for
+    an IA assistant, the deployment for Admin."""
+    from apps.core.scoping import scoped_school_queryset
+    from apps.schools.models import School
+
+    return scoped_school_queryset(
+        _ia_scope(request), School.objects.filter(deleted_at__isnull=True)
+    )
+
+
+def _ia_activities(request):
+    """Every live activity inside this verifier's reach."""
+    return Activity.objects.filter(deleted_at__isnull=True).filter(_ia_reach_q(request))
+
+
+def _ia_staff_queue(request, activities=None):
+    """Staff submissions waiting on this verifier: the queue's population.
+
+    Partner submissions are not here: they arrive without a Salesforce ID and
+    are verified — Salesforce entry included — in Partner Evidence, so listing
+    one here too offered a second door that skipped that step. The reader's own
+    field work is not here either: they may not verify it (a colleague does,
+    or the Country Director as fallback verifier)."""
+    base = activities if activities is not None else _ia_activities(request)
+    queue = (
+        base.filter(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+        .exclude(delivery_type="partner")
+        .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+    )
+    own = _ia_own_ids(request)
+    if own:
+        queue = queue.exclude(responsible_staff_id__in=own)
+    return queue
+
+
+def _ia_evidence_ready_q() -> Q:
+    """An activity with at least one uploaded file that cleared quarantine."""
+    from django.db.models import Exists, OuterRef
+
+    from apps.evidence.models import EvidenceRecord
+
+    return Q(
+        Exists(
+            EvidenceRecord.objects.filter(activity_id=OuterRef("pk"), quarantined=False)
+        )
+    )
+
+
+def _ia_unmatched_ssa(request):
+    """Imported SSA rows nobody could match, inside the reader's country (one
+    definition, shared with the To-Do: apps.activities.ia_todos)."""
+    from apps.activities.ia_todos import unmatched_ssa_for_scope
+
+    return unmatched_ssa_for_scope(_ia_scope(request))
+
+
+def _ia_uploads(request):
+    """Upload batches placed in the reader's country by their uploader."""
+    from apps.core.scoping import country_bound, country_user_ids
+    from apps.schools.models import UploadBatch
+
+    batches = UploadBatch.objects.all()
+    scope = _ia_scope(request)
+    if country_bound(scope):
+        batches = batches.filter(uploaded_by__in=country_user_ids(scope))
+    return batches
+
+
+def _ia_staff_ids_named(value: str) -> set:
+    """Staff profile and user ids whose person's name contains `value`.
+
+    responsible_staff_id is a dual id-space field: it holds a StaffProfile id on
+    some rows and a User id on others. Resolving names through only one of
+    those spaces would quietly match half the queue and look like it worked,
+    so both are resolved and unioned."""
+    from apps.accounts.models import StaffProfile, User
+
+    return set(
+        StaffProfile.objects.filter(user__name__icontains=value).values_list(
+            "id", flat=True
+        )
+    ) | set(User.objects.filter(name__icontains=value).values_list("id", flat=True))
+
+
+#: The three drill-downs the dashboard's headline tiles open (IA review,
+#: 2026-09-13). Each narrows the queue to exactly the population its tile
+#: counted and shows itself as a removable chip; they used to be query
+#: parameters the queue silently ignored.
+IA_QUEUE_DRILLDOWNS = {
+    "evidence": {"ready": "Evidence ready for review"},
+    "age": {"overdue": "Waiting longer than 24 hours"},
+    "sf_id": {"missing": "Delivered work with no Salesforce ID"},
+}
+
 
 @require_page_permission("ia_verification_queue")
 def ia_verification_queue_view(request):
     """Central queue of activities waiting for verification.
 
     Defense-in-depth (2026-07-15 preventive-verification mandate §11): the
-    no-SF-ID exclusion below keeps STAFF submissions honest — their path
-    into "awaiting_ia_verification" requires a Salesforce ID at complete().
+    no-SF-ID exclusion keeps STAFF submissions honest — their path into
+    "awaiting_ia_verification" requires a Salesforce ID at complete().
     PARTNER submissions deliberately arrive WITHOUT one (IA enters it at
-    Confirm Salesforce Entry, §12) — they are therefore invisible here by
-    design and live in their own queue at /ia/partner-evidence/."""
+    Confirm Salesforce Entry, §12) — they live in their own queue at
+    /ia/partner-evidence/ and are excluded here by delivery type as well.
+
+    Bounded to the verifier's country and never listing their own field work
+    (IA review, 2026-09-13; see _ia_staff_queue). `?sf_id=missing` is the one
+    drill-down that changes the population: delivered work still missing its
+    Salesforce ID, which by construction can never be waiting in the queue."""
     overdue_before = timezone.now() - timedelta(hours=IA_VERIFICATION_SLA_HOURS)
-    activities = (
-        Activity.objects.filter(
-            deleted_at__isnull=True, status="awaiting_ia_verification"
+    reach = _ia_activities(request)
+
+    drilldowns = {
+        key: request.GET.get(key)
+        for key, options in IA_QUEUE_DRILLDOWNS.items()
+        if request.GET.get(key) in options
+    }
+    missing_sf_mode = drilldowns.get("sf_id") == "missing"
+    if missing_sf_mode:
+        population = reach.filter(status__in=IA_REVIEWABLE_STATUSES).filter(
+            Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
         )
-        .filter(_ia_reach_q(request))
-        .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
-        .annotate(
-            # The queue is operational, not chronological decoration:
-            # critical Core/SSA work first, then SLA breaches, then the oldest
-            # submission. These ranks are explicit so database ordering and
-            # the risk label shown to IA cannot drift apart.
-            ia_risk_rank=Case(
-                When(
-                    activity_type__in=[
-                        "core_visit",
-                        "core_training",
-                        "baseline_ssa_visit",
-                    ],
-                    then=Value(0),
-                ),
-                default=Value(1),
-                output_field=IntegerField(),
-            ),
-            ia_overdue_rank=Case(
-                When(submitted_to_ia_at__lte=overdue_before, then=Value(0)),
-                default=Value(1),
-                output_field=IntegerField(),
-            ),
-            ia_submitted_at=Coalesce(
-                "submitted_to_ia_at", "updated_at", output_field=DateTimeField()
-            ),
-        )
-        .order_by("ia_risk_rank", "ia_overdue_rank", "ia_submitted_at", "id")
-    )
+    else:
+        population = _ia_staff_queue(request, reach)
+    if drilldowns.get("age") == "overdue":
+        population = population.filter(submitted_to_ia_at__lte=overdue_before)
+    if drilldowns.get("evidence") == "ready":
+        population = population.filter(_ia_evidence_ready_q())
+
+    activities = population.annotate(
+        # The queue is operational, not chronological decoration:
+        # critical Core/SSA work first, then SLA breaches, then the oldest
+        # submission. These ranks are explicit so database ordering and
+        # the risk label shown to IA cannot drift apart.
+        ia_risk_rank=Case(
+            When(activity_type__in=IA_CRITICAL_ACTIVITY_TYPES, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        ),
+        ia_overdue_rank=Case(
+            When(submitted_to_ia_at__lte=overdue_before, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        ),
+        ia_submitted_at=Coalesce(
+            "submitted_to_ia_at", "updated_at", output_field=DateTimeField()
+        ),
+    ).order_by("ia_risk_rank", "ia_overdue_rank", "ia_submitted_at", "id")
 
     # ── KPI Strip Calculation ────────────────────────────────────────────────
     # NOTE: the three counts that describe the QUEUE (waiting, SSA pending,
     # high priority) are computed after filtering — see below. They used to be
     # computed here, before the filters were even read, so the district/staff/
     # type controls changed the table and never touched the headline above it.
-
+    # The throughput figures below read the verifier's reach, not the
+    # deployment: another country's verifications are not this desk's day.
+    reach_ids = reach.values("id")
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     verified_today = VerificationHistory.objects.filter(
-        verified_at__gte=today_start
+        verified_at__gte=today_start, activity_id__in=reach_ids
     ).count()
 
     returned_today = VerificationDecision.objects.filter(
-        decision="RETURN", decided_at__gte=today_start
+        decision="RETURN",
+        decided_at__gte=today_start,
+        verification__activity_id__in=reach_ids,
     ).count()
 
     # Verification SLA is measured from the immutable IA-queue entry time,
@@ -152,6 +296,7 @@ def ia_verification_queue_view(request):
     sla_history = VerificationHistory.objects.filter(
         verified_at__gte=timezone.now() - timedelta(days=30),
         activity__submitted_to_ia_at__isnull=False,
+        activity_id__in=reach_ids,
     )
     turnaround = ExpressionWrapper(
         F("verified_at") - F("activity__submitted_to_ia_at"),
@@ -173,7 +318,7 @@ def ia_verification_queue_view(request):
     )
 
     duplicate_risks = (
-        DuplicateActivity.objects.filter(status="potential")
+        DuplicateActivity.objects.filter(status="potential", activity_id__in=reach_ids)
         .values("activity_id")
         .distinct()
         .count()
@@ -184,10 +329,10 @@ def ia_verification_queue_view(request):
     quarter_filter = request.GET.get("quarter")
     month_filter = request.GET.get("month")
     region_filter = request.GET.get("region")
-    district_filter = request.GET.get("district")
+    district_filter = (request.GET.get("district") or "").strip()
     cluster_filter = request.GET.get("cluster")
     school_filter = request.GET.get("school")
-    staff_filter = request.GET.get("staff")
+    staff_filter = (request.GET.get("staff") or "").strip()
     partner_filter = request.GET.get("partner")
     type_filter = request.GET.get("activity_type")
     project_filter = request.GET.get("project")
@@ -209,13 +354,24 @@ def ia_verification_queue_view(request):
     if region_filter:
         filtered_qs = filtered_qs.filter(school__region_id=region_filter)
     if district_filter:
-        filtered_qs = filtered_qs.filter(school__district_id=district_filter)
+        # The control is a text box ("Kampala, Masaka…"), so a district is
+        # matched by name as well as by id: filtering the id column on a typed
+        # name emptied the queue without saying why (filter contract).
+        filtered_qs = filtered_qs.filter(
+            Q(school__district_id=district_filter)
+            | Q(school__district__name__icontains=district_filter)
+            | Q(event_district__name__icontains=district_filter)
+        )
     if cluster_filter:
         filtered_qs = filtered_qs.filter(cluster_id=cluster_filter)
     if school_filter:
         filtered_qs = filtered_qs.filter(school_id=school_filter)
     if staff_filter:
-        filtered_qs = filtered_qs.filter(responsible_staff_id=staff_filter)
+        # Also a text box ("Filter by CCEO name…"): the name resolves to both
+        # id spaces responsible_staff_id may hold, and an exact id still works.
+        filtered_qs = filtered_qs.filter(
+            responsible_staff_id__in=_ia_staff_ids_named(staff_filter) | {staff_filter}
+        )
     if partner_filter:
         filtered_qs = filtered_qs.filter(assigned_partner_id=partner_filter)
     if type_filter:
@@ -234,36 +390,23 @@ def ia_verification_queue_view(request):
     # neither could be typed anywhere on the page.
     #
     # The Salesforce ID is the reason this matters most: every row in this
-    # queue is guaranteed to have one (see the exclude() above), so it is the
-    # one value that always identifies a record exactly.
+    # queue is guaranteed to have one (see _ia_staff_queue), so it is the one
+    # value that always identifies a record exactly.
     search_q = (request.GET.get("q") or "").strip()
     if search_q:
-        # responsible_staff_id is a dual id-space field: it holds a StaffProfile
-        # id on some rows and a User id on others. Resolving names through only
-        # one of those spaces would quietly match half the queue and look like
-        # it worked, so both are resolved and unioned.
-        from apps.accounts.models import StaffProfile, User
-
-        staff_name_ids = set(
-            StaffProfile.objects.filter(user__name__icontains=search_q).values_list(
-                "id", flat=True
-            )
-        ) | set(
-            User.objects.filter(name__icontains=search_q).values_list("id", flat=True)
-        )
         filtered_qs = filtered_qs.filter(
             Q(school__name__icontains=search_q)
             | Q(school__school_id__icontains=search_q)
             | Q(salesforce_activity_id__icontains=search_q)
             | Q(school__district__name__icontains=search_q)
-            | Q(responsible_staff_id__in=staff_name_ids)
+            | Q(responsible_staff_id__in=_ia_staff_ids_named(search_q))
         )
 
     # The queue KPIs, on the population the table below actually shows.
     waiting_count = filtered_qs.count()
     ssa_pending = filtered_qs.filter(ssa_collection_expected=True).count()
     high_priority = filtered_qs.filter(
-        activity_type__in=["core_visit", "core_training", "baseline_ssa_visit"]
+        activity_type__in=IA_CRITICAL_ACTIVITY_TYPES
     ).count()
 
     # Serialize for template table
@@ -309,14 +452,20 @@ def ia_verification_queue_view(request):
         data["has_evidence"] = a.id in activities_with_evidence
         data["has_sf_id"] = bool(a.salesforce_activity_id)
         data["has_ssa"] = bool(a.school_id) and a.school_id in schools_with_ssa
-        data["is_high_priority"] = a.activity_type in [
-            "core_visit",
-            "core_training",
-            "baseline_ssa_visit",
-        ]
+        data["is_high_priority"] = a.activity_type in IA_CRITICAL_ACTIVITY_TYPES
         submitted_at = a.submitted_to_ia_at or a.updated_at
         age_hours = max(0, int((now - submitted_at).total_seconds() // 3600))
         is_overdue = age_hours >= IA_VERIFICATION_SLA_HOURS
+        if missing_sf_mode:
+            salesforce_status = "Missing"
+            next_action = "No Salesforce ID — the responsible officer records it"
+        else:
+            salesforce_status = "Confirm ID"
+            next_action = (
+                "Evidence ready — verify Salesforce ID"
+                if data["has_evidence"]
+                else "Evidence missing — return to staff"
+            )
         data.update(
             {
                 "submitted_at": submitted_at,
@@ -337,12 +486,8 @@ def ia_verification_queue_view(request):
                 "evidence_status": (
                     "Ready for review" if data["has_evidence"] else "Evidence missing"
                 ),
-                "salesforce_status": "Confirm ID",
-                "next_action_status": (
-                    "Evidence ready — verify Salesforce ID"
-                    if data["has_evidence"]
-                    else "Evidence missing — return to staff"
-                ),
+                "salesforce_status": salesforce_status,
+                "next_action_status": next_action,
             }
         )
         serialized_queue.append(data)
@@ -361,9 +506,28 @@ def ia_verification_queue_view(request):
         )
         d["assignedPartnerName"] = _queue_partners.get(d.get("assignedPartnerId"), "")
 
+    # Each active drill-down as a chip, with the URL that removes it and keeps
+    # everything else the reader chose.
+    drilldown_chips = []
+    for key, value in drilldowns.items():
+        remaining = request.GET.copy()
+        remaining.pop(key, None)
+        remaining.pop("page", None)
+        query = remaining.urlencode()
+        drilldown_chips.append(
+            {
+                "key": key,
+                "value": value,
+                "label": IA_QUEUE_DRILLDOWNS[key][value],
+                "clear_url": "/ia/verification/" + (f"?{query}" if query else ""),
+            }
+        )
+
     context = {
         "queue": serialized_queue,
         "page_obj": page_obj,
+        "drilldowns": drilldown_chips,
+        "missing_sf_mode": missing_sf_mode,
         # The queue offered twelve dropdowns and nowhere to type. A reviewer is
         # usually handed one identifier — a Salesforce ID, a school name — and
         # had to translate it into filter selections to find the row.
@@ -412,6 +576,7 @@ def ia_verification_queue_view(request):
                 type_filter,
                 core_school_filter,
                 search_q,
+                drilldowns,
             )
         ),
     }
@@ -430,6 +595,11 @@ def ia_review_workspace_view(request, activity_id):
         id=activity_id,
         deleted_at__isnull=True,
     )
+    # Partner work is reviewed on the partner evidence page, which carries the
+    # Salesforce confirmation step this workspace does not (IA review,
+    # 2026-09-13).
+    if a.delivery_type == "partner":
+        return redirect(f"/ia/partner-evidence/{a.id}/")
 
     # Resolve checks
     checks = IAVerificationService.get_verification_checks(a)
@@ -536,6 +706,8 @@ def ia_verify_action(request, activity_id):
         id=activity_id,
         deleted_at__isnull=True,
     )
+    if a.delivery_type == "partner":
+        return redirect(f"/ia/partner-evidence/{a.id}/")
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
@@ -586,6 +758,8 @@ def ia_return_action(request, activity_id):
         id=activity_id,
         deleted_at__isnull=True,
     )
+    if a.delivery_type == "partner":
+        return redirect(f"/ia/partner-evidence/{a.id}/")
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
@@ -763,64 +937,451 @@ def ia_duplicate_action(request, duplicate_id):
     return redirect("/ia/duplicates/")
 
 
-def _ia_dashboard_context(request) -> dict:
-    """Everything the IA dashboard shows, computed live, for both of its homes.
+def _ia_week_window():
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=now.weekday())  # Monday
+    week_end = week_start + timedelta(days=6)
+    return now, today_start, week_start, week_end
 
-    /ia/dashboard/ stays Impact Assessment's own home inside the IA workspace;
-    the Analytics workspace reaches the same dashboard at
-    /analytics/verification-quality, as a tab of the one Analytics page
-    (owner, 2026-09-05).
+
+def _ia_header_context(request) -> dict:
+    """The fixed part of the IA dashboard: header, KPI strip and phone queue.
+
+    One strip, the same on every view and after every tab swap (owner rule:
+    the header, KPI strip and attention band never move). It used to render
+    only when the page was first loaded on Map or Operations, so a tab press
+    left the verification strip beside the Outcomes tiles, or took it away.
+    Six registry tiles, one per question the verification desk answers each
+    morning; each drills into a queue that shows exactly what it counted.
     """
-    from datetime import timedelta
+    from django.db.models import Count
+    from django.utils.timesince import timesince
 
+    from apps.accounts.models import StaffProfile, User
+
+    now, _today_start, week_start, week_end = _ia_week_window()
+    overdue_before = now - timedelta(hours=IA_VERIFICATION_SLA_HOURS)
+    activities = _ia_activities(request)
+    queue = _ia_staff_queue(request, activities)
+
+    queue_counts = queue.aggregate(
+        waiting=Count("id"),
+        overdue=Count(
+            "id",
+            filter=Q(
+                submitted_to_ia_at__isnull=False,
+                submitted_to_ia_at__lte=overdue_before,
+            ),
+        ),
+        evidence_ready=Count("id", filter=_ia_evidence_ready_q()),
+    )
+    ledger_counts = activities.aggregate(
+        missing_sf=Count(
+            "id",
+            filter=Q(status__in=IA_REVIEWABLE_STATUSES)
+            & (Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")),
+        ),
+        returned_open=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
+    )
+    unmatched_ssa_cnt = _ia_unmatched_ssa(request).count()
+
+    # ── The oldest waiting records (the phone's queue and primary action) ───
+    queue_activities = list(
+        queue.select_related("school", "school__district").order_by(
+            F("submitted_to_ia_at").asc(nulls_last=True), "updated_at"
+        )[:6]
+    )
+    staff_ids = {
+        a.responsible_staff_id for a in queue_activities if a.responsible_staff_id
+    }
+    user_names = (
+        dict(User.objects.filter(id__in=staff_ids).values_list("id", "name"))
+        if staff_ids
+        else {}
+    )
+    staff_profile_names = (
+        dict(
+            StaffProfile.objects.filter(id__in=staff_ids).values_list(
+                "id", "user__name"
+            )
+        )
+        if staff_ids
+        else {}
+    )
+    staff_names = {**user_names, **staff_profile_names}
+    queue_items = []
+    for activity in queue_activities:
+        submitted_at = activity.submitted_to_ia_at or activity.updated_at
+        age_hours = (now - submitted_at).total_seconds() / 3600
+        queue_items.append(
+            {
+                "id": str(activity.id),
+                "record_id": str(activity.id)[-8:].upper(),
+                "review_url": f"/ia/verification/{activity.id}/",
+                "school_id": activity.school_id,
+                "school": activity.school.name if activity.school else "Cluster-wide",
+                "district": (
+                    activity.school.district.name
+                    if activity.school and activity.school.district_id
+                    else "No district"
+                ),
+                "activity_type": activity.get_activity_type_display(),
+                "submitted_by": staff_names.get(
+                    activity.responsible_staff_id,
+                    activity.responsible_staff_id or "Unassigned",
+                ),
+                "submission_date": timezone.localtime(submitted_at).strftime(
+                    "%d %b %Y, %I:%M %p"
+                ),
+                "submitted_relative": f"{timesince(submitted_at, now)} ago",
+                "is_overdue": age_hours > IA_VERIFICATION_SLA_HOURS,
+            }
+        )
+
+    last_batch = _ia_uploads(request).order_by("-created_at").first()
+
+    kpi_strip_items = render_strip(
+        [
+            render_metric(
+                "ia_awaiting_verification",
+                MetricValue.measured(queue_counts["waiting"]),
+                drilldown_url="/ia/verification/",
+            ),
+            render_metric(
+                "ia_evidence_ready_for_review",
+                MetricValue.measured(queue_counts["evidence_ready"]),
+                drilldown_url="/ia/verification/?evidence=ready",
+            ),
+            render_metric(
+                "ia_salesforce_verification_pending",
+                MetricValue.measured(ledger_counts["missing_sf"]),
+                drilldown_url="/ia/verification/?sf_id=missing",
+            ),
+            render_metric(
+                "ia_returned_for_correction",
+                MetricValue.measured(ledger_counts["returned_open"]),
+                drilldown_url="/ia/returned/",
+            ),
+            render_metric(
+                "ia_unmatched_ssa_records",
+                MetricValue.measured(unmatched_ssa_cnt),
+                drilldown_url="/ssa/unmatched",
+            ),
+            render_metric(
+                "ia_verification_overdue",
+                MetricValue.measured(queue_counts["overdue"]),
+                drilldown_url="/ia/verification/?age=overdue",
+            ),
+        ]
+    )
+    date_range = (
+        f"{week_start.strftime('%b')} {week_start.day} – "
+        f"{week_end.strftime('%b')} {week_end.day}, {week_end.year}"
+    )
+    return {
+        "kpi_strip_items": kpi_strip_items,
+        "kpis": {
+            "waiting": queue_counts["waiting"],
+            "overdue": queue_counts["overdue"],
+            "evidence_ready": queue_counts["evidence_ready"],
+            "sf_queue": ledger_counts["missing_sf"],
+            "returned_open": ledger_counts["returned_open"],
+            "unmatched_ssa": unmatched_ssa_cnt,
+        },
+        "date_range": date_range,
+        "queue_items": queue_items,
+        "upload_status": {
+            "last_upload": last_batch.created_at if last_batch else None,
+        },
+        "mobile_primary_action": {
+            "label": "Review oldest record"
+            if queue_items
+            else "Open verification queue",
+            "url": queue_items[0]["review_url"] if queue_items else "/ia/verification/",
+        },
+        "ia_mobile_status": f"{queue_counts['waiting']} waiting",
+    }
+
+
+def _ia_districts(request):
+    """The districts this reader monitors: the country's, the portfolio's
+    for an IA assistant, every one for Admin."""
+    from apps.core.scoping import country_bound
+    from apps.geography.models import District
+
+    scope = _ia_scope(request)
+    districts = District.objects.all()
+    if country_bound(scope):
+        return districts.filter(region__country=scope.country)
+    if not scope.country_scope:
+        return districts.filter(id__in=_ia_school_scope(request).values("district_id"))
+    return districts
+
+
+def _ia_regions(request):
+    from apps.core.scoping import country_bound
+    from apps.geography.models import Region
+
+    scope = _ia_scope(request)
+    regions = Region.objects.all()
+    if country_bound(scope):
+        return regions.filter(country=scope.country)
+    if not scope.country_scope:
+        return regions.filter(id__in=_ia_school_scope(request).values("region_id"))
+    return regions
+
+
+def _ia_activity_rollup(queryset, geography_field):
+    from django.db.models import Count
+
+    from apps.targets.performance import ACHIEVED_STATUSES
+
+    return {
+        row[geography_field]: row
+        for row in queryset.exclude(**{f"{geography_field}__isnull": True})
+        .values(geography_field)
+        .annotate(
+            planned=Count("id"),
+            achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+            verified=Count("id", filter=Q(ia_verification_status="confirmed")),
+            waiting=Count(
+                "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+            ),
+            returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
+        )
+    }
+
+
+def _ia_merge_rollups(*rollups):
+    merged = {"planned": 0, "achieved": 0, "verified": 0, "waiting": 0, "returned": 0}
+    for rollup in rollups:
+        if not rollup:
+            continue
+        for key in merged:
+            merged[key] += rollup.get(key, 0)
+    merged["rate"] = (
+        round(merged["achieved"] / merged["planned"] * 100) if merged["planned"] else 0
+    )
+    return merged
+
+
+def _ia_performance_activities(request):
+    """This FY's live plans in reach: the base of every roll-up below."""
+    from apps.core.fy import get_operational_fy
+
+    return (
+        _ia_activities(request)
+        .filter(fy=get_operational_fy())
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+    )
+
+
+def _ia_school_reach_sets(request, performance_qs):
+    """School reach (owner, 2026-09-05): active schools per district, and the
+    schools with planned and achieved work per district and per owner.
+
+    Two queries serve every row on the page: the active schools in scope with
+    their district, and the year's activities with owner, school, district and
+    status; everything else is set arithmetic, so the query count stays a
+    constant."""
+    from apps.schools.lifecycle_service import active_schools
+    from apps.targets.performance import ACHIEVED_STATUSES
+
+    active_school_ids = set()
+    schools_by_district: dict = {}
+    for school_id, district_id in active_schools(_ia_school_scope(request)).values_list(
+        "id", "district_id"
+    ):
+        active_school_ids.add(school_id)
+        if district_id:
+            schools_by_district[district_id] = (
+                schools_by_district.get(district_id, 0) + 1
+            )
+    planned_by_district: dict = {}
+    achieved_by_district: dict = {}
+    planned_by_owner: dict = {}
+    achieved_by_owner: dict = {}
+    for owner_id, school_id, district_id, status in performance_qs.exclude(
+        school_id__isnull=True
+    ).values_list("responsible_staff_id", "school_id", "school__district_id", "status"):
+        planned_by_owner.setdefault(owner_id, set()).add(school_id)
+        if district_id:
+            planned_by_district.setdefault(district_id, set()).add(school_id)
+        if status in ACHIEVED_STATUSES:
+            achieved_by_owner.setdefault(owner_id, set()).add(school_id)
+            if district_id:
+                achieved_by_district.setdefault(district_id, set()).add(school_id)
+    return {
+        "active_school_ids": active_school_ids,
+        "schools_by_district": schools_by_district,
+        "planned_by_district": planned_by_district,
+        "achieved_by_district": achieved_by_district,
+        "planned_by_owner": planned_by_owner,
+        "achieved_by_owner": achieved_by_owner,
+    }
+
+
+def _ia_reach_from_sets(assigned, planned, achieved):
+    return {
+        "schools": len(assigned),
+        "schools_planned": len(planned),
+        "schools_achieved": len(achieved),
+        "schools_pct": round(len(achieved) / len(assigned) * 100) if assigned else 0,
+    }
+
+
+def _ia_merge_school_reach(rows):
+    schools = sum(row["schools"] for row in rows)
+    achieved = sum(row["schools_achieved"] for row in rows)
+    return {
+        "schools": schools,
+        "schools_planned": sum(row["schools_planned"] for row in rows),
+        "schools_achieved": achieved,
+        "schools_pct": round(achieved / schools * 100) if schools else 0,
+    }
+
+
+def _ia_geography_context(request, performance_qs=None, reach_sets=None) -> dict:
+    """Regional performance and district monitoring, bounded to the reader's
+    country: the Map view's tables and the Verification Quality tab's cards.
+
+    These are completion/verification facts from the Activity ledger, not a
+    separate reporting store. Programme activities without a school inherit
+    geography through event_district, so central work is not lost from the
+    regional and district views.
+    """
+    if performance_qs is None:
+        performance_qs = _ia_performance_activities(request)
+    if reach_sets is None:
+        reach_sets = _ia_school_reach_sets(request, performance_qs)
+
+    school_district_rollup = _ia_activity_rollup(performance_qs, "school__district_id")
+    event_district_rollup = _ia_activity_rollup(performance_qs, "event_district_id")
+
+    def _school_reach(district_id):
+        schools = reach_sets["schools_by_district"].get(district_id, 0)
+        achieved = len(reach_sets["achieved_by_district"].get(district_id, set()))
+        return {
+            "schools": schools,
+            "schools_planned": len(
+                reach_sets["planned_by_district"].get(district_id, set())
+            ),
+            "schools_achieved": achieved,
+            "schools_pct": round(achieved / schools * 100) if schools else 0,
+        }
+
+    district_performance = []
+    # Districts fold under their sub-region, the way clusters fold under the
+    # person who holds them: one row per sub-region carrying the roll-up,
+    # opened into its districts (owner, 2026-09-05). A district with no
+    # sub-region sits under "Other districts" in its region rather than
+    # vanishing.
+    district_groups_by_key: dict = {}
+    for district in (
+        _ia_districts(request)
+        .select_related("region", "sub_region")
+        .order_by("region__name", "sub_region__name", "name")
+    ):
+        metrics = _ia_merge_rollups(
+            school_district_rollup.get(district.id),
+            event_district_rollup.get(district.id),
+        )
+        row = {
+            "name": district.name,
+            "region": district.region.name,
+            "sub_region": district.sub_region.name if district.sub_region else None,
+            **metrics,
+            **_school_reach(district.id),
+        }
+        district_performance.append(row)
+        key = (district.region.name, row["sub_region"] or "")
+        group = district_groups_by_key.setdefault(
+            key,
+            {
+                "key": f"{district.region_id}-{district.sub_region_id or 'other'}",
+                "name": row["sub_region"] or "Other districts",
+                "region": district.region.name,
+                "districts": [],
+            },
+        )
+        group["districts"].append(row)
+    district_groups = []
+    for group in district_groups_by_key.values():
+        group.update(_ia_merge_rollups(*group["districts"]))
+        group.update(_ia_merge_school_reach(group["districts"]))
+        group["count"] = len(group["districts"])
+        district_groups.append(group)
+
+    school_region_rollup = _ia_activity_rollup(performance_qs, "school__region_id")
+    event_region_rollup = _ia_activity_rollup(
+        performance_qs, "event_district__region_id"
+    )
+    region_performance = [
+        {
+            "name": region.name,
+            **_ia_merge_rollups(
+                school_region_rollup.get(region.id), event_region_rollup.get(region.id)
+            ),
+        }
+        for region in _ia_regions(request).order_by("name")
+    ]
+    return {
+        "district_performance": district_performance,
+        "district_groups": district_groups,
+        "region_performance": region_performance,
+    }
+
+
+def _ia_operations_context(request, header: dict) -> dict:
+    """The verification operations beneath the fixed header: the queue, open
+    queues, exceptions, activity flow, CCEO and Programme Lead performance,
+    quality, coverage and SSA review — every figure bounded to the reader's
+    country (IA review, 2026-09-13), where they used to read the deployment."""
     from django.db.models import Avg, Count
     from django.db.models.functions import TruncWeek
     from django.utils.timesince import timesince
 
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+    from apps.accounts.models import (
+        StaffProfile,
+        StaffSchoolAssignment,
+        StaffSupervisorAssignment,
+        User,
+    )
     from apps.core.enums import EvidenceKind, SsaIntervention
     from apps.core.fy import get_operational_fy
+    from apps.core.rbac import EdifyRole
+    from apps.debriefs.rollup_service import field_debrief_intelligence_summary
     from apps.evidence.models import EvidenceRecord
-    from apps.geography.models import District, Region
     from apps.partners.models import Partner
-    from apps.schools.models import School, UploadBatch
     from apps.ssa.models import SsaRecord, SsaScore
 
-    now = timezone.now()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    week_start = today_start - timedelta(days=now.weekday())  # Monday of current week
-    week_end = week_start + timedelta(days=6)
+    now, today_start, week_start, _week_end = _ia_week_window()
     fy = get_operational_fy()
+    scope = _ia_scope(request)
 
-    PENDING_STATUSES = ["awaiting_ia_verification"]
-    # Local to the IA dashboard on purpose, and NOT the platform's
-    # ACHIEVED_STATUSES (ia_verified / closed / accountant_confirmed).
-    # This queue asks "what work has been done and is therefore
-    # verifiable", which includes `completed` work that has not yet
-    # reached IA -- the whole point of the queue -- and excludes
-    # accountant_confirmed, a finance state IA does not act on.
-    # Renamed so it stops shadowing the shared name.
-    IA_REVIEWABLE_STATUSES = ["completed", "ia_verified", "closed"]
+    activities = _ia_activities(request)
+    reach_ids = activities.values("id")
+    waiting_qs = _ia_staff_queue(request, activities)
+    schools = _ia_school_scope(request)
+    kpis = header["kpis"]
+    waiting_cnt = kpis["waiting"]
+    missing_sf_id = kpis["sf_queue"]
+    returned_open = kpis["returned_open"]
 
-    activities = Activity.objects.filter(deleted_at__isnull=True).filter(
-        _ia_reach_q(request)
+    history = VerificationHistory.objects.filter(activity_id__in=reach_ids)
+    decisions = VerificationDecision.objects.filter(
+        verification__activity_id__in=reach_ids
     )
-    waiting_qs = activities.filter(status__in=PENDING_STATUSES)
-    waiting_cnt = waiting_qs.count()
-
-    verified_today = VerificationHistory.objects.filter(
-        verified_at__gte=today_start
-    ).count()
-    verified_week = VerificationHistory.objects.filter(
-        verified_at__gte=week_start
-    ).count()
+    verified_today = history.filter(verified_at__gte=today_start).count()
+    verified_week = history.filter(verified_at__gte=week_start).count()
 
     # Verification SLA is measured from the moment an activity enters the IA
     # queue to its recorded verification.  Keep the query bounded to the
     # current and previous week so the dashboard remains constant-cost while
     # still providing an honest week-over-week comparison.
     previous_week_start = week_start - timedelta(days=7)
-    sla_rows = VerificationHistory.objects.filter(
+    sla_rows = history.filter(
         verified_at__gte=previous_week_start,
         verified_at__lte=now,
         activity__submitted_to_ia_at__isnull=False,
@@ -866,24 +1427,25 @@ def _ia_dashboard_context(request) -> dict:
         if current_sla_pct is not None
         else None
     )
-    returned_today = VerificationDecision.objects.filter(
+    returned_today = decisions.filter(
         decision="RETURN", decided_at__gte=today_start
     ).count()
-    returned_open_qs = activities.filter(status="returned_by_ia")
-    returned_open = returned_open_qs.count()
     returned_open_school_cnt = (
-        returned_open_qs.exclude(school_id__isnull=True)
+        activities.filter(status=ActivityStatus.RETURNED_BY_IA)
+        .exclude(school_id__isnull=True)
         .values("school_id")
         .distinct()
         .count()
     )
-    duplicate_risk_cnt = DuplicateActivity.objects.filter(status="potential").count()
+    duplicate_risk_cnt = DuplicateActivity.objects.filter(
+        status="potential", activity_id__in=reach_ids
+    ).count()
 
     # ── Awaiting Follow-up (Grid Row 5) — real return→correction cycle time,
     # pairing each RETURN decision with the next APPROVE on the same
     # verification (a second RETURN before that APPROVE starts a new cycle).
     decision_rows = list(
-        VerificationDecision.objects.filter(decision__in=("RETURN", "APPROVE"))
+        decisions.filter(decision__in=("RETURN", "APPROVE"))
         .order_by("verification_id", "decided_at")
         .values("verification_id", "decision", "decided_at")
     )
@@ -907,128 +1469,61 @@ def _ia_dashboard_context(request) -> dict:
         else None
     )
 
-    # ── School-derived KPIs ─────────────────────────────────────────────────
-    schools = School.objects.filter(deleted_at__isnull=True)
-    school_total = schools.count()
-    ssa_done_cnt = schools.filter(current_fy_ssa_status="done").count()
-    ssa_scheduled_cnt = schools.filter(
-        current_fy_ssa_status__in=["scheduled", "partner_assigned"]
-    ).count()
+    # ── School-derived KPIs, one aggregate over the schools in scope ────────
+    school_facts = schools.aggregate(
+        total=Count("id"),
+        ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
+        ssa_scheduled=Count(
+            "id", filter=Q(current_fy_ssa_status__in=["scheduled", "partner_assigned"])
+        ),
+        duplicates=Count(
+            "id", filter=Q(duplicate_status__in=["potential", "confirmed"])
+        ),
+        not_clean=Count("id", filter=~Q(data_quality_status="Clean")),
+        quality_avg=Avg("data_quality_score"),
+    )
+    school_total = school_facts["total"]
+    ssa_done_cnt = school_facts["ssa_done"]
+    ssa_scheduled_cnt = school_facts["ssa_scheduled"]
     ssa_not_done_cnt = school_total - ssa_done_cnt - ssa_scheduled_cnt
     ssa_coverage = round(ssa_done_cnt / school_total * 100, 1) if school_total else 0.0
-
-    quality_avg = schools.aggregate(avg=Avg("data_quality_score"))["avg"]
+    quality_avg = school_facts["quality_avg"]
     quality_pct = round(quality_avg) if quality_avg is not None else 0
+    dup_school_cnt = school_facts["duplicates"]
 
-    # ── Header KPI strip counts ─────────────────────────────────────────────
-    missing_sf_id = (
-        activities.filter(status__in=IA_REVIEWABLE_STATUSES)
-        .filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
-        .count()
+    ssa_records = SsaRecord.objects.filter(deleted_at__isnull=True, school__in=schools)
+    evidence = EvidenceRecord.objects.filter(
+        quarantined=False, activity_id__in=reach_ids
     )
-    ssa_pending_review = SsaRecord.objects.filter(
-        deleted_at__isnull=True, verification_status="pending"
-    ).count()
-    evidence_pending = EvidenceRecord.objects.filter(
-        quarantined=False, status="uploaded"
-    ).count()
-
-    # Two counts the canonical IA strip needs that nothing else computed.
-    # Overdue is a count of what is late *now*, deliberately distinct from
-    # `verification_sla` above, which is the rate for the week just gone.
-    from apps.schools.models import UnmatchedSSARecord
-
-    overdue_cnt = waiting_qs.filter(
-        submitted_to_ia_at__isnull=False,
-        submitted_to_ia_at__lt=now - timedelta(hours=IA_VERIFICATION_SLA_HOURS),
-    ).count()
-    unmatched_ssa_cnt = UnmatchedSSARecord.objects.filter(
-        status__in=("pending", "hold")
-    ).count()
+    evidence_pending = evidence.filter(status="uploaded").count()
     uploads_today = (
-        SsaRecord.objects.filter(
-            deleted_at__isnull=True, created_at__gte=today_start
+        ssa_records.filter(created_at__gte=today_start).count()
+        + EvidenceRecord.objects.filter(
+            created_at__gte=today_start, activity_id__in=reach_ids
         ).count()
-        + EvidenceRecord.objects.filter(created_at__gte=today_start).count()
     )
-
-    # ── Verification work queue (oldest first, so SLA risk is visible) ──────
-    queue_activities = list(
-        waiting_qs.select_related("school", "school__district").order_by(
-            F("submitted_to_ia_at").asc(nulls_last=True), "updated_at"
-        )[:6]
-    )
-    staff_ids = {
-        a.responsible_staff_id for a in queue_activities if a.responsible_staff_id
-    }
-    user_names = (
-        dict(User.objects.filter(id__in=staff_ids).values_list("id", "name"))
-        if staff_ids
-        else {}
-    )
-    staff_profile_names = (
-        dict(
-            StaffProfile.objects.filter(id__in=staff_ids).values_list(
-                "id", "user__name"
-            )
-        )
-        if staff_ids
-        else {}
-    )
-    staff_names = {**user_names, **staff_profile_names}
-    queue_items = []
-    for activity in queue_activities:
-        submitted_at = activity.submitted_to_ia_at or activity.updated_at
-        age_hours = (now - submitted_at).total_seconds() / 3600
-        queue_items.append(
-            {
-                "id": str(activity.id),
-                "record_id": str(activity.id)[-8:].upper(),
-                "review_url": f"/ia/verification/{activity.id}/",
-                "school": activity.school.name if activity.school else "Cluster-wide",
-                "district": (
-                    activity.school.district.name
-                    if activity.school and activity.school.district_id
-                    else "No district"
-                ),
-                "activity_type": activity.get_activity_type_display(),
-                "submitted_by": staff_names.get(
-                    activity.responsible_staff_id,
-                    activity.responsible_staff_id or "Unassigned",
-                ),
-                "submission_date": timezone.localtime(submitted_at).strftime(
-                    "%d %b %Y, %I:%M %p"
-                ),
-                "submitted_relative": f"{timesince(submitted_at, now)} ago",
-                "is_overdue": age_hours > 24,
-            }
-        )
 
     # ── District SSA completion stats (shared by exceptions + leaderboard) ──
     district_stats = list(
-        District.objects.annotate(
-            total=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+        _ia_districts(request)
+        .annotate(
+            total=Count("schools", filter=Q(schools__in=schools)),
             done=Count(
                 "schools",
-                filter=Q(
-                    schools__deleted_at__isnull=True,
-                    schools__current_fy_ssa_status="done",
-                ),
+                filter=Q(schools__in=schools, schools__current_fy_ssa_status="done"),
             ),
-        ).filter(total__gt=0)
+        )
+        .filter(total__gt=0)
     )
     districts_below_target = sum(1 for d in district_stats if d.done / d.total < 0.5)
 
     # ── Alerts / Exceptions (only real, non-zero conditions) ────────────────
-    dup_school_cnt = schools.filter(
-        duplicate_status__in=["potential", "confirmed"]
-    ).count()
     overdue_returns = activities.filter(
-        status="returned_by_ia", updated_at__lt=now - timedelta(days=7)
+        status=ActivityStatus.RETURNED_BY_IA, updated_at__lt=now - timedelta(days=7)
     ).count()
-    failed_uploads = UploadBatch.objects.filter(
-        status__in=["failed", "rejected"]
-    ).count()
+    failed_uploads = (
+        _ia_uploads(request).filter(status__in=["failed", "rejected"]).count()
+    )
     exceptions = [
         e
         for e in [
@@ -1036,7 +1531,7 @@ def _ia_dashboard_context(request) -> dict:
                 "count": missing_sf_id,
                 "text": "completed/verified activities missing Salesforce IDs",
                 "severity": "error",
-                "href": "/completed-activities",
+                "href": "/ia/verification/?sf_id=missing",
             },
             {
                 "count": duplicate_risk_cnt,
@@ -1051,10 +1546,12 @@ def _ia_dashboard_context(request) -> dict:
                 "href": "/data-quality/duplicates",
             },
             {
+                # SSA Performance, reached from IA's workspace strip; the
+                # generic Analytics hub is not an Impact Assessment door.
                 "count": districts_below_target,
                 "text": "districts below 50% SSA completion",
                 "severity": "info",
-                "href": "/analytics",
+                "href": "/ssa",
             },
             {
                 "count": overdue_returns,
@@ -1074,18 +1571,12 @@ def _ia_dashboard_context(request) -> dict:
 
     # ── Data Quality & Compliance panel ─────────────────────────────────────
     dq_metrics = [
-        {
-            "label": "Schools Missing SSA",
-            "value": schools.exclude(current_fy_ssa_status="done").count(),
-        },
+        {"label": "Schools Missing SSA", "value": school_total - ssa_done_cnt},
         {
             "label": "Duplicate Records Detected",
             "value": duplicate_risk_cnt + dup_school_cnt,
         },
-        {
-            "label": "Schools with Missing Fields",
-            "value": schools.exclude(data_quality_status="Clean").count(),
-        },
+        {"label": "Schools with Missing Fields", "value": school_facts["not_clean"]},
         {"label": "Activities Missing Salesforce IDs", "value": missing_sf_id},
     ]
 
@@ -1100,6 +1591,7 @@ def _ia_dashboard_context(request) -> dict:
         ssa_record__deleted_at__isnull=True,
         ssa_record__fy=fy,
         ssa_record__verification_status="confirmed",
+        ssa_record__school__in=schools,
     )
     intervention_labels = dict(SsaIntervention.choices)
     lowest_performing = [
@@ -1164,10 +1656,14 @@ def _ia_dashboard_context(request) -> dict:
         share_of=school_total or None,
     )
 
-    ssa_records = SsaRecord.objects.filter(deleted_at__isnull=True)
-    ssa_rec_total = ssa_records.count()
-    ssa_rec_confirmed = ssa_records.filter(verification_status="confirmed").count()
-    ssa_rec_pending = ssa_records.filter(verification_status="pending").count()
+    ssa_record_facts = ssa_records.aggregate(
+        total=Count("id"),
+        confirmed=Count("id", filter=Q(verification_status="confirmed")),
+        pending=Count("id", filter=Q(verification_status="pending")),
+    )
+    ssa_rec_total = ssa_record_facts["total"]
+    ssa_rec_confirmed = ssa_record_facts["confirmed"]
+    ssa_rec_pending = ssa_record_facts["pending"]
     ssa_rec_other = ssa_rec_total - ssa_rec_confirmed - ssa_rec_pending
     ssa_review = {
         "total": ssa_rec_total,
@@ -1212,8 +1708,7 @@ def _ia_dashboard_context(request) -> dict:
             "returned": row["returned"],
             "rejected": row["rejected"],
         }
-        for row in EvidenceRecord.objects.filter(quarantined=False)
-        .values("kind")
+        for row in evidence.values("kind")
         .annotate(
             submitted=Count("id"),
             verified=Count("id", filter=Q(status="accepted")),
@@ -1236,7 +1731,7 @@ def _ia_dashboard_context(request) -> dict:
         return f"{school}, {district}" if district else school
 
     events = []
-    for vh in VerificationHistory.objects.select_related(
+    for vh in history.select_related(
         "activity", "activity__school", "activity__school__district"
     ).order_by("-verified_at")[:5]:
         events.append(
@@ -1247,7 +1742,7 @@ def _ia_dashboard_context(request) -> dict:
             }
         )
     for vd in (
-        VerificationDecision.objects.filter(decision="RETURN")
+        decisions.filter(decision="RETURN")
         .select_related(
             "verification__activity",
             "verification__activity__school",
@@ -1281,7 +1776,7 @@ def _ia_dashboard_context(request) -> dict:
         .order_by("-c")[:5]
     )
     verifier_rows = list(
-        VerificationHistory.objects.filter(verified_at__gte=week_start)
+        history.filter(verified_at__gte=week_start)
         .values("verified_by")
         .annotate(c=Count("id"))
         .order_by("-c")[:5]
@@ -1295,8 +1790,12 @@ def _ia_dashboard_context(request) -> dict:
         else {}
     )
 
+    # Partner submissions wait in their own queue, so they are read from the
+    # reach directly rather than from the staff queue above.
     partner_rows = list(
-        waiting_qs.filter(delivery_type="partner")
+        activities.filter(
+            status=ActivityStatus.AWAITING_IA_VERIFICATION, delivery_type="partner"
+        )
         .exclude(assigned_partner_id__isnull=True)
         .exclude(assigned_partner_id="")
         .values("assigned_partner_id")
@@ -1338,179 +1837,22 @@ def _ia_dashboard_context(request) -> dict:
         ],
     }
 
-    # ── IA country oversight: every region, district, CCEO and PL ───────────
-    # These are completion/verification facts from the Activity ledger, not a
-    # separate reporting store. Programme activities without a school inherit
-    # geography through event_district, so central work is not lost from the
-    # regional and district views.
-    from apps.targets.performance import ACHIEVED_STATUSES
-    from apps.core.rbac import EdifyRole
-
-    excluded_performance_statuses = ("cancelled", "rejected", "deferred")
-    performance_qs = activities.filter(fy=fy).exclude(
-        status__in=excluded_performance_statuses
-    )
-
-    def _activity_rollup(queryset, geography_field):
-        return {
-            row[geography_field]: row
-            for row in queryset.exclude(**{f"{geography_field}__isnull": True})
-            .values(geography_field)
-            .annotate(
-                planned=Count("id"),
-                achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
-                verified=Count("id", filter=Q(ia_verification_status="confirmed")),
-                waiting=Count(
-                    "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
-                ),
-                returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
-            )
-        }
-
-    def _merge_rollups(*rollups):
-        merged = {
-            "planned": 0,
-            "achieved": 0,
-            "verified": 0,
-            "waiting": 0,
-            "returned": 0,
-        }
-        for rollup in rollups:
-            if not rollup:
-                continue
-            for key in merged:
-                merged[key] += rollup.get(key, 0)
-        merged["rate"] = (
-            round(merged["achieved"] / merged["planned"] * 100)
-            if merged["planned"]
-            else 0
-        )
-        return merged
-
-    school_district_rollup = _activity_rollup(performance_qs, "school__district_id")
-    event_district_rollup = _activity_rollup(performance_qs, "event_district_id")
-
-    # School reach (owner, 2026-09-05), for districts and for leaders alike:
-    # how many schools, how many of them have planned work this year, how many
-    # have achieved work, and the share — schools, not activities, so ten
-    # visits into one school read as one school. Two queries serve every row
-    # on the page: the active schools with their district, and the year's
-    # activities with owner, school, district and status; everything else is
-    # set arithmetic, so the page's query count stays a constant.
-    from apps.accounts.models import StaffSchoolAssignment
-    from apps.schools.lifecycle_service import active_schools
-
-    active_school_ids = set()
-    schools_by_district: dict = {}
-    for school_id, district_id in active_schools().values_list("id", "district_id"):
-        active_school_ids.add(school_id)
-        if district_id:
-            schools_by_district[district_id] = (
-                schools_by_district.get(district_id, 0) + 1
-            )
-    planned_schools_by_district: dict = {}
-    achieved_schools_by_district: dict = {}
-    planned_schools_by_owner: dict = {}
-    achieved_schools_by_owner: dict = {}
-    for owner_id, school_id, district_id, status in performance_qs.exclude(
-        school_id__isnull=True
-    ).values_list("responsible_staff_id", "school_id", "school__district_id", "status"):
-        planned_schools_by_owner.setdefault(owner_id, set()).add(school_id)
-        if district_id:
-            planned_schools_by_district.setdefault(district_id, set()).add(school_id)
-        if status in ACHIEVED_STATUSES:
-            achieved_schools_by_owner.setdefault(owner_id, set()).add(school_id)
-            if district_id:
-                achieved_schools_by_district.setdefault(district_id, set()).add(
-                    school_id
-                )
-
-    def _reach_from_sets(assigned, planned, achieved):
-        return {
-            "schools": len(assigned),
-            "schools_planned": len(planned),
-            "schools_achieved": len(achieved),
-            "schools_pct": round(len(achieved) / len(assigned) * 100)
-            if assigned
-            else 0,
-        }
-
-    def _school_reach(district_id):
-        schools = schools_by_district.get(district_id, 0)
-        achieved = len(achieved_schools_by_district.get(district_id, set()))
-        return {
-            "schools": schools,
-            "schools_planned": len(planned_schools_by_district.get(district_id, set())),
-            "schools_achieved": achieved,
-            "schools_pct": round(achieved / schools * 100) if schools else 0,
-        }
-
-    def _merge_school_reach(rows):
-        schools = sum(row["schools"] for row in rows)
-        achieved = sum(row["schools_achieved"] for row in rows)
-        return {
-            "schools": schools,
-            "schools_planned": sum(row["schools_planned"] for row in rows),
-            "schools_achieved": achieved,
-            "schools_pct": round(achieved / schools * 100) if schools else 0,
-        }
-
-    district_performance = []
-    # Districts fold under their sub-region, the way clusters fold under the
-    # person who holds them: one row per sub-region carrying the roll-up,
-    # opened into its districts (owner, 2026-09-05). A district with no
-    # sub-region sits under "Other districts" in its region rather than
-    # vanishing.
-    district_groups_by_key: dict = {}
-    for district in District.objects.select_related("region", "sub_region").order_by(
-        "region__name", "sub_region__name", "name"
-    ):
-        metrics = _merge_rollups(
-            school_district_rollup.get(district.id),
-            event_district_rollup.get(district.id),
-        )
-        row = {
-            "name": district.name,
-            "region": district.region.name,
-            "sub_region": district.sub_region.name if district.sub_region else None,
-            **metrics,
-            **_school_reach(district.id),
-        }
-        district_performance.append(row)
-        key = (district.region.name, row["sub_region"] or "")
-        group = district_groups_by_key.setdefault(
-            key,
-            {
-                "key": f"{district.region_id}-{district.sub_region_id or 'other'}",
-                "name": row["sub_region"] or "Other districts",
-                "region": district.region.name,
-                "districts": [],
-            },
-        )
-        group["districts"].append(row)
-    district_groups = []
-    for group in district_groups_by_key.values():
-        group.update(_merge_rollups(*group["districts"]))
-        group.update(_merge_school_reach(group["districts"]))
-        group["count"] = len(group["districts"])
-        district_groups.append(group)
-
-    school_region_rollup = _activity_rollup(performance_qs, "school__region_id")
-    event_region_rollup = _activity_rollup(performance_qs, "event_district__region_id")
-    region_performance = []
-    for region in Region.objects.order_by("name"):
-        metrics = _merge_rollups(
-            school_region_rollup.get(region.id), event_region_rollup.get(region.id)
-        )
-        region_performance.append({"name": region.name, **metrics})
+    # ── IA country oversight: every CCEO and PL in the country ──────────────
+    performance_qs = _ia_performance_activities(request)
+    reach_sets = _ia_school_reach_sets(request, performance_qs)
 
     # Activity.responsible_staff_id deliberately accepts either StaffProfile
     # or User ids for compatibility. Aggregate once, then resolve both id
     # spaces in memory so the roster remains constant-query at any team size.
-    owner_rollup = _activity_rollup(performance_qs, "responsible_staff_id")
+    owner_rollup = _ia_activity_rollup(performance_qs, "responsible_staff_id")
+    from apps.core.scoping import country_bound
+
+    roster = on_staff(StaffProfile.objects)
+    if country_bound(scope):
+        roster = roster.filter(country=scope.country)
     active_staff_roster = list(
         # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-        on_staff(StaffProfile.objects).select_related("user").order_by("user__name")
+        roster.select_related("user").order_by("user__name")
     )
     monitored_staff = [
         staff
@@ -1546,7 +1888,7 @@ def _ia_dashboard_context(request) -> dict:
     for staff_id, school_id in StaffSchoolAssignment.objects.filter(
         staff_id__in=[staff.id for staff in monitored_staff]
     ).values_list("staff_id", "school_id"):
-        if school_id in active_school_ids:
+        if school_id in reach_sets["active_school_ids"]:
             assigned_schools_by_staff.setdefault(staff_id, set()).add(school_id)
     leadership_performance = []
     school_sets_by_staff: dict = {}
@@ -1558,7 +1900,7 @@ def _ia_dashboard_context(request) -> dict:
             if is_pl
             else {staff.id, staff.user_id}
         )
-        metrics = _merge_rollups(
+        metrics = _ia_merge_rollups(
             *(owner_rollup.get(owner_id) for owner_id in owner_ids)
         )
         # Portfolio holders are StaffProfile ids; activity owners may be either
@@ -1573,10 +1915,10 @@ def _ia_dashboard_context(request) -> dict:
                 *(assigned_schools_by_staff.get(sid, set()) for sid in portfolio_ids)
             ),
             set().union(
-                *(planned_schools_by_owner.get(oid, set()) for oid in owner_ids)
+                *(reach_sets["planned_by_owner"].get(oid, set()) for oid in owner_ids)
             ),
             set().union(
-                *(achieved_schools_by_owner.get(oid, set()) for oid in owner_ids)
+                *(reach_sets["achieved_by_owner"].get(oid, set()) for oid in owner_ids)
             ),
         )
         school_sets_by_staff[staff.id] = sets
@@ -1588,7 +1930,7 @@ def _ia_dashboard_context(request) -> dict:
                 "scope": "Team portfolio" if is_pl else "Owned activities",
                 "supervisor_id": None if is_pl else pl_by_supervisee.get(staff.id),
                 **metrics,
-                **_reach_from_sets(*sets),
+                **_ia_reach_from_sets(*sets),
             }
         )
     leadership_performance.sort(
@@ -1627,12 +1969,12 @@ def _ia_dashboard_context(request) -> dict:
         )
         (home or unsupervised)["members"].append(row)
     if unsupervised["members"]:
-        unsupervised.update(_merge_rollups(*unsupervised["members"]))
+        unsupervised.update(_ia_merge_rollups(*unsupervised["members"]))
         member_sets = [
             school_sets_by_staff[m["staff_id"]] for m in unsupervised["members"]
         ]
         unsupervised.update(
-            _reach_from_sets(
+            _ia_reach_from_sets(
                 *(set().union(*(sets[i] for sets in member_sets)) for i in range(3))
             )
         )
@@ -1640,9 +1982,9 @@ def _ia_dashboard_context(request) -> dict:
     for group in leadership_groups:
         group["count"] = len(group["members"])
 
-    # Eight-week planned-versus-IA-verified line chart. SVG coordinates are
-    # built server-side from real weekly counts, with text/table equivalents
-    # retained below for accessibility and zero-JavaScript rendering.
+    # Eight-week planned-versus-IA-verified line chart, drawn by the chart
+    # system from these weekly values (2026-09-05), with text/table
+    # equivalents retained for accessibility and zero-JavaScript rendering.
     trend_start = week_start - timedelta(weeks=7)
     planned_by_week = {
         row["week_bucket"].date()
@@ -1657,7 +1999,7 @@ def _ia_dashboard_context(request) -> dict:
         row["week_bucket"].date()
         if hasattr(row["week_bucket"], "date")
         else row["week_bucket"]: row["count"]
-        for row in VerificationHistory.objects.filter(verified_at__gte=trend_start)
+        for row in history.filter(verified_at__gte=trend_start)
         .annotate(week_bucket=TruncWeek("verified_at"))
         .values("week_bucket")
         .annotate(count=Count("id"))
@@ -1677,65 +2019,12 @@ def _ia_dashboard_context(request) -> dict:
         + [row["planned"] for row in weekly_values]
         + [row["verified"] for row in weekly_values]
     )
-    # The chart is drawn by the chart system from these values (2026-09-05);
-    # the SVG geometry this used to compute is gone with the hand-drawn SVG.
     activity_trend = {"weeks": weekly_values, "max": trend_max}
 
-    # ── Upload intake status ────────────────────────────────────────────────
-    last_batch = UploadBatch.objects.order_by("-created_at").first()
-    upload_status = {
-        "last_upload": last_batch.created_at if last_batch else None,
-        "failed": failed_uploads,
-    }
-
-    from apps.debriefs.rollup_service import field_debrief_intelligence_summary
-
-    field_debrief_intel = field_debrief_intelligence_summary(request.user)
-
-    # The canonical KPI strip. Six tiles, one per IA decision question, each
-    # bound to its registry entry and drilling into the queue that resolves
-    # it. The page previously drew its own `ia-metric` tiles, two of which
-    # ("verified this week", "data quality") reported outcomes rather than
-    # work — they told IA how the week went, not what to do next.
-    kpi_strip_items = render_strip(
-        [
-            render_metric(
-                "ia_awaiting_verification",
-                MetricValue.measured(waiting_cnt),
-                drilldown_url="/ia/verification/",
-            ),
-            render_metric(
-                "ia_evidence_ready_for_review",
-                MetricValue.measured(evidence_pending),
-                drilldown_url="/ia/verification/?evidence=ready",
-            ),
-            render_metric(
-                "ia_salesforce_verification_pending",
-                MetricValue.measured(missing_sf_id),
-                drilldown_url="/ia/verification/?sf_id=missing",
-            ),
-            render_metric(
-                "ia_returned_for_correction",
-                MetricValue.measured(returned_open),
-                drilldown_url="/ia/returned/",
-            ),
-            render_metric(
-                "ia_unmatched_ssa_records",
-                MetricValue.measured(unmatched_ssa_cnt),
-                drilldown_url="/ssa/unmatched",
-            ),
-            render_metric(
-                "ia_verification_overdue",
-                MetricValue.measured(overdue_cnt),
-                drilldown_url="/ia/verification/?age=overdue",
-            ),
-        ]
-    )
-
-    context = {
+    return {
         "fy": fy,
-        "kpi_strip_items": kpi_strip_items,
         "kpis": {
+            **kpis,
             "waiting": waiting_cnt,
             "verified_today": verified_today,
             "verified_week": verified_week,
@@ -1747,11 +2036,9 @@ def _ia_dashboard_context(request) -> dict:
             "quality_pct": quality_pct,
             "uploads_today": uploads_today,
             "sf_queue": missing_sf_id,
-            "ssa_pending_review": ssa_pending_review,
+            "ssa_pending_review": ssa_rec_pending,
             "evidence_pending": evidence_pending,
         },
-        "date_range": f"{week_start.strftime('%b')} {week_start.day} – {week_end.strftime('%b')} {week_end.day}, {week_end.year}",
-        "queue_items": queue_items,
         "exceptions": exceptions,
         "dq_metrics": dq_metrics,
         "lowest_performing": lowest_performing,
@@ -1762,30 +2049,158 @@ def _ia_dashboard_context(request) -> dict:
         "evidence_totals": evidence_totals,
         "recent_activities": recent_activities,
         "field_monitoring": field_monitoring,
-        "district_performance": district_performance,
-        "district_groups": district_groups,
-        "region_performance": region_performance,
         "leadership_performance": leadership_performance,
         "leadership_groups": leadership_groups,
         "activity_trend": activity_trend,
-        "upload_status": upload_status,
+        "upload_status": {**header["upload_status"], "failed": failed_uploads},
         "returned_open_school_cnt": returned_open_school_cnt,
         "avg_resolution_days": avg_resolution_days,
         "verification_sla": verification_sla,
-        "field_debrief_intel": field_debrief_intel,
-        "mobile_primary_action": {
-            "label": "Review oldest record"
-            if queue_items
-            else "Open verification queue",
-            "url": queue_items[0]["review_url"] if queue_items else "/ia/verification/",
-        },
+        "field_debrief_intel": field_debrief_intelligence_summary(request.user),
+        # Carried for the operations roll-ups below the queue and the
+        # Verification Quality tab's geography cards.
+        "_performance_qs": performance_qs,
+        "_reach_sets": reach_sets,
     }
+
+
+def _ia_dashboard_context(request) -> dict:
+    """Everything the IA dashboard shows, computed live, for the Analytics
+    workspace's Verification Quality tab (owner, 2026-09-05): the fixed header
+    context, the operations and the geography cards together.
+
+    /ia/dashboard/ itself builds only the part each view renders
+    (IA_DASHBOARD_VIEW_BUILDERS below).
+    """
+    context = _ia_header_context(request)
+    operations = _ia_operations_context(request, context)
+    performance_qs = operations.pop("_performance_qs")
+    reach_sets = operations.pop("_reach_sets")
+    context.update(operations)
+    context.update(_ia_geography_context(request, performance_qs, reach_sets))
     return context
+
+
+# ── The IA dashboard's views (IA review, owner, 2026-09-13) ──────────────────
+# The dashboard opens on Outcomes (owner decision, 2026-09-13), with Map one
+# tab away. Each view builds only what it renders on top of the fixed header:
+# Outcomes, Collection and Impact reports read the outcome workspace and never
+# the verification operations; Map reads the country map and the geography
+# roll-ups; Operations reads the verification operations. The static
+# Framework and Programme learning tabs are gone — their destinations are real
+# pages (/ia/framework/, /ia/learning/) — and an old ?view= value for either
+# falls back to the default.
+IA_DASHBOARD_DEFAULT_VIEW = "outcomes"
+IA_DASHBOARD_TABS = (
+    ("outcomes", "Outcomes", "School change and the strength of its evidence"),
+    ("collection", "Collection", "Schools whose assessment evidence needs collecting"),
+    ("reports", "Impact reports", "Prepare traceable findings and recommendations"),
+    ("map", "Map", "The country map with regional performance and district monitoring"),
+    (
+        "operations",
+        "Operations",
+        "Verification queue, performance, quality and coverage",
+    ),
+)
+#: The partial the Reports view renders. Reporting & Accountability (IA-R)
+#: provides it; until it exists the outcome workspace's draft report renders.
+IA_REPORTS_VIEW_TEMPLATE = "partials/ia/reports_view.html"
+#: An optional context builder for the Reports view, "module:function" with
+#: the signature fn(request) -> dict, provided by the impact report lifecycle.
+IA_REPORTS_CONTEXT_BUILDER = "apps.impact.reports:dashboard_reports_context"
+
+
+def _ia_outcome_workspace_context(request, *, collection: bool = False) -> dict:
+    from django.core.paginator import Paginator
+
+    from apps.analytics.ia_workflow import outcome_workspace
+
+    workspace = outcome_workspace(request.user, request.GET)
+    rows = workspace["rows"]
+    gap = request.GET.get("gap", "")
+    if collection:
+        rows = [row for row in rows if not row["measured"]]
+        if gap:
+            rows = [row for row in rows if row["state"] == gap]
+    return {
+        "ia_outcomes": workspace,
+        "ia_evidence_page": Paginator(rows, 25).get_page(request.GET.get("page")),
+        "ia_gap": gap,
+        "ia_can_export": RolePermissionService.can_export(request.user, "ia_dashboard"),
+        "ia_view_template": "partials/ia/outcomes.html",
+    }
+
+
+def _ia_outcomes_view(request, header: dict) -> dict:
+    return _ia_outcome_workspace_context(request)
+
+
+def _ia_collection_view(request, header: dict) -> dict:
+    """The collection worklist over every operationally active school in
+    scope (apps.analytics.ia_collection), beside the project enrolments'
+    missing baselines and follow-ups the outcome workspace lists."""
+    from apps.analytics.ia_collection import collection_worklist
+
+    context = _ia_outcome_workspace_context(request, collection=True)
+    context["ia_collection"] = collection_worklist(request.user, request.GET)
+    return context
+
+
+def _ia_reports_view(request, header: dict) -> dict:
+    from importlib import import_module
+
+    from django.template import TemplateDoesNotExist
+    from django.template.loader import select_template
+
+    context = _ia_outcome_workspace_context(request)
+    module_name, _, attr = IA_REPORTS_CONTEXT_BUILDER.partition(":")
+    try:
+        builder = getattr(import_module(module_name), attr, None)
+    except ModuleNotFoundError as exc:
+        # Only the absence of the report module itself is expected; a module
+        # that exists and fails to import is a defect and must surface.
+        if exc.name != module_name:
+            raise
+        builder = None
+    if builder is not None:
+        context.update(builder(request) or {})
+    try:
+        context["ia_view_template"] = select_template(
+            [IA_REPORTS_VIEW_TEMPLATE]
+        ).template.name
+    except TemplateDoesNotExist:
+        pass
+    return context
+
+
+def _ia_map_view(request, header: dict) -> dict:
+    from apps.analytics.country_map_context import country_map_context
+    from apps.core.fy import get_operational_fy
+
+    context = dict(country_map_context(get_operational_fy()))
+    context.update(_ia_geography_context(request))
+    return context
+
+
+def _ia_operations_view(request, header: dict) -> dict:
+    context = _ia_operations_context(request, header)
+    context.pop("_performance_qs")
+    context.pop("_reach_sets")
+    return context
+
+
+IA_DASHBOARD_VIEW_BUILDERS = {
+    "outcomes": _ia_outcomes_view,
+    "collection": _ia_collection_view,
+    "reports": _ia_reports_view,
+    "map": _ia_map_view,
+    "operations": _ia_operations_view,
+}
 
 
 @require_page_permission("ia_dashboard")
 def ia_dashboard_view(request):
-    """IA Analytics Dashboard for quality monitoring — all metrics computed live."""
+    """Impact Assessment's home: school outcomes first, the work one tab away."""
     from apps.frontend.views.dashboard_view_state import (
         dashboard_view_tabs,
         remember_dashboard_view,
@@ -1795,87 +2210,22 @@ def ia_dashboard_view(request):
     dashboard_view, view_explicit = resolve_dashboard_view(
         request,
         role_key="ia",
-        default="outcomes",
-        allowed=(
-            "outcomes",
-            "collection",
-            "framework",
-            "learning",
-            "reports",
-            "map",
-            "operations",
-        ),
+        default=IA_DASHBOARD_DEFAULT_VIEW,
+        allowed=tuple(IA_DASHBOARD_VIEW_BUILDERS),
     )
-    context = _ia_dashboard_context(request)
+    context = _ia_header_context(request)
+    context.update(IA_DASHBOARD_VIEW_BUILDERS[dashboard_view](request, context))
     context["ia_dashboard_tabs"] = True
     context["dashboard_view"] = dashboard_view
-    if dashboard_view not in ("map", "operations"):
-        from django.core.paginator import Paginator
-        from apps.analytics.ia_workflow import outcome_workspace
-
-        workspace = outcome_workspace(request.user, request.GET)
-        rows = workspace["rows"]
-        gap = request.GET.get("gap", "")
-        if dashboard_view == "collection":
-            rows = [row for row in rows if not row["measured"]]
-            if gap:
-                rows = [row for row in rows if row["state"] == gap]
-        context["ia_outcomes"] = workspace
-        context["ia_mobile_status"] = f"{workspace['unmeasured']} unmeasured"
-        context["ia_mobile_period"] = "Recorded project assessments"
-        context["ia_evidence_page"] = Paginator(rows, 25).get_page(
-            request.GET.get("page")
-        )
-        context["ia_gap"] = gap
-        context["ia_can_export"] = RolePermissionService.can_export(
-            request.user, "ia_dashboard"
-        )
-        context["mobile_primary_action"] = {
-            "label": "Coordinate assessments",
-            "url": "/ia/dashboard/?view=collection",
-        }
     context["dashboard_tabs"] = dashboard_view_tabs(
         request,
         active=dashboard_view,
         panel_id="ia-dashboard-view",
         view_template="partials/ia/view.html",
-        tabs=[
-            ("outcomes", "Outcomes", "School change and the strength of its evidence"),
-            ("collection", "Collection", "Missing baselines and follow-up assessments"),
-            (
-                "framework",
-                "Framework",
-                "Define how programmes contribute to transformation",
-            ),
-            (
-                "learning",
-                "Programme learning",
-                "Interpret training, lending and technology results",
-            ),
-            (
-                "reports",
-                "Impact reports",
-                "Prepare traceable findings and recommendations",
-            ),
-            (
-                "map",
-                "Map",
-                "The country map with regional performance and district monitoring",
-            ),
-            (
-                "operations",
-                "Operations",
-                "Verification queue, performance, quality and coverage",
-            ),
-        ],
+        tabs=list(IA_DASHBOARD_TABS),
         base_url="/ia/dashboard/",
         keep=("project",),
     )
-    if dashboard_view == "map":
-        from apps.analytics.country_map_context import country_map_context
-        from apps.core.fy import get_operational_fy
-
-        context.update(country_map_context(get_operational_fy()))
     if request.headers.get("HX-Target") == "ia-dashboard-view-shell":
         response = render(
             request,
@@ -1914,6 +2264,10 @@ def verification_quality_section_view(request):
     )
 
 
+#: The notification categories Impact Assessment's own notices travel under.
+IA_NOTIFICATION_CATEGORIES = ("verification", "ia", "ssa")
+
+
 @require_page_permission("ia_notifications")
 def ia_notifications_view(request):
     """Realtime notifications audit feed page."""
@@ -1924,8 +2278,13 @@ def ia_notifications_view(request):
     # `icontains="IA"` matches any title merely containing those letters,
     # including free-text field-debrief titles that can carry restricted
     # incident detail.
+    #
+    # Verification notices reach IA under three categories — "verification"
+    # (submissions, the morning digest), "ssa" and "ia" (returns) — and the
+    # page read only "ia", so it was always empty for the people it is named
+    # for (IA review, 2026-09-13). Each notice opens its own record.
     alerts = Notification.objects.filter(
-        recipient_id=request.user.id, category="ia"
+        recipient_id=request.user.id, category__in=IA_NOTIFICATION_CATEGORIES
     ).order_by("-created_at")[:50]
 
     context = {"alerts": alerts}
@@ -2072,9 +2431,13 @@ def ia_partner_evidence_queue_view(request):
     )
 
 
-def _own_ia_partner_activity(activity_id):
+def _own_ia_partner_activity(request, activity_id):
+    # Country-bound like the staff queue (IA review, 2026-09-13): a partner
+    # activity in another country is not found, for reads and decisions alike.
     return get_object_or_404(
-        Activity.objects.select_related("school", "school__district", "cluster"),
+        Activity.objects.filter(
+            activity_country_q(resolve_user_scope(request.user))
+        ).select_related("school", "school__district", "cluster"),
         id=activity_id,
         delivery_type="partner",
         deleted_at__isnull=True,
@@ -2089,7 +2452,7 @@ def ia_partner_review_view(request, activity_id):
     from apps.evidence.models import EvidenceRecord
     from apps.evidence.requirements import checklist
 
-    a = _own_ia_partner_activity(activity_id)
+    a = _own_ia_partner_activity(request, activity_id)
     partner = (
         Partner.objects.filter(id=a.assigned_partner_id).select_related("user").first()
     )
@@ -2130,7 +2493,7 @@ def ia_partner_review_view(request, activity_id):
 
 @require_page_permission("ia_partner_evidence")
 def ia_partner_return_drawer(request, activity_id):
-    a = _own_ia_partner_activity(activity_id)
+    a = _own_ia_partner_activity(request, activity_id)
     return render(
         request,
         "partials/ia/partner_return_drawer.html",
@@ -2142,7 +2505,7 @@ def ia_partner_return_drawer(request, activity_id):
 def ia_partner_return_action(request, activity_id):
     if request.method != "POST":
         return HttpResponseForbidden("POST required")
-    a = _own_ia_partner_activity(activity_id)
+    a = _own_ia_partner_activity(request, activity_id)
     try:
         from apps.activities.services import ia_return
 
@@ -2174,7 +2537,7 @@ def ia_partner_complete_drawer(request, activity_id):
     """§12 Confirm Salesforce Entry — read-only summary + the required ID."""
     from apps.evidence.models import EvidenceRecord
 
-    a = _own_ia_partner_activity(activity_id)
+    a = _own_ia_partner_activity(request, activity_id)
     from apps.activities.services import is_partner_ssa_support_activity
 
     if is_partner_ssa_support_activity(a):
@@ -2202,7 +2565,7 @@ def ia_partner_complete_drawer(request, activity_id):
 def ia_partner_complete_action(request, activity_id):
     if request.method != "POST":
         return HttpResponseForbidden("POST required")
-    a = _own_ia_partner_activity(activity_id)
+    a = _own_ia_partner_activity(request, activity_id)
     from apps.activities.services import is_partner_ssa_support_activity
 
     if is_partner_ssa_support_activity(a):
@@ -2289,41 +2652,125 @@ def ia_verification_analytics_export_view(request):
 
 @require_page_permission("ia_samples")
 def ia_samples_view(request):
-    """Sample checks: a second look at a share of verified work."""
-    from apps.activities.verification_sampling import sample_share_pct, samples_for
+    """Sample checks: a second look at a share of verified work.
 
-    samples = list(samples_for(request.user)[:200])
-    user_ids = {s.original_verifier for s in samples} | {
-        s.checked_by for s in samples if s.checked_by
-    }
+    Activities and confirmed SSA records (IA review, 2026-09-13), in the
+    reader's country, paged in the database. Each row says what the sample is,
+    who certified it, and what the grader can do: confirm, dispute, ask for a
+    field back-check (an owner-approved visit request), or — for a disputed
+    activity — resolve the dispute once it is corrected.
+    """
     from apps.accounts.models import User
+    from apps.activities.ia_models import VerificationHistory
+    from apps.activities.verification_sampling import (
+        SUBJECT_SSA,
+        grading_flags,
+        sample_school,
+        sample_share_pct,
+        samples_for,
+    )
+    from apps.analytics.ia_collection import db_page
 
+    samples = samples_for(request.user)
+    status = request.GET.get("status", "")
+    if status in ("pending", "confirmed", "disputed"):
+        samples = samples.filter(status=status)
+    else:
+        status = ""
+    subject = request.GET.get("subject", "")
+    if subject in ("activity", "ssa_record"):
+        samples = samples.filter(subject_type=subject)
+    else:
+        subject = ""
+    page = db_page(samples, request.GET.get("samples_page"))
+    page_samples = page["rows"]
+    user_ids = {s.original_verifier for s in page_samples} | {
+        s.checked_by for s in page_samples if s.checked_by
+    }
     names = dict(User.objects.filter(id__in=user_ids).values_list("id", "name"))
+    excluded = set(
+        VerificationHistory.objects.filter(
+            activity_id__in=[s.activity_id for s in page_samples if s.activity_id],
+            analytics_included=False,
+        ).values_list("activity_id", flat=True)
+    )
+    refusals = grading_flags(request.user, page_samples)
     rows = []
-    for smp in samples:
+    for smp in page_samples:
+        is_ssa = smp.subject_type == SUBJECT_SSA and smp.ssa_record_id
+        school = sample_school(smp)
+        if is_ssa:
+            record = smp.ssa_record
+            when = (
+                timezone.localtime(record.date_of_ssa).date()
+                if record.date_of_ssa
+                else None
+            )
+            subject_label = "Confirmed SSA" + (
+                f" dated {when:%-d %b %Y}" if when else ""
+            )
+            record_url = f"/schools/{record.school_id}#ssa-timeline"
+        else:
+            subject_label = (
+                smp.activity.get_activity_type_display() if smp.activity else "Activity"
+            )
+            record_url = (
+                f"/ia/verification/{smp.activity_id}/" if smp.activity_id else ""
+            )
+        refusal = refusals.get(smp.id, "")
+        may_grade = not refusal
+        if smp.status == "pending":
+            outcome, tone = "Pending", "warning"
+        elif smp.status == "confirmed":
+            outcome, tone = "Confirmed", "success"
+        elif is_ssa:
+            outcome, tone = "Disputed · SSA returned to its collector", "danger"
+        elif smp.activity_id in excluded:
+            outcome, tone = (
+                "Disputed · excluded from analytics until resolved",
+                "danger",
+            )
+        else:
+            outcome, tone = "Disputed · resolved", "neutral"
         rows.append(
             {
                 "id": smp.id,
-                "activity_id": smp.activity_id,
-                "school": smp.activity.school.name
-                if smp.activity.school_id
-                else "Cluster-wide",
-                "activity_type": smp.activity.get_activity_type_display(),
+                "school_id": school.id if school else "",
+                "school": school.name if school else "Cluster-wide",
+                "school_code": getattr(school, "school_id", "") if school else "",
+                "subject": subject_label,
+                "record_url": record_url,
+                "method": smp.get_method_display(),
+                "method_key": smp.method,
                 "original_verifier": names.get(
                     smp.original_verifier, smp.original_verifier
                 ),
                 "is_own": str(smp.original_verifier) == str(request.user.user_id),
                 "sampled_at": smp.sampled_at,
-                "status": smp.get_status_display(),
+                "status": outcome,
                 "status_key": smp.status,
+                "tone": tone,
                 "outcome_note": smp.outcome_note,
                 "checked_by": names.get(smp.checked_by, "") if smp.checked_by else "",
                 "checked_at": smp.checked_at,
+                "may_grade": may_grade and smp.status == "pending",
+                "refusal": refusal,
+                "may_field_check": may_grade
+                and smp.status == "pending"
+                and bool(school),
+                "may_resolve": may_grade
+                and smp.status == "disputed"
+                and not is_ssa
+                and smp.activity_id in excluded,
             }
         )
+    visit_school = (request.GET.get("visit") or "").strip()
     context = {
         "samples": rows,
-        "pending_count": sum(1 for r in rows if r["status_key"] == "pending"),
+        "pager": page,
+        "status": status,
+        "subject": subject,
+        "pending_count": samples_for(request.user).filter(status="pending").count(),
         "share_pct": sample_share_pct(),
         "can_draw": getattr(request.user, "active_role", "")
         in (
@@ -2331,6 +2778,11 @@ def ia_samples_view(request):
             "CountryDirector",
             "Admin",
         ),
+        # A field back-check just asked for: open the schedule drawer, which
+        # files an owner-approved visit request for that school.
+        "visit_school": visit_school
+        if visit_school and any(r["school_code"] == visit_school for r in rows)
+        else "",
     }
     return render(request, "pages/ia/verification_samples.html", context)
 
@@ -2356,27 +2808,91 @@ def ia_sample_outcome_action(request, sample_id):
             actor_id=str(request.user.id),
             actor_role=request.user.active_role,
             success=True,
-            payload={"status": sample.status, "note": sample.outcome_note},
+            payload={
+                "status": sample.status,
+                "note": sample.outcome_note,
+                "subject": sample.subject_type,
+            },
         )
-        messages.success(
-            request, f"Sample recorded as {sample.get_status_display().lower()}."
-        )
+        if sample.status == "disputed":
+            messages.success(
+                request,
+                "Sample recorded as disputed. "
+                + (
+                    "The SSA was returned to its collector."
+                    if sample.subject_type == "ssa_record"
+                    else "The activity is excluded from analytics until the dispute is resolved."
+                ),
+            )
+        else:
+            messages.success(
+                request, f"Sample recorded as {sample.get_status_display().lower()}."
+            )
     except (BadRequest, _Forbidden) as exc:
         messages.error(request, str(exc))
     return local_redirect("/ia/samples/")
 
 
 @require_page_permission("ia_samples")
-def ia_sample_draw_action(request):
-    """Draw this week's sample now rather than waiting for Monday."""
-    from apps.activities.verification_sampling import draw_samples
+def ia_sample_resolve_action(request, sample_id):
+    """Put a corrected, disputed activity back into analytics."""
+    from apps.activities.verification_sampling import resolve_dispute
+    from apps.core.exceptions import Forbidden as _Forbidden
 
     if request.method != "POST":
         return local_redirect("/ia/samples/")
-    created = draw_samples(days=7, actor=request.user.user_id)
+    try:
+        resolve_dispute(sample_id, request.POST.get("note", ""), request.user)
+        messages.success(request, "Dispute resolved; the activity counts again.")
+    except (BadRequest, _Forbidden) as exc:
+        messages.error(request, str(exc))
+    return local_redirect("/ia/samples/?status=disputed")
+
+
+@require_page_permission("ia_samples")
+def ia_sample_field_check_action(request, sample_id):
+    """Ask for a field back-check: mark the sample, then open the schedule
+    drawer for its school, which files an owner-approved visit request."""
+    from urllib.parse import urlencode
+
+    from apps.activities.verification_sampling import request_field_check, sample_school
+    from apps.core.exceptions import Forbidden as _Forbidden
+
+    if request.method != "POST":
+        return local_redirect("/ia/samples/")
+    try:
+        sample = request_field_check(sample_id, request.user)
+    except (BadRequest, _Forbidden) as exc:
+        messages.error(request, str(exc))
+        return local_redirect("/ia/samples/")
+    school = sample_school(sample)
+    messages.info(
+        request,
+        f"Request the back-check visit to {school.name}: the school's owner approves it.",
+    )
+    return local_redirect(
+        "/ia/samples/?" + urlencode({"status": "pending", "visit": school.school_id})
+    )
+
+
+@require_page_permission("ia_samples")
+def ia_sample_draw_action(request):
+    """Draw this week's sample now rather than waiting for Monday — for the
+    reader's own country (IA review, 2026-09-13)."""
+    from apps.activities.verification_sampling import draw_samples
+    from apps.core.scoping import country_bound
+
+    if request.method != "POST":
+        return local_redirect("/ia/samples/")
+    scope = resolve_user_scope(request.user)
+    created = draw_samples(
+        days=7,
+        actor=request.user.user_id,
+        country=scope.country if country_bound(scope) else None,
+    )
     messages.success(
         request,
-        f"{created} activit{'y' if created == 1 else 'ies'} drawn for a second look."
+        f"{created} record{'' if created == 1 else 's'} drawn for a second look."
         if created
         else "Nothing new to draw: last week's verifications are already sampled.",
     )
@@ -2385,31 +2901,15 @@ def ia_sample_draw_action(request):
 
 @require_page_permission("ia_attribution")
 def ia_attribution_view(request):
-    """Did the work move the scores? Confirmed assessments only."""
-    from apps.analytics.attribution_service import attribution
-    from apps.core.fy import fy_options, get_operational_fy
-    from apps.geography.models import District
+    """The attribution page merged into Programme Learning (IA review,
+    2026-09-13): its separate maths disagreed with /impact and it made no
+    association caveat. Bookmarks and the Country Director's access land on
+    the Training tab, which carries intervention contribution with the
+    caveat; the financial year travels with them."""
+    from urllib.parse import urlencode
 
-    choices = fy_options()
+    params = {"view": "training"}
     fy = (request.GET.get("fy") or "").strip()
-    fy = fy if fy in choices else get_operational_fy()
-    district_id = (request.GET.get("district") or "").strip() or None
-    data = attribution(request.user, fy=fy, district_id=district_id)
-    share = data["confirmed_share"]
-    context = {
-        **data,
-        "both_years_helper": f"confirmed SSA in FY{data['prior_fy']} and FY{fy}",
-        "confirmed_share_label": f"{share}%",
-        "confirmed_helper": f"{data['confirmed_records']} of {data['total_records']} FY{fy} assessments",
-        "confirmed_tone": "success"
-        if share >= 80
-        else "warning"
-        if share >= 50
-        else "danger",
-        "improving": sum(1 for r in data["rows"] if (r["movement"] or 0) > 0),
-        "improving_helper": f"of {len(data['rows'])} interventions moved up",
-        "fy_options": choices,
-        "selected_district": district_id or "",
-        "districts_options": District.objects.order_by("name").values("id", "name"),
-    }
-    return render(request, "pages/ia/attribution.html", context)
+    if fy:
+        params["fy"] = fy
+    return local_redirect(f"/ia/learning/?{urlencode(params)}")

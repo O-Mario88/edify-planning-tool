@@ -1,0 +1,41 @@
+{% comment %}
+The Country Director dashboard's "Impact findings" section, operations view
+(IA review, owner, 2026-09-13): what Impact Assessment's reports ask of the
+director — the latest report released to country leadership, reports only the
+director can acknowledge, and recommendations awaiting a response or overdue
+(CDDashboardService.impact_findings over apps.impact.reports.cd_impact_findings).
+Tiles come from the reconciled registry; the table is plain text; every row
+opens the report.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="cd-impact-findings-heading" data-cd-impact-findings>
+  <div class="flex items-center justify-between gap-3">
+    <h2 id="cd-impact-findings-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+      <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Impact findings
+    </h2>
+    <a href="/ia/impact-reports/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open impact reports →</a>
+  </div>
+  {% include "components/context_metrics.html" with items=impact_findings.tiles variant="executive" title="Impact findings" %}
+  {% if impact_findings.latest and impact_findings.latest.portfolio_in_scope %}
+  <p class="edify-text-caption edify-text-muted">Latest release: <a href="/ia/impact-reports/{{ impact_findings.latest.report_id }}/">{{ impact_findings.latest.title }}</a> (version {{ impact_findings.latest.version }}) · school change measured in {{ impact_findings.latest.portfolio_measured }} of {{ impact_findings.latest.portfolio_in_scope }} schools in scope.</p>
+  {% endif %}
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Recommendations awaiting your response; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Impact report recommendations awaiting a response or overdue</caption>
+      <thead><tr><th scope="col">Recommendation</th><th scope="col">Report</th><th scope="col">For</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody>
+        {% for row in impact_findings.rows|slice:":5" %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.text|truncatechars:140 }}</span></th>
+          <td data-label="Report">{{ row.report }}</td>
+          <td data-label="For">{{ row.owner }}</td>
+          <td data-label="Due">{{ row.due|date:"j M Y"|default:"—" }}</td>
+          <td data-label="Status"><span data-tone="{{ row.status_tone }}">{{ row.status_label }}{% if row.overdue %} · overdue{% endif %}</span></td>
+          <td class="is-end" data-record-action data-label="Actions"><a class="rpl-row-link rounded-control" href="/ia/impact-reports/{{ row.report_id }}/#recommendations">Respond</a></td>
+        </tr>
+        {% empty %}
+        <tr><td class="rpl-table__empty" colspan="6">{% include "components/empty_state.html" with message="No recommendation waits for you" hint="Recommendations of released impact reports appear here until you answer them." compact="true" %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

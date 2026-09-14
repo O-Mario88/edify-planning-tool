@@ -1,6 +1,6 @@
 """The Country Director's export set.
 
-Four CSVs, one period. Each is the same data the cockpit shows for the
+Five CSVs, one period. Each is the same data the cockpit shows for the
 selected FY/quarter/month, so a file a CD takes into a board meeting can never
 disagree with the screen it came from:
 
@@ -8,19 +8,23 @@ disagree with the screen it came from:
 - ``risk``: every priority school with the factors that ranked it.
 - ``finance``: the advance pipeline and utilisation against the envelope.
 - ``core``: core-package health for every plan in the country.
+- ``impact``: the latest impact report released to the country's leadership,
+  read from its evidence snapshot frozen at submission — never live data — so
+  the board file carries exactly what was reviewed (IA review, 2026-09-13).
 """
 
 from __future__ import annotations
 
 from apps.core.fy import get_operational_fy
 
-DATASETS = ("delivery", "risk", "finance", "core")
+DATASETS = ("delivery", "risk", "finance", "core", "impact")
 
 _LABELS = {
     "delivery": "Delivery",
     "risk": "Risk",
     "finance": "Finance",
     "core": "Core Health",
+    "impact": "Impact Findings",
 }
 
 
@@ -44,6 +48,12 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
 
     fy = fy or get_operational_fy()
     dataset = normalise_dataset(dataset)
+    if dataset == "impact":
+        # A released report is its own period: its frozen snapshot, not the
+        # cockpit's filters, decides every figure in the file.
+        from apps.impact.reports import IMPACT_EXPORT_HEADER, impact_export_rows
+
+        return "impact-findings", list(IMPACT_EXPORT_HEADER), impact_export_rows(user)
     cd = resolve_cd_scope(fy, quarter, month, filters or {}, country=country_for(user))
     acts = _country_activities(cd)
 

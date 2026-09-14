@@ -108,7 +108,8 @@ class ProjectCoordinatorScopeTests(TestCase):
     def test_dashboard_shows_only_their_portfolio(self):
         client = Client()
         client.force_login(self.mine)
-        resp = client.get("/dashboard", follow=True)
+        # The portfolio is the Operations view; the dashboard opens on Today.
+        resp = client.get("/dashboard?view=operations", follow=True)
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
         self.assertIn("SP-MINE", body)

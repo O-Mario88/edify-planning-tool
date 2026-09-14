@@ -7,6 +7,12 @@ School and carry all 8 numeric intervention scores. Valid rows retain the
 canonical FY/quarter, verification-provenance, school-status and planning-
 readiness rules while being persisted in bounded bulk writes. Reporting reuses
 UploadBatch + UploadBatchRowResult with upload_type="ssa".
+
+IA review (owner, 2026-09-13): rows are matched only to schools in the
+uploader's country — a School ID elsewhere in the deployment is blocked with
+"School is outside your country" rather than written onto another country's
+school — and imported records land PENDING like every other SSA, waiting for a
+verifier other than the uploader (apps.ssa.services.verify_record).
 """
 
 from __future__ import annotations
@@ -22,6 +28,7 @@ from django.db import transaction
 
 from apps.core.exceptions import BadRequest
 from apps.schools import upload_mapping as M
+from apps.ssa.services import SOURCE_FILE_IMPORT
 from apps.schools.upload_service import _parse_date, _read_rows, _value
 
 logger = logging.getLogger(__name__)
@@ -36,8 +43,38 @@ def _error_kind(text: str) -> str:
     return re.sub(r"\(-?[\d.]+\)", "(value)", collapsed).strip()
 
 
+OUTSIDE_COUNTRY = "School is outside your country"
+
+
+def _schools_in_reach(principal, school_ids):
+    """(in_reach, outside) School rows by school_id for an import.
+
+    Country roles import onto their country's schools only; an unbounded
+    uploader (Admin, or an officer with no country on file) keeps the
+    deployment. Closed schools stay matchable: an assessment from when the
+    school was open is still that school's history.
+    """
+    from apps.core.scoping import country_bound, resolve_user_scope, school_country_q
+    from apps.schools.models import School
+
+    everything = School.objects.filter(
+        school_id__in=school_ids, deleted_at__isnull=True
+    ).in_bulk(field_name="school_id")
+    scope = resolve_user_scope(principal)
+    if not country_bound(scope):
+        return everything, {}
+    allowed = set(
+        School.objects.filter(school_id__in=list(everything), deleted_at__isnull=True)
+        .filter(school_country_q(scope))
+        .values_list("school_id", flat=True)
+    )
+    inside = {key: school for key, school in everything.items() if key in allowed}
+    outside = {key: school for key, school in everything.items() if key not in allowed}
+    return inside, outside
+
+
 def upload_ssa_file(file, principal) -> dict:
-    from apps.schools.models import SSAImportBatch, SSAImportRow, School
+    from apps.schools.models import SSAImportBatch, SSAImportRow
 
     started_at = time.perf_counter()
     raw_headers, data_rows = _read_rows(file)
@@ -90,10 +127,7 @@ def upload_ssa_file(file, principal) -> dict:
         for _row_number, cells in data_rows
         if _value(field_index, "school_id", cells)
     }
-    schools_by_id = School.objects.filter(
-        school_id__in=uploaded_school_ids,
-        deleted_at__isnull=True,
-    ).in_bulk(field_name="school_id")
+    schools_by_id, outside_country = _schools_in_reach(principal, uploaded_school_ids)
     from apps.core.fy import get_operational_fy
     from apps.ssa.models import SsaRecord as _SR
 
@@ -181,6 +215,11 @@ def upload_ssa_file(file, principal) -> dict:
 
         if bad_score:
             validation_errors.append(bad_score)
+            status = "blocked"
+            counts["failed"] += 1
+
+        if status != "blocked" and school_id in outside_country:
+            validation_errors.append(OUTSIDE_COUNTRY)
             status = "blocked"
             counts["failed"] += 1
 
@@ -446,10 +485,15 @@ def import_ssa_batch(batch, user) -> dict:
         return {"created": 0, "unmatched": 0, "already_imported": True}
 
     rows = list(batch.rows.exclude(status="blocked"))
-    schools_by_id = School.objects.filter(
-        school_id__in=[row.school_id for row in rows],
-        deleted_at__isnull=True,
-    ).in_bulk(field_name="school_id")
+    # The same country boundary as staging: a batch finalised later, or by
+    # someone else, still never writes onto a school outside the reach.
+    schools_by_id, outside_country = _schools_in_reach(
+        user, {row.school_id for row in rows}
+    )
+    rows = [row for row in rows if row.school_id not in outside_country]
+    from apps.core.rbac import EdifyRole
+
+    keyed_by_ia = getattr(user, "active_role", "") == EdifyRole.IMPACT_ASSESSMENT.value
     current_fy = get_operational_fy()
     affected_school_pks = {school.id for school in schools_by_id.values()}
     current_states: dict[str, set[str]] = {}
@@ -496,12 +540,13 @@ def import_ssa_batch(batch, user) -> dict:
                         1,
                     ),
                     uploaded_by=user.user_id,
-                    collector_type="staff",
+                    collector_type="ia" if keyed_by_ia else "staff",
                     collected_by_user_id=user.user_id,
-                    verification_status="confirmed",
-                    verification_source="staff_self_verified",
-                    verified_by_user_id=user.user_id,
-                    verified_at=now,
+                    # Pending: a verifier other than the uploader confirms it.
+                    verification_status="pending",
+                    verification_source=SOURCE_FILE_IMPORT,
+                    verified_by_user_id=None,
+                    verified_at=None,
                 )
                 records.append(record)
                 scores.extend(
@@ -514,7 +559,7 @@ def import_ssa_batch(batch, user) -> dict:
                 )
                 current_states.setdefault(school.id, set())
                 if record.fy == current_fy:
-                    current_states[school.id].add("confirmed")
+                    current_states[school.id].add("pending")
                 continue
 
             # Create UnmatchedSSARecord. Pop the pass-through-only keys
@@ -550,16 +595,26 @@ def import_ssa_batch(batch, user) -> dict:
         if records:
             SsaRecord.objects.bulk_create(records, batch_size=1000)
             SsaScore.objects.bulk_create(scores, batch_size=2000)
-            # bulk_create bypasses Django's post_save bridge. Enqueue the same
-            # durable, idempotent Business Transformation event explicitly so
-            # a verified Financial Health/Government Requirements weakness is
-            # never dependent on whether the SSA arrived through a form or a
-            # batch import. These rows share this transaction with the event.
-            from apps.business_transformation.signals import (
-                enqueue_ssa_confirmed_batch,
-            )
+            # Imported rows are pending, so the confirmation events (Business
+            # Transformation, recommendations, project measurement) fire when
+            # a verifier confirms each one — `verify_record` saves the row and
+            # the post_save bridges carry it. What an import can do now is
+            # fill project baselines from the confirmed history it may sit
+            # beside: one outbox insert for the whole batch, one event per
+            # school, keyed by batch so a re-run converges.
+            from apps.outbox.services import enqueue_many
+            from apps.projects.baselines import EVENT as BASELINE_EVENT
 
-            enqueue_ssa_confirmed_batch(records)
+            enqueue_many(
+                BASELINE_EVENT,
+                [
+                    (
+                        {"schoolId": str(school_pk)},
+                        f"{BASELINE_EVENT}:{school_pk}:batch:{batch.id}",
+                    )
+                    for school_pk in sorted({record.school_id for record in records})
+                ],
+            )
         if unmatched_records:
             UnmatchedSSARecord.objects.bulk_create(
                 unmatched_records,

@@ -1,0 +1,74 @@
+{% load table_pagination %}
+{% comment %}
+The Measurement Framework's register (IA review, 2026-09-13): one card per
+tab, rows of plain-text cells (status words carry a data-tone, never a pill),
+the drawer each row action opens, and the tab's filters. Every filter carries
+the tab so a choice stays on the register it was made on; a filter with
+nothing to choose is not rendered.
+{% endcomment %}
+{% paginate rows "register_page" as pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-framework-register-title" data-ia-framework-register="{{ tab }}">
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ia-framework-register-title" class="rpl-card__title">{{ register_title }}</h2>
+      <span class="rpl-card__subtitle">{{ pager.total }} record{{ pager.total|pluralize }}</span>
+    </div>
+  </header>
+
+  {% if filters %}
+  <form method="get" class="edify-filter-bar" aria-label="{{ register_title }} filters" x-data>
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    {% for field in filters.fields %}
+    {% if field.options %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        <option value="">{{ field.blank }}</option>
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% endfor %}
+  </form>
+  {% endif %}
+
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ register_title }}; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Measurement framework: {{ register_title|lower }}</caption>
+      {% if pager.rows %}
+      <thead>
+        <tr>
+          {% for cell in pager.rows.0.cells %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for row in pager.rows %}
+        <tr>
+          {% for cell in row.cells %}
+          {% if cell.primary %}
+          <th scope="row" data-record-title><span>{{ cell.text }}</span></th>
+          {% else %}
+          <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text }}{% endif %}</td>
+          {% endif %}
+          {% endfor %}
+          <td class="is-end" data-record-action data-label="Actions">
+            {% for action in row.actions %}
+            <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% endfor %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message=empty_title hint=empty_body compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/table_pager.html" with pager=pager param="register_page" %}
+</section>

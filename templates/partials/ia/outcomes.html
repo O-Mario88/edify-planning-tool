@@ -1,48 +1,238 @@
 {% load school_identity %}
-{% load kpi_metrics table_pagination %}
+{% load table_pagination impact_evidence %}
+{% comment %}
+Impact Assessment's Outcomes, Collection and (until the impact report lifecycle
+provides its own partial) Reports views (IA review, owner, 2026-09-13).
+
+Outcomes leads with school change across every school in scope
+(ia_outcomes.progress, computed only here: apps/analytics/ia_workflow.py), then
+the evidence beyond the SSA — student learning, discipleship and EdTech — then
+the special-project cohorts. Collection is the worklist over every
+operationally active school (ia_collection: apps/analytics/ia_collection.py).
+Tiles come from the reconciled registry and read "Not measured" where nothing
+was measured. Tables are plain text: a status is a word with a tone.
+{% endcomment %}
 <div class="space-y-4" data-ia-outcome-workspace>
-  <form id="ia-outcome-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface p-3 border border-[var(--edify-border)] rounded-surface shadow-sm">
-    <input type="hidden" name="view" value="{{ dashboard_view }}">
-    <div class="flex flex-col min-w-[150px] flex-1">
-    <label class="edify-filter-label" for="ia-outcome-project">Project</label>
-      <select id="ia-outcome-project" name="project" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
-        <option value="">All accessible projects</option>
-        {% for project in ia_outcomes.projects %}<option value="{{ project.project_id }}" {% if ia_outcomes.project == project.project_id %}selected{% endif %}>{{ project.project__name }}</option>{% endfor %}
+{% if dashboard_view == "collection" %}
+  {% with wl=ia_collection chosen=ia_collection.filters.chosen options=ia_collection.filters.options %}
+  <form id="ia-collection-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="edify-filter-bar" aria-label="Collection filters" x-data>
+    <input type="hidden" name="view" value="collection">
+    {% if options.states %}
+    <label class="cce-filter"><span class="cce-filter__label">Collection need</span>
+      <select name="state" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        <option value="">Every school needing work</option>
+        {% for o in options.states %}<option value="{{ o.value }}"{% if chosen.state == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
       </select>
-    </div>
-    {% if dashboard_view == "collection" %}
-    <div class="flex flex-col min-w-[150px] flex-1">
-    <label class="edify-filter-label" for="ia-collection-gap">Collection need</label>
-      <select id="ia-collection-gap" name="gap" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
-        <option value="">All unmeasured records</option>
-        <option value="baseline_missing" {% if ia_gap == "baseline_missing" %}selected{% endif %}>Missing baseline</option>
-        <option value="overdue" {% if ia_gap == "overdue" %}selected{% endif %}>Overdue follow-up</option>
-        <option value="due" {% if ia_gap == "due" %}selected{% endif %}>Due today</option>
-        <option value="upcoming" {% if ia_gap == "upcoming" %}selected{% endif %}>Upcoming follow-up</option>
-        <option value="not_scheduled" {% if ia_gap == "not_scheduled" %}selected{% endif %}>Not scheduled</option>
-        <option value="evidence_review" {% if ia_gap == "evidence_review" %}selected{% endif %}>Evidence review</option>
-      </select>
-    </div>
+    </label>
     {% endif %}
-    <button class="btn btn-primary h-8" type="submit">Apply filters</button>
+    {% if options.districts %}
+    <label class="cce-filter"><span class="cce-filter__label">District</span>
+      <select name="district" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        <option value="">Every district</option>
+        {% for o in options.districts %}<option value="{{ o.value }}"{% if chosen.district == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if options.owners %}
+    <label class="cce-filter"><span class="cce-filter__label">Account owner</span>
+      <select name="owner" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        <option value="">Every owner</option>
+        {% for o in options.owners %}<option value="{{ o.value }}"{% if chosen.owner == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if options.school_types or options.projects %}
+    <details class="relative">
+      <summary class="list-none cursor-pointer inline-flex items-center gap-1.5 h-8 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50">More filters</summary>
+      <div class="absolute right-0 z-20 mt-1 w-64 p-3 rounded-surface border border-slate-200 edify-surface shadow-lg space-y-3">
+        {% if options.school_types %}
+        <label class="cce-filter"><span class="cce-filter__label">School type</span>
+          <select name="school_type" class="cce-filter__select" @change="$el.form.requestSubmit()">
+            <option value="">Every type</option>
+            {% for o in options.school_types %}<option value="{{ o.value }}"{% if chosen.school_type == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+          </select>
+        </label>
+        {% endif %}
+        {% if options.projects %}
+        <label class="cce-filter"><span class="cce-filter__label">Special project</span>
+          <select name="project" class="cce-filter__select" @change="$el.form.requestSubmit()">
+            <option value="">Every school</option>
+            {% for o in options.projects %}<option value="{{ o.value }}"{% if chosen.project == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+          </select>
+        </label>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
+    <a class="btn btn-ghost h-8" href="/ia/dashboard/?view=collection">Reset</a>
+  </form>
+
+  {% ia_collection_tiles wl as collection_tiles %}
+  {% include "components/context_metrics.html" with items=collection_tiles variant="executive" title="Assessment collection" %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-collection-title" data-ia-collection-worklist>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-collection-title" class="rpl-card__title">Assessment collection worklist</h2>
+        <span class="rpl-card__subtitle">{{ wl.page.total }} school{{ wl.page.total|pluralize }} · FY{{ wl.fy }} · {{ wl.counts.project_enrolments }} project enrolment{{ wl.counts.project_enrolments|pluralize }}, {{ wl.counts.project_baseline_not_captured }} with a baseline not yet captured, {{ wl.counts.project_no_confirmed_ssa }} with no confirmed SSA</span>
+      </div>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Assessment collection worklist; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">Schools whose SSA evidence needs collecting, verifying or correcting</caption>
+        <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Account owner</th><th scope="col">Need</th><th scope="col">Detail</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+          {% for row in wl.rows %}
+          <tr>
+            <th scope="row" data-record-title><a href="{{ row.school_url }}">{% school_identity row.school row.school_id %}</a></th>
+            <td data-label="District">{{ row.district|default:"—" }}</td>
+            <td data-label="Account owner">{{ row.owner }}</td>
+            <td data-label="Need"><span data-tone="{{ row.state_tone }}">{{ row.state_label }}</span></td>
+            <td data-label="Detail">{{ row.detail }}</td>
+            <td class="is-end" data-record-action data-label="Actions">
+              {% for action in row.actions %}
+              {% if action.method == "post" %}
+              <form method="post" action="{{ action.href }}" class="ia-sample-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="rpl-row-link rounded-control">{{ action.label }}</button></form>
+              {% elif action.method == "drawer" %}
+              <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.href }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% else %}
+              <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
+              {% endif %}
+              {% endfor %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="rpl-table__empty" colspan="6">{% include "components/empty_state.html" with message="No school needs collection work here" hint="Every school in this selection has a confirmed SSA for this financial year, or choose another filter." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=wl.page param="collection_page" %}
+  </section>
+  {% endwith %}
+{% else %}
+  <form id="ia-outcome-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="edify-filter-bar" aria-label="Outcome filters" x-data>
+    <input type="hidden" name="view" value="{{ dashboard_view }}">
+    {% if dashboard_view == "outcomes" and ia_outcomes.fy_options %}
+    <label class="cce-filter"><span class="cce-filter__label">Financial year</span>
+      <select id="ia-outcome-fy" name="fy" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        {% for option in ia_outcomes.fy_options %}<option value="{{ option }}"{% if option == ia_outcomes.fy %} selected{% endif %}>FY{{ option }} against FY{{ option|add:"-1" }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if ia_outcomes.projects %}
+    <label class="cce-filter"><span class="cce-filter__label">Project cohort</span>
+      <select id="ia-outcome-project" name="project" class="cce-filter__select" @change="$el.form.requestSubmit()">
+        <option value="">All accessible projects</option>
+        {% for project in ia_outcomes.projects %}<option value="{{ project.project_id }}"{% if ia_outcomes.project == project.project_id %} selected{% endif %}>{{ project.project__name }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
     <a class="btn btn-ghost h-8" href="/ia/dashboard/?view={{ dashboard_view }}">Reset</a>
   </form>
 
-  <section class="space-y-3" aria-labelledby="ia-outcome-summary">
+  {% if dashboard_view == "outcomes" %}
+  {% with progress=ia_outcomes.progress %}
+  {% with pf=progress.portfolio ev=progress.evidence %}
+  <section class="space-y-3" aria-labelledby="ia-portfolio-title" data-ia-portfolio-change>
+    <div>
+      <h2 id="ia-portfolio-title" class="text-[15px] font-bold edify-text tracking-tight">School change across the portfolio</h2>
+      <p class="edify-text-caption edify-text-muted mt-1">{{ ia_outcomes.scope_label }} · every school in scope with a confirmed SSA in FY{{ pf.prev_fy }} and FY{{ pf.fy }} · {{ pf.rule_label }}</p>
+    </div>
+    {% include "components/context_metrics.html" with items=progress.tiles variant="executive" title="School change" %}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-area-table-title">
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h3 id="ia-area-table-title" class="rpl-card__title">By outcome area and SSA domain</h3>
+          <span class="rpl-card__subtitle">Evidence: {{ pf.grade.label }}</span>
+        </div>
+        <a class="rpl-row-link rounded-control" href="/declining-schools?fy={{ pf.fy }}">Open Declining Schools</a>
+      </header>
+      <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="School change by outcome area; scroll sideways for more columns">
+        <table class="rpl-table" data-mobile-table="scroll">
+          <caption class="sr-only">Schools measured, improved and declined by outcome area and SSA domain</caption>
+          <thead><tr><th scope="col">Outcome area / domain</th><th scope="col">Schools measured</th><th scope="col">Improved</th><th scope="col">Declined</th><th scope="col">No change</th><th scope="col">Median change</th><th scope="col">Evidence</th></tr></thead>
+          <tbody>
+            {% comment %}Bounded by the eight SSA domains and the outcome areas that group them.{% endcomment %}{% for row in pf.rows|slice:":24" %}
+            <tr{% if row.is_area %} data-ia-area-row{% endif %}>
+              <th scope="row" data-record-title>{% if row.is_area %}<strong>{{ row.name }}</strong>{% else %}<span class="edify-text-muted" aria-hidden="true">— </span>{{ row.name }}{% endif %}</th>
+              {% if row.n %}
+              <td data-label="Schools measured" class="tabular-nums">{{ row.n }}</td>
+              <td data-label="Improved" class="tabular-nums"><span data-tone="success">{{ row.improved_pct }}%</span> ({{ row.improved }})</td>
+              <td data-label="Declined" class="tabular-nums"><span data-tone="{% if row.declined %}danger{% else %}neutral{% endif %}">{{ row.declined_pct }}%</span> ({{ row.declined }})</td>
+              <td data-label="No change" class="tabular-nums"><span data-tone="neutral">{{ row.no_change }}{% if row.maintained %} · {{ row.maintained }} kept strong{% endif %}</span></td>
+              <td data-label="Median change" class="tabular-nums">{% if row.withheld %}n too small{% elif row.median_change is not None %}{{ row.median_change|floatformat:"+2" }}{% else %}Not measured{% endif %}</td>
+              <td data-label="Evidence"><span title="{{ row.grade.reasons|join:' ' }}">{{ row.grade.label }}</span></td>
+              {% else %}
+              <td data-label="Schools measured">Not measured</td><td data-label="Improved">—</td><td data-label="Declined">—</td><td data-label="No change">—</td><td data-label="Median change">Not measured</td><td data-label="Evidence">Insufficient evidence</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">{{ pf.limitation }} {{ pf.rule_sentence }}{% if pf.median_interval_days %} Median {{ pf.median_interval_days }} days between the readings compared.{% endif %}</p>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-evidence-title" data-ia-evidence-beyond-ssa>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-evidence-title" class="rpl-card__title">Student learning, discipleship and EdTech</h2>
+        <span class="rpl-card__subtitle">FY{{ ev.fy }} · confirmed school evidence only; pending records wait for a second verifier</span>
+      </div>
+      <a class="rpl-row-link rounded-control" href="/ia/school-evidence/">Open School Evidence</a>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Evidence beyond the SSA; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">Student learning, discipleship and EdTech evidence</caption>
+        <thead><tr><th scope="col">Measure</th><th scope="col">Schools with confirmed evidence</th><th scope="col">What it shows</th><th scope="col">Awaiting verification</th><th scope="col">Evidence</th></tr></thead>
+        <tbody>
+          <tr>
+            <th scope="row" data-record-title><a href="/ia/school-evidence/?tab=learning">Student learning results</a></th>
+            <td data-label="Schools" class="tabular-nums">{% if ev.learning.schools %}{{ ev.learning.schools }}{% else %}Not measured{% endif %}</td>
+            <td data-label="What it shows">{% if ev.learning.comparisons %}{{ ev.learning.improved }} of {{ ev.learning.comparisons }} class comparisons improved ({{ ev.learning.improved_pct }}%), {{ ev.learning.declined }} declined · same class and subject year on year · {{ ev.learning.rule_label }}{% else %}No class has confirmed results in both years{% endif %}{% if ev.learning.withheld %} · {{ ev.learning.withheld }} withheld (fewer than {{ ev.learning.min_learners }} learners){% endif %}</td>
+            <td data-label="Awaiting verification" class="tabular-nums"><span data-tone="{% if ev.learning.pending %}warning{% else %}neutral{% endif %}">{{ ev.learning.pending }}</span></td>
+            <td data-label="Evidence">{{ ev.learning.grade.label }}</td>
+          </tr>
+          <tr>
+            <th scope="row" data-record-title><a href="/ia/school-evidence/?tab=discipleship">Discipleship practice</a></th>
+            <td data-label="Schools" class="tabular-nums">{% if ev.discipleship.schools %}{{ ev.discipleship.schools }}{% else %}Not measured{% endif %}</td>
+            <td data-label="What it shows">{% if ev.discipleship.schools %}{{ ev.discipleship.with_groups_pct }}% run active discipleship groups · {{ ev.discipleship.with_lead_pct }}% have a spiritual lead in post{% if ev.discipleship.learners_in_groups_pct is not None %} · {{ ev.discipleship.learners_in_groups_pct }}% of learners in groups{% endif %}{% else %}No confirmed discipleship record this year{% endif %}</td>
+            <td data-label="Awaiting verification" class="tabular-nums"><span data-tone="{% if ev.discipleship.pending %}warning{% else %}neutral{% endif %}">{{ ev.discipleship.pending }}</span></td>
+            <td data-label="Evidence">{{ ev.discipleship.grade.label }}</td>
+          </tr>
+          <tr>
+            <th scope="row" data-record-title><a href="/ia/stories/">Most Significant Change stories</a></th>
+            <td data-label="Schools" class="tabular-nums">{% if ev.discipleship.stories_approved %}{{ ev.discipleship.stories_approved }} approved{% else %}Not measured{% endif %}</td>
+            <td data-label="What it shows">Reviewed stories of spiritual formation, beside the self-scored Christ-like Behaviour and Word of God domains</td>
+            <td data-label="Awaiting verification" class="tabular-nums"><span data-tone="{% if ev.discipleship.stories_waiting %}warning{% else %}neutral{% endif %}">{{ ev.discipleship.stories_waiting }}</span></td>
+            <td data-label="Evidence">Qualitative</td>
+          </tr>
+          <tr>
+            <th scope="row" data-record-title><a href="/ia/school-evidence/?tab=edtech">EdTech rollout</a></th>
+            <td data-label="Schools" class="tabular-nums">{% if ev.edtech.schools %}{{ ev.edtech.schools }}{% else %}Not measured{% endif %}</td>
+            <td data-label="What it shows">{% if ev.edtech.deployments %}{{ ev.edtech.units }} unit{{ ev.edtech.units|pluralize }} in {{ ev.edtech.deployments }} deployment{{ ev.edtech.deployments|pluralize }} · {% if ev.edtech.checked %}{{ ev.edtech.functional_pct }}% of checked units working, {{ ev.edtech.teachers_using }} teachers and {{ ev.edtech.learners_using }} learners using{% if ev.edtech.learners_with_access %} of {{ ev.edtech.learners_with_access }} with access{% endif %}{% else %}no confirmed check yet{% endif %}{% else %}No confirmed deployment{% endif %}</td>
+            <td data-label="Awaiting verification" class="tabular-nums"><span data-tone="{% if ev.edtech.pending %}warning{% else %}neutral{% endif %}">{{ ev.edtech.pending }}</span></td>
+            <td data-label="Evidence">{{ ev.edtech.grade.label }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endwith %}
+  {% endwith %}
+  {% endif %}
+
+  <section class="space-y-3" aria-labelledby="ia-outcome-summary" data-ia-project-cohorts>
     <div class="flex flex-wrap items-start justify-between gap-2">
       <div>
-        <h2 id="ia-outcome-summary" class="text-[15px] font-bold edify-text tracking-tight">School outcomes and evidence readiness</h2>
-        <p class="edify-text-caption edify-text-muted mt-1">{{ ia_outcomes.scope_label }} · Project-school enrolments</p>
+        <h2 id="ia-outcome-summary" class="text-[15px] font-bold edify-text tracking-tight">Project cohorts</h2>
+        <p class="edify-text-caption edify-text-muted mt-1">{{ ia_outcomes.scope_label }} · {{ ia_outcomes.total }} project-school enrolment{{ ia_outcomes.total|pluralize }} in {{ ia_outcomes.unique_schools }} unique school{{ ia_outcomes.unique_schools|pluralize }}</p>
       </div>
       <span class="edify-text-caption edify-text-muted">{{ ia_outcomes.period }}</span>
     </div>
-    {% kpi_strip %}
-      {% kpi_metric %}{% kpi_label %}Measured{% endkpi_label %}{{ ia_outcomes.measured }} / {{ ia_outcomes.total }}{% kpi_helper %}Confirmed assessment pairs{% endkpi_helper %}{% endkpi_metric %}
-      {% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ ia_outcomes.improved }}{% kpi_helper %}Among measured pairs{% endkpi_helper %}{% endkpi_metric %}
-      {% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ ia_outcomes.declined }}{% kpi_helper %}Among measured pairs{% endkpi_helper %}{% endkpi_metric %}
-      {% kpi_metric %}{% kpi_label %}Missing baseline{% endkpi_label %}{{ ia_outcomes.baseline_missing }}{% kpi_helper %}Collect or confirm evidence{% endkpi_helper %}{% kpi_link %}/ia/dashboard/?view=collection&amp;gap=baseline_missing&amp;project={{ ia_outcomes.project|urlencode }}{% endkpi_link %}{% endkpi_metric %}
-      {% kpi_metric %}{% kpi_label %}Overdue follow-up{% endkpi_label %}{{ ia_outcomes.overdue }}{% kpi_helper %}Coordinate assessment{% endkpi_helper %}{% kpi_link %}/ia/dashboard/?view=collection&amp;gap=overdue&amp;project={{ ia_outcomes.project|urlencode }}{% endkpi_link %}{% endkpi_metric %}
-    {% endkpi_strip %}
+    {% include "components/context_metrics.html" with items=ia_outcomes.cohort_tiles variant="executive" title="Project cohorts" %}
     <details class="analytics-context-disclosure">
       <summary>Evidence context <span>{{ ia_outcomes.unmeasured }} unmeasured enrolments</span></summary>
       <div class="p-4 space-y-2 edify-text-caption edify-text-muted">
@@ -52,34 +242,7 @@
     </details>
   </section>
 
-  {% if dashboard_view == "framework" %}
-  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-    <h2 class="text-[15px] font-bold edify-text tracking-tight">Measurement framework</h2>
-    <p class="edify-text-caption edify-text-muted leading-relaxed">Connect training, lending and educational technology to an intended school outcome before interpreting delivery as success.</p>
-    <ol class="list-decimal pl-5 space-y-3 text-[13px] edify-text-muted leading-relaxed">
-      <li>Choose the SSA intervention and explain the programme's expected contribution.</li>
-      <li>Define baseline eligibility, expected direction, meaningful change and the follow-up window.</li>
-      <li>Publish the measurement mapping through the existing approval workflow; retain its version for enrolled schools.</li>
-      <li>Review domain scores with classroom observations, discipleship evidence and school feedback. Record limitations in the impact report.</li>
-    </ol>
-    <div class="flex flex-wrap gap-2">
-    <a class="btn btn-primary h-8" href="/priorities/ssa-mapping">Manage measurement mappings</a>
-    <a class="btn btn-secondary h-8" href="/priorities">Review strategic priorities</a>
-    </div>
-    <p class="edify-text-caption edify-text-muted leading-relaxed">IA owns measurement quality and interpretation. Programme staff coordinate delivery and field evidence; authorised leadership retains strategic approval.</p>
-  </section>
-  {% elif dashboard_view == "learning" %}
-  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-    <h2 class="text-[15px] font-bold edify-text tracking-tight">Programme learning</h2>
-    <p class="edify-text-caption edify-text-muted leading-relaxed">Compare outcomes with programme exposure, investigate declining or unchanged schools, and agree a follow-up action with the programme team.</p>
-    <div class="flex flex-wrap gap-3">
-      <a class="btn btn-primary h-8" href="/impact">Training and EdTech contribution analysis</a>
-      <a class="btn btn-secondary h-8" href="/business-transformation/impact-reports">Lending impact evidence</a>
-      <a class="btn btn-secondary h-8" href="/projects">Project outcomes</a>
-    </div>
-    <p class="edify-text-caption edify-text-muted leading-relaxed">Use qualitative evidence to explain the observed changes. Attendance, loans disbursed and devices deployed describe delivery; outcome claims require subsequent evidence.</p>
-  </section>
-  {% elif dashboard_view == "reports" %}
+  {% if dashboard_view == "reports" %}
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
     <h2 class="text-[15px] font-bold edify-text tracking-tight">Draft impact report</h2>
     <p class="edify-text-caption edify-text-muted leading-relaxed">Download a draft containing this project's selection, measured and missing evidence, assessment references, mapping versions and your interpretation. Review it before sharing with leadership, donors or schools.</p>
@@ -95,31 +258,55 @@
     {% else %}<p class="edify-text-caption edify-text-muted leading-relaxed">Report download requires export permission.</p>{% endif %}
   </section>
   {% else %}
-    {% if dashboard_view == "outcomes" %}
-    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-      <h2 class="text-[15px] font-bold edify-text tracking-tight">SSA outcome domains</h2>
-      <p class="edify-text-caption edify-text-muted leading-relaxed">Mean score change among measured enrolments, on the 0–10 SSA scale. These domains support assessment of spiritual formation, educational quality and sustainability.</p>
-      <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left" data-mobile-table="scroll">
-        <caption class="sr-only">SSA domains with paired evidence</caption>
-        <thead><tr><th scope="col">Domain</th><th scope="col">Measured enrolments</th><th scope="col">Mean change</th></tr></thead>
-        <tbody>{% for domain in ia_outcomes.domains %}<tr><td>{{ domain.name }}</td><td class="tabular-nums">{{ domain.pairs }}</td><td class="tabular-nums">{{ domain.delta|default_if_none:"Not measured" }}</td></tr>{% endfor %}</tbody>
-      </table></div></div>
-    </section>
-    {% endif %}
-    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-      <h2 class="text-[15px] font-bold edify-text tracking-tight">{% if dashboard_view == "collection" %}Assessment collection worklist{% else %}School evidence and next actions{% endif %}</h2>
-      <p class="edify-text-caption edify-text-muted leading-relaxed">Open a school to review its evidence or coordinate the next assessment.</p>
-      <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left" data-mobile-table="scroll">
-        <caption class="sr-only">Project-school evidence and collection actions</caption>
-        <thead><tr><th scope="col">School / project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Action</th></tr></thead>
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-cohort-domain-title">
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h3 id="ia-cohort-domain-title" class="rpl-card__title">Project cohorts by SSA domain</h3>
+        <span class="rpl-card__subtitle">Measured enrolments; median change leaves out enrolments judged on keeping a Strong score</span>
+      </div>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Project cohorts by SSA domain; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">SSA domains with paired project evidence</caption>
+        <thead><tr><th scope="col">Domain</th><th scope="col">Measured enrolments</th><th scope="col">Unique schools</th><th scope="col">Improved</th><th scope="col">Declined</th><th scope="col">Median change</th></tr></thead>
+        <tbody>{% for domain in ia_outcomes.domains %}<tr>
+          <th scope="row" data-record-title>{{ domain.name }}</th>
+          <td data-label="Measured enrolments" class="tabular-nums">{% if domain.pairs %}{{ domain.pairs }}{% else %}Not measured{% endif %}</td>
+          <td data-label="Unique schools" class="tabular-nums">{{ domain.schools }}</td>
+          <td data-label="Improved" class="tabular-nums">{% if domain.pairs %}{{ domain.improved_pct }}% ({{ domain.improved }}){% else %}—{% endif %}</td>
+          <td data-label="Declined" class="tabular-nums">{% if domain.pairs %}{{ domain.declined_pct }}% ({{ domain.declined }}){% else %}—{% endif %}</td>
+          <td data-label="Median change" class="tabular-nums">{% if domain.withheld %}n too small{% elif domain.delta is not None %}{{ domain.delta|floatformat:"+2" }}{% else %}Not measured{% endif %}</td>
+        </tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-cohort-rows-title">
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h3 id="ia-cohort-rows-title" class="rpl-card__title">Project enrolments and next actions</h3>
+        <span class="rpl-card__subtitle">{{ ia_evidence_page.paginator.count }} enrolment{{ ia_evidence_page.paginator.count|pluralize }}</span>
+      </div>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Project enrolments; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">Project-school evidence and next actions</caption>
+        <thead><tr><th scope="col">School</th><th scope="col">Project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Next action</th></tr></thead>
         <tbody>{% for row in ia_evidence_page %}<tr>
-          <td><a class="block font-semibold edify-primary-text" href="/schools/{{ row.school_id }}">{% school_identity row.school row.school_id %}</a><span class="edify-text-muted" aria-hidden="true"> · </span><a class="block edify-text-caption edify-text-muted mt-1" href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
-          <td>{{ row.intervention }}</td><td title="Baseline → follow-up" class="tabular-nums">{{ row.baseline|default_if_none:"Missing" }} → {{ row.follow_up|default_if_none:"Missing" }}</td>
-          <td>{% if row.state == "overdue" or row.state == "declined" %}{% include "components/badge.html" with label=row.status tone="danger" %}{% elif row.measured %}{% include "components/badge.html" with label=row.status tone="success" %}{% else %}{% include "components/badge.html" with label=row.status tone="warning" %}{% endif %}</td><td>{{ row.due|default:"Not scheduled" }}</td><td>{{ row.owner }}</td><td><a class="btn btn-secondary h-8" title="{{ row.action }}" aria-label="{{ row.action }} — {% school_identity row.school row.school_id %}" href="/schools/{{ row.school_id }}">Review</a></td>
-        </tr>{% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with title="No matching records" message="No assessment records match this selection." hint="Choose another project or collection need to review its evidence." compact="true" %}</td></tr>{% endfor %}</tbody>
-      </table></div></div>
-      {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
-      {% include "components/table_pager.html" with pager=evidence_pager param="page" %}
-    </section>
+          <th scope="row" data-record-title><a href="/schools/{{ row.school_id }}">{% school_identity row.school row.school_id %}</a></th>
+          <td data-label="Project"><a href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
+          <td data-label="Domain">{{ row.intervention }}</td>
+          <td data-label="SSA scores" title="Baseline → follow-up" class="tabular-nums">{{ row.baseline|default_if_none:"Missing" }} → {{ row.follow_up|default_if_none:"Missing" }}</td>
+          <td data-label="Evidence"><span data-tone="{{ row.tone }}">{{ row.status }}</span></td>
+          <td data-label="Follow-up due">{{ row.due|default:"Not scheduled" }}</td>
+          <td data-label="Account owner">{{ row.owner }}</td>
+          <td data-label="Next action">{{ row.action }}</td>
+        </tr>{% empty %}<tr><td class="rpl-table__empty" colspan="8">{% include "components/empty_state.html" with message="No project enrolments" hint="Choose another project cohort, or enrol schools in a special project to measure its cohort." compact="true" %}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
+    {% include "components/table_pager.html" with pager=evidence_pager param="page" %}
+  </section>
   {% endif %}
+{% endif %}
 </div>

@@ -114,7 +114,16 @@ class AnalyticsWorkspaceStructureTest(TestCase):
                 if item["url"] in {s["url"] for s in sections}
             ]
             with self.subTest(role=role.value):
-                if sections:
+                if role == EdifyRole.IMPACT_ASSESSMENT:
+                    # Impact Assessment's one door into the analyses it reads
+                    # is its own workspace strip (IA_SECTIONS); its sidebar
+                    # carries no analytics section at all (IA review,
+                    # 2026-09-13).
+                    self.assertEqual(hub_items, [])
+                    ia_urls = {s["url"] for s in IA_SECTIONS}
+                    for url in ("/ssa", "/impact", "/declining-schools", "/reports"):
+                        self.assertIn(url, ia_urls)
+                elif sections:
                     self.assertEqual(len(hub_items), 1)
                     # It opens the first section the role can actually reach.
                     self.assertEqual(hub_items[0]["url"], sections[0]["url"])
@@ -314,18 +323,20 @@ class IAWorkspaceContractTest(TestCase):
         self.client.force_login(self.user)
 
     def test_sections_are_distinct_authorized_backend_routes(self):
-        # 11 as of 2026-08-19: the Partner Evidence & Salesforce Confirmation
-        # queue joined the verification cluster (§10 direct IA handoff).
-        self.assertEqual(len(IA_SECTIONS), 11)
-        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 11)
-        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 11)
+        # 28 as of 2026-09-13: every Impact Assessment page, clustered by the
+        # role description's responsibilities (IA review), where the strip
+        # used to carry 11 verification-first sections. Impact Attribution
+        # left the strip when it became Programme Learning's Training tab.
+        self.assertEqual(len(IA_SECTIONS), 28)
+        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 28)
+        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 28)
         for section in IA_SECTIONS:
             with self.subTest(section=section["key"]):
                 self.assertIn(section["page_key"], PAGE_PERMISSIONS)
                 self.assertIn("IA", PAGE_PERMISSIONS[section["page_key"]])
 
     def test_shared_analytics_routes_stay_in_the_ia_workspace_for_ia(self):
-        for path in ("/ia/dashboard/", "/impact", "/analytics", "/reports"):
+        for path in ("/ia/dashboard/", "/impact", "/reports", "/ssa"):
             with self.subTest(path=path):
                 workspace = build_workspace(self.user, path)
                 self.assertIsNotNone(workspace)
@@ -340,13 +351,18 @@ class IAWorkspaceContractTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'aria-label="Impact Assessment sections"')
         self.assertContains(response, 'href="/ssa/verification/"')
-        self.assertContains(response, 'href="/ssa/unmatched"')
+        # The IA strip is grouped by responsibility (IA review, 2026-09-13):
+        # the page shows each group's door and the active group's views.
+        self.assertContains(response, "edify-section-nav__cluster")
         self.assertContains(response, 'href="/evidence/"')
         self.assertContains(response, 'aria-current="page"')
 
     def test_the_overview_page_carries_the_sub_navigation(self):
-        """Shared analytics pages remain inside IA's role workspace."""
-        for path in ("/analytics",):
+        """Shared analytics pages remain inside IA's role workspace. The generic
+        /analytics overview left it in the IA review (2026-09-13): it is not an
+        Impact Assessment analysis, so the strip carries Contribution Analysis
+        and the other pages IA reads instead."""
+        for path in ("/impact",):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 200)

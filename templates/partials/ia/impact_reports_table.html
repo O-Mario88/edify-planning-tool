@@ -1,0 +1,63 @@
+{% comment %}
+One card of plain-text rows for Impact Reports (IA review, owner, 2026-09-13):
+the register, a report's recommendations, frozen evidence, releases and
+history, and a school's brief. The view hands `table` = {title, subtitle,
+rows: [{cells, actions}], has_actions, pager, param, empty_title, empty_body}
+and an optional `anchor`; the pager is already one page. A status is a word
+with a tone, never a pill. A row action is a link (`url`), a drawer (`drawer`)
+or a one-button form (`post`).
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-report-table-{{ table.param }}" data-ia-report-table="{{ table.param }}"{% if anchor %} id="{{ anchor }}"{% endif %}>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="ia-report-table-{{ table.param }}" class="rpl-card__title">{{ table.title }}</h2>
+      <span class="rpl-card__subtitle">{% if table.subtitle %}{{ table.subtitle }} · {% endif %}{{ table.pager.total }} row{{ table.pager.total|pluralize }}</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ table.title }}; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">{{ table.title }}</caption>
+      {% if table.rows %}
+      <thead>
+        <tr>
+          {% for cell in table.rows.0.cells %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+          {% if table.has_actions %}<th scope="col" class="is-end"><span class="sr-only">Actions</span></th>{% endif %}
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for row in table.rows %}
+        <tr>
+          {% for cell in row.cells %}
+          {% if cell.primary %}
+          <th scope="row" data-record-title><span>{{ cell.text|linebreaksbr }}</span></th>
+          {% else %}
+          <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text|linebreaksbr }}{% endif %}</td>
+          {% endif %}
+          {% endfor %}
+          {% if table.has_actions %}
+          <td class="is-end" data-record-action data-label="Actions">
+            {% for action in row.actions %}
+            {% if action.url %}
+            <a class="rpl-row-link rounded-control" href="{{ action.url }}">{{ action.label }}</a>
+            {% elif action.drawer %}
+            <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% elif action.post %}
+            <form method="post" action="{{ action.post }}" class="inline">{% csrf_token %}<button type="submit" class="rpl-row-link rounded-control">{{ action.label }}</button></form>
+            {% endif %}
+            {% endfor %}
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message=table.empty_title hint=table.empty_body compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=table.pager param=table.param %}
+</section>

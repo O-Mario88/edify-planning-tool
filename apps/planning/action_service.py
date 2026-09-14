@@ -641,11 +641,20 @@ def notify_role_queue(
     from apps.messaging.services import workflow_message
     from apps.notifications.models import Notification
 
-    recipient_ids = list(
-        User.objects.filter(
-            roles__contains=[role], status="active", deleted_at__isnull=True
-        ).values_list("id", flat=True)
+    holders = User.objects.filter(
+        roles__contains=[role], status="active", deleted_at__isnull=True
     )
+    # Impact Assessment is country-bound (IA review, 2026-09-13): an ask sent
+    # from one country's oversight reaches that country's IA officers, not
+    # every IA holder in the deployment. A sender with no country on file
+    # keeps the deployment-wide queue.
+    if role == "ImpactAssessment":
+        sender_country = (
+            getattr(getattr(sender, "staff_profile", None), "country", "") or ""
+        ).strip()
+        if sender_country:
+            holders = holders.filter(staff_profile__country=sender_country)
+    recipient_ids = list(holders.values_list("id", flat=True))
     if not recipient_ids:
         raise ActionError(
             f"There is no active {ROLE_QUEUES[role]} on the system, so this "

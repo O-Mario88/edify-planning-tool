@@ -1,0 +1,48 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Impact Reports · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Impact Reports (IA review, owner, 2026-09-13): every impact report the reader
+may read, from draft through review to each audience's release
+(apps/frontend/views/impact_report_views.py over apps/impact/reports.py).
+Tiles come from the reconciled registry; the table is plain text; every
+filter drawn reaches the view and a filter with nothing to choose is not drawn.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-impact-reports>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Reporting &amp; accountability</p>
+      <h1 class="edify-page-title edify-page-header__title">Impact Reports</h1>
+      <p class="edify-page-header__description">{% if summary_only %}Reviewed impact reports of your region, as aggregates, and the donor versions waiting for your approval.{% else %}Evidence-based reports for country leadership, partner schools and donors: written by Impact Assessment, reviewed by a second reader, released per audience.{% endif %}</p>
+    </div>
+    {% if may_author %}
+    <div class="edify-page-header__controls">
+      <button type="button" class="btn btn-primary h-8" hx-get="/ia/impact-reports/new" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-start-report>Start report</button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title="Impact reports at a glance" %}
+
+  <form method="get" class="edify-filter-bar" aria-label="Impact report filters" x-data>
+    {% for field in filters %}
+    {% if field.options|length > 1 %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        <option value="">{{ field.blank }}</option>
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% endfor %}
+    <a class="btn btn-ghost h-8" href="/ia/impact-reports/">Reset</a>
+  </form>
+
+  {% include "partials/ia/impact_reports_table.html" with table=table %}
+</div>
+{% endblock %}

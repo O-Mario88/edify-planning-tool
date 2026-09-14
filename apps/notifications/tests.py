@@ -67,7 +67,9 @@ class NotificationsWorkflowTest(TestCase):
         # the notification must land there too — /analytics is the generic page
         # and dropped the CD somewhere their sidebar never takes them.
         self.assertEqual(cd_route, "/analytics/country-director")
-        self.assertEqual(ia_route, "/ia/dashboard/")
+        # The queue that resolves it, not the dashboard, which opens on
+        # Outcomes (IA review, 2026-09-13).
+        self.assertEqual(ia_route, "/ssa/verification/")
 
         # A Program Lead's real active_role is "Program Lead"; the legacy
         # "ProjectLeader" spelling is also accepted so existing callers keep

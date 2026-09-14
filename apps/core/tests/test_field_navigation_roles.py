@@ -112,14 +112,16 @@ class FieldNavigationRoleTest(SimpleTestCase):
         self.assertIn("Team Plans", labels)
         self.assertIn("Admin My Plan", labels)
 
-    def test_ia_school_data_workflow_moves_to_verification(self):
+    def test_ia_school_data_workflow_sits_with_baseline_and_field_data(self):
+        """IA creates and validates school records without being a field role;
+        since the IA review (2026-09-13) the directory sits with the data IA
+        collects, in BASELINE & FIELD DATA, not a VERIFICATION group."""
         groups = self._groups(IA)
 
-        verification = groups["VERIFICATION"]
+        self.assertNotIn("VERIFICATION", groups)
+        baseline = groups["BASELINE & FIELD DATA"]
         school_directory = [
-            item
-            for item in verification["items"]
-            if item["label"] == "School Directory"
+            item for item in baseline["items"] if item["label"] == "School Directory"
         ]
 
         self.assertEqual(len(school_directory), 1)

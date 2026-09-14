@@ -1,182 +1,195 @@
-"""Intervention attribution: did the work move the scores? (2026-09-03)
+"""Intervention contribution (association) — confirmed SSA movement by
+intervention beside the focused work delivered (2026-09-03; merged into
+Programme Learning by the IA review, 2026-09-13).
 
-For each SSA intervention, compare confirmed assessment scores in the
-selected fiscal year with confirmed scores in the year before, across the
-schools that have both, and set that movement beside the trainings and
-visits delivered with that intervention in focus. Confirmed records only;
-the share of confirmed assessments is stated so nobody reads an unverified
-year as a verified one.
+The first version was a second engine answering /impact's question with
+weaker maths: its own stale lists of training and visit types (one of them
+not an activity type at all), a clause that counted every school-less
+activity in the deployment, delivery counted across the whole financial year
+rather than between each school's two assessments, the primary focus only,
+no minimum sample, "improved" as any upward movement, and a page titled
+"Impact Attribution" with no word on causation.
+
+It now reads the impact engine's own frames, so the two cannot disagree:
+
+  - pairs: impact_engine.improvement_frame (confirmed SSAs, FY-1 against FY);
+  - delivery: impact_engine.activity_frame (IA-verified work inside each
+    school's exposure window, attributed through the school, the attendance
+    list or the enrolment — never an unplaced activity), with the canonical
+    TRAINING_TYPES and VISIT_TYPES and every focus the activity carried;
+  - improved/declined: apps.ssa.change_rules, the one IA definition;
+  - strength: apps.analytics.evidence_strength.grade, with the median change
+    where no focused work reached the school shown beside it, so movement
+    without delivery is visible as background drift.
+
+/ia/attribution/ redirects to Programme Learning (Training tab), which renders
+`intervention_contribution` under the association caveat.
 """
 
 from __future__ import annotations
 
-from collections import defaultdict
+from statistics import median
 
-from django.db.models import Q
-
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.analytics.evidence_strength import MIN_N, PRE_POST, grade
 from apps.core.enums import SsaIntervention
-from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope, scoped_school_queryset
 
-TRAINING_TYPES = (
-    "cluster_training",
-    "general_training",
-    "core_training",
-    "in_school_training",
+CAVEAT = (
+    "Association, not attribution: schools were not randomly chosen for "
+    "focused work, and the SSA is the school's own assessment."
 )
-VISIT_TYPES = ("school_visit", "follow_up_visit", "coaching_visit", "core_visit")
 
 
-def _latest_confirmed_scores(school_ids, fy):
-    """{school_id: {intervention: score}} from the latest confirmed SSA in fy."""
-    from apps.ssa.models import SsaRecord, SsaScore
+def _median(values) -> float | None:
+    values = [float(v) for v in values if v is not None]
+    return round(median(values), 2) if values else None
 
-    # Plain values, and the record→school map inverted once: the previous
-    # shape built 16,000 score instances and searched the latest-record dict
-    # for each of them (2.3 million comparisons, 1.5s a page, 2026-09-06).
-    latest: dict = {}
-    for school_id, record_id in (
-        SsaRecord.objects.filter(
-            school_id__in=school_ids,
-            fy=fy,
-            verification_status="confirmed",
-            deleted_at__isnull=True,
+
+def intervention_contribution(
+    imp, acts, *, countries: dict, schools_in_scope: int, confirmed_share=None
+) -> list[dict]:
+    """One row per SSA intervention over precomputed engine frames.
+
+    `imp` and `acts` are impact_engine.improvement_frame / activity_frame for
+    the reader's schools; `countries` maps school id → country (for the change
+    rule). Pure computation over the frames plus one query for the rule book.
+    """
+    from apps.ssa import change_rules
+
+    book = change_rules.RuleBook()
+    pairs = (
+        change_rules.classify_pairs(
+            imp.to_dict("records"),
+            book=book,
+            country_for=lambda school_id: countries.get(school_id) or "",
         )
-        .order_by("school_id", "-date_of_ssa")
-        .values_list("school_id", "id")
-    ):
-        latest.setdefault(school_id, record_id)
-    school_by_record = {record_id: school_id for school_id, record_id in latest.items()}
-    scores = defaultdict(dict)
-    for record_id, intervention, score in SsaScore.objects.filter(
-        ssa_record_id__in=list(school_by_record)
-    ).values_list("ssa_record_id", "intervention", "score"):
-        scores[school_by_record[record_id]][intervention] = score
-    return scores
+        if not imp.empty
+        else []
+    )
+    focused: dict[tuple[str, str], dict[str, set]] = {}
+    if not acts.empty:
+        for row in acts[acts["kind"].isin(("training", "visit"))].to_dict("records"):
+            for intervention in row["focus"] or ():
+                bucket = focused.setdefault(
+                    (row["kind"], intervention), {"activities": set(), "schools": set()}
+                )
+                bucket["activities"].add(row["activity_id"])
+                bucket["schools"].add(row["school_id"])
+
+    rows = []
+    for value, label in SsaIntervention.choices:
+        own = [p for p in pairs if p["intervention"] == value]
+        trainings = focused.get(
+            ("training", value), {"activities": set(), "schools": set()}
+        )
+        visits = focused.get(("visit", value), {"activities": set(), "schools": set()})
+        reached = trainings["schools"] | visits["schools"]
+        measured = len({p["school_id"] for p in own})
+        movement = [
+            p["delta"]
+            for p in own
+            if p["classification"] != change_rules.MAINTAINED_STRONG
+        ]
+        improved = sum(1 for p in own if p["classification"] == change_rules.IMPROVED)
+        declined = sum(1 for p in own if p["classification"] == change_rules.DECLINED)
+        enough = measured >= MIN_N
+        without = [
+            p["delta"]
+            for p in own
+            if p["school_id"] not in reached
+            and p["classification"] != change_rules.MAINTAINED_STRONG
+        ]
+        rows.append(
+            {
+                "key": value,
+                "intervention": value,
+                "label": str(label),
+                "schools_measured": measured,
+                "median_prior": _median(p["prev_score"] for p in own)
+                if enough
+                else None,
+                "median_latest": _median(p["curr_score"] for p in own)
+                if enough
+                else None,
+                "median_change": _median(movement) if enough else None,
+                "median_change_without_focus": (
+                    _median(without) if len(without) >= MIN_N else None
+                ),
+                "improved_pct": round(improved / measured * 100) if enough else None,
+                "declined_pct": round(declined / measured * 100) if enough else None,
+                "withheld": 0 < measured < MIN_N,
+                "trainings": len(trainings["activities"]),
+                "visits": len(visits["activities"]),
+                "schools_reached": len(reached),
+                "rule_label": own[0]["rule_label"] if own else "",
+                "grade": grade(
+                    measured,
+                    confirmed_share=confirmed_share,
+                    missing_share=(
+                        1 - measured / schools_in_scope if schools_in_scope else None
+                    ),
+                    design=PRE_POST,
+                ),
+            }
+        )
+    rows.sort(
+        key=lambda r: (
+            r["median_change"] is None,
+            -(r["median_change"] or 0),
+            r["label"],
+        )
+    )
+    return rows
 
 
 def attribution(
     principal, fy: str | None = None, district_id: str | None = None
 ) -> dict:
-    from apps.activities.models import Activity
+    """The contribution table for one reader, FY-1 against `fy`, optionally
+    one district of the reader's own schools."""
+    from apps.analytics.impact_engine import activity_frame, improvement_frame
+    from apps.core.fy import get_operational_fy
+    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
     from apps.ssa.models import SsaRecord
 
     fy = fy or get_operational_fy()
     prior_fy = str(int(fy) - 1)
     scope = resolve_user_scope(principal)
     schools = scoped_school_queryset(scope)
-    if district_id:
+    if schools is None or scope.can_view_summary_only:
+        schools = None
+    elif district_id:
         schools = schools.filter(district_id=district_id)
-    school_ids = list(schools.values_list("id", flat=True))
-    district_of = dict(schools.values_list("id", "district__name"))
-
-    latest = _latest_confirmed_scores(school_ids, fy)
-    prior = _latest_confirmed_scores(school_ids, prior_fy)
-
-    all_records = SsaRecord.objects.filter(
+    countries = (
+        dict(schools.values_list("id", "region__country"))
+        if schools is not None
+        else {}
+    )
+    school_ids = list(countries)
+    imp = improvement_frame(school_ids, fy)
+    acts = activity_frame(imp, school_ids)
+    records = SsaRecord.objects.filter(
         school_id__in=school_ids, fy=fy, deleted_at__isnull=True
     )
-    total_records = all_records.count()
-    confirmed_records = all_records.filter(verification_status="confirmed").count()
-
-    completed = Activity.objects.filter(
-        deleted_at__isnull=True,
-        fy=fy,
-        status__in=COMPLETED_WORK_STATUSES,
-        focus_intervention__isnull=False,
-    ).filter(Q(school_id__in=school_ids) | Q(school__isnull=True))
-    delivered = defaultdict(lambda: {"trainings": 0, "visits": 0})
-    for atype, focus in completed.values_list("activity_type", "focus_intervention"):
-        if atype in TRAINING_TYPES:
-            delivered[focus]["trainings"] += 1
-        elif atype in VISIT_TYPES:
-            delivered[focus]["visits"] += 1
-
-    rows = []
-    district_movement = defaultdict(list)
-    for value, label in SsaIntervention.choices:
-        pairs = []
-        for school_id, now_scores in latest.items():
-            then = prior.get(school_id, {})
-            if value in now_scores and value in then:
-                delta = now_scores[value] - then[value]
-                pairs.append(delta)
-                district_movement[district_of.get(school_id) or "No district"].append(
-                    delta
-                )
-        measured = len(pairs)
-        avg_prior = (
-            round(
-                sum(
-                    prior[s][value]
-                    for s in latest
-                    if value in prior.get(s, {}) and value in latest[s]
-                )
-                / measured,
-                2,
-            )
-            if measured
-            else None
-        )
-        avg_latest = (
-            round(
-                sum(
-                    latest[s][value]
-                    for s in latest
-                    if value in prior.get(s, {}) and value in latest[s]
-                )
-                / measured,
-                2,
-            )
-            if measured
-            else None
-        )
-        movement = round(sum(pairs) / measured, 2) if measured else None
-        improved = sum(1 for d in pairs if d > 0)
-        rows.append(
-            {
-                "intervention": value,
-                "label": label,
-                "schools_measured": measured,
-                "avg_prior": avg_prior,
-                "avg_latest": avg_latest,
-                "movement": movement,
-                "improved_pct": round(improved / measured * 100) if measured else None,
-                "trainings": delivered[value]["trainings"],
-                "visits": delivered[value]["visits"],
-                "tone": (
-                    "success"
-                    if movement is not None and movement > 0
-                    else "danger"
-                    if movement is not None and movement < 0
-                    else "neutral"
-                ),
-            }
-        )
-    rows.sort(key=lambda r: (r["movement"] is None, -(r["movement"] or 0)))
-
-    districts = [
-        {
-            "name": name,
-            "measurements": len(deltas),
-            "movement": round(sum(deltas) / len(deltas), 2),
-            "improved_pct": round(sum(1 for d in deltas if d > 0) / len(deltas) * 100),
-        }
-        for name, deltas in district_movement.items()
-    ]
-    districts.sort(key=lambda r: -r["movement"])
-
+    total = records.count() if school_ids else 0
+    confirmed = records.filter(verification_status="confirmed").count() if total else 0
     return {
         "fy": fy,
         "prior_fy": prior_fy,
         "schools_in_scope": len(school_ids),
-        "schools_with_both_years": len([s for s in latest if s in prior]),
-        "total_records": total_records,
-        "confirmed_records": confirmed_records,
-        "confirmed_share": round(confirmed_records / total_records * 100)
-        if total_records
+        "schools_with_both_years": int(imp["school_id"].nunique())
+        if not imp.empty
         else 0,
-        "rows": rows,
-        "districts": districts,
+        "total_records": total,
+        "confirmed_records": confirmed,
+        "confirmed_share": round(confirmed / total * 100) if total else None,
+        "rows": intervention_contribution(
+            imp,
+            acts,
+            countries=countries,
+            schools_in_scope=len(school_ids),
+            # Pairs are built from confirmed readings only; unconfirmed ones
+            # are missing, and count in the missing share instead.
+            confirmed_share=1.0,
+        ),
+        "caveat": CAVEAT,
     }

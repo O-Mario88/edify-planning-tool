@@ -86,13 +86,18 @@ class AnalyticsTest(TestCase):
         )
 
     def _ssa(
-        self, school: School, fy: str, avg_score: float, verified=True
+        self, school: School, fy: str, avg_score: float, verified=True, days_ago=None
     ) -> SsaRecord:
+        # A year apart (IA review, 2026-09-13): readings less than
+        # apps.ssa.change_rules.MIN_INTERVAL_DAYS apart are not a before and
+        # after, so the previous FY's assessment is dated a year earlier.
+        if days_ago is None:
+            days_ago = 10 if fy == self.fy else 375
         rec = SsaRecord.objects.create(
             school=school,
             fy=fy,
             quarter="Q3",
-            date_of_ssa=timezone.now() - timedelta(days=10),
+            date_of_ssa=timezone.now() - timedelta(days=days_ago),
             average_score=avg_score,
             verification_status="confirmed" if verified else "pending",
         )
@@ -131,14 +136,32 @@ class AnalyticsTest(TestCase):
         result = ssa_improvement(self.principal, {"fy": self.fy})
         self.assertEqual(result["schoolsCompared"], 0)
 
-    def test_no_change_within_threshold(self):
+    def test_no_change_when_the_score_holds(self):
         s = self._school("IMP-4")
         self._ssa(s, self.prev_fy, 5.0)
-        self._ssa(s, self.fy, 5.1)  # delta +0.1, within ±0.3
+        self._ssa(s, self.fy, 5.0)
         result = ssa_improvement(self.principal, {"fy": self.fy})
         self.assertEqual(result["noChangeCount"], 1)
         self.assertEqual(result["improvedCount"], 0)
         self.assertEqual(result["declinedCount"], 0)
+
+    def test_small_movement_counts_where_no_threshold_is_approved(self):
+        """IA review (2026-09-13): improved follows apps.ssa.change_rules. This
+        used to pin a page-local ±0.3; with no published IA threshold any
+        movement counts, and the payload names the rule it used."""
+        s = self._school("IMP-4B")
+        self._ssa(s, self.prev_fy, 5.0)
+        self._ssa(s, self.fy, 5.1)
+        result = ssa_improvement(self.principal, {"fy": self.fy})
+        self.assertEqual(result["improvedCount"], 1)
+        self.assertEqual(result["ruleLabel"], "Any change (no approved threshold)")
+
+    def test_readings_too_close_together_are_not_compared(self):
+        s = self._school("IMP-4C")
+        self._ssa(s, self.prev_fy, 5.0, days_ago=40)
+        self._ssa(s, self.fy, 8.0, days_ago=10)
+        result = ssa_improvement(self.principal, {"fy": self.fy})
+        self.assertEqual(result["schoolsCompared"], 0)
 
     def test_unverified_ssa_excluded_from_improvement(self):
         s = self._school("IMP-5")

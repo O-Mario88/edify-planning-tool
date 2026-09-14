@@ -16,7 +16,11 @@ from django.views.decorators.http import require_POST
 from apps.core.htmx_errors import UNEXPECTED_MESSAGE, is_user_facing
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.redirects import local_redirect
-from apps.core.permissions import render_access_denied, require_page_permission
+from apps.core.permissions import (
+    render_access_denied,
+    require_page_permission,
+    RolePermissionService,
+)
 from apps.accounts.models import (
     Leave,
     LeaveTypePolicy,
@@ -378,6 +382,11 @@ def personal_time_off_view(request):
         "team_available_count": team_available_count,
         "coverage_active_count": coverage_active_count,
         "upcoming_conflicts_count": upcoming_conflicts_count,
+        # The policy page is HR's; the link shows only to people who can open
+        # it (Programme Lead walk, 2026-09-14: everyone else met Access Denied).
+        "can_view_leave_policies": RolePermissionService.can_view_page(
+            request.user, "leave_policies"
+        ),
         "avg_team_availability": avg_team_availability,
         "impact_preview": impact_preview,
         "tracker_leaves": tracker_leaves_data,

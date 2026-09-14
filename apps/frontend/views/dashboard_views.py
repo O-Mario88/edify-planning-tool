@@ -276,7 +276,8 @@ def _program_lead_dashboard(request, avatar_initials: str):
     """The Program Lead dashboard.
 
     A fixed part — the team pulse tiles and Leadership Attention — above one
-    view at a time: Map (the default, owner 2026-09-05), Priorities, Team,
+    view at a time: Today (the default — Today and Dashboard are one page,
+    owner 2026-09-14), Map, Priorities, Team,
     Coaching, Programmes or Collaboration, one per responsibility in the role
     description (owner, 2026-09-13). The service builds only the fixed part and
     the chosen view; a tab click builds the view alone. "operations", the old
@@ -847,7 +848,7 @@ def dashboard_view(request):
                 "recommended_activity_label": r.get("planned") or "",
                 "recommended_activity_type": "school_visit",
                 "owner_kind": "pl",
-                "owner_name": "",
+                "owner_name": user.name,
                 "action_label": r["action_label"],
                 "action_url": r["action_url"],
                 # Whether the action opens the scheduling drawer in place or
@@ -980,6 +981,7 @@ def dashboard_view(request):
             is_today = a.planned_date == today and a.status == "scheduled"
             school_visits_week.append(
                 {
+                    "school_id": a.school_id,
                     "school": a.school.name,
                     "code": a.school.school_id,
                     "district": a.school.district.name if a.school.district_id else "—",
@@ -1108,8 +1110,13 @@ def dashboard_view(request):
         # No HTMX partial: nothing on cceo.html hx-gets the dashboard body
         # (its only hx-get targets are the drawers), so there is no fragment
         # for an HX-Request to ask for.
+        # Today and Dashboard are one page; Today opens first (owner,
+        # 2026-09-14).
         dashboard_view, view_explicit = resolve_dashboard_view(
-            request, role_key="cceo", default="operations"
+            request,
+            role_key="cceo",
+            default="today",
+            allowed=("today", "operations", "map"),
         )
         context["dashboard_view"] = dashboard_view
         context["dashboard_tabs"] = dashboard_view_tabs(
@@ -1118,6 +1125,11 @@ def dashboard_view(request):
             panel_id="cceo-dashboard-view",
             view_template="partials/dashboards/cceo/view.html",
             tabs=[
+                (
+                    "today",
+                    "Today",
+                    "Your route, the next action and what waits on you",
+                ),
                 (
                     "operations",
                     "Week",
@@ -1240,8 +1252,13 @@ def dashboard_view(request):
                 "url": first_action["url"] if first_action else "/projects",
             },
         }
+        # Today and Dashboard are one page; Today opens first (owner,
+        # 2026-09-14).
         dashboard_view, view_explicit = resolve_dashboard_view(
-            request, role_key="projects", default="operations"
+            request,
+            role_key="projects",
+            default="today",
+            allowed=("today", "operations", "map"),
         )
         context["dashboard_view"] = dashboard_view
         context["dashboard_tabs"] = dashboard_view_tabs(
@@ -1250,6 +1267,11 @@ def dashboard_view(request):
             panel_id="projects-dashboard-view",
             view_template="partials/dashboards/special_projects/view.html",
             tabs=[
+                (
+                    "today",
+                    "Today",
+                    "Your route, the next action and what waits on you",
+                ),
                 ("operations", "Operations", "Portfolio, impact, partners and actions"),
                 ("map", "Map", "The country map and its distribution table"),
             ],

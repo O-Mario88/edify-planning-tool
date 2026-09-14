@@ -254,21 +254,11 @@ def _notify_completion_routed(a, next_status, principal) -> None:
             priority="high",
         )
         return
-
-    from apps.accounts.models import User
-
-    ia_ids = list(
-        User.objects.filter(
-            roles__contains=["ImpactAssessment"], status="active"
-        ).values_list("id", flat=True)
-    )
-    _notify_chain(
-        a,
-        "activity_submitted_for_review",
-        "Activity awaiting verification",
-        f"{who} submitted {what} at {_where(a)}.",
-        ia_ids,
-    )
+    # Work routed straight to Impact Assessment is announced by
+    # _notify_ia_submitted when the submission commits — to the IA officers in
+    # the submitter's country, never the submitter, with the Country Director
+    # as the fallback for IA officers' own work. This used to send a second,
+    # deployment-wide notice to every IA holder as well (IA review, 2026-09-13).
 
 
 # Salesforce's own two-way split, not the platform's grouping. Salesforce
@@ -3223,7 +3213,10 @@ def complete_partner_ssa_support(activity_id: str, data: dict, principal) -> dic
     if enrollment > 1_000_000:
         raise BadRequest("Pupil enrolment cannot exceed 1,000,000 learners.")
 
-    assessment_date = a.actual_delivery_date or a.planned_date or timezone.localdate()
+    from apps.ssa.services import visit_assessment_date
+
+    # Dated by the visit: delivery, else execution start, else plan.
+    assessment_date = visit_assessment_date(a)
     is_ia = RolePermissionService.can_verify_ia(principal, a)
     entry_source = (
         ENTRY_SOURCE_IA_CONFIRMATION if is_ia else ENTRY_SOURCE_MANAGING_STAFF
@@ -3241,15 +3234,20 @@ def complete_partner_ssa_support(activity_id: str, data: dict, principal) -> dic
                 "schoolId": school.school_id,
                 "dateOfSsa": assessment_date.isoformat(),
                 "scores": data.get("scores") or [],
-                # Who KEYED and verified the scores: IA or the monitoring
-                # staff member, so the record is confirmed in this act.
+                # Who KEYED the scores: IA or the monitoring staff member.
+                # Keying is not verifying (IA review, owner, 2026-09-13): the
+                # record lands pending, linked to this visit, until a verifier
+                # other than the keyer confirms it — another IA officer, or the
+                # Country Director for scores IA keyed. The visit itself still
+                # completes here, because its scores are entered (SSA-01).
                 "collectorType": "ia" if is_ia else "staff",
+                "sourceActivityId": a.id,
                 # Who did the FIELDWORK: the partner delivering this SSA
                 # Support. Without it every partner assessment was credited to
                 # staff, and SSA performance by partner had nothing to count
                 # (2026-09-12). Passed alone, not as collectorType="partner",
-                # which would reopen verification on a record this act has
-                # just verified.
+                # because the keyer — not the partner — is who a verifier must
+                # differ from.
                 "collectedByPartnerId": a.assigned_partner_id,
             },
             principal,
@@ -3605,7 +3603,11 @@ def _notify_ia_submitted(a) -> None:
             priority="normal",
             title="Work submitted for verification",
             body=f"{where}: {a.get_activity_type_display()} is waiting for you.",
-            context_type="activity",
+            # Partner work is reviewed on the partner evidence page, which the
+            # link resolver opens from this context type.
+            context_type="partner_activity"
+            if getattr(a, "delivery_type", "") == "partner"
+            else "activity",
             context_id=str(a.id),
             recipients=recipients,
         )

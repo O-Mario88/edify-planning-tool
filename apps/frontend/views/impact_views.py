@@ -27,8 +27,12 @@ def impact_analytics_view(request):
     ).hexdigest()[:20]
     from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
 
+    # v3 (IA review, 2026-09-13): country roles are held to their country,
+    # dosage counts IA-verified work only and per-intervention verdicts are
+    # Holm-corrected, so a v2 entry would serve the old, wider answer until it
+    # expired.
     dashboard = stampede_safe_get_or_compute(
-        f"impact-dashboard:v2:{request.user.id}:"
+        f"impact-dashboard:v3:{request.user.id}:"
         f"{request.user.active_role}:"
         f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
         lambda: impact_analytics_dashboard(request.user, query),
@@ -56,7 +60,7 @@ def impact_analytics_view(request):
             MetricValue.measured(kpis["improved_pct"], denominator=paired_schools)
             if kpis["improved_pct"] is not None and paired_schools
             else MetricValue.absent(DataState.NOT_YET_MEASURABLE),
-            helper="Mean delta above +0.3",
+            helper=kpis.get("improved_rule_label") or "Published IA change rule",
             tone="success",
         ),
         render_kpi_item(

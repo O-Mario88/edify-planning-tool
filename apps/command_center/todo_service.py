@@ -650,25 +650,68 @@ def _school_action_todos(principal):
 
 
 def _ia_todos(principal, role):
+    """Work waiting on a verifier: one row per submission they may verify.
+
+    IA review (owner, 2026-09-13). Bounded to the verifier's country — the
+    rows used to list the twenty newest submissions in the deployment — and
+    never the verifier's own field work, which a colleague or the Country
+    Director verifies. Each row opens its record: staff work its review
+    workspace, partner work its Partner Evidence review, where the Salesforce
+    entry is confirmed. Staff work without a Salesforce ID cannot be verified
+    (it never reaches the queue), so it is not offered here either. Derived:
+    a decision moves the activity out of the status and the row is gone.
+    """
     if role not in ("ImpactAssessment", "Admin"):
         return []
     from apps.activities.models import Activity
+    from apps.core.scoping import activity_country_q, owner_ids
 
-    todos = []
-    for a in (
-        Activity.objects.filter(
-            deleted_at__isnull=True,
-            status="awaiting_ia_verification",
+    try:
+        scope = resolve_user_scope(principal)
+        waiting = (
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                status="awaiting_ia_verification",
+            )
+            .filter(activity_country_q(scope))
+            .filter(
+                Q(delivery_type="partner")
+                | ~(
+                    Q(salesforce_activity_id__isnull=True)
+                    | Q(salesforce_activity_id="")
+                )
+            )
         )
-        .select_related("school", "cluster")
-        .order_by("-updated_at")[:20]
-    ):
+        own = [str(i) for i in owner_ids(principal) if i]
+        if role == "ImpactAssessment" and own:
+            waiting = waiting.exclude(responsible_staff_id__in=own)
+        rows = list(
+            waiting.select_related("school", "cluster").order_by(
+                models.F("submitted_to_ia_at").asc(nulls_last=True), "updated_at"
+            )[:20]
+        )
+    except Exception:  # noqa: BLE001 - one source never breaks the queue
+        logger.exception("IA verification To-Dos failed")
+        return []
+
+    now = timezone.now()
+    todos = []
+    for a in rows:
         where = (
             a.school.name if a.school_id else (a.cluster.name if a.cluster_id else "—")
         )
         # §16 partner submissions get their own queue and wording — the IA
         # confirms the Salesforce entry there, not just the evidence.
         is_partner = a.delivery_type == "partner"
+        submitted = a.submitted_to_ia_at
+        # The 24-hour verification SLA is the due date.
+        due = (
+            timezone.localtime(submitted + timezone.timedelta(hours=24)).date()
+            if submitted
+            else None
+        )
+        late = bool(submitted) and now - submitted > timezone.timedelta(hours=24)
+        due_label, due_tone, due_sort = _due(due, timezone.localdate())
         todos.append(
             {
                 "id": f"ia-{a.id}",
@@ -678,24 +721,31 @@ def _ia_todos(principal, role):
                     else "Verify Activity"
                 ),
                 "description": f"{a.get_activity_type_display()} at {where} is awaiting verification",
-                "category": "IA Verification",
-                "priority": "high",
-                "status_key": "waiting_me",
-                "status_label": "Waiting on Me",
-                "status_tone": "info",
-                "due_label": "—",
-                "due_tone": "neutral",
+                "category": IA_TODO_CATEGORY,
+                "priority": "critical" if late else "high",
+                "status_key": "overdue" if late else "waiting_me",
+                "status_label": "Past 24h" if late else "Waiting on Me",
+                "status_tone": "danger" if late else "info",
+                "due_label": due_label,
+                "due_tone": due_tone,
                 "linked": f"{where} · {a.get_activity_type_display()}",
                 "action_label": "Review" if is_partner else "Verify",
                 "action_url": (
-                    f"/ia/partner-evidence/{a.id}/" if is_partner else "/ia/dashboard/"
+                    f"/ia/partner-evidence/{a.id}/"
+                    if is_partner
+                    else f"/ia/verification/{a.id}/"
                 ),
                 "actionable": True,
                 "source": "IA workflow",
-                "_due_sort": date.max,
+                "_due_sort": due_sort,
             }
         )
     return todos
+
+
+#: The category every Impact Assessment verification and data-quality row
+#: carries: the sidebar group those pages sit in (IA review, 2026-09-13).
+IA_TODO_CATEGORY = "Data Quality & Verification"
 
 
 def _partner_assignment_todos(principal, scope, today):
@@ -1290,33 +1340,10 @@ def _project_ssa_todos(principal, role, today):
             action="Open school",
         )
 
-    if role == "ImpactAssessment":
-        from apps.activity_catalogue.models import (
-            ActivityCatalogueItem,
-            ActivityInterventionMapping,
-        )
-
-        mapped = set(
-            ActivityInterventionMapping.objects.filter(active=True).values_list(
-                "catalogue_item_id", flat=True
-            )
-        )
-        unmapped = (
-            ActivityCatalogueItem.objects.filter(status="active", requires_school=True)
-            .exclude(id__in=mapped)
-            .order_by("display_name")[:20]
-        )
-        for item in unmapped:
-            row(
-                key=f"map-{item.id}",
-                title="Link Activity to SSA Intervention",
-                description=item.display_name,
-                priority="medium",
-                status_label="Mapping required",
-                tone="warning",
-                url="/settings/activity-catalogue",
-                action="Open catalogue",
-            )
+    # Unmapped school activities reach Impact Assessment as one summary row
+    # linked to the measurement rules (apps.impact.framework_todos); the
+    # per-item rows here linked to a catalogue page that 404s (IA review,
+    # 2026-09-13).
 
     return todos
 
@@ -3147,7 +3174,6 @@ def _business_transformation_todos(principal, role, today):
         EnrolmentSnapshot,
         ImpactEvidenceStatus,
         IAValidationStatus,
-        LoanImpactAssessment,
         LoanPurposeProposal,
         LoanPurposeProposalStatus,
         LoanUseFinding,
@@ -3280,39 +3306,9 @@ def _business_transformation_todos(principal, role, today):
                 }
             )
 
-        for assessment in (
-            LoanImpactAssessment.objects.filter(
-                loan_id__in=visible_loan_ids,
-                due_date__lte=today,
-                ia_status=IAValidationStatus.PENDING,
-            )
-            .select_related("loan__school", "loan__mfi")
-            .order_by("due_date")[:30]
-        ):
-            out.append(
-                {
-                    "id": f"bt-impact-{assessment.id}",
-                    "title": "Complete Impact Assessment",
-                    "description": f"{assessment.loan.school.name} · purpose-specific follow-up is due.",
-                    "category": "Business Transformation",
-                    "priority": "critical" if assessment.due_date < today else "high",
-                    "status_key": "overdue"
-                    if assessment.due_date < today
-                    else "waiting_me",
-                    "status_label": "Overdue"
-                    if assessment.due_date < today
-                    else "Waiting on Me",
-                    "status_tone": "danger" if assessment.due_date < today else "info",
-                    "due_label": "Overdue" if assessment.due_date < today else "Today",
-                    "due_tone": "danger" if assessment.due_date < today else "warning",
-                    "linked": f"{assessment.loan.school.name} · {assessment.loan.mfi.name}",
-                    "action_label": "Assess",
-                    "action_url": f"/loans?open={assessment.loan_id}#loan-register-title",
-                    "actionable": True,
-                    "source": "Loan impact schedule",
-                    "_due_sort": assessment.due_date,
-                }
-            )
+        # Loan impact conclusions are prepared by Business Transformation and
+        # verified by Impact Assessment; their Prepare / Verify / Returned rows
+        # come from apps.impact.learning_todos (IA review, 2026-09-13).
 
         for snapshot in (
             EnrolmentSnapshot.objects.filter(
@@ -3863,16 +3859,22 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     "apps.partners.engagement_todos:partner_engagement_todos",
     # ── end S2 ──
     # ── IA review · IA-N ──
+    "apps.activities.ia_todos:ia_queue_todos",
     # ── end IA-N ──
     # ── IA review · IA-F ──
+    "apps.impact.framework_todos:framework_todos",
     # ── end IA-F ──
     # ── IA review · IA-C ──
+    "apps.ssa.collection_todos:collection_todos",
     # ── end IA-C ──
     # ── IA review · IA-P ──
+    "apps.impact.evidence_todos:evidence_todos",
     # ── end IA-P ──
     # ── IA review · IA-L ──
+    "apps.impact.learning_todos:learning_todos",
     # ── end IA-L ──
     # ── IA review · IA-R ──
+    "apps.impact.report_todos:report_todos",
     # ── end IA-R ──
 )
 

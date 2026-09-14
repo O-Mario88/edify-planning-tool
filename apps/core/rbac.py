@@ -637,7 +637,12 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SCHOOL_UPLOAD,
         P.SCHOOL_RESOLVE_DUPLICATE,
         P.CLUSTER_VIEW,
-        P.PLANNING_RECALC,
+        # PLANNING_RECALC, RECRUITMENT_INTELLIGENCE_VIEW and LEADERSHIP_ENGINE_VIEW
+        # left this block in the IA review (2026-09-13). None is part of the
+        # role description and no Impact Assessment page calls them: they
+        # opened the deployment-wide system-health report and planning
+        # recompute for any school, the school recruitment API, and the
+        # leadership boards and snapshot, which are not bounded to a country.
         P.SSA_VIEW,
         P.SSA_UPLOAD,
         P.EVIDENCE_REVIEW,
@@ -651,12 +656,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_VIEW_SUMMARY,
         P.ACTIVITY_OPERATIONAL_COST_VIEW,
         P.ANALYTICS_VIEW,
-        P.ACTIVITY_CATALOGUE_VIEW,
         P.EXPORT,
-        P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.PARTNER_VIEW,
-        # Data-confidence + SSA-impact readiness lens (no decision review authority).
-        P.LEADERSHIP_ENGINE_VIEW,
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,

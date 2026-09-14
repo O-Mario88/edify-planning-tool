@@ -616,12 +616,11 @@ def get_frontend_context(principal, query: dict) -> dict:
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
-        # Both id spaces for the caller's own work (see owner_ids), plus any
-        # supervisees a PL is looking at.
-        staff_ids = list(owner_ids(principal))
-        if scope.supervised_staff_ids:
-            staff_ids.extend(scope.supervised_staff_ids)
-        staff_ids = [s for s in staff_ids if s]
+        # Both id spaces for the caller's own work (see owner_ids). Never the
+        # supervisees: My Plan is the lead's personal list, and a CCEO's work
+        # here offered Complete and Reschedule the lead could not use
+        # (Programme Lead walk, 2026-09-14). Team work lives on Team Oversight.
+        staff_ids = [s for s in owner_ids(principal) if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids)
             | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")

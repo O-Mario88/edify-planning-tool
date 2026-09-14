@@ -27,6 +27,8 @@ from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import FundRequest, FundRequestItem
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from apps.ssa.models import SsaRecord
+from apps.ssa.services import verify_record
 
 
 INTERVENTION_SCORES = [
@@ -57,6 +59,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         )
 
         self.ia = self._user("ia@example.test", EdifyRole.IMPACT_ASSESSMENT.value)
+        self.second_ia = self._user(
+            "ia2@example.test", EdifyRole.IMPACT_ASSESSMENT.value
+        )
         self.cceo = self._user("cceo@example.test", EdifyRole.CCEO.value)
         self.pl = self._user("pl@example.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         self.accountant = self._user(
@@ -116,7 +121,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             },
             201,
         )
-        self.assertEqual(ssa["verificationStatus"], "confirmed")
+        # Keyed scores wait for a different verifier (owner, 2026-09-13).
+        self.assertEqual(ssa["verificationStatus"], "pending")
+        verify_record(SsaRecord.objects.get(pk=ssa["id"]), self.second_ia)
         school.refresh_from_db()
         self.assertEqual(school.planning_readiness, "requires_cluster")
 

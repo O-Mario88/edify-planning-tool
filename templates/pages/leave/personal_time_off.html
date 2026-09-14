@@ -72,7 +72,7 @@
   {% endkpi_strip %}
   <details class="analytics-context-disclosure">
     <summary>Leave guidance and policy</summary>
-    <p>{% if upcoming_conflicts_count %}Resolve planning conflicts before confirming time away.{% elif pending_requests_count %}Your request is in the approval flow. Coverage activates after approval.{% else %}Review your balance and team calendar before requesting leave.{% endif %} <a href="{% url 'frontend:leave_policies' %}">View leave policy</a></p>
+    <p>{% if upcoming_conflicts_count %}Resolve planning conflicts before confirming time away.{% elif pending_requests_count %}Your request is in the approval flow. Coverage activates after approval.{% else %}Review your balance and team calendar before requesting leave.{% endif %}{% if can_view_leave_policies %} <a href="{% url 'frontend:leave_policies' %}">View leave policy</a>{% endif %}</p>
   </details>
 
   <div class="pto-workspace">

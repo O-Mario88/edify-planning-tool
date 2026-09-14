@@ -180,29 +180,37 @@ def classify(
 
     change = round(follow_up.score - baseline.score, 2)
 
+    # One definition of improved and declined (apps.ssa.change_rules). The
+    # window has already placed the follow-up far enough from the work, so no
+    # dates are passed here: the pair is compared on its scores.
+    #
     # Maintenance is a real goal. A school already scoring Strong that is
     # still Strong has done what was asked, and calling that "no change"
-    # would report success as inaction.
-    if expected_direction == "maintain_strong":
-        if follow_up.band == "Strong":
-            return Impact.MAINTAINED_STRONG, change
-        return Impact.DECLINED, change
+    # would report success as inaction. And with no approved threshold,
+    # movement is movement: inventing one here would silently reclassify a
+    # real half-point gain as nothing happening.
+    from apps.ssa import change_rules
 
-    if min_meaningful_change is not None:
-        threshold = abs(float(min_meaningful_change))
-        if change >= threshold:
-            return Impact.IMPROVED, change
-        if change <= -threshold:
-            return Impact.DECLINED, change
-        return Impact.NO_CHANGE, change
-
-    # No approved threshold: movement is movement. Inventing one here would
-    # silently reclassify a real half-point gain as nothing happening.
-    if change > 0:
-        return Impact.IMPROVED, change
-    if change < 0:
-        return Impact.DECLINED, change
-    return Impact.NO_CHANGE, change
+    threshold = (
+        abs(float(min_meaningful_change)) if min_meaningful_change is not None else None
+    )
+    rule = {
+        "threshold": threshold,
+        "direction": expected_direction or "improve",
+        "rule_label": (
+            f"±{threshold:g}" if threshold is not None else change_rules.FALLBACK_LABEL
+        ),
+        "mapping_id": None,
+        "version": None,
+    }
+    result = change_rules.change_between(baseline.score, follow_up.score, "", rule=rule)
+    verdict = {
+        change_rules.IMPROVED: Impact.IMPROVED,
+        change_rules.DECLINED: Impact.DECLINED,
+        change_rules.NO_CHANGE: Impact.NO_CHANGE,
+        change_rules.MAINTAINED_STRONG: Impact.MAINTAINED_STRONG,
+    }.get(result["classification"], Impact.INSUFFICIENT_EVIDENCE)
+    return verdict, change
 
 
 #: Below this, a rate is arithmetic rather than evidence. Six schools where
@@ -299,10 +307,17 @@ def refresh_follow_up(assignment, *, mapping=None, delivered_on: date | None = N
     Idempotent, and safe to run repeatedly: it reads confirmed assessments and
     writes what they support. A school whose window has not opened is left
     saying so rather than being given a verdict early.
+
+    `mapping` is the rule the enrolment was stamped with (see
+    `stamp_measurement_rule`); None measures under the platform fallback —
+    no window, improve, no threshold — with the one documented minimum
+    interval between the baseline and the follow-up
+    (apps.ssa.change_rules.MIN_INTERVAL_DAYS).
     """
     from django.utils import timezone
 
     from apps.projects.models import ProjectSchoolAssignment
+    from apps.ssa.change_rules import MIN_INTERVAL_DAYS
 
     intervention = assignment.matched_intervention or (
         assignment.project.intervention or ""
@@ -316,9 +331,19 @@ def refresh_follow_up(assignment, *, mapping=None, delivered_on: date | None = N
         return assignment
 
     min_days = getattr(mapping, "follow_up_min_days", None)
+    expected_days = getattr(mapping, "follow_up_expected_days", None)
     max_days = getattr(mapping, "follow_up_max_days", None)
     direction = getattr(mapping, "expected_direction", "improve")
     threshold = getattr(mapping, "min_meaningful_change", None)
+    if min_days is None:
+        # No governed window: the follow-up must still sit the minimum
+        # interval after the baseline reading, or the "change" is the same
+        # assessment period read twice.
+        baseline_on = _baseline_date(assignment)
+        if baseline_on is not None:
+            earliest = baseline_on + timedelta(days=MIN_INTERVAL_DAYS)
+            gap = (earliest - delivered_on).days
+            min_days = gap if gap > 0 else None
 
     follow_up = follow_up_for(
         assignment.school_id,
@@ -336,18 +361,28 @@ def refresh_follow_up(assignment, *, mapping=None, delivered_on: date | None = N
         score=assignment.baseline_score,
         band=assignment.baseline_band,
     )
-    verdict, _change = classify(
-        baseline,
-        follow_up,
-        expected_direction=direction,
-        min_meaningful_change=threshold,
-        window_open=window_open,
-    )
+    if getattr(mapping, "measurement_role", "") == "eligibility_only":
+        # The score chose the school; it was never declared the measure of
+        # the work, so the enrolment is not given an outcome verdict.
+        verdict = (
+            Impact.NOT_YET_MEASURABLE
+            if follow_up is None and not window_open
+            else Impact.INSUFFICIENT_EVIDENCE
+        )
+    else:
+        verdict, _change = classify(
+            baseline,
+            follow_up,
+            expected_direction=direction,
+            min_meaningful_change=threshold,
+            window_open=window_open,
+        )
 
+    due_after = expected_days if expected_days is not None else min_days
     fields = {
         "impact_classification": verdict,
         "follow_up_due_on": (
-            delivered_on + timedelta(days=min_days) if min_days else delivered_on
+            delivered_on + timedelta(days=due_after) if due_after else delivered_on
         ),
     }
     if follow_up is not None:
@@ -360,12 +395,21 @@ def refresh_follow_up(assignment, *, mapping=None, delivered_on: date | None = N
     return assignment
 
 
-def _first_verified_delivery(assignment) -> date | None:
-    """When this project first verifiably reached this school.
+def _baseline_date(assignment) -> date | None:
+    record = (
+        getattr(assignment, "baseline_ssa", None)
+        if assignment.baseline_ssa_id
+        else None
+    )
+    assessed = getattr(record, "date_of_ssa", None)
+    if assessed is None:
+        return None
+    return assessed.date() if hasattr(assessed, "date") else assessed
 
-    Verified, not scheduled: a plan is not an intervention, and measuring from
-    a date nothing happened on would open the follow-up window early.
-    """
+
+def _first_verified(assignment):
+    """The first verified delivery of this project at this school, as
+    (delivered_on, catalogue_item_id), or None."""
     from apps.activities.models import Activity
 
     row = (
@@ -376,16 +420,66 @@ def _first_verified_delivery(assignment) -> date | None:
             deleted_at__isnull=True,
         )
         .order_by("actual_delivery_date", "scheduled_date")
-        .values_list("actual_delivery_date", "scheduled_date")
+        .values_list("actual_delivery_date", "scheduled_date", "catalogue_item_id")
         .first()
     )
     if not row:
         return None
-    actual, scheduled = row
+    actual, scheduled, item_id = row
     chosen = actual or scheduled
     if chosen is None:
         return None
-    return chosen.date() if hasattr(chosen, "date") else chosen
+    return (chosen.date() if hasattr(chosen, "date") else chosen), item_id
+
+
+def _first_verified_delivery(assignment) -> date | None:
+    """When this project first verifiably reached this school.
+
+    Verified, not scheduled: a plan is not an intervention, and measuring from
+    a date nothing happened on would open the follow-up window early.
+    """
+    found = _first_verified(assignment)
+    return found[0] if found else None
+
+
+def stamp_measurement_rule(assignment, *, country: str = ""):
+    """Fix the rule this enrolment is measured under, once. Returns the rule.
+
+    Rules resolve by the catalogue item the project first delivered to the
+    school — not by any mapping that happens to share the intervention — in
+    the school's country first, then the deployment-wide rule
+    (apps.ssa.change_rules.rule_for_activity). The rule and its version are
+    written on the enrolment at its first verified delivery, and never
+    rewritten: republishing a mapping changes what future enrolments are
+    measured under, not what a finished one meant.
+
+    An enrolment whose first delivery found no published rule stays unstamped
+    and is measured under the fallback. A rule published later still stamps it
+    — but only while it has no verdict, so no measured result is re-judged by
+    a rule that arrived after it.
+    """
+    from apps.projects.models import ProjectSchoolAssignment
+    from apps.ssa.change_rules import rule_for_activity
+
+    if assignment.mapping_id:
+        return assignment.mapping
+    if assignment.impact_classification in MEASURED:
+        return None
+    intervention = assignment.matched_intervention or (
+        assignment.project.intervention or ""
+    )
+    found = _first_verified(assignment)
+    if not intervention or found is None:
+        return None
+    rule = rule_for_activity(found[1], intervention, country=country)
+    if rule is None:
+        return None
+    ProjectSchoolAssignment.objects.filter(
+        id=assignment.id, mapping__isnull=True
+    ).update(mapping=rule, mapping_version=rule.version)
+    assignment.mapping = rule
+    assignment.mapping_version = rule.version
+    return rule
 
 
 def schools_in_other_projects(school_ids, *, intervention: str, exclude_project=None):

@@ -175,9 +175,11 @@ class DashboardViewRenderTest(TestCase):
         return self.client.get(url, **headers)
 
     def test_leadership_dashboards_open_on_the_map(self):
+        # The Program Lead's dashboard opens on Today since Today and Dashboard
+        # became one page (owner, 2026-09-14); Map is its first own view.
         for user, url in (
             (self.cd, "/dashboard"),
-            (self.pl, "/dashboard"),
+            (self.pl, "/dashboard?view=map"),
             (self.rvp, "/dashboard"),
             (self.ia, "/ia/dashboard/?view=map"),
         ):
@@ -212,9 +214,7 @@ class DashboardViewRenderTest(TestCase):
 
     def test_the_remaining_roles_open_on_their_work_with_the_map_one_tab_away(self):
         for user, first in (
-            (self.cceo, "Week"),
             (self.hr, "Operations"),
-            (self.coordinator, "Operations"),
             (self.admin, "Operations"),
         ):
             with self.subTest(role=user.active_role):
@@ -232,6 +232,28 @@ class DashboardViewRenderTest(TestCase):
                 html = self._get(user, "/dashboard?view=map").content.decode()
                 self.assertIn("subregionMap()", html)
                 self.assertIn('id="subregion-distribution-rows"', html)
+
+    def test_the_field_roles_open_on_today_with_their_work_and_the_map_beside_it(self):
+        # Today and Dashboard are one page (owner, 2026-09-14).
+        for user, work in (
+            (self.cceo, "Week"),
+            (self.pl, "Map"),
+            (self.coordinator, "Operations"),
+        ):
+            with self.subTest(role=user.active_role):
+                response = self._get(user, "/dashboard")
+                self.assertEqual(response.status_code, 200)
+                html = response.content.decode()
+                self.assertIn("data-dashboard-today", html)
+                self.assertNotIn("subregionMap()", html)
+                selected = re.findall(
+                    r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"',
+                    html,
+                )
+                self.assertEqual(selected, ["today"])
+                self.assertLess(html.index(">Today</a>"), html.index(f">{work}</a>"))
+                html = self._get(user, "/dashboard?view=map").content.decode()
+                self.assertIn("subregionMap()", html)
 
     def test_the_operations_view_carries_the_work(self):
         html = self._get(self.cd, "/dashboard?view=operations").content.decode()

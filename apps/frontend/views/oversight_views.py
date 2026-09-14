@@ -871,10 +871,12 @@ def _item_in_scope(user, scope, *, activity_id, assignment_id):
     )
     if item is None:
         return None
-    if scope.is_country:
-        return item
-    owner_ids = {item.operational_owner_id, item.managing_staff_id}
-    return item if owner_ids & scope.team_ids else None
+    # The same rule the page's list uses, so every row it shows opens.
+    if not oversight.record_in_scope(
+        scope, activity_id=activity_id, assignment_id=assignment_id
+    ):
+        return None
+    return item
 
 
 def _recipient_name(action) -> str:
@@ -1175,11 +1177,10 @@ def _partner_item_in_scope(user, assignment_id: str):
     item = partner_oversight.build_item_by_assignment(assignment_id)
     if item is None:
         return None
-    scope = _partner_scope(user)
-    if scope["is_country"]:
-        return item
-    owners = {item.responsible_cceo_id, item.supervising_pl_id}
-    return item if owners & scope["staff_ids"] else None
+    # The same rule the page's list uses, so every row it shows opens.
+    if not partner_oversight.assignment_in_scope(user, assignment_id):
+        return None
+    return item
 
 
 def _partner_lineage(item) -> dict:

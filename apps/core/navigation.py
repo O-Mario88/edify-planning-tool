@@ -558,6 +558,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "ia_samples": {IA, CD, ADMIN},
     "ia_attribution": {IA, CD, ADMIN},
     "ia_upload_center": {IA, ADMIN},
+    # The verification notices addressed to this reader. It resolved only
+    # through the `ia_` prefix fallback; it has no sidebar door — every notice
+    # already opens its record from the bell (IA review, 2026-09-13).
+    "ia_notifications": {IA, ADMIN},
     # ── Impact Assessment by role description (IA review, 2026-09-13) ──────
     # The framework IA measures against; school evidence the SSA does not
     # capture (learning results, discipleship indicators, EdTech use); what
@@ -568,7 +572,8 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "ia_school_evidence": {IA, CD, ADMIN},
     "ia_learning": {IA, CD, ADMIN},
     "ia_lending_evidence": {IA, CD, ADMIN},
-    "ia_stories": {IA, ADMIN},
+    # The CD acknowledges stories where the country has one IA officer.
+    "ia_stories": {IA, CD, ADMIN},
     "impact_reports": {IA, CD, RVP, ADMIN},
     # Finance operations sidebar visibility (views gate on "disbursements")
     "finance_advances": {ACCOUNTANT, ADMIN},
@@ -963,10 +968,23 @@ ANALYTICS_SECTIONS = [
 ]
 
 
-# ── The IA verification workspace ────────────────────────────────────────────
-# These are separate authoritative datasets, not decorative client-side tabs.
-# Each item keeps its existing route, view, permission and browser history;
-# this registry gives Impact Assessment one stable command-centre mental model.
+# ── The Impact Assessment workspace (IA review, owner, 2026-09-13) ───────────
+# One registry for every Impact Assessment page, clustered by the five
+# responsibilities in the role description plus the data quality and
+# verification work that underpins them. The sidebar carries a few doors per
+# responsibility; this strip carries every page, so a reader who arrives on
+# any IA page — a record they were sent to review included (prefix matching:
+# /ia/verification/<id>/ stays inside "Verification Queue") — keeps one
+# stable way around the role.
+#
+# The shared analytics pages Impact Assessment reads (SSA Performance,
+# Declining Schools, Core School Health, Contribution Analysis, Visit
+# Effectiveness, Programme Output Reports, Publishing, Decision Log) live here
+# and not in IA's sidebar: the Analytics workspace has one door, and for IA
+# that door is this strip. For every other role those routes stay inside the
+# Analytics workspace (build_workspace).
+#
+# Each section keeps its own route, view, permission and browser history.
 IA_SECTIONS = [
     {
         "key": "dashboard",
@@ -974,25 +992,169 @@ IA_SECTIONS = [
         "url": "/ia/dashboard/",
         "page_key": "ia_dashboard",
         "match": "exact",
-        "cluster": "verification",
-        "description": "School outcomes, assessment collection, measurement frameworks and impact reporting.",
+        "cluster": "overview",
+        "description": "School outcomes, assessment collection, impact reports and verification work.",
+    },
+    # 1. Framework development & strategy.
+    {
+        "key": "framework",
+        "label": "Measurement Framework",
+        "url": "/ia/framework/",
+        "page_key": "ia_framework",
+        "cluster": "framework",
+        "description": "Outcome areas, indicators, measurement rules and loan purposes.",
+    },
+    # 2. Baseline and field data collection.
+    {
+        "key": "school_evidence",
+        "label": "School Evidence",
+        "url": "/ia/school-evidence/",
+        "page_key": "ia_school_evidence",
+        "cluster": "collection",
+        "description": "Learning results, discipleship indicators and EdTech checks.",
     },
     {
+        "key": "ssa_upload",
+        "label": "SSA Upload Center",
+        "url": "/ssa/upload/",
+        "page_key": "ia_upload_center",
+        "cluster": "collection",
+        # Upload history (/ssa/upload/history/) and each batch's result sit
+        # under this section and are linked from the upload pages.
+        "description": "Import SSA scores, follow each batch to its result, and read the upload history.",
+    },
+    {
+        "key": "unmatched_ssa",
+        "label": "Unmatched SSA",
+        "url": "/ssa/unmatched",
+        "page_key": "data_quality_center",
+        "match": "exact",
+        "cluster": "collection",
+        "description": "Imported SSA records that cannot yet be linked to a school.",
+    },
+    # 3. Evaluating school progress.
+    {
+        "key": "stories",
+        "label": "Most Significant Change",
+        "url": "/ia/stories/",
+        "page_key": "ia_stories",
+        "cluster": "progress",
+        "description": "Change stories to review before they count as discipleship evidence.",
+    },
+    {
+        "key": "ssa_performance",
+        "label": "SSA Performance",
+        "url": "/ssa",
+        "page_key": "ssa_performance",
+        "match": "exact",
+        "cluster": "progress",
+        "description": "Confirmed school self-assessment scores and movement.",
+    },
+    {
+        "key": "declining_schools",
+        "label": "Declining Schools",
+        "url": "/declining-schools",
+        "page_key": "declining_schools",
+        "cluster": "progress",
+        "description": "Schools losing ground between confirmed assessments.",
+    },
+    {
+        # Was "Core Verification": the page verifies nothing, it reads the
+        # core package's health.
+        "key": "core_school_health",
+        "label": "Core School Health",
+        "url": "/core-school-health",
+        "page_key": "core_school_health",
+        "match": "exact",
+        "cluster": "progress",
+        "description": "Core package delivery and completion-gate stalls, read-only.",
+    },
+    # 4. Data analysis and performance tracking.
+    {
+        "key": "learning",
+        "label": "Programme Learning",
+        "url": "/ia/learning/",
+        "page_key": "ia_learning",
+        "cluster": "learning",
+        "description": "What works across training, lending, EdTech and visits.",
+    },
+    {
+        # Was "Impact Readiness": the page is the contribution analysis.
+        "key": "contribution",
+        "label": "Contribution Analysis",
+        "url": "/impact",
+        "page_key": "impact_analytics",
+        "match": "exact",
+        "cluster": "learning",
+        "description": "Association between programme focus and SSA change — never causation.",
+    },
+    {
+        "key": "visit_effectiveness",
+        "label": "Visit Effectiveness",
+        "url": "/analytics/visit-effectiveness",
+        "page_key": "visit_effectiveness",
+        "cluster": "learning",
+        "description": "How school visits relate to confirmed SSA change.",
+    },
+    {
+        "key": "lending_evidence",
+        "label": "Lending Evidence",
+        "url": "/ia/lending-evidence/",
+        "page_key": "ia_lending_evidence",
+        "cluster": "learning",
+        "description": "Loan-use evidence to verify, and financed schools' outcomes.",
+    },
+    # 5. Stakeholder reporting and accountability.
+    {
+        "key": "impact_reports",
+        "label": "Impact Reports",
+        "url": "/ia/impact-reports/",
+        "page_key": "impact_reports",
+        "cluster": "accountability",
+        "description": "Impact reports from draft through review to each audience's release.",
+    },
+    {
+        # /reports reports delivery against targets, not impact; the label
+        # says so for IA, who also writes the impact reports above.
+        "key": "output_reports",
+        "label": "Programme Output Reports",
+        "url": "/reports",
+        "page_key": "reports",
+        "match": "exact",
+        "cluster": "accountability",
+        "description": "Standing reports on programme delivery and outputs.",
+    },
+    {
+        "key": "publishing",
+        "label": "Publishing",
+        "url": "/analytics/publishing",
+        "page_key": "analytics_publishing",
+        "cluster": "accountability",
+        "description": "What has been published to the wider organisation.",
+    },
+    {
+        "key": "decision_log",
+        "label": "Decision Log",
+        "url": "/decision-log",
+        "page_key": "decision_log",
+        "cluster": "accountability",
+        "description": "What leadership decided, by whom, on what evidence.",
+    },
+    # The data quality and verification work every judgement above rests on.
+    {
         "key": "activities",
-        "label": "Activity Verification",
+        "label": "Verification Queue",
         "url": "/ia/verification/",
         "page_key": "ia_verification_queue",
-        "match": "exact",
-        "cluster": "verification",
-        "description": "Evidence and Salesforce checks awaiting an IA decision.",
+        "cluster": "data_quality",
+        "description": "Staff submissions awaiting evidence and Salesforce checks.",
     },
     {
         "key": "partner_evidence",
         "label": "Partner Evidence",
         "url": "/ia/partner-evidence/",
         "page_key": "ia_partner_evidence",
-        "match": "exact",
-        "cluster": "verification",
+        "cluster": "data_quality",
         "description": "Partner submissions awaiting review and Salesforce confirmation.",
     },
     {
@@ -1001,17 +1163,16 @@ IA_SECTIONS = [
         "url": "/ssa/verification/",
         "page_key": "ssa",
         "match": "exact",
-        "cluster": "verification",
-        "description": "Submitted SSA records awaiting quality confirmation.",
+        "cluster": "data_quality",
+        "description": "SSA records waiting for a verifier other than their collector.",
     },
     {
-        "key": "unmatched_ssa",
-        "label": "Unmatched SSA",
-        "url": "/ssa/unmatched",
-        "page_key": "data_quality_center",
-        "match": "exact",
-        "cluster": "assurance",
-        "description": "Imported SSA records that cannot yet be trusted or linked.",
+        "key": "returned",
+        "label": "Returned Activities",
+        "url": "/ia/returned/",
+        "page_key": "ia_returned",
+        "cluster": "data_quality",
+        "description": "Work sent back for correction and not yet resubmitted.",
     },
     {
         "key": "evidence",
@@ -1019,8 +1180,48 @@ IA_SECTIONS = [
         "url": "/evidence/",
         "page_key": "evidence_center",
         "match": "exact",
-        "cluster": "assurance",
+        "cluster": "data_quality",
         "description": "Proof packets across activities in IA scope.",
+    },
+    {
+        "key": "duplicates",
+        "label": "Duplicate Review",
+        "url": "/ia/duplicates/",
+        "page_key": "ia_duplicates",
+        "cluster": "data_quality",
+        "description": "Activities flagged as potential duplicates.",
+    },
+    {
+        "key": "compare",
+        "label": "Evidence Compare",
+        "url": "/ia/compare/",
+        "page_key": "ia_compare",
+        "cluster": "data_quality",
+        "description": "Planned against delivered, with the evidence side by side.",
+    },
+    {
+        "key": "history",
+        "label": "Verification History",
+        "url": "/ia/history/",
+        "page_key": "ia_history",
+        "cluster": "data_quality",
+        "description": "Every verification decision, with who made it.",
+    },
+    {
+        "key": "verification_analytics",
+        "label": "Verification Analytics",
+        "url": "/ia/analytics/",
+        "page_key": "ia_verification_analytics",
+        "cluster": "data_quality",
+        "description": "Verification throughput, return reasons and verifier patterns.",
+    },
+    {
+        "key": "samples",
+        "label": "Sample Checks",
+        "url": "/ia/samples/",
+        "page_key": "ia_samples",
+        "cluster": "data_quality",
+        "description": "Verified work drawn for a second look by another verifier.",
     },
     {
         "key": "data_quality",
@@ -1028,44 +1229,8 @@ IA_SECTIONS = [
         "url": "/admin-panel/data-quality-center",
         "page_key": "data_quality_center",
         "match": "exact",
-        "cluster": "assurance",
+        "cluster": "data_quality",
         "description": "Coverage gaps, duplicates and invalid operational records.",
-    },
-    {
-        "key": "core_verification",
-        "label": "Core Verification",
-        "url": "/core-school-health",
-        "page_key": "core_school_health",
-        "match": "exact",
-        "cluster": "readiness",
-        "description": "Core package blockers and completion-gate stalls.",
-    },
-    {
-        "key": "impact_readiness",
-        "label": "Impact Readiness",
-        "url": "/impact",
-        "page_key": "impact_analytics",
-        "match": "exact",
-        "cluster": "readiness",
-        "description": "Whether supported interventions can be measured credibly.",
-    },
-    {
-        "key": "analytics",
-        "label": "IA Analytics",
-        "url": "/analytics",
-        "page_key": "analytics",
-        "match": "exact",
-        "cluster": "reporting",
-        "description": "Role-scoped trends and operational intelligence.",
-    },
-    {
-        "key": "reports",
-        "label": "Reports",
-        "url": "/reports",
-        "page_key": "reports",
-        "match": "exact",
-        "cluster": "reporting",
-        "description": "Standing and scheduled IA reporting outputs.",
     },
 ]
 
@@ -1226,6 +1391,13 @@ WORKSPACE_CLUSTER_LABELS = {
     "impact_decisions": "Impact & Decisions",
     "delivery": "Delivery & Quality",
     "reporting": "Reporting",
+    # The Impact Assessment workspace, by the role description (2026-09-13).
+    "framework": "Framework & Strategy",
+    "collection": "Baseline & Field Data",
+    "progress": "School Progress",
+    "learning": "Analysis & Learning",
+    "accountability": "Reporting & Accountability",
+    "data_quality": "Data Quality & Verification",
 }
 
 WORKSPACES = {
@@ -1334,10 +1506,11 @@ def build_workspace(user, current_path: str = "") -> dict | None:
     """
     role = get_user_role_slug(user)
     workspaces = list(WORKSPACES.items())
-    # `/analytics`, `/impact` and `/reports` are intentionally shared routes.
-    # IA sees those datasets inside its verification workspace; other roles
-    # retain the general Analytics workspace. Admin gets the IA workspace on
-    # explicitly IA-prefixed pages without losing its normal Analytics model.
+    # `/impact`, `/reports`, `/ssa` and the other analytics sections Impact
+    # Assessment reads are intentionally shared routes. IA sees those datasets
+    # inside its own workspace (IA_SECTIONS); other roles retain the general
+    # Analytics workspace. Admin and the Country Director get the IA workspace
+    # on explicitly IA-prefixed pages without losing their Analytics model.
     if role != IA and not (current_path or "").startswith("/ia/"):
         workspaces = [item for item in workspaces if item[0] != "ia"]
 
@@ -1398,18 +1571,17 @@ SIDEBAR_ITEMS = [
         "group_label": "MY WORK",
         "items": [
             {
-                # Phase 5: the field day's one primary surface. Sits above
-                # Dashboard for the roles it serves; other roles never see it.
-                "label": "Today",
-                "url": "/today",
-                "page_key": "today",
-            },
-            {
                 "label": "Dashboard",
                 "url": "/dashboard",
                 "page_key": "dashboard",
-                # A partner's home IS their assigned work.
-                "role_urls": {PARTNER: "/partner/assigned-schools"},
+                # A partner's home IS their assigned work. Impact Assessment's
+                # home is its own dashboard: /dashboard only redirected there,
+                # so the link cost a round trip and lit nothing on arrival
+                # (IA review, 2026-09-13).
+                "role_urls": {
+                    PARTNER: "/partner/assigned-schools",
+                    IA: "/ia/dashboard/",
+                },
             },
             {
                 # Planning, targets, clusters and flagged schools are lenses
@@ -1423,7 +1595,10 @@ SIDEBAR_ITEMS = [
                 # pacing for a team HR does not supervise rendered empty for
                 # them (HR audit, 2026-09-12).
                 # The Programme Lead's copy sits in PROGRAMME IMPLEMENTATION.
-                "visible_to": {CD, IA, RVP, RPL, ACCOUNTANT, ADMIN},
+                # Not Impact Assessment's: it supervises no team, and its
+                # Target Performance lens rendered an empty roster for them
+                # (IA review, 2026-09-13).
+                "visible_to": {CD, RVP, RPL, ACCOUNTANT, ADMIN},
                 "extra_active_paths": ("/team-targets",),
             },
             {
@@ -1467,10 +1642,10 @@ SIDEBAR_ITEMS = [
                 "url": "/priorities",
                 "page_key": "priorities_master",
                 # The Programme Lead's copy opens the tabbed workspace from
-                # STRATEGIC DIRECTION.
-                "visible_to": PAGE_PERMISSIONS["priorities_master"] - {PL},
+                # STRATEGIC DIRECTION; Impact Assessment's from FRAMEWORK &
+                # STRATEGY.
+                "visible_to": PAGE_PERMISSIONS["priorities_master"] - {PL, IA},
                 "role_urls": {
-                    IA: "/target-distribution",
                     CD: "/target-distribution",
                     ADMIN: "/target-distribution",
                     # The Regional Programme Lead follows up on the Leads'
@@ -1516,9 +1691,10 @@ SIDEBAR_ITEMS = [
                 "label": "My Professional Development",
                 "url": "/my-professional-development",
                 "page_key": "my_professional_development",
-                # The Programme Lead's copy sits in MY PERFORMANCE, beside the
-                # agreement it develops.
-                "visible_to": PAGE_PERMISSIONS["my_professional_development"] - {PL},
+                # The Programme Lead's and Impact Assessment's copies sit in MY
+                # PERFORMANCE, beside the agreement it develops.
+                "visible_to": PAGE_PERMISSIONS["my_professional_development"]
+                - {PL, IA},
             },
             {
                 "label": "To-Do",
@@ -1533,8 +1709,11 @@ SIDEBAR_ITEMS = [
                 "url": "/actions/mine",
                 "page_key": "my_actions",
                 # For a Programme Lead these are the Country Director's and the
-                # Regional Lead's asks, so they sit in COLLABORATION.
-                "visible_to": PAGE_PERMISSIONS["my_actions"] - {PL},
+                # Regional Lead's asks, so they sit in COLLABORATION. Nothing on
+                # the platform sends one to Impact Assessment, so the page was
+                # always empty for them (IA review, 2026-09-13); a deep link
+                # still opens it.
+                "visible_to": PAGE_PERMISSIONS["my_actions"] - {PL, IA},
             },
             {
                 # The CD's flags to Program Leads (apps.flags). Permitted for
@@ -1546,15 +1725,19 @@ SIDEBAR_ITEMS = [
                 "icon_key": "todos",
                 # Admin is listed now that the Programme Lead's copy lives in
                 # COLLABORATION: an override only yields to a duplicate.
-                "visible_to": {CD, IA, ADMIN},
+                # Impact Assessment can neither raise a flag nor act on one,
+                # so the board was a dead end in its sidebar (IA review,
+                # 2026-09-13).
+                "visible_to": {CD, ADMIN},
             },
             {
                 # The other end of the same rows. Only the roles that can send
-                # — PL supervises, IA assures — have anything to monitor here.
+                # have anything to monitor here; no Impact Assessment surface
+                # sends a school action (IA review, 2026-09-13).
                 "label": "Actions Sent",
                 "url": "/actions/sent",
                 "page_key": "actions_sent",
-                "visible_to": {IA, CD, RVP, RPL, ADMIN},
+                "visible_to": {CD, RVP, RPL, ADMIN},
             },
             {
                 # The CCE Regional Lead's coaching conversations, meetings,
@@ -1580,14 +1763,23 @@ SIDEBAR_ITEMS = [
                 "visible_to": {CD, ADMIN},
             },
             {
+                # Impact Assessment's reports: the Country Director reviews
+                # leadership releases and answers recommendations; the RVP
+                # approves donor versions (IA review, 2026-09-13).
+                "label": "Impact Reports",
+                "url": "/ia/impact-reports/",
+                "page_key": "impact_reports",
+                "visible_to": {CD, RVP, ADMIN},
+            },
+            {
                 "label": "Upload Center",
                 "url": "/uploads",
                 "page_key": "uploads",
                 # Admin reaches it from PLATFORM OPERATIONS instead, so it is
                 # not advertised twice in one sidebar. The Regional HR
                 # Director publishes policies from Policies & Documents.
+                # Impact Assessment's copy sits in BASELINE & FIELD DATA.
                 "visible_to": {
-                    IA,
                     CD,
                     RVP,
                 },
@@ -1597,8 +1789,10 @@ SIDEBAR_ITEMS = [
                 "url": "/debriefs",
                 "page_key": "daily_debrief",
                 # A field submission tool. The people and capacity signals HR
-                # needs from it are summarised on the HR dashboard.
-                "visible_to": PAGE_PERMISSIONS["daily_debrief"] - {HR, PL},
+                # needs from it are summarised on the HR dashboard. Impact
+                # Assessment reads it as qualitative field evidence, from
+                # BASELINE & FIELD DATA.
+                "visible_to": PAGE_PERMISSIONS["daily_debrief"] - {HR, PL, IA},
             },
             {
                 # Everyone who can raise or decide an escalation: the field
@@ -1613,7 +1807,7 @@ SIDEBAR_ITEMS = [
                 "label": "Leave & Personal Time Off",
                 "url": "/personal-time-off/",
                 "page_key": "personal_time_off",
-                "visible_to": PAGE_PERMISSIONS["personal_time_off"] - {PL},
+                "visible_to": PAGE_PERMISSIONS["personal_time_off"] - {PL, IA},
             },
             {
                 "label": "Leave Approvals",
@@ -1756,7 +1950,9 @@ SIDEBAR_ITEMS = [
                 "label": "Loans",
                 "url": "/loans",
                 "page_key": "loans",
-                "visible_to": {BUSINESS_TRANSFORMATION, CCEO, CD, IA, RVP},
+                # Impact Assessment's copy sits in ANALYSIS & LEARNING, beside
+                # the lending evidence it verifies.
+                "visible_to": {BUSINESS_TRANSFORMATION, CCEO, CD, RVP},
             },
             {
                 "label": "Business Accounting & Finance",
@@ -1855,19 +2051,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "my_coaching",
                 "visible_to": {CCEO},
             },
-            # The Programme Lead's own development and leave sit with their own
-            # agreement, so MY WORK holds only the day's work (2026-09-13).
+            # The Programme Lead's and Impact Assessment's own development and
+            # leave sit with their own agreement, so MY WORK holds only the
+            # day's work (2026-09-13).
             {
                 "label": "My Professional Development",
                 "url": "/my-professional-development",
                 "page_key": "my_professional_development",
-                "visible_to": {PL},
+                "visible_to": {PL, IA},
             },
             {
                 "label": "Leave & Personal Time Off",
                 "url": "/personal-time-off/",
                 "page_key": "personal_time_off",
-                "visible_to": {PL},
+                "visible_to": {PL, IA},
             },
         ],
     },
@@ -2033,7 +2230,9 @@ SIDEBAR_ITEMS = [
                 # none (HR audit, 2026-09-12).
                 # The Programme Lead's copy sits in STRATEGIC DIRECTION: for them
                 # it is the country plan they help set, not a finance queue.
-                "visible_to": PAGE_PERMISSIONS["work_plan"] - {HR, PL},
+                # Impact Assessment measures the plan's results and plans none
+                # of it (IA review, 2026-09-13).
+                "visible_to": PAGE_PERMISSIONS["work_plan"] - {HR, PL, IA},
             },
             {
                 "label": "Weekly Advance Request",
@@ -2057,6 +2256,10 @@ SIDEBAR_ITEMS = [
                 "url": "/budget",
                 "page_key": "monthly_budget",
                 "icon_key": "my_budget",
+                # No Impact Assessment flow reads the country budget; IA keeps
+                # only the advance for its own assessment visits here (IA
+                # review, 2026-09-13).
+                "visible_to": PAGE_PERMISSIONS["monthly_budget"] - {IA},
             },
             {
                 "label": "Cost Settings",
@@ -2126,60 +2329,64 @@ SIDEBAR_ITEMS = [
         ],
     },
     {
+        # The Country Director's fallback-verifier doors (and Admin's). Impact
+        # Assessment reaches every one of these pages from its own groups and
+        # workspace strip below, so the originals exclude IA and no page is
+        # offered twice (IA review, 2026-09-13).
         "group_label": "VERIFICATION",
         "items": [
-            {
-                # IA creates and validates authoritative school records, but is
-                # not a field-delivery role. Keep that workflow discoverable in
-                # Verification instead of presenting IA with Schools & Field.
-                "label": "School Directory",
-                "url": "/schools",
-                "page_key": "school_directory",
-                "visible_to": {IA},
-                "icon_key": "schools",
-            },
             {
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
                 "page_key": "ia_verification_queue",
+                "visible_to": PAGE_PERMISSIONS["ia_verification_queue"] - {IA},
             },
             {
                 "label": "Duplicate Review",
                 "url": "/ia/duplicates/",
                 "page_key": "ia_duplicates",
+                "visible_to": PAGE_PERMISSIONS["ia_duplicates"] - {IA},
             },
             {
                 "label": "Evidence Compare",
                 "url": "/ia/compare/",
                 "page_key": "ia_compare",
+                "visible_to": PAGE_PERMISSIONS["ia_compare"] - {IA},
             },
             {
                 "label": "Returned Activities",
                 "url": "/ia/returned/",
                 "page_key": "ia_returned",
+                "visible_to": PAGE_PERMISSIONS["ia_returned"] - {IA},
             },
             {
                 "label": "Verification History",
                 "url": "/ia/history/",
                 "page_key": "ia_history",
+                "visible_to": PAGE_PERMISSIONS["ia_history"] - {IA},
             },
             {
                 "label": "Verification Analytics",
                 "url": "/ia/analytics/",
                 "page_key": "ia_verification_analytics",
                 "icon_key": "analytics",
+                "visible_to": PAGE_PERMISSIONS["ia_verification_analytics"] - {IA},
             },
             {
                 "label": "Sample Checks",
                 "url": "/ia/samples/",
                 "page_key": "ia_samples",
                 "icon_key": "ia_compare",
+                "visible_to": PAGE_PERMISSIONS["ia_samples"] - {IA},
             },
             {
-                "label": "Impact Attribution",
-                "url": "/ia/attribution/",
-                "page_key": "ia_attribution",
+                # Impact attribution became the Training tab of Programme
+                # Learning (IA review, 2026-09-13); /ia/attribution/ redirects.
+                "label": "Programme Learning",
+                "url": "/ia/learning/",
+                "page_key": "ia_learning",
                 "icon_key": "impact_analytics",
+                "visible_to": PAGE_PERMISSIONS["ia_learning"] - {IA},
             },
         ],
     },
@@ -2195,6 +2402,178 @@ SIDEBAR_ITEMS = [
                 "url": "/schools",
                 "page_key": "schools",
                 "visible_to": {RPL},
+            },
+        ],
+    },
+    # ── Impact Assessment, by role description (owner, 2026-09-13) ─────────
+    # "Framework development and strategy; baseline and field data collection;
+    # evaluating school progress; data analysis and performance tracking;
+    # stakeholder reporting and accountability" — one group per
+    # responsibility, then the data quality and verification work every
+    # judgement rests on (ROLE_SIDEBAR_GROUP_ORDER). A few doors per group;
+    # every other IA page, and the shared analytics pages IA reads, sit in the
+    # Impact Assessment workspace strip (IA_SECTIONS), which is IA's one door
+    # into analytics. Shared pages are registered again here with
+    # `visible_to: {IA}` and their original entries exclude IA, so each page
+    # appears once.
+    {
+        "group_label": "FRAMEWORK & STRATEGY",
+        "visible_to": {IA},
+        "items": [
+            {
+                "label": "Measurement Framework",
+                "url": "/ia/framework/",
+                "page_key": "ia_framework",
+                "visible_to": {IA},
+                # The measurement rules moved into the framework (IA-F); the
+                # old register URL still belongs to this door.
+                "extra_active_paths": ("/priorities/ssa-mapping",),
+            },
+            {
+                # One link to the tabbed Priorities page (owner, 2026-09-07):
+                # IA distributes the approved master and approves the spreads.
+                "label": "Priorities",
+                "url": "/target-distribution",
+                "page_key": "priorities_master",
+                "visible_to": {IA},
+                "extra_active_paths": ("/strategic-priorities",),
+            },
+        ],
+    },
+    {
+        "group_label": "BASELINE & FIELD DATA",
+        "visible_to": {IA},
+        "items": [
+            {
+                "label": "School Evidence",
+                "url": "/ia/school-evidence/",
+                "page_key": "ia_school_evidence",
+                "visible_to": {IA},
+            },
+            {
+                "label": "SSA Upload Center",
+                "url": "/ssa/upload/",
+                "page_key": "ia_upload_center",
+                "visible_to": {IA},
+            },
+            {
+                # IA creates and validates authoritative school records, but is
+                # not a field-delivery role, so the directory sits with the data
+                # it collects rather than in SCHOOLS & FIELD.
+                "label": "School Directory",
+                "url": "/schools",
+                "page_key": "school_directory",
+                "visible_to": {IA},
+                "icon_key": "schools",
+            },
+            {
+                # Qualitative field evidence IA reads; it never writes one.
+                "label": "Field Debrief",
+                "url": "/debriefs",
+                "page_key": "daily_debrief",
+                "visible_to": {IA},
+            },
+            {
+                # Training manuals and presentations are IA's to publish.
+                "label": "Upload Center",
+                "url": "/uploads",
+                "page_key": "uploads",
+                "visible_to": {IA},
+            },
+        ],
+    },
+    {
+        "group_label": "SCHOOL PROGRESS",
+        "visible_to": {IA},
+        "items": [
+            {
+                # SSA Performance, Declining Schools and Core School Health are
+                # sections of the workspace strip, reached from any IA page.
+                "label": "Most Significant Change",
+                "url": "/ia/stories/",
+                "page_key": "ia_stories",
+                "visible_to": {IA},
+            },
+        ],
+    },
+    {
+        "group_label": "ANALYSIS & LEARNING",
+        "visible_to": {IA},
+        "items": [
+            {
+                "label": "Programme Learning",
+                "url": "/ia/learning/",
+                "page_key": "ia_learning",
+                "visible_to": {IA},
+                # Attribution merges into the learning workspace (IA-L).
+                "extra_active_paths": ("/ia/attribution/",),
+            },
+            {
+                "label": "Lending Evidence",
+                "url": "/ia/lending-evidence/",
+                "page_key": "ia_lending_evidence",
+                "visible_to": {IA},
+            },
+            {
+                "label": "Loans",
+                "url": "/loans",
+                "page_key": "loans",
+                "visible_to": {IA},
+            },
+        ],
+    },
+    {
+        "group_label": "REPORTING & ACCOUNTABILITY",
+        "visible_to": {IA},
+        "items": [
+            {
+                "label": "Impact Reports",
+                "url": "/ia/impact-reports/",
+                "page_key": "impact_reports",
+                "visible_to": {IA},
+            },
+        ],
+    },
+    {
+        "group_label": "DATA QUALITY & VERIFICATION",
+        "visible_to": {IA},
+        "items": [
+            {
+                "label": "Verification Queue",
+                "url": "/ia/verification/",
+                "page_key": "ia_verification_queue",
+                "visible_to": {IA},
+                # Evidence Compare and the audit trail open from queue rows.
+                "extra_active_paths": ("/ia/compare/",),
+            },
+            {
+                "label": "Partner Evidence",
+                "url": "/ia/partner-evidence/",
+                "page_key": "ia_partner_evidence",
+                "icon_key": "partners",
+                "visible_to": {IA},
+            },
+            {
+                "label": "SSA Verification",
+                "url": "/ssa/verification/",
+                "page_key": "ssa",
+                "visible_to": {IA},
+            },
+            {
+                "label": "Returned Activities",
+                "url": "/ia/returned/",
+                "page_key": "ia_returned",
+                "visible_to": {IA},
+            },
+            {
+                # Duplicates, unmatched SSA rows, sample checks, history and
+                # verification analytics are sections of the workspace strip.
+                "label": "Data Quality",
+                "url": "/admin-panel/data-quality-center",
+                "page_key": "data_quality_center",
+                "icon_key": "ia_duplicates",
+                "visible_to": {IA},
+                "extra_active_paths": ("/ssa/unmatched", "/ia/duplicates/"),
             },
         ],
     },
@@ -2375,6 +2754,10 @@ SIDEBAR_ITEMS = [
                 "url": "/analytics",
                 "page_key": "analytics",
                 "analytics_hub": True,
+                # Impact Assessment's door into the analyses it reads is its
+                # own workspace strip (IA_SECTIONS); a second door here opened
+                # the generic programme page (IA review, 2026-09-13).
+                "visible_to": ALL_ROLES - {IA},
             },
         ],
     },
@@ -2485,6 +2868,20 @@ ROLE_SIDEBAR_GROUP_ORDER: dict[str, tuple[str, ...]] = {
         "MY PERFORMANCE",
         "QUALITY & INSIGHTS",
     ),
+    # Impact Assessment reads its sidebar in the order of its role description
+    # (owner, 2026-09-13): the day's work, then the five responsibilities, then
+    # the verification work beneath them, then its own finance and performance.
+    IA: (
+        "MY WORK",
+        "FRAMEWORK & STRATEGY",
+        "BASELINE & FIELD DATA",
+        "SCHOOL PROGRESS",
+        "ANALYSIS & LEARNING",
+        "REPORTING & ACCOUNTABILITY",
+        "DATA QUALITY & VERIFICATION",
+        "FINANCE & BUDGET",
+        "MY PERFORMANCE",
+    ),
 }
 
 
@@ -2594,7 +2991,9 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             # destination moves under you is one that reloads the current page
             # as often as it navigates anywhere.
             if item.get("analytics_hub"):
-                if not analytics_sections:
+                if not analytics_sections or role not in item.get(
+                    "visible_to", ALL_ROLES
+                ):
                     continue
                 home = analytics_sections[0]
                 only_one = len(analytics_sections) == 1
@@ -2733,8 +3132,10 @@ MOBILE_NAV_MAX_PRIMARY = 4
 #
 #   messages — on desktop this is a topbar drawer, so it is a sidebar item
 #     nowhere, yet it is a primary destination for every role on a phone.
-#   ssa — registered in IA_SECTIONS (a workspace registry), so it never
-#     reaches build_sidebar_for_user. §24 makes it IA's second queue.
+#   ssa — SSA Performance is an Analytics section, so it never reaches
+#     build_sidebar_for_user for the roles that read it. Impact Assessment's
+#     SSA Verification door is a sidebar item of its own (IA review,
+#     2026-09-13), which takes precedence over this entry.
 _MOBILE_NAV_STANDALONE = {
     "messages": {"label": "Messages", "url": "/messages", "match": "prefix"},
     "ssa": {
@@ -2753,19 +3154,22 @@ _MOBILE_NAV_STANDALONE = {
 # access" holds by construction. Anything unavailable is skipped and the slot
 # is backfilled from the role's own sidebar order.
 MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
-    # Field execution — the phone IS the field device, so the Today
-    # workbench (roadmap Phase 5) leads; the plan and schools follow.
-    CCEO: ("today", "my_plan", "schools", "messages"),
+    # Field execution — the phone IS the field device, so the Dashboard, which
+    # opens on the Today workbench (roadmap Phase 5; one page since the owner
+    # merged Today and Dashboard, 2026-09-14), leads; the plan and schools follow.
+    CCEO: ("dashboard", "my_plan", "schools", "messages"),
     # A Partner is not authorized for the school directory at all. Their
     # phone opens on the Assigned Schools intake — the same place their
     # sidebar home points.
     PARTNER: ("partner_schools", "my_plan", "calendar", "messages"),
     # A PL's second surface is the team, not their own plan alone.
-    PL: ("today", "my_plan", "team_planning_oversight", "messages"),
+    PL: ("dashboard", "my_plan", "team_planning_oversight", "messages"),
     # Projects lead for the coordinator; their planning is project-scoped.
-    PROJECT_COORDINATOR: ("today", "projects", "my_plan", "messages"),
-    # Verification is the whole job; SSA is its second queue.
-    IA: ("dashboard", "ia_verification_queue", "ssa", "messages"),
+    PROJECT_COORDINATOR: ("dashboard", "projects", "my_plan", "messages"),
+    # The day's queue, then the verification queue that is most of it on a
+    # phone; SSA Verification and Partner Evidence are one tap away in the
+    # workspace strip (IA review, 2026-09-13).
+    IA: ("dashboard", "todos", "ia_verification_queue", "messages"),
     # Finance operates queues, not dashboards.
     ACCOUNTANT: (
         "dashboard",

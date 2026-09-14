@@ -112,10 +112,28 @@ class ChampionPipelineFixture(TestCase):
             ids = ids[:how_many]
         CoreActivitySlot.objects.filter(id__in=ids).update(status="closed")
 
+    def _confirm(self, record_id: str) -> None:
+        """Confirm a keyed SSA as a second Impact Assessment officer would:
+        every SSA lands pending and only a different verifier confirms it
+        (IA review, owner, 2026-09-13)."""
+        from apps.ssa.models import SsaRecord
+        from apps.ssa.services import verify_record
+
+        verifier, _ = User.objects.get_or_create(
+            email="ia2@champ-status.test",
+            defaults={
+                "name": "Second Assessor",
+                "roles": ["ImpactAssessment"],
+                "active_role": "ImpactAssessment",
+                "is_active": True,
+            },
+        )
+        verify_record(SsaRecord.objects.get(id=record_id), verifier)
+
     def _baseline_ssa(self, school: School, value: float = 7.0):
         from apps.ssa.services import upload as ssa_upload
 
-        return ssa_upload(
+        record = ssa_upload(
             {
                 "schoolId": school.school_id,
                 "dateOfSsa": (timezone.now() - timedelta(days=300)).date().isoformat(),
@@ -123,9 +141,11 @@ class ChampionPipelineFixture(TestCase):
             },
             self.user,
         )
+        self._confirm(record["id"])
+        return record
 
     def _follow_up(self, plan: CorePlan, value: float) -> dict:
-        return upload_follow_up_ssa(
+        result = upload_follow_up_ssa(
             plan.id,
             {
                 "dateOfSsa": timezone.now().date().isoformat(),
@@ -133,6 +153,9 @@ class ChampionPipelineFixture(TestCase):
             },
             self.user,
         )
+        plan.refresh_from_db()
+        self._confirm(plan.follow_up_ssa_record_id)
+        return result
 
 
 class ImpactMeasurementKeepsTheSchoolInTheEngineTest(ChampionPipelineFixture):

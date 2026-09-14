@@ -162,7 +162,15 @@ def inferred_category(label: str) -> str:
         return "compliance"
     if any(word in text for word in ("completion", "progress", "achievement", "util")):
         return "progress"
-    if any(word in text for word in ("impact", "improved", "trained", "reached")):
+    # IA review (2026-09-13): counting who was trained, reached or "impacted"
+    # counts delivered work — an output. Only a measured change in schools is
+    # an outcome, and a label alone cannot show one, so the codemod never
+    # infers OUTCOME from these words; reach counts are scale. A metric bound
+    # to an approved IA indicator is categorised as an outcome by hand
+    # (apps/core/tests/test_outcome_metrics_guard.py holds the line).
+    if any(word in text for word in ("trained", "reached", "impacted", "attended")):
+        return "scale"
+    if "improved" in text or "declin" in text:
         return "outcome"
     if any(word in text for word in ("ready", "readiness", "on track")):
         return "readiness"

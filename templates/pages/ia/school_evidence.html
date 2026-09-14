@@ -1,0 +1,82 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}School Evidence · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Impact Assessment's School Evidence (IA review, owner, 2026-09-13): student
+learning results, discipleship practice and EdTech rollout — the evidence of
+school progress the SSA self-scores do not capture. The view
+(apps/frontend/views/ia_school_evidence_views.py) hands the page registered KPI
+tiles, the tab's filters (each reaches the view; one with nothing to choose is
+not drawn), a school-level summary and the register of records.
+
+Tabs are links (?tab=…) so a To-Do, a notification and the back button land on
+the same register; `autoload_drawer` opens the record a link asked for.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-school-evidence>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Baseline &amp; field data</p>
+      <h1 class="edify-page-title edify-page-header__title">School Evidence</h1>
+      <p class="edify-page-header__description">Class learning results, discipleship practice and EdTech use in partner schools — recorded by one person, confirmed by another, and only then counted.</p>
+    </div>
+    {% if header_actions %}
+    <div class="edify-page-header__controls">
+      {% for action in header_actions %}
+      <button type="button" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title="School evidence at a glance" %}
+
+  <nav class="edify-section-nav" aria-label="School evidence registers" data-ia-school-evidence-tabs>
+    <div class="edify-section-nav__inner">
+      {% for item in tabs %}
+      <a href="{{ item.url }}" class="edify-section-nav__link{% if item.active %} is-active{% endif %}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <p class="edify-page-header__description">{{ description }}</p>
+
+  <form method="get" class="edify-filter-bar" aria-label="School evidence filters" x-data>
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    {% for field in filters.fields %}
+    {% if field.options %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% endfor %}
+  </form>
+
+  {% if show_upload %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 space-y-2" aria-labelledby="ia-learning-upload-title" data-ia-learning-upload>
+    <h2 id="ia-learning-upload-title" class="text-[13px] font-bold edify-text">Upload class results (CSV)</h2>
+    <p class="edify-text-caption edify-text-muted">One row per class and subject. Every row is checked against schools in your country; a file with any invalid row records nothing and lists the rows to fix. <a href="/ia/school-evidence/learning/template.csv" class="edify-primary-text">Download the template</a>.</p>
+    <form method="post" action="/ia/school-evidence/learning/upload" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label class="sr-only" for="ia-learning-file">Results file</label>
+      <input id="ia-learning-file" type="file" name="results_file" accept=".csv,text/csv" required class="text-[12px]">
+      <button type="submit" class="btn btn-secondary h-8">Upload results</button>
+    </form>
+  </section>
+  {% endif %}
+
+  {% include "partials/ia/evidence_table.html" with table=summary %}
+  {% include "partials/ia/evidence_table.html" with table=register %}
+  {% if extra_table %}{% include "partials/ia/evidence_table.html" with table=extra_table %}{% endif %}
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-evidence-autoload></div>{% endif %}
+</div>
+{% endblock %}

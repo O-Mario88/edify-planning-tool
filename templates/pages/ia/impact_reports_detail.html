@@ -1,0 +1,127 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ title }} · Impact Reports · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+One impact report (IA review, owner, 2026-09-13): its narrative and
+recommendations, the evidence frozen when it was submitted, its releases per
+audience and its audit history (apps/frontend/views/impact_report_views.py).
+The controls drawn are the ones apps.impact.reports.detail_rights grants the
+reader; the service checks again on every post. The RVP reads aggregates only
+and no history.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-impact-report data-ia-report-status="{{ report.status }}">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow"><a href="/ia/impact-reports/">Impact Reports</a></p>
+      <h1 class="edify-page-title edify-page-header__title">{{ title }}</h1>
+      <p class="edify-page-header__description"><span data-tone="{{ status_tone }}">{{ status_label }}</span> · version {{ report.version }} · {{ report.country }}</p>
+    </div>
+    <div class="edify-page-header__controls" data-ia-report-controls>
+      {% if rights.can_edit %}
+      <button type="button" class="btn btn-secondary h-8" hx-get="/ia/impact-reports/{{ report.id }}/edit" hx-target="#drawer-container" hx-swap="innerHTML">Edit draft</button>
+      <form method="post" action="/ia/impact-reports/{{ report.id }}/submit" class="inline">{% csrf_token %}<button type="submit" class="btn btn-primary h-8" data-ia-report-submit>Submit for review</button></form>
+      {% endif %}
+      {% if rights.can_withdraw %}
+      <form method="post" action="/ia/impact-reports/{{ report.id }}/withdraw" class="inline">{% csrf_token %}<button type="submit" class="btn btn-ghost h-8">Withdraw</button></form>
+      {% endif %}
+      {% if rights.can_review %}
+      <button type="button" class="btn btn-primary h-8" hx-get="/ia/impact-reports/{{ report.id }}/review" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-report-review>Review</button>
+      {% endif %}
+      {% if rights.can_release_leadership %}
+      <form method="post" action="/ia/impact-reports/{{ report.id }}/release/leadership" class="inline">{% csrf_token %}<button type="submit" class="btn btn-primary h-8" data-ia-report-release>Release to country leadership</button></form>
+      {% endif %}
+      {% if rights.can_release_schools %}
+      <button type="button" class="btn btn-secondary h-8" hx-get="/ia/impact-reports/{{ report.id }}/release/schools" hx-target="#drawer-container" hx-swap="innerHTML">Release school briefs</button>
+      {% endif %}
+      {% if rights.can_request_donor %}
+      <button type="button" class="btn btn-secondary h-8" hx-get="/ia/impact-reports/{{ report.id }}/release/donor" hx-target="#drawer-container" hx-swap="innerHTML">Request donor version</button>
+      {% endif %}
+      {% if rights.can_correct %}
+      <form method="post" action="/ia/impact-reports/{{ report.id }}/correct" class="inline">{% csrf_token %}<button type="submit" class="btn btn-secondary h-8">Start a correction</button></form>
+      {% endif %}
+      {% if rights.can_download_annex and can_export %}
+      <a class="btn btn-ghost h-8" href="/ia/impact-reports/{{ report.id }}/annex.csv" data-ia-report-annex>Download evidence annex</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  {% if report.status == "returned" and report.review_note %}
+  <div class="edify-note" data-tone="warning" role="note">Returned by the reviewer: {{ report.review_note }}</div>
+  {% endif %}
+  {% if successor %}
+  <div class="edify-note" data-tone="info" role="note">Version {{ successor.version }} corrects this report ({{ successor.status }}). <a href="/ia/impact-reports/{{ successor.id }}/">Open version {{ successor.version }}</a></div>
+  {% endif %}
+  {% if report.supersedes_id %}
+  <div class="edify-note" data-tone="info" role="note">This version corrects <a href="/ia/impact-reports/{{ report.supersedes_id }}/">version {{ report.supersedes.version }}</a>, which stands until this one {% if report.supersedes.status == "returned" or report.supersedes.status == "withdrawn" %}is submitted{% else %}is released{% endif %}.</div>
+  {% endif %}
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-report-about" data-ia-report-about>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="ia-report-about" class="rpl-card__title">The report</h2>
+        <span class="rpl-card__subtitle">{% if report.status == "draft" %}Draft — nothing is frozen until it is submitted{% else %}Words as submitted; a correction is a new version{% endif %}</span>
+      </div>
+    </header>
+    <div class="p-4 space-y-4">
+      <dl class="hr-drawer-facts">
+        {% for label, value in facts %}
+        <div class="hr-drawer-facts__row"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+      <dl class="hr-drawer-facts" data-ia-report-narrative>
+        <div class="hr-drawer-facts__row"><dt>Methodology</dt><dd>{{ narrative.methodology|default:"Not written yet"|linebreaksbr }}</dd></div>
+        <div class="hr-drawer-facts__row"><dt>Findings</dt><dd>{{ narrative.findings|default:"Not written yet"|linebreaksbr }}</dd></div>
+        <div class="hr-drawer-facts__row"><dt>Limitations</dt><dd>{{ narrative.limitations|default:"Not written yet"|linebreaksbr }}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  {% if not rights.summary_only %}
+  {% if rights.can_edit %}
+  <div class="flex justify-end">
+    <button type="button" class="btn btn-secondary h-8" hx-get="/ia/impact-reports/{{ report.id }}/recommendations/new" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-report-add-recommendation>Add recommendation</button>
+  </div>
+  {% endif %}
+  {% include "partials/ia/impact_reports_table.html" with table=recommendations anchor="recommendations" %}
+  {% endif %}
+
+  <section class="space-y-3" aria-labelledby="ia-report-evidence" data-ia-report-evidence>
+    <h2 id="ia-report-evidence" class="text-[15px] font-bold edify-text tracking-tight">Evidence{% if evidence %} frozen at submission{% endif %}</h2>
+    {% if not evidence %}
+    <div class="edify-note" data-tone="info" role="note">The evidence is taken by the server, in your scope, the moment the report is submitted — the project cohort in the period, school change with its evidence grades, learning, discipleship and EdTech evidence, mapping versions, verified loan conclusions and approved findings — and never changes afterwards.</div>
+    {% if can_export and not rights.summary_only %}
+    <form method="post" action="/ia/impact-report/download" class="flex flex-wrap items-center gap-2" data-ia-report-live-annex>
+      {% csrf_token %}
+      <input type="hidden" name="project" value="{{ report.project_id|default:'' }}">
+      <input type="hidden" name="fy" value="{{ report.fy }}">
+      <input type="hidden" name="period_start" value="{{ report.period_start|date:'Y-m-d' }}">
+      <input type="hidden" name="period_end" value="{{ report.period_end|date:'Y-m-d' }}">
+      <button type="submit" class="btn btn-ghost h-8">Download today's live evidence annex (draft)</button>
+    </form>
+    {% endif %}
+    {% else %}
+    <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4">
+      <dl class="hr-drawer-facts">
+        {% for label, value in evidence.summary %}
+        <div class="hr-drawer-facts__row"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    </div>
+    {% include "partials/ia/impact_reports_table.html" with table=evidence.change %}
+    {% if evidence.schools %}{% include "partials/ia/impact_reports_table.html" with table=evidence.schools %}{% endif %}
+    {% if evidence.findings %}{% include "partials/ia/impact_reports_table.html" with table=evidence.findings %}{% endif %}
+    {% if evidence.limitation %}<div class="edify-note" data-tone="warning" role="note">{{ evidence.limitation }}</div>{% endif %}
+    {% endif %}
+  </section>
+
+  {% include "partials/ia/impact_reports_table.html" with table=releases anchor="releases" %}
+
+  {% if history %}
+  {% include "partials/ia/impact_reports_table.html" with table=history %}
+  {% endif %}
+</div>
+{% endblock %}

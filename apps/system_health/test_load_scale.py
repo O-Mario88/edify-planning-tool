@@ -926,7 +926,8 @@ class TransactionalVolumeScaleTest(TestCase):
         self._assert_flat_in_transactions("/todos")
 
     def test_today_workbench_is_flat_in_activity_volume(self):
-        self._assert_flat_in_transactions("/today")
+        # The workbench is the Dashboard's Today view (owner, 2026-09-14).
+        self._assert_flat_in_transactions("/today/panel")
 
     def test_closure_queue_is_flat_in_activity_volume(self):
         self._assert_flat_in_transactions(

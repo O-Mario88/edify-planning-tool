@@ -396,13 +396,15 @@ def confirm(activity_id: str, principal) -> dict:
     )
     _audit("pl_review_confirm", a, principal)
     _close_review_notice(a)
-    _notify_after_review(
-        a,
-        "activity_submitted_for_review",
-        "Activity awaiting verification",
-        f"{getattr(principal, 'name', 'A reviewer')} confirmed a completion.",
-        _impact_assessment_ids(),
-    )
+    # Impact Assessment in the officer's country is told once the confirmation
+    # commits (never every IA holder in the deployment; the Country Director
+    # for IA officers' own work) — IA review, 2026-09-13.
+    from django.db import transaction
+
+    from apps.activities.services import _notify_ia_submitted
+
+    confirmed = a
+    transaction.on_commit(lambda: _notify_ia_submitted(confirmed))
     return _serialize(a)
 
 
@@ -444,16 +446,6 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
         priority="high",
     )
     return _serialize(a)
-
-
-def _impact_assessment_ids() -> list[str]:
-    from apps.accounts.models import User
-
-    return list(
-        User.objects.filter(
-            roles__contains=["ImpactAssessment"], status="active"
-        ).values_list("id", flat=True)
-    )
 
 
 def _notify_after_review(

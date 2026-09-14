@@ -185,7 +185,11 @@ class ActivityChainNotificationTests(TestCase):
         from apps.pl_review import services
 
         ia = _user("ia-sig@t.org", "Ivy", EdifyRole.IMPACT_ASSESSMENT.value)
-        services.confirm(self.act.id, self.pl)
+        # Impact Assessment is told in the submitter's country, once the
+        # confirmation commits.
+        StaffProfile.objects.create(user=ia, title="IA", country="Uganda")
+        with self.captureOnCommitCallbacks(execute=True):
+            services.confirm(self.act.id, self.pl)
         self.assertTrue(Notification.objects.filter(recipient_id=ia.id).exists())
 
     def test_supervisor_resolution_spans_both_id_spaces(self):

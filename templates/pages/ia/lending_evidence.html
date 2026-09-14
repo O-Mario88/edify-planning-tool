@@ -1,0 +1,59 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Lending Evidence · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Impact Assessment's Lending Evidence (IA review, owner, 2026-09-13): the loan-use,
+enrolment, purpose-output and teacher-completion evidence a lending partner reported,
+the loan impact conclusions that are prepared by one person and verified by another,
+and financed cohorts with their evidence grade and maturity
+(apps/frontend/views/ia_lending_views.py over
+apps/business_transformation/lending_impact.py). Every row opens a one-column drawer;
+a refusal from the service comes back as the page message.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4" data-ia-lending-evidence data-ia-lending-tab="{{ tab }}">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-header__eyebrow">Analysis &amp; learning</p>
+      <h1 class="edify-page-title edify-page-header__title">Lending Evidence</h1>
+      <p class="edify-page-header__description">Verify what school loans were used for and what they produced, then publish loan impact conclusions that someone other than their preparer has checked.</p>
+    </div>
+  </div>
+
+  {% include "partials/_section_nav.html" %}
+
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title="Lending evidence at a glance" %}
+
+  <nav class="edify-section-nav" aria-label="Lending evidence queues" data-ia-lending-tabs>
+    <div class="edify-section-nav__inner">
+      {% for item in tabs %}
+      <a href="{{ item.url }}" class="edify-section-nav__link{% if item.active %} is-active{% endif %}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <div class="edify-note" data-tone="info" role="note">{{ description }}</div>
+
+  {% if filters.fields %}
+  <form method="get" class="edify-filter-bar" aria-label="Lending evidence filters" x-data>
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    {% for field in filters.fields %}
+    {% if field.options %}
+    <label class="cce-filter">
+      <span class="cce-filter__label">{{ field.label }}</span>
+      <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+        {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
+        {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% endfor %}
+  </form>
+  {% endif %}
+
+  {% include "partials/ia/evidence_table.html" with table=table %}
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-lending-autoload></div>{% endif %}
+</div>
+{% endblock %}

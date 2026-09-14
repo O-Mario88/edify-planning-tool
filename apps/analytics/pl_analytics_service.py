@@ -2348,7 +2348,17 @@ class PLAnalyticsService:
             schools = list(
                 School.objects.filter(id__in=scoped.school_ids)
                 .select_related("district")
-                .only("id", "name", "school_type", "current_fy_ssa_status")[:200]
+                # district_id and the district's name are read below; deferring
+                # them beside select_related raised FieldError (500 on every
+                # district drill-down, Programme Lead walk 2026-09-14).
+                .only(
+                    "id",
+                    "name",
+                    "school_type",
+                    "current_fy_ssa_status",
+                    "district_id",
+                    "district__name",
+                )[:200]
             )
             name = "District"
             if schools and schools[0].district_id:

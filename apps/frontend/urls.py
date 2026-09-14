@@ -723,6 +723,7 @@ urlpatterns = [
     ),
     path("today", today_views.today_page, name="today"),
     path("today/action", today_views.today_action, name="today_action"),
+    path("today/panel", today_views.today_panel, name="today_panel"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
     path(
         "my-plan/day-package",
@@ -2978,14 +2979,626 @@ urlpatterns = [
     # ── IA review · IA-N ──
     # ── end IA-N ──
     # ── IA review · IA-F ──
+    # The Measurement Framework (/ia/framework/) and the measurement-rule
+    # review and history drawers (apps/frontend/views/ia_framework_views.py,
+    # ssa_mapping_views.py). Imported by name so this block needs no edit to
+    # the module imports above.
+    path(
+        "ia/framework/",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["framework_page"]
+        ).framework_page,
+        name="ia_framework",
+    ),
+    path(
+        "ia/framework/areas/propose",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["areas_propose"]
+        ).areas_propose,
+        name="ia_framework_areas_propose",
+    ),
+    path(
+        "ia/framework/areas/new",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["area_new_drawer"]
+        ).area_new_drawer,
+        name="ia_framework_area_new",
+    ),
+    path(
+        "ia/framework/areas/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["area_save"]
+        ).area_save,
+        name="ia_framework_area_create",
+    ),
+    path(
+        "ia/framework/areas/<str:area_id>/",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["area_drawer"]
+        ).area_drawer,
+        name="ia_framework_area_drawer",
+    ),
+    path(
+        "ia/framework/areas/<str:area_id>/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["area_save"]
+        ).area_save,
+        name="ia_framework_area_save",
+    ),
+    path(
+        "ia/framework/indicators/new",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["indicator_new_drawer"]
+        ).indicator_new_drawer,
+        name="ia_framework_indicator_new",
+    ),
+    path(
+        "ia/framework/indicators/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["indicator_save"]
+        ).indicator_save,
+        name="ia_framework_indicator_create",
+    ),
+    path(
+        "ia/framework/indicators/<str:indicator_id>/",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["indicator_drawer"]
+        ).indicator_drawer,
+        name="ia_framework_indicator_drawer",
+    ),
+    path(
+        "ia/framework/indicators/<str:indicator_id>/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["indicator_save"]
+        ).indicator_save,
+        name="ia_framework_indicator_save",
+    ),
+    path(
+        "ia/framework/purposes/<str:purpose_id>/",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["purpose_drawer"]
+        ).purpose_drawer,
+        name="ia_framework_purpose_drawer",
+    ),
+    path(
+        "ia/framework/purposes/<str:purpose_id>/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["purpose_save"]
+        ).purpose_save,
+        name="ia_framework_purpose_save",
+    ),
+    path(
+        "ia/framework/<str:kind>/<str:record_id>/submit",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["submit_drawer"]
+        ).submit_drawer,
+        name="ia_framework_submit_drawer",
+    ),
+    path(
+        "ia/framework/<str:kind>/<str:record_id>/submit/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["submit_action"]
+        ).submit_action,
+        name="ia_framework_submit",
+    ),
+    path(
+        "ia/framework/<str:kind>/<str:record_id>/review",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["review_drawer"]
+        ).review_drawer,
+        name="ia_framework_review_drawer",
+    ),
+    path(
+        "ia/framework/<str:kind>/<str:record_id>/review/save",
+        __import__(
+            "apps.frontend.views.ia_framework_views", fromlist=["review_action"]
+        ).review_action,
+        name="ia_framework_review",
+    ),
+    path(
+        "priorities/ssa-mapping/rules/<str:mapping_id>/review",
+        ssa_mapping_views.rule_review_drawer,
+        name="ssa_mapping_rule_review_drawer",
+    ),
+    path(
+        "priorities/ssa-mapping/rules/<str:mapping_id>/review/save",
+        ssa_mapping_views.rule_review_action,
+        name="ssa_mapping_rule_review",
+    ),
+    path(
+        "priorities/ssa-mapping/<str:item_id>/history",
+        ssa_mapping_views.rule_history_drawer,
+        name="ssa_mapping_history",
+    ),
     # ── end IA-F ──
     # ── IA review · IA-C ──
+    # SSA collection integrity (apps/frontend/views/ssa_views.py, ia_views.py
+    # sample checks): upload history, the return-reason drawer, "Ask owner to
+    # collect" from the collection worklist, and the sample-check dispute and
+    # field back-check actions.
+    path(
+        "ssa/upload/history/",
+        ssa_views.ssa_upload_history_view,
+        name="ssa_upload_history",
+    ),
+    path(
+        "ssa/verification/<str:record_id>/return-drawer",
+        ssa_views.ssa_return_drawer_view,
+        name="ssa_return_drawer",
+    ),
+    path(
+        "ia/collection/<str:school_pk>/ask-owner",
+        ssa_views.ia_collection_ask_owner_action,
+        name="ia_collection_ask_owner",
+    ),
+    path(
+        "ia/samples/<str:sample_id>/resolve",
+        ia_views.ia_sample_resolve_action,
+        name="ia_sample_resolve",
+    ),
+    path(
+        "ia/samples/<str:sample_id>/field-check",
+        ia_views.ia_sample_field_check_action,
+        name="ia_sample_field_check",
+    ),
     # ── end IA-C ──
     # ── IA review · IA-P ──
+    # School Evidence (learning results, discipleship, EdTech) and its
+    # verification drawers, OneTest results recorded from the visit, and the
+    # Most Significant Change review (apps/frontend/views/
+    # ia_school_evidence_views.py, ia_stories_views.py). Imported by name so
+    # this block needs no edit to the module imports above.
+    path(
+        "ia/school-evidence/",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["school_evidence_page"],
+        ).school_evidence_page,
+        name="ia_school_evidence",
+    ),
+    path(
+        "ia/school-evidence/learning/upload",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["learning_upload_action"],
+        ).learning_upload_action,
+        name="ia_school_evidence_learning_upload",
+    ),
+    path(
+        "ia/school-evidence/learning/template.csv",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["learning_template_csv"],
+        ).learning_template_csv,
+        name="ia_school_evidence_learning_template",
+    ),
+    path(
+        "ia/school-evidence/edtech/<str:deployment_id>/check",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["check_drawer"]
+        ).check_drawer,
+        name="ia_school_evidence_check_drawer",
+    ),
+    path(
+        "ia/school-evidence/edtech/<str:deployment_id>/check/save",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["check_create_action"],
+        ).check_create_action,
+        name="ia_school_evidence_check_create",
+    ),
+    path(
+        "ia/school-evidence/<str:kind>/new",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["new_drawer"]
+        ).new_drawer,
+        name="ia_school_evidence_new",
+    ),
+    path(
+        "ia/school-evidence/<str:kind>/save",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["create_action"]
+        ).create_action,
+        name="ia_school_evidence_create",
+    ),
+    path(
+        "ia/school-evidence/<str:kind>/<str:record_id>/",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["record_drawer"]
+        ).record_drawer,
+        name="ia_school_evidence_record",
+    ),
+    path(
+        "ia/school-evidence/<str:kind>/<str:record_id>/decide",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["decide_action"]
+        ).decide_action,
+        name="ia_school_evidence_decide",
+    ),
+    path(
+        "ia/school-evidence/<str:kind>/<str:record_id>/correct",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views", fromlist=["correct_action"]
+        ).correct_action,
+        name="ia_school_evidence_correct",
+    ),
+    path(
+        "my-plan/<str:activity_id>/learning-results",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["onetest_results_drawer"],
+        ).onetest_results_drawer,
+        name="onetest_results_drawer",
+    ),
+    path(
+        "my-plan/<str:activity_id>/learning-results/save",
+        __import__(
+            "apps.frontend.views.ia_school_evidence_views",
+            fromlist=["onetest_results_save"],
+        ).onetest_results_save,
+        name="onetest_results_save",
+    ),
+    path(
+        "ia/stories/",
+        __import__(
+            "apps.frontend.views.ia_stories_views", fromlist=["stories_page"]
+        ).stories_page,
+        name="ia_stories",
+    ),
+    path(
+        "ia/stories/<str:story_id>/",
+        __import__(
+            "apps.frontend.views.ia_stories_views", fromlist=["story_drawer"]
+        ).story_drawer,
+        name="ia_story_drawer",
+    ),
+    path(
+        "ia/stories/<str:story_id>/decide",
+        __import__(
+            "apps.frontend.views.ia_stories_views", fromlist=["story_decide"]
+        ).story_decide,
+        name="ia_story_decide",
+    ),
     # ── end IA-P ──
     # ── IA review · IA-L ──
+    # Programme Learning (/ia/learning/, findings drawers) and Lending Evidence
+    # (/ia/lending-evidence/, verification and conclusion drawers) —
+    # apps/frontend/views/ia_learning_views.py, ia_lending_views.py. Imported by
+    # name so this block needs no edit to the module imports above. /ia/attribution/
+    # keeps its route above and redirects to the Training tab.
+    path(
+        "ia/learning/",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["learning_page"]
+        ).learning_page,
+        name="ia_learning",
+    ),
+    path(
+        "ia/learning/findings/new",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_new_drawer"]
+        ).finding_new_drawer,
+        name="ia_learning_finding_new",
+    ),
+    path(
+        "ia/learning/findings/save",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_create"]
+        ).finding_create,
+        name="ia_learning_finding_create",
+    ),
+    path(
+        "ia/learning/findings/<str:finding_id>/",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_drawer"]
+        ).finding_drawer,
+        name="ia_learning_finding",
+    ),
+    path(
+        "ia/learning/findings/<str:finding_id>/update",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_update"]
+        ).finding_update,
+        name="ia_learning_finding_update",
+    ),
+    path(
+        "ia/learning/findings/<str:finding_id>/review",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_review"]
+        ).finding_review,
+        name="ia_learning_finding_review",
+    ),
+    path(
+        "ia/learning/findings/<str:finding_id>/revise",
+        __import__(
+            "apps.frontend.views.ia_learning_views", fromlist=["finding_revise"]
+        ).finding_revise,
+        name="ia_learning_finding_revise",
+    ),
+    path(
+        "ia/lending-evidence/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["lending_evidence_page"]
+        ).lending_evidence_page,
+        name="ia_lending_evidence",
+    ),
+    path(
+        "ia/lending-evidence/use/<str:allocation_id>/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["use_drawer"]
+        ).use_drawer,
+        name="ia_lending_use",
+    ),
+    path(
+        "ia/lending-evidence/use/<str:allocation_id>/verify",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["use_verify"]
+        ).use_verify,
+        name="ia_lending_use_verify",
+    ),
+    path(
+        "ia/lending-evidence/enrolment/<str:snapshot_id>/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["enrolment_drawer"]
+        ).enrolment_drawer,
+        name="ia_lending_enrolment",
+    ),
+    path(
+        "ia/lending-evidence/enrolment/<str:snapshot_id>/verify",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["enrolment_verify"]
+        ).enrolment_verify,
+        name="ia_lending_enrolment_verify",
+    ),
+    path(
+        "ia/lending-evidence/outputs/<str:output_id>/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["output_drawer"]
+        ).output_drawer,
+        name="ia_lending_output",
+    ),
+    path(
+        "ia/lending-evidence/outputs/<str:output_id>/verify",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["output_verify"]
+        ).output_verify,
+        name="ia_lending_output_verify",
+    ),
+    path(
+        "ia/lending-evidence/teachers/<str:beneficiary_id>/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["teacher_drawer"]
+        ).teacher_drawer,
+        name="ia_lending_teacher",
+    ),
+    path(
+        "ia/lending-evidence/teachers/<str:beneficiary_id>/verify",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["teacher_verify"]
+        ).teacher_verify,
+        name="ia_lending_teacher_verify",
+    ),
+    path(
+        "ia/lending-evidence/conclusions/<str:assessment_id>/",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["conclusion_drawer"]
+        ).conclusion_drawer,
+        name="ia_lending_conclusion",
+    ),
+    path(
+        "ia/lending-evidence/conclusions/<str:assessment_id>/prepare",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["conclusion_prepare"]
+        ).conclusion_prepare,
+        name="ia_lending_conclusion_prepare",
+    ),
+    path(
+        "ia/lending-evidence/conclusions/<str:assessment_id>/verify",
+        __import__(
+            "apps.frontend.views.ia_lending_views", fromlist=["conclusion_verify"]
+        ).conclusion_verify,
+        name="ia_lending_conclusion_verify",
+    ),
     # ── end IA-L ──
     # ── IA review · IA-R ──
+    # Impact Reports (/ia/impact-reports/: register, report page, review,
+    # releases, recommendations, annex) and the school brief
+    # (/impact-briefs/<release>/) — apps/frontend/views/impact_report_views.py.
+    # Imported by name so this block needs no edit to the module imports above.
+    path(
+        "ia/impact-reports/",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["register_page"]
+        ).register_page,
+        name="ia_impact_reports",
+    ),
+    path(
+        "ia/impact-reports/new",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_new_drawer"]
+        ).report_new_drawer,
+        name="ia_impact_report_new",
+    ),
+    path(
+        "ia/impact-reports/create",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_create"]
+        ).report_create,
+        name="ia_impact_report_create",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_detail"]
+        ).report_detail,
+        name="ia_impact_report",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/edit",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_edit_drawer"]
+        ).report_edit_drawer,
+        name="ia_impact_report_edit",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/update",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_update"]
+        ).report_update,
+        name="ia_impact_report_update",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/submit",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_submit"]
+        ).report_submit,
+        name="ia_impact_report_submit",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/withdraw",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_withdraw"]
+        ).report_withdraw,
+        name="ia_impact_report_withdraw",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/correct",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["report_correct"]
+        ).report_correct,
+        name="ia_impact_report_correct",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/review",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["review_drawer"]
+        ).review_drawer,
+        name="ia_impact_report_review",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/review/save",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["review_save"]
+        ).review_save,
+        name="ia_impact_report_review_save",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/recommendations/new",
+        __import__(
+            "apps.frontend.views.impact_report_views",
+            fromlist=["recommendation_new_drawer"],
+        ).recommendation_new_drawer,
+        name="ia_impact_report_recommendation_new",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/recommendations/create",
+        __import__(
+            "apps.frontend.views.impact_report_views",
+            fromlist=["recommendation_create"],
+        ).recommendation_create,
+        name="ia_impact_report_recommendation_create",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/",
+        __import__(
+            "apps.frontend.views.impact_report_views",
+            fromlist=["recommendation_drawer"],
+        ).recommendation_drawer,
+        name="ia_impact_report_recommendation",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/respond",
+        __import__(
+            "apps.frontend.views.impact_report_views",
+            fromlist=["recommendation_respond"],
+        ).recommendation_respond,
+        name="ia_impact_report_recommendation_respond",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/recommendations/<str:recommendation_id>/remove",
+        __import__(
+            "apps.frontend.views.impact_report_views",
+            fromlist=["recommendation_remove"],
+        ).recommendation_remove,
+        name="ia_impact_report_recommendation_remove",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/release/leadership",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["release_leadership"]
+        ).release_leadership,
+        name="ia_impact_report_release_leadership",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/release/schools",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["schools_drawer"]
+        ).schools_drawer,
+        name="ia_impact_report_release_schools",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/release/schools/save",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["schools_release"]
+        ).schools_release,
+        name="ia_impact_report_release_schools_save",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/release/donor",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["donor_drawer"]
+        ).donor_drawer,
+        name="ia_impact_report_release_donor",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/release/donor/request",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["donor_request"]
+        ).donor_request,
+        name="ia_impact_report_release_donor_request",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/releases/<str:release_id>/",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["release_drawer"]
+        ).release_drawer,
+        name="ia_impact_report_release",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/releases/<str:release_id>/decide",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["release_decide"]
+        ).release_decide,
+        name="ia_impact_report_release_decide",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/releases/<str:release_id>/download",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["release_download"]
+        ).release_download,
+        name="ia_impact_report_release_download",
+    ),
+    path(
+        "ia/impact-reports/<str:report_id>/annex.csv",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["annex_download"]
+        ).annex_download,
+        name="ia_impact_report_annex",
+    ),
+    path(
+        "impact-briefs/<str:release_id>/",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["brief_page"]
+        ).brief_page,
+        name="impact_brief",
+    ),
+    path(
+        "impact-briefs/<str:release_id>/shared",
+        __import__(
+            "apps.frontend.views.impact_report_views", fromlist=["brief_shared"]
+        ).brief_shared,
+        name="impact_brief_shared",
+    ),
     # ── end IA-R ──
     # Render sign-in directly. A former launch screen added a client-side timer
     # and two extra assets before the first useful interaction.

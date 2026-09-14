@@ -153,10 +153,13 @@ class PartnerSsaCompletionTest(TestCase):
         self.school.refresh_from_db()
         record = SsaRecord.objects.get(school=self.school)
         self.assertEqual(record.collector_type, "staff")
-        self.assertEqual(record.verification_status, "confirmed")
-        # The partner did the fieldwork and is credited with it, while the
-        # record stays confirmed by the staff member who keyed it (2026-09-12:
-        # SSA performance by partner had nothing to count without this).
+        # Keyed by the monitoring staff member, linked to the visit, and
+        # pending until a verifier other than the keyer confirms it (IA review,
+        # owner, 2026-09-13). The partner did the fieldwork and is credited
+        # with it (2026-09-12: SSA performance by partner had nothing to count
+        # without this).
+        self.assertEqual(record.verification_status, "pending")
+        self.assertEqual(record.source_activity_id, activity.id)
         self.assertEqual(record.collected_by_partner_id, activity.assigned_partner_id)
         self.assertEqual(record.scores.count(), 8)
         self.assertIsNone(record.new_enrollment)

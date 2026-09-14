@@ -586,9 +586,8 @@ ALLOW_CD_OPERATIONAL_PLANNING = _truthy(
 # replicate that with serializers that ignore unknown input (see core/serializers).
 ENABLE_MOCK_DATA = _truthy(os.environ.get("ENABLE_MOCK_DATA"), fallback=False)
 ENABLE_DEV_ENDPOINTS = _truthy(os.environ.get("ENABLE_DEV_ENDPOINTS"), fallback=False)
-ENABLE_SALESFORCE_INTEGRATION = _truthy(
-    os.environ.get("ENABLE_SALESFORCE_INTEGRATION"), fallback=False
-)
+# No ENABLE_SALESFORCE_INTEGRATION: nothing read it, and Salesforce references are
+# entered by hand (IA review, 2026-09-13). SALESFORCE_SYNC_ENABLED gates apps.integrations.
 ENABLE_BACKGROUND_JOBS = _truthy(
     os.environ.get("ENABLE_BACKGROUND_JOBS"), fallback=False
 )

@@ -1,5 +1,16 @@
 {% load school_identity %}
 {% load frontend_filters %}
+{% if drilldowns %}
+<div class="flex flex-wrap items-center gap-2 mb-3" aria-label="Applied from the dashboard">
+  {% for chip in drilldowns %}
+  <span class="inline-flex items-center gap-2 h-8 px-3 rounded-control border border-[var(--edify-border)] edify-surface edify-text-caption font-semibold" data-queue-drilldown="{{ chip.key }}">
+    {{ chip.label }}
+    <a href="{{ chip.clear_url }}" class="edify-primary-text" aria-label="Remove filter: {{ chip.label }}">Remove</a>
+  </span>
+  {% endfor %}
+  {% if missing_sf_mode %}<span class="edify-text-caption text-[var(--edify-text-muted)]">Completed, verified or closed work in your country that carries no Salesforce Activity ID.</span>{% endif %}
+</div>
+{% endif %}
 <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
   <div class="overflow-x-auto">
     <table class="w-full text-left" aria-describedby="ia-queue-caption">
@@ -38,8 +49,8 @@
             <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
           </td>
           <td>
-            <span class="status-pill warning">{{ act.salesforce_status }}</span>
-            <span class="block mt-1 font-mono edify-text-caption">{{ act.salesforceActivityId }}</span>
+            <span class="status-pill {% if missing_sf_mode %}danger{% else %}warning{% endif %}">{{ act.salesforce_status }}</span>
+            <span class="block mt-1 font-mono edify-text-caption">{{ act.salesforceActivityId|default:"" }}</span>
           </td>
           <td><time datetime="{{ act.submitted_at|date:'c' }}">{{ act.submitted_at|date:"j M Y, H:i" }}</time></td>
           <td class="tabular-nums {% if act.is_overdue %}text-[var(--edify-danger)] font-semibold{% endif %}">{{ act.age_label }}</td>
@@ -60,7 +71,7 @@
         {% empty %}
         <tr>
           <td colspan="10">
-            {% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}
+            {% if drilldowns %}{% include "components/empty_state.html" with title="Nothing matches this view" message="No records in your country match the filter applied from the dashboard." tone="success" %}{% else %}{% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}{% endif %}
           </td>
         </tr>
         {% endfor %}

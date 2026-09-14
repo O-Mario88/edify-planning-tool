@@ -124,7 +124,8 @@ class SpecialProjectMyPlanPageTests(TestCase):
         )
         self.client.force_login(self.user_a)
 
-        response = self.client.get("/dashboard")
+        # The coordinator's work is the Operations view; Today opens first.
+        response = self.client.get("/dashboard?view=operations")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "What needs my attention today?")

@@ -27,9 +27,18 @@ def _user(role, email):
     return user
 
 
+def _publish(author, reviewer, item, data):
+    """Draft, submit and have a second officer publish (IA review, 2026-09-13:
+    nobody publishes a rule they wrote)."""
+    mapping = im.link_intervention(author, item, data)
+    im.submit_for_review(author, mapping, "Test rule.")
+    return im.publish(reviewer, mapping)
+
+
 class MappingFixture(TestCase):
     def setUp(self):
         self.ia = _user(EdifyRole.IMPACT_ASSESSMENT.value, "ia-map@t.org")
+        self.ia2 = _user(EdifyRole.IMPACT_ASSESSMENT.value, "ia2-map@t.org")
         self.cd = _user(EdifyRole.COUNTRY_DIRECTOR.value, "cd-map@t.org")
         self.item = ActivityCatalogueItem.objects.create(
             stable_code="CC_SEL_TEST",
@@ -46,6 +55,15 @@ class AuthorityTests(MappingFixture):
         self.assertEqual(mapping.intervention, CB)
         self.assertEqual(mapping.relationship, MappingRelationship.PRIMARY)
         self.assertEqual(mapping.status, MappingStatus.DRAFT)
+        # A draft is not live until a second officer publishes it.
+        self.assertFalse(mapping.active)
+
+    def test_the_author_may_not_publish_their_own_rule(self):
+        mapping = im.link_intervention(self.ia, self.item, {"intervention": CB})
+        im.submit_for_review(self.ia, mapping, "Test rule.")
+
+        with self.assertRaises(Forbidden):
+            im.publish(self.ia, mapping)
 
     def test_the_country_director_may_not(self):
         # Authority over a country target is not authority over what counts
@@ -60,10 +78,9 @@ class AuthorityTests(MappingFixture):
 
 class PrimaryTests(MappingFixture):
     def test_a_second_primary_supersedes_the_first_rather_than_joining_it(self):
-        first = im.link_intervention(self.ia, self.item, {"intervention": CB})
-        im.publish(self.ia, first)
+        first = _publish(self.ia, self.ia2, self.item, {"intervention": CB})
 
-        im.link_intervention(self.ia, self.item, {"intervention": LEADERSHIP})
+        _publish(self.ia, self.ia2, self.item, {"intervention": LEADERSHIP})
 
         first.refresh_from_db()
         self.assertEqual(first.status, MappingStatus.SUPERSEDED)
@@ -75,9 +92,10 @@ class PrimaryTests(MappingFixture):
         self.assertEqual(live.first().intervention, LEADERSHIP)
 
     def test_a_secondary_sits_alongside_the_primary(self):
-        im.link_intervention(self.ia, self.item, {"intervention": CB})
-        im.link_intervention(
+        _publish(self.ia, self.ia2, self.item, {"intervention": CB})
+        _publish(
             self.ia,
+            self.ia2,
             self.item,
             {
                 "intervention": LEADERSHIP,
@@ -91,13 +109,15 @@ class PrimaryTests(MappingFixture):
         self.assertEqual([m.intervention for m in resolved["secondary"]], [LEADERSHIP])
 
     def test_republishing_a_changed_rule_keeps_the_old_version_readable(self):
-        first = im.link_intervention(
-            self.ia, self.item, {"intervention": CB, "follow_up_min_days": 90}
+        first = _publish(
+            self.ia, self.ia2, self.item, {"intervention": CB, "follow_up_min_days": 90}
         )
-        im.publish(self.ia, first)
 
-        second = im.link_intervention(
-            self.ia, self.item, {"intervention": CB, "follow_up_min_days": 180}
+        second = _publish(
+            self.ia,
+            self.ia2,
+            self.item,
+            {"intervention": CB, "follow_up_min_days": 180},
         )
 
         first.refresh_from_db()
@@ -133,6 +153,9 @@ class NotMeasuredTests(MappingFixture):
         mapping = im.classify_not_ssa_measured(
             self.ia, self.item, "Internal planning meeting; improves no school score."
         )
+        # Reviewed like any rule before it takes effect.
+        im.submit_for_review(self.ia, mapping, "Administrative work.")
+        mapping = im.publish(self.ia2, mapping)
 
         self.assertIsNone(mapping.intervention)
         self.assertTrue(im.mapping_for(self.item)["not_ssa_measured"])

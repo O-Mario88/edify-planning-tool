@@ -74,6 +74,31 @@ def verifies_own_work(user, activity) -> bool:
     return responsible in {str(i) for i in owner_ids(user) if i}
 
 
+def verifies_own_ssa(user, record) -> bool:
+    """True when `user` collected or keyed the SSA `record`.
+
+    The SSA twin of `verifies_own_work` (IA review, owner, 2026-09-13): scores
+    keyed by field staff or by Impact Assessment wait for a different verifier,
+    so the person who collected them — or uploaded the file they came in — may
+    neither confirm nor return them. Both id spaces count, as they do for
+    activities (`apps.core.scoping.owner_ids`).
+    """
+    from apps.core.scoping import owner_ids
+
+    mine = {str(i) for i in owner_ids(user) if i}
+    if not mine:
+        return False
+    authors = {
+        str(value)
+        for value in (
+            getattr(record, "collected_by_user_id", None),
+            getattr(record, "uploaded_by", None),
+        )
+        if value
+    }
+    return bool(mine & authors)
+
+
 def ia_officer_staff_ids(country: str | None = None):
     """Staff profile ids of Impact Assessment officers, unevaluated."""
     from apps.accounts.models import StaffProfile
@@ -279,7 +304,12 @@ class RolePermissionService:
         empty — and it grants reading only; every edit and workflow action
         keeps asking its own ownership question.
         """
-        if activity.school_id or not getattr(activity, "cluster_id", None):
+        # Non-school work (a field event, a training with no school) has
+        # neither half either, and the lead supervises it just the same: the
+        # Work Plan and Programme Rollout linked leads to records they were
+        # refused (Programme Lead walk, 2026-09-14). Such work is read when it
+        # belongs to someone the viewer supervises.
+        if activity.school_id:
             return False
         team = scope.supervised_staff_ids or []
         if not team:
@@ -293,6 +323,8 @@ class RolePermissionService:
         } - {None, ""}
         if not owners & _both_id_spaces(team):
             return False
+        if not getattr(activity, "cluster_id", None):
+            return True
         cluster = getattr(activity, "cluster", None)
         return cluster is not None and cluster_in_scope(scope, cluster)
 

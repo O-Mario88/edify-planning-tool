@@ -193,9 +193,34 @@ class CDDashboardService:
                 "quick_actions": CDDashboardService.quick_actions(),
                 "budget_stage": CDDashboardService.budget_stage(fy),
                 "field_debrief_intel": field_debrief_intelligence_summary(user),
+                "impact_findings": CDDashboardService.impact_findings(user),
             }
         )
         return data
+
+    # ── Impact findings (IA review, owner, 2026-09-13) ───────────────────────
+    @staticmethod
+    def impact_findings(user) -> dict:
+        """What Impact Assessment's reports ask of the Country Director.
+
+        The role description has IA's evidence-based reports "drive Country
+        Director decisions", yet the only IA signal on this dashboard was the
+        verification backlog. The operations view now carries the latest report
+        released to the country's leadership, the reports only the CD can
+        acknowledge (a country with one IA officer) and the recommendations
+        awaiting a response or overdue — each opening the report
+        (apps.impact.reports.cd_impact_findings, five queries at most). A
+        failure there never breaks the dashboard.
+        """
+        try:
+            from apps.impact.reports import cd_impact_findings
+
+            return cd_impact_findings(user)
+        except Exception:  # noqa: BLE001 - one section never breaks the dashboard
+            import logging
+
+            logging.getLogger(__name__).exception("CD impact findings failed")
+            return {}
 
     # ── KPI strip (8, per mandate §6) ────────────────────────────────────────
     @staticmethod

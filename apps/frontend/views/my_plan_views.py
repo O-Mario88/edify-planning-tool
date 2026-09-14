@@ -342,6 +342,16 @@ def activity_detail_view(request, activity_id):
             and a.status == "awaiting_ia_verification"
         ),
     }
+    # ── IA review · IA-P: OneTest results ──
+    # A delivered OneTest visit carries "Record learning results"; the link a
+    # completion, To-Do or returned-result notice follows (?learning_results=1)
+    # opens the drawer as the page loads.
+    from apps.impact.evidence_services import may_record_for_activity
+
+    if may_record_for_activity(request.user, a):
+        context["onetest_results_drawer"] = f"/my-plan/{a.id}/learning-results"
+        context["onetest_results_autoload"] = request.GET.get("learning_results") == "1"
+    # ── end IA-P ──
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/activity_detail_drawer.html", context)
@@ -1086,20 +1096,30 @@ def complete_activity_action(request, activity_id):
                         )
                     scores_list.append({"intervention": enum_val, "score": f_val})
 
+                from apps.core.exceptions import BadRequest
                 from apps.ssa.services import upload as upload_ssa
+                from apps.ssa.services import visit_assessment_date
 
-                upload_ssa(
-                    {
-                        "schoolId": a.school.school_id,
-                        "dateOfSsa": timezone.now().isoformat(),
-                        "scores": scores_list,
-                        "collectorType": "partner"
-                        if a.delivery_type == "partner"
-                        else "staff",
-                        "collectedByPartnerId": a.assigned_partner_id,
-                    },
-                    request.user,
-                )
+                # IA review (2026-09-13): dated by the visit, linked to it, and
+                # pending until a different verifier confirms the scores. A
+                # refusal (a duplicate date, an unverified prior-year record)
+                # is shown in the drawer, not returned as an error envelope.
+                try:
+                    upload_ssa(
+                        {
+                            "schoolId": a.school.school_id,
+                            "dateOfSsa": visit_assessment_date(a).isoformat(),
+                            "scores": scores_list,
+                            "collectorType": "partner"
+                            if a.delivery_type == "partner"
+                            else "staff",
+                            "collectedByPartnerId": a.assigned_partner_id,
+                            "sourceActivityId": a.id,
+                        },
+                        request.user,
+                    )
+                except BadRequest as exc:
+                    return notice_fragment(str(getattr(exc, "detail", exc)))
                 a.ssa_not_collected_reason = None
             else:
                 reason = request.POST.get("ssa_not_collected_reason", "").strip()
@@ -1170,8 +1190,35 @@ def complete_activity_action(request, activity_id):
                     ),
                 },
             )
+            # ── IA review · IA-P: OneTest results ──
+            # A delivered OneTest diagnostic visit offers "Record learning
+            # results" at once: the visit page reopens on the results drawer
+            # (apps/frontend/views/ia_school_evidence_views.py), where each
+            # class's results are recorded pending verification and linked to
+            # this visit.
+            import json
+
+            onetest_next = ""
+            if paired_school_visit is None:
+                from apps.impact.evidence_services import (
+                    is_onetest,
+                    may_record_for_activity,
+                )
+
+                if is_onetest(a):
+                    a.refresh_from_db(fields=["status", "deleted_at"])
+                    if may_record_for_activity(request.user, a):
+                        onetest_next = f"/my-plan/{a.id}?learning_results=1"
+            # ── end IA-P ──
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("<script>window.location.reload();</script>")
+                if onetest_next:
+                    response = HttpResponse(
+                        f"<script>window.location.assign({json.dumps(onetest_next)});</script>"
+                    )
+                else:
+                    response = HttpResponse(
+                        "<script>window.location.reload();</script>"
+                    )
                 response["HX-Trigger"] = "close-drawer"
                 return response
             messages.success(
@@ -1182,6 +1229,8 @@ def complete_activity_action(request, activity_id):
                     else "Activity completion submitted successfully."
                 ),
             )
+            if onetest_next:
+                return local_redirect(onetest_next)
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
                 return error_fragment(e, action="Submission Error", status=400)
@@ -2118,20 +2167,29 @@ def ssa_evidence_upload_action(request, activity_id):
                     status=400,
                 )
 
+            from apps.core.exceptions import BadRequest
             from apps.ssa.services import upload as upload_ssa
+            from apps.ssa.services import visit_assessment_date
 
-            upload_ssa(
-                {
-                    "schoolId": a.school.school_id,
-                    "dateOfSsa": timezone.now().isoformat(),
-                    "scores": scores_list,
-                    "collectorType": "partner"
-                    if a.delivery_type == "partner"
-                    else "staff",
-                    "collectedByPartnerId": a.assigned_partner_id,
-                },
-                request.user,
-            )
+            # Dated by the visit and linked to it; pending until a different
+            # verifier confirms (IA review, 2026-09-13). A refusal is shown in
+            # the drawer rather than escaping as an error envelope.
+            try:
+                upload_ssa(
+                    {
+                        "schoolId": a.school.school_id,
+                        "dateOfSsa": visit_assessment_date(a).isoformat(),
+                        "scores": scores_list,
+                        "collectorType": "partner"
+                        if a.delivery_type == "partner"
+                        else "staff",
+                        "collectedByPartnerId": a.assigned_partner_id,
+                        "sourceActivityId": a.id,
+                    },
+                    request.user,
+                )
+            except BadRequest as exc:
+                return notice_fragment(str(getattr(exc, "detail", exc)))
 
         if ssa_file:
             record_upload(

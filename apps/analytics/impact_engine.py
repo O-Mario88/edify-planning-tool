@@ -61,10 +61,11 @@ from apps.analytics.decision_engine import (
 )
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
-    COMPLETED_WORK_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.analytics.evidence_strength import STRATIFIED_COMPARISON
+from apps.analytics.evidence_strength import grade as evidence_grade
 from apps.analytics.platform_engine import describe_numeric, engine_metadata
 from apps.core.enums import SsaIntervention, VerificationStatus
 from apps.core.fy import fy_options, get_operational_fy
@@ -76,6 +77,7 @@ from apps.fund_requests.models import AdvanceRequest
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.targets.my_targets import (
+    IA_VERIFIED_STATUSES,
     active_target_areas,
     per_user_monthly_series,
     weighted_period_pct,
@@ -160,16 +162,22 @@ COUNTRY_DRIVER_ROLES = {
 def _scoped_schools(principal):
     """Return the portfolio population authorized for contribution analytics.
 
-    Field staff and PLs use the shared own/team portfolio scope. The explicitly
-    country-facing analysis roles requested by programme leadership (IA, CD,
-    RVP and Accountant) aggregate the whole country; RVP identity suppression
-    remains enforced separately through ``can_view_school_level_detail``.
+    Field staff and PLs use the shared own/team portfolio scope. The
+    country-facing analysis roles (IA, CD, Accountant) aggregate their
+    country: the shared analytics scope bounds them to the country on their
+    staff profile (IA review, 2026-09-13 — this branch used to return every
+    school in the deployment, so a Uganda officer's figures would have
+    included Kenya's schools). Admin and a country role with no country on
+    file stay deployment-wide (owner rule 2026-09-03). The RVP keeps its
+    deployment-wide aggregate by design; its identity suppression is enforced
+    separately through ``can_view_school_level_detail``.
     """
+    from apps.core.rbac import EdifyRole
     from apps.core.scoping import scoped_school_queryset
 
     scope = resolve_user_scope(principal)
     schools = School.objects.filter(deleted_at__isnull=True)
-    if getattr(principal, "active_role", "") in COUNTRY_DRIVER_ROLES:
+    if getattr(principal, "active_role", "") == EdifyRole.REGIONAL_VICE_PRESIDENT.value:
         return schools, scope
     return scoped_school_queryset(scope, schools), scope
 
@@ -259,11 +267,20 @@ def _activity_focus_set(row: dict) -> set[str]:
 
 
 def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
-    """Executed activities attributed per school, restricted to each school's
-    exposure window. Cluster activities (school NULL) attribute through
-    attended_school_ids; their spend is split equally across those schools.
-    Columns: activity_id, school_id, kind, analysis_date, focus (set),
-    delivery_type, is_special_project, accepted_spend (UGX share).
+    """IA-verified activities attributed per school, restricted to each
+    school's exposure window. Cluster activities (school NULL) attribute
+    through attended_school_ids; their spend is split equally across those
+    schools. Columns: activity_id, school_id, kind, analysis_date, focus (set),
+    delivery_type, is_special_project, accepted_spend (UGX share), and the
+    programme identity the learning workspace groups by: catalogue_item_id,
+    catalogue_name and programme_category (the course taught where one is
+    recorded, else the activity's catalogue item), delivery_mode (cluster,
+    in_school or the recorded programme mode), partner_id and project_code.
+
+    Evidence-grade dosage (IA review, 2026-09-13): only IA-verified statuses
+    (targets.my_targets.IA_VERIFIED_STATUSES) count. The legacy "completed"
+    value no production transition writes is not verified work, and the page
+    frame promises verified dosage.
 
     ``analysis_date`` prefers the recorded delivery date and falls back to the
     planned date for legacy rows. A project-wide activity without a direct
@@ -281,6 +298,12 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
         "delivery_type",
         "is_special_project",
         "accepted_spend",
+        "catalogue_item_id",
+        "catalogue_name",
+        "programme_category",
+        "delivery_mode",
+        "partner_id",
+        "project_code",
     ]
     if imp.empty:
         return pd.DataFrame(columns=columns)
@@ -314,7 +337,7 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
         Activity.objects.filter(
             activity_scope,
             deleted_at__isnull=True,
-            status__in=COMPLETED_WORK_STATUSES,
+            status__in=IA_VERIFIED_STATUSES,
         )
         .annotate(analysis_date=Coalesce("actual_delivery_date", "planned_date"))
         .filter(
@@ -335,12 +358,30 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
             "project_id",
             "primary_driver_type",
             "activity_context_type",
+            "cluster_id",
+            "programme_delivery_mode",
+            "assigned_partner_id",
+            "catalogue_item_id",
+            "catalogue_item__display_name",
+            "catalogue_item__programme_category",
+            "training_course_id",
+            "training_course__display_name",
+            "training_course__programme_category",
         )
     )
     if not activities:
         return pd.DataFrame(columns=columns)
 
     spend = _accepted_spend_by_activity([a["id"] for a in activities])
+    from apps.projects.models import Project
+
+    # Activity.project_id is a plain reference, not a foreign key: one query
+    # names every project the window's activities belong to.
+    project_codes = dict(
+        Project.objects.filter(
+            id__in={a["project_id"] for a in activities if a["project_id"]}
+        ).values_list("id", "code")
+    )
     scoped = set(school_ids)
     rows = []
     for act in activities:
@@ -381,6 +422,7 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
             or act["primary_driver_type"] == "special_project"
             or act["activity_context_type"] == "project"
         )
+        identity = _programme_identity(act, project_codes)
         for sid in attributed:
             rows.append(
                 {
@@ -393,9 +435,50 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
                     "delivery_type": act["delivery_type"],
                     "is_special_project": is_special_project,
                     "accepted_spend": share,
+                    **identity,
                 }
             )
     return pd.DataFrame(rows, columns=columns)
+
+
+#: Activity types delivered to a cluster rather than inside one school.
+CLUSTER_DELIVERY_TYPES = frozenset(
+    {"cluster_training", "cluster_training_ssa_collection", *CLUSTER_MEETING_TYPES}
+)
+
+
+def _programme_identity(act: dict, project_codes: dict | None = None) -> dict:
+    """What was delivered, how and by whom, for grouping delivery by
+    programme. The course taught (training_course) names an in-school
+    training; otherwise the activity's own catalogue item does."""
+    if act.get("training_course_id"):
+        item_id = act["training_course_id"]
+        name = act.get("training_course__display_name") or ""
+        category = act.get("training_course__programme_category") or ""
+    else:
+        item_id = act.get("catalogue_item_id")
+        name = act.get("catalogue_item__display_name") or ""
+        category = act.get("catalogue_item__programme_category") or ""
+    if act.get("activity_type") in CLUSTER_DELIVERY_TYPES or (
+        act.get("cluster_id") and not act.get("school_id")
+    ):
+        mode = "cluster"
+    elif act.get("activity_type") == "in_school_training" or act.get("school_id"):
+        mode = "in_school"
+    else:
+        mode = act.get("programme_delivery_mode") or "other"
+    return {
+        "catalogue_item_id": item_id or "",
+        "catalogue_name": name,
+        "programme_category": category,
+        "delivery_mode": mode,
+        "partner_id": (
+            act.get("assigned_partner_id") or ""
+            if act.get("delivery_type") == "partner"
+            else ""
+        ),
+        "project_code": (project_codes or {}).get(act.get("project_id")) or "",
+    }
 
 
 def _accepted_spend_by_activity(activity_ids: list[str]) -> dict[str, float]:
@@ -424,6 +507,42 @@ def _verdict(p: float | None) -> str:
     if p < SUGGESTIVE_P:
         return "suggestive"
     return "not significant"
+
+
+def holm_adjust(p_values: list[float | None]) -> list[float | None]:
+    """Holm step-down adjusted p-values, in the order given.
+
+    A table of eight interventions runs eight tests; at an uncorrected 0.05
+    one "significant" row in three would appear by chance alone (IA review,
+    2026-09-13). Holm controls the family-wise error across the tests that
+    were actually run — rows withheld for sample size (None) are not tests
+    and do not inflate the correction. Monotone: a smaller raw p never gets a
+    larger adjusted p than a bigger one.
+    """
+    indexed = sorted(
+        ((p, i) for i, p in enumerate(p_values) if p is not None),
+        key=lambda pair: pair[0],
+    )
+    m = len(indexed)
+    adjusted: list[float | None] = [None] * len(p_values)
+    running = 0.0
+    for rank, (p, i) in enumerate(indexed):
+        running = max(running, min(1.0, (m - rank) * float(p)))
+        adjusted[i] = round(running, 4)
+    return adjusted
+
+
+def apply_holm(rows: list[dict], *, p_key: str = "p") -> list[dict]:
+    """Add p_adjusted, raw_verdict and tests_run to each row of one family
+    and base its verdict on the adjusted p-value."""
+    adjusted = holm_adjust([row.get(p_key) for row in rows])
+    tests_run = sum(1 for p in adjusted if p is not None)
+    for row, p_adj in zip(rows, adjusted):
+        row["raw_verdict"] = row.get("verdict", _verdict(row.get(p_key)))
+        row["p_adjusted"] = p_adj
+        row["tests_run"] = tests_run
+        row["verdict"] = _verdict(p_adj)
+    return rows
 
 
 def _spearman(x: pd.Series, y: pd.Series) -> dict:
@@ -564,6 +683,18 @@ def dosage_impact(imp: pd.DataFrame, acts: pd.DataFrame, kind: str) -> dict:
                 "label": INTERVENTION_LABELS[intervention],
                 **_mann_whitney(treated, untreated),
             }
+        )
+
+    # One family per activity kind: eight interventions, Holm-corrected, and
+    # the verdict read from the corrected p-value. Each row carries the shared
+    # evidence grade for a stratified comparison of confirmed readings.
+    apply_holm(per_intervention)
+    for row in per_intervention:
+        row["grade"] = evidence_grade(
+            row["n_treated"],
+            n_comparison=row["n_untreated"],
+            confirmed_share=1.0,
+            design=STRATIFIED_COMPARISON,
         )
 
     return {
@@ -882,7 +1013,7 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
             )
         matrix_rows.append({"name": district, "data": cells})
 
-    tests = []
+    tests: list[dict] = []
     lagging = []
     for intervention in ALL_INTERVENTIONS:
         groups = [_deltas(d, intervention) for d in eligible]
@@ -925,6 +1056,8 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
                         "n": int(len(deltas)),
                     }
                 )
+    # Eight Kruskal-Wallis tests are one family (Holm), like the dosage tables.
+    apply_holm(tests)
     lagging.sort(key=lambda r: r["median_delta"])
     # The table shows the ten steepest declines. The total is carried alongside
     # so the page can say so: a silent cap reads as "these are all of them",
@@ -1105,6 +1238,60 @@ def _group_options(metadata: dict[str, dict[str, str]], selected: str) -> list[d
     ]
 
 
+def improvement_verdicts(imp: pd.DataFrame) -> dict[str, dict]:
+    """Per-school improved/declined verdicts for an improvement frame.
+
+    IA review (2026-09-13): "improved" on this page is the one definition in
+    apps.ssa.change_rules — each domain pair judged by the published IA rule in
+    the school's country (any change where none is approved), pairs taken
+    less than MIN_INTERVAL_DAYS apart not compared, and a school improved when
+    its mean movement across comparable domains classifies as improved. It
+    replaces a page-local ``mean_delta > 0.3``. Two queries (the rule book and
+    the schools' countries), whatever the size of the frame.
+    """
+    from apps.ssa import change_rules
+
+    if imp.empty:
+        return {}
+    school_ids = list(imp["school_id"].unique())
+    countries = dict(
+        School.objects.filter(id__in=school_ids).values_list("id", "region__country")
+    )
+    book = change_rules.RuleBook()
+
+    def country_for(school_id):
+        return countries.get(school_id) or ""
+
+    pairs = change_rules.classify_pairs(
+        imp.to_dict("records"), book=book, country_for=country_for
+    )
+    return change_rules.school_verdicts(pairs, book=book, country_for=country_for)
+
+
+def _improved_rule_label() -> str:
+    from apps.ssa import change_rules
+
+    return change_rules.rule_label_for(change_rules.RuleBook())
+
+
+def _improved_rule_sentence() -> str:
+    from apps.ssa import change_rules
+
+    return change_rules.RULE_SENTENCE
+
+
+def improved_pct(verdicts: dict[str, dict], school_ids=None) -> float | None:
+    """The share of comparable schools that improved, or None when no school
+    in `school_ids` (every school by default) has a comparable pair."""
+    from apps.ssa import change_rules
+
+    rows = [v for sid, v in verdicts.items() if school_ids is None or sid in school_ids]
+    if not rows:
+        return None
+    improved = sum(1 for v in rows if v["classification"] == change_rules.IMPROVED)
+    return round(improved / len(rows) * 100, 1)
+
+
 def grouped_driver_associations(
     imp: pd.DataFrame,
     acts: pd.DataFrame,
@@ -1144,6 +1331,7 @@ def grouped_driver_associations(
             .fillna(f"Unassigned {GROUP_LABELS[group_by].lower()}")
         )
 
+    verdicts = improvement_verdicts(imp)
     prepared = []
     for group_label, group_imp in frame.groupby("group_label", sort=True):
         group_acts = (
@@ -1158,11 +1346,8 @@ def grouped_driver_associations(
                 "paired_schools": int(outcomes["school_id"].nunique()),
                 "median_delta": round(float(outcomes["mean_delta"].median()), 2),
                 "mean_delta": round(float(outcomes["mean_delta"].mean()), 2),
-                "improved_pct": round(
-                    float(
-                        (outcomes["mean_delta"] > IMPROVEMENT_THRESHOLD).mean() * 100
-                    ),
-                    1,
+                "improved_pct": improved_pct(
+                    verdicts, set(group_imp["school_id"].unique())
                 ),
                 "_imp": group_imp,
                 "_acts": group_acts,
@@ -1229,11 +1414,8 @@ def build_dashboard(principal, query: dict) -> dict:
     median_delta = (
         round(float(outcomes["mean_delta"].median()), 2) if not outcomes.empty else None
     )
-    improved_pct = (
-        round(float((outcomes["mean_delta"] > IMPROVEMENT_THRESHOLD).mean() * 100), 1)
-        if not outcomes.empty
-        else None
-    )
+    verdicts = improvement_verdicts(imp) if not imp.empty else {}
+    improved_share = improved_pct(verdicts) if verdicts else None
     outcome_summary = describe_numeric(
         outcomes["mean_delta"].tolist() if not outcomes.empty else [],
         target=IMPROVEMENT_THRESHOLD,
@@ -1305,7 +1487,8 @@ def build_dashboard(principal, query: dict) -> dict:
         },
         "kpis": {
             "median_delta": median_delta,
-            "improved_pct": improved_pct,
+            "improved_pct": improved_share,
+            "improved_rule_label": _improved_rule_label(),
             "total_accepted_spend_value": funding["total_accepted_spend"],
             "total_accepted_spend": _ugx(funding["total_accepted_spend"]),
             "ugx_per_point": _ugx(funding["ugx_per_point"]),
@@ -1321,6 +1504,8 @@ def build_dashboard(principal, query: dict) -> dict:
             "minimum_correlation_n": MIN_CORR_N,
             "driver_tests": len(DRIVER_DEFINITIONS),
             "p_adjustment": "Bonferroni",
+            "per_intervention_adjustment": "Holm",
+            "improved_rule": _improved_rule_sentence(),
         },
         "visits": visits,
         "trainings": trainings,
@@ -1335,28 +1520,26 @@ def build_dashboard(principal, query: dict) -> dict:
         # so None becomes null and the embedded literals are valid JS.
         "charts": {
             "bucket_labels": json.dumps([b["label"] for b in visits["buckets"]]),
+            # A bucket with no schools is a gap (null), never a median of 0:
+            # "nothing measured" drawn as "no change" is the error the IA
+            # review found on every progress page (2026-09-13).
             "visit_bucket_medians": json.dumps(
-                [
-                    b["median_delta"] if b["median_delta"] is not None else 0
-                    for b in visits["buckets"]
-                ]
+                [b["median_delta"] for b in visits["buckets"]]
             ),
             "training_bucket_medians": json.dumps(
-                [
-                    b["median_delta"] if b["median_delta"] is not None else 0
-                    for b in trainings["buckets"]
-                ]
+                [b["median_delta"] for b in trainings["buckets"]]
             ),
             "funding_scatter": json.dumps(funding["scatter"]),
             "geo_heatmap": json.dumps(geography["matrix"]),
         },
         "method_notes": [
             f"Improvement = confirmed SSA score in FY {fy} minus confirmed SSA score in FY {prev_fy}, per school per intervention. Only schools assessed in both cycles are analysed ({paired} of {len(school_ids)} in scope).",
-            "Dosage counts only verified/completed activities dated inside each school's own exposure window (between its two assessments); recorded delivery date is preferred over the planned date.",
+            "Dosage counts only IA-verified activities (ia_verified, accountant_confirmed, closed) dated inside each school's own exposure window (between its two assessments); recorded delivery date is preferred over the planned date. Legacy unverified 'completed' rows are not counted.",
             "Training dosage includes only training records linked to at least one SSA intervention. The focused-training table then compares intervention-specific score movement among schools that started weak.",
             "Partner, training, staff, cluster-meeting and special-project families can overlap (for example, a partner-delivered training appears in two lenses), so the five correlations are not additive shares of improvement.",
             "The five driver p-values use a Bonferroni family-wise correction. Cards show Spearman rho with an approximate 95% confidence interval, adjusted p-value, and the paired-school sample size.",
-            f"Treated-vs-untreated comparisons are restricted to schools with a weak initial SSA score (below {WEAK_BASELINE}) on that intervention, because activity planning already targets weak interventions — comparing against strong schools would only measure regression to the mean.",
+            f"Focused-vs-not-focused comparisons are restricted to schools with a weak initial SSA score (below {WEAK_BASELINE}) on that intervention, because activity planning already targets weak interventions — comparing against strong schools would only measure regression to the mean.",
+            "Each focused-vs-not-focused table is one family of up to eight Mann-Whitney tests, and the district comparison another: p-values are Holm-corrected within the family and the verdict reads the corrected value. Every row carries the shared evidence grade (apps.analytics.evidence_strength); no grade is causal.",
             "Spend counts accountant-accepted money only (accounted advances and partner payments, plain UGX). Cluster activities split spend equally across attended schools.",
             f"Rank-based tests (Spearman, Mann-Whitney, Kruskal-Wallis); groups under {MIN_GROUP_N} schools and correlations under {MIN_CORR_N} schools report 'insufficient data' rather than an unreliable number. Correlation is not causation — confounding, reverse causation and targeted support remain possible, so these results direct attention rather than prove attribution.",
         ],

@@ -47,6 +47,31 @@ logger = logging.getLogger(__name__)
 EVIDENCE_NAMESPACE = "evidence"
 
 
+def _assert_activity_readable(activity: Activity, principal) -> None:
+    """Reading evidence follows reading the record.
+
+    The write paths (upload, review) keep the scope check above. Reading is
+    wider in one way: whoever may open the activity record may see what was
+    filed against it — a Programme Lead reading a supervisee's non-school or
+    cluster work, which the record page allowed and this service then refused
+    with a 403 (Programme Lead walk, 2026-09-14).
+    """
+    try:
+        _assert_activity_in_scope(activity, principal)
+    except Forbidden:
+        from apps.core.permissions import RolePermissionService
+
+        # The Accountant's finance-only evidence reach is a deliberate
+        # narrowing of a record it can read; the fallback never widens it.
+        if getattr(principal, "active_role", "") == "Accountant":
+            raise
+        if getattr(principal, "is_authenticated", False) and (
+            RolePermissionService.can_view_record(principal, activity)
+        ):
+            return
+        raise
+
+
 def _assert_activity_in_scope(activity: Activity, principal) -> None:
     scope = resolve_user_scope(principal)
     if scope.country_scope:
@@ -331,7 +356,7 @@ def evidence_records_for_activity(activity_id: str, principal):
     activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not activity:
         raise NotFoundError("Activity not found.")
-    _assert_activity_in_scope(activity, principal)
+    _assert_activity_readable(activity, principal)
     return EvidenceRecord.objects.filter(activity=activity).exclude(quarantined=True)
 
 
@@ -339,7 +364,7 @@ def list_for_activity(activity_id: str, principal) -> list[dict]:
     activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not activity:
         raise NotFoundError("Activity not found.")
-    _assert_activity_in_scope(activity, principal)
+    _assert_activity_readable(activity, principal)
     qs = EvidenceRecord.objects.filter(activity=activity).exclude(quarantined=True)
     return [_serialize(e) for e in qs]
 
@@ -349,7 +374,7 @@ def file_for(record_id: str, principal, *, download: bool = False):
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
-    _assert_activity_in_scope(record.activity, principal)
+    _assert_activity_readable(record.activity, principal)
     if record.quarantined:
         raise BadRequest("This file has been quarantined and cannot be viewed.")
     if not file_exists(EVIDENCE_NAMESPACE, record.uri):
@@ -410,7 +435,7 @@ def prepare_inline_view(record_id: str, principal) -> dict:
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
-    _assert_activity_in_scope(record.activity, principal)
+    _assert_activity_readable(record.activity, principal)
     if record.pdf_rendition_storage_key:
         return {
             "previewStatus": "ready",
@@ -524,7 +549,7 @@ def rendition_for(record_id: str, principal):
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record or not record.pdf_rendition_storage_key:
         raise NotFoundError("PDF rendition not available.")
-    _assert_activity_in_scope(record.activity, principal)
+    _assert_activity_readable(record.activity, principal)
     if not file_exists(EVIDENCE_NAMESPACE, record.pdf_rendition_storage_key):
         raise NotFoundError("Rendition file not found.")
     response = FileResponse(

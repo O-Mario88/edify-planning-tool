@@ -651,7 +651,9 @@ def build_dashboard(principal, query: dict) -> dict:
                 "key": value,
                 "label": label,
                 "average": _round(avg),
-                "width": round((avg or 0) * 10, 1),
+                # No confirmed score draws no bar (IA review, 2026-09-13): a
+                # missing average used to be drawn as a zero-length score.
+                "width": round(avg * 10, 1) if avg is not None else None,
                 "band": _band(avg),
             }
         )
@@ -827,7 +829,14 @@ def build_dashboard(principal, query: dict) -> dict:
             ),
         },
         {
-            "tone": "success" if (average_delta or 0) >= 0 else "danger",
+            # Neutral when nothing is comparable: "no data" is not success.
+            "tone": (
+                "info"
+                if average_delta is None
+                else "success"
+                if average_delta >= 0
+                else "danger"
+            ),
             "title": "Performance momentum",
             "body": (
                 f"Average SSA changed by {average_delta:+.2f} points versus {previous_label}."
