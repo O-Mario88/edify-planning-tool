@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **444**
+Components and application partials: **445**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -156,7 +156,8 @@ Components and application partials: **444**
 | `partials/cost_settings/add_drawer.html` | application-partial | Reusable add drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label | /cost-settings/add | 0 |
 | `partials/cost_settings/cost_setting_row.html` | application-partial | Reusable cost setting row interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /cost-settings<br>/cost-settings/row/<str:key> | 0 |
 | `partials/cost_settings/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /cost-settings/row/<str:key> | 0 |
-| `partials/dashboards/_view_tabs.html` | application-partial | Reusable  view tabs interface primitive | canonical; default, loading, error, selected | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return<br>/ia/dashboard/<br>/priorities/guidance<br>/priorities/master<br>/programme-rollout<br>/strategic-priorities | 0 |
+| `partials/dashboards/_view_tabs.html` | application-partial | Reusable  view tabs interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return<br>/ia/dashboard/<br>/priorities/guidance<br>/priorities/master<br>/programme-rollout<br>/strategic-priorities | 0 |
+| `partials/dashboards/_view_tabs_nav.html` | application-partial | Reusable  view tabs nav interface primitive | canonical; default, loading, error, selected | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return<br>/ia/dashboard/<br>/priorities/guidance<br>/priorities/master<br>/programme-rollout<br>/strategic-priorities | 0 |
 | `partials/dashboards/admin/_icon.html` | application-partial | Reusable  icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /dashboard<br>/ia/dashboard/ | 0 |
 | `partials/dashboards/admin/_planning_progress_body.html` | application-partial | Reusable  planning progress body interface primitive | canonical; default | inherits containing page contract | accessible name and label | /dashboard/planning-progress | 0 |
 | `partials/dashboards/admin/_platform_operations.html` | application-partial | Reusable  platform operations interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |

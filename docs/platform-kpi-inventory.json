@@ -15820,7 +15820,7 @@
   {
    "audit_id": "KPI-SURFACE-142",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 75,
+   "line": 78,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15846,7 +15846,7 @@
   {
    "audit_id": "KPI-SURFACE-143",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 123,
+   "line": 126,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15927,7 +15927,7 @@
   {
    "audit_id": "KPI-SURFACE-146",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 35,
+   "line": 36,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15952,7 +15952,7 @@
   {
    "audit_id": "KPI-SURFACE-147",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 46,
+   "line": 47,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15977,7 +15977,7 @@
   {
    "audit_id": "KPI-SURFACE-148",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 59,
+   "line": 60,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -16002,7 +16002,7 @@
   {
    "audit_id": "KPI-SURFACE-149",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 64,
+   "line": 65,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
