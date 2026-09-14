@@ -34,6 +34,7 @@ styled only the view you happened to enter from.{% endcomment %}
     </select>
   </form>
 
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% if not groups %}
   <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
     <p class="text-[15px] font-bold text-slate-800">No priority plan for FY {{ fy }}</p>

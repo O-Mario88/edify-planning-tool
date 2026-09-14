@@ -109,6 +109,9 @@ styled only the view you happened to enter from.{% endcomment %}
       <p class="max-w-xl text-[12px] text-slate-500">{% if can_edit %}Select <strong>Edit</strong> at the end of a row to change its target, or the disclosure control to review its source detail and the actions authorized for your role.{% elif can_author or can_define or can_approve or can_allocate %}Select the disclosure control at the end of a row to review its source detail and the actions authorized for your role.{% else %}Select the disclosure control at the end of a row to read its source detail.{% endif %}</p>
     </div>
 
+    {% comment %}The Priorities rail sits here, under the heading of the table
+    it switches, rather than above the page header (owner, 2026-09-14).{% endcomment %}
+    {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
     <ul class="flex flex-wrap gap-2" aria-label="Priority groups in this cycle">
       {% for group in group_rows %}
       <li class="inline-flex items-center gap-1.5 rounded-control border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[12px] font-semibold text-slate-700">
@@ -203,6 +206,7 @@ styled only the view you happened to enter from.{% endcomment %}
   </footer>
 
   {% else %}
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   <section class="edify-surface rounded-surface border border-slate-100 p-8 text-center" aria-labelledby="no-cycle-title">
     <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-control bg-slate-100 text-slate-500" aria-hidden="true"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h8l4 4V20H7z"/><path d="M15 3.5V8h4"/></svg></span>
     <h2 id="no-cycle-title" class="mt-3 text-[14px] font-bold text-slate-800">No governed priority cycle for FY{{ fy }}</h2>

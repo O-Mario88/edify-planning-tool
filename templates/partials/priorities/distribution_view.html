@@ -55,6 +55,9 @@ styled only the view you happened to enter from.{% endcomment %}
 
   {% if can_import %}{% include "partials/hr/priority_import.html" %}{% endif %}
 
+  {% comment %}The Priorities rail (owner, 2026-09-14): below the header, above
+  the command band — drawn whether or not this year has a master.{% endcomment %}
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% if hasMaster %}
   <section class="ia-command edify-inverse-surface" aria-labelledby="distribution-command-title">
     <div class="ia-command__main">

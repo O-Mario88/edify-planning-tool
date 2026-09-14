@@ -127,7 +127,11 @@ class DashboardViewSourceTest(TestCase):
         self.assertIn("District monitoring", cards)
 
     def test_the_rail_is_a_tablist_of_real_urls(self):
-        rail = _read("templates/partials/dashboards/_view_tabs.html")
+        # The tablist itself lives in _view_tabs_nav.html so a view can seat
+        # it inside its panel; the shell wrapper stays in _view_tabs.html.
+        rail = _read("templates/partials/dashboards/_view_tabs_nav.html") + _read(
+            "templates/partials/dashboards/_view_tabs.html"
+        )
         self.assertIn('role="tablist"', rail)
         self.assertIn('role="tab"', rail)
         self.assertIn('href="{{ tab.url }}"', rail)

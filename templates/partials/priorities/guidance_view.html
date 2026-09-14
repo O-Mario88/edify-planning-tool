@@ -32,6 +32,7 @@ notification link asked for (?open=…); it opens once the panel is on screen.
 
   {% include "components/context_metrics.html" with items=guidance_metrics variant="executive" title="Team guidance at a glance" %}
 
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% paginate guidance_rows "guidance_page" as pager %}
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="team-guidance-register-title" data-team-guidance-register>
     <header class="rpl-card__header">
