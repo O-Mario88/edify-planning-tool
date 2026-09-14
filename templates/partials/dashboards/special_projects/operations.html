@@ -1,5 +1,7 @@
-{% load static table_pagination %}
-{% comment %}Coordinator delivery home: actions first, then project context.{% endcomment %}
+{% load static table_pagination frontend_filters %}
+{% comment %}Coordinator delivery home: actions first, then project context. An
+item's action only renders for a role its page lets in (2026-09-14: Cluster
+Required rows sent the Coordinator to Clusters, which refuses the role).{% endcomment %}
 <div class="mobile-home-only">
   <section class="mobile-home-section" aria-labelledby="projects-mobile-actions-title">
     <div class="mobile-home-section__header"><h2 id="projects-mobile-actions-title">Needs attention</h2><a href="/projects/my-plan#project-attention">View all</a></div>
@@ -7,7 +9,7 @@
       {% for item in action_queue|slice:":3" %}
       <article class="mobile-record-card" data-mobile-record-card>
         <header><div><p>{{ item.project }}</p><h3>{{ item.issue }}</h3><small>{{ item.title }}</small></div><span class="mobile-record-card__status">{{ item.priority_label }}</span></header>
-        <a href="{{ item.url }}" class="mobile-record-card__action"><span>{{ item.action_label }}</span><span aria-hidden="true">→</span></a>
+        {% if request.user|can_open:item.url %}<a href="{{ item.url }}" class="mobile-record-card__action"><span>{{ item.action_label }}</span><span aria-hidden="true">→</span></a>{% endif %}
       </article>
       {% empty %}<div class="edify-empty-state"><strong>You are caught up</strong><span>No project delivery exceptions need attention.</span></div>{% endfor %}
     </div>
@@ -24,7 +26,7 @@
       {% for item in action_queue %}
       <article class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="edify-badge" data-tone="{{ item.tone }}">{{ item.issue }}</span><span class="text-[12px] font-bold text-slate-400">{{ item.project }}</span></div><h3 class="mt-2 text-[14px] font-bold text-slate-800">{{ item.title }}</h3><p class="mt-0.5 text-[12px] text-slate-500">{{ item.detail }}{% if item.due %} · Due {{ item.due|date:"j M Y" }}{% endif %}</p></div>
-        <a class="btn btn-smooth shrink-0" href="{{ item.url }}">{{ item.action_label }} <span aria-hidden="true">→</span></a>
+        {% if request.user|can_open:item.url %}<a class="btn btn-smooth shrink-0" href="{{ item.url }}">{{ item.action_label }} <span aria-hidden="true">→</span></a>{% endif %}
       </article>
       {% empty %}<div class="edify-empty-state m-5"><strong>You are caught up</strong><span>No project delivery exceptions need attention right now.</span></div>{% endfor %}
     </div>

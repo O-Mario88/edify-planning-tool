@@ -39,7 +39,8 @@
     <label class="text-sm font-semibold">Fiscal year<input aria-label="Fiscal year" type="number" name="fy" value="{{ fy }}" required class="block h-9 rounded-control border border-slate-200 px-3"></label>
     <label class="text-sm font-semibold">Period date<input aria-label="Period date" type="date" name="date" value="{{ anchor|date:'Y-m-d' }}" required class="block h-9 rounded-control border border-slate-200 px-3"></label>
     <button type="submit" class="edify-action-button primary">View Budget</button>
-    <a href="/fund-requests/weekly" class="edify-action-button secondary">Weekly Advance Request</a>
+    {# Only for roles the weekly advance page lets in: the RVP reviews this budget but cannot open it. #}
+    {% if request.user|can_open:"/fund-requests/weekly" %}<a href="/fund-requests/weekly" class="edify-action-button secondary">Weekly Advance Request</a>{% endif %}
   </form>
 
   <nav data-edify-tablist aria-label="Budget period">

@@ -496,6 +496,9 @@ class DashboardMetricsService:
             good = avg_ssa is not None and avg_ssa >= 5
             cluster_performance.append(
                 {
+                    # The row links to its cluster profile; without the id the
+                    # Admin dashboard drew every cluster as href="/clusters/".
+                    "id": c.id,
                     "name": c.name,
                     "avg_ssa": round(avg_ssa, 1) if avg_ssa is not None else "—",
                     "trend": "",

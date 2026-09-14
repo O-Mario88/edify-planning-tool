@@ -70,7 +70,12 @@
               <span class="edify-status-text" data-edify-tone="{% if item.severity == 'critical' %}danger{% elif item.severity == 'high' %}warning{% else %}neutral{% endif %}">{{ due_display|title }}</span>
             </td>
             <td class="px-3 py-3 text-right whitespace-nowrap">
+              {% comment %}The Country Director and the RVP share this queue but not every register it points at (Org Structure is HR's), so an item they cannot open shows no button.{% endcomment %}
+              {% if request.user|can_open:item.url %}
               <a href="{{ item.url }}" class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] px-3 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Open</a>
+              {% else %}
+              <span class="text-slate-400">—</span>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}

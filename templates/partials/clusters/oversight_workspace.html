@@ -6,6 +6,13 @@ The body, swapped on its own so a future filter row in the header survives.
 {% endcomment %}
 
 {% if total_clusters %}
+{% comment %}
+Planning oversight is read by roles that do not open clusters (the RVP, the
+Regional Programme Lead, the Accountant). A cluster is linked, and the
+directory offered, only to someone those pages let in; both gates are the
+route's, so each is checked once here rather than per row.
+{% endcomment %}
+{% with can_open_cluster=request.user|can_open:"/clusters/0" can_open_cluster_directory=request.user|can_open:"/clusters" %}
 <div class="space-y-4">
 
   {% kpi_strip %}
@@ -92,7 +99,7 @@ The body, swapped on its own so a future filter row in the header survives.
             {% for row in group.clusters|slice:":50" %}
             <tr class="border-t edify-border">
               <td class="px-4 py-2.5">
-                <a href="/clusters/{{ row.cluster.id }}" class="font-semibold hover:underline edify-primary-text">{{ row.cluster.name }}</a>
+                {% if can_open_cluster %}<a href="/clusters/{{ row.cluster.id }}" class="font-semibold hover:underline edify-primary-text">{{ row.cluster.name }}</a>{% else %}<span class="font-semibold">{{ row.cluster.name }}</span>{% endif %}
               </td>
               <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
               {% if not is_team_lens %}
@@ -108,7 +115,7 @@ The body, swapped on its own so a future filter row in the header survives.
       <ul class="hidden divide-y edify-border">
         {% for row in group.clusters|slice:":50" %}
         <li class="p-4 space-y-1">
-          <a href="/clusters/{{ row.cluster.id }}" class="font-semibold text-sm hover:underline edify-primary-text">{{ row.cluster.name }}</a>
+          {% if can_open_cluster %}<a href="/clusters/{{ row.cluster.id }}" class="font-semibold text-sm hover:underline edify-primary-text">{{ row.cluster.name }}</a>{% else %}<span class="font-semibold text-sm">{{ row.cluster.name }}</span>{% endif %}
           <p class="edify-text-caption edify-text-muted">
             {{ row.district|default:"—" }}
             {% if not is_team_lens and row.owner %} · {{ row.owner }}{% endif %}
@@ -121,8 +128,10 @@ The body, swapped on its own so a future filter row in the header survives.
       {% if group.count > 50 %}
       <p class="px-4 py-3 edify-text-caption edify-text-muted border-t edify-border">
         Showing 50 of {{ group.count|intcomma }} clusters.
+        {% if can_open_cluster_directory %}
         <a href="/clusters" class="font-semibold hover:underline edify-primary-text">Open the cluster directory</a>
         for the rest.
+        {% endif %}
       </p>
       {% endif %}
     </div>
@@ -130,6 +139,7 @@ The body, swapped on its own so a future filter row in the header survives.
   {% endfor %}
 
 </div>
+{% endwith %}
 {% else %}
 {% include "components/empty_state.html" with title="No clusters to oversee" message="Clusters appear here grouped by the person accountable for them, as soon as any exist in your scope." %}
 {% endif %}

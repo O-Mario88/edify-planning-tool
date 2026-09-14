@@ -1,3 +1,4 @@
+{% load can_open from frontend_filters %}
 {% comment %}
 One core school, compact. The summary line carries only the nine facts a
 planner decides on — school, district, owner, assessment, visits, trainings,
@@ -5,6 +6,10 @@ partner support, package state and the action. Everything else (address,
 contact, cluster, enrolment, SSA breakdown) is secondary metadata and lives in
 the expandable detail, which is what lets twenty rows fit on one screen without
 shrinking the type.
+
+The cluster name links to the cluster page only for a role that page lets in:
+the Accountant reads core schools but not clusters. The gate belongs to the
+route, not the cluster, so one constant URL answers it for every row.
 {% endcomment %}
 <li class="core-school-row core-school-row--compact school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
   <div class="school-record-row__summary">
@@ -59,7 +64,7 @@ shrinking the type.
     <dl class="school-record-row__metadata core-school-row__metadata--secondary">
       <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address|default:"—" }}</dd></div>
       <div><dt>School Type:</dt><dd>{{ school.school_type|default:"Core" }}</dd></div>
-      <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
+      <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id and request.user|can_open:"/clusters/0" %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
       <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
       <div><dt>Phone:</dt><dd>{{ school.phone|default:"—" }}</dd></div>
       <div><dt>Primary Contact:</dt><dd>{{ school.school_contact|default:"—" }}</dd></div>

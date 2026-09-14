@@ -1,5 +1,5 @@
 
-{% load kpi_metrics %}
+{% load kpi_metrics frontend_filters %}
 {% comment %}
   Staff vs Partner Performance — the approved 2+2+1 analytics composition.
   Every figure comes from CoreStaffPartnerPerformanceService (real scoped
@@ -22,7 +22,7 @@
           <p class="text-[12px] edify-text-muted">Average verified core score of each staff portfolio — school-outcome context, <span class="font-semibold" title="These figures describe the verified outcomes of schools in the assigned portfolio. They do not independently determine staff performance ratings.">not a performance rating</span>.</p>
         </div>
       </div>
-      <a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>
+      {% if request.user|can_open:"/analytics/visit-effectiveness" %}<a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>{% endif %}
     </div>
 
     {% if perf_insights.staff_insights %}
@@ -186,7 +186,7 @@
           <p class="text-[12px] edify-text-muted">Average verified core score per intervention (0–10); gap in score points.</p>
         </div>
       </div>
-      <a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>
+      {% if request.user|can_open:"/analytics/visit-effectiveness" %}<a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>{% endif %}
     </div>
 
     {% if perf_insights.intervention_comparison %}
@@ -233,7 +233,7 @@
           <p class="text-[12px] edify-text-muted">Average verified core assessment score across real assessment periods.</p>
         </div>
       </div>
-      <a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>
+      {% if request.user|can_open:"/analytics/visit-effectiveness" %}<a href="/analytics/visit-effectiveness?school_type=core" class="shrink-0 h-8 px-3 inline-flex items-center gap-1 rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">View Full Report <span aria-hidden="true">→</span></a>{% endif %}
     </div>
 
     {% if perf_insights.overall_trend_path %}

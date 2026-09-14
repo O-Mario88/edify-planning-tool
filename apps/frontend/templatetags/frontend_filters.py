@@ -162,3 +162,12 @@ def get_item(mapping, key):
         return mapping.get(key)
     except AttributeError:
         return None
+
+
+@register.filter
+def can_open(user, url):
+    """`{% if request.user|can_open:"/leave/team-availability" %}` — show a link
+    only to someone its page lets in (apps.core.permissions.can_open_url)."""
+    from apps.core.permissions import can_open_url
+
+    return can_open_url(user, str(url or ""))

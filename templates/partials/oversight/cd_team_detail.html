@@ -9,6 +9,15 @@ reschedules or cancels field work.
 {% endcomment %}
 
 {% if owner_groups %}
+{% comment %}
+An activity links to its record only for a viewer who can open it. The record
+page is gated by My Plan, which the RVP and the Regional Programme Lead do not
+hold; that gate is the route's, not the row's, so it is checked once for the
+whole table. The Accountant passes the gate, but the Accountant's evidence and
+record reach is finance-only (apps.evidence.services refuses activities with no
+money movement), so for the Accountant the activity stays plain text.
+{% endcomment %}
+{% with can_open_activity_record=request.user|can_open:"/activities/0" %}
 <div class="space-y-3 pt-2">
   {% for group in owner_groups %}
   <details class="edify-record-group rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}" {% if request.GET|get_item:group.page_param %}open{% endif %}>
@@ -40,7 +49,7 @@ reschedules or cancels field work.
           {% for item in owner_page.rows %}
           <tr class="border-t edify-border">
             <td class="px-3 py-2">
-              {% if item.activity_id %}
+              {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
               <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
               {% else %}
               <span class="font-semibold">{{ item.activity_type|status_label|default:"Partner assignment" }}</span>
@@ -84,6 +93,7 @@ reschedules or cancels field work.
   </details>
   {% endfor %}
 </div>
+{% endwith %}
 {% else %}
 <p class="edify-text-caption edify-text-muted py-2">This team has no planned work in the selected period.</p>
 {% endif %}

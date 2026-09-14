@@ -1,5 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
+{% load can_open from frontend_filters %}
 
 {% comment %}
 hcos-workspace.css is used by this workspace alone; it used to load on
@@ -30,17 +31,27 @@ every authenticated page.
       <p class="edify-page-header__description">{{ description }}</p>
     </div>
     <div class="hcos-hero__actions">
+      {% comment %}
+      Several roles share a register without sharing the pages its buttons
+      open: the RVP reads Workforce Planning but not Recruitment, so "Request
+      a vacancy" drew a drawer that answered 403. Each button is drawn only
+      for someone its page lets in, and the primary action becomes the lead
+      (primary) button when the first header action is not drawn.
+      {% endcomment %}
       {% for action in header_actions %}
       {% if action.href %}
+      {% if request.user|can_open:action.href %}
       <a class="hcos-button hcos-button--primary" href="{{ action.href }}" data-hr-header-action><span>{{ action.label }}</span></a>
-      {% else %}
+      {% endif %}
+      {% elif request.user|can_open:action.drawer %}
       <button type="button" class="hcos-button hcos-button--primary" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-hr-header-action>
         <span>{{ action.label }}</span>
       </button>
       {% endif %}
       {% endfor %}
-      {% if primary_action %}
-      <a class="hcos-button {% if header_actions %}hcos-button--secondary{% else %}hcos-button--primary{% endif %}" href="{{ primary_action.href }}">
+      {% if primary_action and request.user|can_open:primary_action.href %}
+      {% firstof header_actions.0.href header_actions.0.drawer as first_header_url %}
+      <a class="hcos-button {% if first_header_url and request.user|can_open:first_header_url %}hcos-button--secondary{% else %}hcos-button--primary{% endif %}" href="{{ primary_action.href }}">
         <span>{{ primary_action.label }}</span>
         <span aria-hidden="true">→</span>
       </a>

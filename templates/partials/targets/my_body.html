@@ -10,7 +10,7 @@
   <section class="edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6" aria-labelledby="no-performance-priorities-title">
     <h2 id="no-performance-priorities-title" class="text-[13px] font-bold text-slate-800">No measurable performance priorities agreed for FY {{ fy }}</h2>
     <p class="mt-1 edify-text-caption leading-5 text-slate-500">This table is populated from your agreed performance priorities. Add a measurable priority and complete manager agreement to make it appear here.</p>
-    <a href="/my-performance" class="mt-3 inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Open My Performance →</a>
+    {% if request.user|can_open:"/my-performance" %}<a href="/my-performance" class="mt-3 inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Open My Performance →</a>{% endif %}
   </section>
   {% endif %}
 
@@ -41,7 +41,8 @@
     </div>
   </details>
   {% endif %}
-  <a href="/priorities?fy={{ fy }}" class="edify-primary-text font-bold">Open distributed priorities →</a>
+  {# Links only a role its page lets in: partners reached My Performance and Priorities, which refuse them (2026-09-14). #}
+  {% if request.user|can_open:"/priorities" %}<a href="/priorities?fy={{ fy }}" class="edify-primary-text font-bold">Open distributed priorities →</a>{% endif %}
 
   {% include "partials/targets/strategic_priority_overview.html" with strategic_priorities=strategic_priorities fy=fy section_id="my-strategic-priorities" scope_label="your personal target ledger" only %}
 

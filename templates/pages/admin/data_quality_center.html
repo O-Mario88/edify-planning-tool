@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load can_open from frontend_filters %}
 
 {% block title %}Data Quality Center — Edify{% endblock %}
 
@@ -29,7 +30,8 @@
 <h4 class="text-[12px] font-semibold text-slate-800">Link Raw Staff Names</h4>
 <p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Match schools imported via CSV with active staff profiles in the staff setup queue.</p>
 </div>
-<a href="/admin-panel/staff-setup-queue" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open setup queue &rarr;</a>
+{% comment %}The setup queue is user administration, which Impact Assessment does not open; the link is drawn only for roles it lets in.{% endcomment %}
+{% if request.user|can_open:"/admin-panel/staff-setup-queue" %}<a href="/admin-panel/staff-setup-queue" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open setup queue &rarr;</a>{% endif %}
 </div>
 <div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>

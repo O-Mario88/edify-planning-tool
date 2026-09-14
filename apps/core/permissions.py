@@ -739,6 +739,87 @@ def render_access_denied(request, message: str):
     return redirect("/dashboard")
 
 
+def _view_for_url(url: str):
+    from urllib.parse import urlsplit
+
+    from django.urls import Resolver404, resolve
+
+    path = urlsplit(url or "").path
+    if not path.startswith("/"):
+        return None
+    try:
+        return resolve(path).func
+    except Resolver404:
+        return None
+
+
+def page_permission_for_url(url: str) -> str | None:
+    """The page permission guarding the view a URL resolves to, or None when
+    the route is unknown or carries no page gate."""
+    pages = page_permissions_for_url(url)
+    return pages[0] if pages else None
+
+
+def page_permissions_for_url(url: str) -> tuple[str, ...]:
+    """Every page permission that opens the view a URL resolves to: one for
+    require_page_permission, several for require_any_page_permission."""
+    func = _view_for_url(url)
+    while func is not None:
+        pages = getattr(func, "page_permissions", None)
+        if pages:
+            return tuple(pages)
+        page = getattr(func, "page_permission", None)
+        if page:
+            return (page,)
+        func = getattr(func, "__wrapped__", None)
+    return ()
+
+
+def _is_export_request(url: str) -> bool:
+    """Whether following `url` asks an export-gated view for an export —
+    require_export_permission's own test."""
+    from urllib.parse import parse_qs, urlsplit
+
+    func = _view_for_url(url)
+    gated = False
+    while func is not None:
+        if getattr(func, "export_permission", False):
+            gated = True
+            break
+        func = getattr(func, "__wrapped__", None)
+    if not gated:
+        return False
+    parts = urlsplit(url)
+    query = parse_qs(parts.query)
+    return (
+        bool(query.get("export"))
+        or query.get("format") == ["csv"]
+        or "export" in parts.path
+    )
+
+
+def can_open_url(user, url: str) -> bool:
+    """Whether `user` may open `url`, by the page gate on its view.
+
+    A link is only shown to someone who can follow it (visual test, 2026-09-14:
+    pages linked Team Availability, Org Structure, Recruitment, Planning and
+    record pages to roles those pages refuse). Record-level refusals inside a
+    page's own view are that view's business; unknown or ungated routes count
+    as openable, so this never hides a link it cannot judge.
+    """
+    if not url:
+        return False
+    if _is_export_request(url):
+        from urllib.parse import urlsplit
+
+        if not RolePermissionService.can_export(user, urlsplit(url).path):
+            return False
+    pages = page_permissions_for_url(url)
+    if not pages:
+        return True
+    return any(RolePermissionService.can_view_page(user, page) for page in pages)
+
+
 def require_page_permission(page_name: str):
     """Enforces page-level gating across routes and views."""
 
@@ -975,4 +1056,5 @@ def require_export_permission(view):
             )
         return view(request, *args, **kwargs)
 
+    wrapped.export_permission = True
     return wrapped

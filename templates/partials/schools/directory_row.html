@@ -1,3 +1,10 @@
+{% load can_open from frontend_filters %}
+{% comment %}
+The school name and the cluster name link only for a role their pages let in.
+The Regional Programme Lead reads the directory but opens neither profile, and
+the Project Coordinator opens schools but not clusters. The cluster gate is the
+route's, so one constant URL answers it for every row.
+{% endcomment %}
 <li class="school-directory-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
   <div
     class="school-record-row__summary{% if not directory_read_only %} school-record-row__summary--selectable{% endif %}"
@@ -36,14 +43,15 @@
       </span>
 
       <div class="school-record-row__identity">
+        {% url 'frontend:school_detail' school.school_id as school_profile_url %}
         <h2 class="school-record-row__title">
-          <a href="{% url 'frontend:school_detail' school.school_id %}">{{ school.school_name }}</a>
+          {% if request.user|can_open:school_profile_url %}<a href="{{ school_profile_url }}">{{ school.school_name }}</a>{% else %}{{ school.school_name }}{% endif %}
         </h2>
         <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{{ school.district }}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address }}</dd></div>
           <div><dt>School Type:</dt><dd>{{ school.school_type }}</dd></div>
-          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id and request.user|can_open:"/clusters/0" %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
           <div><dt>Enrollment:</dt><dd>{{ school.enrolment }}</dd></div>
           <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
           <div><dt>Primary Contact:</dt><dd>{{ school.school_contact }}</dd></div>

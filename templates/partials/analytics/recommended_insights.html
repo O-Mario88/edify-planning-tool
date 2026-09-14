@@ -1,3 +1,4 @@
+{% load frontend_filters %}
 <div class="space-y-4 ">
 
 <div class="border-b border-slate-200 pb-2">
@@ -65,12 +66,15 @@ hx-swap="innerHTML"
 Focus training efforts on Leadership & Teaching/Learning interventions in districts with low SSA average scores to maximize donor investment efficiency.
 </p>
 
+{# Planning is not every Analytics reader's page (RVP, Regional Lead and HR cannot open it). #}
+{% if request.user|can_open:"/planning" %}
 <a
 href="/planning"
 class="edify-card-action bg-amber-400 text-slate-900 hover:bg-amber-500 rounded-surface edify-text-caption font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
 >
 View Action Plan
 </a>
+{% endif %}
 </div>
 
 </div>

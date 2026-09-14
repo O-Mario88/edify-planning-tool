@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static frontend_filters %}
 
 {% block title %}Calendar — Edify{% endblock %}
 
@@ -68,13 +68,18 @@
       <h1 class="edify-page-title edify-page-header__title">Calendar</h1>
       <p class="calendar-workspace__intro edify-page-header__description">See scheduled work, approved leave, organization events, and important holidays in one place.</p>
     </div>
-    <a href="{% url 'frontend:personal_time_off' %}" class="btn btn-primary calendar-workspace__leave-action">
+    {% comment %}Only for a role whose leave page lets it in — a partner's calendar
+    offered Apply for Leave into a page that refuses partners (2026-09-14).{% endcomment %}
+    {% url 'frontend:personal_time_off' as personal_time_off_url %}
+    {% if request.user|can_open:personal_time_off_url %}
+    <a href="{{ personal_time_off_url }}" class="btn btn-primary calendar-workspace__leave-action">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M4 10h16M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v4m-2-2h4" />
       </svg>
       <span>Apply for Leave</span>
     </a>
+    {% endif %}
   </header>
 
   {% if can_add_calendar_event %}

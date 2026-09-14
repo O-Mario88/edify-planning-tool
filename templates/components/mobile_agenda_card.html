@@ -1,8 +1,10 @@
+{% load frontend_filters %}
 {% comment %}
 Shared task/calendar card. Canonical keys are title, eyebrow/type_label,
 time/date_label, location, status, status_tone, url/action_url and action_label.
 The firstof fallbacks let existing server-owned queue dictionaries adopt the
 card without manufacturing a second presentation-only data model.
+The open action only renders for someone its page lets in (2026-09-14).
 {% endcomment %}
 <article class="mobile-agenda-card{% if item.status_tone %} mobile-agenda-card--{{ item.status_tone }}{% endif %}" data-mobile-agenda-card>
   <span class="mobile-agenda-card__rail" aria-hidden="true"></span>
@@ -16,8 +18,9 @@ card without manufacturing a second presentation-only data model.
     {% if item.location or item.where or item.district or item.purpose or item.desc %}<small>{% firstof item.location item.where item.district item.purpose item.desc %}</small>{% endif %}
     {% if item.status %}<span class="mobile-agenda-card__status">{{ item.status }}</span>{% endif %}
   </div>
-  {% if item.action_url or item.url %}
-  <a href="{% firstof item.action_url item.url %}" class="mobile-agenda-card__action" data-mobile-action="agenda-action">
+  {% firstof item.action_url item.url as agenda_action_url %}
+  {% if agenda_action_url and request.user|can_open:agenda_action_url %}
+  <a href="{{ agenda_action_url }}" class="mobile-agenda-card__action" data-mobile-action="agenda-action">
     <span class="sr-only">{% firstof item.action_label "Open" %} {% firstof item.title item.activity item.school item.cluster "activity" %}</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
   </a>

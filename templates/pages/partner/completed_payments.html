@@ -36,9 +36,13 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 max-xl:block">
+          {% comment %}A school or cluster profile link only for a role those pages let in:
+          partners were linked to profiles that refuse them (2026-09-14). The page gate
+          belongs to the route, not the record, so one check answers for every row.{% endcomment %}
+          {% with link_schools=request.user|can_open:"/schools/row" link_clusters=request.user|can_open:"/clusters/row" %}
           {% for row in rows|slice:":200" %}
           <tr class="max-xl:block max-xl:p-4">
-            <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{% school_identity row.activity.school.name row.activity.school.id %}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}Field work{% endif %}</td>
+            <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% if row.activity.school %}{% if link_schools %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{% school_identity row.activity.school.name row.activity.school.id %}</a>{% else %}{% school_identity row.activity.school.name row.activity.school.id %}{% endif %}{% elif row.activity.cluster %}{% if link_clusters %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}{{ row.activity.cluster.name }}{% endif %}{% else %}Field work{% endif %}</td>
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0">{{ row.activity.get_activity_type_display }}</td>
             <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0">{{ row.activity.scheduled_date|date:"d M Y" }}</td>
             <td class="px-5 py-3.5 max-xl:px-0"><span class="edify-status-text" data-edify-tone="{{ row.ia_tone }}">{{ row.ia_label }}</span></td>
@@ -50,6 +54,7 @@
           {% empty %}
           <tr class="max-xl:block"><td colspan="8" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing submitted yet — completed work appears here after you submit evidence.</td></tr>
           {% endfor %}
+          {% endwith %}
         </tbody>
       </table>
     </div>

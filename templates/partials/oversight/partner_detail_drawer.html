@@ -197,7 +197,14 @@ accountability record, because the CCEO is not the one who is late.
   </section>
   {% endif %}
 
-  {% if item.partner_activity_id %}
+  {% comment %}
+  Drawn only for a viewer who can open the record. Its page is gated by My
+  Plan, which the RVP and the Regional Programme Lead do not hold. The
+  Accountant passes that gate, but the Accountant's evidence and record reach
+  is finance-only (apps.evidence.services refuses activities with no money
+  movement), so the Accountant is not sent to a record that would refuse.
+  {% endcomment %}
+  {% if item.partner_activity_id and request.user.active_role != "Accountant" and request.user|can_open:"/activities/0" %}
   <p class="pt-1">
     <a href="/activities/{{ item.partner_activity_id }}" class="text-sm font-semibold hover:underline edify-primary-text">
       Open the full activity record

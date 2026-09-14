@@ -3940,6 +3940,18 @@ def _get_todos(principal) -> dict:
         for t in todos:
             t["category"] = pl_responsibility_for(t) or t["category"]
 
+    # A task is only listed for someone its link lets in (visual test,
+    # 2026-09-14): a partner's queue offered Schedule SSA Visit, Clusters and
+    # the school directory, each a page that refuses the role. Work whose
+    # page the person cannot open is someone else's to do.
+    from apps.core.permissions import can_open_url
+
+    todos = [
+        t
+        for t in todos
+        if not t.get("action_url") or can_open_url(principal, t["action_url"])
+    ]
+
     todos.sort(key=lambda t: (PRIORITY_ORDER.get(t["priority"], 9), t["_due_sort"]))
     for t in todos:
         t["priority_label"] = PRIORITY_LABEL.get(t["priority"], "—")

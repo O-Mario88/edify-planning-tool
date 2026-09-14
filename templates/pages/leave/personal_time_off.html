@@ -1,6 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load school_identity %}
 {% load table_pagination kpi_metrics %}
+{% load can_open from frontend_filters %}
 
 {% block title %}Personal Time Off · Edify{% endblock %}
 
@@ -307,7 +308,9 @@
       <article class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div><span class="pto-kicker">Next four weeks</span><h3>Team availability</h3></div>
-          <a href="{% url 'frontend:team_availability' %}" class="pto-text-link">Full report →</a>
+          {% comment %}Most roles open this page but not Team Availability (a lead's, director's and HR's page), so the report is linked only for those it lets in.{% endcomment %}
+          {% url 'frontend:team_availability' as team_availability_url %}
+          {% if request.user|can_open:team_availability_url %}<a href="{{ team_availability_url }}" class="pto-text-link">Full report →</a>{% endif %}
         </div>
         <div class="pto-heatmap">
           {% for row in availability_preview %}

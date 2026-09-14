@@ -93,8 +93,14 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/candidate-pipeline">Pipeline <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures">
+          {% comment %}A figure links to its register only for someone that register lets in; otherwise it stays a plain figure.{% endcomment %}
+          {% if request.user|can_open:"/recruitment" %}
           <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></a>
           <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></a>
+          {% else %}
+          <div class="hrd-figure"><span class="hrd-figure__label">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></div>
+          {% endif %}
           <div class="hrd-figure"><span class="hrd-figure__label">Hired this FY</span><strong class="hrd-figure__value">{{ recruitment.hired }}</strong><span class="hrd-figure__meta">{% if recruitment.median_days_to_hire is not None %}median {{ recruitment.median_days_to_hire }} day{{ recruitment.median_days_to_hire|pluralize }} to hire{% else %}no hires yet{% endif %}</span></div>
         </div>
         {% if recruitment.in_pipeline or recruitment.hired %}
@@ -458,7 +464,7 @@ Every card links to the register where the work is done.
             <h3 id="hrd-roles-title" class="hrd-card__title">Headcount by role</h3>
             <span class="hrd-card__subtitle">Active staff in {{ scope_label }}</span>
           </div>
-          <a class="hrd-card__link" href="/org-structure">Organisation <span aria-hidden="true">&rarr;</span></a>
+          {% if request.user|can_open:"/org-structure" %}<a class="hrd-card__link" href="/org-structure">Organisation <span aria-hidden="true">&rarr;</span></a>{% endif %}
         </header>
         {% if headcount_by_role.rows %}
         <div class="hrd-bars" role="list">
