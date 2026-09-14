@@ -176,6 +176,10 @@ def priority_workspace_tabs(request, *, active: str, view_template: str) -> dict
         "view_template": view_template,
         "active": active,
         "tabs": tabs,
+        # The rail is drawn by each view, under the heading of the table it
+        # switches — not by _view_tabs.html above the page header (owner,
+        # 2026-09-14: "move it below priority groups and milestones").
+        "rail_inside": True,
     }
 
 

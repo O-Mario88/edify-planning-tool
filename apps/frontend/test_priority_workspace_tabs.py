@@ -142,6 +142,52 @@ class PriorityWorkspaceTabTest(TestCase):
         self.assertNotIn("data-dashboard-view-shell", html)
         self.assertIn("Priority Setting Dashboard", html)
 
+    def test_the_rail_sits_under_the_table_heading_not_above_the_page(self):
+        """Owner, 2026-09-14: "the tabs ... placed on top of the header — move
+        it below priority groups and milestones". One rail, drawn by the view
+        under the heading of the table it switches; the shared wrapper draws
+        none above the page header."""
+
+        self.client.force_login(_user("CountryDirector", "cd@rail.test"))
+        html = self.client.get("/strategic-priorities?fy=2027").content.decode()
+        self.assertEqual(html.count('role="tablist"'), 1)
+        heading = html.index("Priority groups and milestones</h2>")
+        rail = html.index('role="tablist"')
+        table = html.index('aria-label="Priority groups in this cycle"')
+        self.assertLess(html.index("Priority Setting Dashboard</h1>"), rail)
+        self.assertLess(heading, rail)
+        self.assertLess(rail, table)
+        # The press still returns the rail with the panel: it travels inside.
+        pressed = self.client.get(
+            "/strategic-priorities?fy=2027",
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET=SHELL_ID,
+        ).content.decode()
+        self.assertEqual(pressed.count('role="tablist"'), 1)
+
+    def test_every_priorities_view_seats_the_rail_itself(self):
+        for view in (
+            "setting_view",
+            "distribution_view",
+            "master_view",
+            "team_view",
+            "guidance_view",
+        ):
+            with self.subTest(view=view):
+                source = _read(f"templates/partials/priorities/{view}.html")
+                self.assertEqual(
+                    source.count(
+                        "{% if dashboard_tabs %}{% include "
+                        '"partials/dashboards/_view_tabs_nav.html" %}{% endif %}'
+                    ),
+                    2 if view == "setting_view" else 1,
+                )
+        self.assertIn(
+            "{% if not dashboard_tabs.rail_inside %}{% include "
+            '"partials/dashboards/_view_tabs_nav.html" %}{% endif %}',
+            _read("templates/partials/dashboards/_view_tabs.html"),
+        )
+
     def test_the_year_travels_with_the_press(self):
         self.client.force_login(_user("CountryDirector", "cd@fy.test"))
         html = self.client.get("/target-distribution?fy=2026").content.decode()

@@ -1,0 +1,65 @@
+{% comment %}
+The dashboard view rail on its own: the tablist of real URLs that
+_view_tabs.html draws above its panel. Split out (owner, 2026-09-14: "move
+it below priority groups and milestones") so a view can seat the rail
+INSIDE its panel, beside the table it switches, instead of above the page
+header — the Priorities views do (dashboard_tabs.rail_inside). Either way
+it is the same markup: one tablist, one active tab, one press contract.
+
+Context: `dashboard_tabs` as _view_tabs.html receives it.
+{% endcomment %}
+{% if dashboard_tabs %}
+{% comment %}The tab answers the press, not the server. Fetching a view takes
+about half a second of dashboard on the server, and until the response landed
+the rail showed no sign of having been clicked at all — so the tabs read as
+slow whatever the response time was (owner, 2026-09-07). The clicked tab takes
+the selected state immediately; htmx swaps the server's version of the same
+rail a moment later, and an error puts the old one back.{% endcomment %}
+<nav class="edify-section-nav dashboard-view-nav" aria-label="Dashboard views" data-dashboard-views>
+  <div class="edify-section-nav__inner" role="tablist" aria-label="Dashboard views"
+       @click="
+         const tab = $event.target.closest('[role=tab]');
+         if (!tab) return;
+         [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+           const chosen = other === tab;
+           other.classList.toggle('is-active', chosen);
+           other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+           other.setAttribute('tabindex', chosen ? '0' : '-1');
+         });
+       "
+       @htmx:response-error.window="
+         [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+           const chosen = other.dataset.serverActive === 'true';
+           other.classList.toggle('is-active', chosen);
+           other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+           other.setAttribute('tabindex', chosen ? '0' : '-1');
+         });
+       "
+       x-data>
+    {% for tab in dashboard_tabs.tabs %}
+    <a href="{{ tab.url }}"
+       id="dashboard-tab-{{ tab.key }}"
+       role="tab"
+       aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
+       data-server-active="{% if tab.active %}true{% else %}false{% endif %}"
+       aria-controls="{{ dashboard_tabs.panel_id }}"
+       tabindex="{% if tab.active %}0{% else %}-1{% endif %}"
+       class="edify-section-nav__link{% if tab.active %} is-active{% endif %}"
+       title="{{ tab.description }}"
+       hx-get="{{ tab.url }}"
+       hx-target="#{{ dashboard_tabs.panel_id }}-shell"
+       hx-swap="innerHTML"
+       {% comment %}The last press wins. Each tab is its own element, so htmx
+       treated their requests as unrelated and let both run — press Operations
+       and then Map while the first is still out, and whichever response lands
+       last decides what you are looking at, which on a half-second fetch is
+       easy to do. `replace` on the rail aborts the request in flight and
+       issues the new one (2026-09-07).{% endcomment %}
+       hx-sync="closest [data-dashboard-views]:replace"
+       hx-push-url="true"
+       hx-indicator="#{{ dashboard_tabs.panel_id }}-updating">{{ tab.label }}</a>
+    {% endfor %}
+    <span id="{{ dashboard_tabs.panel_id }}-updating" class="htmx-indicator dashboard-view-nav__updating" role="status" aria-live="polite">Updating…</span>
+  </div>
+</nav>
+{% endif %}

@@ -164,3 +164,26 @@ them, so a view it is not looking at costs nothing and finds nothing.
   document.addEventListener('htmx:afterSettle', bindTeam);
 })();
 </script>
+<script>
+(() => {
+  /* Priority Setting's Edit button (owner, 2026-09-14) sits INSIDE the row's
+     <summary>, at the end of the row beside the disclosure chevron — so a
+     click on it would toggle the row instead of opening the form. Delegated
+     on `document`, like everything else here, because a tab press replaces
+     the panel: it cancels the toggle, opens the row and its edit
+     block, and puts the caret in the first field. Keyboard activation of the
+     button arrives as the same click. */
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-milestone-edit]');
+    if (!button) return;
+    event.preventDefault();
+    const row = button.closest('details');
+    if (!row) return;
+    row.open = true;
+    const panel = row.querySelector('[data-milestone-edit-panel]');
+    if (!panel) return;
+    panel.open = true;
+    panel.querySelector('input, select, textarea')?.focus();
+  });
+})();
+</script>

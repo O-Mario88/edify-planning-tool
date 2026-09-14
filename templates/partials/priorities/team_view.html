@@ -28,6 +28,7 @@ styled only the view you happened to enter from.{% endcomment %}
 
   {% if messages %}<div class="space-y-2" aria-live="polite">{% for message in messages %}<div class="edify-alert" data-tone="{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
 
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% if rows %}
   <section class="ia-command edify-inverse-surface" aria-labelledby="team-command-title">
     <div class="ia-command__main">

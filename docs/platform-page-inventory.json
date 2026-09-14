@@ -3058,7 +3058,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3584,
+      "bytes": 4660,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/school-upload-history",
@@ -3067,7 +3067,8 @@
         "/leave/coverage/",
         "/leave/policies",
         "/leave/policies/",
-        "/schools/<str:school_id>"
+        "/schools/<str:school_id>",
+        "/strategic-priorities"
       ],
       "findings": [],
       "forms": 2,
@@ -3637,10 +3638,41 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 1950,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard",
+        "/dashboard/cd-approve",
+        "/dashboard/cd-return",
+        "/ia/dashboard/",
+        "/priorities/guidance",
+        "/priorities/master",
+        "/programme-rollout",
+        "/strategic-priorities"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " View Tabs",
+      "purpose": "Reusable  view tabs interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/_view_tabs.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4510,
+      "bytes": 3461,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3656,8 +3688,8 @@
       "forms": 0,
       "htmx_controls": 1,
       "kind": "application-partial",
-      "name": " View Tabs",
-      "purpose": "Reusable  view tabs interface primitive",
+      "name": " View Tabs Nav",
+      "purpose": "Reusable  view tabs nav interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
@@ -3666,7 +3698,7 @@
         "selected"
       ],
       "tables": 0,
-      "template": "partials/dashboards/_view_tabs.html",
+      "template": "partials/dashboards/_view_tabs_nav.html",
       "variants": []
     },
     {
@@ -6462,13 +6494,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12449,
+      "bytes": 18724,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
       ],
       "findings": [],
-      "forms": 3,
+      "forms": 5,
       "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Priority Milestone Detail",
@@ -8717,7 +8749,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8367,
+      "bytes": 9332,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -8749,7 +8781,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30935,
+      "bytes": 31191,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -8813,7 +8845,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5475,
+      "bytes": 5567,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance"
@@ -8841,7 +8873,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8071,
+      "bytes": 8163,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/master"
@@ -8866,13 +8898,13 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15707,
+      "bytes": 17839,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
       ],
       "findings": [],
-      "forms": 2,
+      "forms": 3,
       "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Setting View",
@@ -8898,7 +8930,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13720,
+      "bytes": 13812,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution/team"
@@ -31603,7 +31635,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
       "card_count": 0,
@@ -31628,7 +31660,6 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET {{ tab.url }}",
         "GET /dashboard",
         "GET /rvp/approvals?fy={{ fy }}"
       ],
@@ -31690,15 +31721,15 @@
         "disabled": false,
         "empty": true,
         "error": true,
-        "loading": true
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -42035,7 +42066,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.ia_views",
       "backend_view": "apps.frontend.views.ia_views.ia_dashboard_view",
       "card_count": 0,
@@ -42052,9 +42083,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -42103,16 +42132,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": true,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -67109,7 +67138,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.team_guidance_views",
       "backend_view": "apps.frontend.views.team_guidance_views.team_guidance_view",
       "card_count": 0,
@@ -67126,9 +67155,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -67165,16 +67192,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -68288,7 +68315,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.priorities_master_page",
       "card_count": 0,
@@ -68305,9 +68332,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -68350,16 +68375,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -69053,7 +69078,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.programme_rollout_views",
       "backend_view": "apps.frontend.views.programme_rollout_views.programme_rollout_view",
       "card_count": 0,
@@ -69070,9 +69095,7 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -69105,16 +69128,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -77062,8 +77085,8 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.7,
+      "audit_events": true,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.priority_views",
       "backend_view": "apps.frontend.views.priority_views.priority_configuration_page",
       "card_count": 0,
@@ -77080,9 +77103,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -77124,16 +77145,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -77592,7 +77613,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_page",
       "card_count": 0,
@@ -77609,9 +77630,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -77648,16 +77667,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -78054,7 +78073,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.team_distribution_page",
       "card_count": 0,
@@ -78071,9 +78090,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ tab.url }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -78109,16 +78126,16 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": true,
-        "loading": true
+        "error": false,
+        "loading": false
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 1,
-        "type": "in-page-tabs"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -100785,6 +100802,42 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.priority_views.milestone_edit_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/milestones/<str:milestone_id>/edit",
+      "route_name": "milestone_edit",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.priority_views.milestone_remove_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/milestones/<str:milestone_id>/remove",
+      "route_name": "milestone_remove",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.priority_views.priority_remove_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/priorities/<str:priority_id>/remove",
+      "route_name": "priority_remove",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.hr_views.succession_planning_view",
       "kind": "page",
       "methods": [
@@ -101572,9 +101625,9 @@
   "summary": {
     "accessibility_contract_pass": 517,
     "activity_states": 24,
-    "all_routes": 1271,
+    "all_routes": 1274,
     "api_routes": 359,
-    "component_templates": 444,
+    "component_templates": 445,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,

@@ -170,7 +170,7 @@ class DashboardViewRailTest(SimpleTestCase):
     """
 
     def setUp(self):
-        self.markup = _read("templates/partials/dashboards/_view_tabs.html")
+        self.markup = _read("templates/partials/dashboards/_view_tabs_nav.html")
         self.css = _read("static/css/platform.css")
 
     def test_dashboard_switch_fits_its_tabs(self):

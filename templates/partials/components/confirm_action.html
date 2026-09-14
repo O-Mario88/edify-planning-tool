@@ -19,7 +19,9 @@ product it was interrupting.
 Params: uid (required), trigger_label, title, body, confirm_label,
 cancel_label, tone ("danger" default | "neutral"), trigger_class,
 trigger_icon_name ("trash"), trigger_aria_label (required when the
-trigger is icon-only).
+trigger is icon-only), reason_label (adds a required "reason" field to the
+dialog — for an action that must say why, such as removing a priority from
+the FY), reason_placeholder, reason_rows.
 {% endcomment %}
 <div x-data="confirmAction" @keydown.escape.window="asking && dismiss()" class="confirm-action">
   <button type="button"
@@ -53,6 +55,22 @@ trigger is icon-only).
       <p id="confirm-body-{{ uid }}" class="confirm-action__body">
         {{ body|default:"This cannot be undone." }}
       </p>
+      {% if reason_label %}
+      {% comment %}The reason is asked INSIDE the dialog, beside the decision
+      it explains, and required by the field — so the browser refuses an empty
+      confirm before the request is made, the same contract as the shared
+      reason disclosure whose field styling this reuses.{% endcomment %}
+      <label for="confirm-reason-{{ uid }}" class="reason-disclosure__label">
+        {{ reason_label }}
+        <span class="reason-disclosure__required" aria-hidden="true">*</span>
+      </label>
+      <textarea id="confirm-reason-{{ uid }}"
+                name="reason"
+                required
+                rows="{{ reason_rows|default:3 }}"
+                placeholder="{{ reason_placeholder|default:'Say why, so the next person reading the audit trail can follow the decision.' }}"
+                class="reason-disclosure__field"></textarea>
+      {% endif %}
       <div class="confirm-action__actions">
         {% comment %}Cancel is first and holds focus: the safe answer is the
         one a return keypress gives, which is the opposite of what an OK-first

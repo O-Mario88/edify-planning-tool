@@ -118,6 +118,21 @@ urlpatterns = [
         name="milestone_allocate",
     ),
     path(
+        "strategic-priorities/milestones/<str:milestone_id>/edit",
+        priority_views.milestone_edit_action,
+        name="milestone_edit",
+    ),
+    path(
+        "strategic-priorities/milestones/<str:milestone_id>/remove",
+        priority_views.milestone_remove_action,
+        name="milestone_remove",
+    ),
+    path(
+        "strategic-priorities/priorities/<str:priority_id>/remove",
+        priority_views.priority_remove_action,
+        name="priority_remove",
+    ),
+    path(
         "strategic-priorities/cycles/<str:cycle_id>/approve",
         priority_views.cycle_approve_action,
         name="priority_cycle_approve",
