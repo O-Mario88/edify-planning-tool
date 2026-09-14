@@ -1,11 +1,11 @@
 """Impact Assessment's navigation follows its role description.
 
-IA review (owner, 2026-09-13): the sidebar is grouped by the five
-responsibilities — framework and strategy, baseline and field data, school
-progress, analysis and learning, reporting and accountability — then the data
-quality and verification work beneath them; one workspace strip carries every
-IA page and the shared analytics pages IA reads; the grants and doors that had
-nothing to do with the role are gone; and the phone leads with the day's queue.
+IA review (owner, 2026-09-13): one workspace strip carries every IA page and
+the shared analytics pages IA reads; the grants and doors that had nothing to
+do with the role are gone; and the phone leads with the day's queue. Since
+2026-09-14 the sidebar is grouped by how often each page is visited
+(apps.core.nav_cadence): the verification queues IA works every day first, the
+five responsibilities after them in the rhythm they are worked.
 """
 
 from __future__ import annotations
@@ -38,7 +38,9 @@ def _groups(role, path="/dashboard"):
     return build_sidebar_for_user(_user(role), path)
 
 
-IA_GROUPS = [
+# The order IA's pages are registered in, which breaks ties inside a visit
+# tier: the day's work, the five responsibilities, then verification.
+IA_RESPONSIBILITY_ORDER = (
     "MY WORK",
     "FRAMEWORK & STRATEGY",
     "BASELINE & FIELD DATA",
@@ -48,70 +50,78 @@ IA_GROUPS = [
     "DATA QUALITY & VERIFICATION",
     "FINANCE & BUDGET",
     "MY PERFORMANCE",
+)
+
+IA_SIDEBAR = [
+    (
+        "DAILY",
+        [
+            ("Dashboard", "/ia/dashboard/"),
+            ("To-Do", "/todos"),
+            ("Verification Queue", "/ia/verification/"),
+            ("SSA Verification", "/ssa/verification/"),
+            ("Partner Evidence", "/ia/partner-evidence/"),
+            ("My Plan", "/my-plan"),
+            ("Calendar", "/calendar"),
+        ],
+    ),
+    (
+        "WEEKLY",
+        [
+            ("Weekly Advance Request", "/fund-requests/weekly"),
+            ("Planning", "/planning"),
+            ("Field Debrief", "/debriefs"),
+            ("School Evidence", "/ia/school-evidence/"),
+            ("SSA Upload Center", "/ssa/upload/"),
+            ("Returned Activities", "/ia/returned/"),
+            ("Data Quality", "/admin-panel/data-quality-center"),
+            ("Upload Center", "/uploads"),
+        ],
+    ),
+    (
+        "MONTHLY",
+        [
+            ("My Targets", "/my-targets"),
+            ("Impact Reports", "/ia/impact-reports/"),
+            ("Programme Learning", "/ia/learning/"),
+            ("Most Significant Change", "/ia/stories/"),
+            ("Lending Evidence", "/ia/lending-evidence/"),
+            ("Loans", "/loans"),
+        ],
+    ),
+    (
+        "PLANNING CYCLE",
+        [
+            ("Priorities", "/target-distribution"),
+            ("Measurement Framework", "/ia/framework/"),
+            ("My Performance Agreement", "/my-performance"),
+            ("My Professional Development", "/my-professional-development"),
+        ],
+    ),
+    (
+        "REFERENCE",
+        [
+            ("Leave & Personal Time Off", "/personal-time-off/"),
+            ("School Directory", "/schools"),
+        ],
+    ),
 ]
 
 
 class IaSidebarTest(SimpleTestCase):
-    def test_groups_follow_the_role_description(self):
-        self.assertEqual([g["label"] for g in _groups(IA)], IA_GROUPS)
-        self.assertEqual(ROLE_SIDEBAR_GROUP_ORDER[IA], tuple(IA_GROUPS))
+    def test_groups_run_from_most_to_least_visited(self):
+        self.assertEqual(
+            [g["label"] for g in _groups(IA)], [label for label, _ in IA_SIDEBAR]
+        )
+        self.assertEqual(ROLE_SIDEBAR_GROUP_ORDER[IA], IA_RESPONSIBILITY_ORDER)
 
-    def test_each_responsibility_holds_its_doors(self):
-        items = {
-            g["label"]: [(i["label"], i["url"]) for i in g["items"]]
-            for g in _groups(IA)
-        }
+    def test_each_page_sits_in_the_rhythm_it_is_worked(self):
         self.assertEqual(
-            items["MY WORK"],
             [
-                ("Dashboard", "/ia/dashboard/"),
-                ("Planning", "/planning"),
-                ("My Plan", "/my-plan"),
-                ("Calendar", "/calendar"),
-                ("To-Do", "/todos"),
+                (g["label"], [(i["label"], i["url"]) for i in g["items"]])
+                for g in _groups(IA)
             ],
-        )
-        self.assertEqual(
-            items["FRAMEWORK & STRATEGY"],
-            [
-                ("Measurement Framework", "/ia/framework/"),
-                ("Priorities", "/target-distribution"),
-            ],
-        )
-        self.assertIn(
-            ("School Evidence", "/ia/school-evidence/"), items["BASELINE & FIELD DATA"]
-        )
-        self.assertIn(
-            ("SSA Upload Center", "/ssa/upload/"), items["BASELINE & FIELD DATA"]
-        )
-        self.assertIn(("School Directory", "/schools"), items["BASELINE & FIELD DATA"])
-        self.assertIn(("Field Debrief", "/debriefs"), items["BASELINE & FIELD DATA"])
-        self.assertEqual(
-            items["SCHOOL PROGRESS"], [("Most Significant Change", "/ia/stories/")]
-        )
-        self.assertIn(
-            ("Programme Learning", "/ia/learning/"), items["ANALYSIS & LEARNING"]
-        )
-        self.assertIn(
-            ("Lending Evidence", "/ia/lending-evidence/"), items["ANALYSIS & LEARNING"]
-        )
-        self.assertEqual(
-            items["REPORTING & ACCOUNTABILITY"],
-            [("Impact Reports", "/ia/impact-reports/")],
-        )
-        self.assertEqual(
-            items["DATA QUALITY & VERIFICATION"],
-            [
-                ("Verification Queue", "/ia/verification/"),
-                ("Partner Evidence", "/ia/partner-evidence/"),
-                ("SSA Verification", "/ssa/verification/"),
-                ("Returned Activities", "/ia/returned/"),
-                ("Data Quality", "/admin-panel/data-quality-center"),
-            ],
-        )
-        self.assertEqual(
-            items["FINANCE & BUDGET"],
-            [("Weekly Advance Request", "/fund-requests/weekly")],
+            IA_SIDEBAR,
         )
 
     def test_doors_unrelated_to_the_role_are_gone(self):
@@ -164,23 +174,27 @@ class IaSidebarTest(SimpleTestCase):
         self.assertEqual(lit, ["Verification Queue"])
 
     def test_the_country_directors_verification_doors_are_unchanged(self):
-        groups = {g["label"]: g for g in _groups(CD)}
-        self.assertEqual(
-            [i["label"] for i in groups["VERIFICATION"]["items"]],
-            [
-                "Verification Queue",
-                "Verification Analytics",
-                "Sample Checks",
-                "Programme Learning",
-            ],
-        )
-        for label in IA_GROUPS[1:7]:
-            with self.subTest(group=label):
-                self.assertNotIn(label, groups)
-        cd_labels = {i["label"] for g in _groups(CD) for i in g["items"]}
-        self.assertIn("Team Oversight", cd_labels)
-        self.assertIn("Quality Flags", cd_labels)
-        self.assertIn("Analytics", cd_labels)
+        cd_labels = [i["label"] for g in _groups(CD) for i in g["items"]]
+        for label in (
+            "Verification Queue",
+            "Verification Analytics",
+            "Sample Checks",
+            "Programme Learning",
+            "Team Oversight",
+            "Quality Flags",
+            "Analytics",
+        ):
+            with self.subTest(label=label):
+                self.assertEqual(cd_labels.count(label), 1)
+        # IA's own collection and framework doors stay with IA.
+        for label in (
+            "Measurement Framework",
+            "School Evidence",
+            "SSA Upload Center",
+            "Most Significant Change",
+        ):
+            with self.subTest(ia_only=label):
+                self.assertNotIn(label, cd_labels)
 
     def test_admin_is_never_offered_a_page_twice(self):
         labels = [i["label"] for g in _groups(ADMIN) for i in g["items"]]

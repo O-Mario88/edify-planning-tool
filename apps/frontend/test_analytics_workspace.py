@@ -131,21 +131,36 @@ class AnalyticsWorkspaceStructureTest(TestCase):
                     self.assertEqual(hub_items, [])
 
     def test_single_item_groups_render_as_the_link_itself(self):
-        """The workspace left QUALITY & INSIGHTS holding one entry. A collapsed
-        heading over a single link costs a click and reveals what the heading
-        already said, so those groups are marked standalone and the sidebar
-        drops the accordion."""
-        user = _user("standalone@door.test", EdifyRole.COUNTRY_DIRECTOR.value)
-        groups = build_sidebar_for_user(user, "/dashboard")
-        for group in groups:
-            with self.subTest(group=group["label"]):
-                self.assertEqual(group["standalone"], len(group["items"]) == 1)
-                if group["standalone"]:
-                    # Nothing to expand, so it must not start collapsed.
-                    self.assertTrue(group["expanded"])
+        """A collapsed heading over a single link costs a click and reveals
+        what the heading already said, so one-link groups are marked standalone
+        and the sidebar drops the accordion."""
+        for role in (EdifyRole.COUNTRY_DIRECTOR, EdifyRole.COUNTRY_PROGRAM_LEAD):
+            user = _user(f"standalone-{role.name.lower()}@door.test", role.value)
+            groups = build_sidebar_for_user(user, "/dashboard")
+            for group in groups:
+                with self.subTest(role=role.value, group=group["label"]):
+                    self.assertEqual(group["standalone"], len(group["items"]) == 1)
+                    if group["standalone"]:
+                        # Nothing to expand, so it must not start collapsed.
+                        self.assertTrue(group["expanded"])
+            analytics = [
+                item
+                for group in groups
+                for item in group["items"]
+                if item["label"] == "Analytics"
+            ]
+            self.assertEqual(len(analytics), 1)
 
-        analytics = next(g for g in groups if g["label"] == "QUALITY & INSIGHTS")
-        self.assertTrue(analytics["standalone"])
+        lead = _user(
+            "standalone-reference@door.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        reference = next(
+            g
+            for g in build_sidebar_for_user(lead, "/dashboard")
+            if g["label"] == "REFERENCE"
+        )
+        self.assertTrue(reference["standalone"])
+        self.assertTrue(reference["expanded"])
 
     def test_a_role_with_one_section_gets_that_section_by_name(self):
         """An "Analytics" link that opens a single page is a lie about scope."""

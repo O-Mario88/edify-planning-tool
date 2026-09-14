@@ -1583,6 +1583,11 @@ SIDEBAR_ITEMS = [
                 "role_urls": {
                     PARTNER: "/partner/assigned-schools",
                     IA: "/ia/dashboard/",
+                    # An MFI's home is its portal dashboard (/dashboard only
+                    # redirected there); one link, not two "Dashboard" rows.
+                    MFI_ADMIN: "/mfi-portal/dashboard",
+                    MFI_OFFICER: "/mfi-portal/dashboard",
+                    BUSINESS_TRANSFORMATION: "/business-transformation/overview",
                 },
             },
             {
@@ -2853,10 +2858,12 @@ SIDEBAR_GROUP_PRIORITY = {
 }
 
 
-# A role whose work is not field-first reads its sidebar in the order of its
+# A role whose work is not field-first registers its pages in the order of its
 # own role description. The Programme Lead leads a team before working a
 # portfolio (owner, 2026-09-13), so their responsibility groups come first and
 # their own schools after. Groups not listed keep the global order after them.
+# Since 2026-09-14 the sidebar is shown in visit-frequency groups
+# (_regroup_by_visit); this order only breaks ties between pages of equal rank.
 ROLE_SIDEBAR_GROUP_ORDER: dict[str, tuple[str, ...]] = {
     PL: (
         "MY WORK",
@@ -3106,6 +3113,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     # stays active for its own pages (/schools, /schools/<pk>) because on
     # those paths no deeper sibling matches. Section expansion recomputes
     # afterwards so a group does not stay open for a highlight it lost.
+    sections = _regroup_by_visit(sections, role)
     lit = [item for sec in sections for item in sec["items"] if item["active"]]
     for shallow in lit:
         shallow_url = shallow["url"].rstrip("/") + "/"
@@ -3113,13 +3121,61 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             deep is not shallow and deep["url"].startswith(shallow_url) for deep in lit
         ):
             shallow["active"] = False
-    for sec in sections:
+    for index, sec in enumerate(sections):
         sec["active"] = any(item["active"] for item in sec["items"])
-        sec["expanded"] = (
-            sec["active"] or sec["standalone"] or sec["label"] == "MY WORK"
-        )
+        # The most visited group stays open on first load; every other group
+        # opens when it holds the page being viewed.
+        sec["expanded"] = sec["active"] or sec["standalone"] or index == 0
 
     return sections
+
+
+def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
+    """The role's sidebar regrouped by how often each page is visited (owner,
+    2026-09-14): daily work first, then weekly, monthly, the planning cycle and
+    reference pages, most visited first inside each group
+    (apps.core.nav_cadence). Items keep their order from the registry where
+    two rank the same."""
+    from apps.core.nav_cadence import TIERS, visit_rank
+
+    # Two registrations of one destination are one link: the specific page
+    # (a partner's Assigned Schools, an MFI's portal Dashboard) is kept rather
+    # than the generic Dashboard entry pointing at it, at the better rank of
+    # the two, so the mobile bar still finds the page it asks for by key.
+    by_url: dict[str, list] = {}
+    order = 0
+    for sec in sections:
+        for item in sec["items"]:
+            rank = visit_rank(role, item.get("page_key"), item["url"])
+            entry = by_url.get(item["url"])
+            if entry is None:
+                by_url[item["url"]] = [rank, order, item]
+                order += 1
+                continue
+            entry[0] = min(entry[0], rank)
+            if entry[2].get("page_key") == "dashboard" and item.get("page_key"):
+                entry[2] = {
+                    **item,
+                    "active": item["active"] or entry[2]["active"],
+                    # Still the role's home for the phone's Dashboard slot.
+                    "alias_keys": ("dashboard",),
+                }
+    ranked = [
+        (rank[0], rank[1], position, item) for rank, position, item in by_url.values()
+    ]
+    grouped: dict[int, list[dict]] = {}
+    for tier, _weight, _order, item in sorted(ranked, key=lambda r: r[:3]):
+        grouped.setdefault(tier, []).append(item)
+    return [
+        {
+            "label": TIERS[tier],
+            "items": items,
+            "active": any(item["active"] for item in items),
+            "standalone": len(items) == 1,
+            "expanded": False,
+        }
+        for tier, items in sorted(grouped.items())
+    ]
 
 
 # ── Mobile bottom navigation ─────────────────────────────────────────────────
@@ -3248,6 +3304,8 @@ def build_mobile_nav_for_user(
             if key and key not in catalogue:
                 catalogue[key] = item
                 order.append(key)
+            for alias in item.get("alias_keys", ()):
+                catalogue.setdefault(alias, item)
 
     for key, spec in _MOBILE_NAV_STANDALONE.items():
         if role not in PAGE_PERMISSIONS.get(key, set()):
@@ -3271,7 +3329,7 @@ def build_mobile_nav_for_user(
         if len(chosen) >= MOBILE_NAV_MAX_PRIMARY or key in seen:
             return
         item = catalogue.get(key)
-        if item is None:
+        if item is None or any(picked is item for picked in chosen):
             return
         seen.add(key)
         chosen.append(item)

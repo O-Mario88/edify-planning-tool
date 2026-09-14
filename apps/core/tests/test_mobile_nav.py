@@ -196,6 +196,22 @@ class MobileNavDestinationTests(SimpleTestCase):
                     expected = "/dashboard"
                 self.assertEqual(nav_for(role)[0]["url"], expected)
 
+    def test_portal_roles_lead_with_their_own_home(self):
+        # The MFI portal and the Business Transformation workspace are those
+        # roles' homes, so the phone opens on them rather than on /dashboard,
+        # which only redirects there.
+        for role, expected in (
+            ("MFI_ADMIN", "/mfi-portal/dashboard"),
+            ("MFI_OFFICER", "/mfi-portal/dashboard"),
+            ("BUSINESS_TRANSFORMATION", "/business-transformation/overview"),
+        ):
+            with self.subTest(role=role):
+                nav = build_mobile_nav_for_user(_User(role), expected)
+                self.assertEqual(nav[0]["url"], expected)
+                self.assertTrue(nav[0]["active"])
+                urls = [item["url"] for item in nav]
+                self.assertEqual(len(urls), len(set(urls)))
+
     def test_ia_phone_leads_with_the_days_queue(self):
         # IA review (2026-09-13): Dashboard, To-Do, the verification queue and
         # Messages. SSA Verification and Partner Evidence are one tap away in

@@ -22,131 +22,104 @@ def _user(role):
 
 
 class FieldNavigationRoleTest(SimpleTestCase):
+    """Which field doors each role is offered. Since 2026-09-14 the sidebar is
+    grouped by how often pages are visited (apps.core.nav_cadence), so these
+    pin the pages a role reaches rather than the group they sit in."""
+
     def _groups(self, role):
         return {
             group["label"]: group
             for group in build_sidebar_for_user(_user(role), "/dashboard")
         }
 
-    def test_non_field_roles_do_not_receive_schools_and_field(self):
+    def _links(self, role, path="/dashboard"):
+        return [
+            (item["label"], item["url"])
+            for group in build_sidebar_for_user(_user(role), path)
+            for item in group["items"]
+        ]
+
+    def test_non_field_roles_do_not_receive_the_field_workspace(self):
         for role in (CD, RVP, HR, ACCOUNTANT, IA):
             with self.subTest(role=role):
-                self.assertNotIn("SCHOOLS & FIELD", self._groups(role))
+                urls = {url for _label, url in self._links(role)}
+                self.assertNotIn("/core-schools", urls)
+                self.assertNotIn("/schools/closed", urls)
 
     def test_field_roles_retain_schools_and_field(self):
         for role in (CCEO, PL, PROJECT_COORDINATOR):
             with self.subTest(role=role):
-                self.assertIn("SCHOOLS & FIELD", self._groups(role))
+                labels = {label for label, _url in self._links(role)}
+                self.assertIn("Planning", labels)
+                self.assertIn("Schools", labels)
 
-    def test_country_director_reaches_the_cluster_directory_from_my_work(self):
+    def test_country_director_reaches_the_cluster_directory(self):
         """The CD holds `clusters` with country scope, so /clusters lists every
-        cluster for them in the same card directory a CCEO or PL opens from
-        SCHOOLS & FIELD. With no entry in any group they could see, the only
-        cluster list the CD was ever offered was the grouped oversight table on
-        Team Oversight — a different layout for a different question. Mirrors
-        the CD-only Planning entry that already sits in MY WORK."""
-        groups = self._groups(CD)
-        items = {i["label"]: i["url"] for i in groups["MY WORK"]["items"]}
-        self.assertEqual(items.get("Clusters"), "/clusters")
-        for role in (CCEO, PL):
+        cluster for them in the same card directory a CCEO or PL opens."""
+        for role in (CD, CCEO, PL):
             with self.subTest(role=role):
-                field = {
-                    i["label"]: i["url"]
-                    for i in self._groups(role)["SCHOOLS & FIELD"]["items"]
-                }
-                self.assertEqual(field.get("Clusters"), "/clusters")
-                self.assertNotIn(
-                    "Clusters",
-                    {i["label"] for i in self._groups(role)["MY WORK"]["items"]},
-                )
+                links = self._links(role)
+                self.assertEqual(links.count(("Clusters", "/clusters")), 1)
 
     def test_clusters_is_offered_once_per_sidebar(self):
         """Admin's audience override must not turn the CD-only registration
-        into a second Clusters link beside the SCHOOLS & FIELD one."""
+        into a second Clusters link."""
         for role in (ADMIN, CD, CCEO, PL):
             with self.subTest(role=role):
-                labels = [
-                    i["label"]
-                    for g in build_sidebar_for_user(_user(role), "/clusters")
-                    for i in g["items"]
-                ]
+                labels = [label for label, _url in self._links(role, "/clusters")]
                 self.assertEqual(labels.count("Clusters"), 1)
 
-    def test_partner_gets_my_field_work_instead(self):
-        """Partners left SCHOOLS & FIELD (2026-08-20): their surface is the
-        MY FIELD WORK intake — Assigned Schools/Activities, Evidence and
-        Completed & Payments — never the staff school directory."""
+    def test_partner_gets_their_field_work_instead(self):
+        """Partners work their assigned schools and activities, never the staff
+        school directory, and their day starts on Assigned Schools."""
         groups = self._groups(PARTNER)
-        self.assertNotIn("SCHOOLS & FIELD", groups)
-        self.assertIn("MY FIELD WORK", groups)
-        labels = {i["label"] for i in groups["MY FIELD WORK"]["items"]}
-        self.assertEqual(
-            labels,
-            {
-                "Assigned Schools",
-                "Assigned Activities",
-                "Evidence",
-                "Completed & Payments",
-            },
-        )
+        labels = {label for label, _url in self._links(PARTNER)}
+        self.assertNotIn("Schools", labels)
+        for label in (
+            "Assigned Schools",
+            "Assigned Activities",
+            "Evidence",
+            "Completed & Payments",
+        ):
+            with self.subTest(label=label):
+                self.assertIn(label, labels)
+        self.assertEqual(groups["DAILY"]["items"][0]["label"], "Assigned Schools")
 
     def test_admin_carries_both_the_platform_and_field_workspaces(self):
-        """Admin was narrowed to Platform Operations, then widened again.
+        """Admin also works the field as a CCEO, so it is offered both the
+        platform operations pages and the field workspace. Navigation is not
+        authorization: see test_admin_platform_boundary."""
+        labels = {label for label, _url in self._links(ADMIN)}
+        for label in ("Team Plans", "Admin My Plan", "Planning", "Schools"):
+            with self.subTest(label=label):
+                self.assertIn(label, labels)
 
-        The reason is operational rather than architectural: at Edify the
-        person holding Admin also works the field as a CCEO, and a sidebar that
-        advertised none of it made the field half of their job unreachable
-        without switching roles for every action.
-
-        Navigation is not authorization, and this is why the distinction is
-        worth stating: Admin is offered the field workspace and still cannot
-        verify an activity, disburse against a budget, or approve a team fund
-        plan -- see test_admin_platform_boundary, which pins those three to
-        their owning roles. Showing someone a queue is not letting them act on
-        it.
-        """
-        groups = self._groups(ADMIN)
-        self.assertIn("SCHOOLS & FIELD", groups)
-        self.assertIn("PLATFORM OPERATIONS", groups)
-        labels = {i["label"] for i in groups["PLATFORM OPERATIONS"]["items"]}
-        self.assertIn("Team Plans", labels)
-        self.assertIn("Admin My Plan", labels)
-
-    def test_ia_school_data_workflow_sits_with_baseline_and_field_data(self):
-        """IA creates and validates school records without being a field role;
-        since the IA review (2026-09-13) the directory sits with the data IA
-        collects, in BASELINE & FIELD DATA, not a VERIFICATION group."""
-        groups = self._groups(IA)
-
-        self.assertNotIn("VERIFICATION", groups)
-        baseline = groups["BASELINE & FIELD DATA"]
-        school_directory = [
-            item for item in baseline["items"] if item["label"] == "School Directory"
+    def test_ia_reaches_the_school_directory_once(self):
+        """IA creates and validates school records without being a field role."""
+        links = [
+            item
+            for group in build_sidebar_for_user(_user(IA), "/dashboard")
+            for item in group["items"]
+            if item["url"] == "/schools"
         ]
-
-        self.assertEqual(len(school_directory), 1)
-        self.assertEqual(school_directory[0]["url"], "/schools")
-        self.assertTrue(school_directory[0]["icon"])
+        self.assertEqual(len(links), 1)
+        self.assertEqual(links[0]["label"], "School Directory")
+        self.assertTrue(links[0]["icon"])
 
     def test_admin_is_offered_the_school_directory_exactly_once(self):
-        """The original defect this test was written for, which the field
-        workspace coming back makes live again: Admin could be offered School
-        Directory from two different groups at once, so the same page appeared
-        twice in one sidebar.
-        """
-        groups = self._groups(ADMIN)
-
-        labels = [item["label"] for group in groups.values() for item in group["items"]]
-        self.assertIn("School Directory", labels)
-        self.assertEqual(
-            labels.count("School Directory"),
-            1,
-            "one page, one sidebar entry -- two groups both offering it is the "
-            "duplication this test exists to catch",
-        )
+        """One page, one sidebar entry: Admin was once offered the directory
+        from two groups at once."""
+        links = self._links(ADMIN)
+        self.assertEqual(sum(1 for _label, url in links if url == "/schools"), 1)
+        labels = [label for label, _url in links]
         duplicates = {label for label in labels if labels.count(label) > 1}
-        self.assertEqual(
-            duplicates,
-            set(),
-            f"no sidebar entry may appear twice for Admin, found: {duplicates}",
-        )
+        self.assertEqual(duplicates, set())
+
+    def test_groups_run_from_most_to_least_visited(self):
+        from apps.core.nav_cadence import TIERS
+
+        for role in (ADMIN, CCEO, CD, PL, IA, HR, ACCOUNTANT, PARTNER):
+            with self.subTest(role=role):
+                labels = [g["label"] for g in build_sidebar_for_user(_user(role), "/")]
+                self.assertEqual(labels, [t for t in TIERS if t in labels])
+                self.assertEqual(labels[0], "DAILY")

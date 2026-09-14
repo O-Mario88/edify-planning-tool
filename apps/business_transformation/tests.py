@@ -509,37 +509,26 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                     else:
                         self.assertNotIn(f'href="{link}"', workspace_nav)
 
-                sidebar_bt_urls = {
+                sidebar_urls = [
                     item["url"]
                     for section in build_sidebar_for_user(user, "/loans")
-                    if section["label"] == "BUSINESS TRANSFORMATION"
                     for item in section["items"]
-                }
+                ]
                 if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
-                    self.assertTrue(set(protected_links).issubset(sidebar_bt_urls))
-                elif role in {
+                    self.assertTrue(set(protected_links).issubset(sidebar_urls))
+                else:
+                    self.assertEqual(set(protected_links) & set(sidebar_urls), set())
+                if role in {
                     EdifyRole.PARTNER_ADMIN,
                     EdifyRole.PARTNER_FIELD_OFFICER,
                 }:
-                    # Delivery partners carry no BUSINESS TRANSFORMATION
-                    # group at all (owner, 2026-08-19).
-                    self.assertEqual(sidebar_bt_urls, set())
-                elif role == EdifyRole.IMPACT_ASSESSMENT:
-                    # Impact Assessment reads loans as lending evidence, so its
-                    # Loans door sits in ANALYSIS & LEARNING (IA review,
-                    # 2026-09-13), still once.
-                    self.assertEqual(sidebar_bt_urls, set())
-                    self.assertIn(
-                        "/loans",
-                        {
-                            item["url"]
-                            for section in build_sidebar_for_user(user, "/loans")
-                            if section["label"] == "ANALYSIS & LEARNING"
-                            for item in section["items"]
-                        },
-                    )
+                    # Delivery partners are never offered the loan book
+                    # (owner, 2026-08-19).
+                    self.assertNotIn("/loans", sidebar_urls)
                 else:
-                    self.assertEqual(sidebar_bt_urls, {"/loans"})
+                    # Every other role that reads loans (Impact Assessment as
+                    # lending evidence) is offered the door exactly once.
+                    self.assertEqual(sidebar_urls.count("/loans"), 1)
 
     def test_business_accounting_and_government_pages_are_bt_role_only(self):
         protected_pages = (

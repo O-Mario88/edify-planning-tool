@@ -30,78 +30,61 @@ def _user(role):
     return SimpleNamespace(is_authenticated=True, active_role=role)
 
 
+# Grouped by how often a Programme Lead opens each page, most visited first
+# (owner, 2026-09-14; apps.core.nav_cadence).
 EXPECTED_PL_SIDEBAR = [
     (
-        "MY WORK",
+        "DAILY",
         [
             ("Dashboard", "/dashboard"),
-            ("My Plan", "/my-plan"),
-            ("Calendar", "/calendar"),
             ("To-Do", "/todos"),
+            ("My Plan", "/my-plan"),
+            ("Completion Reviews", "/pl/review-queue"),
+            ("Team Oversight", "/team-planning-oversight/"),
+            ("Calendar", "/calendar"),
+            ("My Actions", "/actions/mine"),
         ],
     ),
     (
-        "STRATEGIC DIRECTION",
-        [("Priorities", "/priorities/master"), ("Work Plan", "/work-plan")],
-    ),
-    (
-        "TEAM LEADERSHIP",
+        "WEEKLY",
         [
+            ("Fund Approvals", "/fund-approvals"),
             ("My Team", "/my-team"),
+            ("Weekly Advance Request", "/fund-requests/weekly"),
             ("Team Leave", "/leave/approvals"),
+            ("Planning", "/planning"),
             ("Field Debrief", "/debriefs"),
+            ("Schools", "/schools"),
+            ("Coaching", "/team/coaching"),
+            ("Clusters", "/clusters"),
+            ("Core Schools", "/core-schools"),
+            ("Partners", "/partners"),
             ("Escalations", "/escalations"),
             ("Team Assignments", "/actions/sent"),
-        ],
-    ),
-    (
-        "PERFORMANCE & COACHING",
-        [("Coaching", "/team/coaching"), ("Team Performance", "/performance-reviews")],
-    ),
-    (
-        "PROGRAMME IMPLEMENTATION",
-        [
-            ("Team Oversight", "/team-planning-oversight/"),
-            ("Completion Reviews", "/pl/review-queue"),
-            ("Programme Rollout", "/programme-rollout"),
-        ],
-    ),
-    (
-        "COLLABORATION",
-        [
-            ("Regional Lead", "/cce-leadership/feedback"),
             ("Quality Flags", "/quality-checks"),
-            ("My Actions", "/actions/mine"),
-            ("Partners", "/partners"),
+            ("Programme Rollout", "/programme-rollout"),
+            ("Regional Lead", "/cce-leadership/feedback"),
         ],
     ),
     (
-        "SCHOOLS & FIELD",
+        "MONTHLY",
         [
-            ("Planning", "/planning"),
-            ("Schools", "/schools"),
-            ("Core Schools", "/core-schools"),
-            ("Clusters", "/clusters"),
-        ],
-    ),
-    (
-        "FINANCE & BUDGET",
-        [
-            ("Weekly Advance Request", "/fund-requests/weekly"),
-            ("Fund Approvals", "/fund-approvals"),
             ("Budget", "/budget"),
+            ("Work Plan", "/work-plan"),
+            ("Analytics", "/analytics/program-lead"),
+            ("My Targets", "/my-targets"),
         ],
     ),
     (
-        "MY PERFORMANCE",
+        "PLANNING CYCLE",
         [
+            ("Priorities", "/priorities/master"),
             ("My Performance Agreement", "/my-performance"),
-            ("My Targets", "/my-targets"),
+            ("Team Performance", "/performance-reviews"),
             ("My Professional Development", "/my-professional-development"),
-            ("Leave & Personal Time Off", "/personal-time-off/"),
         ],
     ),
-    ("QUALITY & INSIGHTS", [("Analytics", "/analytics/program-lead")]),
+    ("REFERENCE", [("Leave & Personal Time Off", "/personal-time-off/")]),
 ]
 
 
@@ -109,7 +92,7 @@ class ProgramLeadSidebarTest(SimpleTestCase):
     def _sidebar(self, role, path="/dashboard"):
         return build_sidebar_for_user(_user(role), path)
 
-    def test_the_sidebar_is_organised_by_the_role_description(self):
+    def test_the_sidebar_is_ordered_by_how_often_each_page_is_visited(self):
         sidebar = [
             (group["label"], [(item["label"], item["url"]) for item in group["items"]])
             for group in self._sidebar(PL)
@@ -220,18 +203,16 @@ class ProgramLeadSidebarTest(SimpleTestCase):
 
 
 class OtherRolesKeepTheirSidebarTest(SimpleTestCase):
-    def test_the_programme_lead_groups_are_not_offered_to_other_roles(self):
-        pl_only = {
-            "STRATEGIC DIRECTION",
-            "TEAM LEADERSHIP",
-            "PERFORMANCE & COACHING",
-            "PROGRAMME IMPLEMENTATION",
-            "COLLABORATION",
-        }
+    def test_the_programme_lead_team_pages_are_not_offered_to_other_roles(self):
+        pl_only = {"/my-team", "/team/coaching", "/programme-rollout"}
         for role in (CCEO, CD, HR):
             with self.subTest(role=role):
-                labels = {g["label"] for g in build_sidebar_for_user(_user(role), "/")}
-                self.assertFalse(labels & pl_only)
+                urls = {
+                    item["url"]
+                    for group in build_sidebar_for_user(_user(role), "/")
+                    for item in group["items"]
+                }
+                self.assertFalse(urls & pl_only)
 
     def test_admin_is_offered_each_page_once(self):
         items = [
