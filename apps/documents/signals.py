@@ -20,9 +20,14 @@ logger = logging.getLogger(__name__)
 
 @receiver(user_logged_in, dispatch_uid="documents_policy_obligations_on_login")
 def _record_policy_obligations(sender, request, user, **kwargs):
+    from django.db import transaction
+
     from apps.documents.services import AcknowledgementService
 
     try:
-        AcknowledgementService.ensure_pending_for(user)
+        # A savepoint, so a failure here cannot leave the sign-in's own
+        # transaction unusable.
+        with transaction.atomic():
+            AcknowledgementService.ensure_pending_for(user)
     except Exception:  # a policy record must never stop someone signing in
         logger.exception("Could not record policy obligations for %s", user.pk)

@@ -3944,12 +3944,18 @@ def _get_todos(principal) -> dict:
     # 2026-09-14): a partner's queue offered Schedule SSA Visit, Clusters and
     # the school directory, each a page that refuses the role. Work whose
     # page the person cannot open is someone else's to do.
+    from types import SimpleNamespace
+
     from apps.core.permissions import can_open_url
 
+    # Page gates read only the active role. The queue is always built for a
+    # signed-in principal, and callers pass the minimal principal shape
+    # (user_id, active_role), which need not carry is_authenticated.
+    viewer = SimpleNamespace(is_authenticated=True, active_role=role)
     todos = [
         t
         for t in todos
-        if not t.get("action_url") or can_open_url(principal, t["action_url"])
+        if not t.get("action_url") or can_open_url(viewer, t["action_url"])
     ]
 
     todos.sort(key=lambda t: (PRIORITY_ORDER.get(t["priority"], 9), t["_due_sort"]))
