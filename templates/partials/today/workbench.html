@@ -27,13 +27,32 @@ apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
       <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting on you</h2>
       {% if queue_total %}<a href="/todos" class="text-[12px] font-bold edify-primary-text">View all {{ queue_total }} <span aria-hidden="true">&rarr;</span></a>{% endif %}
     </div>
-    <ul class="mt-2 space-y-1.5">
-      {% for todo in waiting %}
-      {% include "partials/today/queue_item.html" %}
-      {% empty %}
-      <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">Nothing waits on you right now.</li>
-      {% endfor %}
-    </ul>
+    {% comment %}A proper, dense table in the house record-grid style, the
+    buttons at the end of each line (owner, 2026-09-14). Each row is
+    partials/today/queue_row.html; a decision replaces the row in place. The
+    list is bounded by WAITING_LIMIT in today_views and the header discloses
+    the whole queue ("View all N").{% endcomment %}
+    <div class="mt-2 -mx-4 sm:-mx-5 overflow-x-auto">
+      <table class="edify-record-table w-full border-collapse text-left edify-text-caption" data-today-waiting-table>
+        <caption class="sr-only">Waiting on you — what each item is, its kind, status, when it is due, and the decision you can take</caption>
+        <thead>
+          <tr class="font-semibold uppercase tracking-[0.05em]">
+            <th scope="col" class="px-3 py-2">Item</th>
+            <th scope="col" class="px-3 py-2">Kind</th>
+            <th scope="col" class="px-3 py-2">Status</th>
+            <th scope="col" class="px-3 py-2">Due</th>
+            <th scope="col" class="px-3 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for todo in waiting %}
+          {% include "partials/today/queue_row.html" %}
+          {% empty %}
+          <tr><td colspan="5" class="px-3 py-3 text-[12px] text-slate-500" data-today-waiting-empty>Nothing waits on you right now.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
 
   {% if mode == "lead" %}

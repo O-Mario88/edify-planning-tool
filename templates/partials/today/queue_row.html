@@ -1,0 +1,100 @@
+{% load frontend_filters %}
+{% comment %}
+One Today queue row as a table row — the "Waiting on you" table of the Program
+Lead's and desk roles' Today (owner, 2026-09-14: a proper, dense table with the
+buttons at the end of the line). Same `todo` as queue_item.html (the list row
+the field workbench and the exceptions list keep), the same operations from
+apps.command_center.today_actions and the same htmx contract: a decision posts
+to /today/act or /today/snooze and replaces the row by id with
+queue_item_done.html, which renders a <tr> here because every post inside the
+row carries layout=table through hx-vals; a refusal is written into
+[data-today-error], which leads the Item cell.
+
+A table row is one line (the platform's table rule), so what the list row
+opens inline — the short form a decision needs first, and the snooze choices —
+opens here as a small panel anchored to its button: the house row-menu
+(fixed-positioned by Alpine's rowMenu), which the table's scroll region cannot
+clip. The snooze items carry `rounded-control` so the table enhancer
+(micro-ux.js) counts their labels as control text and keeps the Actions column
+at its content width instead of shortening it like prose.
+{% endcomment %}
+<tr id="{{ todo.today.slug }}" class="today-row" hx-vals='{"layout": "table"}' data-today-item data-todo-kind="{{ todo.today.kind }}">
+  {% comment %}Title over context, which the platform's one-line table rule
+  joins as "Title · where · what" and cuts with one ellipsis at the cell's
+  edge. The refusal message leads the cell as an <output> (empty, and
+  hidden, until a decision is refused): the table enhancer injects a hidden
+  column label as the first child, and a title span straight after it
+  would inherit the "·" separator meant for a caption.{% endcomment %}
+  <th scope="row" class="px-3 py-2 align-top" data-record-title>
+    <output class="mr-1.5 edify-text-caption font-semibold text-rose-700 empty:hidden" role="alert" data-today-error>{{ error|default:"" }}</output>
+    <span class="block text-[12px] font-semibold text-slate-800">{{ todo.title }}{% if todo.today.amount %} <span class="tabular-nums font-medium text-slate-600">· UGX {{ todo.today.amount|intcomma }}</span>{% endif %}</span>
+    {% if todo.linked or todo.description %}<span class="block edify-text-caption edify-text-subtle mt-0.5">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</span>{% endif %}
+    {% if todo.ssa_scores %}
+    <ul class="ml-1.5 inline-flex flex-wrap items-center gap-1 align-middle" aria-label="SSA scores, weakest first">
+      {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" data-tone="{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </th>
+  <td class="px-3 py-2 align-top" data-label="Kind">{{ todo.category|default:"—" }}</td>
+  <td class="px-3 py-2 align-top" data-label="Status">
+    <span class="inline-flex flex-wrap items-center gap-1">
+      {% if todo.priority == "critical" %}<span class="edify-badge" data-tone="danger">Critical</span>{% endif %}
+      {% if todo.status_label %}<span class="edify-badge" data-tone="{{ todo.status_tone|default:'neutral' }}">{{ todo.status_label }}</span>{% else %}—{% endif %}
+    </span>
+  </td>
+  <td class="px-3 py-2 align-top tabular-nums" data-label="Due">{% if todo.due_label and todo.due_label != "—" %}<span class="edify-badge tabular-nums" data-tone="{{ todo.due_tone|default:'neutral' }}">{{ todo.due_label }}</span>{% else %}—{% endif %}</td>
+  <td class="px-3 py-2 align-top text-right" data-record-action>
+    <div class="inline-flex items-center justify-end gap-1.5" data-today-actions>
+      {% for op in todo.today.operations %}
+        {% if op.drawer_url %}
+        <button type="button" class="btn {% if op.tone == 'primary' %}btn-primary{% elif op.tone == 'ghost' %}btn-ghost{% else %}btn-secondary{% endif %} h-8" hx-get="{{ op.drawer_url }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ op.label }}</button>
+        {% elif op.needs_form %}
+        <div class="row-menu" x-data="rowMenu"
+             @keydown.escape.window="close()" @click.outside="close()"
+             @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+          <button type="button" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8" x-ref="trigger" @click="toggle()"
+                  :aria-expanded="open ? 'true' : 'false'" aria-haspopup="dialog">{{ op.label }}</button>
+          <form class="row-menu__list min-w-72 w-max max-w-sm space-y-2 p-3 text-left" x-ref="list" x-show="open" :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="dialog" aria-label="{{ op.label }} — {{ todo.title }}"
+                hx-post="/today/act" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" data-today-form="{{ op.key }}">
+            <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="op" value="{{ op.key }}"><input type="hidden" name="title" value="{{ todo.title }}">
+            {% if op.field %}
+            <label class="block edify-text-caption font-semibold text-slate-600">{{ op.field.1 }}
+              <input type="text" name="field_{{ op.field.0 }}" maxlength="128" required class="mt-1 w-full h-8 rounded-control border border-slate-200 edify-surface px-2 text-[12px]">
+            </label>
+            {% endif %}
+            {% if op.reason %}
+            <label class="block edify-text-caption font-semibold text-slate-600">{{ op.reason_label }}
+              <textarea name="reason" rows="2" maxlength="2000" class="mt-1 w-full rounded-control border border-slate-200 edify-surface px-2 py-1.5 text-[12px]"{% if op.reason == "required" %} required{% endif %}></textarea>
+            </label>
+            {% endif %}
+            {% if op.attest %}
+            <label class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600"><input type="checkbox" name="attested" value="yes" required> {{ op.attest }}</label>
+            {% endif %}
+            <div class="flex justify-end gap-1.5"><button type="button" class="btn btn-ghost h-8" @click="close()">Cancel</button><button type="submit" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8">{{ op.label }}</button></div>
+          </form>
+        </div>
+        {% else %}
+        <form hx-post="/today/act" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="m-0">
+          <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="op" value="{{ op.key }}"><input type="hidden" name="title" value="{{ todo.title }}">
+          <button type="submit" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8">{{ op.label }}</button>
+        </form>
+        {% endif %}
+      {% endfor %}
+      <a href="{{ todo.action_url|default:'/todos' }}" class="btn btn-ghost h-8">{% if todo.today.operations %}Open{% else %}{{ todo.action_label|default:"Open" }}{% endif %}</a>
+      <div class="row-menu today-snooze" x-data="rowMenu"
+           @keydown.escape.window="close()" @click.outside="close()"
+           @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+        <button type="button" class="btn btn-ghost h-8" x-ref="trigger" @click="toggle()"
+                :aria-expanded="open ? 'true' : 'false'" aria-haspopup="true" aria-label="Snooze {{ todo.title }}">Snooze</button>
+        <div class="row-menu__list" x-ref="list" x-show="open" :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+          {% for choice, label in snooze_choices %}
+          <form hx-post="/today/snooze" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="m-0">
+            <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="choice" value="{{ choice }}"><input type="hidden" name="title" value="{{ todo.title }}">
+            <button type="submit" class="row-menu__item rounded-control" role="menuitem" @click="close()">{{ label }}</button>
+          </form>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </td>
+</tr>

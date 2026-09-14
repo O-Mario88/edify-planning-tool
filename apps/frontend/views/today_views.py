@@ -414,6 +414,7 @@ def today_act(request):
             "title": request.POST.get("title", "")[:120],
             "message": message,
             "cleared_count": today_actions.cleared_today(request.user),
+            "table": request.POST.get("layout") == "table",
         },
     )
 
@@ -441,6 +442,7 @@ def today_snooze(request):
             "message": f"snoozed until {snoozed.until:%a %-d %b}",
             "undo_todo": todo_id,
             "cleared_count": None,
+            "table": request.POST.get("layout") == "table",
         },
     )
 

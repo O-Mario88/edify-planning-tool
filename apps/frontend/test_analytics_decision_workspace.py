@@ -76,7 +76,11 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertNotIn("#sr-cam:not(.sr-zoomed) .sr-labels", map_template)
         self.assertNotIn("#sr-cam:not(.sr-zoomed) .sr-school-pins", map_template)
         self.assertNotIn("max-block-size: 350px", layout)
-        self.assertIn("sr-map-layout flex flex-col xl:flex-row", map_template)
+        # The distribution table sits below the map at every width (owner,
+        # 2026-09-14), so the layout never turns into a row on desktop.
+        self.assertIn("sr-map-layout flex flex-col", map_template)
+        self.assertNotIn("xl:flex-row", map_template)
+        self.assertNotIn("xl:w-[286px]", map_template)
         self.assertIn("sr-map-viewport", map_template)
         self.assertIn("sr-distribution-panel", map_template)
         self.assertIn('data-mobile-table="fit"', map_template)

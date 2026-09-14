@@ -100,12 +100,14 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
         # forces every table cell visible with !important and yields only to
         # an inline display:none, which is what x-show writes.
         self.assertEqual(html.count('x-show="wideColumns"'), 6)
-        self.assertIn(
-            "'(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)'",
-            script,
-        )
+        # The table sits below the map at every width (owner, 2026-09-14), so
+        # the wide columns need only a tablet's width; the old 1600px rail is
+        # gone with the rail itself.
+        self.assertIn("window.matchMedia('(min-width: 48rem)')", script)
         css = _read("static/css/pages/analytics-dashboard.css")
         self.assertIn(
-            "@media (min-width: 100rem) {\n  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }",
+            ".analytics-geo-card .sr-distribution-panel { flex: 0 0 auto; width: 100%; }",
             css,
         )
+        self.assertNotIn("flex: 0 0 36rem", css)
+        self.assertNotIn("flex: 0 0 19rem", css)

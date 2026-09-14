@@ -672,35 +672,6 @@
 
 }
 
-@media (min-width: 80rem) {
-  .analytics-geo-card .sr-map-viewport {
-    max-inline-size: 60rem;
-  }
-  /* Beside the map the panel is 286px: 12px of side padding leaves the
-     table 262px, and a FIXED layout keeps the four columns inside it — an
-     automatic layout summed the columns to 275px and clipped the SSA
-     figures at the panel edge (owner, 2026-09-06). */
-  .analytics-geo-card .sr-distribution-panel {
-    padding-inline: 0.75rem !important;
-  }
-  .analytics-geo-card .sr-distribution-table,
-  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
-    table-layout: fixed !important;
-    inline-size: 100% !important;
-    min-inline-size: 0 !important;
-  }
-  /* Nothing here can scroll sideways: the table is fixed at the panel's
-     width, so the "fit" wrapper's sideways scroll region is clipped, and the
-     vertical scrollbar that appears once the list passes its height cap
-     keeps a stable gutter instead of stealing width from a 100% table and
-     spilling it into a horizontal scrollbar (owner, 2026-09-06). */
-  .analytics-geo-card .sr-distribution-scroll,
-  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
-    overflow-x: clip !important;
-    scrollbar-gutter: stable;
-  }
-}
-
 @container analytics-dashboard (max-width: 51.99rem) {
   .kpi-strip--executive .kpi-strip__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -818,55 +789,46 @@
   }
 }
 
-/* Mobile and tablet keep the geographic legend as one uninterrupted reading
-   sequence: map first, the full distribution table immediately below, then
-   the explanatory confidence note. The priority rail follows the complete
-   card instead of splitting that sequence.
+/* The distribution table sits below the map at every width (owner,
+   2026-09-14: on desktop the table moved under the map to give the map the
+   room). The panel is a full-width band under the map, and the table fills
+   it: a nested scroll region was giving it a second, narrower viewport
+   inside the panel — the table measured 256px inside a 337px card and
+   scrolled sideways with the whole width sitting unused beside it (owner,
+   2026-09-05). There is room here; nothing needs to scroll horizontally. */
+.analytics-geo-card .sr-distribution-panel {
+  margin-block-start: .25rem;
+  padding: 1rem 0.5rem 0;
+  border-block-start: 1px solid var(--edify-border);
+}
 
-   The bound is the side-by-side breakpoint (xl, 80rem), not 64rem: the panel
-   stacks under the map at every width below xl, and between 64rem and 80rem
-   -- a 10-inch tablet -- the stacked table was still sized to its columns,
-   267px inside an 829px panel, half the row empty (owner, 2026-09-05). */
-@media (max-width: 79.99rem) {
-  .analytics-geo-card .sr-distribution-panel {
-    margin-block-start: .25rem;
-    padding: 1rem 0.5rem 0;
-    border-block-start: 1px solid var(--edify-border);
-  }
+.analytics-geo-card .sr-distribution-scroll {
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: auto;
+}
 
-  .analytics-geo-card .sr-distribution-scroll {
-    overflow-x: clip;
-    overflow-y: auto;
-    overscroll-behavior-block: contain;
-    scrollbar-gutter: auto;
-  }
+.analytics-geo-card .sr-distribution-scroll table,
+.analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  table-layout: auto;
+}
 
-  /* The table fills the card. A nested scroll region was giving it a second,
-     narrower viewport inside the panel — the table measured 256px inside a
-     337px card and scrolled sideways with the whole width sitting unused
-     beside it (owner, 2026-09-05). There is room here; nothing needs to
-     scroll horizontally. */
-  .analytics-geo-card .sr-distribution-scroll table,
-  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
-    inline-size: 100% !important;
-    min-inline-size: 0 !important;
-    table-layout: auto;
-  }
+.analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
 
-  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-  }
+/* The name column takes whatever the figure columns leave. */
+.analytics-geo-card .sr-distribution-col--name {
+  inline-size: auto;
+}
 
-  /* The name column takes whatever the three figure columns leave. */
-  .analytics-geo-card .sr-distribution-col--name {
-    inline-size: auto;
-  }
-
-  .analytics-geo-card .sr-distribution-scroll :is(th, td) {
-    min-block-size: 38px;
-    padding-block: .5rem;
-  }
+.analytics-geo-card .sr-distribution-scroll :is(th, td) {
+  min-block-size: 38px;
+  padding-block: .5rem;
 }
 
 @media (max-width: 36rem) {
@@ -1538,25 +1500,48 @@ main #impact-workspace .impact-group-pagination a {
      used to take every pixel the fixed table left, so the drawing floated in
      the middle of a much wider box and the table was pushed to the far edge
      of the card with empty space between (owner, 2026-09-11). */
-  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; justify-content: center; column-gap: 2.5rem !important; }
+  .analytics-geo-card .sr-map-layout { flex-direction: column; align-items: stretch; }
   .analytics-geo-card .sr-map-canvas {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
-    width: min(100%, var(--map-viewport-height, 40rem));
+    width: 100%;
   }
+  /* A square as tall as the window allows (fitViewport writes the height),
+     centred in the card's full width now that nothing sits beside it
+     (owner, 2026-09-14). The width follows the height so the country fills
+     the square edge to edge instead of floating in a letterbox. */
   .analytics-geo-card .sr-map-viewport {
     aspect-ratio: auto !important;
     height: var(--map-viewport-height, max(220px, calc(100dvh - 22rem)));
+    width: min(100%, var(--map-viewport-height, 40rem));
     max-inline-size: none;
   }
   .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
-  .analytics-geo-card .sr-distribution-panel { flex: 0 0 19rem; width: 19rem; }
-  .analytics-geo-card .sr-distribution-scroll { max-height: var(--map-viewport-height, 24rem); }
-}
-@media (min-width: 64rem) {
-  .analytics-geo-card .sr-distribution-scroll {
-    max-height: max(10rem, calc(var(--map-viewport-height, 24rem) - 4rem));
+  /* The distribution table: a full-width band under the map, every column
+     showing, denser than the stacked phone table, and a bounded height so a
+     district focus with many rows scrolls inside the card rather than
+     stretching it. */
+  .analytics-geo-card .sr-distribution-panel { flex: 0 0 auto; width: 100%; }
+  .analytics-geo-card .sr-distribution-scroll { max-height: 26rem; }
+  .analytics-geo-card .sr-distribution-table {
+    font-size: .75rem;
   }
+  .analytics-geo-card .sr-distribution-scroll :is(th, td) {
+    min-block-size: 32px;
+    padding-block: .375rem;
+    padding-inline: .75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table :is(th, td):first-child {
+    padding-inline-start: .5rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table :is(th, td):last-child {
+    padding-inline-end: .75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-col--schools,
+  .analytics-geo-card .sr-distribution-col--clusters { inline-size: 5rem; }
+  .analytics-geo-card .sr-distribution-col--ssa { inline-size: 5.5rem; }
+  .analytics-geo-card .sr-distribution-table th.sr-wide,
+  .analytics-geo-card .sr-distribution-table td.sr-wide { inline-size: 6.5rem; }
 }
 
 /* Give the selected map the workspace height; summary metrics remain on
@@ -1596,38 +1581,11 @@ main #impact-workspace .impact-group-pagination a {
   }
 }
 
-@media (min-width: 64rem) {
-  .analytics-geo-card .sr-distribution-panel {
-    display: flex;
-    flex-direction: column;
-    block-size: var(--map-viewport-height, 24rem);
-  }
-  .analytics-geo-card .sr-distribution-scroll {
-    flex: 1 1 auto;
-    min-block-size: 0;
-    max-block-size: none;
-    overflow-y: auto;
-  }
-  .analytics-geo-card .sr-distribution-panel > details { flex: 0 0 auto; }
-}
-
 /* The sub-region table's three wide columns — schools visited, schools
-   trained, students impacted (owner, 2026-09-12). Hidden by default; shown
-   where the table has the room: on a tablet, where it sits below the map and
-   takes the whole row; and on desktop screens from 100rem (1600px), where the
-   panel beside the map can be wide. A 13-inch laptop (1440px) keeps the
-   four-column table, as asked. */
-/* Their visibility is the component's (x-show="wideColumns" on the cells,
-   from one matchMedia over the same two bands): mobile-micro-ux.css forces
-   every table cell visible with a ten-part !important rule that yields only
-   to an inline display:none. The panel's width is still the stylesheet's. */
-@media (min-width: 100rem) {
-  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }
-  /* Seven columns share the panel here; the name keeps enough to read
-     "South Western" whole rather than "South W". */
-  .analytics-geo-card .sr-distribution-col--name { width: 9.5rem; }
-  .analytics-geo-card .sr-distribution-col--schools,
-  .analytics-geo-card .sr-distribution-col--clusters { width: 3.25rem; }
-  .analytics-geo-card .sr-distribution-col--ssa { width: 4.25rem; }
-}
+   trained, students impacted (owner, 2026-09-12). Shown from tablet width
+   up, now that the table sits below the map and takes the whole row at
+   every size (owner, 2026-09-14). Their visibility is the component's
+   (x-show="wideColumns" on the cells, from one matchMedia over the same
+   band): mobile-micro-ux.css forces every table cell visible with a
+   ten-part !important rule that yields only to an inline display:none. */
 

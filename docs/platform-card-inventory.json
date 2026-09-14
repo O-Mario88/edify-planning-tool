@@ -5,9 +5,9 @@
   "distinct_titles": 659,
   "with_card_key": 13,
   "untitled_surfaces": 776,
-  "untitled_chrome": 175,
+  "untitled_chrome": 174,
   "untitled_nested": 254,
-  "untitled_headless": 347,
+  "untitled_headless": 348,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -7599,7 +7599,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 40,
+   "line": 59,
    "title": "Your team today",
    "heading_level": 2,
    "has_card_key": false,
@@ -7617,7 +7617,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 103,
+   "line": 122,
    "title": "Today's route",
    "heading_level": 2,
    "has_card_key": false,
@@ -7635,7 +7635,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 137,
+   "line": 156,
    "title": "Waiting for your confirmation",
    "heading_level": 2,
    "has_card_key": false,
@@ -7653,7 +7653,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 153,
+   "line": 172,
    "title": "Your proposed week",
    "heading_level": 2,
    "has_card_key": false,
@@ -7671,7 +7671,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 197,
+   "line": 216,
    "title": "Day completion",
    "heading_level": 2,
    "has_card_key": false,

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **445**
+Components and application partials: **446**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -441,6 +441,7 @@ Components and application partials: **445**
 | `partials/today/exceptions.html` | application-partial | Reusable exceptions interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/today/queue_item.html` | application-partial | Reusable queue item interface primitive | danger, {% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}, {{ todo.due_tone|default:; default, error, open | inherits containing page contract | accessible name and label, announced dynamic state | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/today/queue_item_done.html` | application-partial | Reusable queue item done interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /today/act<br>/today/snooze | 0 |
+| `partials/today/queue_row.html` | application-partial | Reusable queue row interface primitive | danger, {% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}, {{ todo.due_tone|default:, {{ todo.status_tone|default:; default, error, open | inherits containing page contract | accessible name and label, announced dynamic state | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/today/workbench.html` | application-partial | Reusable workbench interface primitive | info, success; default, empty | explicit responsive contract | accessible name and label | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/todos/row.html` | application-partial | Reusable row interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /todos | 0 |
 | `partials/upload_result.html` | application-partial | Reusable upload result interface primitive | canonical; default, error | explicit responsive contract | inherits semantic parent contract | /schools/upload | 0 |
