@@ -43,7 +43,7 @@
       <div class="mt-6 flex items-center justify-center gap-3 text-[12px] font-bold text-white/65">
         <span>Version {{ version.version_number }}</span>
         <span aria-hidden="true">•</span>
-        <span>Required before workspace access</span>
+        <span>Response required</span>
       </div>
       {% if acknowledgement %}
       <div class="mx-auto mt-5 max-w-md rounded-surface border border-white/20 bg-white/10 px-4 py-3 text-left" role="status">
@@ -138,9 +138,9 @@
     {% elif acknowledgement and acknowledgement.state == "disagreed" %}
     <section class="agreement-decision edify-inverse-surface mt-4 px-5 py-12 text-white sm:px-8">
       <div class="mx-auto max-w-[780px]">
-        <p class="text-[12px] font-extrabold uppercase tracking-[.18em] text-amber-200">Access remains locked</p>
+        <p class="text-[12px] font-extrabold uppercase tracking-[.18em] text-amber-200">Not accepted</p>
         <h2 class="edify-inverse-heading mt-3 text-[25px] font-extrabold text-white">You have not accepted this document.</h2>
-        <p class="mt-2 text-[13px] font-medium text-white/70">You cannot continue to the next agreement or enter Edify until all required documents are accepted.</p>
+        <p class="mt-2 text-[13px] font-medium text-white/70">HR and your Country Director have your reason. You can change your response at any time.</p>
         <a href="/policy-agreement/restricted" class="agreement-action agreement-action--primary mt-5 inline-flex min-h-11 items-center rounded-control px-5 text-[13px] font-extrabold">Review and change my response</a>
       </div>
     </section>

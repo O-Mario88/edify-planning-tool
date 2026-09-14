@@ -1,8 +1,8 @@
 """Upload Center, Document Library and policy-agreement routes.
 
-``/documents/…`` and ``/policy-agreement/…`` are exempt from the policy gate
-(see apps/documents/gate.py) — a person being asked to accept a policy has to
-be able to read it, download it, answer it and reach HR.
+``/documents/…`` and ``/policy-agreement/…`` are where a person reads, downloads
+and answers a policy. They were the exemptions of the blocking policy gate,
+which the owner removed on 2026-09-14 (see apps/documents/gate.py).
 """
 
 from django.urls import path

@@ -618,66 +618,93 @@ class AcknowledgementTests(DocumentTestBase):
         )
 
 
-# ── The access gate ──────────────────────────────────────────────────────────
+# ── No access gate ───────────────────────────────────────────────────────────
 
 
-class AccessGateTests(DocumentTestBase):
+class NoAccessGateTests(DocumentTestBase):
+    """An unanswered policy never withholds the application.
+
+    The owner removed the blocking policy gate on 2026-09-14. A policy marked
+    as blocking is still published, read and answered at /policy-agreement;
+    the person who has not answered it simply keeps working.
+    """
+
     def setUp(self):
         self.document, self.version = self._policy()
         self._publish(self.document, self.version)
         self.client = Client()
         self.client.force_login(self.cceo)
 
-    def test_a_pending_user_is_sent_to_the_agreement_center(self):
+    def test_a_pending_user_reaches_the_dashboard(self):
+        self.assertTrue(
+            DocumentAcknowledgement.objects.filter(
+                version=self.version,
+                user_id=self.cceo.id,
+                state=AcknowledgementState.PENDING,
+            ).exists()
+        )
         response = self.client.get("/dashboard")
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "/policy-agreement")
+        self.assertEqual(response.status_code, 200)
 
-    def test_a_direct_url_cannot_bypass_the_gate(self):
+    def test_direct_urls_are_not_sent_to_the_agreement_center(self):
         for path in ("/planning", "/my-plan", "/schools"):
             with self.subTest(path):
-                self.assertEqual(self.client.get(path).status_code, 302)
+                response = self.client.get(path)
+                self.assertNotIn("/policy-agreement", response.get("Location", ""))
 
-    def test_an_api_call_cannot_bypass_the_gate(self):
+    def test_an_api_call_is_not_withheld(self):
         response = self.client.get("/api/activities", HTTP_ACCEPT="application/json")
-        self.assertEqual(response.status_code, 403)
-        self.assertIn("redirect", response.json())
+        self.assertNotEqual(response.status_code, 403)
 
-    def test_an_htmx_request_cannot_bypass_the_gate(self):
+    def test_an_htmx_request_is_not_redirected(self):
         response = self.client.get("/dashboard", HTTP_HX_REQUEST="true")
-        self.assertEqual(response["HX-Redirect"], "/policy-agreement")
+        self.assertNotIn("HX-Redirect", response)
 
-    def test_the_gated_user_can_still_read_the_policy(self):
+    def test_the_pending_user_can_still_read_and_answer_the_policy(self):
         self.assertEqual(
             self.client.get(f"/documents/{self.document.slug}/").status_code, 200
         )
         self.assertEqual(self.client.get("/policy-agreement").status_code, 200)
 
-    def test_the_gated_user_can_still_reach_support_and_logout(self):
-        for path in ("/support", "/logout"):
-            with self.subTest(path):
-                self.assertNotEqual(self.client.get(path).status_code, 302)
-
-    def test_agreeing_opens_the_application(self):
+    def test_agreeing_returns_the_user_to_the_dashboard(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
         response = self.client.post(
             f"/api/documents/acknowledge/{ack.id}", {"choice": "agree"}
         )
         self.assertEqual(response["Location"], "/dashboard")
-        self.assertEqual(self.client.get("/dashboard").status_code, 200)
+        ack.refresh_from_db()
+        self.assertEqual(ack.state, AcknowledgementState.AGREED)
 
-    def test_disagreeing_restricts_rather_than_opens(self):
+    def test_disagreeing_is_recorded_without_restricting_the_application(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
         disagreement = self.client.post(
             f"/api/documents/acknowledge/{ack.id}",
             {"choice": "disagree", "comment": "I need clarification on section 4."},
         )
         self.assertEqual(disagreement["Location"], "/policy-agreement/restricted")
-        response = self.client.get("/dashboard")
-        self.assertEqual(response["Location"], "/policy-agreement/restricted")
+        ack.refresh_from_db()
+        self.assertEqual(ack.state, AcknowledgementState.DISAGREED)
+        self.assertEqual(self.client.get("/dashboard").status_code, 200)
         self.assertEqual(
             self.client.get("/policy-agreement/restricted").status_code, 200
         )
+
+    def test_a_new_starter_is_given_the_policy_when_they_sign_in(self):
+        """Publication assigns the people who exist then; someone who joins
+        later owes the policy from their first sign-in, as they did while the
+        gate recorded it on their first request, and still reaches their work."""
+        starter = _user("starter", "CCEO", country="Uganda")
+        self.assertFalse(
+            DocumentAcknowledgement.objects.filter(user_id=starter.id).exists()
+        )
+        client = Client()
+        client.force_login(starter)
+        ack = DocumentAcknowledgement.objects.get(
+            user_id=starter.id, document=self.document
+        )
+        self.assertEqual(ack.state, AcknowledgementState.PENDING)
+        self.assertEqual(ack.version, self.version)
+        self.assertEqual(client.get("/dashboard").status_code, 200)
 
     def test_a_user_may_change_a_disagreement_to_agreement(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
@@ -686,7 +713,8 @@ class AccessGateTests(DocumentTestBase):
             {"choice": "disagree", "comment": "Concern."},
         )
         self.client.post(f"/api/documents/acknowledge/{ack.id}", {"choice": "agree"})
-        self.assertEqual(self.client.get("/dashboard").status_code, 200)
+        ack.refresh_from_db()
+        self.assertEqual(ack.state, AcknowledgementState.AGREED)
 
     def test_the_original_disagreement_stays_in_the_audit_history(self):
         from apps.audit.models import AuditLog
@@ -704,37 +732,24 @@ class AccessGateTests(DocumentTestBase):
             AuditLog.objects.filter(action="documents.policy_agreed").exists()
         )
 
-    def test_a_user_outside_the_audience_is_never_gated(self):
-        """IA is not in this policy's audience, so nothing withholds the app.
+    def test_no_request_records_a_gate_refusal(self):
+        from apps.audit.models import AuditLog
 
-        /dashboard redirects IA to its own dashboard, so the assertion is that
-        the redirect is *not* the policy gate rather than that there is none.
-        """
-        client = Client()
-        client.force_login(self.ia)
-        response = client.get("/dashboard")
-        self.assertNotIn("/policy-agreement", response.get("Location", ""))
-        self.assertEqual(client.get("/ia/dashboard/").status_code, 200)
-
-    def test_a_policy_that_does_not_block_access_does_not_gate(self):
-        DocumentAcknowledgement.objects.all().delete()
-        DocumentAsset.objects.update(blocks_application_access=False)
-        AcknowledgementService.generate_pending(self.document, self.version)
-        self.assertEqual(self.client.get("/dashboard").status_code, 200)
-
-    def test_a_user_created_after_publication_is_gated_on_first_access(self):
-        late_user = _user("late-user", "CCEO", country="Uganda")
+        self.client.get("/dashboard")
+        self.client.get("/api/activities", HTTP_ACCEPT="application/json")
         self.assertFalse(
-            DocumentAcknowledgement.objects.filter(
-                version=self.version, user_id=late_user.id
-            ).exists()
+            AuditLog.objects.filter(action="documents.access_gate_applied").exists()
         )
 
+    def test_a_user_created_after_publication_works_and_can_still_answer(self):
+        late_user = _user("late-user", "CCEO", country="Uganda")
         client = Client()
         client.force_login(late_user)
-        response = client.get("/dashboard")
 
-        self.assertEqual(response["Location"], "/policy-agreement")
+        self.assertEqual(client.get("/dashboard").status_code, 200)
+
+        # Their obligation is assigned when they open the Agreement Center.
+        self.assertEqual(client.get("/policy-agreement").status_code, 200)
         self.assertTrue(
             DocumentAcknowledgement.objects.filter(
                 version=self.version,
@@ -1371,9 +1386,13 @@ class DocumentHealthTests(DocumentTestBase):
 
 
 class GateCostTests(DocumentTestBase):
-    """The gate runs on every authenticated request, so its cost matters."""
+    """What a user still owes stays cheap to ask.
 
-    def test_with_no_blocking_policy_the_gate_costs_one_query(self):
+    This once ran on every request as the access gate; the owner removed the
+    gate on 2026-09-14 and the Agreement Center and audit scripts still read it.
+    """
+
+    def test_with_no_blocking_policy_the_check_costs_one_query(self):
         from django.db import connection
         from django.test.utils import CaptureQueriesContext
 
@@ -1410,7 +1429,7 @@ class GateCostTests(DocumentTestBase):
             PolicyGateService.any_blocking_policy_exists()
         self.assertEqual(len(queries.captured_queries), 2)
 
-    def test_a_blocking_policy_still_gates(self):
+    def test_a_blocking_policy_is_reported_as_pending(self):
         from apps.documents.gate import PolicyGateService
 
         document, version = self._policy()

@@ -197,9 +197,10 @@ MIDDLEWARE = [
     # Platform failure detection observes the response that is actually sent --
     # a 500 raised by a view and a route that 404s both reach it.
     "apps.admin_ops.detection.PlatformFailureDetectionMiddleware",
-    # Mandatory-policy gate runs before the view layer so a direct URL, an
-    # HTMX fragment, an API call and an SSE stream are all withheld.
-    "apps.documents.gate.PolicyGateMiddleware",
+    # The mandatory-policy gate (apps.documents.gate.PolicyGateMiddleware) sat
+    # here. The owner removed the blocking gate on 2026-09-14: policies are
+    # still published, read and acknowledged at /policy-agreement, but an
+    # unanswered one no longer withholds the application.
     # Generic error envelope — no stack traces / DB errors to clients; mirrors
     # the NestJS AllExceptionsFilter. Business 4xx keep their messages.
     "apps.core.middleware.AllExceptionsMiddleware",
