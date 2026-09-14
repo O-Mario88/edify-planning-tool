@@ -177,7 +177,7 @@
          line of the row; marking it would show it again. Only a child that
          carries a hiding or responsive display class can be hidden. */
       var hidden = Array.from(cell.children).map(function (child) {
-        if (child.hidden || child.hasAttribute('x-cloak')) return true;
+        if (child.hidden || child.hasAttribute('x-cloak') || child.classList.contains('edify-record-field-label')) return true;
         var classes = child.className && typeof child.className === 'string' ? child.className : '';
         if (!/(^|\s)(hidden|max-\w+:hidden|\w+:hidden|\w+:block|\w+:flex|\w+:inline\S*)(\s|$)/.test(classes)) return false;
         return window.getComputedStyle(child).display === 'none';
@@ -248,7 +248,7 @@
       });
       /* A block that follows a pill or a control in a cell (a status over
          its action) sits beside it on the row line. */
-      Array.from(cell.children).forEach(function (child, index) {
+      Array.from(cell.children).filter(function (child) { return !child.classList.contains('edify-record-field-label'); }).forEach(function (child, index) {
         if (index === 0 || child.classList.contains('edify-cell-hidden')) return;
         if (!child.matches('div, p')) return;
         if (child.matches('.flex, .grid, .inline-flex, form, table, details, .edify-cell-stackchip, .edify-cell-row')) return;
@@ -694,10 +694,10 @@
   /* A cell's text as a reader sees it: assistive-only text is not on the
      line and must not decide whether the cell is a figure. */
   function visibleText(cell) {
-    var hidden = cell.querySelectorAll('.sr-only, .edify-visually-hidden');
+    var hidden = cell.querySelectorAll('.sr-only, .edify-visually-hidden, .edify-record-field-label');
     if (!hidden.length) return cleanText(cell.textContent);
     var clone = cell.cloneNode(true);
-    clone.querySelectorAll('.sr-only, .edify-visually-hidden').forEach(function (node) { node.remove(); });
+    clone.querySelectorAll('.sr-only, .edify-visually-hidden, .edify-record-field-label').forEach(function (node) { node.remove(); });
     return cleanText(clone.textContent);
   }
 
@@ -970,7 +970,7 @@
         if (!table.isConnected) return;
         table.querySelectorAll('.edify-cell-truncate').forEach(function (cell) {
           if (cell.scrollWidth > cell.clientWidth + 1) {
-            if (!cell.hasAttribute('title')) { cell.title = cleanText(cell.textContent); cell.dataset.edifyTitle = 'fit'; }
+            if (!cell.hasAttribute('title')) { cell.title = visibleText(cell); cell.dataset.edifyTitle = 'fit'; }
           } else if (cell.dataset.edifyTitle === 'fit') {
             cell.removeAttribute('title'); delete cell.dataset.edifyTitle;
           }
@@ -1750,12 +1750,6 @@
   });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);
-  });
-  document.addEventListener('htmx:responseError', function () {
-    announce('The action could not be completed. Review the error message and try again.', 'assertive');
-  });
-  document.addEventListener('htmx:sendError', function () {
-    announce('The network request failed. Check your connection and try again.', 'assertive');
   });
   document.addEventListener('change', function (event) {
     var choice = event.target.closest && event.target.closest('.edify-record-table input[type="checkbox"]');

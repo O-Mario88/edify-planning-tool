@@ -82,8 +82,8 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260914themeaudit1">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260914themeaudit1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260909anomalies1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260914header2">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260914hierarchy1">
 <link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260914themeaudit1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
@@ -106,8 +106,9 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260913cceregional1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260914workplantables1">
-<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260914records2">
+<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
+<link rel="stylesheet" href="{% static 'css/components/record-views.css' %}?v=20260914records3">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -173,7 +174,8 @@ csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
-<script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
+<script defer src="{% static 'js/interaction-pending.js' %}?v=20260914pending3"></script>
+<script defer src="{% static 'js/record-views.js' %}?v=20260914records3"></script>
 {% comment %}
 Workspace switches are real document navigations, not in-page tabs. Ask the
 browser to fetch likely sibling views after user intent so the next document
@@ -220,7 +222,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260914workplantables1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260914records2"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own
@@ -240,7 +242,7 @@ waited for is now kept, so going back to it costs nothing (owner, 2026-09-07).
 Loaded after the chart system, whose teardown it calls before parking a panel.
 {% endcomment %}
 <script defer src="{% static 'js/view-panels.js' %}?v=20260913filters"></script>
-<script defer src="{% static 'js/platform-status.js' %}?v=20260913busy1"></script>
+<script defer src="{% static 'js/platform-status.js' %}?v=20260914states2"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

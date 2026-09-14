@@ -492,3 +492,24 @@
     gap: 0.1875rem;
   }
 }
+
+/* Compact header: keep every primary control reachable without focusing an
+   off-screen item and horizontally scrolling the entire workspace. */
+.edify-mobile-account-link { display: none; }
+@media (max-width: 40rem) {
+  .edify-topbar .edify-topbar__secondary-link,
+  .edify-topbar [aria-label="Refresh this page"] { display: none !important; }
+  .edify-topbar .edify-mobile-account-link { display: flex; min-height: 44px; align-items: center; }
+  .edify-topbar .edify-topbar__icon-control,
+  .edify-topbar .edify-search-submit {
+    inline-size: 44px; min-inline-size: 44px;
+    block-size: 44px; min-block-size: 44px;
+  }
+  .edify-topbar .edify-topbar__search:not(.is-open):has(.edify-search-submit) {
+    flex: 0 0 44px; inline-size: 44px; max-inline-size: 44px;
+  }
+}
+@media (max-width: 24rem) {
+  .edify-topbar > .edify-topbar__date { display: none; }
+  .edify-topbar .edify-topbar__utilities { margin-inline-start: auto; }
+}

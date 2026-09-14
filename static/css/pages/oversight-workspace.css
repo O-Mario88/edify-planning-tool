@@ -154,3 +154,16 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
  main [data-oversight-workspace] > .edify-page-header { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
  main [data-oversight-workspace] > .edify-page-header .oversight-period-filter { width: auto !important; max-width: 32rem; }
 }
+
+@media (max-width: 47.999rem) {
+  [data-oversight-workspace] .oversight-selection-heading,
+  [data-oversight-workspace] .oversight-selection-heading > div {
+    flex-wrap: wrap; min-width: 0; max-width: 100%;
+  }
+  [data-oversight-workspace] .oversight-selection-heading > div { flex-basis: 100%; }
+  [data-oversight-workspace] [data-team-send] {
+    display: flex; flex-wrap: wrap; width: 100%; min-width: 0;
+  }
+  #main-content [data-oversight-workspace] [data-team-send] :is(select, button) { min-height: 44px !important; }
+  [data-oversight-workspace] [data-team-send] select { flex: 1 1 9rem; min-width: 0; }
+}

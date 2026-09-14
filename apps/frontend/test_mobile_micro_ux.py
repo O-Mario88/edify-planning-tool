@@ -250,8 +250,12 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn("enhanceFormLabels", behavior)
         self.assertIn("label.htmlFor = field.id", behavior)
         self.assertIn("dataset.edifyA11yWarning", behavior)
-        self.assertIn("htmx:responseError", behavior)
-        self.assertIn("htmx:sendError", behavior)
+        status = _read("static/js/platform-status.js")
+        self.assertIn("js/platform-status.js", base)
+        self.assertIn("htmx:responseError", status)
+        self.assertIn("htmx:sendError", status)
+        self.assertIn("htmx:timeout", status)
+        self.assertIn("notice.setAttribute('role', 'alert')", status)
 
     def test_legacy_action_buttons_cannot_accidentally_submit_forms(self):
         behavior = _read("static/js/micro-ux.js")

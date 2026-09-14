@@ -288,7 +288,7 @@ aria-label="Notifications"
 the current page. The server resolves the route to a reviewed, role-aware article. -->
 <a
 href="/help/context?for={{ request.path|urlencode }}"
-class="edify-topbar__icon-control flex items-center justify-center"
+class="edify-topbar__icon-control edify-topbar__secondary-link flex items-center justify-center"
 title="Help for this page"
 aria-label="Help for this page"
 >
@@ -305,7 +305,7 @@ route it was raised from.
 {% endcomment %}
 <a
 href="/support?route={{ request.path|urlencode }}"
-class="edify-topbar__icon-control flex items-center justify-center"
+class="edify-topbar__icon-control edify-topbar__secondary-link flex items-center justify-center"
 title="Report a problem with this page"
 aria-label="Report a problem with this page"
 >
@@ -373,6 +373,9 @@ class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-s
 {% endfor %}
 <div class="my-1.5 border-t edify-border-top"></div>
 {% endif %}
+
+<a href="/help/context?for={{ request.path|urlencode }}" class="edify-mobile-account-link block px-4 py-2 edify-text">Help for this page</a>
+<a href="/support?route={{ request.path|urlencode }}" class="edify-mobile-account-link block px-4 py-2 edify-text">Report a problem</a>
 
 <a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">My Profile</a>
 

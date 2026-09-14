@@ -7,7 +7,8 @@
     "watch:css": "node scripts/watch_css.cjs",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list",
-    "test:e2e:production-auth": "playwright test e2e/authenticated-route-audit.spec.js --project chromium-desktop"
+    "test:e2e:production-auth": "playwright test e2e/authenticated-route-audit.spec.js --project chromium-desktop",
+    "test:ui-state": "node --test tests/js/*.test.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

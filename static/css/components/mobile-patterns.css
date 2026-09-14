@@ -34,7 +34,7 @@
   text-transform: uppercase;
 }
 
-.mobile-role-home__copy > h2 {
+.mobile-role-home__copy > :is(h1, h2) {
   margin: 0;
   color: var(--edify-text);
   font-size: var(--edify-text-display-size);

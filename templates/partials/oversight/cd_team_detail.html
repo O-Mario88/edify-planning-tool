@@ -1,4 +1,4 @@
-{% load frontend_filters table_pagination %}
+{% load frontend_filters table_pagination school_identity %}
 {% comment %}
 One Program Lead's team, expanded: level 2 (the CCEOs and the PL's own work)
 and level 3 (staff versus partner execution) of the country hierarchy.
@@ -11,8 +11,8 @@ reschedules or cancels field work.
 {% if owner_groups %}
 <div class="space-y-3 pt-2">
   {% for group in owner_groups %}
-  <section class="rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}">
-    <header class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b edify-border">
+  <details class="edify-record-group rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}" {% if request.GET|get_item:group.page_param %}open{% endif %}>
+    <summary class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b edify-border">
       <h3 id="owner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h3>
       <p class="edify-text-caption edify-text-muted">
         {{ group.summary.total_planned }} planned ·
@@ -21,10 +21,10 @@ reschedules or cancels field work.
         {{ group.summary.partner_awaiting_schedule }} awaiting ·
         UGX {{ group.summary.planned_budget|intcomma }}
       </p>
-    </header>
+    </summary>
     {% paginate group.items group.page_param as owner_page %}
     <div class="overflow-x-auto">
-      <table class="w-full text-left" data-mobile-table="scroll">
+      <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
         <caption class="sr-only">Planned work owned by {{ group.name }}</caption>
         <thead>
           <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
@@ -46,7 +46,7 @@ reschedules or cancels field work.
               <span class="font-semibold">{{ item.activity_type|status_label|default:"Partner assignment" }}</span>
               {% endif %}
             </td>
-            <td class="px-3 py-2 text-sm">{{ item.context_label }}</td>
+            <td class="px-3 py-2 text-sm">{% if item.school_id %}{% school_identity item.school_name item.school_id %}{% else %}{{ item.context_label }}{% endif %}</td>
             <td class="px-3 py-2 text-sm">
               {% if item.is_partner_work %}
               {{ item.partner_name|default:"Partner" }}
@@ -79,9 +79,9 @@ reschedules or cancels field work.
           {% endfor %}
         </tbody>
       </table>
-      {% include "components/table_pager.html" with pager=owner_page param=group.page_param %}
+      {% include "components/table_pager.html" with pager=owner_page param=group.page_param pagination_label=group.name %}
     </div>
-  </section>
+  </details>
   {% endfor %}
 </div>
 {% else %}

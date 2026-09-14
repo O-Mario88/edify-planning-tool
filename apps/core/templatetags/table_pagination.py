@@ -48,15 +48,16 @@ def pager_query(context, param):
     """Every current query parameter except this table's own page.
 
     So paging one table keeps the period, the district and the search someone
-    already chose, and never carries another table's page number along with it.
+    already chose, including repeated multi-select filters and other tables' pages.
     """
     request = context.get("request")
     if request is None:
         return ""
     pairs = [
         (key, value)
-        for key, value in request.GET.items()
-        if value and key != param and not key.endswith("_page")
+        for key, values in request.GET.lists()
+        for value in values
+        if value and key != param
     ]
     if not pairs:
         return ""

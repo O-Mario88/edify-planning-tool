@@ -11,7 +11,7 @@
 {% load table_pagination %}
 {% if pager.paginated %}
 <nav class="edify-pagination flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100"
-     aria-label="Table pages">
+     aria-label="{{ pagination_label|default:'Table pages' }}">
   <p class="edify-pagination__summary edify-text-caption font-semibold text-slate-400 tabular-nums">
     Showing {{ pager.first_index }}–{{ pager.last_index }} of {{ pager.total }}
   </p>

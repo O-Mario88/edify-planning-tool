@@ -183,3 +183,21 @@
     border: 2px solid CanvasText;
   }
 }
+
+.edify-request-error {
+  position: fixed; z-index: 130; inset-inline-end: max(1rem, env(safe-area-inset-right));
+  inset-block-end: max(5rem, calc(env(safe-area-inset-bottom) + 1rem));
+  width: min(32rem, calc(100vw - 2rem)); display: flex; align-items: center;
+  gap: 1rem; padding: 1rem; border-radius: var(--edify-radius-md);
+  border: 1px solid var(--edify-control-border); background: var(--edify-surface);
+  color: var(--edify-text); box-shadow: var(--edify-shadow-lg);
+}
+.edify-request-error p { margin: 0; font-size: .875rem; line-height: 1.5; }
+.edify-request-error button { flex-shrink: 0; min-height: 44px; }
+@media (max-width: 30rem) {
+  .edify-request-error { align-items: flex-start; flex-direction: column; gap: .5rem; }
+}
+
+/* Opacity alone leaves idle "Updating…" text in the accessibility tree. */
+.htmx-indicator { visibility: hidden; }
+.htmx-request .htmx-indicator, .htmx-indicator.htmx-request { visibility: visible; }

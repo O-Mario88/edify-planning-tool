@@ -30,8 +30,8 @@
   if (window.__edifyPendingInstalled) return;
   window.__edifyPendingInstalled = true;
 
-  var LABEL_KEY = "edifyOriginalLabel";
-  var WIDTH_KEY = "edifyOriginalWidth";
+  var controlStates = new WeakMap();
+  var requests = new Map();
 
   /* Verb → progressive form. The label should name the work in flight, not
      say "Loading…", which tells the user nothing they did not already know. */
@@ -80,83 +80,89 @@
     var element = event.detail && event.detail.elt;
     if (!element || !element.tagName) return null;
     if (element.tagName === "FORM") {
-      return element.querySelector(
-        'button[type="submit"], input[type="submit"], button:not([type])'
-      );
+      var triggering = event.detail.requestConfig && event.detail.requestConfig.triggeringEvent;
+      var submitter = triggering && triggering.submitter;
+      if (submitter && element.contains(submitter)) return submitter;
+      var focused = document.activeElement;
+      if (focused && element.contains(focused) && focused.matches('button, input[type="submit"]')) return focused;
+      return element.querySelector('button[type="submit"], input[type="submit"], button:not([type])');
     }
-    if (element.tagName === "BUTTON" || element.tagName === "A") return element;
+    if (element.matches('button, a, input[type="submit"]')) return element;
     return null;
   }
 
   function markPending(control) {
     if (!control || control.dataset.edifyPending === "1") return;
 
-    /* Freeze the width before the label changes. "Schedule" becoming
-       "Scheduling…" is wider, and a button that grows mid-click shifts every
-       control beside it — motion caused by feedback is worse than no
-       feedback. */
+    var state = {
+      nodes: Array.from(control.childNodes),
+      value: control.value,
+      width: control.style.width,
+      busy: control.getAttribute("aria-busy"),
+      disabled: control.getAttribute("aria-disabled"),
+      pendingClass: control.classList.contains("is-pending")
+    };
+    controlStates.set(control, state);
     var rect = control.getBoundingClientRect();
-    if (rect.width) {
-      control.dataset[WIDTH_KEY] = control.style.width || "";
-      control.style.width = rect.width + "px";
-    }
-
+    if (rect.width) control.style.width = rect.width + "px";
     control.dataset.edifyPending = "1";
     control.setAttribute("aria-busy", "true");
-
-    var label = control.textContent;
-    control.dataset[LABEL_KEY] = label;
-    control.textContent = pendingLabelFor(label);
-
-    /* aria-disabled, not disabled: a disabled button loses focus, which throws
-       a keyboard user back to the top of the document mid-task. HTMX still
-       refuses the second request because of the guard in the capture handler
-       below. */
+    var isInput = control.tagName === "INPUT";
+    var label = pendingLabelFor(isInput ? control.value : control.textContent);
+    if (isInput) control.value = label;
+    else control.textContent = label;
     control.setAttribute("aria-disabled", "true");
     control.classList.add("is-pending");
   }
 
   function clearPending(control) {
-    if (!control || control.dataset.edifyPending !== "1") return;
-    if (control.dataset[LABEL_KEY] !== undefined) {
-      control.textContent = control.dataset[LABEL_KEY];
-      delete control.dataset[LABEL_KEY];
-    }
-    if (control.dataset[WIDTH_KEY] !== undefined) {
-      control.style.width = control.dataset[WIDTH_KEY];
-      delete control.dataset[WIDTH_KEY];
-    }
+    var state = control && controlStates.get(control);
+    if (!state) return;
+    if (control.tagName === "INPUT") control.value = state.value;
+    else control.replaceChildren.apply(control, state.nodes);
+    control.style.width = state.width;
+    [ ["aria-busy", state.busy], ["aria-disabled", state.disabled] ].forEach(function (entry) {
+      if (entry[1] === null) control.removeAttribute(entry[0]);
+      else control.setAttribute(entry[0], entry[1]);
+    });
     delete control.dataset.edifyPending;
-    control.removeAttribute("aria-busy");
-    control.removeAttribute("aria-disabled");
-    control.classList.remove("is-pending");
+    if (!state.pendingClass) control.classList.remove("is-pending");
+    controlStates.delete(control);
   }
 
+  // Track the actual request: swaps may replace the initiating element, and
+  // an error emits more than one terminal lifecycle event for the same XHR.
   document.body.addEventListener("htmx:beforeRequest", function (event) {
-    var element = event.detail && event.detail.elt;
-    if (!element || !element.tagName || !isMutating(element)) return;
-    markPending(controlFor(event));
+    var detail = event.detail || {};
+    var key = detail.xhr;
+    if (!key || event.defaultPrevented || navigator.onLine === false || requests.has(key)) return;
+    var element = detail.elt;
+    var control = element && element.tagName && isMutating(element) ? controlFor(event) : null;
+    if (control && controlStates.has(control)) {
+      event.preventDefault();
+      return;
+    }
+    requests.set(key, control);
+    markPending(control);
+    startProgress();
+    // A document-level guard may cancel after this body listener has run.
+    // Cancelled requests do not emit afterRequest, so release their state once
+    // all listeners have seen the event.
+    Promise.resolve().then(function () {
+      if (event.defaultPrevented) finishRequest(key);
+    });
   });
 
-  /* afterRequest fires for success AND for an error response, which is what we
-     want: the control comes back either way. A failed action that leaves its
-     button spinning forever is the worst of the states this file exists to
-     prevent. */
-  ["htmx:afterRequest", "htmx:responseError", "htmx:sendError", "htmx:timeout"].forEach(
-    function (name) {
-      document.body.addEventListener(name, function (event) {
-        clearPending(controlFor(event));
-      });
-    }
-  );
+  function finishRequest(key) {
+    if (!requests.has(key)) return;
+    clearPending(requests.get(key));
+    requests.delete(key);
+    stopProgress();
+  }
 
-  /* The control is frequently replaced by the swap, taking its pending state
-     with it. Anything left behind is swept here so a stale flag cannot outlive
-     the request that set it. */
-  document.body.addEventListener("htmx:afterSwap", function () {
-    document.querySelectorAll('[data-edify-pending="1"]').forEach(function (control) {
-      if (!control.isConnected) return;
-      clearPending(control);
+  ["htmx:afterRequest", "htmx:responseError", "htmx:sendError", "htmx:timeout"].forEach(function (name) {
+    document.body.addEventListener(name, function (event) {
+      finishRequest(event.detail && event.detail.xhr);
     });
   });
 
@@ -202,13 +208,6 @@
     }
     if (progressBar) progressBar.classList.remove("is-active");
   }
-
-  document.body.addEventListener("htmx:beforeRequest", startProgress);
-  ["htmx:afterRequest", "htmx:responseError", "htmx:sendError", "htmx:timeout"].forEach(
-    function (name) {
-      document.body.addEventListener(name, stopProgress);
-    }
-  );
 
   /* The actual duplicate-submit guard. Capture phase, so it runs before HTMX's
      own click handling and can stop the second request from being issued at

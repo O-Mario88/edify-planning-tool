@@ -40,7 +40,7 @@
     banner.dataset.state = 'restored';
     banner.querySelector('[data-connectivity-title]').textContent = 'Connection restored';
     banner.querySelector('[data-connectivity-detail]').textContent =
-      'You can continue. Any action that did not finish still needs to be submitted.';
+      'You can continue. Check whether your last action completed before submitting it again.';
     banner.hidden = false;
     announce('Connection restored. You can continue.', 'polite');
     restoredTimer = window.setTimeout(function () { banner.hidden = true; }, 5000);
@@ -120,6 +120,35 @@
       event.detail.isError = false;
       showBusy(parseInt(xhr.getResponseHeader('Retry-After'), 10));
     }
+  });
+
+  function showRequestError(event) {
+    var xhr = event.detail && event.detail.xhr;
+    if (xhr && (xhr.status === 401 || xhr.status === 419 || responseIsLogin(xhr) ||
+        (xhr.status === 503 && xhr.getResponseHeader('Retry-After')))) return;
+    var notice = document.getElementById('edify-request-error');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.id = 'edify-request-error';
+      notice.className = 'edify-request-error';
+      notice.setAttribute('role', 'alert');
+      var copy = document.createElement('p');
+      copy.setAttribute('data-request-error-copy', '');
+      var dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'btn btn-secondary';
+      dismiss.textContent = 'Dismiss';
+      dismiss.addEventListener('click', function () { notice.remove(); });
+      notice.append(copy, dismiss);
+      document.body.appendChild(notice);
+    }
+    var message = event.type === 'htmx:timeout' ? 'The request took too long.' :
+      event.type === 'htmx:sendError' ? 'The connection was interrupted.' : 'The request could not be completed.';
+    notice.querySelector('[data-request-error-copy]').textContent =
+      message + ' Your current entries remain on this page. Check whether the action completed before trying again.';
+  }
+  ['htmx:responseError', 'htmx:sendError', 'htmx:timeout'].forEach(function (name) {
+    document.addEventListener(name, showRequestError);
   });
 
   window.EdifyPlatformStatus = Object.freeze({
