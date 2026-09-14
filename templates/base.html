@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260913hrforms2">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260914controls1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260914linkgates1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260914controls1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260914linkgates1">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260914records2">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
 <link rel="stylesheet" href="{% static 'css/components/record-views.css' %}?v=20260914records3">

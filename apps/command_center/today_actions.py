@@ -417,7 +417,10 @@ def row_slug(todo_id: str) -> str:
     """An element id for the row, stable across the swap that replaces it."""
     import hashlib
 
-    return "today-" + hashlib.sha1(todo_id.encode()).hexdigest()[:12]
+    return (
+        "today-"
+        + hashlib.sha1(todo_id.encode(), usedforsecurity=False).hexdigest()[:12]
+    )
 
 
 def _amounts(rows) -> dict[str, int]:

@@ -12032,7 +12032,7 @@
   {
    "audit_id": "KPI-SURFACE-002",
    "template": "templates/pages/admin/data_quality_center.html",
-   "line": 21,
+   "line": 22,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -12205,7 +12205,7 @@
   {
    "audit_id": "KPI-SURFACE-009",
    "template": "templates/pages/budgets/monthly.html",
-   "line": 219,
+   "line": 220,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -12885,7 +12885,7 @@
   {
    "audit_id": "KPI-SURFACE-032",
    "template": "templates/pages/hr/module_workspace.html",
-   "line": 64,
+   "line": 75,
    "source_pattern": "shared-component",
    "items_expression": "metrics",
    "presentation": "context",
@@ -13231,7 +13231,7 @@
   {
    "audit_id": "KPI-SURFACE-045",
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 65,
+   "line": 66,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13267,7 +13267,7 @@
   {
    "audit_id": "KPI-SURFACE-046",
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 89,
+   "line": 90,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14585,7 +14585,7 @@
   {
    "audit_id": "KPI-SURFACE-095",
    "template": "templates/partials/clusters/oversight_workspace.html",
-   "line": 11,
+   "line": 18,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -39497,7 +39497,7 @@
   {
    "audit_id": "KPI-PAYLOAD-003",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 654,
+   "line": 657,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -39523,7 +39523,7 @@
   {
    "audit_id": "KPI-PAYLOAD-004",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 702,
+   "line": 705,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -39547,7 +39547,7 @@
   {
    "audit_id": "KPI-PAYLOAD-005",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 755,
+   "line": 758,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -39573,7 +39573,7 @@
   {
    "audit_id": "KPI-PAYLOAD-006",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 826,
+   "line": 829,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -39599,7 +39599,7 @@
   {
    "audit_id": "KPI-PAYLOAD-007",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 861,
+   "line": 864,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,

@@ -339,7 +339,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1899,
+      "bytes": 2080,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -413,7 +413,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1182,
+      "bytes": 1413,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -2139,7 +2139,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 5046,
+      "bytes": 5225,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2976,7 +2976,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5869,
+      "bytes": 6597,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -3273,7 +3273,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3777,
+      "bytes": 3867,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3320,7 +3320,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20995,
+      "bytes": 21234,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3469,7 +3469,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6182,
+      "bytes": 6489,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3759,7 +3759,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20222,
+      "bytes": 20470,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4036,7 +4036,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 47556,
+      "bytes": 48433,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4833,7 +4833,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7036,
+      "bytes": 7305,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7997,7 +7997,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4638,
+      "bytes": 5294,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8049,7 +8049,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9796,
+      "bytes": 10291,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -8121,7 +8121,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10867,
+      "bytes": 11362,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -9785,7 +9785,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6196,
+      "bytes": 6750,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -10296,7 +10296,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19892,
+      "bytes": 20130,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -10870,7 +10870,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5617,
+      "bytes": 6247,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -66727,7 +66727,7 @@
       "permission_key": "",
       "primary_action": "Read this document",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Please read each document and record your response. Until you do, the rest of Edify stays closed.",
+      "purpose": "Please read each document and record your response.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [],
@@ -66807,7 +66807,7 @@
       "module": "documents",
       "notifications": false,
       "page_id": "UI-PAGE-433A02DA3B",
-      "page_title": "Access Restricted",
+      "page_title": "Policy Response",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "",
