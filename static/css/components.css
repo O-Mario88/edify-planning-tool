@@ -891,7 +891,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 .edify-filter-chip:hover {
   border-color: var(--edify-primary);
-  color: var(--edify-primary);
+  color: var(--edify-accent-text);
   background-color: var(--edify-primary-light);
 }
 
@@ -1219,7 +1219,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 /* Smooth style: Light background with strong matching text */
 .btn-smooth {
   background-color: var(--edify-primary-light);
-  color: var(--edify-primary);
+  color: var(--edify-accent-text);
 }
 .btn-smooth:hover {
   background-color: var(--edify-primary-light);
@@ -1234,7 +1234,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 .btn-ghost:hover, .edify-action-button.secondary:hover {
   border-color: var(--edify-primary);
-  color: var(--edify-primary);
+  color: var(--edify-accent-text);
   background-color: var(--edify-primary-light);
   transform: translateY(-1px);
 }
@@ -2358,7 +2358,7 @@ select:not([multiple]):not(.select-native) {
 
 .budget-period-rail__option--current > span,
 .budget-period-rail__option--current > strong {
-  color: var(--edify-primary);
+  color: var(--edify-accent-text);
 }
 
 @media (max-width: 40rem) {
@@ -4754,7 +4754,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 .edify-metric[data-tone="danger"] .edify-metric__value { color: var(--edify-danger-text); }
 .edify-metric[data-tone="warning"] .edify-metric__value { color: var(--edify-warning-text); }
 .edify-metric[data-tone="success"] .edify-metric__value { color: var(--edify-success-text); }
-.edify-metric[data-tone="info"] .edify-metric__value { color: var(--edify-accent); }
+.edify-metric[data-tone="info"] .edify-metric__value { color: var(--edify-accent-text); }
 
 /* A metric that leads with its number — the To-Do chips and the CD's funded
    backlog read count-first — keeps that order and centres, rather than being
@@ -4794,7 +4794,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   justify-content: center;
   inline-size: 1.35rem;
   block-size: 1.35rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .edify-metric__mark svg {
@@ -5307,4 +5307,16 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   color: var(--edify-text-subtle);
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* Theme-safe neutral separators, including legacy Tailwind divide utilities.
+   Rules organize content; focus rings and input boundaries remain stronger. */
+:root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(hr, thead, tbody, tfoot, tr, th, td) {
+  border-color: var(--edify-table-divider);
+}
+:root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :is([class*="divide-slate-"], [class*="divide-gray-"], [class*="divide-white"]) > * + * {
+  border-color: var(--edify-divider) !important;
+}
+:root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  caret-color: var(--edify-text);
 }

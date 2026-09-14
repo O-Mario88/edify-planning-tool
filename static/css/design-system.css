@@ -638,6 +638,13 @@
   --edify-surface-raised: #103f62;
   /* Popovers remain distinct from the underlying content plane. */
   --edify-surface-popover: #0b3a63;
+  /* Decorative separators stay quiet; controls retain a stronger boundary. */
+  --edify-divider: #244b66;
+  --edify-surface-hover: #124363;
+  --edify-surface-selected: #194f73;
+  --edify-text-disabled: #8aa8bd;
+  --edify-control-border: #60849d;
+
   --edify-border: var(--edify-brand-panel-border);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
   /* The reference photograph is this theme, so these are its measured values
@@ -686,8 +693,8 @@
   --edify-table-row-alt: rgba(123, 189, 232, 0.08);
   --edify-table-row-hover: rgba(24, 114, 189, 0.28);
   --edify-table-row-selected: rgba(123, 189, 232, 0.18);
-  --edify-table-divider: rgba(123, 189, 232, 0.30);
-  --edify-table-header-divider: rgba(189, 216, 233, 0.28);
+  --edify-table-divider: #244b66;
+  --edify-table-header-divider: #3c627c;
 
   --color-edify-divider: rgba(189, 216, 233, 0.12);
   --bg-page: var(--edify-bg);
