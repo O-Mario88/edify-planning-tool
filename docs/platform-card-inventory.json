@@ -6645,7 +6645,7 @@
   },
   {
    "template": "templates/partials/priorities/guidance_view.html",
-   "line": 36,
+   "line": 37,
    "title": "Guidance issued \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6686,7 +6686,7 @@
   },
   {
    "template": "templates/partials/priorities/setting_view.html",
-   "line": 191,
+   "line": 210,
    "title": "No governed priority cycle for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6700,14 +6700,14 @@
   },
   {
    "template": "templates/partials/priorities/team_view.html",
-   "line": 64,
+   "line": 65,
    "title": "Team priority distribution",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "team-delivery-card",
    "branch_path": [
     [
-     8,
+     9,
      0
     ]
    ]
