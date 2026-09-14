@@ -2093,6 +2093,11 @@ def _ia_dashboard_context(request) -> dict:
 IA_DASHBOARD_DEFAULT_VIEW = "outcomes"
 IA_DASHBOARD_TABS = (
     ("outcomes", "Outcomes", "School change and the strength of its evidence"),
+    (
+        "today",
+        "Today",
+        "The next SSA to verify and every decision waiting on you",
+    ),
     ("collection", "Collection", "Schools whose assessment evidence needs collecting"),
     ("reports", "Impact reports", "Prepare traceable findings and recommendations"),
     ("map", "Map", "The country map with regional performance and district monitoring"),
@@ -2189,8 +2194,15 @@ def _ia_operations_view(request, header: dict) -> dict:
     return context
 
 
+def _ia_today_view(request, header: dict) -> dict:
+    # The panel fetches the workbench from /today/panel once the dashboard has
+    # painted (apps.frontend.views.today_views.today_panel).
+    return {}
+
+
 IA_DASHBOARD_VIEW_BUILDERS = {
     "outcomes": _ia_outcomes_view,
+    "today": _ia_today_view,
     "collection": _ia_collection_view,
     "reports": _ia_reports_view,
     "map": _ia_map_view,

@@ -1,0 +1,75 @@
+{% load frontend_filters %}
+{% comment %}
+One Today queue row (owner, 2026-09-14: Today must let people act, not read).
+`todo` is a To-Do row decorated by apps.command_center.today_actions.decorate.
+An operation either decides inline (posts to /today/act; the row is replaced
+by what happened, or the service's refusal is written into the row), opens a
+short form first when it needs a reason, an attestation or a reference, or
+opens the record's own form in the drawer. Every row keeps its link and can be
+snoozed.
+{% endcomment %}
+<li id="{{ todo.today.slug }}" class="today-row rounded-control border border-slate-100 bg-slate-50 px-3 py-2.5" x-data="{ open: '' }" data-today-item data-todo-kind="{{ todo.today.kind }}">
+  <div class="flex flex-wrap items-start justify-between gap-2">
+    <div class="min-w-0 flex-1">
+      <p class="text-[12px] font-semibold text-slate-800">{{ todo.title }}{% if todo.today.amount %} <span class="tabular-nums text-slate-600">· UGX {{ todo.today.amount|intcomma }}</span>{% endif %}</p>
+      <p class="edify-text-caption text-slate-500">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</p>
+      {% if todo.ssa_scores %}
+      <ul class="mt-1.5 flex flex-wrap gap-1" aria-label="SSA scores, weakest first">
+        {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" data-tone="{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div class="flex shrink-0 flex-wrap items-center gap-1.5">
+      {% if todo.priority == "critical" %}<span class="edify-badge" data-tone="danger">Critical</span>{% endif %}
+      {% if todo.due_label and todo.due_label != "—" %}<span class="edify-badge" data-tone="{{ todo.due_tone|default:'neutral' }}">{{ todo.due_label }}</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="mt-2 flex flex-wrap items-center gap-1.5" data-today-actions>
+    {% for op in todo.today.operations %}
+      {% if op.drawer_url %}
+      <button type="button" class="btn {% if op.tone == 'primary' %}btn-primary{% elif op.tone == 'ghost' %}btn-ghost{% else %}btn-secondary{% endif %} h-8" hx-get="{{ op.drawer_url }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ op.label }}</button>
+      {% elif op.needs_form %}
+      <button type="button" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8" @click="open = open === '{{ op.key }}' ? '' : '{{ op.key }}'" :aria-expanded="(open === '{{ op.key }}').toString()">{{ op.label }}</button>
+      {% else %}
+      <form hx-post="/today/act" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="m-0">
+        <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="op" value="{{ op.key }}"><input type="hidden" name="title" value="{{ todo.title }}">
+        <button type="submit" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8">{{ op.label }}</button>
+      </form>
+      {% endif %}
+    {% endfor %}
+    <a href="{{ todo.action_url|default:'/todos' }}" class="btn btn-ghost h-8">{% if todo.today.operations %}Open{% else %}{{ todo.action_label|default:"Open" }}{% endif %}</a>
+    <details class="relative today-snooze">
+      <summary class="list-none cursor-pointer btn btn-ghost h-8" aria-label="Snooze {{ todo.title }}">Snooze</summary>
+      <div class="absolute right-0 z-20 mt-1 w-44 rounded-surface border border-slate-200 edify-surface shadow-lg p-1">
+        {% for choice, label in snooze_choices %}
+        <form hx-post="/today/snooze" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="m-0">
+          <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="choice" value="{{ choice }}"><input type="hidden" name="title" value="{{ todo.title }}">
+          <button type="submit" class="w-full text-left rounded-control px-2 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">{{ label }}</button>
+        </form>
+        {% endfor %}
+      </div>
+    </details>
+  </div>
+
+  {% for op in todo.today.operations %}{% if op.needs_form and not op.drawer_url %}
+  <form x-show="open === '{{ op.key }}'" x-cloak hx-post="/today/act" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="mt-2 space-y-2" data-today-form="{{ op.key }}">
+    <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="op" value="{{ op.key }}"><input type="hidden" name="title" value="{{ todo.title }}">
+    {% if op.field %}
+    <label class="block edify-text-caption font-semibold text-slate-600">{{ op.field.1 }}
+      <input type="text" name="field_{{ op.field.0 }}" maxlength="128" required class="mt-1 w-full h-8 rounded-control border border-slate-200 edify-surface px-2 text-[12px]">
+    </label>
+    {% endif %}
+    {% if op.reason %}
+    <label class="block edify-text-caption font-semibold text-slate-600">{{ op.reason_label }}
+      <textarea name="reason" rows="2" maxlength="2000" class="mt-1 w-full rounded-control border border-slate-200 edify-surface px-2 py-1.5 text-[12px]"{% if op.reason == "required" %} required{% endif %}></textarea>
+    </label>
+    {% endif %}
+    {% if op.attest %}
+    <label class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600"><input type="checkbox" name="attested" value="yes" required> {{ op.attest }}</label>
+    {% endif %}
+    <div class="flex gap-1.5"><button type="submit" class="btn {% if op.tone == 'primary' %}btn-primary{% else %}btn-secondary{% endif %} h-8">{{ op.label }}</button><button type="button" class="btn btn-ghost h-8" @click="open = ''">Cancel</button></div>
+  </form>
+  {% endif %}{% endfor %}
+  <p class="mt-1.5 edify-text-caption font-semibold text-rose-700" role="alert" data-today-error>{{ error|default:"" }}</p>
+</li>

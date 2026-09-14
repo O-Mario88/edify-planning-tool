@@ -1,11 +1,13 @@
 {% comment %}
 The IA dashboard's chosen view, under the fixed header and strip (IA review,
-owner, 2026-09-13): Outcomes (the default), Collection, Impact reports, Map and
-Operations. Each view's context comes from its own builder in
+owner, 2026-09-13): Outcomes (the default), Today (owner, 2026-09-14), Collection,
+Impact reports, Map and Operations. Each view's context comes from its own builder in
 apps/frontend/views/ia_views.py (IA_DASHBOARD_VIEW_BUILDERS), which names the
 partial it renders as `ia_view_template`.
 {% endcomment %}
-{% if dashboard_view == "map" %}
+{% if dashboard_view == "today" %}
+{% include "partials/today/dashboard_loader.html" %}
+{% elif dashboard_view == "map" %}
 <div class="space-y-4" data-ia-map-view>
   <div class="analytics-layout-row analytics-row--geography">
     <div class="analytics-card-slot analytics-card-slot--map">

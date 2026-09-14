@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **800**
-- All registered routes: **1268**
+- Routed product surfaces: **803**
+- All registered routes: **1271**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **441**
+- Shared component templates: **443**
 - Full pages: **255**
-- Partials and drawers: **256**
-- Permission-gated surfaces: **785**
-- Referenced by automated tests: **690**
+- Partials and drawers: **259**
+- Permission-gated surfaces: **788**
+- Referenced by automated tests: **693**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -811,8 +811,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-58A0F21603 | /team/coaching/new | Team Coaching New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-256E69494D | /team/coaching/record | Team Coaching Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-94BD4F6DBA | /today | Today · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A65E98A3ED | /today/act | Today Act | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E427BD31F3 | /today/action | Today Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-63325D0097 | /today/panel | Today Panel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D10DA56BF1 | /today/snooze | Today Snooze | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-839833901F | /today/unsnooze | Today Unsnooze | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1678B2AEB5 | /todos | To-Do | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-AB418DCFC9 | /trainings | Trainings Log | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0612DD46E0 | /uploads | Upload Center | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

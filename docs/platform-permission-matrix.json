@@ -17378,6 +17378,7 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -17392,6 +17393,22 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/today/act",
+   "route_name": "today_act",
+   "view": "apps.frontend.views.today_views.today_act"
+  },
+  {
+   "page_permission": "today",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -17406,12 +17423,43 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "ImpactAssessment",
     "ProjectCoordinator",
     "Admin"
    ],
    "route": "/today/panel",
    "route_name": "today_panel",
    "view": "apps.frontend.views.today_views.today_panel"
+  },
+  {
+   "page_permission": "today",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/today/snooze",
+   "route_name": "today_snooze",
+   "view": "apps.frontend.views.today_views.today_snooze"
+  },
+  {
+   "page_permission": "today",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/today/unsnooze",
+   "route_name": "today_unsnooze",
+   "view": "apps.frontend.views.today_views.today_unsnooze"
   },
   {
    "page_permission": "todos",
@@ -17590,26 +17638,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 402,
-  "Admin": 982,
+  "Admin": 985,
   "BusinessTransformationOfficer": 230,
-  "CCEO": 513,
+  "CCEO": 516,
   "CountryDirector": 742,
   "HumanResources": 328,
-  "ImpactAssessment": 596,
+  "ImpactAssessment": 602,
   "MfiLoanOfficer": 126,
   "MfiPartnerAdmin": 129,
   "PartnerAdmin": 217,
   "PartnerFieldOfficer": 217,
-  "Program Lead": 596,
-  "ProjectCoordinator": 434,
+  "Program Lead": 599,
+  "ProjectCoordinator": 437,
   "RegionalProgramLead": 300,
   "RegionalVicePresident": 363
  },
  "summary": {
   "page_keys_declared": 172,
   "page_keys_in_navigation": 189,
-  "routes_guarded": 1079,
-  "routes_total": 1268,
+  "routes_guarded": 1082,
+  "routes_total": 1271,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

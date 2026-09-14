@@ -5,8 +5,18 @@ The Today workbench's blocks: one partial shared by the Dashboard's Today view
 page — owner, 2026-09-14) and the standalone /today page other holders of the
 permission still open. The caller supplies the header; every variable comes
 from apps.frontend.views.today_views.build_today_context.
+
+Rows are decisions, not links (owner, 2026-09-14): each Waiting and Exceptions
+row is partials/today/queue_item.html, which carries the row's buttons from
+apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
+(CCEO, Project Coordinator) or "desk" (every other role: the queue alone).
 {% endcomment %}
-  {% if is_program_lead %}
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 edify-text-caption font-semibold text-slate-500" data-today-tally>
+    <span>Cleared from Today: <strong id="today-cleared-count" class="tabular-nums text-slate-700">{{ cleared_count }}</strong></span>
+    {% if snoozed_count %}<span>{{ snoozed_count }} snoozed</span>{% endif %}
+  </div>
+
+  {% if mode == "lead" or mode == "desk" %}
   {% comment %}
   The Programme Lead's day starts with the decisions others are waiting on —
   leadership handoffs ahead of the lead's own field chores — then the team in
@@ -17,20 +27,16 @@ from apps.frontend.views.today_views.build_today_context.
       <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting on you</h2>
       {% if queue_total %}<a href="/todos" class="text-[12px] font-bold edify-primary-text">View all {{ queue_total }} <span aria-hidden="true">&rarr;</span></a>{% endif %}
     </div>
-    <ul class="mt-2 space-y-1">
+    <ul class="mt-2 space-y-1.5">
       {% for todo in waiting %}
-      <li class="rounded-control bg-slate-50 px-3 py-2">
-        <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
-          <p class="text-[12px] font-semibold text-slate-700">{{ todo.title }}</p>
-          <p class="edify-text-caption text-slate-400">{{ todo.category }}{% if todo.description %} · {{ todo.description }}{% endif %}</p>
-        </a>
-      </li>
+      {% include "partials/today/queue_item.html" %}
       {% empty %}
       <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">Nothing waits on you right now.</li>
       {% endfor %}
     </ul>
   </section>
 
+  {% if mode == "lead" %}
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="team-today-title" data-today-team>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 id="team-today-title" class="text-[13px] font-bold text-slate-800">Your team today</h2>
@@ -67,9 +73,12 @@ from apps.frontend.views.today_views.build_today_context.
     {% endif %}
   </section>
 
+  {% endif %}
+
   {% include "partials/today/exceptions.html" %}
   {% endif %}
 
+  {% if mode != "desk" %}
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="next-activity-title">
     <p class="edify-text-caption uppercase tracking-wider text-slate-400">Your next activity</p>
     {% if next_activity %}
@@ -123,18 +132,13 @@ from apps.frontend.views.today_views.build_today_context.
 
   {% endif %}
 
-  {% if not is_program_lead %}
+  {% if mode == "field" %}
   <div class="grid gap-5 lg:grid-cols-2">
     <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="waiting-title">
       <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting for your confirmation</h2>
-      <ul class="mt-2 space-y-1">
+      <ul class="mt-2 space-y-1.5">
         {% for todo in waiting %}
-        <li class="rounded-control bg-slate-50 px-3 py-2">
-          <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
-            <p class="text-[12px] font-semibold text-slate-700">{{ todo.title }}</p>
-            {% if todo.description %}<p class="edify-text-caption text-slate-400">{{ todo.description }}</p>{% endif %}
-          </a>
-        </li>
+        {% include "partials/today/queue_item.html" %}
         {% empty %}
         <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">Nothing waits on you right now.</li>
         {% endfor %}
@@ -201,3 +205,4 @@ from apps.frontend.views.today_views.build_today_context.
     <a href="/debriefs/submit" class="edify-primary-solid edify-primary-on-solid mt-3 inline-block rounded-control px-4 py-2 text-[12px] font-bold sm:mt-0">Complete debrief</a>
     {% endif %}
   </section>
+  {% endif %}

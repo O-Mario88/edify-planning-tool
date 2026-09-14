@@ -6870,7 +6870,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 928,
+      "bytes": 1045,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10593,10 +10593,11 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1174,
+      "bytes": 1420,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/today/panel"
+        "/today/panel",
+        "/today/unsnooze"
       ],
       "findings": [],
       "forms": 0,
@@ -10616,11 +10617,12 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1173,
+      "bytes": 876,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
-        "/today/panel"
+        "/today/panel",
+        "/today/unsnooze"
       ],
       "findings": [],
       "forms": 0,
@@ -10639,13 +10641,70 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 12387,
+      "bytes": 5957,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
-        "/today/panel"
+        "/today/panel",
+        "/today/unsnooze"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Queue Item",
+      "purpose": "Reusable queue item interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/today/queue_item.html",
+      "variants": [
+        "danger",
+        "{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}",
+        "{{ todo.due_tone|default:"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 1060,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/today/act",
+        "/today/snooze"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Queue Item Done",
+      "purpose": "Reusable queue item done interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/today/queue_item_done.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12495,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/today",
+        "/today/panel",
+        "/today/unsnooze"
       ],
       "findings": [],
       "forms": 3,
@@ -80214,6 +80273,7 @@
       "role_access": [
         "ADMIN",
         "CCEO",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -80259,6 +80319,97 @@
       ]
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.today_views",
+      "backend_view": "apps.frontend.views.today_views.today_act",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/today/queue_item_done.html",
+        "test:referenced-by-automated-test",
+        "permission:today"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /today/unsnooze"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-A65E98A3ED",
+      "page_title": "Today Act",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "today",
+      "primary_action": "Today Act",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One decision from a Today row, through the record's own service.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/today/act",
+      "route_name": "today_act",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/today/unsnooze"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.autopilot.models",
+        "apps.autopilot.services",
+        "apps.core.scoping",
+        "apps.debriefs.models",
+        "apps.pl_review.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/today/queue_item_done.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -80299,6 +80450,7 @@
       "role_access": [
         "ADMIN",
         "CCEO",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -80381,11 +80533,188 @@
       "role_access": [
         "ADMIN",
         "CCEO",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
       "route": "/today/panel",
       "route_name": "today_panel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.autopilot.models",
+        "apps.autopilot.services",
+        "apps.core.scoping",
+        "apps.debriefs.models",
+        "apps.pl_review.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/today/dashboard_view.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.today_views",
+      "backend_view": "apps.frontend.views.today_views.today_snooze",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/today/queue_item_done.html",
+        "test:referenced-by-automated-test",
+        "permission:today"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /today/unsnooze"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D10DA56BF1",
+      "page_title": "Today Snooze",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "today",
+      "primary_action": "Today Snooze",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate today snooze within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/today/snooze",
+      "route_name": "today_snooze",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/today/unsnooze"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.autopilot.models",
+        "apps.autopilot.services",
+        "apps.core.scoping",
+        "apps.debriefs.models",
+        "apps.pl_review.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/today/queue_item_done.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.today_views",
+      "backend_view": "apps.frontend.views.today_views.today_unsnooze",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/today/dashboard_view.html",
+        "test:referenced-by-automated-test",
+        "permission:today"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-839833901F",
+      "page_title": "Today Unsnooze",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "today",
+      "primary_action": "Today Unsnooze",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Undo a snooze: the item returns, and the panel is drawn again with it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/today/unsnooze",
+      "route_name": "today_unsnooze",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -100891,6 +101220,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.today_views.today_act",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "today",
+      "required_permissions": [],
+      "route": "/today/act",
+      "route_name": "today_act",
+      "templates": [
+        "partials/today/queue_item_done.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.today_views.today_action",
       "kind": "action",
       "methods": [
@@ -100912,6 +101255,34 @@
       "required_permissions": [],
       "route": "/today/panel",
       "route_name": "today_panel",
+      "templates": [
+        "partials/today/dashboard_view.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.today_views.today_snooze",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "today",
+      "required_permissions": [],
+      "route": "/today/snooze",
+      "route_name": "today_snooze",
+      "templates": [
+        "partials/today/queue_item_done.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.today_views.today_unsnooze",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "today",
+      "required_permissions": [],
+      "route": "/today/unsnooze",
+      "route_name": "today_unsnooze",
       "templates": [
         "partials/today/dashboard_view.html"
       ]
@@ -101129,30 +101500,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 514,
+    "accessibility_contract_pass": 517,
     "activity_states": 24,
-    "all_routes": 1268,
+    "all_routes": 1271,
     "api_routes": 359,
-    "component_templates": 441,
+    "component_templates": 443,
     "full_pages": 255,
-    "mobile_contract_pass": 514,
+    "mobile_contract_pass": 517,
     "nonvisual_actions": 261,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 517,
+      "interaction-fragment": 520,
       "operational-queue": 148,
       "planning-or-creation": 10,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 256,
-    "permission_gated": 785,
+    "partials_and_drawers": 259,
+    "permission_gated": 788,
     "permission_keys": 112,
     "roles": 15,
-    "routed_surfaces": 800,
+    "routed_surfaces": 803,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -101160,8 +101531,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 514,
-    "test_referenced": 690,
-    "theme_contract_pass": 514
+    "tablet_contract_pass": 517,
+    "test_referenced": 693,
+    "theme_contract_pass": 517
   }
 }

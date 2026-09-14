@@ -1,0 +1,13 @@
+{% comment %}What a decided or snoozed Today row becomes (apps.frontend.views.today_views).{% endcomment %}
+<li id="{{ slug }}" class="today-row rounded-control border border-emerald-100 bg-emerald-50/60 px-3 py-2" role="status" data-today-item-done>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <p class="text-[12px] font-semibold text-emerald-800"><svg class="inline h-3.5 w-3.5 align-[-2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> {{ title }} — {{ message }}</p>
+    {% if undo_todo %}
+    <form hx-post="/today/unsnooze" hx-target="#{{ slug }}" hx-swap="outerHTML" class="m-0">
+      <input type="hidden" name="todo" value="{{ undo_todo }}">
+      <button type="submit" class="btn btn-ghost h-8">Undo</button>
+    </form>
+    {% endif %}
+  </div>
+</li>
+{% if cleared_count is not None %}<span id="today-cleared-count" hx-swap-oob="true" class="tabular-nums">{{ cleared_count }}</span>{% endif %}

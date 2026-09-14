@@ -616,7 +616,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The Today workbench (roadmap Phase 5): the field roles' one primary
     # daily surface — route, next action, waiting-on-you, exceptions, the
     # proposed week, day completion.
-    "today": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
+    # Impact Assessment works its queue from the IA dashboard's Today view
+    # (owner, 2026-09-14: Today lets every role act, not just read).
+    "today": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
     # Uganda Master Priority Plan distribution: IA distributes the approved
     # country targets to Program Leads (CD owns/publishes the master and
     # monitors); each PL distributes their team target to supervised CCEOs.

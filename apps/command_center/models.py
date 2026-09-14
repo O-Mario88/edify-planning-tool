@@ -57,3 +57,47 @@ class CommandCenterAlertDismissal(TimeStampedModel):
 
 
 __all__ = ["CommandCenterAlert", "CommandCenterAlertDismissal"]
+
+
+class TodayActionRecord(TimeStampedModel):
+    """A decision someone took from a Today row (owner, 2026-09-14).
+
+    The decision itself lives in its domain record and audit row; this is the
+    record that it was cleared from Today, which "cleared today" counts
+    (apps.command_center.today_actions).
+    """
+
+    id = CuidField()
+    user_id = models.CharField(max_length=30, db_index=True)
+    todo_id = models.CharField(max_length=128)
+    kind = models.CharField(max_length=64)
+    operation = models.CharField(max_length=32)
+    record_id = models.CharField(max_length=64)
+    reason = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "command_center_today_action"
+        indexes = [models.Index(fields=["user_id", "created_at"])]
+
+
+class TodoSnooze(TimeStampedModel):
+    """A To-Do a person put aside until a day (owner, 2026-09-14).
+
+    Hides the item from their Today until `until`; the work itself is not
+    touched, and a still-open item is back on the day it was snoozed to.
+    """
+
+    id = CuidField()
+    user_id = models.CharField(max_length=30)
+    todo_id = models.CharField(max_length=128)
+    title = models.CharField(max_length=255, blank=True, default="")
+    until = models.DateField()
+
+    class Meta:
+        db_table = "command_center_todo_snooze"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user_id", "todo_id"], name="todo_snooze_one_per_item"
+            )
+        ]
+        indexes = [models.Index(fields=["user_id", "until"])]

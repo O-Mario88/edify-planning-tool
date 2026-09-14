@@ -3966,6 +3966,18 @@ def _get_todos(principal) -> dict:
     }
 
 
+def todo_snapshot_key(principal) -> str:
+    """The cache key of `principal`'s queue snapshot for today, so a decision
+    taken elsewhere (apps.command_center.today_actions) can drop it."""
+    role_key = hashlib.sha256(
+        str(getattr(principal, "active_role", "")).encode()
+    ).hexdigest()[:12]
+    return (
+        f"todo-snapshot:v1:{principal.id}:{role_key}:"
+        f"{timezone.localdate().isoformat()}"
+    )
+
+
 def get_cached_todos(principal) -> dict:
     """Short-lived shared snapshot for the three read-only queue surfaces.
 
@@ -3975,15 +3987,8 @@ def get_cached_todos(principal) -> dict:
     few seconds.
     """
 
-    role_key = hashlib.sha256(
-        str(getattr(principal, "active_role", "")).encode()
-    ).hexdigest()[:12]
-    key = (
-        f"todo-snapshot:v1:{principal.id}:{role_key}:"
-        f"{timezone.localdate().isoformat()}"
-    )
     return stampede_safe_get_or_compute(
-        key,
+        todo_snapshot_key(principal),
         lambda: get_todos(principal),
         timeout=settings.TODO_SNAPSHOT_CACHE_SECONDS,
     )

@@ -724,6 +724,9 @@ urlpatterns = [
     path("today", today_views.today_page, name="today"),
     path("today/action", today_views.today_action, name="today_action"),
     path("today/panel", today_views.today_panel, name="today_panel"),
+    path("today/act", today_views.today_act, name="today_act"),
+    path("today/snooze", today_views.today_snooze, name="today_snooze"),
+    path("today/unsnooze", today_views.today_unsnooze, name="today_unsnooze"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
     path(
         "my-plan/day-package",

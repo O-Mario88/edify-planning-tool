@@ -210,7 +210,9 @@ class IaDashboardShellTest(IaShellFixture):
         self.assertEqual(_selected_tab(response.content.decode()), ["outcomes"])
         self.assertEqual(
             [tab["key"] for tab in response.context["dashboard_tabs"]["tabs"]],
-            ["outcomes", "collection", "reports", "map", "operations"],
+            # Today, where IA acts on its queue, sits beside the default view
+            # (owner, 2026-09-14).
+            ["outcomes", "today", "collection", "reports", "map", "operations"],
         )
 
     def test_retired_static_tabs_fall_back_to_outcomes(self):

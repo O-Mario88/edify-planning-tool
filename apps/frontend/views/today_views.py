@@ -15,6 +15,11 @@ The CCEO's and Project Coordinator's workbench is unchanged.
 Today and Dashboard are one page for the CCEO, the Program Lead and the
 Project Coordinator (owner, 2026-09-14): the workbench is the Dashboard's
 Today view, opened first, and one "Dashboard" link replaces the two.
+
+Today is where work is done, not read (owner, 2026-09-14): a queue row that is
+one decision carries its buttons, every row can be snoozed, and a desk role
+(Impact Assessment) gets the same queue without the field blocks
+(apps.command_center.today_actions).
 """
 
 from functools import wraps
@@ -24,9 +29,12 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from django.views.decorators.http import require_POST
+
+from apps.command_center import today_actions
 from apps.core.permissions import require_page_permission
 
-WAITING_LIMIT = 6
+WAITING_LIMIT = 8
 EXCEPTION_LIMIT = 6
 # How many of the team's activities today the Programme Lead's block lists
 # before sending them to Team Oversight.
@@ -65,7 +73,8 @@ def _split_todos(
     )
 
     payload = get_cached_todos(principal)
-    todos = payload.get("todos", [])
+    snoozed = today_actions.snoozed_ids(principal)
+    todos = [todo for todo in payload.get("todos", []) if todo.get("id") not in snoozed]
     exceptions = [
         todo
         for todo in todos
@@ -188,63 +197,93 @@ DASHBOARD_TODAY_URL = "/dashboard?view=today"
 
 def today_home_url(user) -> str:
     """Where the Today workbench lives for this user."""
-    if getattr(user, "active_role", "") in DASHBOARD_TODAY_ROLES:
+    role = getattr(user, "active_role", "")
+    if role in DASHBOARD_TODAY_ROLES:
         return DASHBOARD_TODAY_URL
+    if role == "ImpactAssessment":
+        return "/ia/dashboard/?view=today"
     return "/today"
+
+
+#: Roles whose day is at a desk: the queue and its decisions, no route, no
+#: proposed week and no field debrief.
+FIELD_ROLES = ("CCEO", "Program Lead", "ProjectCoordinator")
+SNOOZE_CHOICES = (("tomorrow", "Until tomorrow"), ("next_week", "Until next week"))
 
 
 def build_today_context(request) -> dict:
     """Everything the Today workbench renders (partials/today/workbench.html),
     for the Dashboard's Today view and the standalone page alike."""
+    principal = request.user
+    role = getattr(principal, "active_role", "")
+    is_program_lead = role == "Program Lead"
+    desk = role not in FIELD_ROLES
+    waiting, exceptions, queue_total = _split_todos(
+        principal, leadership_first=is_program_lead
+    )
+    next_ssa = today_actions.next_ssa_row(principal)
+    if next_ssa:
+        waiting = [next_ssa, *waiting][:WAITING_LIMIT]
+    context = {
+        "mode": "desk" if desk else ("lead" if is_program_lead else "field"),
+        "waiting": today_actions.decorate(waiting, principal),
+        "exceptions": today_actions.decorate(exceptions, principal),
+        "queue_total": queue_total,
+        "cleared_count": today_actions.cleared_today(principal),
+        "snoozed_count": len(today_actions.snoozed_ids(principal)),
+        "snooze_choices": SNOOZE_CHOICES,
+        "is_program_lead": is_program_lead,
+        "today_label": timezone.localdate().strftime("%A, %d %B %Y"),
+        "package": None,
+        "next_activity": None,
+        "team_today": None,
+        "has_own_portfolio": False,
+        "proposal": None,
+        "debrief_done": False,
+        "done_count": 0,
+    }
+    if desk:
+        return context
+
     from apps.autopilot.services import live_proposal_for
     from apps.my_plan.day_package import build_day_package
 
-    package = build_day_package(request.user)
+    package = build_day_package(principal)
     activities = [
         activity for group in package["routeGroups"] for activity in group["activities"]
     ]
-    next_activity = next(
-        (
-            activity
-            for activity in activities
-            if activity["status"] in ("planned", "scheduled", "in_progress")
-        ),
-        None,
-    )
-    is_program_lead = getattr(request.user, "active_role", "") == "Program Lead"
-    waiting, exceptions, queue_total = _split_todos(
-        request.user, leadership_first=is_program_lead
-    )
-    team_today = _team_today(request.user) if is_program_lead else None
     has_own_portfolio = True
     if is_program_lead:
         from apps.core.scoping import resolve_user_scope
 
-        has_own_portfolio = bool(resolve_user_scope(request.user).own_school_ids)
-    proposal = (
-        live_proposal_for(getattr(request.user, "staff_profile_id", None))
-        if has_own_portfolio
-        else None
+        has_own_portfolio = bool(resolve_user_scope(principal).own_school_ids)
+    context.update(
+        {
+            "package": package,
+            "next_activity": next(
+                (
+                    activity
+                    for activity in activities
+                    if activity["status"] in ("planned", "scheduled", "in_progress")
+                ),
+                None,
+            ),
+            "team_today": _team_today(principal) if is_program_lead else None,
+            "has_own_portfolio": has_own_portfolio,
+            "proposal": (
+                live_proposal_for(getattr(principal, "staff_profile_id", None))
+                if has_own_portfolio
+                else None
+            ),
+            "debrief_done": _debrief_done_today(principal),
+            "done_count": sum(
+                1
+                for activity in activities
+                if activity["status"] not in ("planned", "scheduled")
+            ),
+        }
     )
-    done_count = sum(
-        1
-        for activity in activities
-        if activity["status"] not in ("planned", "scheduled")
-    )
-    return {
-        "package": package,
-        "next_activity": next_activity,
-        "waiting": waiting,
-        "exceptions": exceptions,
-        "queue_total": queue_total,
-        "is_program_lead": is_program_lead,
-        "team_today": team_today,
-        "has_own_portfolio": has_own_portfolio,
-        "proposal": proposal,
-        "debrief_done": _debrief_done_today(request.user),
-        "done_count": done_count,
-        "today_label": timezone.localdate().strftime("%A, %d %B %Y"),
-    }
+    return context
 
 
 @require_page_permission("today")
@@ -323,3 +362,100 @@ def today_action(request):
     except BadRequest as exc:
         messages.error(request, str(exc))
     return redirect(today_home_url(request.user))
+
+
+def _decision_errors():
+    from django.core.exceptions import ValidationError
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    return (BadRequest, Forbidden, NotFoundError, ValidationError, PermissionError)
+
+
+def _refusal(request, message: str):
+    """A refused decision is written into the row it came from; the row and
+    its buttons stay, so the person can correct and try again."""
+    from django.http import HttpResponse
+    from django.utils.html import escape
+
+    slug = today_actions.row_slug(request.POST.get("todo", ""))
+    response = HttpResponse(escape(message), status=200)
+    response["HX-Retarget"] = f"#{slug} [data-today-error]"
+    response["HX-Reswap"] = "innerHTML"
+    return response
+
+
+@require_POST
+@require_page_permission("today")
+@_staff_guard
+def today_act(request):
+    """One decision from a Today row, through the record's own service."""
+    todo_id = request.POST.get("todo", "")
+    try:
+        message = today_actions.perform(
+            request.user,
+            todo_id,
+            request.POST.get("op", ""),
+            reason=request.POST.get("reason", ""),
+            attested=request.POST.get("attested") == "yes",
+            fields={
+                key[len("field_") :]: value
+                for key, value in request.POST.items()
+                if key.startswith("field_")
+            },
+        )
+    except _decision_errors() as exc:
+        return _refusal(request, str(getattr(exc, "detail", None) or exc))
+    return render(
+        request,
+        "partials/today/queue_item_done.html",
+        {
+            "slug": today_actions.row_slug(todo_id),
+            "title": request.POST.get("title", "")[:120],
+            "message": message,
+            "cleared_count": today_actions.cleared_today(request.user),
+        },
+    )
+
+
+@require_POST
+@require_page_permission("today")
+@_staff_guard
+def today_snooze(request):
+    todo_id = request.POST.get("todo", "")
+    try:
+        snoozed = today_actions.snooze(
+            request.user,
+            todo_id,
+            request.POST.get("choice", ""),
+            title=request.POST.get("title", ""),
+        )
+    except _decision_errors() as exc:
+        return _refusal(request, str(getattr(exc, "detail", None) or exc))
+    return render(
+        request,
+        "partials/today/queue_item_done.html",
+        {
+            "slug": today_actions.row_slug(todo_id),
+            "title": request.POST.get("title", "")[:120],
+            "message": f"snoozed until {snoozed.until:%a %-d %b}",
+            "undo_todo": todo_id,
+            "cleared_count": None,
+        },
+    )
+
+
+@require_POST
+@require_page_permission("today")
+@_staff_guard
+def today_unsnooze(request):
+    """Undo a snooze: the item returns, and the panel is drawn again with it."""
+    today_actions.unsnooze(request.user, request.POST.get("todo", ""))
+    response = render(
+        request,
+        "partials/today/dashboard_view.html",
+        {"today": build_today_context(request)},
+    )
+    response["HX-Retarget"] = "[data-dashboard-today]"
+    response["HX-Reswap"] = "outerHTML"
+    return response
