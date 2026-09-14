@@ -7292,7 +7292,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13027,
+      "bytes": 13099,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -8516,7 +8516,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23896,
+      "bytes": 24846,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -8545,7 +8545,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 33167,
+      "bytes": 35033,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -10188,6 +10188,32 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 769,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>",
+        "/my-plan/<str:activity_id>",
+        "/work-plan",
+        "/work-plan/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Plan Verdict",
+      "purpose": "Reusable plan verdict interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ssa/plan_verdict.html",
+      "variants": [
+        "{{ verdict.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -10844,7 +10870,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5445,
+      "bytes": 5617,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -101504,7 +101530,7 @@
     "activity_states": 24,
     "all_routes": 1271,
     "api_routes": 359,
-    "component_templates": 443,
+    "component_templates": 444,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,

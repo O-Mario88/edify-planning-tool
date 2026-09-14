@@ -103,6 +103,10 @@ class Activity(SoftDeleteModel):
         default="",
         choices=SsaAlignment.choices,
     )
+    #: Why the planner chose work the SSA does not prioritise, or named no
+    #: intervention, in their own words (owner, 2026-09-14: SSA scores inform
+    #: every planned activity; a departure from them is explained).
+    ssa_deviation_reason = models.TextField(blank=True, default="")
     recommendation_reason = models.TextField(blank=True)
     recommendation_source = models.JSONField(default=dict, blank=True)
 

@@ -1099,6 +1099,12 @@ def schedule_modal_view(request):
         "recommended_activity_label": recommended_activity_label,
         "activity_type_options": activity_type_options,
         "recommended_focus_intervention": recommended_focus_intervention,
+        # What the drawer warns against: a focus outside the SSA's priorities.
+        "ssa_priorities_json": json.dumps(list(ranked_need.priorities)),
+        "ssa_top_label": dict(SsaIntervention.choices).get(
+            ranked_need.priorities[0] if ranked_need.priorities else "", ""
+        ),
+        "ssa_stale": ranked_need.stale,
         "staff_visit_purposes": STAFF_VISIT_PURPOSES,
         # Drives which purposes stay selectable when delivery is Partner.
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
@@ -1394,6 +1400,10 @@ def schedule_action_view(request):
         "requireCatalogue": True,
         "recommendationReason": recommendation_reason,
         "overrideReason": override_reason,
+        # The drawers ask a planner to explain a plan the SSA does not
+        # support (apps.activities.services.create; owner, 2026-09-14).
+        "requireSsaReason": True,
+        "ssaDeviationReason": request.POST.get("ssa_deviation_reason", ""),
     }
     if source_activity_id:
         payload["sourceActivityId"] = source_activity_id

@@ -73,6 +73,7 @@ class="h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-2
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Intervention Focus</p>
 <p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ act.focus_intervention|default:"General"|replace_underscore }}</p>
+{% include "partials/ssa/plan_verdict.html" with verdict=ssa_verdict %}
 </div>
 </div>
 

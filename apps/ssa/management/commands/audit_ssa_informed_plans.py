@@ -48,6 +48,14 @@ class Command(BaseCommand):
             help="Judge live plans that carry no verdict and link their recommendations.",
         )
         parser.add_argument(
+            "--history",
+            action="store_true",
+            help=(
+                "Judge finished plans that carry no verdict against the SSA "
+                "verified when each was planned."
+            ),
+        )
+        parser.add_argument(
             "--limit",
             type=int,
             default=0,
@@ -60,6 +68,11 @@ class Command(BaseCommand):
             self._generate(fy, options["limit"])
         if options["stamp"]:
             self._stamp(fy, options["limit"])
+        if options["history"]:
+            from apps.ssa.plan_alignment import judge_history
+
+            judged = judge_history(fy, limit=options["limit"] or None)
+            self.stdout.write(f"History: {judged} finished plan(s) judged.")
         self._report(fy)
 
     # ── Recommendations ──────────────────────────────────────────────────────

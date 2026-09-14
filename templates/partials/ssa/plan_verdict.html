@@ -1,0 +1,12 @@
+{% comment %}
+Whether a plan followed the verified SSA (apps.ssa.plan_alignment.verdict_display;
+owner, 2026-09-14: the verdict was recorded but nobody could see it). `verdict`
+is the display dict; `compact` shows the badge and the planner's reason only.
+{% endcomment %}
+{% if verdict %}
+<div class="mt-1 space-y-0.5" data-ssa-verdict="{{ verdict.alignment }}">
+  <span class="edify-badge" data-tone="{{ verdict.tone }}">{{ verdict.label }}</span>
+  {% if verdict.reason and not compact %}<p class="edify-text-caption text-slate-500">{{ verdict.reason }}</p>{% endif %}
+  {% if verdict.deviation_reason %}<p class="edify-text-caption text-slate-600"><span class="font-semibold">Planner's reason:</span> {{ verdict.deviation_reason }}</p>{% endif %}
+</div>
+{% endif %}

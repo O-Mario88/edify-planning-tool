@@ -2313,7 +2313,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 98,
+   "line": 99,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2322,7 +2322,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 162,
+   "line": 163,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2331,7 +2331,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 198,
+   "line": 199,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -6430,7 +6430,7 @@
   },
   {
    "template": "templates/partials/my_plan/activity_detail_drawer.html",
-   "line": 126,
+   "line": 127,
    "title": "System Workflow Auditing",
    "heading_level": 4,
    "has_card_key": false,
@@ -6623,7 +6623,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 147,
+   "line": 149,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,

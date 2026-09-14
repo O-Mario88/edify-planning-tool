@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **443**
+Components and application partials: **444**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -419,6 +419,7 @@ Components and application partials: **443**
 | `partials/ssa/breakdown_table.html` | application-partial | Reusable breakdown table interface primitive | {{ row.band.tone }}; default, empty | inherits containing page contract | inherits semantic parent contract | /ssa | 0 |
 | `partials/ssa/manual_school_options.html` | application-partial | Reusable manual school options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /ssa/manual/<br>/ssa/manual/schools | 0 |
 | `partials/ssa/performance_workspace.html` | application-partial | Reusable performance workspace interface primitive | danger, executive, lime, success, warning, {{ cell.band.tone }}, {{ district.band.tone }}, {{ insight.tone }}, {{ intervention.band.tone }}, {{ row.tone }}; default, empty, selected, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /ssa | 0 |
+| `partials/ssa/plan_verdict.html` | application-partial | Reusable plan verdict interface primitive | {{ verdict.tone }}; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id><br>/my-plan/<str:activity_id><br>/work-plan<br>/work-plan/ | 0 |
 | `partials/ssa/score_group_columns.html` | application-partial | Reusable score group columns interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |
 | `partials/targets/_period_matrix.html` | application-partial | Reusable  period matrix interface primitive | {% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}, {% if cell.pct == None %}neutral{% elif cell.pct >= 70 %}success{% elif cell.pct >= 50 %}warning{% else %}danger{% endif %}; default | inherits containing page contract | accessible name and label | /my-targets<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/targets/area_drawer.html` | application-partial | Reusable area drawer interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-targets/area-drawer | 0 |

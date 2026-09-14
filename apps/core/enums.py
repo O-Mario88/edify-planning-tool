@@ -141,6 +141,9 @@ class SsaAlignment(models.TextChoices):
     )
     NO_FOCUS = "no_focus", "Names no SSA intervention"
     NO_SSA = "no_ssa", "No verified SSA to inform it"
+    #: The latest verified SSA is older than the previous financial year, so it
+    #: no longer describes the school (owner, 2026-09-14).
+    STALE_SSA = "stale_ssa", "The verified SSA is out of date"
     SSA_COLLECTION = "ssa_collection", "Collects the SSA"
     NOT_APPLICABLE = "not_applicable", "Not school-improvement work"
 

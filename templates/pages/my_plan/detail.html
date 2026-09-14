@@ -54,6 +54,7 @@
             <p class="ad-field__label">Focus intervention</p>
             <p class="ad-field__value capitalize">{{ act.focus_intervention|default:"None"|replace_underscore }}</p>
             <p class="ad-field__note">Intervention area</p>
+            {% include "partials/ssa/plan_verdict.html" with verdict=ssa_verdict %}
           </div>
         </div>
 

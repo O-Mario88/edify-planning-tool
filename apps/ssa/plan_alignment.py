@@ -50,6 +50,14 @@ STRONG_SCORE = 8.0
 #: Below this it is Critical, and every Critical intervention is a priority
 #: however many there are.
 CRITICAL_SCORE = 5.0
+#: How many financial years a verified SSA describes a school for: the
+#: operational year and the one before it (owner, 2026-09-14). An older SSA
+#: still names what the school needed then, so it still ranks the need, but
+#: the plan is marked as resting on an out-of-date assessment.
+CURRENT_SSA_FYS = 2
+#: Verdicts a planner explains in words when they plan from the scheduling
+#: drawers (owner, 2026-09-14: SSA scores inform every planned activity).
+NEEDS_REASON = ("off_priority", "no_focus")
 
 #: Work that exists to collect or review the SSA itself.
 SSA_COLLECTION_KINDS = frozenset(
@@ -96,6 +104,7 @@ UNINFORMED = (
     SsaAlignment.OFF_PRIORITY,
     SsaAlignment.NO_FOCUS,
     SsaAlignment.NO_SSA,
+    SsaAlignment.STALE_SSA,
 )
 
 _LABELS = dict(SsaIntervention.choices)
@@ -150,10 +159,49 @@ class SchoolNeed:
     record: object | None
     ranked: list[dict] = field(default_factory=list)
     priorities: list[str] = field(default_factory=list)
+    #: The verified SSA is older than CURRENT_SSA_FYS financial years.
+    stale: bool = False
+    #: The date of a newer SSA still waiting for its verifier, if any.
+    pending_since: object | None = None
 
     @property
     def assessed(self) -> bool:
         return self.record is not None and bool(self.ranked)
+
+
+def _record_fy(record) -> int | None:
+    from apps.core.fy import get_operational_fy
+
+    raw = str(getattr(record, "fy", "") or "").strip()
+    if not raw and getattr(record, "date_of_ssa", None):
+        raw = str(get_operational_fy(record.date_of_ssa))
+    try:
+        return int(raw[-4:])
+    except (TypeError, ValueError):
+        return None
+
+
+def is_current(record) -> bool:
+    """Whether a verified SSA still describes its school today."""
+    from apps.core.fy import get_operational_fy
+
+    fy = _record_fy(record)
+    if fy is None:
+        return False
+    return fy > int(str(get_operational_fy())[-4:]) - CURRENT_SSA_FYS
+
+
+def _pending_since(school, after):
+    from apps.ssa.models import SsaRecord
+
+    pending = SsaRecord.objects.filter(
+        school=school, deleted_at__isnull=True, verification_status="pending"
+    )
+    if after is not None and getattr(after, "date_of_ssa", None):
+        pending = pending.filter(date_of_ssa__gte=after.date_of_ssa)
+    return (
+        pending.order_by("-date_of_ssa").values_list("date_of_ssa", flat=True).first()
+    )
 
 
 def school_need(school) -> SchoolNeed:
@@ -165,12 +213,14 @@ def school_need(school) -> SchoolNeed:
         return SchoolNeed(None)
     record = latest_applicable_record(school)
     if record is None:
-        return SchoolNeed(None)
+        return SchoolNeed(None, pending_since=_pending_since(school, None))
     ranked = prioritized_interventions(school)
     return SchoolNeed(
         record,
         ranked,
         _priority_codes([(row["intervention"], row["score"]) for row in ranked]),
+        stale=not is_current(record),
+        pending_since=_pending_since(school, record),
     )
 
 
@@ -181,10 +231,16 @@ class ClusterNeed:
     priorities: list[str] = field(default_factory=list)
     assessed_schools: int = 0
     source_ssa_ids: list[str] = field(default_factory=list)
+    #: Members whose verified SSA is out of date and so left out of the ranking.
+    stale_schools: int = 0
 
     @property
     def assessed(self) -> bool:
         return bool(self.rows)
+
+    @property
+    def stale(self) -> bool:
+        return not self.rows and self.stale_schools > 0
 
 
 def cluster_need(cluster_id, school_ids=None) -> ClusterNeed:
@@ -205,6 +261,8 @@ def cluster_need(cluster_id, school_ids=None) -> ClusterNeed:
         members = members.filter(id__in=list(school_ids))
     members = list(members.only("id", "school_id"))
     records = latest_applicable_records(members, with_scores=True)
+    stale = {sid for sid, record in records.items() if not is_current(record)}
+    records = {sid: record for sid, record in records.items() if sid not in stale}
     scores: dict[str, list[float]] = defaultdict(list)
     for record in records.values():
         for score in record.scores.all():
@@ -233,6 +291,7 @@ def cluster_need(cluster_id, school_ids=None) -> ClusterNeed:
         ),
         assessed_schools=len(records),
         source_ssa_ids=sorted(record.id for record in records.values())[:50],
+        stale_schools=len(stale),
     )
 
 
@@ -303,17 +362,22 @@ def assess(
         "focusSource": focus_source if focus else "",
     }
 
+    stale = False
     if school is not None:
         need = school_need_ or school_need(school)
         if need.record is not None:
             evidence["school"] = _school_evidence(need, focus)
+        if need.pending_since:
+            evidence["pendingSsaDate"] = str(need.pending_since)[:10]
         priorities = need.priorities
         assessed = need.assessed
+        stale = need.stale
     elif cluster_id:
         need = cluster_need_ or cluster_need(cluster_id, school_ids)
         evidence["cluster"] = _cluster_evidence(need, focus)
         priorities = need.priorities
         assessed = need.assessed
+        stale = need.stale
     else:
         # Non-school programme work has no school to assess.
         return PlanEvidence(
@@ -328,6 +392,8 @@ def assess(
         alignment = SsaAlignment.SSA_COLLECTION
     elif nature == "not_applicable":
         alignment = SsaAlignment.NOT_APPLICABLE
+    elif stale:
+        alignment = SsaAlignment.STALE_SSA
     elif not assessed:
         alignment = SsaAlignment.NO_SSA
     elif not focus:
@@ -378,6 +444,7 @@ def _cluster_evidence(need: ClusterNeed, focus: str | None) -> dict:
             else None
         ),
         "sourceSsaIds": list(need.source_ssa_ids),
+        "staleSchools": need.stale_schools,
     }
 
 
@@ -401,10 +468,21 @@ def reason_for(evidence: PlanEvidence) -> str:
         return "Collects the SSA this school's support will be planned from."
     if alignment == SsaAlignment.NOT_APPLICABLE:
         return "Not school-improvement work, so no SSA intervention applies."
+    pending = data.get("pendingSsaDate")
+    pending_note = (
+        f" A newer SSA ({pending}) is waiting for verification." if pending else ""
+    )
     if alignment == SsaAlignment.NO_SSA:
         return (
             "No verified SSA yet: collect the assessment so support can target a "
-            "measured need."
+            "measured need." + pending_note
+        )
+    if alignment == SsaAlignment.STALE_SSA:
+        school = data.get("school") or {}
+        when = f" (FY{school.get('ssaFy')})" if school.get("ssaFy") else ""
+        return (
+            f"The verified SSA{when} is out of date: collect this year's assessment "
+            "before planning support from it." + pending_note
         )
     school = data.get("school")
     cluster = data.get("cluster")
@@ -444,11 +522,44 @@ def reason_for(evidence: PlanEvidence) -> str:
     return ""
 
 
+# ── Showing it ───────────────────────────────────────────────────────────────
+_VERDICT_TONES = {
+    SsaAlignment.PRIORITY: "success",
+    SsaAlignment.SSA_COLLECTION: "success",
+    SsaAlignment.NOT_APPLICABLE: "neutral",
+    SsaAlignment.OFF_PRIORITY: "warning",
+    SsaAlignment.NO_FOCUS: "warning",
+    SsaAlignment.NO_SSA: "danger",
+    SsaAlignment.STALE_SSA: "danger",
+}
+
+
+def verdict_display(activity) -> dict | None:
+    """What a Work Plan row, a review drawer or an activity record shows about
+    whether the plan followed the SSA (owner, 2026-09-14: nobody saw it)."""
+    alignment = getattr(activity, "ssa_alignment", "") or ""
+    if not alignment:
+        return None
+    ssa = (getattr(activity, "recommendation_source", None) or {}).get("ssa") or {}
+    return {
+        "alignment": alignment,
+        "label": SsaAlignment(alignment).label
+        if alignment in SsaAlignment.values
+        else alignment,
+        "tone": _VERDICT_TONES.get(alignment, "neutral"),
+        "informed": alignment in INFORMED,
+        "reason": ssa.get("reason") or getattr(activity, "recommendation_reason", ""),
+        "deviation_reason": getattr(activity, "ssa_deviation_reason", "") or "",
+    }
+
+
 # ── Writing it down ──────────────────────────────────────────────────────────
 def stamp(activity, evidence: PlanEvidence, *, link: bool = True) -> None:
     """Record the verdict on the activity and hand the need to the lifecycle."""
     source = dict(activity.recommendation_source or {})
     source["ssa"] = {**evidence.evidence, "reason": reason_for(evidence)}
+    if getattr(activity, "ssa_deviation_reason", ""):
+        source["ssa"]["deviationReason"] = activity.ssa_deviation_reason
     activity.recommendation_source = source
     activity.ssa_alignment = evidence.alignment
     update_fields = ["recommendation_source", "ssa_alignment", "updated_at"]
@@ -705,6 +816,168 @@ def judge_unjudged_plans(fy: str, *, limit: int | None = None) -> tuple[int, int
         if limit and stamped >= limit:
             break
     return stamped, linked
+
+
+# ── History: what informed finished work ─────────────────────────────────────
+def _as_of_record_fy(record, plan_fy) -> bool:
+    fy = _record_fy(record)
+    try:
+        plan = int(str(plan_fy)[-4:])
+    except (TypeError, ValueError):
+        return fy is not None
+    return fy is not None and fy > plan - CURRENT_SSA_FYS
+
+
+def _records_as_of(schools, day):
+    """Each school's newest SSA confirmed and dated on or before `day`."""
+    from apps.ssa.models import SsaRecord
+
+    records = SsaRecord.objects.filter(
+        school__in=schools, deleted_at__isnull=True, verification_status="confirmed"
+    ).prefetch_related("scores")
+    if day is not None:
+        records = records.filter(date_of_ssa__date__lte=day)
+    return {
+        record.school_id: record
+        for record in records.order_by(
+            "school_id", "-date_of_ssa", "-created_at"
+        ).distinct("school_id")
+    }
+
+
+def _ranked_scores(record) -> list[dict]:
+    rows = []
+    for score in record.scores.all():
+        if score.score is None or score.intervention not in _LABELS:
+            continue
+        band, _hex, _tone = ssa_score_band(float(score.score))
+        rows.append(
+            {
+                "intervention": score.intervention,
+                "label": _LABELS[score.intervention],
+                "score": float(score.score),
+                "band": band,
+            }
+        )
+    rows.sort(key=lambda row: (row["score"], row["intervention"]))
+    return rows
+
+
+def school_need_as_of(school, day, plan_fy) -> SchoolNeed:
+    """The school's verified need as it stood when a plan was made: its newest
+    SSA confirmed by then, ranked weakest score first. The full engine ranks
+    with today's history and peers, which is not what the planner could see."""
+    record = _records_as_of([school], day).get(school.id) if school else None
+    if record is None:
+        return SchoolNeed(None)
+    ranked = _ranked_scores(record)
+    return SchoolNeed(
+        record,
+        ranked,
+        _priority_codes([(row["intervention"], row["score"]) for row in ranked]),
+        stale=not _as_of_record_fy(record, plan_fy),
+    )
+
+
+def cluster_need_as_of(cluster_id, day, plan_fy) -> ClusterNeed:
+    from apps.schools.models import School
+
+    members = list(
+        School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True).only(
+            "id", "school_id"
+        )
+    )
+    records = _records_as_of(members, day)
+    stale = {sid for sid, r in records.items() if not _as_of_record_fy(r, plan_fy)}
+    scores: dict[str, list[float]] = defaultdict(list)
+    for sid, record in records.items():
+        if sid in stale:
+            continue
+        for row in _ranked_scores(record):
+            scores[row["intervention"]].append(row["score"])
+    rows = []
+    for code, values in scores.items():
+        average = round(sum(values) / len(values), 1)
+        band, _hex, _tone = ssa_score_band(average)
+        rows.append(
+            {
+                "intervention": code,
+                "label": _LABELS[code],
+                "average": average,
+                "band": band,
+                "schoolsAssessed": len(values),
+                "schoolsBelow": sum(1 for value in values if value < 5.5),
+            }
+        )
+    rows.sort(key=lambda row: (row["average"], row["intervention"]))
+    return ClusterNeed(
+        member_count=len(members),
+        rows=rows,
+        priorities=_priority_codes([(r["intervention"], r["average"]) for r in rows]),
+        assessed_schools=len(records) - len(stale),
+        source_ssa_ids=sorted(r.id for sid, r in records.items() if sid not in stale)[
+            :50
+        ],
+        stale_schools=len(stale),
+    )
+
+
+def judge_history(fy: str, *, limit: int | None = None) -> int:
+    """Judge finished plans that carry no verdict against the SSA verified when
+    each was planned (owner, 2026-09-14: delivered work must say whether it
+    followed the SSA too). Marked historical; recommendations are not linked,
+    because the need they answered has since been reassessed."""
+    from apps.activities.models import Activity
+
+    plans = (
+        Activity.objects.filter(deleted_at__isnull=True, fy=fy, ssa_alignment="")
+        .exclude(status__in=LIVE_PLAN_STATUSES)
+        .exclude(status__in=RELEASED_STATUSES)
+        .select_related("school", "catalogue_item")
+        .order_by("planned_date", "id")
+    )
+    stamped = 0
+    for activity in plans.iterator(chunk_size=200):
+        day = activity.planned_date
+        day = day.date() if hasattr(day, "date") else day
+        modes = (
+            set(
+                activity.catalogue_item.intervention_mappings.filter(
+                    active=True
+                ).values_list("mapping_mode", flat=True)
+            )
+            if activity.catalogue_item_id
+            else set()
+        )
+        school = activity.school if activity.school_id else None
+        cluster_id = None if school else activity.cluster_id
+        evidence = assess(
+            activity_type=activity.activity_type,
+            focus=activity.focus_intervention,
+            mapping_modes=modes,
+            school=school,
+            cluster_id=cluster_id,
+            focus_source="planner",
+            school_need_=school_need_as_of(school, day, activity.fy)
+            if school
+            else None,
+            cluster_need_=(
+                cluster_need_as_of(cluster_id, day, activity.fy) if cluster_id else None
+            ),
+            collects_ssa=activity.ssa_collection_expected,
+        )
+        evidence.evidence.update(
+            {
+                "historical": True,
+                "judgedAsOf": day.isoformat() if day else None,
+                "engine": f"{ENGINE_VERSION}/history",
+            }
+        )
+        stamp(activity, evidence, link=False)
+        stamped += 1
+        if limit and stamped >= limit:
+            break
+    return stamped
 
 
 def _audit_recommendations(action: str, activity, ids) -> None:

@@ -1,6 +1,7 @@
 from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
+from apps.ssa.plan_alignment import verdict_display
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
     has_permission,
@@ -341,6 +342,7 @@ def activity_detail_view(request, activity_id):
             RolePermissionService.can_complete_partner_ssa_support(request.user, a)
             and a.status == "awaiting_ia_verification"
         ),
+        "ssa_verdict": verdict_display(a),
     }
     # ── IA review · IA-P: OneTest results ──
     # A delivered OneTest visit carries "Record learning results"; the link a
@@ -1313,6 +1315,27 @@ def pl_queue_view(request):
     )
 
 
+def _ssa_basis_facts(activity) -> list[dict]:
+    """Whether the completion's plan followed the SSA, and the planner's
+    reason when it did not (owner, 2026-09-14)."""
+    from apps.ssa.plan_alignment import verdict_display
+
+    verdict = verdict_display(activity)
+    if verdict is None:
+        return []
+    facts = [
+        {"label": "SSA basis", "value": f"{verdict['label']}. {verdict['reason']}"}
+    ]
+    if verdict["deviation_reason"]:
+        facts.append(
+            {
+                "label": "Why it departs from the SSA",
+                "value": verdict["deviation_reason"],
+            }
+        )
+    return facts
+
+
 def _review_facts(activity) -> list[dict]:
     """What the lead reads before deciding: the completion as submitted.
 
@@ -1351,6 +1374,7 @@ def _review_facts(activity) -> list[dict]:
             "label": "Intervention",
             "value": INTERVENTION_LABELS.get(activity.focus_intervention or "", ""),
         },
+        *_ssa_basis_facts(activity),
         {"label": "Attendance", "value": _attendance_label(activity)},
         {
             "label": "Evidence",

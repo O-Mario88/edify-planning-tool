@@ -475,6 +475,19 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 </div>
 {% endif %}
 
+{% comment %}
+  Owner, 2026-09-14: a session that departs from the cluster's verified SSA
+  need (or names no intervention) is explained; the service refuses it
+  without a reason and the refusal appears above.
+{% endcomment %}
+{% if ssa_priority_rows %}
+<div data-ssa-deviation>
+<label for="cluster_ssa_deviation_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">If this session departs from the SSA, say why</label>
+<textarea name="ssa_deviation_reason" id="cluster_ssa_deviation_reason" rows="2" maxlength="2000" class="w-full mt-1 rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-medium normal-case tracking-normal"></textarea>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The cluster's SSA priorities: {% for row in ssa_priority_rows %}{{ row.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+</div>
+{% endif %}
+
 <!-- Activity Goal -->
 {% if action == 'meeting' %}
 <div>

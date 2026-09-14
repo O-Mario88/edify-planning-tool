@@ -23,6 +23,8 @@ ssa_expected: 'yes',
 activityType: '{{ recommended_activity_type|default:'school_visit' }}',
 purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
 focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
+ssaPriorities: {{ ssa_priorities_json|default:'[]' }},
+get ssaDeviation() { return this.ssaPriorities.length > 0 && !this.showSsaDataGathering && !this.showFollowUpPicker && (!this.focusIntervention || !this.ssaPriorities.includes(this.focusIntervention)); },
 recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
 alternative: false,
 {% comment %}
@@ -277,6 +279,18 @@ its costing on, so the costing link is derived server-side and never asked for.
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
 </div>
 </template>
+
+{% comment %}
+  Owner, 2026-09-14: SSA scores inform every planned activity. When the focus
+  is not one of the school's SSA priorities (or none is named) the planner says
+  why; apps.activities.services.create refuses the plan without it.
+{% endcomment %}
+<div x-show="ssaDeviation" style="display:none" class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1.5" data-ssa-deviation>
+  <p class="edify-text-caption font-semibold normal-case tracking-normal text-amber-900" x-text="focusIntervention ? 'The verified SSA does not rank this intervention among the school\'s priorities{% if ssa_top_label %} ({{ ssa_top_label|escapejs }} is first){% endif %}.' : 'No intervention is named{% if ssa_top_label %}; the verified SSA ranks {{ ssa_top_label|escapejs }} first{% endif %}.'"></p>
+  <label for="ssa_deviation_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-900">Why this plan departs from the SSA <span class="text-rose-500">*</span></label>
+  <textarea name="ssa_deviation_reason" id="ssa_deviation_reason" rows="2" maxlength="2000" :required="ssaDeviation" :disabled="!ssaDeviation" class="w-full rounded-control border border-amber-200 edify-surface px-3 py-2 text-[12px] font-medium normal-case tracking-normal"></textarea>
+</div>
+{% if ssa_stale %}<p class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 edify-text-caption font-semibold normal-case tracking-normal text-amber-900" data-ssa-stale>This school's verified SSA is out of date. Plan an SSA collection so support rests on this year's scores.</p>{% endif %}
 
 <template x-if="showSsaDataGathering">
 <div>

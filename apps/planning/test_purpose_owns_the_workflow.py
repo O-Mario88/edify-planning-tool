@@ -97,6 +97,9 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
             focus_intervention="learning_environment",
             recommendation_reason="SSA recommends in-school training.",
             override_reason="Authorized priority training selection.",
+            # Learning Environment is not among this school's SSA priorities,
+            # so the drawer asks why (owner, 2026-09-14).
+            ssa_deviation_reason="Authorized priority training selection.",
             teachers_per_school="4",
             expected_participants="4",
         )

@@ -3,6 +3,7 @@
 from urllib.parse import urlencode
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES, CLUSTER_MEETING_TYPES
+from apps.ssa.plan_alignment import verdict_display
 
 
 def detail_group(activity, summary_group):
@@ -54,6 +55,7 @@ def detail_fields(activity, summary_group, period_label):
         "detail_venue": activity.venue,
         "delivery_status": status,
         "delivery_status_tone": tone,
+        "ssa_verdict": verdict_display(activity),
     }
 
 
