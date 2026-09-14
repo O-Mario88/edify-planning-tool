@@ -3058,7 +3058,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3584,
+      "bytes": 4660,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/school-upload-history",
@@ -3067,7 +3067,8 @@
         "/leave/coverage/",
         "/leave/policies",
         "/leave/policies/",
-        "/schools/<str:school_id>"
+        "/schools/<str:school_id>",
+        "/strategic-priorities"
       ],
       "findings": [],
       "forms": 2,
@@ -6462,13 +6463,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12449,
+      "bytes": 18724,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
       ],
       "findings": [],
-      "forms": 3,
+      "forms": 5,
       "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Priority Milestone Detail",
@@ -8717,7 +8718,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8367,
+      "bytes": 9332,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -8866,13 +8867,13 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15707,
+      "bytes": 17486,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
       ],
       "findings": [],
-      "forms": 2,
+      "forms": 3,
       "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Setting View",
@@ -77062,7 +77063,7 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.priority_views",
       "backend_view": "apps.frontend.views.priority_views.priority_configuration_page",
@@ -100785,6 +100786,42 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.priority_views.milestone_edit_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/milestones/<str:milestone_id>/edit",
+      "route_name": "milestone_edit",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.priority_views.milestone_remove_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/milestones/<str:milestone_id>/remove",
+      "route_name": "milestone_remove",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.priority_views.priority_remove_action",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/strategic-priorities/priorities/<str:priority_id>/remove",
+      "route_name": "priority_remove",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.hr_views.succession_planning_view",
       "kind": "page",
       "methods": [
@@ -101572,7 +101609,7 @@
   "summary": {
     "accessibility_contract_pass": 517,
     "activity_states": 24,
-    "all_routes": 1271,
+    "all_routes": 1274,
     "api_routes": 359,
     "component_templates": 444,
     "full_pages": 255,

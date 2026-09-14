@@ -1,20 +1,27 @@
 from functools import wraps
 
+from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.permissions import has_permission, require_page_permission
 from apps.core.rbac import Permission
 from apps.hr.milestone_allocations import approve_allocation, create_allocation
 from apps.hr.models import (
+    MilestoneAllocationMethod,
     PriorityMilestone,
+    StrategicPriority,
     StrategicPriorityCycle,
 )
 from apps.hr.priority_services import (
     approve_cycle,
     approve_milestone,
     define_milestone,
+    edit_milestone_targets,
+    remove_milestone,
+    remove_priority,
 )
 
 
@@ -123,6 +130,11 @@ def priority_configuration_page(request):
     defined_count = 0
     approved_count = 0
     allocation_count = 0
+    # Editing and removing (owner, 2026-09-14): the numbers are editable by
+    # the roles the matrix gives strategicPriorities.edit — the CD and IA (and
+    # the RVP) — and never by the Program Lead, who reads this tab to receive
+    # the number they distribute. The same permission gates the POSTs below.
+    can_edit = has_permission(request.user, Permission.STRATEGIC_PRIORITIES_EDIT.value)
     for priority in priorities:
         milestones = list(priority.milestones.all())
         milestone_rows.extend(
@@ -130,6 +142,19 @@ def priority_configuration_page(request):
                 "priority": priority,
                 "milestone": milestone,
                 "progress": plan_progress.get(milestone.id),
+                # Allocations are prefetched with the cycle; counting in
+                # Python keeps the edit form's warning off the query count.
+                "approved_allocation_count": sum(
+                    1
+                    for allocation in milestone.allocations.all()
+                    if allocation.status == "approved"
+                ),
+                "remove_title": f"Remove {milestone.title} from FY{fy}?",
+                "remove_body": (
+                    "It leaves this year's priority set for good, with its "
+                    "source wording kept in the audit trail. A milestone with "
+                    "targets already distributed cannot be removed."
+                ),
             }
             for milestone in milestones
         )
@@ -155,6 +180,15 @@ def priority_configuration_page(request):
                 "needs_definition_count": group_needs_definition,
                 "defined_count": group_defined,
                 "allocation_count": group_allocations,
+                "remove_aria": f"Remove {priority.title} from FY{fy}",
+                "remove_title": f"Remove {priority.title} from FY{fy}?",
+                "remove_body": (
+                    f"For a priority the country will not work on this FY. Its "
+                    f"{len(milestones)} milestone"
+                    f"{'s' if len(milestones) != 1 else ''} leave with it; "
+                    "the audit trail keeps what they said. A group with "
+                    "targets already distributed cannot be removed."
+                ),
             }
         )
 
@@ -196,6 +230,8 @@ def priority_configuration_page(request):
         ),
         "staff": staff,
         "teams": staff.filter(id__in=supervisor_ids),
+        "can_edit": can_edit,
+        "allocation_methods": MilestoneAllocationMethod.choices,
         "countries": sorted(
             {country for country in staff.values_list("country", flat=True) if country}
         ),
@@ -277,3 +313,69 @@ def cycle_approve_action(request, cycle_id):
     cycle = get_object_or_404(StrategicPriorityCycle, id=cycle_id)
     approve_cycle(cycle, principal=request.user)
     return redirect("/strategic-priorities?fy=" + cycle.financial_year)
+
+
+def _back_to_setting(fy: str) -> str:
+    return "/strategic-priorities?fy=" + fy
+
+
+# The three actions the owner asked for on 2026-09-14 — edit the figures,
+# remove a milestone, remove a priority group — share one gate, the matrix's
+# strategicPriorities.edit (CD, IA, RVP), and one failure contract: a refusal
+# the service raises on purpose (BadRequest / Forbidden) is shown back on the
+# page as an error flash, never as a 500 or a JSON envelope.
+@require_POST
+@_permission(Permission.STRATEGIC_PRIORITIES_EDIT.value)
+def milestone_edit_action(request, milestone_id):
+    milestone = get_object_or_404(
+        PriorityMilestone.objects.select_related("priority"), id=milestone_id
+    )
+    back = _back_to_setting(milestone.priority.fy)
+    try:
+        edit_milestone_targets(
+            milestone, data=request.POST.dict(), principal=request.user
+        )
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, f"{milestone.title}: {exc.detail}")
+        return redirect(back)
+    messages.success(request, f"{milestone.title}: targets saved.")
+    return redirect(back)
+
+
+@require_POST
+@_permission(Permission.STRATEGIC_PRIORITIES_EDIT.value)
+def milestone_remove_action(request, milestone_id):
+    milestone = get_object_or_404(
+        PriorityMilestone.objects.select_related("priority"), id=milestone_id
+    )
+    fy = milestone.priority.fy
+    try:
+        remove_milestone(
+            milestone, principal=request.user, reason=request.POST.get("reason")
+        )
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(exc.detail))
+        return redirect(_back_to_setting(fy))
+    messages.success(request, f"{milestone.title} removed from FY{fy}.")
+    return redirect(_back_to_setting(fy))
+
+
+@require_POST
+@_permission(Permission.STRATEGIC_PRIORITIES_EDIT.value)
+def priority_remove_action(request, priority_id):
+    priority = get_object_or_404(StrategicPriority, id=priority_id)
+    fy = priority.fy
+    try:
+        removed = remove_priority(
+            priority, principal=request.user, reason=request.POST.get("reason")
+        )
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(exc.detail))
+        return redirect(_back_to_setting(fy))
+    count = len(removed["milestones"])
+    messages.success(
+        request,
+        f"{priority.title} removed from FY{fy} with its {count} "
+        f"milestone{'s' if count != 1 else ''}.",
+    )
+    return redirect(_back_to_setting(fy))

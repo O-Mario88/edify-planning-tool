@@ -4705,8 +4705,10 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 }
 
 .priority-record-grid {
-  /* Floors sum to 57.25rem so a 1440px desktop shows all nine columns
-     without a sideways scroll (owner, 2026-09-06); narrower screens scroll. */
+  /* Floors sum to 60.5rem so a 1440px desktop shows all nine columns
+     without a sideways scroll (owner, 2026-09-06); narrower screens scroll.
+     The action column grew from 3.25rem on 2026-09-14 to seat Edit beside
+     the disclosure chevron for the CD and IA. */
   min-inline-size: min(58rem, 100%);
   background: var(--edify-surface, #fff);
 }
@@ -4724,7 +4726,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
     8rem
     minmax(7.5rem, 0.8fr)
     repeat(3, 4rem)
-    3.25rem;
+    6.5rem;
   align-items: stretch;
 }
 
@@ -4755,6 +4757,11 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .priority-record-header > span:first-child,
 .priority-record-header > span:nth-last-child(-n + 4) {
   justify-content: center;
+}
+
+/* The action cell: Edit (for editors) and the chevron, kept to the end. */
+.priority-record-summary > .priority-record-action {
+  justify-content: flex-end;
 }
 
 .priority-record-header svg {

@@ -17657,8 +17657,8 @@
   "page_keys_declared": 172,
   "page_keys_in_navigation": 189,
   "routes_guarded": 1082,
-  "routes_total": 1271,
-  "routes_unguarded": 189,
+  "routes_total": 1274,
+  "routes_unguarded": 192,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -18935,6 +18935,27 @@
    "route": "/strategic-priorities/milestones/<str:milestone_id>/define",
    "route_name": "milestone_define",
    "view": "apps.frontend.views.priority_views.milestone_define_action"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/edit",
+   "route_name": "milestone_edit",
+   "view": "apps.frontend.views.priority_views.milestone_edit_action"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/strategic-priorities/milestones/<str:milestone_id>/remove",
+   "route_name": "milestone_remove",
+   "view": "apps.frontend.views.priority_views.milestone_remove_action"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/strategic-priorities/priorities/<str:priority_id>/remove",
+   "route_name": "priority_remove",
+   "view": "apps.frontend.views.priority_views.priority_remove_action"
   },
   {
    "page_permission": "",

@@ -26,6 +26,40 @@
     </div>
   </div>
 
+  {% comment %}Editable by the CD and IA (owner, 2026-09-14): "Priority setting
+  is in CD but cannot be edited. Make sure the numbers/targets are editable
+  from CD and IA only." can_edit is the matrix's strategicPriorities.edit; a
+  Program Lead reads this row for the number they distribute and sees none of
+  this. The Edit button in the row's summary opens this block.{% endcomment %}
+  {% if can_edit %}
+  <details class="mt-3 rounded-control border border-slate-200 edify-surface" data-milestone-edit-panel="{{ milestone.id }}">
+    <summary class="cursor-pointer list-none px-3 py-2.5 text-[12px] font-bold edify-primary-text [&::-webkit-details-marker]:hidden">Edit targets <span class="ml-1 text-slate-400" aria-hidden="true">＋</span></summary>
+    <form method="post" action="/strategic-priorities/milestones/{{ milestone.id }}/edit" class="grid gap-3 border-t border-slate-100 p-3 sm:grid-cols-2 lg:grid-cols-4">
+      {% csrf_token %}
+      <fieldset class="contents">
+        <legend class="sr-only">Edit targets for {{ milestone.title }}</legend>
+        <label for="edit-title-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600 sm:col-span-2 lg:col-span-4">Milestone title<input id="edit-title-{{ milestone.id }}" name="title" required maxlength="255" value="{{ milestone.title }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-target-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Target value<input id="edit-target-{{ milestone.id }}" type="number" step="0.01" min="0" name="targetValue" value="{{ milestone.target_value|default_if_none:'' }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-unit-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Target unit<input id="edit-unit-{{ milestone.id }}" name="targetUnit" maxlength="64" value="{{ milestone.target_unit }}" placeholder="Schools, %, UGX…" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-core-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Core schools share<input id="edit-core-{{ milestone.id }}" type="number" step="0.01" min="0" name="coreTarget" value="{{ milestone.core_target|default_if_none:'' }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-client-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Client schools share<input id="edit-client-{{ milestone.id }}" type="number" step="0.01" min="0" name="clientTarget" value="{{ milestone.client_target|default_if_none:'' }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-participants-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Participants per school<input id="edit-participants-{{ milestone.id }}" type="number" step="1" min="0" name="participantsPerSchool" value="{{ milestone.participants_per_school|default_if_none:'' }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        <label for="edit-method-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Allocation method<select id="edit-method-{{ milestone.id }}" name="allocationMethod" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"><option value="" {% if not milestone.allocation_method %}selected{% endif %}>Not set</option>{% for value, label in allocation_methods %}<option value="{{ value }}" {% if value == milestone.allocation_method %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label for="edit-due-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600">Due date<input id="edit-due-{{ milestone.id }}" type="date" name="dueDate" value="{{ milestone.due_date|date:'Y-m-d' }}" class="mt-1 block h-9 w-full rounded-control border border-slate-200 px-3 text-[12px]"></label>
+        {% if priority.status == "published" %}
+        {% comment %}A published figure may still move (the CD and IA own it),
+        but not silently: the reason travels into the audit row.{% endcomment %}
+        <label for="edit-reason-{{ milestone.id }}" class="text-[12px] font-semibold text-slate-600 sm:col-span-2 lg:col-span-4">Reason for changing a published figure <span class="text-rose-500" aria-hidden="true">*</span><textarea id="edit-reason-{{ milestone.id }}" name="reason" required rows="2" placeholder="This priority is published. Say why the figure is changing." class="mt-1 block w-full rounded-control border border-slate-200 px-3 py-2 text-[12px]"></textarea></label>
+        {% endif %}
+        {% if item.approved_allocation_count %}
+        <p class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800 sm:col-span-2 lg:col-span-4" role="note">{{ item.approved_allocation_count }} allocation{{ item.approved_allocation_count|pluralize }} already distributed keep their figures until amended.</p>
+        {% endif %}
+      </fieldset>
+      <div class="sm:col-span-2 lg:col-span-4"><button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-control px-4 py-2 text-[12px] font-bold">Save targets</button></div>
+    </form>
+  </details>
+  {% endif %}
+
   {% if can_define and milestone.requires_definition %}
   <details class="mt-3 rounded-control border border-slate-200 edify-surface">
     <summary class="cursor-pointer list-none px-3 py-2.5 text-[12px] font-bold edify-primary-text [&::-webkit-details-marker]:hidden">Define metric <span class="ml-1 text-slate-400" aria-hidden="true">＋</span></summary>
@@ -74,5 +108,16 @@
       <div class="sm:col-span-2 lg:col-span-4"><button class="edify-primary-solid edify-primary-on-solid rounded-control px-4 py-2 text-[12px] font-bold" type="submit">Allocate and approve</button></div>
     </form>
   </details>
+  {% endif %}
+
+  {% if can_edit %}
+  {% comment %}"CD and IA can edit or delete a priority in case they don't
+  want to work on that specific priority this FY." Asked in the page with a
+  reason, never in a browser dialog; the service refuses while any target is
+  distributed from this row.{% endcomment %}
+  <form method="post" action="/strategic-priorities/milestones/{{ milestone.id }}/remove" class="mt-3 flex justify-end">
+    {% csrf_token %}
+    {% include "partials/components/confirm_action.html" with uid="milestone-"|add:milestone.id trigger_label="Remove from FY"|add:fy trigger_aria_label="Remove "|add:milestone.title|add:" from FY"|add:fy title=item.remove_title body=item.remove_body confirm_label="Remove from FY"|add:fy reason_label="Why this milestone is not being worked on this FY" %}
+  </form>
   {% endif %}
 </div>
