@@ -682,8 +682,14 @@ class PlanningDashboardService:
                         "blockedReason": readiness_details["reason"]
                         if readiness_details["blockedActions"]
                         else None,
-                        "staffCanSchedule": gate.staff_can_schedule,
-                        "staffScheduleReason": gate.staff_reason,
+                        # The row's Schedule button is off only while a partner
+                        # holds the school; a used follow-up visit greys that
+                        # purpose inside the drawer and leaves in-school
+                        # training, donor and social visits open.
+                        "staffCanSchedule": not gate.staff_locked,
+                        "staffScheduleReason": gate.staff_locked_reason,
+                        "followUpVisitOpen": gate.staff_can_schedule,
+                        "followUpVisitReason": gate.staff_reason,
                         "canAssignPartner": gate.can_assign_partner,
                         "assignPartnerReason": gate.assign_reason,
                         "visitGate": gate.as_dict(),

@@ -136,6 +136,15 @@ def touch_presence(user, request=None) -> None:
 
     if not getattr(user, "is_authenticated", False):
         return
+    # A session request carries the User; an API request the AuthPrincipal,
+    # which names the same row as user_id.
+    user_pk = (
+        getattr(user, "pk", None)
+        or getattr(user, "user_id", None)
+        or getattr(user, "id", None)
+    )
+    if not user_pk:
+        return
     now = timezone.now()
     values = {
         "last_seen_at": now,
@@ -153,7 +162,7 @@ def touch_presence(user, request=None) -> None:
     if footprint:
         values["last_seen_path"], values["last_seen_action"] = footprint
     try:
-        User.objects.filter(pk=user.pk).update(**values)
+        User.objects.filter(pk=user_pk).update(**values)
     except DatabaseError:
         return
 

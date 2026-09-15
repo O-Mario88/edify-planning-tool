@@ -1,13 +1,13 @@
 {
  "summary": {
   "titled_cards": 686,
-  "templates": 258,
+  "templates": 259,
   "distinct_titles": 652,
   "with_card_key": 13,
-  "untitled_surfaces": 766,
+  "untitled_surfaces": 768,
   "untitled_chrome": 173,
-  "untitled_nested": 247,
-  "untitled_headless": 346,
+  "untitled_nested": 248,
+  "untitled_headless": 347,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 228,
+   "line": 235,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 263,
+   "line": 270,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 286,
+   "line": 293,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -4407,7 +4407,7 @@
   },
   {
    "template": "templates/partials/core_schools/schedule_activity_drawer.html",
-   "line": 59,
+   "line": 64,
    "title": "Schedule an additional visit or training",
    "heading_level": 3,
    "has_card_key": false,
@@ -4433,6 +4433,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/dashboards/_whos_online.html",
+   "line": 11,
+   "title": "Who's Online",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "presence-panel",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
    "line": 10,
    "title": "Critical Now",
@@ -4453,19 +4462,10 @@
   {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
    "line": 37,
-   "title": "Who's Online",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "admin-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/admin/_platform_operations.html",
-   "line": 53,
    "title": "Sign-ins",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "admin-panel",
+   "classes": "admin-panel admin-panel--presence",
    "branch_path": []
   },
   {
@@ -4641,7 +4641,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 65,
+   "line": 75,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4650,7 +4650,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 96,
+   "line": 106,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4659,7 +4659,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 154,
+   "line": 164,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4668,7 +4668,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 228,
+   "line": 238,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4677,7 +4677,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 263,
+   "line": 273,
    "title": "Verification &amp; Data Quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4686,7 +4686,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 314,
+   "line": 324,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4695,7 +4695,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 338,
+   "line": 348,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4704,7 +4704,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 387,
+   "line": 397,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4713,7 +4713,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 461,
+   "line": 471,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,

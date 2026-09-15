@@ -949,6 +949,7 @@ def _assert_schedule_entitlement(
     *,
     core_slot_verified: bool = False,
     catalogue_item=None,
+    is_request: bool = False,
 ):
     """Core work must still arrive through the slot machinery, which sets
     coreSlotVerified after locking a slot — otherwise POSTing
@@ -978,7 +979,11 @@ def _assert_schedule_entitlement(
     )
 
     rule = rule_for(school.school_type)
-    if rule != "client" or not is_gated_visit(rule, activity_type, catalogue_item):
+    if is_request or rule != "client":
+        # A visit request waits for the owner; the rule is applied when they
+        # approve it (apps.planning.visit_requests.approve).
+        return
+    if not is_gated_visit(rule, activity_type, catalogue_item, data.get("purposeType")):
         return
     partner_delivery = data.get("deliveryType") == "partner" or bool(
         data.get("assignedPartnerId")
@@ -1765,6 +1770,7 @@ def create(
         data,
         core_slot_verified=core_slot_verified,
         catalogue_item=catalogue_item,
+        is_request=bool(approval_owner_id),
     )
 
     # ── Who executes ─────────────────────────────────────────────────────
@@ -2272,6 +2278,7 @@ def create(
                 data,
                 core_slot_verified=core_slot_verified,
                 catalogue_item=catalogue_item,
+                is_request=bool(approval_owner_id),
             )
         elif cluster_id:
             # Serialise concurrent cluster scheduling the same way the school

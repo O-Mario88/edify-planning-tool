@@ -241,6 +241,24 @@ class QuarterlyConversationJourneyTest(TestCase):
         cycle, _ = PerformanceCycle.objects.get_or_create(fy=self.fy)
         return review, cycle
 
+    def _school_for_visit(self):
+        """The journey's school for the first visit; a fresh one in the same
+        portfolio for each visit after it."""
+        used = getattr(self, "_visited_schools", 0)
+        self._visited_schools = used + 1
+        if used == 0:
+            return self.school
+        school = School.objects.create(
+            school_id=f"SCH-QTR-{used + 1}",
+            name=f"Quarterly Primary {used + 1}",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        _confirmed_ssa(school)
+        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=school.id)
+        return school
+
     def _verified_visit(self, purpose="Quarterly proof", *, offset_days=0):
         """One real, delivered, IA-verified school visit.
 
@@ -272,9 +290,14 @@ class QuarterlyConversationJourneyTest(TestCase):
         self._sf_seq = getattr(self, "_sf_seq", 300000) + 1
         day = _next_schedulable(self.day, offset_days)
         item = resolve_item_for_workflow_kind("school_visit")
+        # A client school is visited once a year (owner, 2026-09-15), so a
+        # walk that delivers a second visit delivers it at a second school in
+        # the officer's portfolio — the conversation counts the officer's
+        # visits, wherever they were.
+        school = self._school_for_visit()
         schedule_school_visit(
             {
-                "schoolId": self.school.school_id,
+                "schoolId": school.school_id,
                 "catalogueItemId": item.id,
                 "scheduledDate": _at(day).isoformat(),
                 "activityPurposeText": purpose,
@@ -282,7 +305,7 @@ class QuarterlyConversationJourneyTest(TestCase):
             self.cceo,
         )
         activity = (
-            Activity.objects.filter(school=self.school, scheduled_date__date=day)
+            Activity.objects.filter(school=school, scheduled_date__date=day)
             .order_by("-id")
             .first()
         )

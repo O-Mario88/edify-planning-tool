@@ -31,29 +31,41 @@ route, not the cluster, so one constant URL answers it for every row.
           <h2 class="school-record-row__title">{{ school.name }}</h2>
           <div class="school-record-row__actions core-school-row__actions">
             {% comment %}
-              Staff deliver two of the four visits and two of the four
-              trainings (owner, 2026-09-15). Schedule greys out once both
-              staff halves are used; the partner's Assign greys out once
-              both partner halves are scheduled or assigned.
+              Staff deliver two of the four visits (owner, 2026-09-15):
+              Schedule greys out after two staff visits — visits only, not
+              trainings, so a Training entry stays beside it while staff
+              trainings remain. Assign greys out once two partner visits are
+              scheduled or assigned.
             {% endcomment %}
-            {% if not school.staff_share_complete %}
+            {% if school.staff_can_schedule_visit %}
             <button type="button" class="school-record-action school-record-action--schedule" hx-get="/core-schools/schedule-activity?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule an activity for {{ school.name }}">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
               <span class="core-school-row__action-label">Schedule</span>
             </button>
             {% else %}
-            <button type="button" class="school-record-action school-record-action--schedule" disabled title="Staff core visits and trainings complete ({{ school.staff_visit_count }}/{{ school.staff_visits_cap }} visits). The remaining package belongs to the partner." data-visit-locked="true" aria-label="Schedule an activity for {{ school.name }} unavailable: staff core visits and trainings complete">
+            <button type="button" class="school-record-action school-record-action--schedule" disabled title="{{ school.staff_visit_reason }}" data-visit-locked="true" aria-label="Schedule an activity for {{ school.name }} unavailable: {{ school.staff_visit_reason }}">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>
               <span class="core-school-row__action-label">Schedule</span>
             </button>
             {% endif %}
-            {% if school.core_package_available and not school.partner_share_complete %}
+            {% if school.core_package_available and school.staff_trainings_open %}
+            <button type="button" class="school-record-action school-record-action--schedule" hx-get="/core-schools/schedule-training?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule a core training for {{ school.name }}">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>
+              <span class="core-school-row__action-label">Training</span>
+            </button>
+            {% else %}
+            <button type="button" class="school-record-action school-record-action--schedule" disabled title="{% if not school.core_package_available %}{{ school.blocked_reason|default:'Core package complete' }}{% else %}Staff core trainings complete ({{ school.staff_training_count }}/{{ school.staff_visits_cap }}). The remaining trainings belong to the partner.{% endif %}" data-training-locked="true" aria-label="Schedule a core training for {{ school.name }} unavailable">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>
+              <span class="core-school-row__action-label">Training</span>
+            </button>
+            {% endif %}
+            {% if school.core_package_available and school.can_assign_partner_visit %}
               <button type="button" class="school-record-action school-record-action--assign" hx-get="/core-schools/assign-partner?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign core support for {{ school.name }}">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
                 <span class="core-school-row__action-label">Assign</span>
               </button>
             {% else %}
-              <button type="button" class="school-record-action school-record-action--assign" disabled title="{% if school.partner_share_complete %}Partner core visits and trainings already assigned ({{ school.partner_visit_count }}/{{ school.partner_visits_cap }} visits).{% else %}{{ school.blocked_reason|default:'Core package complete' }}{% endif %}" data-assign-locked="{% if school.partner_share_complete %}true{% else %}false{% endif %}" aria-label="Assign core support for {{ school.name }} unavailable">
+              <button type="button" class="school-record-action school-record-action--assign" disabled title="{% if not school.can_assign_partner_visit %}{{ school.assign_visit_reason }}{% else %}{{ school.blocked_reason|default:'Core package complete' }}{% endif %}" data-assign-locked="{% if not school.can_assign_partner_visit %}true{% else %}false{% endif %}" aria-label="Assign core support for {{ school.name }} unavailable">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
                 <span class="core-school-row__action-label">Assign</span>
               </button>

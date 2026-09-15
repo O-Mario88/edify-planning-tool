@@ -63,8 +63,11 @@
     <select name="purpose_of_visit" id="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()"
       class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
       <option value="">Select a reason…</option>
-      {% for value, label in partner_visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      {% for value, label in partner_visit_purposes %}<option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% endif %}</option>{% endfor %}
     </select>
+    {% if locked_visit_reason %}
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} An in-school training can still be assigned.</p>
+    {% endif %}
   </div>
 
   <template x-if="showTraining">

@@ -18,20 +18,31 @@ sentence). Both call here. Nothing else counts visits for this purpose.
 
 What counts:
 
-* Client-rule schools (``client`` and ``core_trained``): a support visit to
-  the school in the operational fiscal year, whoever delivers it — the
-  canonical visit types (apps.core.activity_types.VISIT_TYPES) less the four
-  social ones that are not support (donor, social, story-gathering,
-  invitation) and the core-package ones, plus anything the catalogue flags
-  as consuming the client visit. One per year. A catalogue item the CD has
-  taken out of the entitlement (its rule's counts_toward_entitlement off)
-  neither counts nor is refused. A live partner assignment that has not been
-  scheduled yet also locks the staff buttons; a returned one does not.
+* Client-rule schools (``client`` and ``core_trained``): the follow-up visit
+  — a support visit to the school in the operational fiscal year, whoever
+  delivers it (owner, 2026-09-15: "follow up can only be scheduled once").
+  Donor visits, story gathering, invitations and social visits are not it;
+  neither is an in-school training, nor the companion visit the training
+  pair creates, nor an in-school coaching visit ("if the training is
+  in-school, allow those"). A catalogue item the CD has taken out of the
+  entitlement (its rule's counts_toward_entitlement off) neither counts nor
+  is refused. A live partner assignment that has not been scheduled yet
+  locks the school for staff altogether; a returned one does not.
 * Core schools: ``core_visit`` activities in the fiscal year, split by
   ``delivery_type``. Staff may hold two; the partner side (scheduled partner
   visits plus visit slots assigned to a partner and not yet scheduled) may
   hold two. These are the halves of the package's four visits, and the same
-  two the core scheduling service caps at.
+  two the core scheduling service caps at. Trainings are not visits: the
+  Core Schools row keeps its own Training entry open while staff trainings
+  remain.
+
+Two answers per side, because a row button and a purpose inside a drawer
+are gated differently: ``staff_can_schedule`` says whether the follow-up
+visit itself may be scheduled (the purpose in the drawer, the core-visit
+option, the core row's Schedule button); ``staff_locked`` says whether the
+whole Schedule button on a Planning or cluster row is off (only when a
+partner holds the school). Likewise ``can_assign_partner`` (the Assign
+button) and ``can_assign_visit`` (the visit purposes in the assign drawer).
 
 "Live" excludes cancelled, rejected, deferred and not-planned work, which is
 what every other counter here excludes. A completed visit still counts: the
@@ -54,6 +65,10 @@ CLIENT_RULE_SCHOOL_TYPES = ("client", "core_trained")
 CORE_RULE_SCHOOL_TYPES = ("core",)
 
 DEAD_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
+# A visit request a country role has filed and the owner has not decided on
+# (apps.planning.visit_requests) is not a plan yet: it neither uses the
+# school's visit nor is refused by the rule. Approval is where it is checked.
+NOT_YET_PLANNED_STATUSES = ("awaiting_owner_approval",)
 
 
 @dataclass
@@ -69,10 +84,14 @@ class VisitGate:
     partner_name: str = ""
     staff_can_schedule: bool = True
     staff_reason: str = ""
+    staff_locked: bool = False
+    staff_locked_reason: str = ""
     partner_can_schedule: bool = True
     partner_reason: str = ""
     can_assign_partner: bool = True
     assign_reason: str = ""
+    can_assign_visit: bool = True
+    assign_visit_reason: str = ""
     staff_cap: int = 0
     partner_cap: int = 0
     # Core only: the training half of the package, tallied the same way so
@@ -91,50 +110,38 @@ class VisitGate:
         return self.partner_visits + self.partner_pending
 
     @property
-    def core_staff_share_complete(self) -> bool:
-        """Staff have used their two visits and two trainings."""
-        return (
-            self.rule == "core"
-            and self.staff_visits >= CORE_STAFF_VISIT_CAP
-            and self.staff_trainings >= CORE_STAFF_VISIT_CAP
-        )
-
-    @property
-    def core_partner_share_complete(self) -> bool:
-        """Two visits and two trainings are scheduled by, or assigned to, a
-        partner."""
-        return (
-            self.rule == "core"
-            and self.partner_held_visits >= CORE_PARTNER_VISIT_CAP
-            and self.partner_trainings + self.partner_pending_trainings
-            >= CORE_PARTNER_VISIT_CAP
-        )
+    def staff_trainings_open(self) -> bool:
+        """Core only: staff still have one of their two trainings to give."""
+        return self.rule == "core" and self.staff_trainings < CORE_STAFF_VISIT_CAP
 
     def as_dict(self) -> dict:
         data = asdict(self)
         data["total_visits"] = self.total_visits
         data["partner_held_visits"] = self.partner_held_visits
-        data["core_staff_share_complete"] = self.core_staff_share_complete
-        data["core_partner_share_complete"] = self.core_partner_share_complete
+        data["staff_trainings_open"] = self.staff_trainings_open
         return data
 
 
-# Visits that are not support: they do not use the school's yearly visit.
-SOCIAL_VISIT_TYPES = (
-    "donor_visit",
-    "social_visit",
-    "story_gathering_visit",
-    "school_invitation",
+# The follow-up visit: the support visits that use a client school's one
+# visit a year. Donor, social, story-gathering and invitation visits do not;
+# nor does an in-school coaching visit (in-school work is allowed) or the
+# core package's own visits.
+FOLLOW_UP_VISIT_TYPES = (
+    "school_visit",
+    "follow_up_visit",
+    "training_follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
 )
-CORE_PACKAGE_TYPES = ("core_visit", "core_assessment_visit")
+# The visit the in-school training pair creates beside the training: one
+# mission, recorded twice for Salesforce. It is the training, not a visit.
+COMPANION_VISIT_PURPOSE = "in_school_training_delivery_visit"
 
-
-def support_visit_types() -> tuple[str, ...]:
-    from apps.core.activity_types import VISIT_TYPES
-
-    return tuple(
-        t for t in VISIT_TYPES if t not in SOCIAL_VISIT_TYPES + CORE_PACKAGE_TYPES
-    )
+# Purposes in the schedule and assign drawers that ARE the follow-up visit.
+FOLLOW_UP_PURPOSES = ("training_follow_up", "ssa_support")
 
 
 def _client_visit_q():
@@ -142,7 +149,7 @@ def _client_visit_q():
 
     from apps.activities.services import client_entitlement_consumers_q
 
-    return Q(activity_type__in=support_visit_types()) | client_entitlement_consumers_q(
+    return Q(activity_type__in=FOLLOW_UP_VISIT_TYPES) | client_entitlement_consumers_q(
         "visit"
     )
 
@@ -162,24 +169,28 @@ def _exempt_by_rule(catalogue_item) -> bool:
     return not getattr(rule, "counts_toward_entitlement", True)
 
 
-def consumes_client_visit(activity_type: str, catalogue_item=None) -> bool:
+def consumes_client_visit(
+    activity_type: str, catalogue_item=None, purpose_type: str | None = None
+) -> bool:
     """Does an activity of this shape count as the client school's visit?
     Mirrors ``_client_visit_q`` for a row that does not exist yet."""
-    if _exempt_by_rule(catalogue_item):
+    if purpose_type == COMPANION_VISIT_PURPOSE or _exempt_by_rule(catalogue_item):
         return False
     if catalogue_item is not None and getattr(
         catalogue_item, "counts_toward_client_visit", False
     ):
         return True
-    return activity_type in support_visit_types()
+    return activity_type in FOLLOW_UP_VISIT_TYPES
 
 
-def is_gated_visit(rule: str, activity_type: str, catalogue_item=None) -> bool:
+def is_gated_visit(
+    rule: str, activity_type: str, catalogue_item=None, purpose_type=None
+) -> bool:
     """Is an activity of this shape the kind of visit the rule counts?"""
     if rule == "core":
         return activity_type == "core_visit"
     if rule == "client":
-        return consumes_client_visit(activity_type, catalogue_item)
+        return consumes_client_visit(activity_type, catalogue_item, purpose_type)
     return False
 
 
@@ -220,7 +231,7 @@ def visit_gates(
         return gates
 
     live = Activity.objects.filter(fy=fy, deleted_at__isnull=True).exclude(
-        status__in=DEAD_STATUSES
+        status__in=DEAD_STATUSES + NOT_YET_PLANNED_STATUSES
     )
     if exclude_activity_id:
         live = live.exclude(id=exclude_activity_id)
@@ -235,6 +246,7 @@ def visit_gates(
         _tally(
             live.filter(school_id__in=client_ids)
             .filter(_client_visit_q())
+            .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
             .exclude(
                 catalogue_item__counts_toward_client_visit=True,
                 catalogue_item__eligibility_rule__counts_toward_entitlement=False,
@@ -313,13 +325,15 @@ def _decide(gate: VisitGate) -> None:
                 f"{gate.school_name} already has its visit for FY{gate.fy} "
                 f"(scheduled by {who}). Client schools are visited once a year."
             )
+            # The follow-up visit is used; the rest of the drawer (in-school
+            # training, donor and social visits) stays open.
             gate.staff_can_schedule = False
             gate.staff_reason = visited_reason
             gate.partner_can_schedule = False
             gate.partner_reason = visited_reason
-            gate.can_assign_partner = False
-            gate.assign_reason = visited_reason
-        elif gate.partner_pending:
+            gate.can_assign_visit = False
+            gate.assign_visit_reason = visited_reason
+        if gate.partner_pending:
             partner = gate.partner_name or "a partner"
             locked = (
                 f"{gate.school_name} is assigned to {partner}. Only the partner "
@@ -327,8 +341,14 @@ def _decide(gate: VisitGate) -> None:
             )
             gate.staff_can_schedule = False
             gate.staff_reason = locked
-            gate.can_assign_partner = False
-            gate.assign_reason = f"{gate.school_name} is already assigned to {partner}."
+            gate.staff_locked = True
+            gate.staff_locked_reason = locked
+            # The follow-up visit is the partner's; other support (an
+            # in-school training) may still be handed over.
+            gate.can_assign_visit = False
+            gate.assign_visit_reason = (
+                f"{gate.school_name}'s visit is already assigned to {partner}."
+            )
         return
 
     if gate.rule == "core":
@@ -350,7 +370,8 @@ def _decide(gate: VisitGate) -> None:
             )
         if partner_held >= CORE_PARTNER_VISIT_CAP:
             gate.can_assign_partner = False
-            gate.assign_reason = (
+            gate.can_assign_visit = False
+            gate.assign_reason = gate.assign_visit_reason = (
                 f"Partner core visits already assigned for FY{gate.fy} "
                 f"({partner_held}/{CORE_PARTNER_VISIT_CAP})."
             )

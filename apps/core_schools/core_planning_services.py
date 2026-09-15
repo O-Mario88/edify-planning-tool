@@ -841,20 +841,21 @@ class CorePackageProgressService:
                     "core_package_available": bool(plan)
                     and not package_summary["package_complete"],
                     "blocked_reason": blocked_reason,
-                    # Staff share: two visits and two trainings. The Schedule
-                    # button greys out when both are used; the visit half
-                    # alone greys the core-visit option in the chooser.
+                    # Staff's two visits: the Schedule button greys out once
+                    # they are used. Trainings are not visits, so the row's
+                    # Training entry stays open while staff trainings remain.
                     "staff_visit_count": gate.staff_visits,
                     "staff_visits_cap": gate.staff_cap,
                     "staff_can_schedule_visit": gate.staff_can_schedule,
                     "staff_visit_reason": gate.staff_reason,
-                    "staff_share_complete": gate.core_staff_share_complete,
-                    # Partner share: scheduled by, or assigned to, a partner.
+                    "staff_training_count": gate.staff_trainings,
+                    "staff_trainings_open": gate.staff_trainings_open,
+                    # Partner's two visits: scheduled by, or assigned to, a
+                    # partner. The Assign button greys out once both are held.
                     "partner_visit_count": gate.partner_held_visits,
                     "partner_visits_cap": gate.partner_cap,
                     "can_assign_partner_visit": gate.can_assign_partner,
                     "assign_visit_reason": gate.assign_reason,
-                    "partner_share_complete": gate.core_partner_share_complete,
                     "next_missing_milestone": next_missing_milestone,
                 }
             )

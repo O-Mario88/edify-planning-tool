@@ -31,8 +31,7 @@
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="presence-group__row">
           <td colspan="5">
-            <button type="button" class="presence-group__toggle" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="presence-group-{{ forloop.counter }}"
-                    onclick="var t=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',t);this.closest('tbody').toggleAttribute('data-collapsed',!t);">
+            <button type="button" class="presence-group__toggle" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="presence-group-{{ forloop.counter }}">
               <span class="presence-group__chevron" aria-hidden="true"></span>
               <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
               <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
@@ -53,7 +52,13 @@
          the table works with or without Alpine on the page. */
       document.querySelectorAll('[data-admin-presence] tbody.presence-group').forEach(function (group) {
         var toggle = group.querySelector('.presence-group__toggle');
-        if (toggle && toggle.getAttribute('aria-expanded') !== 'true') group.setAttribute('data-collapsed', '');
+        if (!toggle) return;
+        if (toggle.getAttribute('aria-expanded') !== 'true') group.setAttribute('data-collapsed', '');
+        toggle.addEventListener('click', function () {
+          var open = toggle.getAttribute('aria-expanded') !== 'true';
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          group.toggleAttribute('data-collapsed', !open);
+        });
       });
     })();
   </script>

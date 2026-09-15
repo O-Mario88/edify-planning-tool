@@ -133,15 +133,19 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_a_staff_visit_this_year_closes_the_school_for_the_year(self):
+    def test_a_staff_visit_this_year_uses_the_follow_up_visit(self):
         school = self._school("VG-2")
         self._visit(school)
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
         self.assertFalse(gate.partner_can_schedule)
-        self.assertFalse(gate.can_assign_partner)
+        self.assertFalse(gate.can_assign_visit)
         self.assertIn("visited once a year", gate.staff_reason)
         self.assertIn("scheduled by staff", gate.staff_reason)
+        # The row stays open: in-school training, donor and social visits
+        # can still be scheduled or assigned there.
+        self.assertFalse(gate.staff_locked)
+        self.assertTrue(gate.can_assign_partner)
 
     def test_a_partner_visit_this_year_closes_it_too(self):
         school = self._school("VG-3")
@@ -163,15 +167,23 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
         self.assertTrue(gate.staff_can_schedule)
         self.assertEqual(gate.total_visits, 0)
 
-    def test_a_training_or_a_social_visit_is_not_the_visit(self):
+    def test_in_school_work_and_social_visits_are_not_the_visit(self):
         school = self._school("VG-6")
         self._visit(school, kind="in_school_training")
+        self._visit(school, kind="in_school_coaching_visit")
         self._visit(school, kind="donor_visit")
-        self.assertTrue(visit_gate(school).staff_can_schedule)
+        self._visit(school, kind="story_gathering_visit")
+        # The companion visit an in-school training pair records.
+        companion = self._visit(school, kind="school_visit")
+        companion.purpose_type = "in_school_training_delivery_visit"
+        companion.save(update_fields=["purpose_type"])
+        gate = visit_gate(school)
+        self.assertTrue(gate.staff_can_schedule)
+        self.assertEqual(gate.total_visits, 0)
 
-    def test_a_coaching_or_ssa_visit_is_the_visit(self):
+    def test_a_follow_up_or_ssa_visit_is_the_visit(self):
         school = self._school("VG-6b")
-        self._visit(school, kind="in_school_coaching_visit", delivery="partner")
+        self._visit(school, kind="training_follow_up_visit", delivery="partner")
         self.assertFalse(visit_gate(school).staff_can_schedule)
         other = self._school("VG-6c")
         self._visit(other, kind="school_visit_ssa_collection")
@@ -182,10 +194,15 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
         self._assign(school)
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
-        self.assertIn("VG Partner Org", gate.staff_reason)
+        self.assertTrue(gate.staff_locked)
+        self.assertIn("VG Partner Org", gate.staff_locked_reason)
         self.assertIn("until they return the school", gate.staff_reason)
         self.assertTrue(gate.partner_can_schedule)
-        self.assertFalse(gate.can_assign_partner)
+        # The visit is the partner's; an in-school training may still be
+        # handed over, so the Assign button itself stays open.
+        self.assertTrue(gate.can_assign_partner)
+        self.assertFalse(gate.can_assign_visit)
+        self.assertIn("already assigned to VG Partner Org", gate.assign_visit_reason)
 
     def test_a_returned_school_is_the_staffs_again(self):
         school = self._school("VG-8")
@@ -252,14 +269,16 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self.assertEqual(gate.partner_pending_trainings, 1)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_the_staff_share_is_complete_only_with_visits_and_trainings(self):
+    def test_trainings_are_not_visits_and_keep_their_own_entry(self):
         school = self._school("VG-C5", school_type="core")
         self._visit(school)
         self._visit(school)
-        self.assertFalse(visit_gate(school).core_staff_share_complete)
+        gate = visit_gate(school)
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertTrue(gate.staff_trainings_open)
         self._visit(school, kind="core_training")
         self._visit(school, kind="core_training")
-        self.assertTrue(visit_gate(school).core_staff_share_complete)
+        self.assertFalse(visit_gate(school).staff_trainings_open)
 
 
 class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
@@ -275,13 +294,42 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
             self._entitlement(school)
         self.assertIn("visited once a year", str(ctx.exception.detail))
 
-    def test_the_first_visit_and_a_training_pass(self):
+    def test_the_first_visit_and_in_school_work_pass(self):
         from apps.activities.services import _assert_schedule_entitlement
 
         school = self._school("VG-S2")
         self._entitlement(school)
         self._visit(school)
         _assert_schedule_entitlement("in_school_training", school, self.fy, {})
+        _assert_schedule_entitlement("donor_visit", school, self.fy, {})
+        # The training pair's companion visit is the training, not a visit.
+        _assert_schedule_entitlement(
+            "school_visit",
+            school,
+            self.fy,
+            {"purposeType": "in_school_training_delivery_visit"},
+        )
+
+    def test_a_visit_request_neither_uses_the_visit_nor_is_refused_until_approved(
+        self,
+    ):
+        from apps.activities.services import _assert_schedule_entitlement
+        from apps.planning import visit_requests
+
+        school = self._school("VG-S0")
+        self._visit(school)
+        # Filing a request at a visited school is allowed…
+        _assert_schedule_entitlement(
+            "school_visit", school, self.fy, {}, is_request=True
+        )
+        request = self._visit(school, status=visit_requests.AWAITING)
+        request.approval_owner_id = self.cceo.id
+        request.save(update_fields=["approval_owner_id"])
+        self.assertEqual(visit_gate(school).total_visits, 1)
+        # …but approving it is where the rule bites.
+        with self.assertRaises(BadRequest) as ctx:
+            visit_requests.approve(request.id, self.cceo_user)
+        self.assertIn("visited once a year", str(ctx.exception.detail))
 
     def test_staff_cannot_schedule_a_school_that_is_with_a_partner(self):
         school = self._school("VG-S3")
@@ -310,31 +358,41 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
 
         # The client tab lists only the schools still to be planned; the
         # visited school sits on the Scheduled tab and the handed-over one on
-        # the Partner tab, where their buttons are greyed.
+        # the Partner tab.
         self.assertEqual(sorted(rows_on("client")), ["VG-S6"])
         rows = {**rows_on("scheduled"), **rows_on("partner"), **rows_on("client")}
         self.assertIn("VG-S4", rows, sorted(rows))
-        self.assertFalse(rows["VG-S4"]["staffCanSchedule"])
-        self.assertIn("visited once a year", rows["VG-S4"]["staffScheduleReason"])
-        self.assertFalse(rows["VG-S4"]["canAssignPartner"])
+        # Visited: the row stays open for in-school training and social
+        # visits; the follow-up purpose is what is used.
+        self.assertTrue(rows["VG-S4"]["staffCanSchedule"])
+        self.assertFalse(rows["VG-S4"]["followUpVisitOpen"])
+        self.assertIn("visited once a year", rows["VG-S4"]["followUpVisitReason"])
+        self.assertTrue(rows["VG-S4"]["canAssignPartner"])
+        # With a partner: the whole row is the partner's.
         self.assertFalse(rows["VG-S5"]["staffCanSchedule"])
         self.assertIn("VG Partner Org", rows["VG-S5"]["staffScheduleReason"])
-        self.assertFalse(rows["VG-S5"]["canAssignPartner"])
+        self.assertTrue(rows["VG-S5"]["canAssignPartner"])
         self.assertTrue(rows["VG-S6"]["staffCanSchedule"])
         self.assertTrue(rows["VG-S6"]["canAssignPartner"])
 
-    def test_the_planning_page_renders_the_greyed_button(self):
-        visited = self._school("VG-S7")
-        self._visit(visited)
+    def test_the_planning_page_greys_the_row_of_a_partner_held_school(self):
+        handed = self._school("VG-S7")
+        self._assign(handed)
         self.client.force_login(self.cceo_user)
-        response = self.client.get("/planning?tab=scheduled")
+        response = self.client.get("/planning?tab=partner")
         self.assertEqual(response.status_code, 200, response.get("Location"))
         html = response.content.decode()
         self.assertIn("VG-S7", html)
         self.assertIn('data-visit-locked="true"', html)
-        self.assertIn("visited once a year", html)
+        self.assertIn("Only the partner can schedule it", html)
+        response = self.client.get(
+            f"/planning/schedule-modal?school_id={handed.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Only the partner can schedule it", response.content.decode())
+        self.assertNotIn('name="purpose_of_visit"', response.content.decode())
 
-    def test_the_schedule_drawer_refuses_a_visited_school(self):
+    def test_the_drawers_grey_the_follow_up_purposes_of_a_visited_school(self):
         visited = self._school("VG-S8")
         self._visit(visited)
         self.client.force_login(self.cceo_user)
@@ -342,8 +400,23 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
             f"/planning/schedule-modal?school_id={visited.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("visited once a year", response.content.decode())
-        self.assertNotIn('name="purpose_of_visit"', response.content.decode())
+        html = response.content.decode()
+        self.assertIn('name="purpose_of_visit"', html)
+        self.assertIn("data-visit-locked-reason", html)
+        self.assertIn("visited once a year", html)
+        self.assertIn('value="training_follow_up" disabled', html)
+        self.assertIn('value="ssa_support" disabled', html)
+        self.assertNotIn('value="in_school_training" disabled', html)
+        self.assertNotIn('value="donor_visit" disabled', html)
+        # And the assign drawer likewise: an in-school training can still be
+        # handed to a partner, the follow-up visit cannot.
+        response = self.client.get(
+            f"/planning/assign-partner-modal?school_id={visited.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('value="training_follow_up" disabled', html)
+        self.assertNotIn('value="in_school_training" disabled', html)
 
     def test_the_partner_queue_greys_schedule_at_a_visited_school(self):
         school = self._school("VG-S9")

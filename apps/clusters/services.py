@@ -804,8 +804,10 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "hasCompletedTraining": bool(training_dates),
                 # The school's own visit rule (apps.planning.visit_gate), so
                 # the roster's Schedule and Assign grey out like Planning's.
-                "staffCanSchedule": gate.staff_can_schedule,
-                "staffScheduleReason": gate.staff_reason,
+                "staffCanSchedule": not gate.staff_locked,
+                "staffScheduleReason": gate.staff_locked_reason,
+                "followUpVisitOpen": gate.staff_can_schedule,
+                "followUpVisitReason": gate.staff_reason,
                 "canAssignPartner": gate.can_assign_partner,
                 "assignPartnerReason": gate.assign_reason,
                 "planningStatus": s.planning_readiness,
