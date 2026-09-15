@@ -509,6 +509,10 @@
   color: var(--edify-text-subtle);
 }
 
+/* Who's Online is a five-column table: it takes the whole grid row rather
+   than a half-width cell (its own rules are in components/presence.css). */
+.admin-ops-grid .admin-panel--presence { grid-column: 1 / -1; padding: 0.9rem 1rem; }
+
 .admin-panel__empty {
   padding: 26px 16px;
   text-align: center;
@@ -516,6 +520,3 @@
   font-weight: 600;
   color: var(--edify-text-subtle);
 }
-
-/* The ops tiles are links; the strip's own styling assumes <article>. */
-

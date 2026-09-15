@@ -935,6 +935,18 @@ def schedule_modal_view(request):
     school = get_visit_target_school_or_404(
         request.user, Q(id=school_id) | Q(school_id=school_id)
     )
+    # The school's own visit rule (owner, 2026-09-15). The Schedule button is
+    # greyed for the same reason; a stale row or a typed URL gets the
+    # sentence, not a form the service will refuse.
+    from apps.planning.visit_gate import visit_gate
+
+    _gate = visit_gate(school)
+    if not _gate.staff_can_schedule:
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {"error": _gate.staff_reason},
+        )
     project_id = request.GET.get("project_id", "")
     from apps.activity_catalogue.services import recommend_activities
 
@@ -1563,6 +1575,15 @@ def assign_partner_modal_view(request):
         school = get_operational_school_or_404(
             request.user, Q(id=school_id) | Q(school_id=school_id)
         )
+        from apps.planning.visit_gate import visit_gate
+
+        _gate = visit_gate(school)
+        if not _gate.can_assign_partner:
+            return render(
+                request,
+                "partials/schools/drawer_error.html",
+                {"error": _gate.assign_reason},
+            )
     if cluster_id:
         cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
 
@@ -1935,6 +1956,12 @@ def assign_partner_action_view(request):
                 if expected_date
                 else get_operational_fy(),
             )
+            # A school already visited this year, or already with a partner,
+            # is not handed over again (owner, 2026-09-15). The Assign button
+            # is greyed for the same reason; a stale row lands here.
+            from apps.planning.visit_gate import assert_may_assign_partner_visit
+
+            assert_may_assign_partner_visit(school)
             with transaction.atomic():
                 partner_services.create_assignment(
                     school=school,

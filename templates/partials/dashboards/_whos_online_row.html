@@ -1,0 +1,15 @@
+<tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}">
+  <td class="presence-table__status"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" title="{% if person.online %}Online{% else %}Offline{% endif %}"></i><span class="sr-only">{% if person.online %}Online{% else %}Offline{% endif %}</span></td>
+  <td class="presence-table__name"><strong>{{ person.name }}</strong><small>{{ person.active_role|default:"—" }}{% if is_lead %} · lead{% endif %}</small></td>
+  <td class="presence-table__duration">
+    {% if person.online %}
+      <span class="presence-duration presence-duration--online" title="Online since {{ person.online_since|date:'j M Y, H:i' }}">{{ person.duration_label }}</span>
+    {% elif person.last_seen_at %}
+      <span class="presence-duration" title="Last sitting {{ person.duration_label }} · last seen {{ person.last_seen_at|date:'j M Y, H:i' }}">{{ person.duration_label }}<small>last seen {{ person.last_seen_at|timesince }} ago</small></span>
+    {% else %}
+      <span class="presence-duration presence-duration--never">never signed in</span>
+    {% endif %}
+  </td>
+  <td class="presence-table__working">{{ person.working_on }}</td>
+  <td class="presence-table__section">{{ person.section }}</td>
+</tr>

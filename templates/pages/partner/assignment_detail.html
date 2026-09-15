@@ -66,12 +66,23 @@
             class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-4 text-[13px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">
       Return
     </button>
+    {% if a.can_schedule %}
     <button type="button"
             hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
             class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[13px] font-bold text-white transition-colors">
       Schedule
     </button>
+    {% else %}
+    <button type="button" disabled title="{{ a.schedule_blocked_reason }}" data-visit-locked="true"
+            aria-label="Schedule unavailable: {{ a.schedule_blocked_reason }}"
+            class="inline-flex h-8 items-center rounded-control edify-primary-solid px-4 text-[13px] font-bold text-white">
+      Schedule
+    </button>
+    {% endif %}
   </div>
+  {% if not a.can_schedule %}
+  <p class="text-right text-[12px] font-semibold text-slate-500">{{ a.schedule_blocked_reason }}</p>
+  {% endif %}
   {% elif a.status == "partner_scheduled" %}
   <p class="text-right text-[12px] font-semibold text-slate-500">This work is on <a href="/partner/my-plan" class="edify-primary-text font-bold">My Plan</a> — reschedule or start it from there.</p>
   {% endif %}

@@ -133,6 +133,16 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     # person is working, so "who is online" is a WHERE on this column rather
     # than a scan of the session store (owner, 2026-09-12).
     last_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Presence detail for the Admin's and CD's "Who's Online" table (owner,
+    # 2026-09-15: who is online, how long, what they were working on, which
+    # part of the system). online_since is the start of the current sitting —
+    # reset when a touch arrives after a gap longer than the online window.
+    # last_seen_path is the page; last_seen_action the last write or drawer
+    # request on it ("POST /planning/schedule-action"), empty when just
+    # reading. Both are labelled for people in apps.accounts.presence_labels.
+    online_since = models.DateTimeField(null=True, blank=True)
+    last_seen_path = models.CharField(max_length=255, blank=True, default="")
+    last_seen_action = models.CharField(max_length=255, blank=True, default="")
     # Set True when an admin creates/resets the password. The user must change it on next login.
     must_change_password = models.BooleanField(default=False)
     # Brute-force protection — apps.accounts.lockout_service

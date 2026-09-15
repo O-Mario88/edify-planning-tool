@@ -115,14 +115,25 @@ class SchoolDirectoryViewModel:
         available_actions = []
         disabled_reasons = {}
 
-        # Add to Cluster action
-        if not is_clustered:
-            if can_assign_cluster:
-                available_actions.append("add_to_cluster")
-            else:
-                disabled_reasons["add_to_cluster"] = (
-                    "You do not have permission to assign clusters."
-                )
+        # Add to Cluster action. A clustered school is never offered the
+        # button again (owner, 2026-09-15: "all clustered schools button for
+        # adding to cluster should be greyed out to avoid double clustering"),
+        # and the greyed button says which cluster it is already in.
+        if is_clustered:
+            current_cluster = (
+                clusters_dict.get(school.cluster_id) if school.cluster_id else None
+            )
+            disabled_reasons["add_to_cluster"] = (
+                f"Already in {current_cluster}."
+                if current_cluster
+                else "Already in a cluster."
+            )
+        elif can_assign_cluster:
+            available_actions.append("add_to_cluster")
+        else:
+            disabled_reasons["add_to_cluster"] = (
+                "You do not have permission to assign clusters."
+            )
 
         # Assign to Project action
         if not active_projects_exist:

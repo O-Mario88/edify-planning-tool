@@ -694,6 +694,10 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         if a.activity_type in ["training", "cluster_training", "core_training"]
     )
 
+    from apps.planning.visit_gate import visit_gates
+
+    gate_map = visit_gates(schools)
+
     out = []
     for s in schools:
         # Canonical decision rule: confirmed SSA only (see
@@ -756,6 +760,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         assigned_staff = "Unassigned"
         if s.account_owner_id:
             assigned_staff = s.account_owner_name_raw or s.account_owner_id
+        gate = gate_map[s.id]
 
         # Calculate school-specific attendance counts
         attended_meetings = sum(
@@ -797,6 +802,12 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "lastTrainingDate": last_training_date,
                 "hasCompletedVisit": bool(visit_dates),
                 "hasCompletedTraining": bool(training_dates),
+                # The school's own visit rule (apps.planning.visit_gate), so
+                # the roster's Schedule and Assign grey out like Planning's.
+                "staffCanSchedule": gate.staff_can_schedule,
+                "staffScheduleReason": gate.staff_reason,
+                "canAssignPartner": gate.can_assign_partner,
+                "assignPartnerReason": gate.assign_reason,
                 "planningStatus": s.planning_readiness,
                 "planningStatusLabel": s.get_planning_readiness_display(),
                 "ssaStatus": s.current_fy_ssa_status,

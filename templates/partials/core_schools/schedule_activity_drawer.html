@@ -18,7 +18,7 @@
     </div>
 
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
-      {% if package_available and not package_complete and visits_remaining %}
+      {% if package_available and not package_complete and visits_remaining and staff_can_schedule_visit %}
         <button
           type="button"
           hx-get="/core-schools/schedule-visit?school_id={{ school.school_id }}"
@@ -27,7 +27,12 @@
           class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
         >
           <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
-          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining · staff {{ staff_visit_count }}/{{ staff_visits_cap }}</span>
+        </button>
+      {% elif not staff_can_schedule_visit %}
+        <button type="button" disabled title="{{ staff_visit_reason }}" data-visit-locked="true" class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
+          <span class="block text-[13px] font-bold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core visit · staff visits complete ({{ staff_visit_count }}/{{ staff_visits_cap }})</span>
         </button>
       {% else %}
         <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">

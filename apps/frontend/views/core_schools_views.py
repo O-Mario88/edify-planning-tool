@@ -859,9 +859,19 @@ def core_schedule_activity_drawer(request):
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     summary = CorePackageSchedulingService.summary(plan) if plan else None
+    from apps.planning.visit_gate import visit_gate
+
+    gate = visit_gate(school, get_operational_fy())
 
     context = {
         "school": school,
+        # Staff's two visits (owner, 2026-09-15): the core-visit option greys
+        # out once they are used, whatever the package still has left for
+        # the partner.
+        "staff_can_schedule_visit": gate.staff_can_schedule,
+        "staff_visit_reason": gate.staff_reason,
+        "staff_visit_count": gate.staff_visits,
+        "staff_visits_cap": gate.staff_cap,
         # Core trainings are the owner's programme; the request-only country
         # roles schedule visits only (apps.planning.visit_requests).
         "can_plan_core_training": RolePermissionService.can_schedule_activity(
@@ -1017,6 +1027,13 @@ def core_assign_partner_action(request):
                 activity_type=activity_type,
                 sequence_number=sequence_number,
             )
+            if activity_type == "visit":
+                # The partner side of a core package is two visits (owner,
+                # 2026-09-15): scheduled partner visits plus visit slots
+                # already assigned and waiting on the partner.
+                from apps.planning.visit_gate import assert_may_assign_partner_visit
+
+                assert_may_assign_partner_visit(school)
 
             # 1. Create PartnerAssignment in DB
             pa = partner_services.create_assignment(

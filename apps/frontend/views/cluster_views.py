@@ -1061,6 +1061,7 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         user = request.user
 
         assigned_schools = []
+        skipped_schools = []
         for sid in school_ids:
             # Allow assignment if school is in a covered sub-county OR (for
             # district-level clusters with no covered sub-counties) in the
@@ -1075,18 +1076,28 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             school = writable.filter(
                 id=sid, district_id=cluster.district_id, deleted_at__isnull=True
             ).first()
-            if school:
-                # Audited inside set_school_cluster_membership() (the
-                # canonical service assign_school_to_cluster delegates to)
-                # — not duplicated here.
-                assign_school_to_cluster(
-                    school.school_id, {"clusterId": cluster.id}, user
-                )
-                assigned_schools.append(school.name)
+            if not school:
+                continue
+            # The drawer lists unclustered schools only; a school clustered
+            # since it was rendered is skipped rather than moved, so the
+            # bulk path can never double-cluster (owner, 2026-09-15).
+            if school.cluster_id or school.cluster_status == "clustered":
+                skipped_schools.append(school.name)
+                continue
+            # Audited inside set_school_cluster_membership() (the
+            # canonical service assign_school_to_cluster delegates to)
+            # — not duplicated here.
+            assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
+            assigned_schools.append(school.name)
 
         msg = (
             f"Successfully assigned {len(assigned_schools)} schools to {cluster.name}."
         )
+        if skipped_schools:
+            msg += (
+                f" Skipped {len(skipped_schools)} already-clustered: "
+                f"{', '.join(skipped_schools)}."
+            )
         response = render(
             request, "partials/schools/toast_success.html", {"message": msg}
         )

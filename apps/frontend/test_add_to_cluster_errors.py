@@ -178,3 +178,81 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
         self.assertEqual(
             [c.schools_count for c in response.context["all_clusters"]], [0]
         )
+
+
+class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
+    """Owner, 2026-09-15: "all clustered schools' button for adding to a
+    cluster should be greyed out to avoid double clustering." The directory
+    greys the button and says which cluster; the drawer and the bulk drawer
+    refuse the same school when a stale page still offers it."""
+
+    def setUp(self):
+        self.region = Region.objects.create(name="DC Region")
+        self.district = District.objects.create(name="DC District", region=self.region)
+        self.sub_county = SubCounty.objects.create(name="DC SC", district=self.district)
+        self.user = User.objects.create(
+            id="dc-admin",
+            email="dc-admin@edify.org",
+            name="DC Admin",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+        )
+        StaffProfile.objects.create(id="dc-sp", user=self.user, title="Admin")
+        self.cluster = Cluster.objects.create(
+            name="DC Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            cluster_type="mixed",
+            status="active",
+        )
+        ClusterSubCounty.objects.create(cluster=self.cluster, sub_county=self.sub_county)
+        self.other = Cluster.objects.create(
+            name="DC Other Cluster",
+            region=self.region,
+            district=self.district,
+            cluster_type="mixed",
+            status="active",
+        )
+        self.school = School.objects.create(
+            school_id="DC-1",
+            name="DC Clustered Primary",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            school_type="client",
+            cluster_id=self.cluster.id,
+            cluster_status="clustered",
+        )
+        self.client.force_login(self.user)
+
+    def test_the_directory_row_greys_the_button_and_names_the_cluster(self):
+        from apps.frontend.view_models import SchoolDirectoryViewModel
+
+        row = SchoolDirectoryViewModel.from_school(
+            self.school, self.user, {self.cluster.id: "DC Cluster"}, False
+        )
+        self.assertNotIn("add_to_cluster", row["available_actions"])
+        self.assertEqual(row["disabled_reasons"]["add_to_cluster"], "Already in DC Cluster.")
+
+    def test_the_drawer_refuses_a_clustered_school(self):
+        for method in (self.client.get, self.client.post):
+            response = method(
+                f"/schools/{self.school.id}/add-to-cluster",
+                {"cluster_action_type": "existing", "existing_cluster_id": self.other.id},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("already in cluster DC Cluster", response.content.decode())
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.cluster.id)
+
+    def test_the_bulk_drawer_skips_a_clustered_school(self):
+        response = self.client.post(
+            f"/clusters/{self.other.id}/bulk-assign-drawer",
+            {"school_ids": [self.school.id]},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Skipped 1 already-clustered", response.content.decode())
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.cluster.id)

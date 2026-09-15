@@ -1,0 +1,113 @@
+/* Who's Online (owner, 2026-09-15): the Admin's and the Country Director's
+   table of who is using the system. Loaded by the two dashboards that show
+   it, so the pulsing light is not on every page's critical path. */
+
+.admin-status.s-green { color: var(--edify-success-text); background: var(--edify-success-light); }
+
+.admin-presence-light {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--edify-text-subtle);
+  opacity: 0.55;
+  vertical-align: middle;
+}
+.admin-presence-light--online {
+  background: var(--edify-success);
+  opacity: 1;
+  animation: admin-presence-beep 1.6s ease-out infinite;
+}
+.admin-presence-light--online::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--edify-success);
+  animation: admin-presence-ring 1.6s ease-out infinite;
+}
+@keyframes admin-presence-beep {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+@keyframes admin-presence-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-presence-light--online,
+  .admin-presence-light--online::after { animation: none; }
+  .admin-presence-light--online::after { display: none; }
+}
+
+.presence-panel { min-width: 0; }
+.presence-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0 0 0.6rem;
+}
+.presence-panel__header h2 { margin: 0; font-size: var(--edify-text-label-size); font-weight: 750; color: var(--edify-text); }
+.presence-panel__caption { margin: 0.15rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
+.presence-legend { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.presence-legend .admin-presence-light { margin-inline-start: 0.35rem; }
+
+.presence-table-wrap { overflow-x: auto; max-height: 34rem; overflow-y: auto; }
+.presence-table { width: 100%; border-collapse: collapse; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
+.presence-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: start;
+  padding: 0.45rem 0.6rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--edify-text-subtle);
+  background: var(--edify-surface-raised);
+  border-bottom: 1px solid var(--edify-border);
+  white-space: nowrap;
+}
+.presence-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--edify-border); vertical-align: middle; }
+.presence-table__status { width: 1.4rem; text-align: center; }
+.presence-table__name strong { display: block; color: var(--edify-text); font-weight: 620; white-space: nowrap; }
+.presence-table__name small { display: block; color: var(--edify-text-subtle); }
+.presence-row--lead .presence-table__name strong { font-weight: 720; }
+.presence-row[data-presence="offline"] .presence-table__name strong { color: var(--edify-text-muted); font-weight: 560; }
+.presence-table__duration { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.presence-duration--online { color: var(--edify-success-text); font-weight: 650; }
+.presence-duration small { display: block; color: var(--edify-text-subtle); font-weight: 400; }
+.presence-duration--never { color: var(--edify-text-subtle); font-style: italic; }
+.presence-table__working { min-width: 12rem; }
+.presence-table__section { white-space: nowrap; }
+.presence-table__empty { padding: 1.4rem; text-align: center; color: var(--edify-text-subtle); font-weight: 600; }
+
+.presence-group__row td { padding: 0; background: var(--edify-surface-muted); }
+.presence-group__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--edify-text);
+  font: inherit;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+.presence-group__chevron { width: 0.45rem; height: 0.45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s ease; opacity: .7; }
+.presence-group__toggle[aria-expanded="false"] .presence-group__chevron { transform: rotate(-45deg); }
+.presence-group__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.presence-group__count { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; color: var(--edify-text-muted); white-space: nowrap; }
+tbody.presence-group[data-collapsed] .presence-row { display: none; }
+
+@media (max-width: 640px) {
+  .presence-table__section, .presence-table th:last-child { display: none; }
+}

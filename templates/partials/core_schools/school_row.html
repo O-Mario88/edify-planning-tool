@@ -30,17 +30,30 @@ route, not the cluster, so one constant URL answers it for every row.
         <div class="core-school-row__headline">
           <h2 class="school-record-row__title">{{ school.name }}</h2>
           <div class="school-record-row__actions core-school-row__actions">
+            {% comment %}
+              Staff deliver two of the four visits and two of the four
+              trainings (owner, 2026-09-15). Schedule greys out once both
+              staff halves are used; the partner's Assign greys out once
+              both partner halves are scheduled or assigned.
+            {% endcomment %}
+            {% if not school.staff_share_complete %}
             <button type="button" class="school-record-action school-record-action--schedule" hx-get="/core-schools/schedule-activity?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule an activity for {{ school.name }}">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
               <span class="core-school-row__action-label">Schedule</span>
             </button>
-            {% if school.core_package_available %}
+            {% else %}
+            <button type="button" class="school-record-action school-record-action--schedule" disabled title="Staff core visits and trainings complete ({{ school.staff_visit_count }}/{{ school.staff_visits_cap }} visits). The remaining package belongs to the partner." data-visit-locked="true" aria-label="Schedule an activity for {{ school.name }} unavailable: staff core visits and trainings complete">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>
+              <span class="core-school-row__action-label">Schedule</span>
+            </button>
+            {% endif %}
+            {% if school.core_package_available and not school.partner_share_complete %}
               <button type="button" class="school-record-action school-record-action--assign" hx-get="/core-schools/assign-partner?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign core support for {{ school.name }}">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
                 <span class="core-school-row__action-label">Assign</span>
               </button>
             {% else %}
-              <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ school.blocked_reason|default:'Core package complete' }}" aria-label="Assign core support for {{ school.name }}">
+              <button type="button" class="school-record-action school-record-action--assign" disabled title="{% if school.partner_share_complete %}Partner core visits and trainings already assigned ({{ school.partner_visit_count }}/{{ school.partner_visits_cap }} visits).{% else %}{{ school.blocked_reason|default:'Core package complete' }}{% endif %}" data-assign-locked="{% if school.partner_share_complete %}true{% else %}false{% endif %}" aria-label="Assign core support for {{ school.name }} unavailable">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
                 <span class="core-school-row__action-label">Assign</span>
               </button>
@@ -51,7 +64,7 @@ route, not the cluster, so one constant URL answers it for every row.
           <div><dt>District:</dt><dd>{{ school.district_name|default:"—" }}</dd></div>
           <div><dt>Owner:</dt><dd>{{ school.staff_name|default:"Unassigned" }}</dd></div>
           <div><dt>Assessment:</dt><dd class="{% if school.assessment.status == 'Missing' %}is-attention{% else %}is-positive{% endif %}">{{ school.assessment.status|default:"Missing" }}</dd></div>
-          <div><dt>Visits:</dt><dd class="{% if school.scheduled_visit_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_visit_count }}/{{ school.visits_target }}</dd></div>
+          <div><dt>Visits:</dt><dd class="{% if school.scheduled_visit_count %}is-positive{% else %}is-attention{% endif %}" title="Staff {{ school.staff_visit_count }}/{{ school.staff_visits_cap }} · Partner {{ school.partner_visit_count }}/{{ school.partner_visits_cap }}">{{ school.scheduled_visit_count }}/{{ school.visits_target }} <span class="core-school-row__split">(staff {{ school.staff_visit_count }}/{{ school.staff_visits_cap }} · partner {{ school.partner_visit_count }}/{{ school.partner_visits_cap }})</span></dd></div>
           <div><dt>Trainings:</dt><dd class="{% if school.scheduled_training_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_training_count }}/{{ school.trainings_target }}</dd></div>
           <div><dt>Partner:</dt><dd>{% if school.partner_support_count %}{{ school.partner_support_count }} assigned{% else %}None{% endif %}</dd></div>
           <div><dt>Package:</dt><dd class="{% if school.package_complete %}is-positive{% else %}is-attention{% endif %}">{% if school.package_complete %}Complete{% else %}{{ school.next_missing_milestone }}{% endif %}</dd></div>

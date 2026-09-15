@@ -7,12 +7,25 @@ Two facts, kept where they are cheap to read:
 
 * ``User.last_seen_at`` — written by ``SlidingSessionMiddleware`` at most once
   per minute per active person (it already throttles the session touch on
-  exactly that interval), so "online now" is one indexed query.
+  exactly that interval), so "online now" is one indexed query. The same
+  touch records ``online_since`` (the start of the sitting), the page
+  (``last_seen_path``) and the last write or drawer request on it
+  (``last_seen_action``); writes touch on every request so an action between
+  two beats is not lost.
 * ``LoginEvent`` — one row per successful sign-in, from both the password and
   the MFA path in ``auth_views``.
 
 "Online" means seen within the last ten minutes. A person who closes the tab
 drops off the list within that window; nothing here needs a logout.
+
+Owner, 2026-09-15: "Who's Online should show a green online beeping light and
+those that are offline should show me the grey offline icon." And, later the
+same day: "The admin and CD should know who logged in, who is online, how long
+they have been online, what they were working on… group all the CCEO by their
+PL." So the panel is a table of everyone with an account — status light,
+name, how long they have been on, what they were doing, which part of the
+system — with the CCEOs folded under their Program Lead and everyone else
+under their role.
 """
 
 from __future__ import annotations
@@ -26,6 +39,8 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 ONLINE_WINDOW = timedelta(minutes=10)
+# The panel is a glance, not a directory: the most recently seen people first.
+PRESENCE_LIST_LIMIT = 50
 
 
 def client_address(request) -> str | None:
@@ -61,30 +76,217 @@ def record_login(request, user) -> None:
             ip=client_address(request),
             user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:256],
         )
-        User.objects.filter(pk=user.pk).update(last_seen_at=now)
+        User.objects.filter(pk=user.pk).update(
+            last_seen_at=now,
+            online_since=now,
+            last_seen_path="/dashboard",
+            last_seen_action="",
+        )
     except (DatabaseError, ValueError):  # pragma: no cover - defensive
         logger.exception(
             "presence: sign-in was not recorded for %s", getattr(user, "pk", None)
         )
 
 
-def touch_presence(user) -> None:
-    """Mark the person as seen now. One UPDATE; the caller throttles. Inside a
+# Requests that say nothing about what a person is doing.
+_UNTRACKED_PREFIXES = (
+    "/api/",
+    "/static/",
+    "/media/",
+    "/health",
+    "/favicon",
+    "/realtime",
+)
+_READ_METHODS = ("GET", "HEAD", "OPTIONS")
+
+
+def request_footprint(request) -> tuple[str, str] | None:
+    """(page path, action) for a request, or None when it is not a person
+    working on a page. The page is the document the person is on — for an
+    htmx request that is HX-Current-URL, not the fragment fetched. The action
+    is the request itself when it writes or opens a drawer; empty for a plain
+    page load."""
+    if request is None:
+        return None
+    path = request.path or "/"
+    if path.startswith(_UNTRACKED_PREFIXES):
+        return None
+    htmx = request.headers.get("HX-Request") == "true"
+    current = request.headers.get("HX-Current-URL") or ""
+    from .presence_labels import page_path
+
+    page = page_path(current) if htmx and current else path
+    method = request.method or "GET"
+    if method in _READ_METHODS and not htmx:
+        action = ""
+    else:
+        action = f"{method} {path}"
+    return page[:255], action[:255]
+
+
+def touch_presence(user, request=None) -> None:
+    """Mark the person as seen now, on this page, doing this. One UPDATE; the
+    caller throttles reads to once a minute and sends every write. A touch
+    after a gap longer than the online window starts a new sitting. Inside a
     request whose transaction has already failed, it does nothing."""
     from django.db import DatabaseError
+    from django.db.models import Case, F, Q, Value, When
 
     from .models import User
 
     if not getattr(user, "is_authenticated", False):
         return
+    now = timezone.now()
+    values = {
+        "last_seen_at": now,
+        "online_since": Case(
+            When(
+                Q(online_since__isnull=True)
+                | Q(last_seen_at__isnull=True)
+                | Q(last_seen_at__lt=now - ONLINE_WINDOW),
+                then=Value(now),
+            ),
+            default=F("online_since"),
+        ),
+    }
+    footprint = request_footprint(request)
+    if footprint:
+        values["last_seen_path"], values["last_seen_action"] = footprint
     try:
-        User.objects.filter(pk=user.pk).update(last_seen_at=timezone.now())
+        User.objects.filter(pk=user.pk).update(**values)
     except DatabaseError:
         return
 
 
+def format_duration(seconds: float | None) -> str:
+    if seconds is None or seconds < 0:
+        return "—"
+    seconds = int(seconds)
+    if seconds < 60:
+        return "just now" if seconds < 30 else "<1m"
+    minutes, _ = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes:02d}m"
+    return f"{minutes}m"
+
+
+def _person(row: dict, *, now, online: bool) -> dict:
+    from .presence_labels import describe
+
+    last_seen = row["last_seen_at"]
+    since = row["online_since"]
+    if online:
+        duration = (now - since).total_seconds() if since else 0
+    elif since and last_seen and last_seen >= since:
+        duration = (last_seen - since).total_seconds()
+    else:
+        duration = None
+    described = describe(row["last_seen_path"] or "", row["last_seen_action"] or "")
+    return {
+        **row,
+        "online": online,
+        "duration_seconds": duration,
+        "duration_label": format_duration(duration) if last_seen else "never",
+        "section": described["section"] if last_seen else "—",
+        "working_on": described["working_on"] if last_seen else "Never signed in",
+    }
+
+
+def _program_lead_of() -> tuple[dict[str, str], dict[str, str]]:
+    """CCEO user id → Program Lead user id, and PL user id → name, from the
+    direct reporting lines."""
+    from django.db.models import Q
+
+    from .models import StaffSupervisorAssignment
+
+    pl = "Program Lead"
+    links = (
+        StaffSupervisorAssignment.objects.filter(
+            Q(supervisor__user__active_role=pl)
+            | Q(supervisor__user__roles__contains=[pl]),
+            supervisor__deleted_at__isnull=True,
+            supervisee__deleted_at__isnull=True,
+        )
+        .values_list(
+            "supervisee__user_id", "supervisor__user_id", "supervisor__user__name"
+        )
+        .order_by("supervisor__user__name")
+    )
+    lead_of: dict[str, str] = {}
+    names: dict[str, str] = {}
+    for cceo_user_id, pl_user_id, pl_name in links:
+        lead_of.setdefault(cceo_user_id, pl_user_id)
+        names[pl_user_id] = pl_name
+    return lead_of, names
+
+
+def presence_groups(people: list[dict]) -> list[dict]:
+    """The table's rows folded so a country's roster does not run to a
+    hundred lines: one group per Program Lead holding their CCEOs, one for
+    CCEOs nobody leads, then everyone else by role. Online people sort first
+    inside a group; groups with someone online open by default."""
+    from .hr_dashboard_service import ROLE_LABELS
+
+    lead_of, lead_names = _program_lead_of()
+    by_id = {p["id"]: p for p in people}
+    groups: dict[str, dict] = {}
+
+    def group(key, label, kind, order):
+        return groups.setdefault(
+            key,
+            {
+                "key": key,
+                "label": label,
+                "kind": kind,
+                "order": order,
+                "lead": None,
+                "members": [],
+            },
+        )
+
+    for p in people:
+        role = p["active_role"] or ""
+        if role == "Program Lead":
+            g = group(f"pl:{p['id']}", p["name"], "program_lead", (0, p["name"]))
+            g["lead"] = p
+            continue
+        if role == "CCEO":
+            pl_id = lead_of.get(p["id"])
+            if pl_id:
+                g = group(
+                    f"pl:{pl_id}",
+                    lead_names.get(pl_id)
+                    or by_id.get(pl_id, {}).get("name", "Program Lead"),
+                    "program_lead",
+                    (0, lead_names.get(pl_id, "")),
+                )
+                g["members"].append(p)
+            else:
+                group(
+                    "cceo:unled", "CCEOs without a Program Lead", "cceo", (1, "")
+                ).setdefault("members", []).append(p)
+            continue
+        label = ROLE_LABELS.get(role, role.replace("_", " ").title() or "Other")
+        group(f"role:{role}", label, "role", (2, label))["members"].append(p)
+
+    out = []
+    for g in groups.values():
+        g["members"].sort(key=lambda p: (not p["online"], p["name"]))
+        everyone = ([g["lead"]] if g["lead"] else []) + g["members"]
+        g["total"] = len(everyone)
+        g["online"] = sum(1 for p in everyone if p["online"])
+        g["open"] = g["online"] > 0
+        out.append(g)
+    out.sort(key=lambda g: (g["order"][0], -g["online"], g["order"][1]))
+    return out
+
+
 def presence_summary(*, now=None) -> dict:
-    from django.db.models import Count
+    from django.db.models import Count, F
     from django.db.models.functions import TruncDate
 
     from .models import LoginEvent, User
@@ -95,13 +297,43 @@ def presence_summary(*, now=None) -> dict:
     week_start = today - timedelta(days=today.weekday())  # Monday
     since_online = now - ONLINE_WINDOW
 
-    online = list(
-        User.objects.filter(
-            last_seen_at__gte=since_online, is_active=True, deleted_at__isnull=True
-        )
-        .order_by("-last_seen_at")
-        .values("id", "name", "email", "active_role", "last_seen_at")[:50]
+    people = User.objects.filter(is_active=True, deleted_at__isnull=True).values(
+        "id",
+        "name",
+        "email",
+        "active_role",
+        "last_seen_at",
+        "online_since",
+        "last_seen_path",
+        "last_seen_action",
     )
+    online = [
+        _person(person, now=now, online=True)
+        for person in people.filter(last_seen_at__gte=since_online).order_by(
+            "-last_seen_at"
+        )[:PRESENCE_LIST_LIMIT]
+    ]
+    # Offline: seen before the window, or never. Most recently seen first, and
+    # the people who have never signed in last.
+    offline = [
+        _person(person, now=now, online=False)
+        for person in people.exclude(last_seen_at__gte=since_online).order_by(
+            F("last_seen_at").desc(nulls_last=True), "name"
+        )[:PRESENCE_LIST_LIMIT]
+    ]
+    # The table: everyone, folded by Program Lead and role (no cap — the
+    # groups are what keep it short).
+    everyone = [
+        _person(
+            person,
+            now=now,
+            online=bool(
+                person["last_seen_at"] and person["last_seen_at"] >= since_online
+            ),
+        )
+        for person in people.order_by("name")
+    ]
+    groups = presence_groups(everyone)
 
     events = LoginEvent.objects.filter(user__deleted_at__isnull=True)
     day_start = timezone.make_aware(
@@ -145,6 +377,10 @@ def presence_summary(*, now=None) -> dict:
     return {
         "online": online,
         "online_count": len(online),
+        "offline": offline,
+        "offline_count": len(offline),
+        "groups": groups,
+        "people_count": len(everyone),
         "window_minutes": int(ONLINE_WINDOW.total_seconds() // 60),
         "logins_today": logins_today,
         "logins_this_week": logins_this_week,

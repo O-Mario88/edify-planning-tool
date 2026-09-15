@@ -79,7 +79,7 @@ route's, so one constant URL answers it for every row.
           <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
         </button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" aria-label="Add {{ school.school_name }} to a cluster unavailable" disabled>
+        <button type="button" class="school-record-action school-record-action--assign{% if school.is_clustered %} school-record-action--clustered{% endif %}" aria-label="Add {{ school.school_name }} to a cluster unavailable{% if school.disabled_reasons.add_to_cluster %}: {{ school.disabled_reasons.add_to_cluster }}{% endif %}" title="{{ school.disabled_reasons.add_to_cluster }}" disabled>
           {% include "partials/schools/_cluster_action_icon.html" %}
           <span class="school-record-action__label--full">Add to Cluster</span>
           <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>

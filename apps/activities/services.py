@@ -953,8 +953,13 @@ def _assert_schedule_entitlement(
     """Core work must still arrive through the slot machinery, which sets
     coreSlotVerified after locking a slot — otherwise POSTing
     activity_type=core_visit to the generic endpoint would create a core
-    activity with no slot behind it. The client one-visit/one-training annual
-    entitlement no longer blocks scheduling.
+    activity with no slot behind it.
+
+    A client school is visited once a year, by staff or by a partner, and a
+    school handed to a partner is the partner's to schedule until they return
+    it (owner, 2026-09-15; apps.planning.visit_gate is the one definition the
+    greyed buttons and this refusal share). The annual training entitlement
+    stays advisory.
     """
     if not school:
         return
@@ -965,9 +970,23 @@ def _assert_schedule_entitlement(
                 "which reserves one of the package's slots."
             )
         return
-    # Planning restriction removed: the one-visit/one-training annual
-    # entitlement no longer blocks scheduling additional client-school work.
-    return
+    from apps.planning.visit_gate import (
+        assert_partner_may_schedule_visit,
+        assert_staff_may_schedule_visit,
+        is_gated_visit,
+        rule_for,
+    )
+
+    rule = rule_for(school.school_type)
+    if rule != "client" or not is_gated_visit(rule, activity_type, catalogue_item):
+        return
+    partner_delivery = data.get("deliveryType") == "partner" or bool(
+        data.get("assignedPartnerId")
+    )
+    if partner_delivery:
+        assert_partner_may_schedule_visit(school, fy)
+    else:
+        assert_staff_may_schedule_visit(school, fy)
 
 
 def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
@@ -4078,6 +4097,30 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 # otherwise every re-schedule reads as a second activity.
                 exclude_activity_id=pa.scheduled_activity_id,
             )
+            # The school's own visit rule (owner, 2026-09-15): a client school
+            # is visited once a year, a core school's partner side holds two
+            # visits. Same answer as the greyed Schedule button in the
+            # partner's queue.
+            from apps.planning.visit_gate import (
+                assert_partner_may_schedule_visit,
+                is_gated_visit,
+                rule_for,
+            )
+
+            _rule = rule_for(pa.school.school_type)
+            _gated_type = _sched_activity_type
+            if (
+                not catalogue_item
+                and not pa.expected_activity_type
+                and _rule == "client"
+            ):
+                _gated_type = (
+                    "school_visit"  # a school handover with no type is a visit
+                )
+            if is_gated_visit(_rule, _gated_type, catalogue_item):
+                assert_partner_may_schedule_visit(
+                    pa.school, fy, exclude_activity_id=pa.scheduled_activity_id
+                )
         # The school's own staff member where the handoff recorded one; the
         # assigner otherwise, which is what every pre-existing row resolves to.
         monitored_by_staff_id = _canonical_staff_identity(

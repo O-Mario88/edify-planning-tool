@@ -190,6 +190,13 @@ class CorePackageSchedulingService:
                 "Core support must be scheduled within this package's fiscal year."
             )
 
+        if is_partner_delivery and activity_type == "visit":
+            # The partner side of the package is two visits, the mirror of
+            # STAFF_ANNUAL_CAP below (owner, 2026-09-15).
+            from apps.planning.visit_gate import assert_partner_may_schedule_visit
+
+            assert_partner_may_schedule_visit(school, plan.fy)
+
         if not is_partner_delivery:
             current_day = date.today()
             current_fy = get_operational_fy(current_day)
@@ -617,10 +624,18 @@ class CorePackageProgressService:
             .annotate(count=Count("id"))
         }
 
+        # The staff and partner halves of each package's visits (owner,
+        # 2026-09-15: staff schedule two, a partner is assigned two), from
+        # the same rule the Schedule and Assign buttons grey out on.
+        from apps.planning.visit_gate import visit_gates
+
+        gate_map = visit_gates(iterator, fy)
+
         # Prefetch school geo details and latest SSA
         schools_data = []
         for s in iterator:
             plan = plans_map.get(s.school_id)
+            gate = gate_map[s.id]
 
             # Calculate the average and recommendation bands from the actual
             # saved intervention scores, not the denormalized record average.
@@ -826,6 +841,20 @@ class CorePackageProgressService:
                     "core_package_available": bool(plan)
                     and not package_summary["package_complete"],
                     "blocked_reason": blocked_reason,
+                    # Staff share: two visits and two trainings. The Schedule
+                    # button greys out when both are used; the visit half
+                    # alone greys the core-visit option in the chooser.
+                    "staff_visit_count": gate.staff_visits,
+                    "staff_visits_cap": gate.staff_cap,
+                    "staff_can_schedule_visit": gate.staff_can_schedule,
+                    "staff_visit_reason": gate.staff_reason,
+                    "staff_share_complete": gate.core_staff_share_complete,
+                    # Partner share: scheduled by, or assigned to, a partner.
+                    "partner_visit_count": gate.partner_held_visits,
+                    "partner_visits_cap": gate.partner_cap,
+                    "can_assign_partner_visit": gate.can_assign_partner,
+                    "assign_visit_reason": gate.assign_reason,
+                    "partner_share_complete": gate.core_partner_share_complete,
                     "next_missing_milestone": next_missing_milestone,
                 }
             )

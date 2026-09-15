@@ -7,6 +7,16 @@ Operations view: what the director works from — performance overview, the
 Program Leads table, verification, risk, field intelligence and actions.
 {% endcomment %}
 <div class="space-y-4" data-cd-operations-view>
+  {% if presence %}
+  {% comment %}
+  Who's Online — the Country Director sees who is using the system, how
+  long and on what, the CCEOs folded under their Program Lead (owner,
+  2026-09-15). The same table the Admin's Platform Operations view shows.
+  {% endcomment %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
+    {% include "partials/dashboards/_whos_online.html" %}
+  </div>
+  {% endif %}
   {# ── Country Performance Overview | Regional Performance + Approvals ── #}
   {% comment %}
   Packing columns, not a plain row: the performance chart is far taller than
