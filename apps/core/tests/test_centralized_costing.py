@@ -327,6 +327,7 @@ class CentralizedCostingTest(APITestCase):
         """Meetings include their venue and staff travel, but no training fee."""
         _seed_rates(
             cluster_meetings_trainings=7000,
+            cluster_meetings_trainings_meals=6000,
             group_training_venue_cost=30000,
             primary_transport_per_day=15000,
             lunch_per_day=8000,
@@ -345,14 +346,15 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # The session's own rate, the room, the materials (by the page, 0
-        # until the rates are set) and the staff day. Nobody is fed at a
-        # meeting in the 2026-09-06 catalogue.
-        self.assertEqual(prev["amount"], 7000 + 30000 + 15000 + 8000)
+        # The session's own rate, the twelve participants fed at the cluster
+        # meals rate (owner, 2026-09-15), the room, the materials (by the
+        # page, 0 until the rates are set) and the staff day.
+        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
             {
                 "cluster_meetings_trainings",
+                "cluster_meetings_trainings_meals",
                 "group_training_venue_cost",
                 "printing_training_materials",
                 "photocopying_training_materials",
@@ -361,15 +363,29 @@ class CentralizedCostingTest(APITestCase):
             },
         )
         self.assertEqual(prev["lines"][0]["label"], "Cluster Meetings/ Trainings")
+        meals = next(
+            line for line in prev["lines"] if line["key"].endswith("trainings_meals")
+        )
+        self.assertEqual((meals["qty"], meals["amount"]), (12, 72000))
+        self.assertEqual(meals["label"], "Cluster Meetings/ Trainings - Meals")
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertEqual(
-            labels, {"activity_rate", "venue", "materials", "transport", "lunch"}
+            labels,
+            {
+                "activity_rate",
+                "participant_meals",
+                "venue",
+                "materials",
+                "transport",
+                "lunch",
+            },
         )
         self.assertIn("venue", labels)
         self.assertNotIn("facilitation", labels)
+        # The retired legacy snack key never prices a new meeting.
         self.assertNotIn(
-            "participant_meals", labels
-        )  # group-training rate must NOT appear
+            "meals_per_participant", {line["key"] for line in prev["lines"]}
+        )
 
     def test_a_tot_training_requires_participants(self):
         """Missing headcounts must not invent ten participants: the session

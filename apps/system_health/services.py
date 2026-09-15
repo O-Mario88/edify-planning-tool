@@ -571,6 +571,7 @@ def _workflow_issues() -> dict:
         .exclude(
             cost_setting_key__in=[
                 "cluster_meeting_participant_meal_cost_per_head",
+                "cluster_meetings_trainings_meals",
                 *_DAY_POOL_KEYS,
             ]
         )

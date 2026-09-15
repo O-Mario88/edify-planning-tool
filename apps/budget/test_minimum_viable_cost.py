@@ -51,10 +51,11 @@ class ThePlannerSeesANumberTest(TestCase):
                 "districtType": "primary",
                 "expectedParticipants": 20,
             },
-            # Facilitation + venue + the staff day. Only a TOT training feeds
-            # its participants (owner's list, 2026-09-06); the cluster
-            # session's own rate and the materials default to 0.
-            142_000,
+            # Facilitation + venue + the staff day, plus the twenty
+            # participants fed at the cluster meals default of 5,000 (owner,
+            # 2026-09-15). The cluster session's own rate defaults to 0, and
+            # no pages are stated, so there is no materials line.
+            242_000,
         ),
     )
 

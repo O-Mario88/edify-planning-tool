@@ -35,6 +35,11 @@ GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
     ("cluster_meetings_trainings", "Cluster Meetings/ Trainings", 0),
     ("tot_trainings", "TOT trainings", 0),
     ("tot_trainings_meals", "TOT trainings - Meals", 5000),
+    # Owner, 2026-09-15: a cluster meeting or training feeds its participants
+    # too, per head per day. Seeded at the TOT meals default; the migration
+    # that adds it copies the retired per-head snack rate where a catalogue
+    # still carries one, so a rate the CD had set is not reset.
+    ("cluster_meetings_trainings_meals", "Cluster Meetings/ Trainings - Meals", 5000),
     ("student_conference", "Student Conference", 0),
     ("proprietor_conference", "Proprietor Conference", 0),
     ("printing_training_materials", "Printing training materials", 0),
@@ -60,6 +65,7 @@ RATE_UNITS: dict[str, str] = {
     "cluster_meetings_trainings": "per session",
     "tot_trainings": "per training",
     "tot_trainings_meals": "per participant per day",
+    "cluster_meetings_trainings_meals": "per participant per day",
     "student_conference": "per event",
     "proprietor_conference": "per event",
     "printing_training_materials": "per page",
@@ -87,6 +93,7 @@ OPTIONAL_RATE_KEYS = frozenset(
         "onetest",
         "cluster_meetings_trainings",
         "tot_trainings",
+        "cluster_meetings_trainings_meals",
         "student_conference",
         "proprietor_conference",
         "printing_training_materials",
@@ -102,6 +109,10 @@ RATE_ALIASES: dict[str, tuple[str, ...]] = {
     "core_partner_visit": ("partner_visit_lump_sum",),
     "partner_meetings": ("partner_visit_lump_sum",),
     "tot_trainings_meals": ("group_training_participant_meal_cost_per_head",),
+    "cluster_meetings_trainings_meals": (
+        "cluster_meeting_participant_meal_cost_per_head",
+        "meals_per_participant",
+    ),
 }
 
 
@@ -121,9 +132,10 @@ def with_rate_aliases(rates):
 
 
 # Keys the 2026-09-06 list replaced. `secondary_lunch_per_day` was a second
-# lunch; `secondary_incidentals_per_day` and the cluster snack rate have no
-# row in the owner's list; the partner lumps became the partner rates; the
-# group meal rate became the TOT meals rate.
+# lunch; `secondary_incidentals_per_day` has no row in the owner's list; the
+# cluster snack rate became the cluster meals rate (2026-09-15); the partner
+# lumps became the partner rates; the group meal rate became the TOT meals
+# rate.
 RENAMED_COST_SETTING_KEYS = frozenset(
     {
         "primary_lunch_per_day",

@@ -45,6 +45,7 @@ RATES = {
     "cluster_meetings_trainings": 20_000,
     "tot_trainings": 25_000,
     "tot_trainings_meals": 5_000,
+    "cluster_meetings_trainings_meals": 4_000,
     "student_conference": 60_000,
     "proprietor_conference": 70_000,
     "printing_training_materials": 3_000,
@@ -70,6 +71,8 @@ MATERIALS = (
     + 5 * 20 * RATES["photocopying_training_materials"]
 )
 ROOM = RATES["group_training_facilitation_fee"] + RATES["group_training_venue_cost"]
+# A cluster session feeds its participants per head (owner, 2026-09-15).
+CLUSTER_MEALS = RATES["cluster_meetings_trainings_meals"]
 
 
 def _cost(**activity):
@@ -222,7 +225,8 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
         )
         self.assertEqual(
             cost.amount,
-            self._session(1, RATES["cluster_meetings_trainings"]) + MATERIALS,
+            self._session(1, RATES["cluster_meetings_trainings"], 20 * CLUSTER_MEALS)
+            + MATERIALS,
         )
         by_key = {line.key: line for line in cost.lines}
         printing = by_key["printing_training_materials"]
@@ -273,8 +277,52 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
                     expectedParticipants=20,
                 )
                 self.assertEqual(
-                    cost.amount, self._session(1, RATES["cluster_meetings_trainings"])
+                    cost.amount,
+                    self._session(
+                        1, RATES["cluster_meetings_trainings"], 20 * CLUSTER_MEALS
+                    ),
                 )
+
+    def test_a_cluster_session_feeds_its_participants_per_head(self):
+        """Owner, 2026-09-15: a cluster meeting or training carries the
+        cluster meals rate x the planned headcount x the days, so the total
+        moves with the per-school figures and the schools invited."""
+        for activity_type in ("cluster_meeting", "cluster_training"):
+            for participants in (6, 30):
+                with self.subTest(activity_type=activity_type, n=participants):
+                    cost = _cost(
+                        activityType=activity_type,
+                        districtType="primary",
+                        expectedParticipants=participants,
+                    )
+                    meals = next(
+                        line
+                        for line in cost.lines
+                        if line.key == "cluster_meetings_trainings_meals"
+                    )
+                    self.assertEqual(
+                        (meals.qty, meals.amount),
+                        (participants, participants * CLUSTER_MEALS),
+                    )
+                    self.assertFalse(cost.cost_missing)
+        # A session priced with meals but no headcount is unfundable, as a
+        # TOT training is -- never priced for nobody.
+        nobody = _cost(activityType="cluster_meeting", districtType="primary")
+        self.assertTrue(nobody.cost_missing)
+        self.assertIn("expectedParticipants", nobody.missing_items)
+        # A card without the rate (older tests, older snapshots) prices as
+        # it did: the rate is one the owner's list added.
+        older = cost_for_activity(
+            {
+                "deliveryType": "staff",
+                "activityType": "cluster_meeting",
+                "districtType": "primary",
+                "expectedParticipants": 12,
+            },
+            {k: v for k, v in RATES.items() if k != "cluster_meetings_trainings_meals"},
+        )
+        self.assertNotIn("cluster_meetings_trainings_meals", _keys(older))
+        self.assertFalse(older.cost_missing)
 
     def test_a_tot_training_feeds_its_participants(self):
         cost = _cost(
@@ -394,6 +442,7 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
         self.assertEqual(
             cost.amount,
             RATES["cluster_meetings_trainings"]
+            + 12 * CLUSTER_MEALS
             + RATES["group_training_venue_cost"]
             + MATERIALS
             + PRIMARY_STAFF_DAY,
