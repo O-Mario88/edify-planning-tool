@@ -88,6 +88,7 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
         return self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
             {"cluster_action_type": "existing", "existing_cluster_id": cluster.id},
+            HTTP_HX_REQUEST="true",
         )
 
     def test_a_cluster_in_another_district_is_refused_not_crashed(self):
@@ -168,10 +169,10 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
 
 
 class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
-    """Owner, 2026-09-15: "all clustered schools' button for adding to a
-    cluster should be greyed out to avoid double clustering." The directory
-    greys the button and says which cluster; the drawer and the bulk drawer
-    refuse the same school when a stale page still offers it."""
+    """A school has one active cluster. The owner first greyed the button for
+    clustered schools (2026-09-15); the brief later that day replaced it with
+    Change Cluster, which needs a reason and a confirmation and closes the old
+    membership. The bulk drawer still skips a school clustered since render."""
 
     def setUp(self):
         self.region = Region.objects.create(name="DC Region")
@@ -185,7 +186,9 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             active_role="Admin",
             is_active=True,
         )
-        StaffProfile.objects.create(id="dc-sp", user=self.user, title="Admin")
+        self.profile = StaffProfile.objects.create(
+            id="dc-sp", user=self.user, title="Admin"
+        )
         self.cluster = Cluster.objects.create(
             name="DC Cluster",
             region=self.region,
@@ -193,6 +196,7 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             sub_county=self.sub_county,
             cluster_type="mixed",
             status="active",
+            responsible_staff_id="dc-sp",
         )
         ClusterSubCounty.objects.create(
             cluster=self.cluster, sub_county=self.sub_county
@@ -203,6 +207,7 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             district=self.district,
             cluster_type="mixed",
             status="active",
+            responsible_staff_id="dc-sp",
         )
         self.school = School.objects.create(
             school_id="DC-1",
@@ -213,33 +218,66 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             school_type="client",
             cluster_id=self.cluster.id,
             cluster_status="clustered",
+            account_owner_id="dc-sp",
+        )
+        StaffSchoolAssignment.objects.get_or_create(
+            staff=self.profile, school_id=self.school.id
         )
         self.client.force_login(self.user)
 
-    def test_the_directory_row_greys_the_button_and_names_the_cluster(self):
+    def test_the_directory_row_offers_change_cluster(self):
         from apps.frontend.view_models import SchoolDirectoryViewModel
 
         row = SchoolDirectoryViewModel.from_school(
             self.school, self.user, {self.cluster.id: "DC Cluster"}, False
         )
         self.assertNotIn("add_to_cluster", row["available_actions"])
-        self.assertEqual(
-            row["disabled_reasons"]["add_to_cluster"], "Already in DC Cluster."
-        )
+        self.assertIn("change_cluster", row["available_actions"])
 
-    def test_the_drawer_refuses_a_clustered_school(self):
-        for method in (self.client.get, self.client.post):
-            response = method(
-                f"/schools/{self.school.id}/add-to-cluster",
-                {
-                    "cluster_action_type": "existing",
-                    "existing_cluster_id": self.other.id,
-                },
-            )
-            self.assertEqual(response.status_code, 200)
-            self.assertIn("already in cluster DC Cluster", response.content.decode())
+    def test_the_drawer_opens_in_change_mode_and_needs_confirmation(self):
+        response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
+        self.assertContains(response, "Change Cluster")
+        self.assertContains(response, "DC Cluster")
+        refused = self.client.post(
+            f"/schools/{self.school.id}/add-to-cluster",
+            {
+                "cluster_action_type": "existing",
+                "existing_cluster_id": self.other.id,
+                "reason": "Closer to the school",
+            },
+        )
+        self.assertContains(refused, "Confirm that DC Clustered Primary")
         self.school.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.cluster.id)
+
+    def test_a_confirmed_change_moves_the_school_and_keeps_history(self):
+        from apps.clusters.models import SchoolClusterMembership
+
+        response = self.client.post(
+            f"/schools/{self.school.id}/add-to-cluster",
+            {
+                "cluster_action_type": "existing",
+                "existing_cluster_id": self.other.id,
+                "reason": "Closer to the school",
+                "confirm_change": "yes",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(response, "moved to DC Other Cluster")
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.other.id)
+        rows = list(
+            SchoolClusterMembership.objects.filter(school=self.school).order_by(
+                "started_at"
+            )
+        )
+        self.assertEqual([r.cluster_id for r in rows][-1], self.other.id)
+        self.assertEqual(
+            SchoolClusterMembership.objects.filter(
+                school=self.school, ended_at__isnull=True
+            ).count(),
+            1,
+        )
 
     def test_the_bulk_drawer_skips_a_clustered_school(self):
         response = self.client.post(

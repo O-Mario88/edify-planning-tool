@@ -482,6 +482,16 @@ urlpatterns = [
         name="cluster_impact_partial",
     ),
     path(
+        "clusters/<str:cluster_id>/catchment-drawer",
+        cluster_views.cluster_catchment_drawer_view,
+        name="cluster_catchment_drawer",
+    ),
+    path(
+        "clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+        cluster_views.cluster_catchment_end_view,
+        name="cluster_catchment_end",
+    ),
+    path(
         "clusters/<str:cluster_id>",
         cluster_views.cluster_detail_view,
         name="cluster_detail",

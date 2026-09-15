@@ -656,6 +656,7 @@ class ClusterSetupTest(APITestCase):
                 "notes": "",
             },
             format="multipart",
+            HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(

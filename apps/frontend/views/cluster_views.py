@@ -777,7 +777,180 @@ def cluster_detail_view(request, cluster_id):
         "can_schedule": RolePermissionService.can_schedule_activity(request.user)
         or RolePermissionService.can_request_school_visit(request.user),
     }
+    context.update(_catchment_context(request.user, _cluster_row))
     return render(request, "pages/clusters/detail.html", context)
+
+
+def _catchment_context(user, cluster) -> dict:
+    """The districts a cluster serves, and its members outside them."""
+    if cluster is None:
+        return {}
+    from apps.clusters.catchment import active_on, may_manage_catchments
+    from apps.clusters.models import ClusterServiceDistrict
+
+    rows = list(
+        ClusterServiceDistrict.objects.filter(cluster=cluster)
+        .select_related("district")
+        .order_by("-active", "relationship_type", "district__name")
+    )
+    in_force = {
+        r.district_id
+        for r in ClusterServiceDistrict.objects.filter(active_on(), cluster=cluster)
+    } | {cluster.district_id}
+    outside = list(
+        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+        .exclude(district_id__in=in_force)
+        .select_related("district")
+        .order_by("name")[:50]
+    )
+    return {
+        "catchment_rows": rows,
+        "catchment_outside_members": outside,
+        "can_manage_catchments": may_manage_catchments(user),
+    }
+
+
+@require_page_permission("cluster_detail")
+def cluster_catchment_drawer_view(request, cluster_id):
+    """Approve a neighbouring district for a cluster (CD, Admin)."""
+    from datetime import date as _date
+
+    from apps.clusters.catchment import (
+        approve_neighbouring_district,
+        country_of_district,
+        may_manage_catchments,
+    )
+    from apps.clusters.models import ClusterServiceDistrict
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    if not may_manage_catchments(request.user):
+        return HttpResponseForbidden(
+            "Only a Country Director or Admin approves the districts a cluster serves."
+        )
+    cluster = get_scoped_object_or_404(
+        Cluster.objects.select_related("district__region"),
+        request.user,
+        id=cluster_id,
+        deleted_at__isnull=True,
+    )
+    served = set(
+        ClusterServiceDistrict.objects.filter(cluster=cluster, active=True).values_list(
+            "district_id", flat=True
+        )
+    ) | {cluster.district_id}
+    country = country_of_district(cluster.district)
+    districts = (
+        District.objects.filter(region__country=country)
+        .exclude(id__in=served)
+        .select_related("region")
+        .order_by("name")
+    )
+
+    def drawer(error=None, posted=None):
+        return render(
+            request,
+            "partials/clusters/catchment_drawer.html",
+            {
+                "cluster": cluster,
+                "districts": districts,
+                "validation_error": error,
+                "posted": posted or {},
+                "today": _date.today().isoformat(),
+                "drawer_size": "md",
+            },
+        )
+
+    if request.method == "POST":
+        posted = {
+            "district_id": request.POST.get("district_id", "").strip(),
+            "reason": request.POST.get("reason", "").strip(),
+            "effective_from": request.POST.get("effective_from", "").strip(),
+            "effective_to": request.POST.get("effective_to", "").strip(),
+        }
+        try:
+            start = (
+                _date.fromisoformat(posted["effective_from"])
+                if posted["effective_from"]
+                else None
+            )
+            end = (
+                _date.fromisoformat(posted["effective_to"])
+                if posted["effective_to"]
+                else None
+            )
+        except ValueError:
+            return drawer("Enter the dates as calendar dates.", posted)
+        try:
+            row = approve_neighbouring_district(
+                cluster.id,
+                posted["district_id"],
+                request.user,
+                reason=posted["reason"],
+                effective_from=start,
+                effective_to=end,
+            )
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return drawer(str(getattr(exc, "detail", exc)), posted)
+        messages.success(
+            request,
+            f"{cluster.name} now serves {row.district.name} as a neighbouring district.",
+        )
+        response = HttpResponse(
+            f'<script>window.location.href = "/clusters/{cluster.id}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    return drawer()
+
+
+@require_page_permission("cluster_detail")
+def cluster_catchment_end_view(request, cluster_id, catchment_id):
+    """End an approved neighbouring district (CD, Admin)."""
+    from apps.clusters.catchment import end_catchment, may_manage_catchments
+    from apps.clusters.models import ClusterServiceDistrict
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    if not may_manage_catchments(request.user):
+        return HttpResponseForbidden(
+            "Only a Country Director or Admin changes the districts a cluster serves."
+        )
+    cluster = get_scoped_object_or_404(
+        Cluster, request.user, id=cluster_id, deleted_at__isnull=True
+    )
+    row = get_object_or_404(
+        ClusterServiceDistrict.objects.select_related("district"),
+        id=catchment_id,
+        cluster=cluster,
+    )
+    if request.method == "POST":
+        try:
+            end_catchment(row.id, request.user, reason=request.POST.get("reason", ""))
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return render(
+                request,
+                "partials/clusters/catchment_end_drawer.html",
+                {
+                    "cluster": cluster,
+                    "row": row,
+                    "validation_error": str(getattr(exc, "detail", exc)),
+                    "drawer_size": "sm",
+                },
+            )
+        messages.success(
+            request,
+            f"{cluster.name} no longer serves {row.district.name}. Schools already "
+            "in the cluster from there are listed for review.",
+        )
+        response = HttpResponse(
+            f'<script>window.location.href = "/clusters/{cluster.id}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    return render(
+        request,
+        "partials/clusters/catchment_end_drawer.html",
+        {"cluster": cluster, "row": row, "drawer_size": "sm"},
+    )
 
 
 @require_page_permission("planning")
@@ -1056,6 +1229,19 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
     cluster = get_scoped_object_or_404(
         Cluster, request.user, id=cluster_id, deleted_at__isnull=True
     )
+    # The districts this cluster serves: its own, and any approved
+    # neighbouring district (owner, 2026-09-15).
+    from django.db.models import Q
+
+    from apps.clusters.catchment import active_on
+    from apps.clusters.models import ClusterServiceDistrict
+
+    served_ids = {cluster.district_id} | set(
+        ClusterServiceDistrict.objects.filter(
+            active_on(), cluster_id=cluster.id
+        ).values_list("district_id", flat=True)
+    )
+    served_district_q = Q(district_id__in=served_ids)
     if request.method == "POST":
         school_ids = request.POST.getlist("school_ids")
         user = request.user
@@ -1074,7 +1260,7 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
                 or School.objects.none()
             )
             school = writable.filter(
-                id=sid, district_id=cluster.district_id, deleted_at__isnull=True
+                served_district_q, id=sid, deleted_at__isnull=True
             ).first()
             if not school:
                 continue
@@ -1110,14 +1296,14 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
     scope = resolve_user_scope(request.user)
     if scope.country_scope or scope.can_view_summary_only:
         unassigned_schools = School.objects.filter(
-            district_id=cluster.district_id,
+            served_district_q,
             cluster_status="unclustered",
             deleted_at__isnull=True,
         )
     else:
         writable = direct_portfolio_schools(scope) or School.objects.none()
         unassigned_schools = writable.filter(
-            district_id=cluster.district_id,
+            served_district_q,
             cluster_status="unclustered",
             deleted_at__isnull=True,
         )

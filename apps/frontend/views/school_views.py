@@ -53,6 +53,7 @@ from apps.core.enums import ClusterRecordStatus
 from apps.core.scoping import (
     assert_may_write_school,
     cluster_queryset,
+    direct_portfolio_schools,
     resolve_user_scope,
     school_queryset,
 )
@@ -182,22 +183,26 @@ def _create_manual_school(request) -> School:
             # own district" — accurate, but raised from the membership service
             # about a choice this form had offered, so it read as the save
             # breaking rather than as the picker being wrong.
+            from apps.clusters.catchment import clusters_serving_district_q
+
             cluster = Cluster.objects.filter(
+                clusters_serving_district_q(school.district_id),
                 id=cluster_id,
-                district_id=school.district_id,
                 deleted_at__isnull=True,
                 status="active",
             ).first()
             if cluster is None:
                 raise BadRequest(
-                    "Select an active cluster in the same district as the "
-                    "school. Clusters belong to one district, so the list "
-                    "changes when you change the district."
+                    "Select an active cluster that serves the school's district: "
+                    "one in the district, or one approved to serve it as a "
+                    "neighbouring district. The list changes with the district."
                 )
             set_school_cluster_membership(
                 school,
                 cluster,
                 request.user.user_id,
+                reason="Chosen when the school was added.",
+                actor_role=getattr(request.user, "active_role", "") or "",
             )
 
     return school
@@ -920,26 +925,37 @@ def school_parish_options_view(request):
 
 @require_page_permission("school_directory")
 def add_to_cluster_drawer_view(request, school_id):
-    """Assign a school straight to one of its owner's clusters.
+    """Add a school to one of its owner's clusters, or change its cluster.
 
-    Owner, 2026-09-15: the directory's Add to Cluster opens a drawer that
-    assigns the school directly, choosing from the clusters that belong to the
-    school's owner — not a cluster picked automatically from the sub-county.
-    A cluster in another district is listed but cannot be chosen, because
-    membership stays within the school's district
-    (`set_school_cluster_membership`). An owner with no cluster can create one
-    here.
+    Owner, 2026-09-15 (twice):
+
+    * The drawer lists the clusters that belong to the school's owner — never
+      another staff member's, never an unowned one.
+    * A cluster may be chosen when it serves the school's district: its own
+      district, or a neighbouring district the Country Director or Admin
+      approved for it (apps.clusters.catchment). Clusters that do not serve
+      the district are listed, marked, and cannot be chosen.
+    * A school already in a cluster is offered Change Cluster, which needs a
+      reason and a confirmation. The canonical service closes the old
+      membership in the history, opens the new one and keeps one active
+      cluster — the school's own geography never changes.
     """
+    from apps.clusters.catchment import (
+        CatchmentRelationship,
+        NOT_IN_CATCHMENT,
+        service_districts_by_cluster,
+    )
+    from apps.clusters.eligibility import owner_clusters_for_school
+    from apps.core.permissions import has_permission
+    from apps.core.scoping import OVERSIGHT_ONLY_MESSAGE
+
     school = get_scoped_object_or_404(
-        School.objects.select_related("district", "sub_county"),
+        School.objects.select_related("district", "sub_county", "region"),
         request.user,
         id=school_id,
         deleted_at__isnull=True,
     )
     user = request.user
-
-    from apps.core.permissions import has_permission
-    from apps.clusters.eligibility import owner_clusters_for_school
 
     if not has_permission(user, "cluster.assign"):
         return render(
@@ -947,27 +963,14 @@ def add_to_cluster_drawer_view(request, school_id):
             "partials/schools/drawer_error.html",
             {"error": "You do not have permission to assign clusters."},
         )
-
-    # A school belongs to one cluster. The directory greys the button out for
-    # a clustered school; a stale row or a hand-typed URL still lands here, and
-    # re-clustering silently would move the school (owner, 2026-09-15: "greyed
-    # out to avoid double clustering").
-    if school.cluster_id or school.cluster_status == "clustered":
-        current = (
-            Cluster.objects.filter(id=school.cluster_id).first()
-            if school.cluster_id
-            else None
-        )
-        where = f"cluster {current.name}" if current else "a cluster"
+    # Reading a school is not operating on it. The drawer used to open for a
+    # supervisor and then fail on save with "outside your scope"; say so first.
+    writable = direct_portfolio_schools(resolve_user_scope(user))
+    if writable is None or not writable.filter(id=school.id).exists():
         return render(
             request,
             "partials/schools/drawer_error.html",
-            {
-                "error": (
-                    f"{school.name} is already in {where}. A school belongs to "
-                    "one cluster; remove it from that cluster first."
-                )
-            },
+            {"error": OVERSIGHT_ONLY_MESSAGE},
         )
 
     def get_responsible_staff(sch):
@@ -995,6 +998,14 @@ def add_to_cluster_drawer_view(request, school_id):
         )
         return assigned_profiles[0] if len(assigned_profiles) == 1 else None
 
+    current_cluster = (
+        Cluster.objects.select_related("district")
+        .filter(id=school.cluster_id, deleted_at__isnull=True)
+        .first()
+        if school.cluster_id
+        else None
+    )
+    is_change = current_cluster is not None or school.cluster_status == "clustered"
     responsible_staff = get_responsible_staff(school)
     owner_clusters = list(
         owner_clusters_for_school(school)
@@ -1002,29 +1013,68 @@ def add_to_cluster_drawer_view(request, school_id):
         .annotate(schools_count=Count("assignments", distinct=True))
         .order_by("name")
     )
+    served = service_districts_by_cluster(
+        [c.id for c in owner_clusters]
+        + ([current_cluster.id] if current_cluster else [])
+    )
+
+    def relationship_for(cluster):
+        if cluster is None or not school.district_id:
+            return None
+        if cluster.district_id == school.district_id:
+            return CatchmentRelationship.PRIMARY
+        for row in served.get(cluster.id, []):
+            if row.district_id == school.district_id:
+                return row.relationship_type
+        return None
+
     for cluster in owner_clusters:
-        cluster.in_school_district = cluster.district_id == school.district_id
-    selectable_ids = {c.id for c in owner_clusters if c.in_school_district}
-    # Preselect the cluster already covering the school's sub-county when it is
-    # one of the owner's; the planner still chooses.
+        cluster.catchment_relationship = relationship_for(cluster)
+        cluster.serves_school = cluster.catchment_relationship is not None
+        cluster.is_cross_district = (
+            cluster.catchment_relationship == CatchmentRelationship.NEIGHBOURING
+        )
+        cluster.is_current = bool(current_cluster and cluster.id == current_cluster.id)
+    # Served first, the school's own district first among those.
+    owner_clusters.sort(
+        key=lambda c: (
+            not c.serves_school,
+            c.is_cross_district,
+            c.is_current,
+            c.name.lower(),
+        )
+    )
+    selectable = [c for c in owner_clusters if c.serves_school and not c.is_current]
+    selectable_ids = {c.id for c in selectable}
     covering = (
         active_cluster_for_school_geography(school) if school.sub_county_id else None
     )
     preselected_id = (
-        school.cluster_id
-        if school.cluster_id in selectable_ids
-        else (covering.id if covering and covering.id in selectable_ids else "")
+        covering.id
+        if covering and covering.id in selectable_ids
+        else (selectable[0].id if len(selectable) == 1 else "")
     )
+    current_relationship = relationship_for(current_cluster)
 
-    def drawer_context(validation_error=None):
+    def drawer_context(validation_error=None, posted=None):
+        posted = posted or {}
         return {
             "school": school,
             "responsible_staff": responsible_staff,
             "owner_clusters": owner_clusters,
-            "has_selectable_cluster": bool(selectable_ids),
-            "preselected_cluster_id": preselected_id,
+            "has_selectable_cluster": bool(selectable),
+            "preselected_cluster_id": posted.get("cluster_id") or preselected_id,
+            "posted_reason": posted.get("reason", ""),
             "validation_error": validation_error,
             "ineligibility_reason": ineligibility_reason(school),
+            "current_cluster": current_cluster,
+            "current_relationship": current_relationship,
+            "current_is_cross_district": current_relationship
+            == CatchmentRelationship.NEIGHBOURING,
+            "is_change": is_change,
+            "cross_district_ids": json.dumps(
+                [c.id for c in owner_clusters if c.is_cross_district]
+            ),
             "drawer_type": "center",
             "drawer_size": "md",
         }
@@ -1041,32 +1091,71 @@ def add_to_cluster_drawer_view(request, school_id):
 
     if request.method == "POST":
         action_type = request.POST.get("cluster_action_type", "existing")
+        reason = (request.POST.get("reason") or "").strip()
+        posted = {
+            "cluster_id": request.POST.get("existing_cluster_id", "").strip(),
+            "reason": reason,
+        }
+
+        if is_change:
+            if request.POST.get("confirm_change") != "yes":
+                return render(
+                    request,
+                    "partials/schools/add_to_cluster_drawer.html",
+                    drawer_context(
+                        f"Confirm that {school.name} should leave "
+                        f"{current_cluster.name if current_cluster else 'its cluster'}.",
+                        posted,
+                    ),
+                )
+            if len(reason) < 5:
+                return render(
+                    request,
+                    "partials/schools/add_to_cluster_drawer.html",
+                    drawer_context("Give the reason for changing the cluster.", posted),
+                )
 
         if action_type == "existing":
-            cluster_id = request.POST.get("existing_cluster_id", "").strip()
+            cluster_id = posted["cluster_id"]
             # The same rule on submit: the id arrives in a POST body, and a
-            # crafted one must not land this school in another owner's cluster.
-            # `set_school_cluster_membership` checks owner and district again.
+            # crafted one must not land this school in another owner's cluster
+            # or a cluster that does not serve its district. The service checks
+            # owner and catchment again.
             cluster = next(
-                (
-                    c
-                    for c in owner_clusters
-                    if c.id == cluster_id and c.in_school_district
-                ),
+                (c for c in owner_clusters if c.id == cluster_id and c.serves_school),
                 None,
             )
             if cluster is None:
                 listed = next((c for c in owner_clusters if c.id == cluster_id), None)
                 message = (
-                    f"{listed.name} is in {listed.district.name}. A school joins a "
-                    f"cluster in its own district, {school.district.name}."
+                    NOT_IN_CATCHMENT.format(
+                        cluster=listed.name, district=school.district.name
+                    )
                     if listed is not None
                     else "Select one of the clusters belonging to this school's owner."
                 )
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    drawer_context(message),
+                    drawer_context(message, posted),
+                )
+            if cluster.is_current:
+                return render(
+                    request,
+                    "partials/schools/add_to_cluster_drawer.html",
+                    drawer_context(
+                        f"{school.name} is already in {cluster.name}.", posted
+                    ),
+                )
+            if cluster.is_cross_district and len(reason) < 5:
+                return render(
+                    request,
+                    "partials/schools/add_to_cluster_drawer.html",
+                    drawer_context(
+                        f"{cluster.name} is in {cluster.district.name}. Give the reason "
+                        "this school joins a cluster across the district border.",
+                        posted,
+                    ),
                 )
         else:
             cluster_name = request.POST.get("new_cluster_name", "").strip()
@@ -1074,7 +1163,7 @@ def add_to_cluster_drawer_view(request, school_id):
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    drawer_context("Enter a cluster name to continue."),
+                    drawer_context("Enter a cluster name to continue.", posted),
                 )
             try:
                 cluster_data = create_cluster_service(
@@ -1095,31 +1184,51 @@ def add_to_cluster_drawer_view(request, school_id):
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    drawer_context(str(e)),
+                    drawer_context(str(e), posted),
                 )
             cluster = get_object_or_404(
                 Cluster, id=cluster_data["id"], deleted_at__isnull=True
             )
 
-        # Audited inside set_school_cluster_membership() (the canonical
-        # service assign_school_to_cluster delegates to). Its refusals — a
-        # district mismatch, a cluster retired since the drawer opened, scope —
-        # come back as the sentence, never a 500 (INC-000001).
+        # Audited, historied and notified inside set_school_cluster_membership()
+        # (the canonical service assign_school_to_cluster delegates to). Its
+        # refusals — a district outside the catchment, a cluster retired since
+        # the drawer opened, scope — come back as the sentence, never a 500.
         try:
-            assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
+            assign_school_to_cluster(
+                school.school_id,
+                {"clusterId": cluster.id, "reason": reason},
+                user,
+            )
         except (BadRequest, Forbidden, NotFoundError) as exc:
             return render(
                 request,
                 "partials/schools/add_to_cluster_drawer.html",
-                drawer_context(str(getattr(exc, "detail", exc))),
+                drawer_context(str(getattr(exc, "detail", exc)), posted),
             )
 
+        verb = "moved to" if is_change else "added to"
+        message = f"{school.name} {verb} {cluster.name}."
+        if request.headers.get("HX-Request") != "true":
+            # The full-page fallback: a plain form post lands back on the
+            # directory with the outcome, not on a bare toast fragment.
+            from django.contrib import messages as flash
+
+            flash.success(request, message)
+            return redirect("/schools")
         response = render(
             request,
             "partials/schools/toast_success.html",
-            {"message": f"{school.name} added to {cluster.name}."},
+            {"message": message},
         )
-        response["HX-Trigger"] = "schools-updated"
+        response["HX-Trigger"] = (
+            f"schools-updated, cluster-schools-updated-{cluster.id}"
+            + (
+                f", cluster-schools-updated-{current_cluster.id}"
+                if current_cluster
+                else ""
+            )
+        )
         return response
 
     return render(
@@ -1489,8 +1598,32 @@ def school_detail_view(request, school_id):
             or (activity.scheduled_date.date() if activity.scheduled_date else None)
         )
 
+    # Current cluster and every membership before it (owner, 2026-09-15):
+    # joins, changes and removals with who, why and when, and whether the
+    # cluster serves the school across a district border.
+    from apps.clusters.catchment import serving_match
+    from apps.clusters.membership_history import membership_history
+
+    current_cluster = (
+        Cluster.objects.select_related("district")
+        .filter(id=school.cluster_id, deleted_at__isnull=True)
+        .first()
+        if school.cluster_id
+        else None
+    )
+    current_match = (
+        serving_match(current_cluster, school.district_id) if current_cluster else None
+    )
+
     context = {
         "school": school,
+        "current_cluster": current_cluster,
+        "current_cluster_cross_district": bool(
+            current_match and current_match.is_cross_district
+        ),
+        "current_cluster_outside_catchment": bool(current_cluster)
+        and current_match is None,
+        "cluster_history": membership_history(school.id),
         "partner_support": partner_support,
         "business_transformation": business_transformation,
         "latest_ssa": latest_ssa,

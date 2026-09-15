@@ -93,6 +93,12 @@ class Permission(str, Enum):
     CLUSTER_VIEW = "cluster.view"
     CLUSTER_ASSIGN = "cluster.assign"
     CLUSTER_OVERRIDE = "cluster.override"  # create a 2nd cluster in a sub-county
+    # Approve or end the neighbouring districts a cluster serves (owner,
+    # 2026-09-15). Narrow on purpose: it edits no district, sub-county or
+    # school geography — only which districts' schools may join one cluster.
+    # Held where CLUSTER_OVERRIDE is (Country Director, Admin); not by IA,
+    # which the brief refused unrestricted geography authority.
+    CLUSTER_CATCHMENT_MANAGE = "cluster.catchmentManage"
     PLANNING_RECALC = "planning.recalc"
     SSA_VIEW = "ssa.view"
     SSA_UPLOAD = "ssa.upload"
@@ -390,6 +396,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.CLUSTER_VIEW,
         P.CLUSTER_ASSIGN,
         P.CLUSTER_OVERRIDE,
+        P.CLUSTER_CATCHMENT_MANAGE,
         P.PLANNING_RECALC,
         P.SSA_VIEW,
         P.PLANNING_VIEW,

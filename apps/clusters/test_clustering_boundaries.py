@@ -540,5 +540,5 @@ class TheOnboardDrawerOffersOnlyItsDistrictsClustersTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("same district as the school", response.content.decode())
+        self.assertIn("serves the school", response.content.decode())
         self.assertFalse(School.objects.filter(school_id="BOUNDARY-1").exists())
