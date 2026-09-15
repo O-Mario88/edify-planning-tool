@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 880,
+   "line": 928,
    "label": null,
    "keys": [
     "label",
@@ -3001,7 +3001,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 109,
+   "line": 146,
    "label": null,
    "keys": [
     "amount",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 509,
+   "line": 550,
    "label": null,
    "keys": [
     "label",

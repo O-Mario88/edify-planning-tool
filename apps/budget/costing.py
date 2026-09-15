@@ -103,6 +103,21 @@ def _participants_of(a: dict, default_n: int) -> int:
     return counted if counted > 0 else default_n
 
 
+def materials_quantities(a: dict) -> tuple[int, int]:
+    """(pages to print, pages x copies to photocopy) for a group session.
+
+    `printingPages`, `photocopyPages` and `photocopyCopies` arrive as form
+    strings or JSON numbers; blank, absent, invalid or negative all count as
+    zero, and a zero on either side of the photocopying product is no
+    photocopying. Shared by the cluster drawers, which show the same
+    arithmetic beside the inputs."""
+    printing = _nonnegative_count(a.get("printingPages"))
+    photocopying = _nonnegative_count(a.get("photocopyPages")) * _nonnegative_count(
+        a.get("photocopyCopies")
+    )
+    return printing, photocopying
+
+
 def _days_of(a: dict) -> int:
     """Service days an activity spans (1 unless it carries a date range).
 
@@ -123,7 +138,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     costingKind ('core' | 'onetest' | 'tot' | 'student_conference' |
     'proprietor_conference', from the catalogue item's costing profile),
     teachersAttended, leadersAttended, otherParticipants, expectedParticipants,
-    nights, days, projectId.
+    nights, days, projectId, printingPages, photocopyPages, photocopyCopies.
 
     The recipe (owner, 2026-09-06 catalogue):
 
@@ -140,8 +155,9 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
       partner school visit related activities"; Partner Meetings for a
       partner-run training or a partner/project activity. A partner visit
       whose reason is OneTest fetches the OneTest rate instead.
-    * A group session is venue and facilitation per day, printing and
-      photocopying of materials, the staff day, and the session's own rate:
+    * A group session is venue and facilitation per day, the materials it
+      states (printing by the page, photocopying by the page and the copy;
+      none stated, none charged), the staff day, and the session's own rate:
       Cluster Meetings/Trainings, TOT trainings (which alone feed their
       participants, at the TOT meals rate), Student or Proprietor Conference.
     * A field event is a visit day for every day away.
@@ -211,9 +227,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             return
         add_staff_visit_day(days)
 
-    def add_materials(days: int) -> None:
-        add_rate("printing_training_materials", days)
-        add_rate("photocopying_training_materials", days)
+    def add_materials() -> None:
+        """Printed and photocopied training materials, by the page.
+
+        Owner, 2026-09-15: printing is the pages printed at the per-page
+        rate; photocopying is pages x copies at the per-page rate. A
+        session that states no pages (or zero) prints nothing and carries
+        no materials line at all -- the rates used to be charged once per
+        session day whether or not anything was printed, which is how a
+        meeting with no handouts fetched a printing cost."""
+        printing, photocopying = materials_quantities(a)
+        if printing:
+            add_rate("printing_training_materials", printing)
+        if photocopying:
+            add_rate("photocopying_training_materials", photocopying)
 
     def add_group_session(days: int, rate_key: str | None, meals: bool = False) -> None:
         """The one group-session recipe: the session's own rate, participants
@@ -234,7 +261,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             days,
         )
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
-        add_materials(days)
+        add_materials()
         add_staff_day(days)
 
     is_partner = a.get("deliveryType") == "partner"
@@ -279,7 +306,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         days = _days_of(a)
         add_rate("cluster_meetings_trainings")
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
-        add_materials(days)
+        add_materials()
         add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
@@ -370,6 +397,7 @@ __all__ = [
     "CLUSTER_TRAINING_TYPES",
     "GROUP_TRAINING_RATE_KEYS",
     "LEGACY_CLUSTER_ACTIVITY_COST_KEYS",
+    "materials_quantities",
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
 ]

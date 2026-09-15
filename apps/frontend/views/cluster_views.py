@@ -72,6 +72,29 @@ def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
     return "healthy"
 
 
+#: Form field -> costing key for the training materials a cluster session
+#: plans (owner, 2026-09-15): printing by the page, photocopying by the page
+#: and the copy. Read from the drawer's GET (preview, re-render) and POST
+#: (schedule) alike, so the two cannot price different handouts.
+MATERIALS_FIELDS = (
+    ("printing_pages", "printingPages"),
+    ("photocopy_pages", "photocopyPages"),
+    ("photocopy_copies", "photocopyCopies"),
+)
+
+
+def _materials_from(source) -> dict:
+    """The materials inputs as typed, keyed for costing; blank stays blank.
+
+    Blank means "none planned" everywhere downstream — the engine prices a
+    blank or zero page count as no materials line — so nothing is defaulted
+    here; the service refuses anything that is not a whole number."""
+    return {
+        payload_key: str(source.get(form_key, "") or "").strip()
+        for form_key, payload_key in MATERIALS_FIELDS
+    }
+
+
 def _get_cost_preview_data(
     activity_type,
     participants,
@@ -79,28 +102,42 @@ def _get_cost_preview_data(
     *,
     planned_date=None,
     responsible_user_id=None,
+    materials=None,
 ):
     """Cost preview via the central CostingService — no fallback/fabricated rates.
 
     Missing rates surface as blockers instead of fake prices."""
+    from apps.budget.costing import _nonnegative_count
     from apps.budget.costing_service import preview
 
     act_type = "cluster_training" if activity_type == "training" else "cluster_meeting"
+    materials = materials or {}
     result = preview(
         {
             "activityType": act_type,
             "expectedParticipants": participants,
             "clusterId": cluster_id,
             "plannedDate": planned_date,
+            **materials,
         },
         minimum=True,
         responsible_user_id=responsible_user_id,
     )
+    printing_pages = _nonnegative_count(materials.get("printingPages"))
+    photocopy_pages = _nonnegative_count(materials.get("photocopyPages"))
+    photocopy_copies = _nonnegative_count(materials.get("photocopyCopies"))
 
     cost_lines = []
     for line in result["lines"]:
         if line["missing"]:
             formula = "Rate not set"
+        elif line["key"] == "printing_training_materials":
+            formula = f"{printing_pages} pages x UGX {line['unit']:,.0f}"
+        elif line["key"] == "photocopying_training_materials":
+            formula = (
+                f"{photocopy_pages} pages x {photocopy_copies} copies "
+                f"x UGX {line['unit']:,.0f}"
+            )
         elif line["qty"] and line["qty"] > 1:
             formula = f"{line['qty']} x UGX {line['unit']:,.0f}"
         else:
@@ -376,6 +413,7 @@ def cluster_cost_preview_partial(request):
             responsible_user_id=planning_preview_owner(
                 request.user, request.GET.get("responsible_staff_id")
             ),
+            materials=_materials_from(request.GET),
         )
         context = {
             "success": True,
@@ -449,6 +487,9 @@ def cluster_schedule_activity_view(request):
         per_school = request.POST.get("participants_per_school", "").strip()
         if per_school:
             data["participantsPerSchool"] = per_school
+        # Pages to print, pages to photocopy and copies — validated and
+        # stored by the service; a blank one is no materials.
+        data.update(_materials_from(request.POST))
         # Ticked by name. The count the budget multiplies by is derived from
         # the list rather than typed beside it, so the two cannot disagree.
         invited_school_ids = [
@@ -539,7 +580,10 @@ def cluster_schedule_activity_view(request):
                 if selected_cluster:
                     try:
                         cost_preview = ClusterCostPreviewService.preview_cost(
-                            activity_type, participants, selected_cluster.id
+                            activity_type,
+                            participants,
+                            selected_cluster.id,
+                            materials=_materials_from(request.POST),
                         )
                     except Exception:
                         pass
@@ -565,6 +609,10 @@ def cluster_schedule_activity_view(request):
                     or 0,
                     "other_per_school": request.POST.get("other_per_school", "").strip()
                     or 0,
+                    **{
+                        form_key: request.POST.get(form_key, "").strip()
+                        for form_key, _payload_key in MATERIALS_FIELDS
+                    },
                     "schools_invited": len(retry_invited),
                     "member_schools": [
                         {
@@ -905,19 +953,26 @@ def planner_drawer_view(request):
     # Who the planner is inviting from each school. The drawer re-renders on
     # every cluster / activity-type change, so these come back from the form
     # rather than resetting to the defaults each time.
-    per_school_categories = {
-        key: (
-            int(request.GET.get(key, "").strip())
-            if request.GET.get(key, "").strip().isdigit()
-            else default
-        )
-        for key, default in (
-            ("teachers_per_school", 2 if activity_type == "training" else 0),
-            ("leaders_per_school", 0 if activity_type == "training" else 2),
-            ("other_per_school", 0),
-        )
-    }
-    participants_per_school = sum(per_school_categories.values()) or 2
+    per_school_defaults = (
+        ("teachers_per_school", 2 if activity_type == "training" else 0),
+        ("leaders_per_school", 0 if activity_type == "training" else 2),
+        ("other_per_school", 0),
+    )
+    # The defaults are for a first open only. Once the form has been through
+    # a re-render (a cluster or activity-type change), a field the planner
+    # cleared is zero — not the default quietly put back (owner, 2026-09-15:
+    # "leaving a field blank should automatically translate to zero").
+    per_school_submitted = any(
+        key in request.GET for key, _default in per_school_defaults
+    )
+    per_school_categories = {}
+    for key, default in per_school_defaults:
+        raw = request.GET.get(key, "").strip()
+        if raw.isdigit():
+            per_school_categories[key] = int(raw)
+        else:
+            per_school_categories[key] = 0 if per_school_submitted else default
+    participants_per_school = sum(per_school_categories.values())
     schools_invited = len(invited_ids)
 
     raw_participants = request.GET.get("expected_participants", "").strip()
@@ -941,7 +996,10 @@ def planner_drawer_view(request):
     cost_preview = None
     if selected_cluster:
         cost_preview = ClusterCostPreviewService.preview_cost(
-            activity_type, participants, selected_cluster.id
+            activity_type,
+            participants,
+            selected_cluster.id,
+            materials=_materials_from(request.GET),
         )
 
     from apps.activity_catalogue.availability import (
@@ -981,6 +1039,11 @@ def planner_drawer_view(request):
         "cost_preview": cost_preview,
         "default_date": default_date,
         "drawer_type": "center",
+        # Materials as typed, so a re-render keeps them.
+        **{
+            form_key: request.GET.get(form_key, "").strip()
+            for form_key, _payload_key in MATERIALS_FIELDS
+        },
         "training_activity_options": training_options,
         "training_activity_options_json": json.dumps(training_options),
         "selected_training_activity_id": selected_training_activity_id,

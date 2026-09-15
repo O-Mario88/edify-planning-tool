@@ -208,18 +208,20 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
-        # A cluster meeting (2026-09-06 catalogue): its own rate, the venue,
-        # printing and photocopying (all 0 until the CD sets them) and the
-        # staff day. Nobody is fed at a meeting.
+        # A cluster meeting (2026-09-06 catalogue): its own rate, the venue
+        # and the staff day. Nobody is fed at a meeting, and no pages were
+        # stated, so there is no printing or photocopying line (materials
+        # are by the page since 2026-09-15).
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
-        self.assertEqual(cm_lines.count(), 6)
+        self.assertEqual(cm_lines.count(), 4)
         self.assertEqual(sum(l.amount for l in cm_lines), 262000)
         self.assertEqual(
             cm_lines.get(cost_setting_key="group_training_venue_cost").amount, 200000
         )
 
         # 3. Schedule a Group Training (15 participants: venue=200000,
-        # facilitation=150000, materials 0, staff day 62000). Total = 412,000
+        # facilitation=150000, no materials stated, staff day 62000).
+        # Total = 412,000
         # ACCOUNTING_FINANCIAL_MANAGEMENT is the cluster_training item for
         # financial_health, the second-weakest verified intervention →
         # also a primary cluster recommendation.
@@ -247,8 +249,6 @@ class WeeklyFundRequestsTest(APITestCase):
                 "cluster_meetings_trainings",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
-                "printing_training_materials",
-                "photocopying_training_materials",
                 "primary_transport_per_day",
                 "lunch_per_day",
             },

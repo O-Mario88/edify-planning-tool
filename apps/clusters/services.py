@@ -1889,11 +1889,18 @@ class ClusterRecommendationService:
 class ClusterCostPreviewService:
     @staticmethod
     def preview_cost(
-        activity_type: str, participants: int, cluster_id: str, fy: str = "2026"
+        activity_type: str,
+        participants: int,
+        cluster_id: str,
+        fy: str = "2026",
+        *,
+        materials: dict | None = None,
     ) -> dict:
         from apps.frontend.views.cluster_views import _get_cost_preview_data
 
-        return _get_cost_preview_data(activity_type, participants, cluster_id)
+        return _get_cost_preview_data(
+            activity_type, participants, cluster_id, materials=materials
+        )
 
 
 class ClusterMyPlanSyncService:

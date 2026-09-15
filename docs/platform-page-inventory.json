@@ -709,7 +709,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 74087,
+      "bytes": 75584,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2164,7 +2164,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18284,
+      "bytes": 21449,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2685,7 +2685,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23522,
+      "bytes": 24913,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -3027,6 +3027,36 @@
       ],
       "tables": 0,
       "template": "partials/clusters/planned_date_field.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 3767,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/planner-drawer",
+        "/clusters/schedule-activity",
+        "/clusters/schedule-meeting-drawer",
+        "/clusters/schedule-training-drawer",
+        "/planning/schedule-modal"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Training Materials Fields",
+      "purpose": "Reusable training materials fields interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/training_materials_fields.html",
       "variants": []
     },
     {
@@ -8613,7 +8643,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25109,
+      "bytes": 25786,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -101740,7 +101770,7 @@
     "activity_states": 24,
     "all_routes": 1274,
     "api_routes": 359,
-    "component_templates": 449,
+    "component_templates": 450,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,

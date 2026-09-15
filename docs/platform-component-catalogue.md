@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **449**
+Components and application partials: **450**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -132,6 +132,7 @@ Components and application partials: **449**
 | `partials/clusters/kpi_strip.html` | application-partial | Reusable kpi strip interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /clusters | 0 |
 | `partials/clusters/oversight_workspace.html` | application-partial | Reusable oversight workspace interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/clusters/planned_date_field.html` | application-partial | Reusable planned date field interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /clusters/planner-drawer<br>/clusters/schedule-activity<br>/clusters/schedule-meeting-drawer<br>/clusters/schedule-training-drawer | 0 |
+| `partials/clusters/training_materials_fields.html` | application-partial | Reusable training materials fields interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/planner-drawer<br>/clusters/schedule-activity<br>/clusters/schedule-meeting-drawer<br>/clusters/schedule-training-drawer<br>/planning/schedule-modal | 0 |
 | `partials/coaching/one_to_ones.html` | application-partial | Reusable one to ones interface primitive | {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/components/confirm_action.html` | application-partial | Reusable confirm action interface primitive | canonical; default, error, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /admin-panel/school-upload-history<br>/admin-panel/users/<str:user_id><br>/leave/coverage<br>/leave/coverage/<br>/leave/policies<br>/leave/policies/<br>/schools/<str:school_id><br>/strategic-priorities | 0 |
 | `partials/components/donut_rings.html` | application-partial | Reusable donut rings interface primitive | canonical; default | inherits containing page contract | accessible name and label | /accounts<br>/accounts/<br>/core-schools/<str:school_id>/champion-review<br>/disbursements<br>/disbursements/action<br>/fund-approvals<br>/fund-approvals/action<br>/fund-approvals/invoices/<str:invoice_id>/action | 0 |

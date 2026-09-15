@@ -204,8 +204,14 @@
   inline-size: 2.75rem;
 }
 
-.analytics-geo-card .sr-distribution-col--ssa {
-  inline-size: 3.85rem;
+/* achieved/planned reads "12/40"; the partner column is one count. The
+   "# planned" columns are hidden below tablet width (x-show on the <col>). */
+.analytics-geo-card .sr-distribution-col--achieved {
+  inline-size: 3.25rem;
+}
+
+.analytics-geo-card .sr-distribution-col--partner {
+  inline-size: 2.6rem;
 }
 
 .analytics-geo-card .sr-distribution-table :is(th, td) {
@@ -848,8 +854,12 @@
     inline-size: 2.45rem;
   }
 
-  .analytics-geo-card .sr-distribution-col--ssa {
-    inline-size: 3.45rem;
+  .analytics-geo-card .sr-distribution-col--achieved {
+    inline-size: 2.9rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--partner {
+    inline-size: 2.3rem;
   }
 
   .analytics-geo-card .sr-distribution-table {
@@ -1546,9 +1556,11 @@ main #impact-workspace .impact-group-pagination a {
   }
   .analytics-geo-card .sr-distribution-col--schools,
   .analytics-geo-card .sr-distribution-col--clusters { inline-size: 5rem; }
-  .analytics-geo-card .sr-distribution-col--ssa { inline-size: 5.5rem; }
+  .analytics-geo-card .sr-distribution-col--achieved { inline-size: 6rem; }
+  .analytics-geo-card .sr-distribution-col--partner { inline-size: 4.5rem; }
+  .analytics-geo-card .sr-distribution-col--planned,
   .analytics-geo-card .sr-distribution-table th.sr-wide,
-  .analytics-geo-card .sr-distribution-table td.sr-wide { inline-size: 6.5rem; }
+  .analytics-geo-card .sr-distribution-table td.sr-wide { inline-size: 5.5rem; }
 }
 
 /* Give the selected map the workspace height; summary metrics remain on

@@ -276,6 +276,12 @@ class CentralizedCostingTest(APITestCase):
                 "costingProfile": "TOT_TRAINING",
                 "deliveryType": "staff",
                 "expectedParticipants": 20,
+                # One page printed, one page copied once: the materials
+                # rates are by the page (owner, 2026-09-15), and a session
+                # that states no pages carries no materials line.
+                "printingPages": 1,
+                "photocopyPages": 1,
+                "photocopyCopies": 1,
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
@@ -333,11 +339,15 @@ class CentralizedCostingTest(APITestCase):
                 "activityType": "cluster_meeting",
                 "deliveryType": "staff",
                 "expectedParticipants": 12,
+                "printingPages": 2,
+                "photocopyPages": 3,
+                "photocopyCopies": 12,
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # The session's own rate, the room, the materials (0 until set) and
-        # the staff day. Nobody is fed at a meeting in the 2026-09-06 catalogue.
+        # The session's own rate, the room, the materials (by the page, 0
+        # until the rates are set) and the staff day. Nobody is fed at a
+        # meeting in the 2026-09-06 catalogue.
         self.assertEqual(prev["amount"], 7000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},

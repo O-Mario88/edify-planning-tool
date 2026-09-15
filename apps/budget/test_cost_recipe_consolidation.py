@@ -61,8 +61,13 @@ RATES = {
 # Transport + lunch; the secondary district adds dinner, a night and breakfast.
 PRIMARY_STAFF_DAY = 62_000
 SECONDARY_STAFF_DAY = 152_000
+# Materials are by the page (owner, 2026-09-15): 10 pages printed, and 5
+# pages photocopied for 20 people. A session that states no pages carries no
+# materials line at all.
+PAGES = {"printingPages": 10, "photocopyPages": 5, "photocopyCopies": 20}
 MATERIALS = (
-    RATES["printing_training_materials"] + RATES["photocopying_training_materials"]
+    10 * RATES["printing_training_materials"]
+    + 5 * 20 * RATES["photocopying_training_materials"]
 )
 ROOM = RATES["group_training_facilitation_fee"] + RATES["group_training_venue_cost"]
 
@@ -185,11 +190,12 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
     )
 
     def _session(self, days: int, rate: int = 0, meals: int = 0) -> int:
-        return rate + meals + days * (ROOM + MATERIALS) + days * PRIMARY_STAFF_DAY
+        return rate + meals + days * ROOM + days * PRIMARY_STAFF_DAY
 
     def test_every_group_training_costs_the_same_recipe(self):
-        """Venue and facilitation per day, printing and photocopying, and the
-        staff day. Only a TOT training feeds its participants."""
+        """Venue and facilitation per day, and the staff day. Only a TOT
+        training feeds its participants; materials are charged only when
+        the session states pages."""
         for activity_type in self.GROUP:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(
@@ -199,7 +205,64 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
                 )
                 self.assertEqual(cost.amount, self._session(1))
                 self.assertNotIn("tot_trainings_meals", _keys(cost))
+                self.assertNotIn("printing_training_materials", _keys(cost))
+                self.assertNotIn("photocopying_training_materials", _keys(cost))
                 self.assertFalse(cost.cost_missing)
+
+    def test_materials_are_priced_by_the_page_and_the_copy(self):
+        """Owner, 2026-09-15: printing is pages x the printing rate;
+        photocopying is pages x copies x the photocopying rate. Blank or
+        zero on either side is no line, not a zero line -- so a meeting with
+        no handouts no longer fetches a printing cost."""
+        cost = _cost(
+            activityType="cluster_training",
+            districtType="primary",
+            expectedParticipants=20,
+            **PAGES,
+        )
+        self.assertEqual(
+            cost.amount,
+            self._session(1, RATES["cluster_meetings_trainings"]) + MATERIALS,
+        )
+        by_key = {line.key: line for line in cost.lines}
+        printing = by_key["printing_training_materials"]
+        self.assertEqual((printing.qty, printing.amount), (10, 30_000))
+        photocopying = by_key["photocopying_training_materials"]
+        self.assertEqual((photocopying.qty, photocopying.amount), (100, 200_000))
+
+        for blank in (
+            {"printingPages": "", "photocopyPages": "", "photocopyCopies": ""},
+            {"printingPages": 0, "photocopyPages": 5, "photocopyCopies": 0},
+            {"printingPages": None, "photocopyPages": 0, "photocopyCopies": 20},
+            {},
+        ):
+            with self.subTest(blank=blank):
+                cost = _cost(
+                    activityType="cluster_meeting", districtType="primary", **blank
+                )
+                self.assertNotIn("printing_training_materials", _keys(cost))
+                self.assertNotIn("photocopying_training_materials", _keys(cost))
+
+        # Copies alone, with no pages, is nothing to photocopy; pages alone
+        # with no copies likewise. Printing needs only its pages.
+        only_printing = _cost(
+            activityType="cluster_meeting", districtType="primary", printingPages=3
+        )
+        self.assertEqual(
+            [
+                line.qty
+                for line in only_printing.lines
+                if line.key.endswith("materials")
+            ],
+            [3],
+        )
+
+    def test_materials_are_not_multiplied_by_the_days(self):
+        """Pages are a total for the session, not a daily quantity."""
+        cost = _cost(
+            activityType="programme_event", districtType="primary", days=3, **PAGES
+        )
+        self.assertEqual(cost.amount, self._session(3) + MATERIALS)
 
     def test_a_cluster_training_carries_the_cluster_rate(self):
         for activity_type in ("cluster_training", "cluster_training_ssa_collection"):
@@ -326,6 +389,7 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
             activityType="cluster_meeting",
             districtType="primary",
             expectedParticipants=12,
+            **PAGES,
         )
         self.assertEqual(
             cost.amount,

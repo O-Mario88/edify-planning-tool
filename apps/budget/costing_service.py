@@ -823,8 +823,8 @@ def _programme_period_specs(cost, activity, planned_date):
         "primary_lunch_per_day",
         "lunch_per_day",
         "tot_trainings_meals",
-        "printing_training_materials",
-        "photocopying_training_materials",
+        # Printing and photocopying are priced by the page (owner,
+        # 2026-09-15), not per service day, so they book to the first day.
         "secondary_transport_per_day",
         "secondary_lunch_per_day",
         "secondary_accommodation_per_night",
