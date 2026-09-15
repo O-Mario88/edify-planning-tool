@@ -1349,7 +1349,7 @@
    "audit_id": "KPI-SOURCE-069",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1416,
+   "line": 1423,
    "label": null,
    "keys": [
     "amount",
@@ -1369,7 +1369,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1089,
+   "line": 1096,
    "label": null,
    "keys": [
     "count",
@@ -1390,7 +1390,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1408,
+   "line": 1415,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -14757,7 +14757,7 @@
   {
    "audit_id": "KPI-SURFACE-101",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 246,
+   "line": 256,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14779,7 +14779,7 @@
   {
    "audit_id": "KPI-SURFACE-102",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 280,
+   "line": 290,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -39707,7 +39707,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1037,
+   "line": 1047,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -39733,7 +39733,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1439,
+   "line": 1449,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

@@ -11,7 +11,9 @@ test('desktop labels survive laptop heights and district drilldown', async({page
   for (const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]]) {
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length)).toBeGreaterThan(15);
-    await expect.poll(async()=>{const map=await mapInView(page);return Math.abs(map.windowHeight-map.bottom-24);}).toBeLessThanOrEqual(24);
+    // The map is a fixed 30cm x 42cm sheet (owner, 2026-09-15): taller than it is wide on every window.
+    await mapInView(page);
+    await expect.poll(async () => { const r=await svg.boundingBox(); return r ? r.height/r.width : 0; }).toBeGreaterThan(1.3);
     if (height === 1440) {
       await expect.poll(async () => (await svg.boundingBox())?.height || 0).toBeGreaterThan(560);
     }

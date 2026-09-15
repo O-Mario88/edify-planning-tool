@@ -709,7 +709,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75670,
+      "bytes": 74087,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2164,7 +2164,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18275,
+      "bytes": 18284,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3941,6 +3941,29 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 1155,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard",
+        "/dashboard/cd-approve",
+        "/dashboard/cd-return"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Attention Card",
+      "purpose": "Reusable  attention card interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/_attention_card.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
@@ -3968,7 +3991,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2270,
+      "bytes": 1486,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4018,7 +4041,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 33152,
+      "bytes": 33613,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10935,7 +10958,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 590,
+      "bytes": 584,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -31911,8 +31934,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]"
+        "text-[12px]"
       ]
     },
     {
@@ -31997,8 +32019,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]"
+        "text-[12px]"
       ]
     },
     {
@@ -101719,7 +101740,7 @@
     "activity_states": 24,
     "all_routes": 1274,
     "api_routes": 359,
-    "component_templates": 448,
+    "component_templates": 449,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,

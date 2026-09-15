@@ -7,6 +7,16 @@ Operations view: what the director works from — performance overview, the
 Program Leads table, verification, risk, field intelligence and actions.
 {% endcomment %}
 <div class="space-y-4" data-cd-operations-view>
+  {% if region_attention %}
+  {% comment %}
+  Regions Behind Target — moved here from the band above the views (owner,
+  2026-09-15) so the Map view has the room for the map. It sits beside the
+  regional performance it points at.
+  {% endcomment %}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" data-cd-region-attention>
+    {% for c in region_attention %}{% include "partials/dashboards/cd/_attention_card.html" %}{% endfor %}
+  </div>
+  {% endif %}
   {% if presence %}
   {% comment %}
   Who's Online — the Country Director sees who is using the system, how
