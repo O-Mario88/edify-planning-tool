@@ -407,6 +407,12 @@ def _core_training_courses() -> list[dict]:
     return in_school_training_course_options()
 
 
+def _follow_up_requires_training() -> bool:
+    from apps.frontend.views.planning_views import _follow_up_requires_training as rule
+
+    return rule()
+
+
 def _core_ranked_focus(school) -> tuple[str, str]:
     """The SSA's first-ranked need, as (code, label), or blanks."""
     from apps.ssa.plan_alignment import school_need
@@ -546,6 +552,7 @@ def core_schedule_visit_drawer(request):
             _school_training_follow_up_options(school)
         ),
         "follow_up_fy": fy,
+        "follow_up_requires_training": _follow_up_requires_training(),
         "requester_name": getattr(request.user, "name", "") or "You",
         **_core_visit_request_context(school, request.user),
     }
@@ -663,21 +670,30 @@ def core_schedule_visit_action(request):
                     _school_training_follow_up_options,
                 )
 
+                from apps.planning.fy_policy import (
+                    follow_up_requires_prior_training,
+                )
+
                 eligible = {
                     option["id"]
                     for option in _school_training_follow_up_options(school)
                 }
-                if not source_activity_id:
+                if source_activity_id:
+                    if source_activity_id not in eligible:
+                        raise BadRequest(
+                            "Choose a completed current-FY training this School did."
+                        )
+                    payload["sourceActivityId"] = source_activity_id
+                    # The training followed up owns the intervention.
+                    focus_intervention = None
+                elif follow_up_requires_prior_training(get_operational_fy()):
                     raise BadRequest(
                         "Select the completed training this visit follows up."
                     )
-                if source_activity_id not in eligible:
-                    raise BadRequest(
-                        "Choose a completed current-FY training this School did."
-                    )
-                payload["sourceActivityId"] = source_activity_id
-                # The training followed up owns the intervention.
-                focus_intervention = None
+                elif not focus_intervention:
+                    # No prior training is recorded and the policy allows the
+                    # visit (owner, 2026-09-15): the SSA names what it moves.
+                    focus_intervention = _core_ranked_focus(school)[0] or None
             elif purpose_of_visit == "in_school_coaching" and not focus_intervention:
                 focus_intervention = _core_ranked_focus(school)[0] or None
             if focus_intervention:
@@ -1074,6 +1090,7 @@ def core_assign_partner_drawer(request):
             _school_training_follow_up_options(school)
         ),
         "follow_up_fy": get_operational_fy(),
+        "follow_up_requires_training": _follow_up_requires_training(),
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
 
@@ -1205,24 +1222,33 @@ def core_assign_partner_action(request):
                         _school_training_follow_up_options,
                     )
 
-                    if not source_activity_id:
-                        raise BadRequest(
-                            "Select the completed training this support follows up."
-                        )
-                    eligible = {
-                        option["id"]
-                        for option in _school_training_follow_up_options(school)
-                    }
-                    if source_activity_id not in eligible:
-                        raise BadRequest(
-                            "Choose a completed current-FY training this School did."
-                        )
-                    source_activity = Activity.objects.get(id=source_activity_id)
-                    focus_intervention = (
-                        source_activity.focus_intervention
-                        or source_activity.purpose_intervention
-                        or None
+                    from apps.planning.fy_policy import (
+                        follow_up_requires_prior_training,
                     )
+
+                    if not source_activity_id:
+                        if follow_up_requires_prior_training(get_operational_fy()):
+                            raise BadRequest(
+                                "Select the completed training this support follows up."
+                            )
+                        focus_intervention = (
+                            focus_intervention or _core_ranked_focus(school)[0] or None
+                        )
+                    else:
+                        eligible = {
+                            option["id"]
+                            for option in _school_training_follow_up_options(school)
+                        }
+                        if source_activity_id not in eligible:
+                            raise BadRequest(
+                                "Choose a completed current-FY training this School did."
+                            )
+                        source_activity = Activity.objects.get(id=source_activity_id)
+                        focus_intervention = (
+                            source_activity.focus_intervention
+                            or source_activity.purpose_intervention
+                            or None
+                        )
             if catalogue_item is None:
                 raise BadRequest(
                     "No approved Catalogue Activity is configured for this support. "

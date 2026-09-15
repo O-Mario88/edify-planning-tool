@@ -1878,7 +1878,14 @@ def create(
         )
     )
     if is_school_training_follow_up and not data.get("sourceActivityId"):
-        raise BadRequest("Select the completed training this visit follows up.")
+        # Governed per country and fiscal year (owner, 2026-09-15): Uganda
+        # plans school visit follow-ups without a prior training. Every other
+        # safeguard below — scope, operating school, duplicates, calendar,
+        # leave, catalogue, evidence, costing — still applies.
+        from apps.planning.fy_policy import follow_up_requires_prior_training
+
+        if follow_up_requires_prior_training(fy):
+            raise BadRequest("Select the completed training this visit follows up.")
     governed_recommendation_reason = data.get("recommendationReason", "")
     governed_recommendation_source = {}
     # Owner, 2026-09-13: every school activity plan is SSA informed. The need

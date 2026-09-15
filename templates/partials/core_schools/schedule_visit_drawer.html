@@ -9,10 +9,11 @@ trainingCourses: {{ training_courses_json|default:'[]' }},
 trainingCourseId: '',
 followUps: {{ follow_up_options_json|default:'[]' }},
 sourceActivityId: '',
+followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
 get showTraining() { return this.purposeOfVisit === 'in_school_training'; },
 get showFollowUp() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsa() { return this.purposeOfVisit === 'ssa_support'; },
-get showFocus() { return !!this.purposeOfVisit && !this.showTraining && !this.showFollowUp && !this.showSsa; },
+get showFocus() { return !!this.purposeOfVisit && !this.showTraining && !this.showSsa && (!this.showFollowUp || (!this.followUpRequiresTraining && !this.sourceActivityId)); },
 get availableCourses() {
   return this.trainingCourses.filter(course => this.delivery === 'partner' ? course.partnerDeliveryAllowed : course.staffDeliveryAllowed);
 },
@@ -124,15 +125,16 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <template x-if="showFollowUp">
 <div class="space-y-3">
   <div>
-    <label for="core_source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Followed Up <span class="text-rose-500">*</span></label>
-    <select name="source_activity_id" id="core_source_activity_id" x-model="sourceActivityId" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    <label for="core_source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Followed Up <span x-show="followUpRequiresTraining" class="text-rose-500">*</span><span x-show="!followUpRequiresTraining" class="normal-case tracking-normal font-semibold"> (optional)</span></label>
+    <select name="source_activity_id" id="core_source_activity_id" x-model="sourceActivityId" :required="followUpRequiresTraining" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
       <option value="">Select a training this school did…</option>
       <template x-for="row in followUps" :key="row.id">
         <option :value="row.id" x-text="row.label"></option>
       </template>
     </select>
     <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
-    <p x-show="followUps.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+<p x-show="followUps.length === 0 && followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+    <p x-show="followUps.length === 0 && !followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-slate-500" role="status" data-no-prior-training>No prior training recorded. The follow-up can still be planned; its focus comes from the school's SSA.</p>
   </div>
   <div x-show="selectedFollowUp" style="display:none">
     <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</span>

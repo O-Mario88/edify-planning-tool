@@ -1,0 +1,374 @@
+"""Fiscal-year planning policy — the one place its questions are answered.
+
+Every planning, scheduling, execution and follow-up surface asks here rather
+than comparing dates or reading the table itself (owner, 2026-09-15). The
+policy rows live in ``apps.planning.fy_policy_models``; FY arithmetic stays in
+``apps.core.fy``.
+"""
+
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta
+
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
+from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.fy import get_operational_fy
+
+from .fy_policy_models import FiscalYearPlanningPolicy
+
+#: The first fiscal year the platform ever planned (apps.core.fy.fy_options).
+FIRST_FY = 2025
+
+
+def default_country() -> str:
+    return getattr(settings, "COUNTRY", "Uganda") or "Uganda"
+
+
+def policy_for(fy, country: str | None = None) -> FiscalYearPlanningPolicy | None:
+    """The policy row for one fiscal year, cached for the request."""
+    if not fy:
+        return None
+    country = country or default_country()
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("fy_planning_policy", country, str(fy)),
+        lambda: FiscalYearPlanningPolicy.objects.filter(
+            country=country, fy=str(fy)
+        ).first(),
+    )
+
+
+def _as_datetime(at) -> datetime:
+    if at is None:
+        return timezone.now()
+    if isinstance(at, datetime):
+        return at if timezone.is_aware(at) else timezone.make_aware(at)
+    return timezone.make_aware(datetime(at.year, at.month, at.day, 12))
+
+
+def is_planning_open(fy, *, at=None, country: str | None = None) -> bool:
+    """Whether a fiscal year may be planned now.
+
+    The operational year and every earlier year stay plannable, exactly as
+    before. A later year is plannable once its policy's ``planning_open_at``
+    has passed — never without a row.
+    """
+    at = _as_datetime(at)
+    operational = int(get_operational_fy(at))
+    try:
+        target = int(fy)
+    except (TypeError, ValueError):
+        return False
+    if target <= operational:
+        return True
+    policy = policy_for(fy, country)
+    return bool(policy and policy.planning_open_at and policy.planning_open_at <= at)
+
+
+def plannable_fys(*, at=None, country: str | None = None) -> list[str]:
+    """Fiscal years a planner may choose now, oldest first."""
+    at = _as_datetime(at)
+    operational = int(get_operational_fy(at))
+    years = [str(y) for y in range(FIRST_FY, operational + 1)]
+    for policy in FiscalYearPlanningPolicy.objects.filter(
+        country=country or default_country(),
+        planning_open_at__lte=at,
+    ).order_by("fy"):
+        if int(policy.fy) > operational and policy.fy not in years:
+            years.append(policy.fy)
+    return years
+
+
+def next_open_fy(*, at=None, country: str | None = None) -> str | None:
+    """The future fiscal year open for planning now, if there is one."""
+    at = _as_datetime(at)
+    operational = int(get_operational_fy(at))
+    future = [y for y in plannable_fys(at=at, country=country) if int(y) > operational]
+    return future[0] if future else None
+
+
+def _format(day: date) -> str:
+    return f"{day:%-d %B %Y}"
+
+
+def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None):
+    """Refuse a date whose fiscal year is not open for planning.
+
+    Also refuses a date outside the policy's execution window, which is how
+    "no FY2027 date before 1 October 2026" reads for a year whose dates are
+    derived from the calendar anyway — a defence against a policy row whose
+    window someone narrowed.
+    """
+    if scheduled_for is None:
+        return
+    day = scheduled_for.date() if isinstance(scheduled_for, datetime) else scheduled_for
+    fy = get_operational_fy(day)
+    if not is_planning_open(fy, at=at, country=country):
+        raise BadRequest(
+            f"FY{fy} is not open for planning yet. Plan dates in an open "
+            "fiscal year, or ask the Country Director to open it."
+        )
+    policy = policy_for(fy, country)
+    if policy and not (policy.execution_start <= day <= policy.execution_end):
+        raise BadRequest(
+            f"FY{fy} activities take place between {_format(policy.execution_start)} "
+            f"and {_format(policy.execution_end)}."
+        )
+
+
+def assert_may_execute(activity, *, today: date | None = None) -> None:
+    """Refuse delivering work before its fiscal year's execution starts.
+
+    Planning FY2027 in September 2026 is allowed; starting, completing or
+    submitting evidence for it before 1 October 2026 is not.
+    """
+    today = today or timezone.localdate()
+    planned = getattr(activity, "planned_date", None) or (
+        activity.scheduled_date.date()
+        if getattr(activity, "scheduled_date", None)
+        else None
+    )
+    fy = getattr(activity, "fy", None) or (
+        get_operational_fy(planned) if planned else None
+    )
+    if not fy:
+        return
+    policy = policy_for(fy)
+    if policy and today < policy.execution_start:
+        raise BadRequest(
+            f"This is FY{fy} work. It can be started from "
+            f"{_format(policy.execution_start)}."
+        )
+
+
+def assert_same_fiscal_year(old_date, new_date) -> None:
+    """A reschedule never carries an activity into another fiscal year.
+
+    Moving a date across 30 September silently re-stamped the activity's FY,
+    moving its budget line, fund request and target credit into a year it was
+    never planned for. The planner cancels it and plans it in the new year.
+    """
+    if old_date is None or new_date is None:
+        return
+    old_fy = get_operational_fy(old_date)
+    new_fy = get_operational_fy(new_date)
+    if old_fy != new_fy:
+        raise BadRequest(
+            f"This activity is FY{old_fy} work and the new date is in FY{new_fy}. "
+            f"Choose a date in FY{old_fy}, or cancel it and plan it in FY{new_fy}."
+        )
+
+
+def follow_up_requires_prior_training(fy, country: str | None = None) -> bool:
+    """Whether a school visit follow-up must name a completed training.
+
+    True without a policy row — the rule the platform has always had.
+    """
+    policy = policy_for(fy, country)
+    return True if policy is None else policy.follow_up_visit_requires_prior_training
+
+
+# ── Governance writes ────────────────────────────────────────────────────────
+def may_manage(principal) -> bool:
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    return bool(
+        getattr(principal, "is_superuser", False)
+        or has_permission(principal, Permission.PLANNING_POLICY_MANAGE.value)
+    )
+
+
+def _actor(principal) -> str:
+    return str(getattr(principal, "user_id", None) or getattr(principal, "id", ""))
+
+
+@transaction.atomic
+def open_fy_planning(
+    fy: str,
+    principal,
+    *,
+    planning_open_at: datetime | None = None,
+    follow_up_visit_requires_prior_training: bool | None = None,
+    notes: str = "",
+    country: str | None = None,
+) -> FiscalYearPlanningPolicy:
+    """Open a fiscal year for planning (idempotent), audited and announced."""
+    from apps.core.fy import get_fy_date_range
+
+    if not may_manage(principal):
+        raise Forbidden("Only the Country Director or Admin opens a fiscal year.")
+    country = country or default_country()
+    start, end = get_fy_date_range(str(fy))
+    policy, created = (
+        FiscalYearPlanningPolicy.objects.select_for_update().get_or_create(
+            country=country,
+            fy=str(fy),
+            defaults={
+                "execution_start": start.date(),
+                "execution_end": end.date() - timedelta(days=1),
+            },
+        )
+    )
+    previous = {
+        "planningOpenAt": policy.planning_open_at.isoformat()
+        if policy.planning_open_at
+        else None,
+        "followUpRequiresTraining": policy.follow_up_visit_requires_prior_training,
+    }
+    was_open = bool(
+        policy.planning_open_at and policy.planning_open_at <= timezone.now()
+    )
+    policy.planning_open_at = (
+        planning_open_at or policy.planning_open_at or timezone.now()
+    )
+    if follow_up_visit_requires_prior_training is not None:
+        policy.follow_up_visit_requires_prior_training = (
+            follow_up_visit_requires_prior_training
+        )
+    policy.opened_by = policy.opened_by or _actor(principal)
+    policy.updated_by = _actor(principal)
+    if notes:
+        policy.notes = notes
+    policy.save()
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="fy.planning_opened" if not was_open else "fy.planning_policy_updated",
+        subject_kind="fiscal_year_planning_policy",
+        subject_id=policy.id,
+        actor_id=_actor(principal),
+        actor_role=getattr(principal, "active_role", None),
+        reason=notes or None,
+        payload={
+            "fy": policy.fy,
+            "country": policy.country,
+            "previous": None if created else previous,
+            "new": {
+                "planningOpenAt": policy.planning_open_at.isoformat(),
+                "executionStart": policy.execution_start.isoformat(),
+                "executionEnd": policy.execution_end.isoformat(),
+                "followUpRequiresTraining": policy.follow_up_visit_requires_prior_training,
+            },
+        },
+    )
+    if not was_open:
+        transaction.on_commit(lambda: announce_fy_planning(policy.id))
+    return policy
+
+
+@transaction.atomic
+def set_follow_up_rule(
+    fy: str, requires_prior_training: bool, principal, *, reason: str
+) -> FiscalYearPlanningPolicy:
+    """Turn the follow-up training prerequisite on or off for one year."""
+    if not may_manage(principal):
+        raise Forbidden("Only the Country Director or Admin changes this rule.")
+    reason = (reason or "").strip()
+    if not reason:
+        raise BadRequest("Give the reason the follow-up rule changes.")
+    policy = (
+        FiscalYearPlanningPolicy.objects.select_for_update()
+        .filter(country=default_country(), fy=str(fy))
+        .first()
+    )
+    if policy is None:
+        raise BadRequest(f"FY{fy} has no planning policy yet. Open the year first.")
+    previous = policy.follow_up_visit_requires_prior_training
+    policy.follow_up_visit_requires_prior_training = bool(requires_prior_training)
+    policy.updated_by = _actor(principal)
+    policy.save(
+        update_fields=[
+            "follow_up_visit_requires_prior_training",
+            "updated_by",
+            "updated_at",
+        ]
+    )
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="planning.follow_up_rule_changed",
+        subject_kind="fiscal_year_planning_policy",
+        subject_id=policy.id,
+        actor_id=_actor(principal),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason,
+        payload={
+            "fy": policy.fy,
+            "previous": {"followUpRequiresTraining": previous},
+            "new": {
+                "followUpRequiresTraining": policy.follow_up_visit_requires_prior_training
+            },
+        },
+    )
+    return policy
+
+
+def announce_fy_planning(policy_id: str) -> int:
+    """Tell the people who plan that a fiscal year is open. Idempotent: the
+    notification service keeps one live notice per recipient and policy."""
+    import logging
+
+    try:
+        policy = FiscalYearPlanningPolicy.objects.filter(id=policy_id).first()
+        if policy is None:
+            return 0
+        from apps.notifications.services import WorkflowNotificationService
+
+        created = WorkflowNotificationService.trigger(
+            event_type="fy_planning_opened",
+            category="planning",
+            priority="normal",
+            title=f"FY{policy.fy} is open for planning",
+            body=(
+                f"Plan FY{policy.fy} activities for dates from "
+                f"{_format(policy.execution_start)}."
+            ),
+            context_type="fiscal_year_planning_policy",
+            context_id=policy.id,
+            recipients=planners(),
+        )
+        return len(created)
+    except Exception:  # noqa: BLE001 - an announcement never undoes the policy
+        logging.getLogger(__name__).warning(
+            "FY planning announcement failed for %s", policy_id, exc_info=True
+        )
+        return 0
+
+
+def planners() -> list:
+    """Active staff whose roles plan field work."""
+    from apps.accounts.models import User
+    from apps.core.rbac import EdifyRole
+
+    planning_roles = [
+        EdifyRole.CCEO.value,
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.PROJECT_COORDINATOR.value,
+    ]
+    from django.db.models import Q
+
+    q = Q()
+    for role in planning_roles:
+        q |= Q(roles__contains=[role])
+    return list(User.objects.filter(q, is_active=True, deleted_at__isnull=True))
+
+
+__all__ = [
+    "announce_fy_planning",
+    "assert_date_plannable",
+    "assert_may_execute",
+    "assert_same_fiscal_year",
+    "follow_up_requires_prior_training",
+    "is_planning_open",
+    "may_manage",
+    "next_open_fy",
+    "open_fy_planning",
+    "plannable_fys",
+    "policy_for",
+    "set_follow_up_rule",
+]

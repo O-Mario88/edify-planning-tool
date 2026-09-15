@@ -24,7 +24,7 @@ activityType: '{{ recommended_activity_type|default:'school_visit' }}',
 purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
 focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
 ssaPriorities: {{ ssa_priorities_json|default:'[]' }},
-get ssaDeviation() { return this.ssaPriorities.length > 0 && !this.showSsaDataGathering && !this.showFollowUpPicker && (!this.focusIntervention || !this.ssaPriorities.includes(this.focusIntervention)); },
+get ssaDeviation() { return this.ssaPriorities.length > 0 && !this.showSsaDataGathering && !(this.showFollowUpPicker && this.sourceActivityId) && (!this.focusIntervention || !this.ssaPriorities.includes(this.focusIntervention)); },
 recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
 alternative: false,
 {% comment %}
@@ -38,13 +38,15 @@ trainingActivityId: '{{ selected_catalogue_item.catalogueItemId|default:""|escap
 defaultCatalogueItemId: '{{ selected_catalogue_item.catalogueItemId|default:""|escapejs }}',
 followUpActivities: {{ follow_up_activity_options_json|default:'[]' }},
 sourceActivityId: '',
+followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
 {% comment %}The governed Training Catalogue owns category and SSA mapping.
 The planner chooses one course; Alpine presents its metadata immediately and
 the backend derives the same values again from the selected id.{% endcomment %}
 get showTrainingActivityPicker() { return this.purposeOfVisit === 'in_school_training'; },
 get showFollowUpPicker() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsaDataGathering() { return this.purposeOfVisit === 'ssa_support'; },
-get showManualIntervention() { return !this.showTrainingActivityPicker && !this.showFollowUpPicker && !this.showSsaDataGathering; },
+get followUpWithoutSource() { return this.showFollowUpPicker && !this.followUpRequiresTraining && !this.sourceActivityId; },
+get showManualIntervention() { return !this.showTrainingActivityPicker && !this.showSsaDataGathering && (!this.showFollowUpPicker || this.followUpWithoutSource); },
 get selectedSourceActivity() {
   return this.followUpActivities.find(activity => activity.id === this.sourceActivityId) || null;
 },
@@ -93,7 +95,7 @@ onPurposeChange() {
   if (!this.showTrainingActivityPicker) { this.trainingActivityId = ''; }
   else { this.ensureTrainingActivity(); }
   if (!this.showFollowUpPicker) { this.sourceActivityId = ''; }
-  if (this.showSsaDataGathering || this.showFollowUpPicker) { this.focusIntervention = ''; }
+  if (this.showSsaDataGathering || (this.showFollowUpPicker && this.followUpRequiresTraining)) { this.focusIntervention = ''; }
 },
 plannedParticipants: ''
 }"
@@ -306,8 +308,8 @@ its costing on, so the costing link is derived server-side and never asked for.
 <template x-if="showFollowUpPicker">
 <div class="space-y-3">
   <div>
-    <label for="source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training Followed Up <span class="text-rose-500">*</span></label>
-    <select name="source_activity_id" id="source_activity_id" x-model="sourceActivityId" required
+    <label for="source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training Followed Up <span x-show="followUpRequiresTraining" class="text-rose-500">*</span><span x-show="!followUpRequiresTraining" class="normal-case tracking-normal font-semibold"> (optional)</span></label>
+    <select name="source_activity_id" id="source_activity_id" x-model="sourceActivityId" :required="followUpRequiresTraining"
       class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
       <option value="">Select a training this school did…</option>
       <template x-for="activity in followUpActivities" :key="activity.id">
@@ -315,7 +317,8 @@ its costing on, so the costing link is derived server-side and never asked for.
       </template>
     </select>
     <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
-    <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+<p x-show="followUpActivities.length === 0 && followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+    <p x-show="followUpActivities.length === 0 && !followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-slate-500" role="status" data-no-prior-training>No prior training recorded. The follow-up can still be planned; its focus comes from the school's SSA.</p>
   </div>
   <div x-show="selectedSourceActivity" style="display:none">
     <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</span>

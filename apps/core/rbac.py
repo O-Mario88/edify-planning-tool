@@ -104,6 +104,10 @@ class Permission(str, Enum):
     SSA_UPLOAD = "ssa.upload"
     PLANNING_VIEW = "planning.view"
     PLANNING_CREATE = "planning.create"
+    # The per-country, per-fiscal-year planning policy (owner, 2026-09-15):
+    # when a year opens for planning and whether a school visit follow-up
+    # needs a prior training. Country Director and Admin.
+    PLANNING_POLICY_MANAGE = "planningPolicy.manage"
     # §5 — the Work Plan "Add Non-School Activity" entry point: dated
     # programme activities (conferences, camps, exhibitions) created outside
     # school/cluster planning but through the same canonical funnel.
@@ -397,6 +401,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.CLUSTER_ASSIGN,
         P.CLUSTER_OVERRIDE,
         P.CLUSTER_CATCHMENT_MANAGE,
+        P.PLANNING_POLICY_MANAGE,
         P.PLANNING_RECALC,
         P.SSA_VIEW,
         P.PLANNING_VIEW,

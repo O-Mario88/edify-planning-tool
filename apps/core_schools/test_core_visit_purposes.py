@@ -399,6 +399,14 @@ class CorePartnerPurposeTest(_CoreFixture):
         self._take_first_visit()
         course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
         own = self._completed_in_school_training(course)
+        # Where the fiscal year's policy requires a prior training, a follow-up
+        # handoff without one is refused (owner, 2026-09-15: governed per FY).
+        from apps.core.fy import get_operational_fy
+        from apps.planning.models import FiscalYearPlanningPolicy
+
+        FiscalYearPlanningPolicy.objects.filter(fy=get_operational_fy()).update(
+            follow_up_visit_requires_prior_training=True
+        )
         missing = self._assign(purpose_of_visit="training_follow_up")
         self.assertEqual(missing.status_code, 400)
         response = self._assign(

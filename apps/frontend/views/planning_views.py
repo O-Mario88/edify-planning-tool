@@ -111,6 +111,13 @@ def _certified_agency_options(district_name: str = "", activity_type: str = ""):
     )
 
 
+def _follow_up_requires_training() -> bool:
+    """The governed follow-up rule for the operational fiscal year."""
+    from apps.planning.fy_policy import follow_up_requires_prior_training
+
+    return follow_up_requires_prior_training(get_operational_fy())
+
+
 def _school_training_follow_up_options(school) -> list[dict]:
     """Completed current-FY trainings this school did, by either route.
 
@@ -1109,6 +1116,7 @@ def schedule_modal_view(request):
         "follow_up_activity_options": follow_up_options,
         "follow_up_activity_options_json": json.dumps(follow_up_options),
         "follow_up_fy": get_operational_fy(),
+        "follow_up_requires_training": _follow_up_requires_training(),
         "responsible_staff_id": responsible_staff_id,
         "responsible_staff_name": responsible_staff_name,
         "certified_agencies": _certified_agency_options(
@@ -1625,6 +1633,7 @@ def assign_partner_modal_view(request):
         "training_activity_options_json": json.dumps(partner_training_options),
         "follow_up_activity_options_json": json.dumps(follow_up_options),
         "follow_up_fy": get_operational_fy(),
+        "follow_up_requires_training": _follow_up_requires_training(),
         # What happened to this school's partner work before. Shown because
         # the person choosing a partner is the one who most needs to know the
         # last one was withdrawn for capacity — and because handing the same
@@ -1828,11 +1837,26 @@ def assign_partner_action_view(request):
                 if school_for_validation
                 else None
             )
-            if school_for_validation and purpose_of_visit == "training_follow_up":
-                if not source_activity_id:
+            if (
+                school_for_validation
+                and purpose_of_visit == "training_follow_up"
+                and not source_activity_id
+            ):
+                from apps.planning.fy_policy import follow_up_requires_prior_training
+
+                if follow_up_requires_prior_training(get_operational_fy()):
                     raise BadRequest(
                         "Select the completed training this assignment follows up."
                     )
+                if not focus_intervention:
+                    # No prior training recorded, and the policy allows the
+                    # follow-up (owner, 2026-09-15): the SSA's first-ranked
+                    # need is what the partner's visit is meant to move.
+                    from apps.ssa.plan_alignment import school_need
+
+                    need = school_need(school_for_validation)
+                    focus_intervention = need.priorities[0] if need.priorities else None
+            elif school_for_validation and purpose_of_visit == "training_follow_up":
                 from apps.activities.models import Activity
 
                 eligible_source_ids = {
