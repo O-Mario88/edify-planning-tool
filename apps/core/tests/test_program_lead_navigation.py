@@ -84,7 +84,14 @@ EXPECTED_PL_SIDEBAR = [
             ("My Professional Development", "/my-professional-development"),
         ],
     ),
-    ("REFERENCE", [("Leave & Personal Time Off", "/personal-time-off/")]),
+    (
+        "REFERENCE",
+        [
+            ("Leave & Personal Time Off", "/personal-time-off/"),
+            # The owner put Closed Schools in the PL sidebar (2026-09-15).
+            ("Closed Schools", "/schools/closed"),
+        ],
+    ),
 ]
 
 
@@ -117,7 +124,6 @@ class ProgramLeadSidebarTest(SimpleTestCase):
             "/leave/tracker",
             "/leave/team-availability",
             "/policy-compliance",
-            "/schools/closed",
             "/projects",
             "/priorities",
         ):

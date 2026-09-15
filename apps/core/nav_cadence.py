@@ -210,11 +210,18 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
     },
     "MFI_OFFICER": {"mfi_portal": (DAILY, 5), "loans": (DAILY, 15)},
     "MFI_ADMIN": {"mfi_portal": (DAILY, 5), "loans": (DAILY, 15)},
+    # Admin is offered every role's pages, so its sidebar runs past a hundred
+    # links. Its own administration comes first: after the regroup Users sat
+    # among fifty WEEKLY links and Upload Center 34th, and the owner could not
+    # find either on the live site (2026-09-15).
     "ADMIN": {
-        "admin_support_queue": (DAILY, 12),
+        "users": (DAILY, 11),
+        "uploads": (DAILY, 12),
+        "admin_support_queue": (DAILY, 13),
         "admin_incidents": (DAILY, 15),
         "system_health": (DAILY, 18),
-        "users": (WEEKLY, 5),
+        "roles_permissions": (WEEKLY, 1),
+        "data_repair": (WEEKLY, 2),
     },
 }
 
