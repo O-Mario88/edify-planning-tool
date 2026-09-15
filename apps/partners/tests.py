@@ -150,12 +150,14 @@ class PartnerDirectoryManagementTests(TestCase):
         self.assertFalse(Partner.objects.filter(id=cd_target.id).exists())
 
     def test_hr_and_ia_cannot_add_or_delete_partners(self):
+        """HR neither adds nor removes organisations. Impact Assessment adds
+        them since the owner's 2026-09-15 brief, and still removes none."""
         from apps.partners.services import onboard
 
         target = Partner.objects.create(name="Protected Partner")
+        with self.assertRaises(Forbidden):
+            onboard({"name": "Blocked HR"}, self.hr)
         for principal in (self.hr, self.ia):
-            with self.assertRaises(Forbidden):
-                onboard({"name": f"Blocked {principal.name}"}, principal)
             with self.assertRaises(Forbidden):
                 delete_partner(target.id, principal)
         self.assertTrue(Partner.objects.filter(id=target.id).exists())

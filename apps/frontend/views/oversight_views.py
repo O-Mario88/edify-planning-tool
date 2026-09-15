@@ -951,6 +951,7 @@ def country_planning_team_view(request, staff_id: str):
 @require_page_permission("partner_oversight")
 def partner_oversight_view(request):
     """Which schools are with partners, who has scheduled, and what it costs."""
+    from apps.partners.services import may_create_partner_organisation
     from apps.planning import partner_oversight_service as partner_oversight
 
     period = _period_filters(request)
@@ -1020,6 +1021,9 @@ def partner_oversight_view(request):
         "fy_options": fy_options(),
         "can_grant_allowance": request.user.active_role
         in ("CountryDirector", "Program Lead", "Admin"),
+        # Impact Assessment's door to adding a partner organisation: it cannot
+        # open the Users page where Admin and the CD add theirs (2026-09-15).
+        "can_create_partner": may_create_partner_organisation(request.user),
     }
 
     # The partnership work beside the delivery (owner, 2026-09-13): the

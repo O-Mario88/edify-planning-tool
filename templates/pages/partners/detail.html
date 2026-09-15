@@ -22,6 +22,10 @@ contract every profile page shares.
 </div>
 <div class="edify-page-header__controls">
 <span class="edify-badge" data-tone="{% if partner.active_status %}success{% else %}warning{% endif %}">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
+<span class="edify-badge" data-tone="{% if partner.user_setup_status == 'configured' %}success{% elif partner.user_setup_status == 'not_required' %}neutral{% else %}warning{% endif %}" data-partner-user-setup>{{ partner.get_user_setup_status_display }}</span>
+{% if can_manage_partner_users %}
+<button type="button" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9">Set up login</button>
+{% endif %}
 {% if can_edit %}
 <button type="button" hx-get="/partners/{{ partner.id }}/edit-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9" aria-label="Edit {{ partner.name }} details">Edit details</button>
 {% endif %}

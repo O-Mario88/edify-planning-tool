@@ -16,5 +16,10 @@ urlpatterns = [
         views.PartnerMeScheduleView.as_view(),
         name="me-schedule",
     ),
+    path(
+        "<str:partner_id>/user-setup",
+        views.PartnerUserSetupView.as_view(),
+        name="user-setup",
+    ),
     path("<str:partner_id>", views.PartnerUpdateView.as_view(), name="update"),
 ]

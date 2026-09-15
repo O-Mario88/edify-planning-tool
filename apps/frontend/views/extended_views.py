@@ -1484,6 +1484,8 @@ def admin_users_view(request):
     from apps.core.navigation import get_user_role_slug
     from apps.core.rbac import EdifyRole
 
+    from apps.partners.services import may_manage_partner_users
+
     can_manage_partners = request.user.is_superuser or get_user_role_slug(
         request.user
     ) in {"ADMIN", "CD"}
@@ -1767,6 +1769,8 @@ def admin_users_view(request):
         "can_configure_management_team": can_configure_management_team,
         "management_candidates": management_candidates,
         "can_manage_partners": can_manage_partners,
+        "can_manage_partner_users": can_manage_partners
+        and may_manage_partner_users(request.user),
         # Permanent deletion is the Admin's alone (owner, 2026-09-07); a
         # Country Director deactivates.
         "can_purge_partners": request.user.is_superuser

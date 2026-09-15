@@ -503,70 +503,143 @@ def _partner_workspace(request):
 
 @require_page_permission("partners")
 def create_partner_view(request):
-    """Legacy partner-onboarding drawer; management now lives under Users."""
-    from apps.core.enums import SsaIntervention
-    from apps.partners.services import onboard as onboard_partner_service
-    from django.contrib import messages
-    from django.shortcuts import redirect
+    """Add a partner organisation — the organisation record only.
 
-    allowed_roles = {
-        "CountryDirector",
-        "Admin",
-        "CD",
-        "ADMIN",
-    }
-    user_role = getattr(request.user, "active_role", None)
-    if user_role not in allowed_roles and not request.user.is_superuser:
-        if request.headers.get("HX-Request"):
-            return HttpResponseForbidden(
-                "Only a Country Director or Admin can onboard new partners."
-            )
-        messages.error(
-            request,
-            "Only a Country Director or Admin can onboard new partners.",
-        )
+    Admin, the Country Director and Impact Assessment hold
+    PARTNER_ORGANISATION_CREATE (owner, 2026-09-15). The role list that used to
+    sit here named Admin and the CD only; the permission is the one rule, and
+    the service checks it again. Nothing here creates a sign-in account.
+    """
+    from django.contrib import messages
+    from django.utils.html import escape
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden
+    from apps.partners.services import (
+        may_create_partner_organisation,
+        may_manage_partner_users,
+        onboard as onboard_partner_service,
+    )
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    refusal = "Only an Admin, Country Director or Impact Assessment can add partner organisations."
+    if not may_create_partner_organisation(request.user):
+        if is_htmx:
+            return HttpResponseForbidden(refusal)
+        messages.error(request, refusal)
         return redirect("frontend:partners_list")
 
+    # Where a saved organisation is looked at next: the Users directory for the
+    # people who administer it, the organisation's own profile for everyone
+    # else (Impact Assessment cannot open the Users page).
+    directory_url = (
+        "/admin-panel/users"
+        if RolePermissionService.can_view_page(request.user, "users")
+        and may_manage_partner_users(request.user)
+        else None
+    )
+
     if request.method == "POST":
-        name = request.POST.get("name", "").strip()
-        region_name = request.POST.get("region_name", "").strip()
-        contact_person = request.POST.get("contact_person", "").strip()
-        email = request.POST.get("email", "").strip()
-        phone = request.POST.get("phone", "").strip()
-        ssa_intervention = request.POST.get("ssa_intervention", "").strip()
-        notes = request.POST.get("notes", "").strip()
-        expertise = request.POST.get("expertise", "").strip()
-
-        if not name:
-            messages.error(request, "Partner name is required.")
-            return redirect("frontend:admin_users")
-
         payload = {
-            "name": name,
-            "regionName": region_name,
-            "contactPerson": contact_person,
-            "email": email,
-            "phone": phone,
-            "ssaIntervention": ssa_intervention,
-            "notes": notes,
-            "expertiseAreas": expertise,
+            "name": request.POST.get("name", "").strip(),
+            "regionName": request.POST.get("region_name", "").strip(),
+            "contactPerson": request.POST.get("contact_person", "").strip(),
+            "email": request.POST.get("email", "").strip(),
+            "phone": request.POST.get("phone", "").strip(),
+            "ssaIntervention": request.POST.get("ssa_intervention", "").strip(),
+            "notes": request.POST.get("notes", "").strip(),
+            "expertiseAreas": request.POST.get("expertise", "").strip(),
         }
-
         try:
-            onboard_partner_service(payload, request.user)
-            messages.success(
-                request, f"Partner organisation '{name}' onboarded successfully."
-            )
-        except Exception as exc:
-            messages.error(request, str(getattr(exc, "detail", exc)))
+            created = onboard_partner_service(payload, request.user)
+        except (BadRequest, ConflictError, Forbidden) as exc:
+            message = str(getattr(exc, "detail", exc))
+            if is_htmx:
+                return HttpResponse(
+                    f'<p role="alert" class="edify-note" data-tone="danger">{escape(message)}</p>',
+                    status=200,
+                )
+            messages.error(request, message)
+            return redirect(directory_url or "frontend:partners_list")
 
-        return redirect("frontend:admin_users")
+        messages.success(
+            request,
+            f"Partner organisation '{created['name']}' added. "
+            + (
+                "Activate it when it is ready for work, and set up its login."
+                if directory_url
+                else "A user administrator has been asked to set up its logins."
+            ),
+        )
+        target = directory_url or f"/partners/{created['id']}"
+        if is_htmx:
+            response = HttpResponse(
+                f'<script>window.location.href = "{escape(target)}";</script>'
+            )
+            response["HX-Trigger"] = "close-drawer"
+            return response
+        return redirect(target)
 
     context = {
         "regions": Region.objects.order_by("name"),
         "interventions": SsaIntervention.choices,
+        "can_manage_partner_users": may_manage_partner_users(request.user),
+        "drawer_size": "md",
     }
     return render(request, "partials/partners/create_partner_drawer.html", context)
+
+
+@require_page_permission("partners")
+def partner_user_setup_drawer_view(request, partner_id):
+    """Set up a partner organisation's login: link, invite, or not yet.
+
+    User administration (PARTNER_USER_MANAGE with USER_MANAGE): Admin and the
+    Country Director. Impact Assessment never reaches it — the page refuses
+    and so does the service.
+    """
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners.services import configure_partner_user, may_manage_partner_users
+
+    if not may_manage_partner_users(request.user):
+        return HttpResponseForbidden(
+            "Only a user administrator can set up partner logins."
+        )
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+
+    def drawer(error=None, status=200):
+        return render(
+            request,
+            "partials/partners/user_setup_drawer.html",
+            {"partner": partner, "validation_error": error, "drawer_size": "md"},
+            status=status,
+        )
+
+    if request.method == "POST":
+        try:
+            updated = configure_partner_user(
+                partner.id,
+                {
+                    "mode": request.POST.get("mode", "").strip(),
+                    "email": request.POST.get("email", "").strip(),
+                    "name": request.POST.get("login_name", "").strip(),
+                },
+                request.user,
+            )
+        except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+            return drawer(str(getattr(exc, "detail", exc)))
+        label = {
+            "configured": "login linked",
+            "not_required": "marked as needing no login yet",
+        }.get(updated["userSetupStatus"], "updated")
+        messages.success(request, f"{partner.name}: {label}.")
+        response = HttpResponse(
+            '<script>window.location.href = "/admin-panel/users";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    return drawer()
 
 
 def _partner_location_label(
@@ -807,9 +880,16 @@ def partner_detail_view(request, partner_id):
     scope = resolve_user_scope(request.user)
     # The organisation edits its own bio (owner, 2026-09-07); the roles that
     # run the directory edit any. Same rule services.update() enforces.
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+    from apps.partners.services import may_manage_partner_users
+
     can_edit = (
         request.user.is_superuser
-        or scope.country_scope
+        or (
+            scope.country_scope
+            and has_permission(request.user, Permission.PARTNER_ORGANISATION_EDIT.value)
+        )
         or partner.id in scope.partner_ids
     )
     can_manage_roster = (
@@ -841,6 +921,8 @@ def partner_detail_view(request, partner_id):
         "can_edit": can_edit,
         "can_manage_roster": can_manage_roster,
         "can_manage_status": can_manage_status,
+        # Partner logins are user administration (owner, 2026-09-15).
+        "can_manage_partner_users": may_manage_partner_users(request.user),
         # Kept for the older template contract.
         "activities": activities,
         "completed": counts["completed"],
@@ -883,7 +965,19 @@ def partner_edit_drawer_view(request, partner_id):
 
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
     scope = resolve_user_scope(request.user)
-    country_side = bool(request.user.is_superuser or scope.country_scope)
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    # Country reach is not edit authority: the Accountant and the RVP read
+    # every partner and correct none (2026-09-15). The organisation editors
+    # are Admin, the Country Director and Impact Assessment.
+    country_side = bool(
+        request.user.is_superuser
+        or (
+            scope.country_scope
+            and has_permission(request.user, Permission.PARTNER_ORGANISATION_EDIT.value)
+        )
+    )
     if not (country_side or partner.id in scope.partner_ids):
         return HttpResponseForbidden("You may only edit your own partner organisation.")
 

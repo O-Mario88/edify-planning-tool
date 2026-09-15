@@ -126,9 +126,13 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
           </td>
           <td class="px-4 py-3.5" data-label="Status">
             <span class="edify-badge" data-tone="{% if partner.presentation_status == "active" %}success{% elif partner.presentation_status == "inactive" %}warning{% else %}danger{% endif %}">{{ partner.presentation_status|title }}</span>
+            {% if partner.presentation_status != "deleted" %}<span class="edify-text-caption font-semibold block mt-1 {% if partner.user_setup_status == 'pending' %}text-amber-700{% else %}text-slate-400{% endif %}" data-partner-user-setup>{{ partner.get_user_setup_status_display }}</span>{% endif %}
           </td>
           <td class="px-5 py-3.5 text-right" data-record-action>
             <div class="inline-flex items-center justify-end gap-2">
+              {% if partner.presentation_status != "deleted" and can_manage_partner_users %}
+              <button type="button" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" aria-label="Set up login for {{ partner.name }}">{% if partner.user_setup_status == 'pending' %}Set up login{% else %}Login{% endif %}</button>
+              {% endif %}
               {% if partner.presentation_status != "deleted" %}
               <form method="post" action="{% url 'frontend:admin_users' %}" class="inline">
                 {% csrf_token %}

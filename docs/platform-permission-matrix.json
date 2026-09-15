@@ -5421,15 +5421,15 @@
   {
    "page_permission": "",
    "required_permissions": [
-    "partner.manage"
+    "partnerUser.manage"
    ],
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
     "Admin"
    ],
-   "route": "/api/partners(?:/|)<str:partner_id>",
-   "route_name": "update",
+   "route": "/api/partners(?:/|)<str:partner_id>/user-setup",
+   "route_name": "user-setup",
    "view": "apps.partners.views.view"
   },
   {
@@ -14545,6 +14545,31 @@
     "MfiLoanOfficer",
     "Admin"
    ],
+   "route": "/partners/<str:partner_id>/user-setup",
+   "route_name": "partner_user_setup",
+   "view": "apps.frontend.views.partner_views.partner_user_setup_drawer_view"
+  },
+  {
+   "page_permission": "partners",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
    "route": "/partners/create",
    "route_name": "create_partner",
    "view": "apps.frontend.views.partner_views.create_partner_view"
@@ -17637,28 +17662,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 402,
-  "Admin": 985,
-  "BusinessTransformationOfficer": 230,
-  "CCEO": 516,
-  "CountryDirector": 742,
-  "HumanResources": 328,
-  "ImpactAssessment": 602,
-  "MfiLoanOfficer": 126,
-  "MfiPartnerAdmin": 129,
-  "PartnerAdmin": 217,
-  "PartnerFieldOfficer": 217,
-  "Program Lead": 599,
-  "ProjectCoordinator": 437,
-  "RegionalProgramLead": 300,
-  "RegionalVicePresident": 363
+  "Accountant": 403,
+  "Admin": 986,
+  "BusinessTransformationOfficer": 231,
+  "CCEO": 517,
+  "CountryDirector": 743,
+  "HumanResources": 329,
+  "ImpactAssessment": 603,
+  "MfiLoanOfficer": 127,
+  "MfiPartnerAdmin": 130,
+  "PartnerAdmin": 218,
+  "PartnerFieldOfficer": 218,
+  "Program Lead": 600,
+  "ProjectCoordinator": 438,
+  "RegionalProgramLead": 301,
+  "RegionalVicePresident": 364
  },
  "summary": {
   "page_keys_declared": 172,
   "page_keys_in_navigation": 189,
-  "routes_guarded": 1082,
-  "routes_total": 1274,
-  "routes_unguarded": 192,
+  "routes_guarded": 1083,
+  "routes_total": 1276,
+  "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -18696,6 +18721,13 @@
    "required_permissions": [],
    "route": "/api/partners(?:/|)",
    "route_name": "list",
+   "view": "apps.partners.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/partners(?:/|)<str:partner_id>",
+   "route_name": "update",
    "view": "apps.partners.views.view"
   },
   {

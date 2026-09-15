@@ -154,6 +154,14 @@ class Permission(str, Enum):
     USER_MANAGE = "user.manage"
     PARTNER_VIEW = "partner.view"
     PARTNER_MANAGE = "partner.manage"
+    # The partner ORGANISATION record and the partner's LOGINS are separate
+    # authorities (owner, 2026-09-15). Impact Assessment may add and correct an
+    # organisation; it may never create, invite or link the accounts people
+    # sign in with — that is user administration, held by Admin and the
+    # Country Director. Creating an organisation creates no account.
+    PARTNER_ORGANISATION_CREATE = "partnerOrganisation.create"
+    PARTNER_ORGANISATION_EDIT = "partnerOrganisation.edit"
+    PARTNER_USER_MANAGE = "partnerUser.manage"
     # Take work back from a partner. Coarse: it says the role does withdrawals
     # at all. WHICH assignment is a scope question, answered per record by
     # partners.withdrawal_service.assert_may_withdraw — a CCEO holds this and
@@ -415,6 +423,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STAFF_PERFORMANCE_VIEW,
         P.PARTNER_VIEW,
         P.PARTNER_MANAGE,
+        P.PARTNER_ORGANISATION_CREATE,
+        P.PARTNER_ORGANISATION_EDIT,
+        # The CD already holds USER_MANAGE; partner logins are part of it.
+        P.PARTNER_USER_MANAGE,
         # Review escalated partner cases and hold a partner from new work. NOT
         # PARTNER_ASSIGNMENT_WITHDRAW: routine team withdrawals belong to the
         # Program Lead, and a CD reaching past them into one school's
@@ -658,6 +670,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ANALYTICS_VIEW,
         P.EXPORT,
         P.PARTNER_VIEW,
+        # IA adds and corrects partner organisations (owner, 2026-09-15). Not
+        # PARTNER_USER_MANAGE, USER_MANAGE or PARTNER_MANAGE: an organisation
+        # IA creates waits for an administrator to set up its logins.
+        P.PARTNER_ORGANISATION_CREATE,
+        P.PARTNER_ORGANISATION_EDIT,
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,

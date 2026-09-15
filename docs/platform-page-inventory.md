@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **803**
-- All registered routes: **1274**
-- API routes: **359**
+- Routed product surfaces: **804**
+- All registered routes: **1276**
+- API routes: **360**
 - Roles: **15**
-- Permission keys: **112**
+- Permission keys: **115**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **449**
+- Shared component templates: **450**
 - Full pages: **255**
-- Partials and drawers: **259**
-- Permission-gated surfaces: **788**
-- Referenced by automated tests: **693**
+- Partials and drawers: **260**
+- Permission-gated surfaces: **789**
+- Referenced by automated tests: **694**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -623,6 +623,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D79E38D41C | /partners/<str:partner_id>/members | Partner Member Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4E3422B820 | /partners/<str:partner_id>/members/drawer | Partner Member Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-748EB16E46 | /partners/<str:partner_id>/status | Partner Status | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7FF4CF6F26 | /partners/<str:partner_id>/user-setup | Partner User Setup | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C6043D2C4C | /partners/create | Create Partner | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4D179B38E1 | /payroll-readiness | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2703FFD952 | /performance-conversation | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

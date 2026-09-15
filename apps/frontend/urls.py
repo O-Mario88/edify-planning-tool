@@ -1731,6 +1731,11 @@ urlpatterns = [
     path("partners", partner_views.partners_list_view, name="partners_list"),
     path("partners/create", partner_views.create_partner_view, name="create_partner"),
     path(
+        "partners/<str:partner_id>/user-setup",
+        partner_views.partner_user_setup_drawer_view,
+        name="partner_user_setup",
+    ),
+    path(
         "partners/<str:partner_id>",
         partner_views.partner_detail_view,
         name="partner_detail",

@@ -1,81 +1,89 @@
-{% load frontend_filters %}
-<div class="edify-popup-dialog fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4" x-data="{ open: true }" x-show="open" role="dialog" aria-modal="true" aria-labelledby="onboard-partner-title">
-  <div class="edify-popup-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in" @click.outside="open = false; $el.remove()">
-    <header class="drawer-header flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-      <div>
-        <span class="edify-page-eyebrow">Delivery Partner</span>
-        <h2 id="onboard-partner-title" class="text-[16px] font-bold text-slate-800 tracking-tight">Onboard New Partner</h2>
-      </div>
-      <button type="button" aria-label="Close partner onboarding" @click="open = false; $el.remove()" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-control">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </header>
+{% extends "components/drawers/base_drawer.html" %}
 
-    <form method="post" action="{% url 'frontend:create_partner' %}" class="drawer-body p-5 space-y-4">
-      {% csrf_token %}
+{% block drawer_title %}Add Partner Organisation{% endblock %}
+{% block drawer_subtitle %}Record the organisation. It starts inactive and receives no work until it is activated.{% endblock %}
 
-      <div>
-        <label class="block text-[12px] font-semibold text-slate-700 mb-1">Partner Organisation Name <span class="text-rose-500">*</span></label>
-        <input type="text" name="name" required placeholder="e.g. Hope Education Initiative" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Region</label>
-          <select name="region_name" class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-            <option value="">Select Region...</option>
-            {% for r in regions %}
-            <option value="{{ r.name }}">{{ r.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Linked SSA Intervention <span class="text-rose-500">*</span></label>
-          <select name="ssa_intervention" required class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-            <option value="">Select Intervention...</option>
-            {% for val, label in interventions %}
-            <option value="{{ val }}">{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Contact Person</label>
-          <input type="text" name="contact_person" placeholder="e.g. Jane Doe" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Email Address</label>
-          <input type="email" name="email" placeholder="contact@partner.org" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Phone Number</label>
-          <input type="text" name="phone" placeholder="+256 700 000 000" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-[12px] font-semibold text-slate-700 mb-1">Expertise</label>
-          {% comment %}Its own field now (owner, 2026-09-07: the directory shows
-          an Expertise column). Comma-separated; stored as a list.{% endcomment %}
-          <input type="text" name="expertise" placeholder="e.g. Literacy, Leadership training" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-[12px] font-semibold text-slate-700 mb-1">Notes</label>
-        <input type="text" name="notes" placeholder="Anything the team should know" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">
-      </div>
-
-      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-        <button type="button" @click="open = false; $el.remove()" class="px-4 py-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-all">Cancel</button>
-        <button type="submit" class="px-4 py-2 rounded-control bg-sky-600 hover:bg-sky-700 text-white text-[12px] font-semibold uppercase tracking-wider shadow-sm transition-all">Onboard Partner</button>
-      </div>
-    </form>
+{% block drawer_body %}
+{% comment %}
+Organisation only (owner, 2026-09-15). Impact Assessment, the Country Director
+and Admin add organisations here; nobody creates a sign-in account from this
+form. The email is the organisation's contact address. Its logins are set up
+afterwards by a user administrator, who is told the organisation is waiting.
+{% endcomment %}
+<form method="post"
+      action="{% url 'frontend:create_partner' %}"
+      hx-post="{% url 'frontend:create_partner' %}"
+      hx-target="#create-partner-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600"
+      data-create-partner-form>
+  {% csrf_token %}
+  <div id="create-partner-errors" aria-live="polite">
+    {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
   </div>
-</div>
+
+  <div>
+    <label for="cp-name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Organisation name <span class="text-rose-500">*</span></label>
+    <input id="cp-name" type="text" name="name" required maxlength="255" placeholder="e.g. Hope Education Initiative"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="cp-region" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Region</label>
+      <select id="cp-region" name="region_name" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Select region…</option>
+        {% for r in regions %}<option value="{{ r.name }}">{{ r.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="cp-intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Linked SSA intervention <span class="text-rose-500">*</span></label>
+      <select id="cp-intervention" name="ssa_intervention" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Select intervention…</option>
+        {% for val, label in interventions %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="cp-contact" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Contact person</label>
+      <input id="cp-contact" type="text" name="contact_person" placeholder="e.g. Jane Doe"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    <div>
+      <label for="cp-email" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Organisation email</label>
+      <input id="cp-email" type="email" name="email" placeholder="contact@partner.org"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="cp-phone" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Phone number</label>
+      <input id="cp-phone" type="tel" name="phone" placeholder="+256 700 000 000"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    <div>
+      <label for="cp-expertise" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expertise</label>
+      <input id="cp-expertise" type="text" name="expertise" placeholder="e.g. Literacy, Leadership training"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+  </div>
+
+  <div>
+    <label for="cp-notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Notes</label>
+    <textarea id="cp-notes" name="notes" rows="2" placeholder="Anything the team should know"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <p class="edify-note" data-tone="info" data-partner-login-note>
+    {% if can_manage_partner_users %}No sign-in account is created here. Set up the organisation's login from the Partner Organisations directory once it is saved.{% else %}No sign-in account is created here. A user administrator is told the organisation is waiting and sets up its logins.{% endif %}
+  </p>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Add Partner Organisation</button>
+  </div>
+</form>
+{% endblock %}
