@@ -207,7 +207,9 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             cluster_type="mixed",
             status="active",
         )
-        ClusterSubCounty.objects.create(cluster=self.cluster, sub_county=self.sub_county)
+        ClusterSubCounty.objects.create(
+            cluster=self.cluster, sub_county=self.sub_county
+        )
         self.other = Cluster.objects.create(
             name="DC Other Cluster",
             region=self.region,
@@ -234,13 +236,18 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
             self.school, self.user, {self.cluster.id: "DC Cluster"}, False
         )
         self.assertNotIn("add_to_cluster", row["available_actions"])
-        self.assertEqual(row["disabled_reasons"]["add_to_cluster"], "Already in DC Cluster.")
+        self.assertEqual(
+            row["disabled_reasons"]["add_to_cluster"], "Already in DC Cluster."
+        )
 
     def test_the_drawer_refuses_a_clustered_school(self):
         for method in (self.client.get, self.client.post):
             response = method(
                 f"/schools/{self.school.id}/add-to-cluster",
-                {"cluster_action_type": "existing", "existing_cluster_id": self.other.id},
+                {
+                    "cluster_action_type": "existing",
+                    "existing_cluster_id": self.other.id,
+                },
             )
             self.assertEqual(response.status_code, 200)
             self.assertIn("already in cluster DC Cluster", response.content.decode())
