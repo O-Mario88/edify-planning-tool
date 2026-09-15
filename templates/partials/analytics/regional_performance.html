@@ -6,11 +6,12 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
 {% comment %}
   Performance by Sub-Region — map plus the sub-region roll-up.
 
-  Layout: the card fills the row. The map takes the card's full width — a
-  square as tall as the window allows, centred — and the distribution table
-  sits below it at full width on every screen size (owner, 2026-09-14: the
-  table moved under the map on desktop to give the map the room, and the
-  wide table shows every column). Phones and tablets stack the same way.
+  Layout: the card fills the row. The map is a fixed 30cm × 42cm portrait
+  box, centred, the same for every role (owner, 2026-09-15: "the map size
+  should be 30cm width x 42cm height — for every role"), narrowing only when
+  the card is narrower than 30cm; the distribution table sits below it at
+  full width on every screen size (owner, 2026-09-14). Phones and tablets
+  stack the same way.
 
   The table lives back inside this card, so it shares the Alpine component with
   the map again and can call highlight() directly. When they were separate
@@ -72,7 +73,7 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
 
     <div class="sr-map-canvas w-full min-w-0"
          @keydown.escape.window="back()" @click.outside="reset()">
-      <div class="sr-map-viewport relative w-full aspect-square">
+      <div class="sr-map-viewport relative w-full">
       <div x-show="!ready && !failed"
            class="absolute inset-0 flex items-center justify-center
                   edify-text-caption font-semibold text-slate-400">

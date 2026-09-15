@@ -158,13 +158,17 @@ class CDDashboardService:
         pl_rows = CDDashboardService.pl_performance(cd, acts)
         regional = CDDashboardService.regional_performance(cd, acts)
 
+        # The "Regions Behind Target" card belongs to the Operations view,
+        # beside the regional table it points at, so the Map view keeps its
+        # room for the map (owner, 2026-09-15). The other attention cards
+        # stay above both views.
+        attention = CDDashboardService.leadership_attention(cd, acts, fy, regional)
         data = {
             "fy": fy,
             "month": month,
             "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows, user),
-            "leadership_attention": CDDashboardService.leadership_attention(
-                cd, acts, fy, regional
-            ),
+            "leadership_attention": [c for c in attention if c["kind"] != "region"],
+            "region_attention": [c for c in attention if c["kind"] == "region"],
             "scope_meta": {
                 "pl_count": len(CDAnalyticsService._pls()),
                 "cceo_count": len(cd.cceo_user_ids),
@@ -515,6 +519,7 @@ class CDDashboardService:
             worst = behind[-1]
             cards.append(
                 {
+                    "kind": "region",
                     "tone": "danger",
                     "title": f"{len(behind)} Region{'s' if len(behind) > 1 else ''} Behind Target",
                     "line1": f"{worst['name']} is at {worst['achievement']}% vs the {REGION_BEHIND_THRESHOLD}% threshold.",
@@ -527,6 +532,7 @@ class CDDashboardService:
         if overdue_sf:
             cards.append(
                 {
+                    "kind": "sf_backlog",
                     "tone": "warning",
                     "title": "High Activity SF ID Backlog",
                     "line1": f"{overdue_sf:,} completed activities missing Activity SF IDs beyond {SF_ID_OVERDUE_DAYS} days.",
@@ -539,6 +545,7 @@ class CDDashboardService:
         if pending["count"]:
             cards.append(
                 {
+                    "kind": "pending",
                     "tone": "info",
                     "title": f"{pending['count']} Fund Item{'s' if pending['count'] > 1 else ''} Pending",
                     "line1": (

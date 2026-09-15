@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **448**
+Components and application partials: **449**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -169,6 +169,7 @@ Components and application partials: **448**
 | `partials/dashboards/cceo/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/cceo/view.html` | application-partial | Reusable view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/cceo/week.html` | application-partial | Reusable week interface primitive | canonical; default, empty, open | explicit responsive contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/cd/_attention_card.html` | application-partial | Reusable  attention card interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return | 0 |
 | `partials/dashboards/cd/_impact_findings.html` | application-partial | Reusable  impact findings interface primitive | executive, {{ row.status_tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/cd/body.html` | application-partial | Reusable body interface primitive | executive; default | explicit responsive contract | inherits semantic parent contract | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return | 0 |
 | `partials/dashboards/cd/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |

@@ -1,0 +1,13 @@
+{% comment %}One Leadership Attention card. Expects `c` (tone, title, line1, action, link).{% endcomment %}
+<div class="rounded-surface border p-4 flex items-start gap-3
+  {% if c.tone == 'danger' %}bg-rose-50/60 border-rose-200{% elif c.tone == 'warning' %}bg-amber-50/60 border-amber-200{% else %}bg-sky-50/60 border-sky-200{% endif %}" data-attention-card="{{ c.kind }}">
+  <span class="h-8 w-8 rounded-pill flex items-center justify-center shrink-0 mt-0.5
+    {% if c.tone == 'danger' %}bg-rose-100 text-rose-600{% elif c.tone == 'warning' %}bg-amber-100 text-amber-600{% else %}bg-sky-100 text-sky-600{% endif %}">
+    {% include "partials/analytics/pl/_icon.html" with name="warning" %}
+  </span>
+  <div class="min-w-0">
+    <p class="text-[13px] font-bold text-slate-800">{{ c.title }}</p>
+    <p class="edify-text-caption font-semibold text-slate-600 leading-snug mt-0.5">{{ c.line1 }}</p>
+    <a href="{{ c.link }}" class="inline-block mt-1.5 edify-text-caption font-bold {% if c.tone == 'danger' %}text-rose-700{% elif c.tone == 'warning' %}text-amber-700{% else %}text-sky-700{% endif %} hover:underline">{{ c.action }} →</a>
+  </div>
+</div>

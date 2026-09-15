@@ -486,25 +486,26 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertNotIn("containsPoint", template)
 
 
-class MapFillsTheScreenTest(SimpleTestCase):
-    """Owner, 2026-09-11: "make sure the map canvas is large enough to fill the
-    whole screen. It should be dynamic according to the screen size, but it
-    should be large."
+class MapIsAFixedSheetTest(SimpleTestCase):
+    """Owner, 2026-09-15: "the map size should be 30cm width x 42cm height —
+    for every role." It replaces the window-height fit of 2026-09-11.
 
-    The viewport's height is the window's height less the chrome that sits
-    above the canvas — the top bar and the card's own header — measured, not
-    assumed, and never capped by the canvas width (a wide screen centres the
-    square in a wider box). The floor keeps a short window from squashing it.
+    The stylesheet sizes the viewport — a 30cm × 42cm portrait sheet that
+    shrinks in proportion only when the card is narrower — so the script no
+    longer measures the window or writes a height; a resize only re-places
+    the labels.
     """
 
-    def test_the_viewport_takes_the_window_less_the_chrome_above_it(self):
+    def test_the_stylesheet_sizes_the_sheet_and_the_script_no_longer_does(self):
         template = _regional_source()
-        self.assertIn("document.querySelector('.edify-topbar')", template)
-        self.assertIn("const cardChrome = Math.max(0, top - cardTop);", template)
-        self.assertIn(
-            "Math.max(520, window.innerHeight - topbar - cardChrome - 24)", template
-        )
-        # The old caps: what was left below the card, and the canvas width.
-        self.assertNotIn("window.innerHeight - top - 24", template)
-        self.assertNotIn("canvasWidth * 0.92", template)
+        layout = _read("static/css/pages/analytics-dashboard.css")
+        self.assertIn("inline-size: min(30cm, 100%)", layout)
+        self.assertIn("aspect-ratio: 30 / 42", layout)
+        self.assertNotIn("--map-viewport-height", layout)
+        # The window fit is gone from the script.
+        self.assertNotIn("document.querySelector('.edify-topbar')", template)
+        self.assertNotIn("window.innerHeight - topbar", template)
+        self.assertNotIn("--map-viewport-height", template)
+        # A resize still re-places the labels on the rendered sheet.
         self.assertIn('@resize.window.debounce.100ms="fitViewport()"', template)
+        self.assertIn("this.refreshMapLabelPlacement();", template)

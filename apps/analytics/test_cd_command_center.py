@@ -371,8 +371,12 @@ class CDCommandCenterTest(TestCase):
     # 8 ─ leadership attention from real data
     def test_cd_leadership_attention_cards_generated_from_real_data(self):
         d = self._dash()
+        # The region card is the Operations view's (owner, 2026-09-15); the
+        # rest of the band stays above both views.
+        region_titles = " ".join(c["title"] for c in d["region_attention"])
+        self.assertIn("Region", region_titles)  # Northern Region at 0% < threshold
         titles = " ".join(c["title"] for c in d["leadership_attention"])
-        self.assertIn("Region", titles)  # Northern Region at 0% < threshold
+        self.assertNotIn("Region", titles)
         self.assertIn("Pending", titles)  # escalated fund items
         # Resolve the fund items → the card disappears.
         WeeklyFundRequest.objects.filter(id=self.wfr.id).update(

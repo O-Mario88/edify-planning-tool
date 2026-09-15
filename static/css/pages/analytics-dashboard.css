@@ -166,9 +166,17 @@
   min-inline-size: 0;
 }
 
+/* The map is a fixed 30cm × 42cm portrait box for every role (owner,
+   2026-09-15), centred in the card; a card narrower than 30cm shrinks it in
+   proportion. The country is drawn centred inside it (the SVG keeps its
+   aspect), so the sheet reads the same on every screen. */
 .analytics-geo-card .sr-map-viewport {
   margin-inline: auto;
+  inline-size: min(30cm, 100%);
+  aspect-ratio: 30 / 42;
+  block-size: auto;
 }
+.analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
 
 .analytics-geo-card .sr-distribution-scroll {
   max-inline-size: 100%;
@@ -1506,14 +1514,13 @@ main #impact-workspace .impact-group-pagination a {
     min-width: 0;
     width: 100%;
   }
-  /* A square as tall as the window allows (fitViewport writes the height),
-     centred in the card's full width now that nothing sits beside it
-     (owner, 2026-09-14). The width follows the height so the country fills
-     the square edge to edge instead of floating in a letterbox. */
+  /* The same 30cm × 42cm sheet on desktop (owner, 2026-09-15). It used to
+     be a square sized to the window's height; the page scrolls to it like
+     any other card. */
   .analytics-geo-card .sr-map-viewport {
-    aspect-ratio: auto !important;
-    height: var(--map-viewport-height, max(220px, calc(100dvh - 22rem)));
-    width: min(100%, var(--map-viewport-height, 40rem));
+    inline-size: min(30cm, 100%);
+    aspect-ratio: 30 / 42;
+    block-size: auto;
     max-inline-size: none;
   }
   .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }

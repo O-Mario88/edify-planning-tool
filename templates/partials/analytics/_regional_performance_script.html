@@ -226,35 +226,11 @@ window.subregionMap = function (){
     },
 
     fitViewport(){
-      const viewport = this.$el.querySelector('.sr-map-viewport');
-      if (!viewport) return;
-      // The map is the motivator on this page (owner, 2026-09-11: "it should
-      // be bigger and detailed"). It used to be sized to whatever window
-      // height was LEFT below the card — 594px on a 1080p screen, 266px on a
-      // 1366x768 laptop — inside a box twice as wide, so the country sat
-      // small in a letterbox. It now takes most of the window's height, up to
-      // the width the canvas gives it, and the page scrolls to it like any
-      // other card. Phones keep the square (the flex column below 1280px).
-      // Owner, 2026-09-11 (second pass): "large enough to fill the whole
-      // screen, dynamic according to the screen size." The canvas takes the
-      // full viewport height less the fixed chrome above it — the top bar and
-      // the card's own header — so the country and its distribution table
-      // fill the screen once the card is scrolled into view, on every size.
-      // The distribution table sits below the map (owner, 2026-09-14), so
-      // the square is centred in the card's full width; the height is what
-      // bounds it.
-      const top = viewport.getBoundingClientRect().top;
-      const header = document.querySelector('.edify-topbar');
-      const topbar = header ? header.getBoundingClientRect().height : 56;
-      // The card header sits between the top bar and the viewport; measure it
-      // from the card itself so a taller header on a narrow desktop is honoured.
-      const card = viewport.closest('.analytics-geo-card') || viewport.parentElement;
-      const cardTop = card ? card.getBoundingClientRect().top : top;
-      const cardChrome = Math.max(0, top - cardTop);
-      const height = Math.round(
-        Math.max(520, window.innerHeight - topbar - cardChrome - 24)
-      );
-      this.$el.style.setProperty('--map-viewport-height', height + 'px');
+      // The map is a fixed 30cm × 42cm sheet for every role (owner,
+      // 2026-09-15), sized by the stylesheet; it used to be a square fitted
+      // to the window's height from here. What still depends on the rendered
+      // size is where the labels sit, so a resize re-places them.
+      if (!this.$el.querySelector('.sr-map-viewport')) return;
       this.refreshMapLabelPlacement();
     },
     watchWideColumns(){

@@ -565,12 +565,22 @@ def dashboard_view(request):
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
             "mobile_primary_action": {
+                # The most pressing card, wherever it is shown: the region
+                # card lives on the Operations view, the rest above the tabs.
                 "label": (
-                    (data.get("leadership_attention") or [{}])[0].get("action")
+                    (
+                        (data.get("region_attention") or [])
+                        + (data.get("leadership_attention") or [])
+                        or [{}]
+                    )[0].get("action")
                     or "Open country analytics"
                 ),
                 "url": (
-                    (data.get("leadership_attention") or [{}])[0].get("link")
+                    (
+                        (data.get("region_attention") or [])
+                        + (data.get("leadership_attention") or [])
+                        or [{}]
+                    )[0].get("link")
                     or "/analytics/country-director"
                 ),
             },
