@@ -14757,7 +14757,7 @@
   {
    "audit_id": "KPI-SURFACE-101",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 236,
+   "line": 246,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14779,7 +14779,7 @@
   {
    "audit_id": "KPI-SURFACE-102",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 270,
+   "line": 280,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -39465,7 +39465,7 @@
   {
    "audit_id": "KPI-PAYLOAD-002",
    "module": "apps/clusters/services.py",
-   "line": 1676,
+   "line": 1689,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -39707,7 +39707,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1031,
+   "line": 1037,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -39733,7 +39733,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1433,
+   "line": 1439,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,
@@ -40038,7 +40038,7 @@
   {
    "audit_id": "KPI-PAYLOAD-023",
    "module": "apps/planning/planning_service.py",
-   "line": 886,
+   "line": 910,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 9,
