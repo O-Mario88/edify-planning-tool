@@ -1440,7 +1440,10 @@ def remove_school_from_cluster_view(request, cluster_id, school_id):
                 status=400,
             )
         messages.error(request, str(exc))
-        return redirect(f"/clusters/{cluster_id}")
+        # A fixed destination: the id in the path is the caller's, and a
+        # redirect built from it is an open-redirect finding (CodeQL, PR
+        # #104). The list page shows the message either way.
+        return redirect("/clusters")
     message = f"Removed {result['schoolId']} from the cluster; it is unclustered again."
     if is_htmx:
         response = render(
@@ -1451,7 +1454,9 @@ def remove_school_from_cluster_view(request, cluster_id, school_id):
         )
         return response
     messages.success(request, message)
-    return redirect(f"/clusters/{cluster_id}")
+    # Back to the profile of the cluster the service resolved -- its own id
+    # from the database, reversed through the route, never the path value.
+    return redirect("frontend:cluster_detail", cluster_id=result["clusterId"])
 
 
 @require_page_permission("planning")

@@ -496,3 +496,14 @@ class ClusterMembershipEditingTest(TestCase):
         self.assertEqual(roster.status_code, 200)
         self.assertContains(roster, f"/clusters/{self.cluster.id}/schools/sch-2/remove")
         self.assertContains(roster, "school-record-action--danger")
+
+    def test_a_plain_remove_redirects_to_a_fixed_destination(self):
+        """Without htmx the view redirects: to the profile of the cluster
+        the service resolved on success, and to the list on refusal --
+        never to a URL built from the path value (CodeQL, PR #104)."""
+        ok = self.client.post(f"/clusters/{self.cluster.id}/schools/sch-1/remove")
+        self.assertEqual(ok.status_code, 302)
+        self.assertEqual(ok["Location"], f"/clusters/{self.cluster.id}")
+        refused = self.client.post(f"/clusters/{self.cluster.id}/schools/sch-1/remove")
+        self.assertEqual(refused.status_code, 302)
+        self.assertEqual(refused["Location"], "/clusters")
