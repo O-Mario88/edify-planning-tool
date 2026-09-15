@@ -164,6 +164,7 @@ Schedule Cluster Meeting
 <th scope="col" class="px-4 py-2.5">Last Training</th>
 <th scope="col" class="px-4 py-2.5">Readiness</th>
 {% if can_schedule %}<th scope="col" class="px-4 py-2.5 text-right">Plan</th>{% endif %}
+{% if can_edit_cluster %}<th scope="col" class="px-4 py-2.5 text-right">Remove</th>{% endif %}
 </tr>
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
@@ -204,11 +205,31 @@ aria-label="Schedule support for {{ s.name }}"
 {% endif %}
 </td>
 {% endif %}
+{% if can_edit_cluster %}
+<td class="px-4 py-3 text-right" data-label="Remove">
+{% comment %}A school added by mistake leaves the cluster from its row
+(owner, 2026-09-15). The page reloads on success so the count, the students
+impacted and the table agree; the service refuses what the caller may not
+touch.{% endcomment %}
+<button
+type="button"
+class="school-record-action school-record-action--danger ml-auto"
+hx-post="/clusters/{{ cluster.id }}/schools/{{ s.id }}/remove"
+hx-swap="none"
+hx-confirm="Remove {{ s.name }} from {{ cluster.name }}? It goes back to unclustered and can be added to another cluster."
+hx-on::after-request="if (event.detail.successful) window.location.reload()"
+aria-label="Remove {{ s.name }} from this cluster"
+>
+<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9.5 7V5.5h5V7M8 7l.7 12h6.6L16 7M10.5 10.5v6M13.5 10.5v6"/></svg>
+<span>Remove</span>
+</button>
+</td>
+{% endif %}
 </tr>
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if can_schedule %}7{% else %}6{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if can_schedule and can_edit_cluster %}8{% elif can_schedule or can_edit_cluster %}7{% else %}6{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button

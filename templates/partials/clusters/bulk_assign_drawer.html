@@ -81,7 +81,12 @@ hx-target="#drawer-container"
 class="space-y-6"
 >
 {% csrf_token %}
-<div class="space-y-5 max-h-[480px] overflow-y-auto pr-1">
+{% comment %}The list is bounded so the footer below stays in view: the
+list used to run to 480px, and with the search, the select-all row and the
+footprint panel the Assign button sat below the fold of the drawer with
+nothing to say it was there (owner, 2026-09-15: "does not have the button
+to save the schools marked").{% endcomment %}
+<div class="space-y-5 max-h-[42vh] overflow-y-auto pr-1">
 {% regroup schools by sub_county as sub_county_list %}
 {% for item in sub_county_list %}
 <div class="space-y-2">
@@ -152,8 +157,13 @@ style="display: none;"
 </div>
 </div>
 
-<!-- Footer Buttons -->
-<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+<!-- Footer Buttons: pinned to the bottom of the drawer, like the planner's -->
+<div class="sticky bottom-[-28px] z-10 -mx-7 px-7 py-4 flex items-center justify-between gap-3 edify-surface border-t edify-border-top">
+<p class="edify-text-caption font-semibold text-slate-400" aria-live="polite">
+<span x-show="selectedCount === 0">Tick the schools to add, then save.</span>
+<span x-show="selectedCount > 0" x-cloak><span x-text="selectedCount"></span> ticked</span>
+</p>
+<div class="flex items-center gap-2">
 <button
 type="button"
 @click="$dispatch('close-drawer')"
@@ -163,12 +173,14 @@ Cancel
 </button>
 <button
 type="submit"
+data-testid="bulk-assign-save"
 class="px-4 h-8 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 :disabled="selectedCount === 0"
 :class="selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
 >
-<span>Assign Checked Schools</span>
+<span x-text="selectedCount > 0 ? `Save ${selectedCount} school${selectedCount === 1 ? '' : 's'} to cluster` : 'Save schools to cluster'">Save schools to cluster</span>
 </button>
+</div>
 </div>
 </form>
 {% else %}

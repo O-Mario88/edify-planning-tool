@@ -392,6 +392,10 @@ def cluster_schools_partial(request, cluster_id):
         "can_schedule": RolePermissionService.can_schedule_activity(request.user)
         or RolePermissionService.can_request_school_visit(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        # The same check the edit drawer and the remove endpoint enforce.
+        "can_edit_cluster": RolePermissionService.can_view_page(
+            request.user, "planning"
+        ),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
 
@@ -1326,6 +1330,9 @@ def edit_cluster_drawer_view(request, cluster_id):
     ]
 
     staff = get_eligible_staff(cluster.district_id)
+    # The schools in the cluster, each ticked (owner, 2026-09-15): untick a
+    # school added by mistake and save, and it goes back to unclustered.
+    from apps.clusters.services import active_schools
 
     context = {
         "cluster": cluster,
@@ -1333,6 +1340,7 @@ def edit_cluster_drawer_view(request, cluster_id):
         "sub_counties_json": json.dumps(sub_counties_list),
         "covered_ids": covered_ids,
         "staff": staff,
+        "member_schools": list(active_schools(cluster.id)),
         "drawer_size": "md",
         "drawer_type": "center",
     }
@@ -1364,13 +1372,86 @@ def edit_cluster_view(request, cluster_id):
             }
             try:
                 update_cluster(cluster_id, payload, request.user)
-                messages.success(request, f"Successfully updated cluster '{name}'.")
+                removed = _remove_unticked_members(request, cluster_id)
+                messages.success(
+                    request,
+                    f"Successfully updated cluster '{name}'."
+                    + (
+                        f" Removed {len(removed)} school"
+                        f"{'' if len(removed) == 1 else 's'}: {', '.join(removed)}."
+                        if removed
+                        else ""
+                    ),
+                )
             except Exception as e:
                 messages.error(request, f"Failed to update cluster: {e}")
         else:
             messages.error(request, "Failed to update cluster: missing fields.")
 
     return redirect("/clusters")
+
+
+def _remove_unticked_members(request, cluster_id: str) -> list[str]:
+    """Take out every member school the edit drawer left unticked.
+
+    Only when the drawer sent its member list (``manage_members``): an API
+    client or an older form that never showed the schools must not empty
+    the cluster by omission. Each removal goes through the canonical
+    service, so the ownership rule and the audit trail are the roster's.
+    """
+    if not request.POST.get("manage_members"):
+        return []
+    from apps.clusters.services import active_schools, remove_school_from_cluster
+
+    kept = {s.strip() for s in request.POST.getlist("member_school_ids") if s.strip()}
+    removed = []
+    for school in list(active_schools(cluster_id)):
+        if school.id in kept:
+            continue
+        remove_school_from_cluster(school.id, cluster_id, request.user)
+        removed.append(school.name)
+    return removed
+
+
+@require_page_permission("planning")
+def remove_school_from_cluster_view(request, cluster_id, school_id):
+    """Take one school out of a cluster from its roster (owner, 2026-09-15).
+
+    The service decides who may: the school and the cluster must both be in
+    the caller's direct portfolio. On success the cluster cards re-fetch
+    their rosters (the same trigger the add-schools drawer fires) and the
+    profile page reloads itself.
+    """
+    from django.http import HttpResponse, HttpResponseNotAllowed
+
+    from apps.clusters.services import remove_school_from_cluster
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    is_htmx = bool(request.headers.get("HX-Request"))
+    try:
+        result = remove_school_from_cluster(school_id, cluster_id, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        if is_htmx:
+            return HttpResponse(
+                f'<div class="edify-note" data-tone="danger" role="alert">'
+                f'<p class="edify-note__body">{escape(str(exc))}</p></div>',
+                status=400,
+            )
+        messages.error(request, str(exc))
+        return redirect(f"/clusters/{cluster_id}")
+    message = f"Removed {result['schoolId']} from the cluster; it is unclustered again."
+    if is_htmx:
+        response = render(
+            request, "partials/schools/toast_success.html", {"message": message}
+        )
+        response["HX-Trigger"] = (
+            f"cluster-schools-updated-{cluster_id}, schools-updated"
+        )
+        return response
+    messages.success(request, message)
+    return redirect(f"/clusters/{cluster_id}")
 
 
 @require_page_permission("planning")

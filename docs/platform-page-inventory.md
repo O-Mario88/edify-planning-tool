@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **803**
-- All registered routes: **1274**
+- Routed product surfaces: **804**
+- All registered routes: **1275**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **24**
 - Shared component templates: **450**
 - Full pages: **255**
-- Partials and drawers: **259**
-- Permission-gated surfaces: **788**
-- Referenced by automated tests: **693**
+- Partials and drawers: **260**
+- Permission-gated surfaces: **789**
+- Referenced by automated tests: **695**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -192,6 +192,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-C171311DFC | /clusters/<str:cluster_id>/delete | Delete Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-67CB08D75B | /clusters/<str:cluster_id>/edit | Edit Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2F0996F451 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3429DE9B4C | /clusters/<str:cluster_id>/schools/<str:school_id>/remove | Remove School From Cluster | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D1234D25E2 | /clusters/create | Create Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5250FB3393 | /clusters/create-drawer | Create Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -406,7 +407,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-F4BFB7C2B0 | /ia/impact-reports/<str:report_id>/release/donor | Ia Impact Report Release Donor | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-E488104A11 | /ia/impact-reports/<str:report_id>/release/donor/request | Ia Impact Report Release Donor Request | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-EF6CDCC94D | /ia/impact-reports/<str:report_id>/release/leadership | Ia Impact Report Release Leadership | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-1BF17E0F65 | /ia/impact-reports/<str:report_id>/release/schools | Ia Impact Report Release Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-1BF17E0F65 | /ia/impact-reports/<str:report_id>/release/schools | Ia Impact Report Release Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FE1D6A67CB | /ia/impact-reports/<str:report_id>/release/schools/save | Ia Impact Report Release Schools Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8517D2975A | /ia/impact-reports/<str:report_id>/releases/<str:release_id>/ | Ia Impact Report Release | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-6E2CB27363 | /ia/impact-reports/<str:report_id>/releases/<str:release_id>/decide | Ia Impact Report Release Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |

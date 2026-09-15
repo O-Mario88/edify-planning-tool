@@ -612,6 +612,43 @@ def assign(data: dict, principal) -> dict:
     return assign_school(data.get("schoolId", ""), data, principal)
 
 
+def remove_school_from_cluster(school_id: str, cluster_id: str, principal) -> dict:
+    """Take a school out of its cluster (owner, 2026-09-15).
+
+    The reverse of :func:`assign_school`, under the same rule: changing a
+    school's cluster edits the school record and frees a slot in the
+    cluster, so both halves must be in the caller's DIRECT portfolio; a
+    supervisor with oversight of either side asks the CCEO who owns it. The
+    school goes back to ``unclustered`` through the one membership service,
+    so the audit trail and the derived readiness fields are written exactly
+    as they are for any other move. ``school_id`` may be the row id or the
+    human School ID -- the roster shows the one and the directory the other.
+    """
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        cluster_queryset,
+        direct_portfolio_schools,
+    )
+
+    scope = resolve_user_scope(principal)
+    schools = direct_portfolio_schools(scope)
+    school = (
+        (schools or School.objects.none())
+        .filter(Q(id=school_id) | Q(school_id=school_id), deleted_at__isnull=True)
+        .first()
+    )
+    if not school:
+        raise NotFoundError("School not found or outside your scope.")
+    cluster = _scoped_cluster(cluster_id, principal)
+    writable = cluster_queryset(scope, direct_only=True)
+    if writable is None or not writable.filter(id=cluster.id).exists():
+        raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
+    if school.cluster_id != cluster.id:
+        raise BadRequest(f"{school.name} is not in {cluster.name}.")
+    school = set_school_cluster_membership(school, None, principal.user_id)
+    return {"ok": True, "schoolId": school.school_id, "clusterId": cluster.id}
+
+
 def _scoped_cluster(cluster_id: str, principal):
     """Resolve a cluster the caller is actually entitled to read.
 
