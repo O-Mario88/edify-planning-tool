@@ -950,31 +950,29 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotIn("assign_to_project", vm["disabled_reasons"])
 
     def test_add_to_cluster_drawer_get(self):
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.cceo_profile.id
+        )
         self.client.force_login(self.cceo_user)
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/schools/add_to_cluster_drawer.html")
-        self.assertContains(response, "Cluster selected automatically")
+        self.assertContains(response, "data-owner-clusters")
         self.assertContains(response, self.cluster.name)
+        self.assertContains(response, 'name="existing_cluster_id"')
         self.assertContains(response, self.cceo_user.name)
         self.assertContains(response, "Automatic from the school owner")
         self.assertContains(response, "cluster-assignment-drawer")
-        self.assertNotContains(response, "Nearby clusters")
+        self.assertNotContains(response, "Cluster selected automatically")
         self.assertNotContains(response, "Assignment Notes")
         self.assertNotContains(response, 'name="responsible_staff_id"')
         self.assertNotContains(response, 'name="notes"')
         self.assertNotContains(response, "bg-slate-50")
         self.assertNotContains(response, "bg-emerald-50")
 
-    def test_add_to_cluster_drawer_shows_nearby_only_without_covering_cluster(self):
-        """The directory branch, under the eligibility rule.
-
-        This used to assert that a cluster in the district was offered even
-        though it covered a different sub-county. It is not any more — showing
-        another sub-county's clusters is the thing the rule forbids — so the
-        cluster offered here is a district-level one, which has claimed no
-        sub-county and is therefore not "another" one.
-        """
+    def test_add_to_cluster_drawer_lists_every_owner_cluster(self):
+        """Owner, 2026-09-15: not narrowed by sub-county — every active
+        cluster belonging to the school's owner, and nobody else's."""
         uncovered_sub_county = SubCounty.objects.create(
             name="Uncovered Subcounty",
             district=self.district,
@@ -982,6 +980,9 @@ class FrontendViewsTestCase(TestCase):
         self.school.sub_county = uncovered_sub_county
         self.school.account_owner_id = self.cceo_profile.id
         self.school.save()
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.cceo_profile.id
+        )
         district_level = Cluster.objects.create(
             name="Kampola District Cluster",
             region=self.region,
@@ -989,35 +990,37 @@ class FrontendViewsTestCase(TestCase):
             status="active",
             responsible_staff_id=self.cceo_profile.id,
         )
+        someone_elses = Cluster.objects.create(
+            name="Somebody Else Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+            responsible_staff_id="another-profile",
+        )
         self.client.force_login(self.cceo_user)
 
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["show_cluster_directory"])
-        # "Your clusters", not "Nearby": the list is scoped to who is
-        # responsible for a cluster rather than to the district it sits in.
-        self.assertContains(response, "Your clusters")
         self.assertContains(response, district_level.name)
-        # The sub-county rule at work: this one covers a different sub-county.
-        self.assertNotContains(response, self.cluster.name)
+        self.assertContains(response, self.cluster.name)
+        self.assertNotContains(response, someone_elses.name)
         self.assertContains(response, "Create new")
-        self.assertNotContains(response, "Cluster selected automatically")
 
-    def test_add_to_cluster_drawer_hides_nearby_without_school_sub_county(self):
+    def test_add_to_cluster_drawer_works_without_a_school_sub_county(self):
+        """Choosing an owner's cluster needs a district, not a sub-county."""
         self.school.sub_county = None
         self.school.save()
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.cceo_profile.id
+        )
         self.client.force_login(self.cceo_user)
 
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
 
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.context["show_cluster_directory"])
-        self.assertFalse(response.context["geography_ready"])
-        self.assertContains(response, "Update the Sub-county on the School Profile")
-        self.assertContains(response, "Update School Profile")
-        self.assertNotContains(response, 'name="new_cluster_name"')
-        self.assertNotContains(response, "Nearby clusters")
+        self.assertContains(response, self.cluster.name)
+        self.assertNotContains(response, "Update the Sub-county on the School Profile")
 
     def test_create_cluster_drawer_uses_guided_geography_workflow(self):
         outside_region = Region.objects.create(name="Outside Drawer Region")
@@ -1148,6 +1151,9 @@ class FrontendViewsTestCase(TestCase):
         self.school.account_owner_id = self.cceo_profile.id
         self.school.account_owner_status = "matched"
         self.school.save()
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.cceo_profile.id
+        )
         # Post assignment to existing cluster
         response = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",

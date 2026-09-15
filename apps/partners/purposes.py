@@ -31,6 +31,13 @@ STAFF_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("in_school_coaching", "In-school Coaching Visit"),
 )
 
+# Purposes that move no single SSA intervention: collecting the SSA itself and
+# relationship visits. A visit for one of these may name a focus, but its
+# governed workflow must not demand one (Core visits inherit theirs otherwise).
+INTERVENTION_FREE_PURPOSES = frozenset(
+    {"ssa_support", "donor_visit", "school_invitation", "social_visit"}
+)
+
 PURPOSE_ACTIVITY_TYPES = {
     "in_school_training": "in_school_training",
     "training_follow_up": "training_follow_up_visit",
@@ -105,6 +112,7 @@ def _fallback_for_activity_type(activity_type: str | None, for_partner: bool) ->
 
 
 __all__ = [
+    "INTERVENTION_FREE_PURPOSES",
     "PARTNER_VISIT_PURPOSES",
     "STAFF_VISIT_PURPOSES",
     "normalise_visit_purpose",

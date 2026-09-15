@@ -1072,6 +1072,7 @@ def partner_activities_view(request):
             "school",
             "cluster",
             "catalogue_item",
+            "training_course",
             "source_ssa",
         )
         .prefetch_related("allowed_catalogue_items")
@@ -1091,7 +1092,7 @@ def partner_schedule_assignment_drawer(request, assignment_id):
     partner_ids = resolve_partner_ids(request.user)
     assignment = get_object_or_404(
         PartnerAssignment.objects.select_related(
-            "school", "cluster", "catalogue_item", "source_ssa"
+            "school", "cluster", "catalogue_item", "training_course", "source_ssa"
         ).prefetch_related("allowed_catalogue_items"),
         id=assignment_id,
         partner_id__in=partner_ids,
@@ -1112,6 +1113,7 @@ def partner_schedule_assignment_drawer(request, assignment_id):
             "partials/schools/drawer_error.html",
             {"error": assignment.schedule_blocked_reason},
         )
+    assignment.purpose_label = visit_purpose_label(assignment.purpose_of_visit, "")
     return render(
         request,
         "partials/partners/schedule_assignment_drawer.html",
@@ -1172,7 +1174,9 @@ def partner_return_assignment_drawer(request, assignment_id):
 
     partner_ids = resolve_partner_ids(request.user)
     assignment = get_object_or_404(
-        PartnerAssignment.objects.select_related("school", "cluster", "catalogue_item"),
+        PartnerAssignment.objects.select_related(
+            "school", "cluster", "catalogue_item", "training_course"
+        ),
         id=assignment_id,
         partner_id__in=partner_ids,
         status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
@@ -1338,7 +1342,7 @@ def partner_assignments_view(request):
     partner_ids = resolve_partner_ids(request.user)
     assignments = list(
         PartnerAssignment.objects.filter(partner_id__in=partner_ids)
-        .select_related("school", "cluster", "catalogue_item")
+        .select_related("school", "cluster", "catalogue_item", "training_course")
         .order_by("-created_at")[:200]
     )
     pending = [a for a in assignments if a.status in ("assigned", "pending_scheduling")]

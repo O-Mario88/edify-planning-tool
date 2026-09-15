@@ -392,17 +392,101 @@ def _refuse_core_training_for_requesters(user):
     return None
 
 
+def _core_training_courses() -> list[dict]:
+    """Every governed training course, whatever intervention it serves.
+
+    Owner, 2026-09-15: Core trainings are chosen from the whole Training
+    Catalogue, not only the courses keyed to a school-level delivery or a
+    focus intervention. The standard In-school Training workflow delivers the
+    course, exactly as it does at a client school.
+    """
+    from apps.activity_catalogue.availability import (
+        in_school_training_course_options,
+    )
+
+    return in_school_training_course_options()
+
+
+def _core_ranked_focus(school) -> tuple[str, str]:
+    """The SSA's first-ranked need, as (code, label), or blanks."""
+    from apps.ssa.plan_alignment import school_need
+
+    need = school_need(school)
+    code = need.priorities[0] if need.priorities else ""
+    return code, dict(SsaIntervention.choices).get(code, "")
+
+
+def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
+    payload = {
+        "schoolId": school_id,
+        "scheduledDate": scheduled_date,
+        "activityPurposeText": (
+            request.POST.get("activity_goal", "")
+            or request.POST.get("visit_purpose", "")
+        ).strip(),
+        "expectedOutcome": request.POST.get("expected_outcome", "").strip(),
+        "deliveryType": "partner" if partner_id else "staff",
+        "requireCatalogue": True,
+        "recommendationReason": request.POST.get("recommendation_reason", ""),
+        # Omit the key entirely for staff delivery — an empty string would be
+        # stamped into the budget line's partner FK and violate the constraint.
+        **({"assignedPartnerId": partner_id} if partner_id else {}),
+    }
+    try:
+        dt = date.fromisoformat(scheduled_date)
+        payload["plannedMonth"] = dt.month
+        payload["plannedWeek"] = min(5, (dt.day - 1) // 7 + 1)
+    except (TypeError, ValueError):
+        pass
+    return payload
+
+
+def _core_scheduled_response(request, created, scheduled_date, message):
+    """Confirm the save and open the plan the activity actually landed on.
+
+    A bare "/my-plan" opens the current week, so work dated in any other week
+    looked as though it had not saved (owner, 2026-09-15). Same rule as the
+    Planning drawer: the week that holds it on the scheduler's own My Plan, or
+    the Calendar month when the responsible person is somebody else.
+    """
+    from apps.frontend.views.planning_views import (
+        _calendar_url_for_scheduled_date,
+        _my_plan_url_for_scheduled_date,
+        _scheduled_into_own_plan,
+    )
+
+    lands_here, owner_name = _scheduled_into_own_plan(created, request.user)
+    if lands_here:
+        messages.success(request, message)
+        url = _my_plan_url_for_scheduled_date(scheduled_date)
+    else:
+        messages.success(
+            request,
+            f"{message} It is on {owner_name}'s My Plan, because they are the "
+            "responsible staff member — you will find it on the Calendar.",
+        )
+        url = _calendar_url_for_scheduled_date(scheduled_date)
+    response = HttpResponse(f'<script>window.location.href = "{url}";</script>')
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
 @require_page_permission("core_schools")
 def core_schedule_visit_drawer(request):
-    """Renders schedule core visit drawer."""
+    """Renders schedule core visit drawer.
+
+    The visit is chosen by its Purpose of Visit, as at a client school, not by
+    an SSA focus intervention. The first Core visit of the fiscal year is SSA
+    Support: it collects the year's SSA data before any other support.
+    """
+    import json
+
+    from apps.partners.purposes import STAFF_VISIT_PURPOSES
+    from apps.planning.visit_requests import approval_owner_for
+
     school_id = request.GET.get("school_id")
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
 
-    (
-        school.ssa_records.filter(deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
-        .first()
-    )
     # §17 — four weakest verified interventions, 2 → Partner, 2 → Staff.
     from apps.core_schools.core_planning_services import (
         CoreInterventionRecommendationService,
@@ -410,22 +494,6 @@ def core_schedule_visit_drawer(request):
 
     reco = CoreInterventionRecommendationService.recommend(school)
     recommendations = reco["rows"]
-    from apps.activity_catalogue.services import recommend_activities
-
-    catalogue_result = recommend_activities(
-        school=school,
-        principal=request.user,
-        executor_type="staff",
-        limit=3,
-    )
-    visit_catalogue_items = [
-        row
-        for row in [
-            *catalogue_result["primary"],
-            *catalogue_result["otherEligible"],
-        ]
-        if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
-    ]
 
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
@@ -437,7 +505,23 @@ def core_schedule_visit_drawer(request):
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
     )
+    available_training_slots = (
+        CorePackageSchedulingService.available_options(plan, "training") if plan else []
+    )
+    first_visit = bool(plan) and CorePackageSchedulingService.first_visit_pending(plan)
+    # Trainings are the owner's; a request-only country role asks for visits.
+    is_requester = bool(approval_owner_for(school, request.user))
+    purposes = [
+        (value, label)
+        for value, label in STAFF_VISIT_PURPOSES
+        if not (is_requester and value == "in_school_training")
+    ]
+    if first_visit:
+        purposes = [(v, label) for v, label in purposes if v == "ssa_support"]
 
+    from apps.frontend.views.planning_views import _school_training_follow_up_options
+
+    focus_code, focus_label = _core_ranked_focus(school)
     context = {
         "school": school,
         "recommendations": recommendations,
@@ -447,8 +531,21 @@ def core_schedule_visit_drawer(request):
         if available_visit_slots
         else None,
         "available_visit_slots": available_visit_slots,
+        "available_training_slots": available_training_slots,
+        "first_visit": first_visit,
+        "visit_purposes": purposes,
+        "recommended_visit_purpose": "ssa_support" if first_visit else "",
+        "partner_visit_purpose_values_json": json.dumps(
+            [value for value, _label in PARTNER_VISIT_PURPOSES]
+        ),
         "interventions": SsaIntervention.choices,
-        "catalogue_items": visit_catalogue_items,
+        "recommended_focus_intervention": focus_code,
+        "ssa_top_label": focus_label,
+        "training_courses_json": json.dumps(_core_training_courses()),
+        "follow_up_options_json": json.dumps(
+            _school_training_follow_up_options(school)
+        ),
+        "follow_up_fy": fy,
         "requester_name": getattr(request.user, "name", "") or "You",
         **_core_visit_request_context(school, request.user),
     }
@@ -459,15 +556,17 @@ def core_schedule_visit_drawer(request):
 @require_page_permission("core_schools")
 def core_schedule_visit_action(request):
     """Handles schedule visit submission."""
+    from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+    from apps.partners.purposes import normalise_visit_purpose, visit_purpose_label
+
     school_id = request.POST.get("school_id")
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
     visit_seq = request.POST.get("visit_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
-    focus_intervention = request.POST.get("focus_intervention")
-    purpose_text = request.POST.get("visit_purpose", "").strip()
-    expected_outcome = request.POST.get("expected_outcome", "").strip()
+    focus_intervention = request.POST.get("focus_intervention", "").strip() or None
+    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     responsible_staff_id = request.POST.get("responsible_staff_id")
-    partner_id = request.POST.get("assigned_partner_id")
+    partner_id = request.POST.get("assigned_partner_id", "").strip() or None
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip()
     # A request-only country role at somebody else's school: the requester
@@ -479,14 +578,8 @@ def core_schedule_visit_action(request):
     if visit_request_owner_id:
         responsible_staff_id = _requester_identity(request.user)
         partner_id = None
-    if not catalogue_item_id:
-        return error_fragment(
-            BadRequest("Select an eligible approved Catalogue visit."),
-            status=400,
-        )
 
     try:
-        visit_sequence = int(visit_seq)
         scheduled_for = date.fromisoformat(scheduled_date)
     except (TypeError, ValueError):
         return HttpResponse(
@@ -494,22 +587,34 @@ def core_schedule_visit_action(request):
             status=400,
         )
 
+    try:
+        if purpose_of_visit:
+            purpose_of_visit = normalise_visit_purpose(
+                purpose_of_visit, for_partner=bool(partner_id)
+            )
+        if purpose_of_visit == "in_school_training":
+            if visit_request_owner_id:
+                raise BadRequest(CORE_TRAINING_REFUSED)
+            return _schedule_core_in_school_training(
+                request,
+                school=school,
+                scheduled_for=scheduled_for,
+                responsible_staff_id=responsible_staff_id,
+                partner_id=partner_id,
+            )
+        visit_sequence = int(visit_seq)
+    except (TypeError, ValueError):
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Please choose a valid planned date and visit slot.</div>',
+            status=400,
+        )
+    except Exception as exc:
+        return error_fragment(exc, status=400)
+
     payload = {
-        "schoolId": school_id,
+        **_core_visit_payload_base(request, school_id, scheduled_date, partner_id),
         "activityType": "core_visit",
-        "scheduledDate": scheduled_date,
-        "focusIntervention": focus_intervention,
-        "activityPurposeText": purpose_text,
-        "expectedOutcome": expected_outcome,
         "responsibleStaffId": responsible_staff_id,
-        "deliveryType": "partner" if partner_id else "staff",
-        "catalogueItemId": catalogue_item_id,
-        "requireCatalogue": True,
-        "sourceActivityId": source_activity_id,
-        "recommendationReason": request.POST.get("recommendation_reason", ""),
-        # Omit the key entirely for staff delivery — an empty string would be
-        # stamped into the budget line's partner FK and violate the constraint.
-        **({"assignedPartnerId": partner_id} if partner_id else {}),
         **(
             {"visitJustification": visit_justification}
             if visit_request_owner_id
@@ -517,17 +622,19 @@ def core_schedule_visit_action(request):
         ),
     }
 
-    if scheduled_date:
-        try:
-            dt = date.fromisoformat(scheduled_date)
-            payload["plannedMonth"] = dt.month
-            payload["plannedWeek"] = min(5, (dt.day - 1) // 7 + 1)
-        except ValueError:
-            pass
-
     from apps.activities.services import create as create_activity
 
     try:
+        if not catalogue_item_id:
+            item = resolve_item_for_workflow_kind("core_visit", on_date=scheduled_for)
+            if item is None:
+                raise BadRequest(
+                    "No approved Catalogue Activity costs a Core School visit. "
+                    "Ask the Country Director to configure one."
+                )
+            catalogue_item_id = item.id
+        payload["catalogueItemId"] = catalogue_item_id
+
         with transaction.atomic():
             plan = (
                 CorePlan.objects.select_for_update()
@@ -536,6 +643,46 @@ def core_schedule_visit_action(request):
             )
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
+            first_visit = CorePackageSchedulingService.first_visit_pending(plan)
+            if first_visit and not purpose_of_visit:
+                purpose_of_visit = "ssa_support"
+            if first_visit and purpose_of_visit != "ssa_support":
+                raise BadRequest(
+                    "The first Core visit of the fiscal year is SSA Support: it "
+                    "collects this year's SSA data before any other support."
+                )
+            if purpose_of_visit:
+                payload["purposeType"] = purpose_of_visit
+            if purpose_of_visit == "ssa_support":
+                # Linked to data collection: completion asks for the scores (or
+                # why none were collected), and IA reads it as an SSA visit.
+                payload["ssaCollectionExpected"] = True
+                focus_intervention = None
+            elif purpose_of_visit == "training_follow_up":
+                from apps.frontend.views.planning_views import (
+                    _school_training_follow_up_options,
+                )
+
+                eligible = {
+                    option["id"]
+                    for option in _school_training_follow_up_options(school)
+                }
+                if not source_activity_id:
+                    raise BadRequest(
+                        "Select the completed training this visit follows up."
+                    )
+                if source_activity_id not in eligible:
+                    raise BadRequest(
+                        "Choose a completed current-FY training this School did."
+                    )
+                payload["sourceActivityId"] = source_activity_id
+                # The training followed up owns the intervention.
+                focus_intervention = None
+            elif purpose_of_visit == "in_school_coaching" and not focus_intervention:
+                focus_intervention = _core_ranked_focus(school)[0] or None
+            if focus_intervention:
+                payload["focusIntervention"] = focus_intervention
+
             slot = CorePackageSchedulingService.assert_can_schedule(
                 plan=plan,
                 school=school,
@@ -573,12 +720,17 @@ def core_schedule_visit_action(request):
                 success=True,
             )
 
+            purpose_note = (
+                f" ({visit_purpose_label(purpose_of_visit)})"
+                if purpose_of_visit
+                else ""
+            )
             if visit_request_owner_id:
                 from apps.planning.visit_requests import QUEUE_URL
 
                 messages.success(
                     request,
-                    f"Core Visit V{visit_sequence} scheduled, pending "
+                    f"Core Visit V{visit_sequence}{purpose_note} scheduled, pending "
                     f"{visit_request['visit_request_owner_name']}'s approval. It "
                     "takes effect on your plan and enters your budget once approved.",
                 )
@@ -587,17 +739,96 @@ def core_schedule_visit_action(request):
                 )
                 response["HX-Trigger"] = "close-drawer"
                 return response
-            # Success message & direct redirect to My Plan
-            messages.success(
-                request, f"Core Visit V{visit_sequence} scheduled successfully."
+            return _core_scheduled_response(
+                request,
+                act_data,
+                scheduled_date,
+                f"Core Visit V{visit_sequence}{purpose_note} scheduled successfully.",
             )
-            response = HttpResponse(
-                '<script>window.location.href = "/my-plan";</script>'
-            )
-            response["HX-Trigger"] = "close-drawer"
-            return response
     except Exception as e:
         return error_fragment(e, status=400)
+
+
+def _schedule_core_in_school_training(
+    request, *, school, scheduled_for, responsible_staff_id, partner_id
+):
+    """In-school Training chosen from the Core visit drawer.
+
+    Same outcome as at a client school: the governed Training and its
+    companion School Visit are created together
+    (apps.planning.services.schedule_in_school_training_pair). The Training
+    fills the package's next open training slot — it is the Core training —
+    while the companion visit is the uncosted Salesforce/evidence record of
+    the same mission and leaves the visit slots untouched.
+    """
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.planning.services import schedule_in_school_training_pair
+
+    school_id = school.school_id
+    scheduled_date = scheduled_for.isoformat()
+    course_id = request.POST.get("training_course_id", "").strip()
+    if not course_id:
+        raise BadRequest("Select the Training to deliver.")
+    validate_in_school_training_course_selection(course_id, on_date=scheduled_for)
+
+    payload = {
+        **_core_visit_payload_base(request, school_id, scheduled_date, partner_id),
+        "catalogueItemId": course_id,
+        "responsibleStaffId": responsible_staff_id,
+    }
+    with transaction.atomic():
+        plan = (
+            CorePlan.objects.select_for_update()
+            .filter(school_id=school_id, fy=get_operational_fy())
+            .first()
+        )
+        if not plan:
+            raise BadRequest("This school does not have an active core package.")
+        if CorePackageSchedulingService.first_visit_pending(plan):
+            raise BadRequest(
+                "The first Core visit of the fiscal year is SSA Support: it "
+                "collects this year's SSA data before any other support."
+            )
+        requested = request.POST.get("training_number", "").strip()
+        options = CorePackageSchedulingService.available_options(plan, "training")
+        if not options:
+            raise BadRequest("All 4 core trainings are already scheduled or completed.")
+        training_sequence = int(requested) if requested else options[0]["sequence"]
+        slot = CorePackageSchedulingService.assert_can_schedule(
+            plan=plan,
+            school=school,
+            activity_type="training",
+            sequence_number=training_sequence,
+            scheduled_for=scheduled_for,
+            is_partner_delivery=bool(partner_id),
+        )
+        created = schedule_in_school_training_pair(payload, request.user)
+        CorePackageSchedulingService.commit_schedule(
+            slot,
+            activity_id=created["id"],
+            scheduled_for=scheduled_date,
+            scheduled_month=str(payload.get("plannedMonth")),
+            scheduled_week=payload.get("plannedWeek"),
+            assigned_staff_id=responsible_staff_id,
+            partner_id=partner_id,
+        )
+        audit_log(
+            action="schedule_core_training",
+            subject_kind="Activity",
+            subject_id=created["id"],
+            actor_id=str(request.user.id),
+            actor_role=getattr(request.user, "active_role", None),
+            success=True,
+        )
+    return _core_scheduled_response(
+        request,
+        created,
+        scheduled_date,
+        f"Core Training T{training_sequence} ({created['trainingCourseLabel']}) and "
+        "its school visit scheduled successfully.",
+    )
 
 
 @require_page_permission("core_schools")
@@ -609,11 +840,6 @@ def core_schedule_training_drawer(request):
     school_id = request.GET.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
-    (
-        school.ssa_records.filter(deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
-        .first()
-    )
     # §17 — four weakest verified interventions, 2 → Partner, 2 → Staff.
     from apps.core_schools.core_planning_services import (
         CoreInterventionRecommendationService,
@@ -621,18 +847,6 @@ def core_schedule_training_drawer(request):
 
     reco = CoreInterventionRecommendationService.recommend(school)
     recommendations = reco["rows"]
-    from apps.activity_catalogue.availability import (
-        SCHOOL,
-        training_activity_options,
-    )
-
-    # Course choice is governed by the 21-row Training Catalogue.  SSA
-    # recommendations remain visible as advice, but they no longer replace
-    # the user's training decision or ask them to restate its association.
-    training_catalogue_items = training_activity_options(
-        planning_context=SCHOOL,
-        school=school,
-    )
 
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
@@ -656,7 +870,7 @@ def core_schedule_training_drawer(request):
         "available_training_slots": available_training_slots,
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "interventions": SsaIntervention.choices,
-        "catalogue_items": training_catalogue_items,
+        "catalogue_items": _core_training_courses(),
     }
     return render(
         request, "partials/core_schools/schedule_training_drawer.html", context
@@ -674,7 +888,6 @@ def core_schedule_training_action(request):
     school = get_operational_school_or_404(request.user, school_id=school_id)
     train_seq = request.POST.get("training_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
-    focus_intervention = request.POST.get("focus_intervention")
     purpose_text = request.POST.get("training_purpose", "").strip()
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
@@ -682,20 +895,34 @@ def core_schedule_training_action(request):
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     if not catalogue_item_id:
         return error_fragment(
-            BadRequest("Select an eligible approved Catalogue Training."),
+            BadRequest("Select a training from the Training Catalogue."),
             status=400,
         )
     try:
         from apps.activity_catalogue.availability import (
-            SCHOOL,
-            validate_priority_training_selection,
+            validate_in_school_training_course_selection,
         )
+        from apps.activity_catalogue.services import (
+            get_selectable_item,
+            resolve_item_for_workflow_kind,
+        )
+        from apps.core.activity_types import ActivityType
 
-        selected_training = validate_priority_training_selection(
-            catalogue_item_id,
-            planning_context=SCHOOL,
+        # Any governed course: the course names the training, the standard
+        # In-school Training workflow delivers and costs it — the same split a
+        # client school's in-school training uses. Posting the course itself
+        # as the catalogue item made the Activity take the course's own kind,
+        # which for the cluster-delivered courses is not a school workflow.
+        validate_in_school_training_course_selection(catalogue_item_id)
+        course = get_selectable_item(catalogue_item_id)
+        training_profile = resolve_item_for_workflow_kind(
+            ActivityType.IN_SCHOOL_TRAINING
         )
-        focus_intervention = selected_training["ssaIntervention"] or None
+        if training_profile is None:
+            raise BadRequest(
+                "The standard In-school Training profile must be active before "
+                "a Core training can be scheduled."
+            )
     except BadRequest as exc:
         return error_fragment(exc, status=400)
 
@@ -710,16 +937,16 @@ def core_schedule_training_action(request):
 
     payload = {
         "schoolId": school_id,
-        "activityType": "core_training",
+        "activityType": ActivityType.IN_SCHOOL_TRAINING,
+        "purposeType": "in_school_training",
         "scheduledDate": scheduled_date,
-        "focusIntervention": focus_intervention,
         "activityPurposeText": purpose_text,
         "expectedParticipants": int(expected_participants)
         if expected_participants.isdigit()
         else 10,
         "responsibleStaffId": responsible_staff_id,
         "deliveryType": "partner" if partner_id else "staff",
-        "catalogueItemId": catalogue_item_id,
+        "catalogueItemId": training_profile.id,
         "requireCatalogue": True,
         "recommendationReason": request.POST.get("recommendation_reason", ""),
         # Omit the key entirely for staff delivery — an empty string would be
@@ -758,7 +985,12 @@ def core_schedule_training_action(request):
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
             # without it, closing the raw-POST bypass around the slot cap.
-            act_data = create_activity(payload, request.user, core_slot_verified=True)
+            act_data = create_activity(
+                payload,
+                request.user,
+                core_slot_verified=True,
+                training_course=course,
+            )
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
@@ -783,28 +1015,31 @@ def core_schedule_training_action(request):
                 success=True,
             )
 
-            # Success message & redirect to My Plan
-            messages.success(
+            return _core_scheduled_response(
                 request,
+                act_data,
+                scheduled_date,
                 f"Core Training T{training_sequence} scheduled successfully.",
             )
-            response = HttpResponse(
-                '<script>window.location.href = "/my-plan";</script>'
-            )
-            response["HX-Trigger"] = "close-drawer"
-            return response
     except Exception as e:
         return error_fragment(e, status=400)
 
 
 @require_page_permission("core_schools")
 def core_assign_partner_drawer(request):
-    """Renders partner assignment drawer."""
+    """Renders partner assignment drawer.
+
+    Owner, 2026-09-15: the support is chosen by Purpose of Visit, as for a
+    client school — In-school Training, Training Follow Up or SSA Support —
+    not by a Visit/Training switch. For In-school Training staff choose the
+    course here and the partner only sets the date.
+    """
+    import json
+
     school_id = request.GET.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
     partners = Partner.objects.all().order_by("name")
-    interventions = SsaIntervention.choices
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
@@ -812,42 +1047,33 @@ def core_assign_partner_drawer(request):
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
-    from apps.activity_catalogue.services import recommend_activities
-
-    catalogue_result = recommend_activities(
-        school=school,
-        principal=request.user,
-        executor_type="partner",
-        limit=3,
-    )
-    catalogue_items = [
-        row
-        for row in [
-            *catalogue_result["primary"],
-            *catalogue_result["otherEligible"],
-        ]
-        if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
+    first_visit = bool(plan) and CorePackageSchedulingService.first_visit_pending(plan)
+    purposes = [
+        (value, label)
+        for value, label in PARTNER_VISIT_PURPOSES
+        if not first_visit or value == "ssa_support"
     ]
-    from apps.activity_catalogue.availability import (
-        SCHOOL,
-        training_activity_options,
-    )
-
-    training_options = training_activity_options(
-        planning_context=SCHOOL,
-        school=school,
-        executor_type="partner",
-    )
+    from apps.frontend.views.planning_views import _school_training_follow_up_options
 
     context = {
         "school": school,
         "partners": partners,
-        "interventions": interventions,
         "available_visit_slots": available_visit_slots,
         "available_training_slots": available_training_slots,
-        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
-        "catalogue_items": catalogue_items,
-        "training_options": training_options,
+        "first_visit": first_visit,
+        "partner_visit_purposes": purposes,
+        "recommended_visit_purpose": "ssa_support" if first_visit else "",
+        "training_courses_json": json.dumps(
+            [
+                course
+                for course in _core_training_courses()
+                if course["partnerDeliveryAllowed"]
+            ]
+        ),
+        "follow_up_options_json": json.dumps(
+            _school_training_follow_up_options(school)
+        ),
+        "follow_up_fy": get_operational_fy(),
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
 
@@ -897,124 +1123,39 @@ def core_schedule_activity_drawer(request):
 @require_page_permission("core_schools")
 def core_assign_partner_action(request):
     """Handles partner assignment submission."""
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        resolve_item_for_workflow_kind,
+        validate_context,
+    )
+    from apps.core.activity_types import ActivityType
+    from apps.partners.purposes import normalise_visit_purpose, visit_purpose_label
+    from apps.ssa.services import latest_applicable_record
+
     school_id = request.POST.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
-    support_type = request.POST.get("support_type", "Visit")  # Visit | Training
-    visit_training_number = request.POST.get("visit_training_number", "1")
     partner_id = request.POST.get("partner_id")
     purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
-    focus_intervention = request.POST.get("focus_intervention")
     notes = request.POST.get("notes", "").strip()
-    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
+    course_id = request.POST.get("training_course_id", "").strip()
 
     partner = get_object_or_404(Partner, id=partner_id)
 
     try:
         with transaction.atomic():
-            from apps.activity_catalogue.services import (
-                get_selectable_item,
-                recommend_activities,
-                resolve_activity_intervention,
-                validate_context,
-            )
-            from apps.ssa.services import latest_applicable_record
-
-            if not catalogue_item_id:
-                raise BadRequest("Select an eligible approved Catalogue Activity.")
-            catalogue_item = get_selectable_item(catalogue_item_id)
-            override_reason = (request.POST.get("override_reason") or "").strip()
-            recommendation = None
-            if support_type == "Training":
-                from apps.activity_catalogue.availability import (
-                    SCHOOL,
-                    validate_priority_training_selection,
-                )
-
-                selected_training = validate_priority_training_selection(
-                    catalogue_item_id,
-                    planning_context=SCHOOL,
-                )
-                focus_intervention = selected_training["ssaIntervention"] or None
-            else:
-                recommendation_result = recommend_activities(
-                    school=school,
-                    principal=request.user,
-                    executor_type="partner",
-                    limit=3,
-                )
-                recommendation_rows = [
-                    *recommendation_result["primary"],
-                    *recommendation_result["otherEligible"],
-                ]
-                recommendation = next(
-                    (
-                        row
-                        for row in recommendation_rows
-                        if row["catalogueItemId"] == catalogue_item.id
-                    ),
-                    None,
-                )
-                if recommendation is None and not override_reason:
-                    raise BadRequest(
-                        "The selected Partner Activity is not eligible in the "
-                        "current Core School SSA context."
-                    )
-                if (
-                    recommendation
-                    and focus_intervention != recommendation["targetIntervention"]
-                    and not override_reason
-                ):
-                    raise BadRequest(
-                        "The selected intervention does not match this Catalogue "
-                        "recommendation."
-                    )
-            source_activity = (
-                Activity.objects.filter(
-                    id=source_activity_id,
-                    school=school,
-                    deleted_at__isnull=True,
-                ).first()
-                if source_activity_id
-                else None
-            )
-            validate_context(
-                catalogue_item,
-                school=school,
-                cluster=None,
-                project=None,
-                executor_type="partner",
-            )
-            focus_intervention = resolve_activity_intervention(
-                catalogue_item,
-                requested_intervention=focus_intervention,
-                source_activity=source_activity,
-            )
-            if support_type == "Visit" and catalogue_item.core_slot_type != "VISIT":
-                raise BadRequest("Choose the approved Core Visit Catalogue item.")
-            if (
-                support_type == "Training"
-                and catalogue_item.activity_type != "training"
-            ):
-                raise BadRequest("Choose an approved Training Catalogue item.")
-            if support_type not in {"Visit", "Training"}:
-                raise BadRequest("Choose either a visit or training support slot.")
-            from apps.partners.purposes import normalise_visit_purpose
-
+            if not purpose_of_visit:
+                raise BadRequest("Select the purpose of this support.")
             purpose_of_visit = normalise_visit_purpose(
-                purpose_of_visit,
-                for_partner=True,
-                fallback_activity_type=(
-                    "in_school_training"
-                    if support_type == "Training"
-                    else "school_visit"
-                ),
+                purpose_of_visit, for_partner=True
             )
-            activity_type = "visit" if support_type == "Visit" else "training"
-            try:
-                sequence_number = int(visit_training_number)
-            except (TypeError, ValueError) as error:
-                raise BadRequest("Choose an available support slot.") from error
+            is_training = purpose_of_visit == "in_school_training"
+            support_type = "Training" if is_training else "Visit"
+            activity_type = "training" if is_training else "visit"
+
             plan = (
                 CorePlan.objects.select_for_update()
                 .filter(school_id=school_id, fy=get_operational_fy())
@@ -1022,6 +1163,89 @@ def core_assign_partner_action(request):
             )
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
+            if (
+                CorePackageSchedulingService.first_visit_pending(plan)
+                and purpose_of_visit != "ssa_support"
+            ):
+                raise BadRequest(
+                    "The first Core visit of the fiscal year is SSA Support: it "
+                    "collects this year's SSA data before any other support."
+                )
+
+            training_course = None
+            source_activity = None
+            focus_intervention = None
+            if is_training:
+                if not course_id:
+                    raise BadRequest("Select the Training the partner delivers.")
+                selected = validate_in_school_training_course_selection(course_id)
+                training_course = get_selectable_item(course_id)
+                if not training_course.partner_delivery_allowed:
+                    raise BadRequest(
+                        "The selected Training is not approved for Partner delivery."
+                    )
+                catalogue_item = resolve_item_for_workflow_kind(
+                    ActivityType.IN_SCHOOL_TRAINING
+                )
+                focus_intervention = selected["ssaIntervention"] or None
+                linked = ", ".join(selected["priorityTitles"])
+                recommendation_reason = (
+                    f"Priority activity: {linked}"
+                    if linked
+                    else f"Governed {selected['category']} training."
+                )
+            else:
+                catalogue_item = resolve_item_for_workflow_kind("core_visit")
+                recommendation_reason = (
+                    f"{visit_purpose_label(purpose_of_visit)} selected by the "
+                    "assigning staff member."
+                )
+                if purpose_of_visit == "training_follow_up":
+                    from apps.frontend.views.planning_views import (
+                        _school_training_follow_up_options,
+                    )
+
+                    if not source_activity_id:
+                        raise BadRequest(
+                            "Select the completed training this support follows up."
+                        )
+                    eligible = {
+                        option["id"]
+                        for option in _school_training_follow_up_options(school)
+                    }
+                    if source_activity_id not in eligible:
+                        raise BadRequest(
+                            "Choose a completed current-FY training this School did."
+                        )
+                    source_activity = Activity.objects.get(id=source_activity_id)
+                    focus_intervention = (
+                        source_activity.focus_intervention
+                        or source_activity.purpose_intervention
+                        or None
+                    )
+            if catalogue_item is None:
+                raise BadRequest(
+                    "No approved Catalogue Activity is configured for this support. "
+                    "Ask the Country Director to configure one."
+                )
+            validate_context(
+                catalogue_item,
+                school=school,
+                cluster=None,
+                project=None,
+                executor_type="partner",
+            )
+
+            options = CorePackageSchedulingService.available_options(
+                plan, activity_type
+            )
+            requested = request.POST.get("visit_training_number", "").strip()
+            try:
+                sequence_number = (
+                    int(requested) if requested else options[0]["sequence"]
+                )
+            except (TypeError, ValueError, IndexError) as error:
+                raise BadRequest("Choose an available support slot.") from error
             slot = CorePackageSchedulingService.assert_can_assign(
                 plan=plan,
                 activity_type=activity_type,
@@ -1042,24 +1266,17 @@ def core_assign_partner_action(request):
                 assigning_staff_id=request.user.staff_profile_id,
                 assignment_mode="specific_activity",
                 catalogue_item=catalogue_item,
+                training_course=training_course,
                 source_ssa=latest_applicable_record(school),
                 source_activity=source_activity,
-                recommendation_reason=request.POST.get("recommendation_reason", "")
-                or (
-                    recommendation["recommendationReason"]
-                    if recommendation
-                    else "Authorized Core School alternative."
-                ),
-                override_reason=override_reason,
+                recommendation_reason=recommendation_reason,
                 catalogue_snapshot=catalogue_item.snapshot(),
                 focus_intervention=focus_intervention,
                 purpose_of_visit=purpose_of_visit,
                 expected_activity_type=catalogue_item.workflow_kind,
                 notes=notes,
-                visit_number=visit_training_number if support_type == "Visit" else "",
-                training_number=visit_training_number
-                if support_type == "Training"
-                else "",
+                visit_number="" if is_training else str(sequence_number),
+                training_number=str(sequence_number) if is_training else "",
                 support_type=support_type,
             )
 
@@ -1090,12 +1307,15 @@ def core_assign_partner_action(request):
                 )
                 if uid
             ]
+            what = visit_purpose_label(purpose_of_visit)
+            if training_course is not None:
+                what = f"{what}: {training_course.display_name}"
             WorkflowNotificationService.trigger(
                 event_type="core_school_assigned",
                 category="partner",
                 priority="normal",
                 title="New Core School Support Assignment",
-                body=f"Your organization has been assigned to support {school.name} with {support_type} {visit_training_number} focusing on {focus_intervention}.",
+                body=f"Your organization has been assigned to support {school.name} with {what}. Choose the date to deliver it.",
                 context_type="School",
                 context_id=school.id,
                 recipients=partner_user_ids,

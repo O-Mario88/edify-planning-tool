@@ -65,6 +65,26 @@ CORE_SLOT_ORDINALS = {
 }
 
 
+def core_training_q(prefix: str = ""):
+    """Activities that are a Core School's package trainings.
+
+    Core trainings are delivered through the standard in-school workflow with
+    the course recorded (owner, 2026-09-15), so their activity type is not
+    ``core_training``. What makes one a Core training is the package slot it
+    fills; legacy ``core_training`` rows count too. A cluster session that
+    fills a slot is not a staff school training and is excluded.
+    """
+    from django.db.models import Q
+
+    slot_activity_ids = CoreActivitySlot.objects.filter(
+        activity_type="training", activity_id__isnull=False
+    ).values("activity_id")
+    return (
+        Q(**{f"{prefix}activity_type": "core_training"})
+        | Q(**{f"{prefix}id__in": slot_activity_ids})
+    ) & Q(**{f"{prefix}cluster__isnull": True})
+
+
 class CorePackageSchedulingService:
     """One source of truth for the Core Schools 4 visits + 4 trainings rule.
 
@@ -106,6 +126,19 @@ class CorePackageSchedulingService:
             "package_complete": package_complete,
             "package_status": "Package complete" if package_complete else "In progress",
         }
+
+    @classmethod
+    def first_visit_pending(cls, plan: CorePlan) -> bool:
+        """No visit of this package is on the calendar or handed to a partner.
+
+        Owner, 2026-09-15: the first Core visit of the fiscal year is SSA
+        Support, linked to data collection, so the drawer offers only that
+        purpose until one visit slot has been taken.
+        """
+        return not any(
+            cls.is_allocated(slot) or cls._normalise_status(slot.status) == "assigned"
+            for slot in plan.slots.filter(activity_type="visit")
+        )
 
     @classmethod
     def available_sequences(cls, plan: CorePlan, activity_type: str) -> list[int]:
@@ -217,8 +250,10 @@ class CorePackageSchedulingService:
             STAFF_ANNUAL_CAP = 2
             staff_this_fy = (
                 Activity.objects.filter(
+                    core_training_q()
+                    if activity_type == "training"
+                    else Q(activity_type=activity_kind),
                     school=school,
-                    activity_type=activity_kind,
                     fy=current_fy,
                     delivery_type="staff",
                     deleted_at__isnull=True,
@@ -234,8 +269,10 @@ class CorePackageSchedulingService:
                 )
             staff_already_scheduled = (
                 Activity.objects.filter(
+                    core_training_q()
+                    if activity_type == "training"
+                    else Q(activity_type=activity_kind),
                     school=school,
-                    activity_type=activity_kind,
                     fy=current_fy,
                     quarter=current_quarter,
                     delivery_type="staff",

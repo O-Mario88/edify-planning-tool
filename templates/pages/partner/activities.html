@@ -35,7 +35,7 @@
         {% for assignment in assignments %}
         <div class="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p class="font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
+            <p class="font-bold text-slate-800">{% if assignment.training_course %}{{ assignment.training_course.display_name }}{% elif assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
             <p class="mt-1 edify-text-caption text-slate-500">{% if assignment.school %}{{ assignment.school.name }}{% else %}{{ assignment.cluster.name }}{% endif %}{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|cut:"_"|title }}{% endif %}</p>
             <p class="mt-1 edify-text-caption font-bold text-amber-700">Yet to Schedule</p>
           </div>

@@ -78,6 +78,9 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
             district=district,
             cluster_type="mixed",
             status=status,
+            # The drawer offers only the school owner's clusters (owner,
+            # 2026-09-15); these tests are about refusals, not ownership.
+            responsible_staff_id=self.profile.id,
         )
         return cluster
 
@@ -147,37 +150,21 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
 
-    def test_the_cluster_directory_branch_renders(self):
-        """The branch no local database exercises.
-
-        show_cluster_directory is only true when a school HAS a sub-county and
-        NO cluster covers it. Every school in the development database lacks a
-        sub-county, so this path — including its schools_count annotation —
-        never runs locally, which is precisely how a defect in it would reach
-        production unseen.
-        """
-        # A cluster in the district that does NOT cover this sub-county, so the
-        # directory is offered rather than an automatic match.
+    def test_the_owner_cluster_list_renders(self):
+        """The list of the owner's clusters, including its schools_count
+        annotation, which is evaluated at render rather than construction."""
         other_sub_county = SubCounty.objects.create(
             name="INC1 Elsewhere", district=self.district
         )
         cluster = self._cluster(district=self.district)
-        # Owned by this school's own staff owner. An ownerless cluster is no
-        # longer offered to anybody — a cluster belongs to the person
-        # responsible for its schools — and this test is about the annotation
-        # branch, not about ownership.
-        Cluster.objects.filter(id=cluster.id).update(
-            responsible_staff_id=self.profile.id
-        )
         ClusterSubCounty.objects.create(cluster=cluster, sub_county=other_sub_county)
 
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["show_cluster_directory"])
-        # The annotation is evaluated here, not at queryset construction.
         self.assertEqual(
-            [c.schools_count for c in response.context["all_clusters"]], [0]
+            [c.schools_count for c in response.context["owner_clusters"]], [0]
         )
+        self.assertContains(response, cluster.name)
 
 
 class AClusteredSchoolIsNotClusteredAgainTest(TestCase):

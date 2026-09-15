@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 686,
+  "titled_cards": 684,
   "templates": 259,
-  "distinct_titles": 652,
+  "distinct_titles": 650,
   "with_card_key": 13,
-  "untitled_surfaces": 770,
+  "untitled_surfaces": 772,
   "untitled_chrome": 174,
-  "untitled_nested": 248,
-  "untitled_headless": 348,
+  "untitled_nested": 249,
+  "untitled_headless": 349,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -7154,49 +7154,12 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 56,
-   "title": "Cluster selected automatically",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     1,
-     0
-    ],
-    [
-     3,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 189,
+   "line": 120,
    "title": "Responsible Field Staff",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": [
-    [
-     1,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 224,
-   "title": "Complete the school geography first",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-amber-200 bg-amber-50/60 p-4",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
+   "branch_path": []
   },
   {
    "template": "templates/partials/schools/assign_to_project_drawer.html",

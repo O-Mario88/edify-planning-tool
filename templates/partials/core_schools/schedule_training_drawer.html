@@ -91,8 +91,8 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
       data-reason="{% if item.priorityTitles %}Priority activity: {{ item.priorityTitles|join:', ' }}{% else %}Governed {{ item.category }} training.{% endif %}">{{ item.label }}</option>
     {% endfor %}
   </select>
-  <p id="core-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Approved Training Catalogue courses available for this Core School.</p>
-  {% if not catalogue_items %}<div class="mt-2 rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No eligible Training is available for this School context.</div>{% endif %}
+  <p id="core-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Every training in the Training Catalogue, whatever intervention it serves.</p>
+  {% if not catalogue_items %}<div class="mt-2 rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No training is active in the Training Catalogue.</div>{% endif %}
 </div>
 
 <div x-show="catalogueItemId" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">

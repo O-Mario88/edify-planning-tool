@@ -121,9 +121,13 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
         raise BadRequest("Only a cluster activity invites schools by name.")
 
     wanted = _clean_ids(school_ids)
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
     members = set(
         School.objects.filter(
-            cluster_id=activity.cluster_id, deleted_at__isnull=True
+            cluster_id=activity.cluster_id,
+            deleted_at__isnull=True,
+            operational_status__in=OPERATING_STATUSES,
         ).values_list("id", flat=True)
     )
     unknown = wanted - members

@@ -483,8 +483,18 @@ class Activity(SoftDeleteModel):
             from apps.core_schools.models import CoreActivitySlot
             from apps.core_schools.services import resync_plan_completion
 
-            slot = CoreActivitySlot.objects.filter(activity_id=self.id).first()
-            if slot:
+            if self.cluster_id:
+                # A cluster session a Core School was invited to and attended
+                # fills one of its training slots (apps.core_schools
+                # .cluster_credit); the loop below then mirrors it like any
+                # other slot's activity.
+                from apps.core_schools.cluster_credit import credit_cluster_session
+
+                credit_cluster_session(self)
+            # One cluster session can fill a slot at several schools.
+            for slot in CoreActivitySlot.objects.filter(
+                activity_id=self.id
+            ).select_related("core_plan"):
                 with transaction.atomic():
                     slot.status = self.status
                     if self.scheduled_date:

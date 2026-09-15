@@ -15,7 +15,7 @@
 
   <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What you are returning</p>
-    <p class="mt-2 text-[14px] font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
+    <p class="mt-2 text-[14px] font-bold text-slate-800">{% if assignment.training_course %}{{ assignment.training_course.display_name }}{% elif assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
     {% if assignment.focus_intervention %}<p class="mt-1 text-slate-500">Intervention: {{ assignment.focus_intervention|cut:"_"|title }}</p>{% endif %}
     <p class="mt-2 font-medium text-slate-600">This goes back to the staff member who assigned it. It leaves your scheduling queue, and no activity or cost is created.</p>
   </div>

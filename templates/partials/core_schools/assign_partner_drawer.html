@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Assign Core Support to Partner{% endblock %}
-{% block drawer_subtitle %}Hand off visit or training delivery for this core school to a certified partner.{% endblock %}
+{% block drawer_subtitle %}Hand Core support at this school to a partner. The partner chooses the delivery date.{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -9,81 +9,27 @@ hx-post="/core-schools/assign-partner/action"
 hx-target="#partner-form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600 "
 x-data="{
+  purposeOfVisit: '{{ recommended_visit_purpose|default:''|escapejs }}',
+  trainingCourses: {{ training_courses_json|default:'[]' }},
+  trainingCourseId: '',
+  followUps: {{ follow_up_options_json|default:'[]' }},
   sourceActivityId: '',
-  recommendationReason: '',
-  focusIntervention: '',
-  supportType: '',
-  catalogueItemId: '',
-  trainingCategory: '',
-  ssaIndicator: '',
-  resetSelection() {
-    this.catalogueItemId = '';
-    this.focusIntervention = '';
-    this.sourceActivityId = '';
-    this.recommendationReason = '';
-    this.trainingCategory = '';
-    this.ssaIndicator = '';
-  },
-  selectTraining(event) {
-    const option = event.target.options[event.target.selectedIndex];
-    this.catalogueItemId = event.target.value;
-    this.focusIntervention = option ? option.dataset.intervention || '' : '';
-    this.trainingCategory = option ? option.dataset.category || '' : '';
-    this.ssaIndicator = option ? option.dataset.indicator || '' : '';
-    this.recommendationReason = option ? option.dataset.reason || '' : '';
-  },
-  selectVisit(event) {
-    const option = event.target.options[event.target.selectedIndex];
-    this.catalogueItemId = event.target.value;
-    this.focusIntervention = option ? option.dataset.intervention || '' : '';
-    this.sourceActivityId = option ? option.dataset.source || '' : '';
-    this.recommendationReason = option ? option.dataset.reason || '' : '';
+  get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+  get isFollowUp() { return this.purposeOfVisit === 'training_follow_up'; },
+  get isSsa() { return this.purposeOfVisit === 'ssa_support'; },
+  get selectedCourse() { return this.trainingCourses.find(course => course.id === this.trainingCourseId) || null; },
+  get selectedFollowUp() { return this.followUps.find(row => row.id === this.sourceActivityId) || null; },
+  onPurposeChange() {
+    if (!this.isTraining) { this.trainingCourseId = ''; }
+    if (!this.isFollowUp) { this.sourceActivityId = ''; }
   }
 }"
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
-<input type="hidden" name="source_activity_id" :value="sourceActivityId">
-<input type="hidden" name="recommendation_reason" :value="recommendationReason">
-<input type="hidden" name="catalogue_item_id" :value="catalogueItemId">
-<input type="hidden" name="focus_intervention" :value="focusIntervention">
 
 <!-- Form Error Container -->
 <div id="partner-form-errors"></div>
-
-<div>
-<label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
-<select id="support_type" name="support_type" x-model="supportType" @change="resetSelection()" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="">Select support type…</option>
-<option value="Visit">Core Visit</option>
-<option value="Training">Core Training</option>
-</select>
-</div>
-
-<template x-if="supportType === 'Training'">
-  <div>
-    <label for="partner_core_training" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
-    <select id="partner_core_training" required @change="selectTraining($event)" class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-      <option value="">Select a training…</option>
-      {% for item in training_options %}<option value="{{ item.id }}" data-category="{{ item.category }}" data-indicator="{{ item.ssaIndicator }}" data-intervention="{{ item.ssaIntervention }}" data-reason="{% if item.priorityTitles %}Priority activity: {{ item.priorityTitles|join:', ' }}{% else %}Governed {{ item.category }} training.{% endif %}">{{ item.label }}</option>{% endfor %}
-    </select>
-    <div x-show="catalogueItemId" style="display:none" class="mt-2 grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
-      <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="trainingCategory"></strong></div>
-      <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="ssaIndicator"></strong></div>
-    </div>
-  </div>
-</template>
-
-<template x-if="supportType === 'Visit'">
-  <div>
-    <label for="partner_core_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved visit <span class="text-rose-500">*</span></label>
-    <select id="partner_core_visit" required @change="selectVisit($event)" class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-      <option value="">Select a visit…</option>
-      {% for item in catalogue_items %}<option value="{{ item.catalogueItemId }}" data-source="{{ item.sourceActivityId|default:'' }}" data-intervention="{{ item.targetIntervention|default:'' }}" data-reason="{{ item.recommendationReason|escape }}">{{ item.displayName }}</option>{% endfor %}
-    </select>
-    {% if not catalogue_items %}<p class="mt-2 rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Partner-deliverable Core Visit is currently eligible.</p>{% endif %}
-  </div>
-</template>
 
 <!-- Core School Name (Read Only) -->
 <div>
@@ -91,22 +37,85 @@ x-data="{
 <input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
 </div>
 
+{% if first_visit %}
+<div class="rounded-surface border edify-primary-border edify-primary-soft p-3 edify-primary-text" role="status" data-core-first-visit>
+  <p class="font-bold">First Core visit of Fiscal Year {{ follow_up_fy }}: SSA Support</p>
+  <p class="mt-1 font-medium">This visit collects the school&rsquo;s SSA data for the year. The other purposes open once it is assigned or scheduled.</p>
+</div>
+{% endif %}
+
+<div>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Purpose of Visit <span class="text-rose-500">*</span></label>
+<select name="purpose_of_visit" id="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+{% if not first_visit %}<option value="">Select purpose…</option>{% endif %}
+{% for value, label in partner_visit_purposes %}
+<option value="{{ value }}" {% if value == recommended_visit_purpose %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Partners deliver In-school Training, Training Follow Up or SSA Support. In-school Training fills a Core training slot; the others fill a Core visit slot.</p>
+</div>
+
+<template x-if="isSsa">
+<div>
+  <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</span>
+  <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" role="status">Data Gathering</div>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The partner uploads the visit form; the SSA scores are recorded at completion.</p>
+</div>
+</template>
+
+<template x-if="isFollowUp">
+<div class="space-y-3">
+  <div>
+    <label for="partner_source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Followed Up <span class="text-rose-500">*</span></label>
+    <select name="source_activity_id" id="partner_source_activity_id" x-model="sourceActivityId" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+      <option value="">Select a training this school did…</option>
+      <template x-for="row in followUps" :key="row.id">
+        <option :value="row.id" x-text="row.label"></option>
+      </template>
+    </select>
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
+    <p x-show="followUps.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+  </div>
+  <div x-show="selectedFollowUp" style="display:none">
+    <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</span>
+    <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" x-text="selectedFollowUp ? selectedFollowUp.interventionLabel : ''"></div>
+  </div>
+</div>
+</template>
+
+<template x-if="isTraining">
+<div class="space-y-3">
+  <div>
+    <label for="partner_core_training" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training <span class="text-rose-500">*</span></label>
+    <select name="training_course_id" id="partner_core_training" x-model="trainingCourseId" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+      <option value="">Select a training…</option>
+      <template x-for="course in trainingCourses" :key="course.id">
+        <option :value="course.id" x-text="course.label"></option>
+      </template>
+    </select>
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">You choose the training; the partner only sets the date it is delivered.</p>
+  </div>
+  <div x-show="selectedCourse" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedCourse ? selectedCourse.category : ''"></strong></div>
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedCourse ? selectedCourse.ssaInterventionLabel : ''"></strong></div>
+  </div>
+</div>
+</template>
+
 <div
+  x-show="purposeOfVisit"
   x-data="{
     visitSlots: [{% for slot in available_visit_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}],
     trainingSlots: [{% for slot in available_training_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}]
   }"
 >
-<!-- Sequence Number -->
-<div>
 <label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Available Slot</label>
-<select name="visit_training_number" id="visit_training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<template x-for="slot in (supportType === 'Visit' ? visitSlots : trainingSlots)" :key="slot.sequence">
+<select name="visit_training_number" id="visit_training_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<template x-for="slot in (isTraining ? trainingSlots : visitSlots)" :key="slot.sequence">
   <option :value="slot.sequence" x-text="slot.label"></option>
 </template>
-<option value="" x-show="(supportType === 'Visit' ? visitSlots : trainingSlots).length === 0">No slots available</option>
+<option value="" x-show="(isTraining ? trainingSlots : visitSlots).length === 0">No slots available</option>
 </select>
-</div>
 </div>
 
 <!-- Partner Selection -->
@@ -118,18 +127,6 @@ x-data="{
 <option value="{{ p.id }}">{{ p.name }}</option>
 {% endfor %}
 </select>
-</div>
-
-<!-- Purpose of Visit -->
-<div>
-<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Purpose of Visit</label>
-<select name="purpose_of_visit" id="purpose_of_visit" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="">Select purpose...</option>
-{% for value, label in partner_visit_purposes %}
-<option value="{{ value }}">{{ label }}</option>
-{% endfor %}
-</select>
-<p class="mt-1.5 edify-text-caption font-medium text-slate-400">Partners may deliver In-school Training, Training Follow Up, or SSA Support only.</p>
 </div>
 
 <!-- Notes -->

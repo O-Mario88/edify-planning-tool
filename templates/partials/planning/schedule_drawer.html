@@ -306,16 +306,16 @@ its costing on, so the costing link is derived server-side and never asked for.
 <template x-if="showFollowUpPicker">
 <div class="space-y-3">
   <div>
-    <label for="source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training / Cluster Meeting Followed Up <span class="text-rose-500">*</span></label>
+    <label for="source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training Followed Up <span class="text-rose-500">*</span></label>
     <select name="source_activity_id" id="source_activity_id" x-model="sourceActivityId" required
       class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
-      <option value="">Select a completed session…</option>
+      <option value="">Select a training this school did…</option>
       <template x-for="activity in followUpActivities" :key="activity.id">
         <option :value="activity.id" x-text="activity.label"></option>
       </template>
     </select>
-    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only completed sessions this School attended in Fiscal Year {{ follow_up_fy }} are listed.</p>
-    <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No eligible completed Cluster Training or Cluster Meeting is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
+    <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
   </div>
   <div x-show="selectedSourceActivity" style="display:none">
     <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</span>

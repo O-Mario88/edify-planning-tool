@@ -659,7 +659,8 @@ class ClusterSetupTest(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            "School added to cluster successfully.", response.content.decode()
+            "Overlap Test School added to Overlapping Cluster.",
+            response.content.decode(),
         )
 
         created = Cluster.objects.filter(name="Overlapping Cluster").first()

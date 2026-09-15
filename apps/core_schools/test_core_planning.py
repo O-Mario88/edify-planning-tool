@@ -545,11 +545,9 @@ class CoreSchoolsPlanningTest(TestCase):
             "/core-schools/assign-partner/action",
             {
                 "school_id": self.school.school_id,
-                "support_type": "Visit",
+                "purpose_of_visit": "ssa_support",
                 "visit_training_number": "1",
                 "partner_id": self.partner.id,
-                "focus_intervention": "teaching_environment",
-                "catalogue_item_id": self.core_visit_item.id,
             },
         )
         self.assertEqual(blocked_assignment.status_code, 400)
@@ -584,14 +582,11 @@ class CoreSchoolsPlanningTest(TestCase):
             "/core-schools/assign-partner/action",
             {
                 "school_id": self.school.school_id,
-                "support_type": "Visit",
+                # The support is chosen by its purpose (owner, 2026-09-15);
+                # the first Core visit of the year is SSA Support.
+                "purpose_of_visit": "ssa_support",
                 "visit_training_number": "2",
                 "partner_id": self.partner.id,
-                "focus_intervention": "teaching_environment",
-                "catalogue_item_id": self.core_visit_item.id,
-                "recommendation_reason": (
-                    "Current unresolved Teacher's Environment SSA need."
-                ),
                 "notes": "core support",
             },
         )
@@ -852,6 +847,21 @@ class CoreSchoolsPlanningTest(TestCase):
             activity=act, kind="photo", uri="core/evidence.jpg", uploaded_by="test"
         )
         payload = {"salesforceId": sf_id, **(extra or {})}
+        if act.ssa_collection_expected:
+            # The first Core visit of the FY is SSA Support (owner,
+            # 2026-09-15): completion answers the SSA question, and the
+            # scores it collected are keyed on the visit.
+            payload.setdefault("ssaCollected", True)
+            SsaRecord.objects.create(
+                school=act.school,
+                fy=FY,
+                quarter="Q1",
+                average_score=5.6,
+                verification_status="pending",
+                date_of_ssa=act.planned_date,
+                uploaded_by="test",
+                source_activity=act,
+            )
         complete_activity(act.id, payload, self.cceo)
         act.refresh_from_db()
         self.assertEqual(act.status, "submitted_to_pl")  # CCEO -> PL review first
@@ -895,10 +905,13 @@ class CoreSchoolsPlanningTest(TestCase):
             },
         )
         self.assertIn(resp.status_code, (200, 302), resp.content[:200])
+        # The course names the training; the standard In-school Training
+        # workflow delivers it (owner, 2026-09-15: any catalogue training).
         act = Activity.objects.get(
             school=self.school,
-            catalogue_item=self.core_training_item,
+            training_course=self.core_training_item,
         )
+        self.assertEqual(act.activity_type, "in_school_training")
         self._complete_core_activity(
             act, "TS-CORE1", extra={"teachersAttended": 5, "leadersAttended": 2}
         )

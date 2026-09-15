@@ -3210,7 +3210,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9198,
+      "bytes": 9715,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3449,7 +3449,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15483,
+      "bytes": 15480,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -3477,7 +3477,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16727,
+      "bytes": 22585,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3488,7 +3488,7 @@
       "kind": "application-partial",
       "name": "Schedule Visit Drawer",
       "purpose": "Reusable schedule visit drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty",
@@ -8542,7 +8542,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3930,
+      "bytes": 4012,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/return-drawer"
@@ -8568,7 +8568,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3036,
+      "bytes": 3672,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
@@ -8595,7 +8595,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9797,
+      "bytes": 9816,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -8674,7 +8674,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 35719,
+      "bytes": 35710,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -9789,14 +9789,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13568,
+      "bytes": 8298,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Add To Cluster Drawer",
       "purpose": "Reusable add to cluster drawer interface primitive",
@@ -9804,6 +9804,7 @@
       "states": [
         "default",
         "error",
+        "disabled",
         "open"
       ],
       "tables": 0,
@@ -28340,6 +28341,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -28545,6 +28547,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -28634,6 +28637,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -28726,6 +28730,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -28823,6 +28828,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -28923,6 +28929,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29017,6 +29024,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29109,6 +29117,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29204,6 +29213,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29298,6 +29308,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29392,6 +29403,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29492,6 +29504,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29588,6 +29601,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29632,7 +29646,7 @@
         "test:referenced-by-automated-test",
         "permission:core_schools"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -29682,6 +29696,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29712,6 +29727,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[18px]",
         "text-[20px]"
       ]
@@ -29777,6 +29793,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -29867,6 +29884,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
+        "apps.planning.services",
         "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
@@ -62631,6 +62649,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]",
         "text-[16px]"
       ]
@@ -73587,7 +73606,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.add_to_cluster_drawer_view",
       "card_count": 0,
@@ -73600,14 +73619,13 @@
         "test:referenced-by-automated-test",
         "permission:school_directory"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /schools/{{ school.id }}/add-to-cluster",
-        "GET /schools/{{ school.id }}/edit-drawer"
+        "POST /schools/{{ school.id }}/add-to-cluster"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -73623,7 +73641,7 @@
       "permission_key": "school_directory",
       "primary_action": "Add To Cluster Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate add to cluster drawer within the frontend workflow.",
+      "purpose": "Assign a school straight to one of its owner's clusters.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -73661,7 +73679,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false

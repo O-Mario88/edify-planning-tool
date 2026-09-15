@@ -1617,6 +1617,9 @@ def create(
         school = School.objects.filter(school_id=school_id_str).first()
         if not school:
             raise NotFoundError(f"School {school_id_str} not in directory")
+        from apps.schools.lifecycle_service import assert_operating
+
+        assert_operating(school)
         # Costing should use the target school's real district type whenever
         # the form did not explicitly provide one.
         if not data.get("districtType") and school.district_id:
@@ -1927,6 +1930,7 @@ def create(
 
     source_ssa = None
     source_activity = None
+    source_without_focus = False
     mapping_modes: set = set()
     catalogue_cluster = _catalogue_cluster(cluster_id) if cluster_id else None
     is_school_training_follow_up = bool(
@@ -1937,9 +1941,7 @@ def create(
         )
     )
     if is_school_training_follow_up and not data.get("sourceActivityId"):
-        raise BadRequest(
-            "Select the completed Cluster Training or Cluster Meeting this visit follows up."
-        )
+        raise BadRequest("Select the completed training this visit follows up.")
     governed_recommendation_reason = data.get("recommendationReason", "")
     governed_recommendation_source = {}
     # Owner, 2026-09-13: every school activity plan is SSA informed. The need
@@ -1986,7 +1988,27 @@ def create(
                 raise BadRequest(
                     "The source Activity belongs to a different Special Project."
                 )
-            if source_activity.status not in (
+            if is_school_training_follow_up:
+                from apps.activities.training_history import (
+                    follow_up_source_problem,
+                )
+
+                problem = follow_up_source_problem(source_activity, school, fy)
+                if problem:
+                    raise BadRequest(problem)
+                inherited_focus = (
+                    source_activity.focus_intervention
+                    or source_activity.purpose_intervention
+                )
+                if inherited_focus and inherited_focus not in SsaIntervention.values:
+                    raise BadRequest(
+                        "The selected session has no valid intervention to follow up. "
+                        "Ask IA to repair its completion record."
+                    )
+                # A course that is not SSA-scored (an orientation) is followed
+                # up with no intervention rather than being refused.
+                source_without_focus = not inherited_focus
+            elif source_activity.status not in (
                 "completed",
                 "ia_verified",
                 "accountant_confirmed",
@@ -1996,36 +2018,6 @@ def create(
                     "Follow-up requires a completed source Training or support Activity."
                 )
             if is_school_training_follow_up:
-                permitted_source_types = {
-                    ActivityType.CLUSTER_TRAINING,
-                    ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
-                    ActivityType.CLUSTER_MEETING,
-                    ActivityType.CLUSTER_MEETING_SSA_REVIEW,
-                }
-                if source_activity.activity_type not in permitted_source_types:
-                    raise BadRequest(
-                        "Training Follow Up must reference a completed Cluster "
-                        "Training or Cluster Meeting."
-                    )
-                if source_activity.fy != fy:
-                    raise BadRequest(
-                        "Training Follow Up must reference a session from the "
-                        "same Fiscal Year as the scheduled visit."
-                    )
-                if school.id not in (source_activity.attended_school_ids or []):
-                    raise BadRequest(
-                        "This School is not recorded as attending the selected "
-                        "Cluster Training or Cluster Meeting."
-                    )
-                inherited_focus = (
-                    source_activity.focus_intervention
-                    or source_activity.purpose_intervention
-                )
-                if inherited_focus not in SsaIntervention.values:
-                    raise BadRequest(
-                        "The selected session has no valid intervention to follow up. "
-                        "Ask IA to repair its completion record."
-                    )
                 # The source session, not a free-form browser field, owns the
                 # intervention and its lineage.
                 focus = inherited_focus
@@ -2054,6 +2046,7 @@ def create(
             ssa_default_focus
             and training_course is None
             and not non_school
+            and not source_without_focus
             and not (focus or data.get("purposeIntervention"))
         ):
             ssa_focus = plan_alignment.default_focus(
@@ -2483,6 +2476,7 @@ def create(
         )
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
+            from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
 
             apply_catalogue_snapshot(
                 activity,
@@ -2493,6 +2487,11 @@ def create(
                 source_activity=source_activity,
                 override_reason=data.get("overrideReason", ""),
                 recommendation_source=governed_recommendation_source,
+                intervention_optional=(
+                    is_ssa_activity
+                    or p_type in INTERVENTION_FREE_PURPOSES
+                    or source_without_focus
+                ),
             )
             if training_course is not None:
                 # Operational snapshots stay sourced from the standard
@@ -3519,7 +3518,23 @@ def _confirm_activity_after_authorization(
                 "IA Verification failed: Activity Salesforce ID is missing."
             )
 
-        if not a.focus_intervention:
+        from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
+        # A Core visit that collects the SSA, a relationship visit, or the
+        # follow-up of a course that is not SSA-scored names no intervention
+        # by design; every other Core activity must.
+        focus_expected = not (
+            a.ssa_collection_expected
+            or a.purpose_type in INTERVENTION_FREE_PURPOSES
+            or (
+                a.follow_up_of_activity_id
+                and not (
+                    a.follow_up_of_activity.focus_intervention
+                    or a.follow_up_of_activity.purpose_intervention
+                )
+            )
+        )
+        if focus_expected and not a.focus_intervention:
             raise BadRequest("IA Verification failed: Focus intervention not recorded.")
 
         if a.school and a.school.school_type == "core":
@@ -3789,6 +3804,9 @@ def _notify_ia_return(a, reason: str) -> None:
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     _assert_may_schedule(a, principal)
+    from apps.schools.lifecycle_service import assert_operating
+
+    assert_operating(a.school)
     _assert_not_awaiting_owner(a)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
@@ -4052,6 +4070,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 "school",
                 "cluster",
                 "catalogue_item",
+                "training_course",
                 "source_ssa",
                 "source_activity",
                 "project",
@@ -4063,6 +4082,9 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             raise NotFoundError("Partner assignment not found.")
         if pa.status in ("partner_scheduled", "scheduled", "completed"):
             raise BadRequest("This assignment is already scheduled.")
+        from apps.schools.lifecycle_service import assert_operating
+
+        assert_operating(pa.school)
         scope = resolve_user_scope(principal)
         if scope.active_role not in COUNTRY_SCHEDULING_ROLES:
             if scope.country_scope:
@@ -4204,6 +4226,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         )
         activity = Activity.objects.create(
             activity_type=_sched_activity_type,
+            training_course=pa.training_course,
             school=pa.school,
             cluster=pa.cluster,
             project_id=pa.project_id,
@@ -4259,7 +4282,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         )
         partner_focus = pa.focus_intervention
         partner_focus_source = "planner" if partner_focus else ""
-        if not partner_focus and not pa.source_activity_id:
+        if (
+            not partner_focus
+            and not pa.source_activity_id
+            and not pa.training_course_id
+        ):
             # The assignment named no target: the SSA as it stands on the day
             # the partner dates the work decides it, as it would for staff.
             partner_focus = plan_alignment.default_focus(
@@ -4285,6 +4312,8 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
 
+            from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
             apply_catalogue_snapshot(
                 activity,
                 item=catalogue_item,
@@ -4293,7 +4322,40 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 requested_intervention=partner_focus,
                 source_activity=pa.source_activity,
                 override_reason=pa.override_reason,
+                # SSA Support collects data, and a course that is not
+                # SSA-scored has none to hand on: neither names one.
+                intervention_optional=(
+                    activity.ssa_collection_expected
+                    or pa.purpose_of_visit in INTERVENTION_FREE_PURPOSES
+                    or pa.training_course_id is not None
+                    or (
+                        pa.source_activity_id is not None
+                        and not (
+                            pa.source_activity.focus_intervention
+                            or pa.source_activity.purpose_intervention
+                        )
+                    )
+                ),
             )
+            if pa.training_course_id:
+                # Staff chose the course at handover; the partner only dated
+                # it. The course names the work, as on a staff-scheduled one.
+                course = pa.training_course
+                activity.activity_name_snapshot = course.display_name
+                activity.recommendation_source = {
+                    **(activity.recommendation_source or {}),
+                    "trainingCourseId": course.id,
+                    "trainingCourseCode": course.stable_code,
+                    "trainingCategory": course.training_category,
+                    "ssaIndicator": course.ssa_indicator_label,
+                }
+                activity.save(
+                    update_fields=[
+                        "activity_name_snapshot",
+                        "recommendation_source",
+                        "updated_at",
+                    ]
+                )
         plan_alignment.stamp(
             activity,
             plan_alignment.assess(

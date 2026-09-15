@@ -854,9 +854,12 @@ def create_assignment(**fields):
     post_save signal (apps/partners/signals.py), which covers every creation
     path by construction.
     """
+    from apps.schools.lifecycle_service import assert_operating
+
     from .models import PartnerAssignment
 
     fields.pop("status", None)
+    assert_operating(fields.get("school"))
     return PartnerAssignment.objects.create(
         status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
     )

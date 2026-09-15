@@ -35,6 +35,22 @@ from apps.schools.models import School
 REASON_MIN_LENGTH = 20
 REASON_MAX_LENGTH = 600
 
+CLOSED_SCHOOL_MESSAGE = (
+    "This school is closed, so it takes no new activities. Its history is on "
+    "the Closed Schools page; reopen the school before planning work there."
+)
+
+
+def assert_operating(school) -> None:
+    """Refuse new work at a closed school (owner, 2026-09-15).
+
+    Closure disables the school from all activities: nothing is scheduled,
+    rescheduled, assigned or invited there. Work it already did stays intact
+    and can still be completed and verified.
+    """
+    if school is not None and getattr(school, "is_closed", False):
+        raise BadRequest(CLOSED_SCHOOL_MESSAGE)
+
 
 # ── The one definition ───────────────────────────────────────────────────────
 def active_schools(base=None):

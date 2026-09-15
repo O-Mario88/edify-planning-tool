@@ -159,8 +159,10 @@ class AnalyticsWorkspaceStructureTest(TestCase):
             for g in build_sidebar_for_user(lead, "/dashboard")
             if g["label"] == "REFERENCE"
         )
-        self.assertTrue(reference["standalone"])
-        self.assertTrue(reference["expanded"])
+        # Two links since Closed Schools joined the Programme Lead's sidebar
+        # (owner, 2026-09-15), so it is an ordinary group rather than a link.
+        self.assertIn("Closed Schools", [i["label"] for i in reference["items"]])
+        self.assertFalse(reference["standalone"])
 
     def test_a_role_with_one_section_gets_that_section_by_name(self):
         """An "Analytics" link that opens a single page is a lie about scope."""

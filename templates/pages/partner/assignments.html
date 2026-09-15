@@ -25,7 +25,7 @@
       <div class="py-3 flex items-center justify-between gap-3">
         <div class="min-w-0">
           <p class="text-[13px] font-semibold truncate">{% firstof a.school.name a.cluster.name "Field work" %}</p>
-          <p class="edify-text-caption text-slate-400">{% firstof a.catalogue_item.display_name a.workflow_kind|cut:"_"|title %}{% if a.due_date %} · due {{ a.due_date|date:"d M Y" }}{% endif %}</p>
+          <p class="edify-text-caption text-slate-400">{% firstof a.training_course.display_name a.catalogue_item.display_name a.workflow_kind|cut:"_"|title %}{% if a.due_date %} · due {{ a.due_date|date:"d M Y" }}{% endif %}</p>
         </div>
         <button type="button"
                 hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"

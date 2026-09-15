@@ -28,6 +28,14 @@
   required it (`data.get("expectedParticipants")` is optional the whole way
   down) and the real figure is captured with attendance at completion.
   {% endcomment %}
+  {% if approved_item %}
+  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3" data-assignment-work>
+    <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">{% firstof assignment.purpose_label "Support" %}</span>
+    <p class="mt-1 text-[13px] font-bold text-slate-800">{% firstof assignment.training_course.display_name approved_item.display_name %}</p>
+    {% if assignment.training_course_id %}<p class="mt-1 edify-text-caption font-medium text-slate-500">The training was chosen at assignment. Choose the date it is delivered.</p>{% endif %}
+  </div>
+  {% endif %}
+
   <div>
     <label for="partner-scheduled-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery date</label>
     <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
