@@ -45,7 +45,13 @@ class TableBoundsTest(SimpleTestCase):
     #:   to the user's role (typically 3 to 6).
     #: * The PL Team Targets performance matrix (`members`, bounded by supervisees)
     #:   and monthly trend table (`team_trend`, exactly 12 financial-year months).
-    UNBOUNDED_CEILING = 81
+    #:
+    #: 82 rather than 81 for the "Waiting on you" table on Today
+    #: (partials/today/workbench.html, owner 2026-09-14): `waiting` is capped
+    #: at WAITING_LIMIT (8) in apps.frontend.views.today_views, and the card's
+    #: header discloses the whole queue ("View all N") — bounded in Python,
+    #: and the reader is told there is more.
+    UNBOUNDED_CEILING = 82
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

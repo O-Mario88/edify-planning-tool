@@ -240,8 +240,9 @@ window.subregionMap = function (){
       // full viewport height less the fixed chrome above it — the top bar and
       // the card's own header — so the country and its distribution table
       // fill the screen once the card is scrolled into view, on every size.
-      // Nothing caps it at the canvas width any more: a wide screen simply
-      // centres the square inside a wider box.
+      // The distribution table sits below the map (owner, 2026-09-14), so
+      // the square is centred in the card's full width; the height is what
+      // bounds it.
       const top = viewport.getBoundingClientRect().top;
       const header = document.querySelector('.edify-topbar');
       const topbar = header ? header.getBoundingClientRect().height : 56;
@@ -258,9 +259,9 @@ window.subregionMap = function (){
     },
     watchWideColumns(){
       if(this._wideColumnsQuery || !window.matchMedia) return;
-      const query = window.matchMedia(
-        '(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)',
-      );
+      // The table sits below the map at every width (owner, 2026-09-14), so
+      // the three wide columns need only a tablet's width.
+      const query = window.matchMedia('(min-width: 48rem)');
       this.wideColumns = query.matches;
       query.addEventListener('change', event => { this.wideColumns = event.matches; });
       this._wideColumnsQuery = query;

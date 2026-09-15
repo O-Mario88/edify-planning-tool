@@ -707,7 +707,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75551,
+      "bytes": 75670,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2162,7 +2162,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18106,
+      "bytes": 18275,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10733,15 +10733,15 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 1060,
+      "bytes": 2303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today/act",
         "/today/snooze"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
+      "forms": 2,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Queue Item Done",
       "purpose": "Reusable queue item done interface primitive",
@@ -10755,9 +10755,42 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 8372,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/today",
+        "/today/panel",
+        "/today/unsnooze"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Queue Row",
+      "purpose": "Reusable queue row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/today/queue_row.html",
+      "variants": [
+        "danger",
+        "{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}",
+        "{{ todo.due_tone|default:",
+        "{{ todo.status_tone|default:"
+      ]
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12495,
+      "bytes": 13597,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -10775,7 +10808,7 @@
         "default",
         "empty"
       ],
-      "tables": 0,
+      "tables": 1,
       "template": "partials/today/workbench.html",
       "variants": [
         "info",
@@ -101627,7 +101660,7 @@
     "activity_states": 24,
     "all_routes": 1274,
     "api_routes": 359,
-    "component_templates": 445,
+    "component_templates": 446,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,
