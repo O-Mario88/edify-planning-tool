@@ -190,6 +190,13 @@ class CorePackageSchedulingService:
                 "Core support must be scheduled within this package's fiscal year."
             )
 
+        if is_partner_delivery and activity_type == "visit":
+            # The partner side of the package is two visits, the mirror of
+            # STAFF_ANNUAL_CAP below (owner, 2026-09-15).
+            from apps.planning.visit_gate import assert_partner_may_schedule_visit
+
+            assert_partner_may_schedule_visit(school, plan.fy)
+
         if not is_partner_delivery:
             current_day = date.today()
             current_fy = get_operational_fy(current_day)
@@ -617,10 +624,18 @@ class CorePackageProgressService:
             .annotate(count=Count("id"))
         }
 
+        # The staff and partner halves of each package's visits (owner,
+        # 2026-09-15: staff schedule two, a partner is assigned two), from
+        # the same rule the Schedule and Assign buttons grey out on.
+        from apps.planning.visit_gate import visit_gates
+
+        gate_map = visit_gates(iterator, fy)
+
         # Prefetch school geo details and latest SSA
         schools_data = []
         for s in iterator:
             plan = plans_map.get(s.school_id)
+            gate = gate_map[s.id]
 
             # Calculate the average and recommendation bands from the actual
             # saved intervention scores, not the denormalized record average.
@@ -826,6 +841,21 @@ class CorePackageProgressService:
                     "core_package_available": bool(plan)
                     and not package_summary["package_complete"],
                     "blocked_reason": blocked_reason,
+                    # Staff's two visits: the Schedule button greys out once
+                    # they are used. Trainings are not visits, so the row's
+                    # Training entry stays open while staff trainings remain.
+                    "staff_visit_count": gate.staff_visits,
+                    "staff_visits_cap": gate.staff_cap,
+                    "staff_can_schedule_visit": gate.staff_can_schedule,
+                    "staff_visit_reason": gate.staff_reason,
+                    "staff_training_count": gate.staff_trainings,
+                    "staff_trainings_open": gate.staff_trainings_open,
+                    # Partner's two visits: scheduled by, or assigned to, a
+                    # partner. The Assign button greys out once both are held.
+                    "partner_visit_count": gate.partner_held_visits,
+                    "partner_visits_cap": gate.partner_cap,
+                    "can_assign_partner_visit": gate.can_assign_partner,
+                    "assign_visit_reason": gate.assign_reason,
                     "next_missing_milestone": next_missing_milestone,
                 }
             )

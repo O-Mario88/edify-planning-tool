@@ -141,12 +141,14 @@ class SchoolProfileEditTest(TestCase):
         self.assertEqual(self.school.cluster_id, cluster.id)
         self.assertEqual(self.school.cluster_status, "clustered")
 
+        # The school is clustered by its geography, so the Add to Cluster
+        # drawer no longer offers to cluster it again (owner, 2026-09-15: no
+        # double clustering); it names the cluster the school is in.
         drawer = self.client.get(
             reverse("frontend:add_to_cluster_drawer", args=[self.school.id])
         )
         self.assertEqual(drawer.status_code, 200)
-        self.assertEqual(drawer.context["existing_covering_cluster"], cluster)
-        self.assertContains(drawer, "Cluster selected automatically")
+        self.assertContains(drawer, "already in cluster Namagunga Cluster")
 
     def test_directory_school_name_links_to_its_profile(self):
         response = self.client.get(reverse("frontend:schools_directory"))

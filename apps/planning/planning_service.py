@@ -514,11 +514,23 @@ class PlanningDashboardService:
                     )
                 weakest_map[sch_id] = weakest_list
 
-            # Resolve partner assignments
-            assignments = PartnerAssignment.objects.filter(
-                school_id__in=school_ids
-            ).select_related("partner")
+            # Resolve partner assignments. A returned assignment has let the
+            # school go (owner, 2026-09-15: staff schedule it again once the
+            # partner returns it), so it must not read as "Partner Pending
+            # Schedule"; and the newest live row wins when there are several.
+            assignments = (
+                PartnerAssignment.objects.filter(school_id__in=school_ids)
+                .exclude(status=PartnerAssignment.STATUS_RETURNED_TO_STAFF)
+                .select_related("partner")
+                .order_by("created_at")
+            )
             assignment_map = {a.school_id: a for a in assignments}
+
+            # Who may schedule or assign a visit at each school this year —
+            # the one rule the Schedule and Assign buttons grey out on.
+            from apps.planning.visit_gate import visit_gates
+
+            gate_map = visit_gates(paginated_schools, fy)
 
             # Schools store an owner as either a StaffProfile ID or a User ID,
             # depending on the source that assigned it. Build a display-name
@@ -622,6 +634,7 @@ class PlanningDashboardService:
 
                 has_scheduled = s.id in scheduled_map
                 partner_assignment = assignment_map.get(s.id)
+                gate = gate_map[s.id]
 
                 readiness_details = PlanningReadinessService.get_school_readiness(
                     school=s,
@@ -669,6 +682,17 @@ class PlanningDashboardService:
                         "blockedReason": readiness_details["reason"]
                         if readiness_details["blockedActions"]
                         else None,
+                        # The row's Schedule button is off only while a partner
+                        # holds the school; a used follow-up visit greys that
+                        # purpose inside the drawer and leaves in-school
+                        # training, donor and social visits open.
+                        "staffCanSchedule": not gate.staff_locked,
+                        "staffScheduleReason": gate.staff_locked_reason,
+                        "followUpVisitOpen": gate.staff_can_schedule,
+                        "followUpVisitReason": gate.staff_reason,
+                        "canAssignPartner": gate.can_assign_partner,
+                        "assignPartnerReason": gate.assign_reason,
+                        "visitGate": gate.as_dict(),
                         "ownerId": s.account_owner_id,
                         "ownerName": staff_names_by_owner_id.get(s.account_owner_id)
                         or s.account_owner_name_raw

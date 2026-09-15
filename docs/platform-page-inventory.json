@@ -2784,7 +2784,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6174,
+      "bytes": 6807,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -3391,7 +3391,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4344,
+      "bytes": 4897,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-activity"
@@ -3472,14 +3472,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6489,
+      "bytes": 9520,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "School Row",
       "purpose": "Reusable school row interface primitive",
@@ -3704,6 +3704,48 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3826,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Whos Online",
+      "purpose": "Reusable  whos online interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/_whos_online.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1409,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Whos Online Row",
+      "purpose": "Reusable  whos online row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/_whos_online_row.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 3543,
       "deprecated_alternatives": [],
@@ -3752,7 +3794,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3841,
+      "bytes": 3160,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3976,7 +4018,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 32714,
+      "bytes": 33152,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8498,7 +8540,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9381,
+      "bytes": 9797,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -8577,7 +8619,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 35296,
+      "bytes": 35719,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -8626,7 +8668,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5588,
+      "bytes": 6424,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9819,7 +9861,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6750,
+      "bytes": 6978,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -9870,6 +9912,9 @@
       "bytes": 806,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/partner/assignments/<str:assignment_id>/schedule-drawer",
+        "/planning/assign-partner-modal",
+        "/planning/schedule-modal",
         "/schools/<str:school_id>/add-to-cluster",
         "/schools/<str:school_id>/assign-to-project"
       ],
@@ -31706,6 +31751,7 @@
       "page_title": "Dashboard",
       "page_type": "interaction-fragment",
       "per_page_css": [
+        "css/components/presence.css",
         "css/admin-dashboard.css"
       ],
       "permission_key": "dashboard",
@@ -61702,7 +61748,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_assigned_activities_view",
       "card_count": 0,
@@ -61767,7 +61813,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -61797,7 +61843,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_assigned_schools_view",
       "card_count": 0,
@@ -61862,7 +61908,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -61986,7 +62032,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_assignment_detail_view",
       "card_count": 0,
@@ -62051,7 +62097,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": false,
         "loading": false
@@ -62357,6 +62403,7 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/drawer_error.html",
         "template:partials/partners/schedule_assignment_drawer.html",
         "test:referenced-by-automated-test",
         "permission:partner_activities"
@@ -62430,6 +62477,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/partners/schedule_assignment_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -62438,6 +62486,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -65733,6 +65782,7 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/drawer_error.html",
         "template:partials/planning/assign_partner_drawer.html",
         "test:referenced-by-automated-test",
         "permission:planning"
@@ -65812,6 +65862,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/planning/assign_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -65820,7 +65871,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]"
+        "text-[13px]",
+        "text-[14px]"
       ]
     },
     {
@@ -66311,6 +66363,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/planning/schedule_cluster_drawer.html",
+        "template:partials/schools/drawer_error.html",
         "template:partials/planning/schedule_drawer.html",
         "test:referenced-by-automated-test",
         "permission:planning"
@@ -66393,6 +66446,7 @@
       },
       "templates": [
         "partials/planning/schedule_cluster_drawer.html",
+        "partials/schools/drawer_error.html",
         "partials/planning/schedule_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -98505,6 +98559,7 @@
       "route": "/partner/assignments/<str:assignment_id>/schedule-drawer",
       "route_name": "partner_schedule_assignment_drawer",
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/partners/schedule_assignment_drawer.html"
       ]
     },
@@ -98988,6 +99043,7 @@
       "route": "/planning/assign-partner-modal",
       "route_name": "planning_assign_partner_modal",
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/planning/assign_partner_drawer.html"
       ]
     },
@@ -99071,6 +99127,7 @@
       "route_name": "planning_schedule_modal",
       "templates": [
         "partials/planning/schedule_cluster_drawer.html",
+        "partials/schools/drawer_error.html",
         "partials/planning/schedule_drawer.html"
       ]
     },
@@ -101662,7 +101719,7 @@
     "activity_states": 24,
     "all_routes": 1274,
     "api_routes": 359,
-    "component_templates": 446,
+    "component_templates": 448,
     "full_pages": 255,
     "mobile_contract_pass": 517,
     "nonvisual_actions": 261,

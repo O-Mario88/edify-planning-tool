@@ -1098,6 +1098,20 @@ def partner_schedule_assignment_drawer(request, assignment_id):
         status__in=["assigned", "pending_scheduling"],
     )
     _ensure_assignment_item(assignment)
+    from apps.planning.visit_gate import visit_gates
+
+    _annotate_schedule_gate(
+        assignment,
+        visit_gates([assignment.school]) if assignment.school_id else {},
+    )
+    if not assignment.can_schedule:
+        # The queue greys the button out; a stale page still gets the reason
+        # rather than a form the service will refuse.
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {"error": assignment.schedule_blocked_reason},
+        )
     return render(
         request,
         "partials/partners/schedule_assignment_drawer.html",
@@ -1411,7 +1425,14 @@ def _assigned_intake(request, *, school_scoped: bool):
             id__in={a.assigning_staff_id for a in assignments if a.assigning_staff_id}
         ).values_list("id", "user__name")
     )
+    # The school's own visit rule (owner, 2026-09-15): a client school is
+    # visited once a year, a core school's partner side holds two visits. The
+    # Schedule button greys out with the reason; Return stays available.
+    from apps.planning.visit_gate import visit_gates
+
+    gate_map = visit_gates([a.school for a in assignments if a.school_id])
     for a in assignments:
+        _annotate_schedule_gate(a, gate_map)
         a.assigned_by_name = (
             names.get(a.assigning_staff_id) or sp_names.get(a.assigning_staff_id) or "—"
         )
@@ -1430,6 +1451,33 @@ def _assigned_intake(request, *, school_scoped: bool):
             visit_purpose_label(a.purpose_of_visit, "") or a.purpose or "—"
         )
     return assignments
+
+
+def _annotate_schedule_gate(assignment, gate_map) -> None:
+    """``can_schedule`` / ``schedule_blocked_reason`` on a partner assignment,
+    from the school's visit gate. Cluster work and returned rows are not
+    gated here."""
+    from apps.planning.visit_gate import is_gated_visit
+
+    assignment.can_schedule = True
+    assignment.schedule_blocked_reason = ""
+    gate = gate_map.get(assignment.school_id) if assignment.school_id else None
+    if gate is None or assignment.status not in ("assigned", "pending_scheduling"):
+        return
+    # An assignment with no recorded type is a school visit: that is what a
+    # school-scoped handover is (see _assignment_is_school_scoped).
+    activity_type = (
+        assignment.catalogue_item.workflow_kind
+        if assignment.catalogue_item_id
+        else (
+            assignment.expected_activity_type
+            or ("core_visit" if gate.rule == "core" else "school_visit")
+        )
+    )
+    if not is_gated_visit(gate.rule, activity_type, assignment.catalogue_item):
+        return
+    assignment.can_schedule = gate.partner_can_schedule
+    assignment.schedule_blocked_reason = gate.partner_reason
 
 
 @require_page_permission("partner_schools")
@@ -1495,6 +1543,12 @@ def partner_assignment_detail_view(request, assignment_id):
         or "—"
     )
     can_decide = assignment.status in ("assigned", "pending_scheduling")
+    from apps.planning.visit_gate import visit_gates
+
+    _annotate_schedule_gate(
+        assignment,
+        visit_gates([assignment.school]) if assignment.school_id else {},
+    )
     return render(
         request,
         "pages/partner/assignment_detail.html",

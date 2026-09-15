@@ -1,0 +1,65 @@
+{% comment %}
+  Who's Online (owner, 2026-09-15): who logged in, who is online, how long,
+  what they were working on and which part of the system. One table for the
+  Admin's Platform Operations view and the Country Director's Operations
+  view. CCEOs fold under their Program Lead, everyone else under their role,
+  so a country roster reads as a dozen groups and not a hundred rows; a
+  group opens by itself when somebody in it is online.
+
+  Expects `presence` (apps.accounts.presence.presence_summary).
+{% endcomment %}
+<section class="presence-panel" aria-labelledby="presence-title" data-admin-presence>
+  <header class="presence-panel__header">
+    <div>
+      <h2 id="presence-title">Who's Online</h2>
+      <p class="presence-panel__caption">{{ presence.online_count }} of {{ presence.people_count }} online in the last {{ presence.window_minutes }} min · {{ presence.logins_today }} sign-in{{ presence.logins_today|pluralize }} today · {{ presence.logins_this_week }} this week</p>
+    </div>
+    <span class="presence-legend" aria-hidden="true"><i class="admin-presence-light admin-presence-light--online"></i> online <i class="admin-presence-light admin-presence-light--offline"></i> offline</span>
+  </header>
+  <div class="presence-table-wrap">
+    <table class="presence-table">
+      <thead>
+        <tr>
+          <th scope="col" class="presence-table__status"><span class="sr-only">Status</span></th>
+          <th scope="col">Staff name</th>
+          <th scope="col">Duration</th>
+          <th scope="col">Working on what</th>
+          <th scope="col">Part of the system accessed</th>
+        </tr>
+      </thead>
+      {% for group in presence.groups %}
+      <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
+        <tr class="presence-group__row">
+          <td colspan="5">
+            <button type="button" class="presence-group__toggle" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="presence-group-{{ forloop.counter }}">
+              <span class="presence-group__chevron" aria-hidden="true"></span>
+              <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
+              <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
+            </button>
+          </td>
+        </tr>
+        {% if group.lead %}{% with person=group.lead is_lead=True %}{% include "partials/dashboards/_whos_online_row.html" %}{% endwith %}{% endif %}
+        {% for person in group.members %}{% include "partials/dashboards/_whos_online_row.html" with is_lead=False %}{% endfor %}
+      </tbody>
+      {% empty %}
+      <tbody><tr><td colspan="5" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
+      {% endfor %}
+    </table>
+  </div>
+  <script>
+    (function () {
+      /* Groups with nobody online start folded; the toggle is plain DOM so
+         the table works with or without Alpine on the page. */
+      document.querySelectorAll('[data-admin-presence] tbody.presence-group').forEach(function (group) {
+        var toggle = group.querySelector('.presence-group__toggle');
+        if (!toggle) return;
+        if (toggle.getAttribute('aria-expanded') !== 'true') group.setAttribute('data-collapsed', '');
+        toggle.addEventListener('click', function () {
+          var open = toggle.getAttribute('aria-expanded') !== 'true';
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          group.toggleAttribute('data-collapsed', !open);
+        });
+      });
+    })();
+  </script>
+</section>

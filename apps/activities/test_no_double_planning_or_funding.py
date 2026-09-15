@@ -1,8 +1,9 @@
-"""Flexible activity planning with strict duplicate funding safeguards.
+"""Activity planning with strict duplicate funding safeguards.
 
-Annual client entitlements are advisory under the relaxed scheduling policy.
-Core activities still require reserved package slots, each cost line belongs
-in only one weekly request, and scheduled costs follow the activity's week.
+A client school is visited once a year (owner, 2026-09-15; the rule lives in
+apps.planning.visit_gate). Core activities still require reserved package
+slots, each cost line belongs in only one weekly request, and scheduled costs
+follow the activity's week.
 """
 
 from __future__ import annotations
@@ -26,7 +27,8 @@ def _next_monday(weeks: int = 1) -> date:
 
 
 class ClientEntitlementHoldsTest(TestCase):
-    """Client annual entitlements do not block additional planned work."""
+    """A client school's visit is once a year; the training entitlement stays
+    advisory."""
 
     @classmethod
     def setUpTestData(cls):
@@ -70,9 +72,18 @@ class ClientEntitlementHoldsTest(TestCase):
             "school_visit", self.school, get_operational_fy(_next_monday()), {}
         )
 
-    def test_additional_client_visits_are_not_blocked_by_annual_entitlements(self):
+    def test_a_second_client_visit_in_the_year_is_refused(self):
         self._existing_visit()
-        self._schedule_another()
+        with self.assertRaises(BadRequest):
+            self._schedule_another()
+
+    def test_a_second_client_training_is_still_allowed(self):
+        from apps.activities.services import _assert_schedule_entitlement
+
+        self._existing_visit()
+        _assert_schedule_entitlement(
+            "in_school_training", self.school, get_operational_fy(_next_monday()), {}
+        )
 
     def test_the_first_visit_is_allowed(self):
         self._schedule_another()  # must not raise
@@ -116,10 +127,10 @@ class ClientEntitlementHoldsTest(TestCase):
 
 
 class CatalogueEntitlementOwnershipTest(TestCase):
-    """Catalogue entitlement metadata remains available for reporting.
-
-    Legacy and catalogue visits may both be scheduled repeatedly; the
-    existing health detector can still report multiple activities.
+    """The catalogue's entitlement flags decide what counts as the year's
+    visit (owner, 2026-09-15: a client school is visited once a year), and
+    the rule's counts_toward_entitlement is the governance switch that takes
+    an item out of it. The health detector keeps reporting duplicates.
     """
 
     @classmethod
@@ -171,18 +182,21 @@ class CatalogueEntitlementOwnershipTest(TestCase):
             catalogue_item=catalogue_item,
         )
 
-    def test_additional_follow_up_visits_are_allowed(self):
+    def test_a_second_follow_up_visit_is_refused(self):
         self._activity("follow_up_visit")
-        self._assert("follow_up_visit")
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
 
-    def test_follow_up_after_a_visit_is_allowed(self):
+    def test_a_follow_up_after_the_visit_is_refused(self):
         self._activity("school_visit")
-        self._assert("follow_up_visit")
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
 
-    def test_catalogue_entitlement_flag_does_not_block_follow_up(self):
+    def test_the_catalogue_entitlement_flag_is_what_counts(self):
         item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
         self._activity("follow_up_visit", catalogue_item=item)
-        self._assert(item.workflow_kind, catalogue_item=item)
+        with self.assertRaises(BadRequest):
+            self._assert(item.workflow_kind, catalogue_item=item)
 
     def test_flagless_catalogue_training_neither_blocks_nor_consumes(self):
         """Student camps carry workflow_kind ``training`` with both client

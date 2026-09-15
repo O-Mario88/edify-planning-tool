@@ -938,6 +938,28 @@ def add_to_cluster_drawer_view(request, school_id):
             {"error": "You do not have permission to assign clusters."},
         )
 
+    # A school belongs to one cluster. The directory greys the button out for
+    # a clustered school; a stale row or a hand-typed URL still lands here, and
+    # re-clustering silently would move the school (owner, 2026-09-15: "greyed
+    # out to avoid double clustering").
+    if school.cluster_id or school.cluster_status == "clustered":
+        current = (
+            Cluster.objects.filter(id=school.cluster_id).first()
+            if school.cluster_id
+            else None
+        )
+        where = f"cluster {current.name}" if current else "a cluster"
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {
+                "error": (
+                    f"{school.name} is already in {where}. A school belongs to "
+                    "one cluster; remove it from that cluster first."
+                )
+            },
+        )
+
     def get_responsible_staff(sch):
         """Use the school's owner; fall back to its portfolio assignment."""
         if sch.account_owner_id:

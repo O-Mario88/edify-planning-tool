@@ -608,11 +608,13 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_additional_client_visits_keep_distinct_planned_activities(self):
+    def test_a_second_client_visit_in_the_year_is_refused(self):
+        """A client school is visited once a year (owner, 2026-09-15); the
+        first visit stands untouched by the refusal."""
         first = self._schedule_visit(5)
-        second = self._schedule_visit(12)
-        self.assertNotEqual(first["id"], second["id"])
-        self.assertEqual(second["status"], "scheduled")
+        with self.assertRaises(BadRequest) as ctx:
+            self._schedule_visit(12)
+        self.assertIn("visited once a year", str(ctx.exception.detail))
         self.assertEqual(Activity.objects.get(id=first["id"]).status, "scheduled")
 
     def test_additional_client_training_is_allowed(self):

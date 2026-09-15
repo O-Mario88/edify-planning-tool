@@ -594,6 +594,12 @@ def dashboard_view(request):
             from apps.analytics.country_map_context import country_map_context
 
             context.update(country_map_context(fy))
+        else:
+            # Who is using the system (owner, 2026-09-15): the Admin's Who's
+            # Online table, on the CD's Operations view as well.
+            from apps.accounts.presence import presence_summary
+
+            context["presence"] = presence_summary()
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
             response = render(
                 request,

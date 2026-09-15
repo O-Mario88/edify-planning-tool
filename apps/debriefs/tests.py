@@ -566,13 +566,25 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
-    def test_accept_recommendation_allows_follow_up_after_existing_visits(self):
+    def test_accept_recommendation_of_a_follow_up_waits_for_the_years_visit(self):
+        """A client school is visited once a year (owner, 2026-09-15): while
+        this year's visit stands, the supervisor's acceptance is refused with
+        the reason and the recommendation stays proposed; once the visit is
+        released, it goes through."""
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
             school_ids=[self.school.id],
             follow_up_owner_id=self.cceo_sp.id,
         )
+        with self.assertRaises(BadRequest) as ctx:
+            FieldDebriefService.accept_recommendation(self.pl, d.id)
+        self.assertIn("visited once a year", str(ctx.exception.detail))
+        d.refresh_from_db()
+        self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
+        self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
+
+        self._release_visit_entitlement()
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         d.refresh_from_db()
         self.assertEqual(d.recommendation_status, RecommendationStatus.ACCEPTED)

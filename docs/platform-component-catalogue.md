@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **446**
+Components and application partials: **448**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -158,6 +158,8 @@ Components and application partials: **446**
 | `partials/cost_settings/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /cost-settings/row/<str:key> | 0 |
 | `partials/dashboards/_view_tabs.html` | application-partial | Reusable  view tabs interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return<br>/ia/dashboard/<br>/priorities/guidance<br>/priorities/master<br>/programme-rollout<br>/strategic-priorities | 0 |
 | `partials/dashboards/_view_tabs_nav.html` | application-partial | Reusable  view tabs nav interface primitive | canonical; default, loading, error, selected | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /dashboard<br>/dashboard/cd-approve<br>/dashboard/cd-return<br>/ia/dashboard/<br>/priorities/guidance<br>/priorities/master<br>/programme-rollout<br>/strategic-priorities | 0 |
+| `partials/dashboards/_whos_online.html` | application-partial | Reusable  whos online interface primitive | canonical; default, empty, open | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/_whos_online_row.html` | application-partial | Reusable  whos online row interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/admin/_icon.html` | application-partial | Reusable  icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /dashboard<br>/ia/dashboard/ | 0 |
 | `partials/dashboards/admin/_planning_progress_body.html` | application-partial | Reusable  planning progress body interface primitive | canonical; default | inherits containing page contract | accessible name and label | /dashboard/planning-progress | 0 |
 | `partials/dashboards/admin/_platform_operations.html` | application-partial | Reusable  platform operations interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
@@ -406,7 +408,7 @@ Components and application partials: **446**
 | `partials/schools/directory_intelligence.html` | application-partial | Reusable directory intelligence interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /schools<br>/schools/partial-intelligence/<str:school_id> | 0 |
 | `partials/schools/directory_row.html` | application-partial | Reusable directory row interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label | /schools | 0 |
 | `partials/schools/directory_sub_county_filter.html` | application-partial | Reusable directory sub county filter interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility | /schools | 0 |
-| `partials/schools/drawer_error.html` | application-partial | Reusable drawer error interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /schools/<str:school_id>/add-to-cluster<br>/schools/<str:school_id>/assign-to-project | 0 |
+| `partials/schools/drawer_error.html` | application-partial | Reusable drawer error interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /partner/assignments/<str:assignment_id>/schedule-drawer<br>/planning/assign-partner-modal<br>/planning/schedule-modal<br>/schools/<str:school_id>/add-to-cluster<br>/schools/<str:school_id>/assign-to-project | 0 |
 | `partials/schools/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/edit-drawer | 0 |
 | `partials/schools/htmx_response.html` | application-partial | Reusable htmx response interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
 | `partials/schools/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |

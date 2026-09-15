@@ -80,9 +80,15 @@
                 <button type="button"
                         hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
                         class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-2.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">Return</button>
+                {% if a.can_schedule %}
                 <button type="button"
                         hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
                         class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Schedule</button>
+                {% else %}
+                <button type="button" disabled title="{{ a.schedule_blocked_reason }}" data-visit-locked="true"
+                        aria-label="Schedule unavailable: {{ a.schedule_blocked_reason }}"
+                        class="inline-flex h-8 items-center rounded-control edify-primary-solid px-3 text-[12px] font-semibold text-white">Schedule</button>
+                {% endif %}
               </div>
             </td>
           </tr>

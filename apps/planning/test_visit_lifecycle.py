@@ -27,6 +27,10 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
                 page = self.client.get(f"/my-plan?fy={a.fy}&period=fy&status=scheduled")
                 self.assertEqual(page.status_code, 200, who.active_role)
                 self.assertContains(page, "Owned Primary")
+                # A client school is visited once a year: free the visit so
+                # the next role's request can be approved too.
+                a.status = "cancelled"
+                a.save(update_fields=["status"])
 
     def test_a_pending_request_is_not_on_the_plan_yet(self):
         a = self._request(self.ia)
@@ -47,7 +51,10 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
             with self.subTest(role=who.active_role):
                 # One visit per person per day at a school; move the date.
                 self.day = self.__class__.day + datetime.timedelta(days=offset)
-                own = self._request(who)
+                # And one visit a year per client school: theirs holds Owned
+                # Primary's, so each requester's own visit is at another
+                # school in the same portfolio.
+                own = self._request(who, self._owned_school(who.active_role))
                 visit_requests.approve(own.id, self.cceo)
                 own.refresh_from_db()
                 _assert_may_close(who, own)  # theirs: allowed

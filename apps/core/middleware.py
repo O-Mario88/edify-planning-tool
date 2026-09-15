@@ -521,16 +521,40 @@ class SlidingSessionMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         response = self.get_response(request)
-        if self._slide(getattr(request, "session", None)):
-            # The same once-a-minute beat marks the person as seen, so the
-            # Admin's "who is online" costs one indexed UPDATE per active
-            # user per minute and never a write per request.
+        slid = self._slide(getattr(request, "session", None))
+        # The same once-a-minute beat marks the person as seen, so the
+        # Admin's "who is online" costs one indexed UPDATE per active user
+        # per minute and never a write per request. A write (or a drawer
+        # opened over htmx) touches as well, so "what they were working on"
+        # names the action and not only the page it happened on — writes are
+        # a small fraction of requests, and each is one UPDATE.
+        if slid or self._is_action(request):
             user = getattr(request, "user", None)
             if user is not None and getattr(user, "is_authenticated", False):
                 from apps.accounts.presence import touch_presence
 
-                touch_presence(user)
+                touch_presence(user, request)
         return response
+
+    ACTION_TOUCHED_AT = "_last_action_touch"
+    # A page can fire several htmx loads at once; one touch every few seconds
+    # keeps "what they were working on" current without a write per fragment.
+    ACTION_INTERVAL = 15
+
+    def _is_action(self, request: HttpRequest) -> bool:
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            return True
+        if request.headers.get("HX-Request") != "true":
+            return False
+        session = getattr(request, "session", None)
+        if session is None or session.is_empty():
+            return False
+        now = time.time()
+        touched = session.get(self.ACTION_TOUCHED_AT)
+        if isinstance(touched, (int, float)) and now - touched < self.ACTION_INTERVAL:
+            return False
+        session[self.ACTION_TOUCHED_AT] = int(now)
+        return True
 
     def _slide(self, session) -> bool:
         # An empty session has nothing to keep alive, and creating one here

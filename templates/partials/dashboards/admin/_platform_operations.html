@@ -34,21 +34,9 @@
   </section>
 
   {% with presence=admin_ops.presence %}
-  <section class="admin-panel" aria-labelledby="admin-ops-online-title" data-admin-presence>
-    <header class="admin-panel__header">
-      <h2 id="admin-ops-online-title">Who's Online</h2>
-      <span class="edify-text-caption">{{ presence.online_count }} in the last {{ presence.window_minutes }} min</span>
-    </header>
-    {% for person in presence.online %}
-    <div class="admin-target-row">
-      <span>{{ person.name }}</span>
-      <strong>{{ person.active_role }}</strong>
-      <span class="admin-status s-green" title="{{ person.last_seen_at|date:'j M Y, H:i' }}">seen {{ person.last_seen_at|timesince }} ago</span>
-    </div>
-    {% empty %}
-    <p class="admin-panel__empty">Nobody has been active in the last {{ presence.window_minutes }} minutes.</p>
-    {% endfor %}
-  </section>
+  <div class="admin-panel admin-panel--presence">
+    {% include "partials/dashboards/_whos_online.html" %}
+  </div>
 
   <section class="admin-panel" aria-labelledby="admin-ops-logins-title" data-admin-logins>
     <header class="admin-panel__header">

@@ -243,10 +243,13 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select the purpose of this visit…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}" {% if value == recommended_visit_purpose %}selected{% endif %}>{{ label }}</option>
+    <option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% endif %}</option>
     {% endfor %}
   </select>
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The purpose determines which activity and evidence workflow is created.</p>
+  {% if locked_visit_reason %}
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} In-school training, donor and social visits can still be scheduled.</p>
+  {% endif %}
   {% comment %}
     §30 — a purpose the Cost Catalogue cannot price says exactly that, and
     names the person who can fix it. It never tells anyone to create a

@@ -167,6 +167,22 @@ class VisitRequestFixture(TestCase):
             data["visitJustification"] = justification
         return data
 
+    def _owned_school(self, suffix: str) -> School:
+        """Another school in the CCEO's portfolio, for a walk that needs more
+        than one approved visit: a client school is visited once a year."""
+        school = School.objects.create(
+            school_id=f"VR-OWNED-{suffix}",
+            name=f"Owned Primary {suffix}",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+            account_owner_id=self.cceo_sp.id,
+            account_owner_status="matched",
+        )
+        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=school.id)
+        _confirmed_ssa(school)
+        return school
+
     def _request(self, who, school=None, **kw) -> Activity:
         from apps.planning.services import schedule_school_visit
 
@@ -246,6 +262,10 @@ class RequestingAVisitTest(VisitRequestFixture):
                 self.assertEqual(a.status, "scheduled")
                 self.assertEqual(a.approval_owner_id, "")
                 self.assertEqual(a.responsible_staff_id, who.staff_profile_id)
+                # A client school is visited once a year: free the visit so
+                # the next role can schedule it outright too.
+                a.status = "cancelled"
+                a.save(update_fields=["status"])
 
     def test_never_a_cluster_meeting_or_training(self):
         """Owned or not: cluster work is the cluster owner's programme."""

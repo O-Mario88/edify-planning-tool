@@ -264,6 +264,19 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
             supervisor=cls.pl_sp, supervisee=cls.cceo_sp
         )
         StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=cls.school.id)
+        # A client school is visited once a year (owner, 2026-09-15), so a
+        # week with two visit days visits two schools in the portfolio.
+        cls.school_two = School.objects.create(
+            school_id="SCH-WK-COMPILE-2",
+            name="Weekly Compile Primary Two",
+            region=cls.region,
+            district=cls.district,
+            school_type="client",
+        )
+        _confirmed_ssa(cls.school_two)
+        StaffSchoolAssignment.objects.create(
+            staff=cls.cceo_sp, school_id=cls.school_two.id
+        )
 
         # Two schedulable days in the SAME week (skip Sunday; stay in-week).
         first = _schedulable_date()
@@ -298,10 +311,13 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         )
 
         item = resolve_item_for_workflow_kind("school_visit")
-        for day in (self.day_one, self.day_two):
+        for day, school in (
+            (self.day_one, self.school),
+            (self.day_two, self.school_two),
+        ):
             schedule_school_visit(
                 {
-                    "schoolId": self.school.school_id,
+                    "schoolId": school.school_id,
                     "catalogueItemId": item.id,
                     "scheduledDate": _at(day).isoformat(),
                     "activityPurposeText": f"Weekly compile proof {day}",
@@ -364,10 +380,13 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         from apps.planning.services import schedule_school_visit
 
         item = resolve_item_for_workflow_kind("school_visit")
-        for day in (self.day_one, self.day_two):
+        for day, school in (
+            (self.day_one, self.school),
+            (self.day_two, self.school_two),
+        ):
             schedule_school_visit(
                 {
-                    "schoolId": self.school.school_id,
+                    "schoolId": school.school_id,
                     "catalogueItemId": item.id,
                     "scheduledDate": _at(day).isoformat(),
                     "activityPurposeText": f"Lifecycle proof {day}",
@@ -461,10 +480,13 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         from apps.planning.services import schedule_school_visit
 
         item = resolve_item_for_workflow_kind("school_visit")
-        for day in (self.day_one, self.day_two):
+        for day, school in (
+            (self.day_one, self.school),
+            (self.day_two, self.school_two),
+        ):
             schedule_school_visit(
                 {
-                    "schoolId": self.school.school_id,
+                    "schoolId": school.school_id,
                     "catalogueItemId": item.id,
                     "scheduledDate": _at(day).isoformat(),
                     "activityPurposeText": f"Self-funded proof {day}",
