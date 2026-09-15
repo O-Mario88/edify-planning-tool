@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Edit Cluster details{% endblock %}
-{% block drawer_subtitle %}Modify cluster name, type, geographical boundaries, assigned staff, and leadership details.{% endblock %}
+{% block drawer_subtitle %}Modify cluster name, type, geographical boundaries, assigned staff, leadership details, and which schools belong to it.{% endblock %}
 
 {% block drawer_body %}
 <div
@@ -151,6 +151,43 @@
             class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus"
           >
         </div>
+      </div>
+    </div>
+
+    {% comment %}
+      The schools in the cluster, each ticked (owner, 2026-09-15: "click
+      edit, then the drawer opens with a list of schools with checkboxes so
+      the user can uncheck the school added by mistake and save"). Unticked
+      schools go back to unclustered on save, through the same membership
+      service the roster's Remove uses. `manage_members` tells the save
+      view the list was shown, so a form that never showed it cannot empty
+      the cluster by omission.
+    {% endcomment %}
+    <div class="space-y-1.5" x-data="{ kept: {{ member_schools|length }} }">
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+        Schools in this cluster (<span x-text="kept">{{ member_schools|length }}</span> of {{ member_schools|length }} kept)
+      </label>
+      <p class="edify-text-caption text-slate-400 font-normal -mt-0.5">Untick a school added by mistake. It leaves the cluster when you save and can be added to another.</p>
+      <input type="hidden" name="manage_members" value="1">
+      <div class="border border-slate-200 rounded-surface max-h-56 overflow-y-auto divide-y divide-slate-100 edify-surface" role="group" aria-label="Schools in this cluster">
+        {% for s in member_schools %}
+        <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-700">
+          <input
+            type="checkbox"
+            name="member_school_ids"
+            value="{{ s.id }}"
+            checked
+            @change="kept += $event.target.checked ? 1 : -1"
+            class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
+          >
+          <span class="min-w-0 flex-1">
+            <span class="block font-semibold text-slate-800 truncate">{{ s.name }}</span>
+            <span class="block edify-text-caption font-medium text-slate-400">{{ s.school_id }}</span>
+          </span>
+        </label>
+        {% empty %}
+        <p class="p-6 text-center text-slate-400 font-medium italic text-[12px]">This cluster has no schools yet.</p>
+        {% endfor %}
       </div>
     </div>
 

@@ -199,9 +199,11 @@ class SubCountyInsightTest(TestCase):
             core_start_fy="FY2026",
         )
 
-        # Eight grouped queries; the count remains independent of the 26
-        # sub-counties and schools in this fixture.
-        with self.assertNumQueries(8):
+        # Ten grouped queries (eight, plus the two planned-vs-achieved
+        # aggregates of apps.analytics.plan_progress, one through the school
+        # and one through the cluster); the count remains independent of the
+        # 26 sub-counties and schools in this fixture.
+        with self.assertNumQueries(10):
             result = subcounty_insight("FY2026")
 
         self.assertEqual(result["totals"]["assigned_schools"], 26)

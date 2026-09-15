@@ -709,7 +709,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 74087,
+      "bytes": 75584,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2164,7 +2164,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18284,
+      "bytes": 21449,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2656,9 +2656,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 7172,
+      "bytes": 8085,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2685,7 +2686,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23522,
+      "bytes": 24913,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2784,14 +2785,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6807,
+      "bytes": 7734,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 4,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Cluster Schools Table",
       "purpose": "Reusable cluster schools table interface primitive",
@@ -2840,7 +2841,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8208,
+      "bytes": 10403,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -2854,6 +2855,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "empty",
         "open"
       ],
       "tables": 0,
@@ -3027,6 +3029,36 @@
       ],
       "tables": 0,
       "template": "partials/clusters/planned_date_field.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 3767,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/planner-drawer",
+        "/clusters/schedule-activity",
+        "/clusters/schedule-meeting-drawer",
+        "/clusters/schedule-training-drawer",
+        "/planning/schedule-modal"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Training Materials Fields",
+      "purpose": "Reusable training materials fields interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/training_materials_fields.html",
       "variants": []
     },
     {
@@ -8613,7 +8645,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25109,
+      "bytes": 25786,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -10187,6 +10219,7 @@
         "/analytics/customize-dashboard",
         "/analytics/schedule-report",
         "/clusters/<str:cluster_id>/bulk-assign-drawer",
+        "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
         "/schools/<str:school_id>/add-to-cluster",
         "/schools/<str:school_id>/assign-to-project"
       ],
@@ -25574,7 +25607,8 @@
         "GET /clusters/{{ cluster.id }}/edit-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
         "POST /clusters/{{ cluster.id }}/delete",
-        "GET /planning/schedule-modal?school_id={{ s.schoolId }}"
+        "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
+        "POST /clusters/{{ cluster.id }}/schools/{{ s.id }}/remove"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -25913,7 +25947,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.edit_cluster_drawer_view",
       "card_count": 0,
@@ -25978,7 +26012,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -26000,6 +26034,95 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[14px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/schools/toast_success.html",
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-3429DE9B4C",
+      "page_title": "Remove School From Cluster",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Remove School From Cluster",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Take one school out of a cluster from its roster (owner, 2026-09-15).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+      "route_name": "remove_school_from_cluster",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/toast_success.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]"
       ]
     },
     {
@@ -44936,7 +45059,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/hr/form_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:impact_reports"
       ],
       "filters": "none",
@@ -44999,7 +45122,7 @@
       "templates": [
         "partials/hr/form_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -59728,7 +59851,8 @@
       "htmx_endpoints": [
         "GET /clusters/{{ cluster_id }}/bulk-assign-drawer",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
-        "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}"
+        "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}",
+        "POST /clusters/{{ cluster_id }}/schools/{{ s.id }}/remove"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -92893,6 +93017,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+      "route_name": "remove_school_from_cluster",
+      "templates": [
+        "partials/schools/toast_success.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.cluster_cost_preview_partial",
       "kind": "partial",
       "methods": [
@@ -101754,30 +101892,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 517,
+    "accessibility_contract_pass": 518,
     "activity_states": 24,
-    "all_routes": 1274,
+    "all_routes": 1275,
     "api_routes": 359,
-    "component_templates": 449,
+    "component_templates": 450,
     "full_pages": 255,
-    "mobile_contract_pass": 517,
+    "mobile_contract_pass": 518,
     "nonvisual_actions": 261,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 520,
+      "interaction-fragment": 521,
       "operational-queue": 148,
       "planning-or-creation": 10,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 259,
-    "permission_gated": 788,
+    "partials_and_drawers": 260,
+    "permission_gated": 789,
     "permission_keys": 112,
     "roles": 15,
-    "routed_surfaces": 803,
+    "routed_surfaces": 804,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -101785,8 +101923,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 517,
-    "test_referenced": 693,
-    "theme_contract_pass": 517
+    "tablet_contract_pass": 518,
+    "test_referenced": 695,
+    "theme_contract_pass": 518
   }
 }

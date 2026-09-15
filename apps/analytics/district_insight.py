@@ -46,6 +46,11 @@ from typing import Any
 import pandas as pd
 from django.db.models import Avg, Count, Q, Sum
 
+from apps.analytics.plan_progress import (
+    PLAN_PROGRESS_FIELDS,
+    plan_progress_by_district,
+    plan_progress_frame,
+)
 from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     TRAINING_TYPES,
@@ -242,6 +247,14 @@ def district_insight(
         "district_id",
         n="enrollment",
     )
+    # Planned vs achieved, and partner-assigned work, for the distribution
+    # table's district rows (owner, 2026-09-15); the same definition as the
+    # sub-region roll-up and the sub-county rows.
+    progress = plan_progress_frame(
+        plan_progress_by_district(
+            fy, schools=school_qs, clusters=cluster_qs, activities=activities
+        )
+    )
 
     for part in (
         schools,
@@ -254,6 +267,7 @@ def district_insight(
         visited,
         people,
         enrolment,
+        progress,
     ):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
@@ -274,6 +288,7 @@ def district_insight(
         "teachers_trained",
         "leaders_trained",
         "enrollment",
+        *PLAN_PROGRESS_FIELDS,
     ]
     for col in counts:
         if col not in base:
@@ -351,5 +366,6 @@ def district_insight(
             "teachers_trained": int(r["teachers_trained"]),
             "leaders_trained": int(r["leaders_trained"]),
             "enrollment": int(r["enrollment"]),
+            **{field: int(r[field]) for field in PLAN_PROGRESS_FIELDS},
         }
     return out

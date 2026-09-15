@@ -28,6 +28,7 @@ from apps.analytics.pl_analytics_service import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.analytics.plan_progress import empty_progress, plan_progress_by_subcounty
 
 
 def boundary_name(value: str | None) -> str:
@@ -144,6 +145,7 @@ def subcounty_insight(
             "visited": 0,
             "teachers_trained": 0,
             "leaders_trained": 0,
+            **empty_progress(),
         }
 
     ssa_qs = (
@@ -222,6 +224,15 @@ def subcounty_insight(
             entry["visited"] = int(row["visited"] or 0)
             entry["teachers_trained"] = int(row["teachers"] or 0)
             entry["leaders_trained"] = int(row["leaders"] or 0)
+
+    # Planned vs achieved and partner-assigned work, for the sub-county rows
+    # of the distribution table (owner, 2026-09-15).
+    for sub_county_id, figures in plan_progress_by_subcounty(
+        fy, schools=school_qs, activities=activities
+    ).items():
+        entry = entries.get(id_to_key.get(str(sub_county_id), ""))
+        if entry:
+            entry.update(figures)
 
     score_rows = list(
         SsaScore.objects.filter(ssa_record_id__in=ssa_qs.values("id"))

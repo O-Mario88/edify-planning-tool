@@ -164,8 +164,11 @@ class DualRateCardSecurityTest(APITestCase):
         )
         self.assertEqual(payload["operationalCost"], 218_000)
         # The reference copy adds 100 to every operational line, including
-        # the TOT rate, printing and photocopying at their 0 defaults.
-        self.assertEqual(payload["referenceCost"], 387_300)
+        # the TOT rate at its 0 default. No pages were stated, so there is
+        # no printing or photocopying line on either card.
+        self.assertEqual(payload["referenceCost"], 387_100)
+        self.assertNotIn("printing_training_materials", reference_lines)
+        self.assertNotIn("photocopying_training_materials", reference_lines)
 
     def test_management_preview_is_forbidden_to_field_staff(self):
         self._as(self.cceo)

@@ -447,6 +447,11 @@ urlpatterns = [
         name="edit_cluster",
     ),
     path(
+        "clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+        cluster_views.remove_school_from_cluster_view,
+        name="remove_school_from_cluster",
+    ),
+    path(
         "clusters/<str:cluster_id>/delete",
         cluster_views.delete_cluster_view,
         name="delete_cluster",

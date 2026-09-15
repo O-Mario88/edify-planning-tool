@@ -7573,6 +7573,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+   "route_name": "remove_school_from_cluster",
+   "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/clusters/cost-preview",
    "route_name": "cluster_cost_preview",
    "view": "apps.frontend.views.cluster_views.cluster_cost_preview_partial"
@@ -17637,27 +17654,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 402,
-  "Admin": 985,
+  "Accountant": 403,
+  "Admin": 986,
   "BusinessTransformationOfficer": 230,
-  "CCEO": 516,
-  "CountryDirector": 742,
+  "CCEO": 517,
+  "CountryDirector": 743,
   "HumanResources": 328,
-  "ImpactAssessment": 602,
+  "ImpactAssessment": 603,
   "MfiLoanOfficer": 126,
   "MfiPartnerAdmin": 129,
   "PartnerAdmin": 217,
   "PartnerFieldOfficer": 217,
-  "Program Lead": 599,
-  "ProjectCoordinator": 437,
+  "Program Lead": 600,
+  "ProjectCoordinator": 438,
   "RegionalProgramLead": 300,
   "RegionalVicePresident": 363
  },
  "summary": {
   "page_keys_declared": 172,
   "page_keys_in_navigation": 189,
-  "routes_guarded": 1082,
-  "routes_total": 1274,
+  "routes_guarded": 1083,
+  "routes_total": 1275,
   "routes_unguarded": 192,
   "surfaces_no_role_can_reach": 0
  },

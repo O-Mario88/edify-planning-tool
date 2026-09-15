@@ -55,6 +55,10 @@ GROUP_TRAINING_RATE_KEYS = (
     "group_training_venue_cost",
 )
 TOT_MEALS_RATE_KEY = "tot_trainings_meals"
+# Owner, 2026-09-15: cluster meetings and trainings feed their participants,
+# per head per day, at their own rate.
+CLUSTER_MEALS_RATE_KEY = "cluster_meetings_trainings_meals"
+MEALS_RATE_KEYS = (TOT_MEALS_RATE_KEY, CLUSTER_MEALS_RATE_KEY)
 # School work that is SSA work: it carries the SSA Support rate.
 SSA_WORK_TYPES = {
     "baseline_ssa_visit",
@@ -103,6 +107,21 @@ def _participants_of(a: dict, default_n: int) -> int:
     return counted if counted > 0 else default_n
 
 
+def materials_quantities(a: dict) -> tuple[int, int]:
+    """(pages to print, pages x copies to photocopy) for a group session.
+
+    `printingPages`, `photocopyPages` and `photocopyCopies` arrive as form
+    strings or JSON numbers; blank, absent, invalid or negative all count as
+    zero, and a zero on either side of the photocopying product is no
+    photocopying. Shared by the cluster drawers, which show the same
+    arithmetic beside the inputs."""
+    printing = _nonnegative_count(a.get("printingPages"))
+    photocopying = _nonnegative_count(a.get("photocopyPages")) * _nonnegative_count(
+        a.get("photocopyCopies")
+    )
+    return printing, photocopying
+
+
 def _days_of(a: dict) -> int:
     """Service days an activity spans (1 unless it carries a date range).
 
@@ -123,7 +142,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     costingKind ('core' | 'onetest' | 'tot' | 'student_conference' |
     'proprietor_conference', from the catalogue item's costing profile),
     teachersAttended, leadersAttended, otherParticipants, expectedParticipants,
-    nights, days, projectId.
+    nights, days, projectId, printingPages, photocopyPages, photocopyCopies.
 
     The recipe (owner, 2026-09-06 catalogue):
 
@@ -140,10 +159,12 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
       partner school visit related activities"; Partner Meetings for a
       partner-run training or a partner/project activity. A partner visit
       whose reason is OneTest fetches the OneTest rate instead.
-    * A group session is venue and facilitation per day, printing and
-      photocopying of materials, the staff day, and the session's own rate:
-      Cluster Meetings/Trainings, TOT trainings (which alone feed their
-      participants, at the TOT meals rate), Student or Proprietor Conference.
+    * A group session is venue and facilitation per day, the materials it
+      states (printing by the page, photocopying by the page and the copy;
+      none stated, none charged), the staff day, and the session's own rate:
+      Cluster Meetings/Trainings (which feed their participants per head at
+      the cluster meals rate, owner 2026-09-15), TOT trainings (fed at the
+      TOT meals rate), Student or Proprietor Conference.
     * A field event is a visit day for every day away.
 
     A rate the owner's list ADDED (see ``OPTIONAL_RATE_KEYS``) is charged only
@@ -211,30 +232,49 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             return
         add_staff_visit_day(days)
 
-    def add_materials(days: int) -> None:
-        add_rate("printing_training_materials", days)
-        add_rate("photocopying_training_materials", days)
+    def add_materials() -> None:
+        """Printed and photocopied training materials, by the page.
 
-    def add_group_session(days: int, rate_key: str | None, meals: bool = False) -> None:
+        Owner, 2026-09-15: printing is the pages printed at the per-page
+        rate; photocopying is pages x copies at the per-page rate. A
+        session that states no pages (or zero) prints nothing and carries
+        no materials line at all -- the rates used to be charged once per
+        session day whether or not anything was printed, which is how a
+        meeting with no handouts fetched a printing cost."""
+        printing, photocopying = materials_quantities(a)
+        if printing:
+            add_rate("printing_training_materials", printing)
+        if photocopying:
+            add_rate("photocopying_training_materials", photocopying)
+
+    def add_meals(meals_key: str, days: int) -> None:
+        """Participants fed per head per day. The TOT meals rate is a
+        required rate; the cluster meals rate was added on 2026-09-15 and is
+        charged only on a card that carries it, like the other added rates.
+        A session priced with meals but no headcount is unfundable (see the
+        expectedParticipants check at the end), never priced for nobody."""
+        if meals_key in OPTIONAL_RATE_KEYS and meals_key not in rates:
+            return
+        add(RATE_LABELS[meals_key], meals_key, _participants_of(a, 0) * days)
+
+    def add_group_session(
+        days: int, rate_key: str | None, meals_key: str | None = None
+    ) -> None:
         """The one group-session recipe: the session's own rate, participants
-        fed when the session feeds them (TOT trainings), someone facilitates,
-        the room costs money, materials are printed and copied, and the staff
-        member travels."""
+        fed when the session feeds them (TOT trainings, cluster sessions),
+        someone facilitates, the room costs money, materials are printed and
+        copied, and the staff member travels."""
         if rate_key:
             add_rate(rate_key)
-        if meals:
-            add(
-                RATE_LABELS[TOT_MEALS_RATE_KEY],
-                TOT_MEALS_RATE_KEY,
-                _participants_of(a, 0) * days,
-            )
+        if meals_key:
+            add_meals(meals_key, days)
         add(
             RATE_LABELS["group_training_facilitation_fee"],
             "group_training_facilitation_fee",
             days,
         )
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
-        add_materials(days)
+        add_materials()
         add_staff_day(days)
 
     is_partner = a.get("deliveryType") == "partner"
@@ -274,16 +314,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add_group_session(_days_of(a), conference)
 
     elif activity_type in CLUSTER_MEETING_TYPES:
-        # A cluster meeting: the session rate, the room, the materials and
-        # the staff day. Nobody facilitates a meeting.
+        # A cluster meeting: the session rate, the participants fed per head
+        # (owner, 2026-09-15), the room, the materials and the staff day.
+        # Nobody facilitates a meeting.
         days = _days_of(a)
         add_rate("cluster_meetings_trainings")
+        add_meals(CLUSTER_MEALS_RATE_KEY, days)
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
-        add_materials(days)
+        add_materials()
         add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        add_group_session(_days_of(a), "cluster_meetings_trainings")
+        add_group_session(
+            _days_of(a), "cluster_meetings_trainings", meals_key=CLUSTER_MEALS_RATE_KEY
+        )
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
@@ -323,7 +367,9 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # Every group training is the same session; a TOT training also has
         # its own rate and feeds its participants.
         if kind == "tot":
-            add_group_session(_days_of(a), "tot_trainings", meals=True)
+            add_group_session(
+                _days_of(a), "tot_trainings", meals_key=TOT_MEALS_RATE_KEY
+            )
         else:
             add_group_session(_days_of(a), None)
     elif activity_type in ("partner_activity", "project_activity"):
@@ -344,7 +390,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)
     missing_items = [line.key for line in lines if line.missing]
-    if any(line.qty == 0 and line.key == TOT_MEALS_RATE_KEY for line in lines):
+    if any(line.qty == 0 and line.key in MEALS_RATE_KEYS for line in lines):
         missing_items.append("expectedParticipants")
         cost_missing = True
     return ActivityCost(
@@ -366,10 +412,13 @@ __all__ = [
     "CostLine",
     "ActivityCost",
     "TOT_MEALS_RATE_KEY",
+    "CLUSTER_MEALS_RATE_KEY",
+    "MEALS_RATE_KEYS",
     "CLUSTER_MEETING_TYPES",
     "CLUSTER_TRAINING_TYPES",
     "GROUP_TRAINING_RATE_KEYS",
     "LEGACY_CLUSTER_ACTIVITY_COST_KEYS",
+    "materials_quantities",
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
 ]

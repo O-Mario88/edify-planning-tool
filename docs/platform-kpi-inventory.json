@@ -1844,7 +1844,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 679,
+   "line": 680,
    "label": null,
    "keys": [
     "amount",
@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 880,
+   "line": 932,
    "label": null,
    "keys": [
     "label",
@@ -3001,7 +3001,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 109,
+   "line": 146,
    "label": null,
    "keys": [
     "amount",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 509,
+   "line": 554,
    "label": null,
    "keys": [
     "label",
@@ -39465,7 +39465,7 @@
   {
    "audit_id": "KPI-PAYLOAD-002",
    "module": "apps/clusters/services.py",
-   "line": 1694,
+   "line": 1731,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,

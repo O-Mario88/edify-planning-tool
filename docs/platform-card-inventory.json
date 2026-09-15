@@ -4,10 +4,10 @@
   "templates": 259,
   "distinct_titles": 650,
   "with_card_key": 13,
-  "untitled_surfaces": 770,
-  "untitled_chrome": 173,
+  "untitled_surfaces": 772,
+  "untitled_chrome": 174,
   "untitled_nested": 249,
-  "untitled_headless": 348,
+  "untitled_headless": 349,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 235,
+   "line": 256,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 270,
+   "line": 291,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 293,
+   "line": 314,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,

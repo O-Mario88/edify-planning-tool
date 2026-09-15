@@ -131,15 +131,21 @@ hx-include="#action-planner-form"
   x-data="{
     activities: {{ training_activity_options_json|default:'[]' }},
     activityId: '{{ selected_training_activity_id|default:""|escapejs }}',
-    teachers: {{ teachers_per_school|default:2 }},
-    leaders: {{ leaders_per_school|default:0 }},
-    other: {{ other_per_school|default:0 }},
+    teachers: {{ teachers_per_school|default_if_none:2 }},
+    leaders: {{ leaders_per_school|default_if_none:0 }},
+    other: {{ other_per_school|default_if_none:0 }},
     clusterSchools: {{ cluster_school_count|default:0 }},
     schoolsInvited: {{ schools_invited|default:0 }},
     get availableActivities() { return this.activities.filter(activity => activity.staffDeliveryAllowed); },
     get selectedTraining() { return this.availableActivities.find(activity => activity.id === this.activityId) || null; },
     get perSchool() { return (Number(this.teachers) || 0) + (Number(this.leaders) || 0) + (Number(this.other) || 0); },
     get total() { return this.perSchool * (Number(this.schoolsInvited) || 0); },
+    printingPages: '{{ printing_pages|default:""|escapejs }}',
+    photocopyPages: '{{ photocopy_pages|default:""|escapejs }}',
+    photocopyCopies: '{{ photocopy_copies|default:""|escapejs }}',
+    copiesTouched: {% if photocopy_copies %}true{% else %}false{% endif %},
+    get copies() { return this.copiesTouched ? this.photocopyCopies : this.total; },
+    get photocopiedPages() { return (Number(this.photocopyPages) || 0) * (Number(this.copies) || 0); },
     allChecked: {% if schools_invited == cluster_school_count and cluster_school_count %}true{% else %}false{% endif %},
     boxes() { return Array.from(this.$el.querySelectorAll('input[name=invited_school_ids]')); },
     syncInvited() {
@@ -180,11 +186,11 @@ hx-include="#action-planner-form"
   </div>
 
   <div>
-    <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Per school <span class="text-rose-500">*</span></span>
+    <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Per school <span class="text-rose-500">*</span> <span class="text-slate-400 normal-case tracking-normal font-medium">(blank counts as 0)</span></span>
     <div class="grid grid-cols-3 gap-2" data-keep-columns>
       <div>
         <label for="teachers_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Teachers</label>
-        <input aria-label="Teachers per school" type="number" min="0" step="1" required
+        <input aria-label="Teachers per school" type="number" min="0" step="1" placeholder="0"
           id="teachers_per_school" name="teachers_per_school" x-model.number="teachers"
           hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
           hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -192,7 +198,7 @@ hx-include="#action-planner-form"
       </div>
       <div>
         <label for="leaders_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">School leaders</label>
-        <input aria-label="School leaders per school" type="number" min="0" step="1" required
+        <input aria-label="School leaders per school" type="number" min="0" step="1" placeholder="0"
           id="leaders_per_school" name="leaders_per_school" x-model.number="leaders"
           hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
           hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -200,7 +206,7 @@ hx-include="#action-planner-form"
       </div>
       <div>
         <label for="other_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Other</label>
-        <input aria-label="Other participants per school" type="number" min="0" step="1" required
+        <input aria-label="Other participants per school" type="number" min="0" step="1" placeholder="0"
           id="other_per_school" name="other_per_school" x-model.number="other"
           hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
           hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -208,6 +214,8 @@ hx-include="#action-planner-form"
       </div>
     </div>
   </div>
+
+  {% include "partials/clusters/training_materials_fields.html" with materials_preview=True %}
 
   {% comment %}The planned date sits right under the per-school numbers, and
   the invited list takes the whole row (owner, 2026-09-12: "the Schools
@@ -271,21 +279,27 @@ hx-include="#action-planner-form"
 {% endcomment %}
 <div
   x-data="{
-    teachers: {{ teachers_per_school|default:0 }},
-    leaders: {{ leaders_per_school|default:2 }},
-    other: {{ other_per_school|default:0 }},
+    teachers: {{ teachers_per_school|default_if_none:0 }},
+    leaders: {{ leaders_per_school|default_if_none:2 }},
+    other: {{ other_per_school|default_if_none:0 }},
     clusterSchools: {{ cluster_school_count|default:0 }},
     get perSchool() { return (Number(this.teachers) || 0) + (Number(this.leaders) || 0) + (Number(this.other) || 0); },
-    get total() { return this.perSchool * (Number(this.clusterSchools) || 0); }
+    get total() { return this.perSchool * (Number(this.clusterSchools) || 0); },
+    printingPages: '{{ printing_pages|default:""|escapejs }}',
+    photocopyPages: '{{ photocopy_pages|default:""|escapejs }}',
+    photocopyCopies: '{{ photocopy_copies|default:""|escapejs }}',
+    copiesTouched: {% if photocopy_copies %}true{% else %}false{% endif %},
+    get copies() { return this.copiesTouched ? this.photocopyCopies : this.total; },
+    get photocopiedPages() { return (Number(this.photocopyPages) || 0) * (Number(this.copies) || 0); }
   }"
   class="space-y-4"
 >
 <div>
-  <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Per school <span class="text-rose-500">*</span></span>
+  <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Per school <span class="text-rose-500">*</span> <span class="text-slate-400 normal-case tracking-normal font-medium">(blank counts as 0)</span></span>
   <div class="grid grid-cols-3 gap-2" data-keep-columns>
     <div>
       <label for="teachers_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Teachers</label>
-      <input aria-label="Teachers per school" type="number" min="0" step="1" required
+      <input aria-label="Teachers per school" type="number" min="0" step="1" placeholder="0"
         id="teachers_per_school" name="teachers_per_school" x-model.number="teachers"
         hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
         hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -293,7 +307,7 @@ hx-include="#action-planner-form"
     </div>
     <div>
       <label for="leaders_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">School leaders</label>
-      <input aria-label="School leaders per school" type="number" min="0" step="1" required
+      <input aria-label="School leaders per school" type="number" min="0" step="1" placeholder="0"
         id="leaders_per_school" name="leaders_per_school" x-model.number="leaders"
         hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
         hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -301,7 +315,7 @@ hx-include="#action-planner-form"
     </div>
     <div>
       <label for="other_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Other</label>
-      <input aria-label="Other participants per school" type="number" min="0" step="1" required
+      <input aria-label="Other participants per school" type="number" min="0" step="1" placeholder="0"
         id="other_per_school" name="other_per_school" x-model.number="other"
         hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
         hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
@@ -315,6 +329,7 @@ hx-include="#action-planner-form"
     <span class="text-[14px] font-bold edify-text tabular-nums" x-text="total.toLocaleString()"></span>
   </div>
 </div>
+{% include "partials/clusters/training_materials_fields.html" with materials_preview=True %}
 <div>
 <label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention <span class="text-slate-400">(optional)</span></label>
 <select aria-label="Focus intervention"

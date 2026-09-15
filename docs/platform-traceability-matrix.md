@@ -26,7 +26,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 48 | 15 | 0 | 0 | 1 | 4 | 10 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 85 | 39 | 3 | 3 | 6 | 24 | 48 |
 | `journey-11` | Professional Development | ✓ | 1 | 39 | 8 | 0 | 0 | 1 | 1 | 0 |
-| `journey-12` | Policy lifecycle | ✓ | 1 | 34 | 12 | 0 | 0 | 1 | 10 | 4 |
+| `journey-12` | Policy lifecycle | ✓ | 1 | 33 | 12 | 0 | 0 | 1 | 10 | 4 |
 | `journey-13` | PIP | ✓ | 1 | 36 | 7 | 0 | 0 | 0 | 3 | 0 |
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 49 | 14 | 0 | 0 | 2 | 3 | 10 |
 | `journey-15` | Financial Health | ✓ | 1 | 49 | 17 | 2 | 4 | 1 | 6 | 14 |
@@ -273,7 +273,7 @@ Steps: Upload → Review → Return → Approval → Publication → Employee ac
 | Permissions checked | — |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py`, `apps/core/logging_filters.py` _+24 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py`, `apps/core/middleware.py` _+23 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `audit.AuditLog`, `documents.DocumentAcknowledgement`, `documents.DocumentAsset`, `documents.DocumentAudienceRule`, `documents.DocumentVersion`, `help_center.HelpArticle`, `help_center.HelpArticleRoleAccess`, `help_center.HelpCategory`, `notifications.Notification`, `sessions.Session` |
 | Notifications raised | `documents.policy_published` |
 | Audit actions (evidence) | `documents.audience_changed`, `documents.created`, `documents.help_mapping_created`, `documents.help_mapping_updated`, `documents.policy_agreed`, `documents.published`, `documents.review_completed`, `documents.review_requested` _+2 more_ |

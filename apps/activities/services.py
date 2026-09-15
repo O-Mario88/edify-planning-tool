@@ -727,6 +727,9 @@ def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
         "leadersAttended": a.leaders_attended,
         "otherParticipants": a.other_participants,
         "expectedParticipants": a.expected_participants,
+        "printingPages": a.printing_pages,
+        "photocopyPages": a.photocopy_pages,
+        "photocopyCopies": a.photocopy_copies,
         "activityPurposeText": a.activity_purpose_text,
         "purposeType": a.purpose_type,
         "focusIntervention": a.focus_intervention,
@@ -811,6 +814,11 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "expectedParticipants": value(
             "expectedParticipants", activity.expected_participants
         ),
+        # Materials by the page (owner, 2026-09-15). Absent from a
+        # reschedule form, so the saved plan prices again unchanged.
+        "printingPages": value("printingPages", activity.printing_pages),
+        "photocopyPages": value("photocopyPages", activity.photocopy_pages),
+        "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
         "nights": data.get("nights"),
         "projectId": activity.project_id,
@@ -1345,6 +1353,55 @@ def _validated_per_school_categories(data: dict) -> dict:
     return categories
 
 
+#: The materials a group session plans, by the page. Printing is pages x the
+#: per-page rate; photocopying is pages x copies x the per-page rate (owner,
+#: 2026-09-15). Blank means none: a session with no handouts is not an
+#: error, it just carries no materials cost.
+MATERIALS_INPUT_KEYS = ("printingPages", "photocopyPages", "photocopyCopies")
+_MATERIALS_LABELS = {
+    "printingPages": "pages to print",
+    "photocopyPages": "pages to photocopy",
+    "photocopyCopies": "photocopies",
+}
+
+
+def _validated_materials(data: dict) -> dict:
+    """``{key: int}`` for every materials input, blank read as zero.
+
+    Zero is the honest reading of an empty field here: nothing to print is
+    nothing to charge, and refusing the submission would turn "no handouts"
+    into a failed schedule. Negative, fractional or non-numeric values are
+    refused by name, as the participant fields are.
+    """
+    out = {}
+    for key in MATERIALS_INPUT_KEYS:
+        raw = data.get(key)
+        if raw in (None, ""):
+            out[key] = 0
+            continue
+        text = str(raw).strip()
+        try:
+            value = int(text)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest(
+                f"The number of {_MATERIALS_LABELS[key]} must be a whole number."
+            ) from exc
+        if str(value) != text.lstrip("+"):
+            raise BadRequest(
+                f"The number of {_MATERIALS_LABELS[key]} must be a whole number."
+            )
+        if value < 0:
+            raise BadRequest(
+                f"The number of {_MATERIALS_LABELS[key]} cannot be negative."
+            )
+        if value > 1_000_000:
+            raise BadRequest(
+                f"The number of {_MATERIALS_LABELS[key]} is implausibly large."
+            )
+        out[key] = value
+    return out
+
+
 def _validated_schools_invited(raw, cluster_school_count: int) -> int:
     """How many member schools are actually being invited.
 
@@ -1637,6 +1694,12 @@ def create(
                 **data,
                 "expectedParticipants": participants_per_school * schools_invited,
             }
+
+    # ── Training materials ───────────────────────────────────────────────
+    # Pages to print, pages to photocopy and copies: validated once, stored
+    # on the row, and read by every pricing of it. Absent means none.
+    materials = _validated_materials(data)
+    data = {**data, **materials}
 
     non_school = bool(
         catalogue_item
@@ -2188,6 +2251,9 @@ def create(
                 "leadersAttended": data.get("leadersAttended"),
                 "otherParticipants": data.get("otherParticipants"),
                 "expectedParticipants": data.get("expectedParticipants"),
+                "printingPages": data.get("printingPages"),
+                "photocopyPages": data.get("photocopyPages"),
+                "photocopyCopies": data.get("photocopyCopies"),
                 "projectId": data.get("projectId"),
                 "fy": fy,
             }
@@ -2395,6 +2461,9 @@ def create(
             teachers_per_school=per_school_categories.get("teachersPerSchool"),
             leaders_per_school=per_school_categories.get("leadersPerSchool"),
             other_per_school=per_school_categories.get("otherPerSchool"),
+            printing_pages=materials["printingPages"] or None,
+            photocopy_pages=materials["photocopyPages"] or None,
+            photocopy_copies=materials["photocopyCopies"] or None,
             teachers_attended=data.get("teachersAttended"),
             leaders_attended=data.get("leadersAttended"),
             other_participants=data.get("otherParticipants"),
