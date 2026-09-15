@@ -958,6 +958,7 @@ def get_operational_school_or_404(user, *args, **kwargs):
         )
     if not may_plan_school(resolve_user_scope(user), school.id):
         raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    _refuse_closed_school(school)
     return school
 
 
@@ -988,7 +989,18 @@ def get_visit_target_school_or_404(user, *args, **kwargs):
         may_plan_school(scope, school.id) or may_request_school_visit(scope, school)
     ):
         raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    _refuse_closed_school(school)
     return school
+
+
+def _refuse_closed_school(school) -> None:
+    """A closed school opens no scheduling, assignment or assessment drawer."""
+    from django.core.exceptions import PermissionDenied
+
+    if school.is_closed:
+        from apps.schools.lifecycle_service import CLOSED_SCHOOL_MESSAGE
+
+        raise PermissionDenied(CLOSED_SCHOOL_MESSAGE)
 
 
 def get_operational_cluster_or_404(user, *args, **kwargs):

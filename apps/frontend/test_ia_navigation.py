@@ -103,6 +103,7 @@ IA_SIDEBAR = [
         [
             ("Leave & Personal Time Off", "/personal-time-off/"),
             ("School Directory", "/schools"),
+            ("Closed Schools", "/schools/closed"),
         ],
     ),
 ]

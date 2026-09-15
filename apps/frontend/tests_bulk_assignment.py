@@ -92,17 +92,44 @@ class BulkAssignmentTests(TestCase):
             cluster=self.cluster, sub_county=self.sub_county_1
         )
 
-    def test_add_to_cluster_drawer_nearby_directory_is_district_scoped(self):
-        """The drawer's successor to the sub-county picker: an uncovered
-        school gets a directory of nearby clusters, and it must only offer
-        clusters from the school's own district."""
+    def test_add_to_cluster_drawer_lists_the_owners_clusters_only(self):
+        """Owner, 2026-09-15: the drawer lists the clusters belonging to the
+        school's owner. One in another district is listed but cannot be
+        chosen; an unowned cluster is not listed."""
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.staff_profile.id
+        )
+        far = Cluster.objects.create(
+            id="cl-far",
+            name="Wakiso Owner Cluster",
+            region=self.region,
+            district=self.district_other,
+            status="active",
+            responsible_staff_id=self.staff_profile.id,
+        )
+        unowned = Cluster.objects.create(
+            id="cl-unowned",
+            name="Unowned Mukono Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+        )
         self.client.force_login(self.user)
-        # self.school_other sits in sc-2, which no cluster covers.
         response = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["show_cluster_directory"])
-        for cluster in response.context["all_clusters"]:
-            self.assertEqual(cluster.district_id, self.district.id)
+        listed = {
+            c.id: c.in_school_district for c in response.context["owner_clusters"]
+        }
+        self.assertEqual(listed, {self.cluster.id: True, far.id: False})
+        self.assertNotContains(response, unowned.name)
+
+        refused = self.client.post(
+            f"/schools/{self.school_other.id}/add-to-cluster",
+            {"cluster_action_type": "existing", "existing_cluster_id": far.id},
+        )
+        self.assertContains(refused, "own district")
+        self.school_other.refresh_from_db()
+        self.assertIsNone(self.school_other.cluster_id)
 
     def test_create_new_cluster_multi_sub_counties(self):
         self.client.force_login(self.user)
@@ -228,54 +255,52 @@ class BulkAssignmentTests(TestCase):
         self.assertIn(my_cluster.id, cluster_ids)
         self.assertNotIn(other_cluster.id, cluster_ids)
 
-    def test_add_to_cluster_drawer_get_with_existing_covering_cluster(self):
+    def test_add_to_cluster_drawer_preselects_the_owners_covering_cluster(self):
+        StaffSchoolAssignment.objects.create(
+            staff=self.staff_profile, school_id=self.school.id
+        )
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.staff_profile.id
+        )
         self.client.force_login(self.user)
         # self.school is in sub_county_1 which is covered by self.cluster
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.context["existing_covering_cluster"].id, self.cluster.id
-        )
+        self.assertEqual(response.context["preselected_cluster_id"], self.cluster.id)
 
-    def test_add_to_cluster_drawer_resolves_coverage_per_school(self):
-        """Successor to the per-sub-county claimed flag: a school in a
-        covered sub-county resolves its covering cluster (no directory);
-        a school in an uncovered one gets the directory instead."""
+    def test_add_to_cluster_drawer_preselects_per_school(self):
+        """Only a school in a sub-county the owner's cluster covers opens with
+        it selected; the other chooses from the same list."""
+        StaffSchoolAssignment.objects.create(
+            staff=self.staff_profile, school_id=self.school.id
+        )
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.staff_profile.id
+        )
         self.client.force_login(self.user)
         covered = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
-        self.assertEqual(covered.status_code, 200)
-        self.assertEqual(
-            covered.context["existing_covering_cluster"].id, self.cluster.id
-        )
-        self.assertFalse(covered.context["show_cluster_directory"])
+        self.assertEqual(covered.context["preselected_cluster_id"], self.cluster.id)
 
         uncovered = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
-        self.assertEqual(uncovered.status_code, 200)
-        self.assertIsNone(uncovered.context["existing_covering_cluster"])
-        self.assertTrue(uncovered.context["show_cluster_directory"])
+        self.assertEqual(uncovered.context["preselected_cluster_id"], "")
+        self.assertIn(
+            self.cluster.id, [c.id for c in uncovered.context["owner_clusters"]]
+        )
 
-    def test_create_new_cluster_routing_safeguard(self):
+    def test_choosing_an_owners_cluster_assigns_the_school_directly(self):
+        """No automatic routing: the planner's choice is what is saved."""
+        StaffSchoolAssignment.objects.create(
+            staff=self.staff_profile, school_id=self.school.id
+        )
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.staff_profile.id
+        )
         self.client.force_login(self.user)
-        # Get count of clusters before POST
-        cluster_count_before = Cluster.objects.count()
-
-        # Try to post "new" cluster for school in sc-1 (which is already covered by self.cluster)
         response = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
-            {
-                "cluster_action_type": "new",
-                "new_cluster_name": "Duplicate Mukono Hub Cluster",
-                "new_district_id": "dist-1",
-                "new_sub_county_ids": ["sc-1"],
-                "notes": "Trying to bypass.",
-            },
+            {"cluster_action_type": "existing", "existing_cluster_id": self.cluster.id},
         )
         self.assertEqual(response.status_code, 200)
-
-        # Verify no new cluster was created
-        self.assertEqual(Cluster.objects.count(), cluster_count_before)
-
-        # Verify the school was auto-routed and assigned to self.cluster
         self.school.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.cluster.id)
         self.assertEqual(self.school.cluster_status, "clustered")

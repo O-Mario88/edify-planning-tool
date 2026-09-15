@@ -150,6 +150,17 @@ class PartnerAssignment(TimeStampedModel):
         blank=True,
         related_name="partner_choice_assignments",
     )
+    # The course an In-school Training handover delivers, kept apart from
+    # catalogue_item, which is the standard In-school Training workflow that
+    # prices it. Staff choose the course; the partner only dates it. Mirrors
+    # Activity.training_course, which the scheduled activity inherits.
+    training_course = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="partner_course_assignments",
+    )
     source_ssa = models.ForeignKey(
         "ssa.SsaRecord",
         on_delete=models.PROTECT,

@@ -1635,6 +1635,14 @@ SIDEBAR_ITEMS = [
                 "visible_to": {CD},
             },
             {
+                # The CD has no SCHOOLS & FIELD group; the archive of closed
+                # schools reaches them here (owner, 2026-09-15).
+                "label": "Closed Schools",
+                "url": "/schools/closed",
+                "page_key": "closed_schools",
+                "visible_to": {CD},
+            },
+            {
                 # The canonical Uganda Master table in its four source
                 # columns; PL/CCEO read their OWN allocated figure here
                 # (owner, 2026-08-20).
@@ -1885,9 +1893,9 @@ SIDEBAR_ITEMS = [
                 "label": "Closed Schools",
                 "url": "/schools/closed",
                 "page_key": "closed_schools",
-                # Not in a Programme Lead's sidebar: the archive stays linked from
-                # the close drawer and the directory (2026-09-13).
-                "visible_to": PAGE_PERMISSIONS["closed_schools"] - {PL},
+                # CCEO, Programme Lead, IA and CD (owner, 2026-09-15; it was
+                # left out of the Programme Lead's sidebar on 2026-09-13).
+                "visible_to": PAGE_PERMISSIONS["closed_schools"],
             },
             {
                 "label": "Core Schools",
@@ -2472,6 +2480,14 @@ SIDEBAR_ITEMS = [
                 "page_key": "school_directory",
                 "visible_to": {IA},
                 "icon_key": "schools",
+            },
+            {
+                # The archive beside the directory IA keeps (owner, 2026-09-15:
+                # Closed Schools for the CCEO, Programme Lead, IA and CD).
+                "label": "Closed Schools",
+                "url": "/schools/closed",
+                "page_key": "closed_schools",
+                "visible_to": {IA},
             },
             {
                 # Qualitative field evidence IA reads; it never writes one.

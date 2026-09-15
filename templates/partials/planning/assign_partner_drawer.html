@@ -93,16 +93,16 @@
   <template x-if="showFollowUp">
     <div class="space-y-3">
       <div>
-        <label for="partner_source_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training / Cluster Meeting followed up</label>
+        <label for="partner_source_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training followed up</label>
         <select name="source_activity_id" id="partner_source_activity" required x-model="sourceActivityId"
           class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-          <option value="">Select a completed session…</option>
+          <option value="">Select a training this school did…</option>
           <template x-for="activity in followUpActivities" :key="activity.id">
             <option :value="activity.id" x-text="activity.label"></option>
           </template>
         </select>
-        <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only completed sessions this School attended in Fiscal Year {{ follow_up_fy }} are listed.</p>
-        <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No eligible completed session is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+        <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
+        <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
       </div>
       <div x-show="selectedSource" style="display:none">
         <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus intervention</span>

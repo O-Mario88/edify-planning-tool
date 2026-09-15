@@ -192,7 +192,15 @@ def resolve_activity_intervention(
     *,
     requested_intervention: str | None,
     source_activity=None,
+    intervention_optional: bool = False,
 ) -> str | None:
+    """The one intervention an Activity records for this Catalogue item.
+
+    ``intervention_optional`` is for work that moves no single intervention
+    even when its item usually inherits one: an SSA collection, a relationship
+    visit, or the follow-up of a course that is not SSA-scored (an
+    orientation). Such work records none rather than being refused.
+    """
     mappings = list(_mapping(item))
     if not mappings:
         raise BadRequest("This Catalogue item has no active intervention mapping.")
@@ -225,6 +233,8 @@ def resolve_activity_intervention(
                 or source_activity.purpose_intervention
             )
             if not inherited:
+                if intervention_optional:
+                    return None
                 raise BadRequest(
                     "The selected source Activity has no intervention to inherit. "
                     "Choose a valid source Training or ask IA to repair its mapping."
@@ -232,6 +242,8 @@ def resolve_activity_intervention(
             return inherited
         if requested_intervention in SsaIntervention.values:
             return requested_intervention
+        if not requested_intervention and intervention_optional:
+            return None
         if not requested_intervention:
             raise BadRequest(
                 "Choose the Training or support Activity being followed up, or "
@@ -307,6 +319,7 @@ def apply_catalogue_snapshot(
     source_activity=None,
     override_reason: str = "",
     recommendation_source: dict | None = None,
+    intervention_optional: bool = False,
 ):
     """Stamp governed metadata onto a canonical Activity exactly once."""
 
@@ -314,6 +327,7 @@ def apply_catalogue_snapshot(
         item,
         requested_intervention=requested_intervention,
         source_activity=source_activity,
+        intervention_optional=intervention_optional,
     )
     version = _latest_version(item)
     activity.catalogue_item = item

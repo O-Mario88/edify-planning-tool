@@ -112,66 +112,15 @@ def _certified_agency_options(district_name: str = "", activity_type: str = ""):
 
 
 def _school_training_follow_up_options(school) -> list[dict]:
-    """Completed current-FY cluster sessions this school actually attended.
+    """Completed current-FY trainings this school did, by either route.
 
-    A cluster invitation is not attendance.  Follow-up choices therefore come
-    from the completion ledger's ``attended_school_ids`` snapshot, not current
-    cluster membership, and only completed sessions with a usable intervention
-    are offered.  The create service repeats every one of these checks.
+    In-school and Core trainings at the school, and cluster trainings or
+    meetings it is recorded as attending (a cluster invitation is not
+    attendance). The create service repeats every one of these checks.
     """
-    from apps.activities.models import Activity
+    from apps.activities.training_history import follow_up_options
 
-    source_types = (
-        ActivityType.CLUSTER_TRAINING,
-        ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
-        ActivityType.CLUSTER_MEETING,
-        ActivityType.CLUSTER_MEETING_SSA_REVIEW,
-    )
-    completed_statuses = (
-        "completed",
-        "ia_verified",
-        "accountant_confirmed",
-        "closed",
-    )
-    labels = dict(SsaIntervention.choices)
-    rows = (
-        Activity.objects.filter(
-            deleted_at__isnull=True,
-            fy=get_operational_fy(),
-            status__in=completed_statuses,
-            activity_type__in=source_types,
-            attended_school_ids__contains=[school.id],
-        )
-        .exclude(focus_intervention__isnull=True)
-        .exclude(focus_intervention="")
-        .select_related("catalogue_item", "cluster")
-        .order_by("-planned_date", "-created_at")
-    )
-    options = []
-    for activity in rows:
-        name = (
-            activity.activity_name_snapshot
-            or getattr(activity.catalogue_item, "display_name", "")
-            or activity.get_activity_type_display()
-        )
-        when = (
-            activity.planned_date.strftime("%d %b %Y")
-            if activity.planned_date
-            else "Date not recorded"
-        )
-        cluster_name = getattr(activity.cluster, "name", "") or "Cluster session"
-        options.append(
-            {
-                "id": activity.id,
-                "label": f"{name} · {when} · {cluster_name}",
-                "intervention": activity.focus_intervention,
-                "interventionLabel": labels.get(
-                    activity.focus_intervention, activity.focus_intervention
-                ),
-                "salesforceId": activity.salesforce_activity_id or "",
-            }
-        )
-    return options
+    return follow_up_options(school, fy=get_operational_fy())
 
 
 def _scheduled_into_own_plan(created, principal) -> tuple[bool, str]:
@@ -1488,6 +1437,15 @@ def schedule_action_view(request):
         payload["participantsPerSchool"] = participants_per_school
     if schools_invited:
         payload["schoolsInvited"] = schools_invited
+    # The schools ticked by name. Without them the session recorded no
+    # invitation at all, so nothing could tell a checked school from one that
+    # happened to walk in (the Core training credit reads both).
+    invited_school_ids = [
+        s.strip() for s in request.POST.getlist("invited_school_ids") if s.strip()
+    ]
+    if cluster_id and invited_school_ids:
+        payload["invitedSchoolIds"] = invited_school_ids
+        payload["schoolsInvited"] = str(len(invited_school_ids))
     for key, raw in (
         ("teachersPerSchool", teachers_per_school),
         ("leadersPerSchool", leaders_per_school),
@@ -1873,8 +1831,7 @@ def assign_partner_action_view(request):
             if school_for_validation and purpose_of_visit == "training_follow_up":
                 if not source_activity_id:
                     raise BadRequest(
-                        "Select the completed Cluster Training or Cluster Meeting "
-                        "this assignment follows up."
+                        "Select the completed training this assignment follows up."
                     )
                 from apps.activities.models import Activity
 
@@ -1886,8 +1843,7 @@ def assign_partner_action_view(request):
                 }
                 if source_activity_id not in eligible_source_ids:
                     raise BadRequest(
-                        "Choose a completed current-FY Cluster Training or Cluster "
-                        "Meeting this School attended."
+                        "Choose a completed current-FY training this School did."
                     )
                 source_activity = Activity.objects.filter(
                     id=source_activity_id,

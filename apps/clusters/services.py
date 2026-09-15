@@ -12,6 +12,7 @@ its own district — and the portfolio boundary, enforced in
 from __future__ import annotations
 
 from apps.core.metrics import render_precomputed_metric_item
+from apps.schools.lifecycle_models import OPERATING_STATUSES
 
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
@@ -845,6 +846,8 @@ def active_school_count(cluster_id: str) -> int:
         cluster_id=cluster_id,
         cluster_status="clustered",
         deleted_at__isnull=True,
+        # A closed school is no longer a member anyone can invite or price.
+        operational_status__in=OPERATING_STATUSES,
     ).count()
 
 
@@ -862,6 +865,8 @@ def active_schools(cluster_id: str):
         cluster_id=cluster_id,
         cluster_status="clustered",
         deleted_at__isnull=True,
+        # A closed school is no longer a member anyone can invite or price.
+        operational_status__in=OPERATING_STATUSES,
     ).order_by("name")
 
 

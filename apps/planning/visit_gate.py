@@ -255,13 +255,15 @@ def visit_gates(
             "partner_visits",
         )
     if core_ids:
+        from apps.core_schools.core_planning_services import core_training_q
+
         _tally(
             live.filter(school_id__in=core_ids, activity_type="core_visit"),
             "staff_visits",
             "partner_visits",
         )
         _tally(
-            live.filter(school_id__in=core_ids, activity_type="core_training"),
+            live.filter(school_id__in=core_ids).filter(core_training_q()),
             "staff_trainings",
             "partner_trainings",
         )

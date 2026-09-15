@@ -723,6 +723,46 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(activity.participants_per_school, 4)
         self.assertEqual(activity.expected_participants, 8)
 
+    def test_the_ticked_schools_are_recorded_as_invitations(self):
+        """The Planning cluster drawer ticks schools by name; the view used to
+        drop the list and keep only the count, so no invitation was recorded
+        and nothing could tell a checked school from a walk-in."""
+        from apps.activities.models import ClusterActivityAttendance
+
+        client = Client()
+        client.force_login(self.user)
+        scheduled = timezone.localdate() + datetime.timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += datetime.timedelta(days=1)
+        members = list(
+            School.objects.filter(cluster_id=self.cluster.id).order_by("school_id")
+        )
+        response = client.post(
+            "/planning/schedule-action",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "cluster_training",
+                "catalogue_item_id": self.tam_cluster_training.id,
+                "scheduled_date": scheduled.isoformat(),
+                "participants_per_school": "2",
+                "invited_school_ids": [members[0].id, members[1].id],
+                "delivery_type": "staff",
+                "override_reason": "Drawer seam test fixture has no SSA records.",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(catalogue_item=self.tam_cluster_training)
+        self.assertEqual(activity.schools_invited, 2)
+        self.assertEqual(
+            set(
+                ClusterActivityAttendance.objects.filter(
+                    activity=activity, invited=True
+                ).values_list("school_id", flat=True)
+            ),
+            {members[0].id, members[1].id},
+        )
+
     def test_selected_training_post_preserves_intervention_and_total(self):
         client = Client()
         client.force_login(self.user)

@@ -241,6 +241,26 @@ def eligible_clusters_for_school(school, *, scope=None):
     return qs.select_related("district", "sub_county").order_by("name")
 
 
+def owner_clusters_for_school(school):
+    """The active clusters belonging to this school's owner, in any district.
+
+    What the directory's Add to Cluster drawer lists (owner, 2026-09-15). Only
+    the owner's: an unowned cluster or another staff member's is not offered.
+    The caller marks clusters outside the school's district, which membership
+    refuses.
+    """
+    if school is None:
+        return Cluster.objects.none()
+    owner_ids = school_owner_ids(school)
+    if not owner_ids:
+        return Cluster.objects.none()
+    return Cluster.objects.filter(
+        responsible_staff_id__in=owner_ids,
+        deleted_at__isnull=True,
+        status=ClusterRecordStatus.ACTIVE,
+    )
+
+
 def ineligibility_reason(school) -> str | None:
     """Why the list is empty, in the words the drawer should use.
 

@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Add School to Cluster{% endblock %}
-{% block drawer_subtitle %}The school's saved system sub-county determines its cluster automatically.{% endblock %}
+{% block drawer_subtitle %}Choose one of the owner's clusters for this school.{% endblock %}
 
 {% block drawer_body %}
 <div class="cluster-assignment-drawer edify-surface space-y-5">
@@ -33,158 +33,89 @@
     </dl>
   </section>
 
-  {% if geography_ready %}
   <form
     hx-post="/schools/{{ school.id }}/add-to-cluster"
     hx-target="#drawer-container"
     class="edify-surface space-y-5 text-[12px] text-slate-600"
     x-data="{
-      {% comment %}
-      Land on the tab that can actually be completed. With no cluster assigned
-      to this person there is nothing to pick, and opening on an empty picker
-      makes the drawer look broken rather than pointing at the way forward.
-      {% endcomment %}
-      actionType: '{% if existing_covering_cluster or show_cluster_directory and all_clusters %}existing{% else %}new{% endif %}',
-      selectedClusterId: '{{ existing_covering_cluster.id|default:"" }}'
+      actionType: '{% if has_selectable_cluster %}existing{% else %}new{% endif %}',
+      selectedClusterId: '{{ preselected_cluster_id|default:""|escapejs }}'
     }"
   >
     {% csrf_token %}
     <input type="hidden" name="cluster_action_type" :value="actionType">
-    <input type="hidden" name="existing_cluster_id" x-model="selectedClusterId">
 
-    {% if existing_covering_cluster %}
-    <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="automatic-cluster-heading">
-      <div class="flex items-start gap-3">
-        <svg class="mt-0.5 h-5 w-5 shrink-0 text-[var(--edify-accent-text)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-        </svg>
-        <div>
-          <h3 id="automatic-cluster-heading" class="text-[13px] font-extrabold text-slate-800">Cluster selected automatically</h3>
-          <p class="mt-1 text-[12px] font-semibold leading-5 text-slate-500">
-            {{ school.sub_county.name }} is covered by <span class="font-extrabold text-slate-800">{{ existing_covering_cluster.name }}</span>.
-          </p>
-        </div>
-      </div>
-    </section>
-    {% else %}
-      {% if show_cluster_directory %}
-      <div class="edify-surface grid grid-cols-2 gap-1 rounded-surface border border-slate-200 p-1" role="group" aria-label="Cluster assignment method">
-        <button
-          type="button"
-          @click="actionType = 'existing'"
-          :aria-pressed="actionType === 'existing'"
-          :class="actionType === 'existing' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-          class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
-        >
-          Select nearby
-        </button>
-        <button
-          type="button"
-          @click="actionType = 'new'"
-          :aria-pressed="actionType === 'new'"
-          :class="actionType === 'new' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-          class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
-        >
-          Create new
-        </button>
-      </div>
+    <div class="edify-surface grid grid-cols-2 gap-1 rounded-surface border border-slate-200 p-1" role="group" aria-label="Cluster assignment method" data-keep-columns>
+      <button
+        type="button"
+        @click="actionType = 'existing'"
+        :aria-pressed="actionType === 'existing'"
+        :class="actionType === 'existing' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
+        class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
+      >
+        Owner&rsquo;s clusters
+      </button>
+      <button
+        type="button"
+        @click="actionType = 'new'"
+        :aria-pressed="actionType === 'new'"
+        :class="actionType === 'new' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
+        class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
+      >
+        Create new
+      </button>
+    </div>
 
-      <div x-show="actionType === 'existing'" class="space-y-2">
-        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Your clusters</label>
-        {% if all_clusters %}
-        <select
-          id="all_cluster_id"
-          x-model="selectedClusterId"
-          class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
-        >
-          <option value="">Select a cluster</option>
-          {% for cluster in all_clusters %}
-          {% comment %}
-          Enough context to choose without opening each one: §7 asks for the
-          sub-county and district beside the name, because "Chegere North" and
-          "Chegere South" are indistinguishable otherwise.
-          {% endcomment %}
-          <option value="{{ cluster.id }}">{{ cluster.name }}{% if cluster.sub_county.name %} · {{ cluster.sub_county.name }}{% endif %} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
-          {% endfor %}
-        </select>
-        <p class="edify-text-caption font-semibold text-slate-400">
-          {% if filtered_by_sub_county %}
-          Your active clusters in {{ school.sub_county.name }}, {{ school.district.name }}.
-          {% else %}
-          Your active clusters in {{ school.district.name }}.
-          {% endif %}
-        </p>
-        {% if sub_county_missing %}
-        {% comment %}
-        Named, not silently ignored. Without a sub-county the list can only be
-        narrowed to the district, so the person is told what is missing and
-        what completing it buys — rather than wondering why a neighbouring
-        sub-county's cluster is on offer.
-        {% endcomment %}
-        <p class="edify-text-caption font-semibold text-amber-700">
-          This school has no sub-county, so the list could only be narrowed to
-          the district. Add the sub-county on the school profile to see just
-          the clusters covering it.
-        </p>
-        {% endif %}
-        {% else %}
-        {% comment %}
-        An empty picker with no explanation reads as a broken page. A cluster
-        belongs to whoever is responsible for it, so having none here is a
-        fact about assignment rather than about this school — and the next
-        step is the one already on this drawer.
-        {% endcomment %}
-        {% if ineligibility_reason %}
-        <p class="edify-text-caption font-semibold text-amber-700">{{ ineligibility_reason }}</p>
-        {% else %}
-        <p class="edify-text-caption font-semibold text-slate-500">
-          No active cluster owned by {% firstof responsible_staff.user.name "this school's owner" %}
-          covers {% if filtered_by_sub_county %}{{ school.sub_county.name }}, {% endif %}{{ school.district.name }}.
-          A cluster belongs to the staff member responsible for its schools, so
-          another owner's cluster is not an option here — create one below,
-          {% if sub_county_missing %}complete the sub-county to widen the match,{% endif %}
-          or request a portfolio transfer.
-        </p>
-        {% endif %}
-        {% endif %}
-      </div>
+    <div x-show="actionType === 'existing'" class="space-y-2"{% if not has_selectable_cluster %} style="display: none;"{% endif %} data-owner-clusters>
+      <label for="owner_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster</label>
+      {% if owner_clusters %}
+      <select
+        id="owner_cluster_id"
+        name="existing_cluster_id"
+        x-model="selectedClusterId"
+        :required="actionType === 'existing'"
+        class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+      >
+        <option value="">Select a cluster</option>
+        {% for cluster in owner_clusters %}
+        <option value="{{ cluster.id }}"{% if not cluster.in_school_district %} disabled{% endif %}>{{ cluster.name }}{% if cluster.sub_county.name %} · {{ cluster.sub_county.name }}{% endif %} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}{% if not cluster.in_school_district %} · {{ cluster.district.name }} (other district){% endif %}</option>
+        {% endfor %}
+      </select>
+      <p class="edify-text-caption font-semibold text-slate-400">
+        Every active cluster belonging to {% firstof responsible_staff.user.name "this school's owner" %}. A school joins a cluster in its own district, {{ school.district.name }}.
+      </p>
+      {% elif ineligibility_reason %}
+      <p class="edify-text-caption font-semibold text-amber-700">{{ ineligibility_reason }}</p>
+      {% else %}
+      <p class="edify-text-caption font-semibold text-slate-500">
+        {% firstof responsible_staff.user.name "This school's owner" %} has no active cluster yet. Create one to add the school.
+      </p>
       {% endif %}
+    </div>
 
-      <div x-show="actionType === 'new'"{% if show_cluster_directory %} style="display: none;"{% endif %} class="space-y-4">
-        <div class="space-y-2">
-          <label for="new_cluster_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster name</label>
-          <input
-            type="text"
-            name="new_cluster_name"
-            id="new_cluster_name"
-            {% comment %}
-              firstof, not the default filter — a filter ARGUMENT resolves
-              eagerly, so a dotted fallback raised VariableDoesNotExist and
-              500'd the whole drawer for any school whose district is null.
-              firstof resolves each candidate with ignore_failures, so a
-              missing one is simply skipped.
-            {% endcomment %}
-            placeholder="e.g. {% firstof school.sub_county.name school.district.name %} Cluster"
-            class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
-          >
-        </div>
-
-        <input type="hidden" name="new_district_id" value="{{ school.district_id }}">
-        {% if school.sub_county_id %}
-        <input type="hidden" name="new_sub_county_ids" value="{{ school.sub_county_id }}">
-        {% endif %}
-        <dl class="edify-surface grid grid-cols-2 gap-3 rounded-surface border border-slate-200 p-3 text-[12px]">
-          <div>
-            <dt class="font-semibold text-slate-400">District</dt>
-            <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name }}</dd>
-          </div>
-          <div>
-            <dt class="font-semibold text-slate-400">Coverage</dt>
-            <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"District level" }}</dd>
-          </div>
-        </dl>
+    <div x-show="actionType === 'new'"{% if has_selectable_cluster %} style="display: none;"{% endif %} class="space-y-4">
+      <div class="space-y-2">
+        <label for="new_cluster_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster name</label>
+        <input
+          type="text"
+          name="new_cluster_name"
+          id="new_cluster_name"
+          placeholder="e.g. {% firstof school.sub_county.name school.district.name %} Cluster"
+          :required="actionType === 'new'"
+          class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+        >
       </div>
-    {% endif %}
+      <dl class="edify-surface grid grid-cols-2 gap-3 rounded-surface border border-slate-200 p-3 text-[12px]">
+        <div>
+          <dt class="font-semibold text-slate-400">District</dt>
+          <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name|default:"Not assigned" }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-slate-400">Coverage</dt>
+          <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"District level" }}</dd>
+        </div>
+      </dl>
+    </div>
 
     <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="responsible-staff-heading">
       <h3 id="responsible-staff-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Field Staff</h3>
@@ -216,42 +147,9 @@
         type="submit"
         class="btn-premium-primary min-h-11 rounded-control px-6 text-[12px] font-bold text-white transition-colors"
       >
-        {% if existing_covering_cluster %}Add to {{ existing_covering_cluster.name }}{% else %}Add to cluster{% endif %}
+        Add to cluster
       </button>
     </div>
   </form>
-  {% else %}
-  <section class="rounded-surface border border-amber-200 bg-amber-50/60 p-4" aria-labelledby="cluster-geography-required-heading">
-    <div class="flex items-start gap-3">
-      <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>
-      </svg>
-      <div>
-        <h3 id="cluster-geography-required-heading" class="text-[13px] font-extrabold text-slate-800">Complete the school geography first</h3>
-        <p class="mt-1 text-[12px] font-semibold leading-5 text-slate-600">
-          Select the school's updated sub-county on its profile. The saved value is mapped to the system geography and used to find the cluster that covers it.
-        </p>
-      </div>
-    </div>
-  </section>
-  <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-    <button
-      type="button"
-      @click="$dispatch('close-drawer')"
-      class="edify-surface min-h-11 rounded-control border border-slate-200 px-5 text-[12px] font-bold text-slate-700 transition-colors hover:border-slate-300"
-    >
-      Close
-    </button>
-    <button
-      type="button"
-      hx-get="/schools/{{ school.id }}/edit-drawer"
-      hx-target="#drawer-container"
-      hx-swap="innerHTML"
-      class="btn-premium-primary min-h-11 rounded-control px-6 text-[12px] font-bold text-white transition-colors"
-    >
-      Update School Profile
-    </button>
-  </div>
-  {% endif %}
 </div>
 {% endblock %}

@@ -284,8 +284,7 @@ class TheDrawerExplainsAnEmptyPickerTest(ClusterPickerScopeFixture):
         body = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
-        # The wording is the eligibility rule's, not the old scope message's.
-        self.assertIn("No active cluster owned by", body)
+        self.assertIn("has no active cluster yet", body)
         self.assertNotIn("Mine Cluster", body)
 
     def test_a_cceo_with_clusters_gets_the_picker_not_the_message(self):
@@ -296,7 +295,7 @@ class TheDrawerExplainsAnEmptyPickerTest(ClusterPickerScopeFixture):
         ).content.decode()
 
         self.assertIn("Mine Cluster", body)
-        self.assertNotIn("No active cluster owned by", body)
+        self.assertNotIn("has no active cluster yet", body)
 
 
 class ACreatedClusterBelongsToItsCreatorTest(ClusterPickerScopeFixture):
@@ -384,33 +383,28 @@ class TheClustersPageAgreesWithItsOwnDrawersTest(ClusterPickerScopeFixture):
 
 
 class TheDrawerLearnsFromTheFirstAssignmentTest(ClusterPickerScopeFixture):
-    """The journey the drawer's own subtitle promises.
+    """The first assignment teaches the cluster its sub-county.
 
-    "The school's saved system sub-county determines its cluster
-    automatically" was true of the code and false in practice: the resolver
-    matches on declared sub-county coverage, coverage could only be typed in
-    when the cluster was created, and the command that derives it reads member
-    schools — the members the missing coverage prevents. Every cluster in the
-    deployment was inside that loop, so the promised sentence had never once
-    been shown. The first assignment is what breaks it.
+    The drawer lists the owner's clusters and the planner chooses (owner,
+    2026-09-15). Once one school has joined, the cluster covers its
+    sub-county, so a neighbour in the same sub-county opens with that cluster
+    already selected.
     """
-
-    AUTOMATIC = "Cluster selected automatically"
 
     def setUp(self):
         super().setUp()
         self.neighbour = self._school("SCOPE-3", self.mine, self.cceo)
         self.client.force_login(self.cceo_user)
 
-    def _drawer(self, school):
+    def _preselected(self, school):
         response = self.client.get(f"/schools/{school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-        return response.content.decode()
+        return response.context["preselected_cluster_id"]
 
-    def test_before_any_assignment_the_school_gets_the_manual_picker(self):
-        self.assertNotIn(self.AUTOMATIC, self._drawer(self.school))
+    def test_before_any_assignment_nothing_is_preselected(self):
+        self.assertEqual(self._preselected(self.school), "")
 
-    def test_after_the_first_assignment_the_neighbour_resolves_automatically(self):
+    def test_after_the_first_assignment_the_neighbour_opens_on_that_cluster(self):
         self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
             {
@@ -421,7 +415,4 @@ class TheDrawerLearnsFromTheFirstAssignmentTest(ClusterPickerScopeFixture):
         self.school.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.my_cluster.id)
 
-        body = self._drawer(self.neighbour)
-
-        self.assertIn(self.AUTOMATIC, body)
-        self.assertIn("Mine Cluster", body)
+        self.assertEqual(self._preselected(self.neighbour), self.my_cluster.id)
