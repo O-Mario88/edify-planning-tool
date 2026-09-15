@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 693,
+  "titled_cards": 686,
   "templates": 258,
-  "distinct_titles": 659,
+  "distinct_titles": 652,
   "with_card_key": 13,
-  "untitled_surfaces": 776,
-  "untitled_chrome": 174,
-  "untitled_nested": 254,
-  "untitled_headless": 348,
+  "untitled_surfaces": 766,
+  "untitled_chrome": 173,
+  "untitled_nested": 247,
+  "untitled_headless": 346,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -299,47 +299,11 @@
   },
   {
    "template": "templates/pages/admin/data_quality_center.html",
-   "line": 25,
+   "line": 29,
    "title": "Quality Actions Needed",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "bg-slate-50 border border-slate-200 rounded-surface p-5 space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/admin/data_quality_center.html",
-   "line": 28,
-   "title": "Link Raw Staff Names",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/admin/data_quality_center.html",
-   "line": 36,
-   "title": "Cluster Client Schools",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/admin/data_quality_center.html",
-   "line": 43,
-   "title": "Resolve Duplicate Risks",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/admin/data_quality_center.html",
-   "line": 50,
-   "title": "Link Unmatched SSAs",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": []
   },
   {
@@ -1028,25 +992,16 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 46,
+   "line": 47,
    "title": "Country operational cost",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm",
+   "classes": "card p-0 overflow-hidden grid lg:grid-cols-2",
    "branch_path": []
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 50,
-   "title": "Minimum viable cost",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/cost_settings/index.html",
-   "line": 57,
+   "line": 59,
    "title": "Cost review requests",
    "heading_level": 2,
    "has_card_key": false,
@@ -1060,7 +1015,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 124,
+   "line": 120,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -1620,11 +1575,11 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 50,
+   "line": 52,
    "title": "Distributed priorities ()",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
      11,
@@ -1634,11 +1589,11 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 76,
+   "line": 80,
    "title": "Core ValuesSpiritual Formation",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
      11,
@@ -1648,11 +1603,11 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 81,
+   "line": 85,
    "title": "Professional Development",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
      11,
@@ -2033,30 +1988,16 @@
   },
   {
    "template": "templates/pages/leave/leave_approvals.html",
-   "line": 81,
+   "line": 82,
    "title": "Approval Queue ()",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "lg:col-span-3 rounded-surface border flex flex-col shadow-sm overflow-hidden edify-surface edify-border",
+   "classes": "card p-0 overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch",
    "branch_path": []
   },
   {
    "template": "templates/pages/leave/leave_approvals.html",
-   "line": 169,
-   "title": "Select Request to Audit Impact",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border p-20 text-center shadow-sm edify-surface edify-border",
-   "branch_path": [
-    [
-     16,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/leave/leave_approvals.html",
-   "line": 185,
+   "line": 177,
    "title": "Recent Approval Activity",
    "heading_level": 3,
    "has_card_key": false,
@@ -2074,20 +2015,20 @@
   },
   {
    "template": "templates/pages/leave/leave_policies.html",
-   "line": 128,
-   "title": "Public Holidays",
-   "heading_level": 3,
+   "line": 34,
+   "title": "Leave Entitlement Policies",
+   "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-8 edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": []
   },
   {
    "template": "templates/pages/leave/leave_policies.html",
-   "line": 161,
-   "title": "Add Public Holiday",
-   "heading_level": 4,
+   "line": 99,
+   "title": "Public Holidays",
+   "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-4 edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4",
+   "classes": "card p-0 overflow-hidden",
    "branch_path": []
   },
   {
@@ -2110,7 +2051,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 81,
+   "line": 86,
    "title": "Leave balance portfolio",
    "heading_level": 2,
    "has_card_key": false,
@@ -2119,7 +2060,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 97,
+   "line": 102,
    "title": "Leave requests",
    "heading_level": 2,
    "has_card_key": false,
@@ -2128,7 +2069,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 160,
+   "line": 165,
    "title": "Leave impact",
    "heading_level": 2,
    "has_card_key": false,
@@ -2137,7 +2078,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 187,
+   "line": 192,
    "title": "Coverage &amp; handover",
    "heading_level": 2,
    "has_card_key": false,
@@ -2146,7 +2087,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 263,
+   "line": 268,
    "title": "Upcoming constraints",
    "heading_level": 3,
    "has_card_key": false,
@@ -2155,7 +2096,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 283,
+   "line": 288,
    "title": "Schedule conflicts",
    "heading_level": 3,
    "has_card_key": false,
@@ -2164,7 +2105,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 308,
+   "line": 313,
    "title": "Team availability",
    "heading_level": 3,
    "has_card_key": false,
@@ -2173,7 +2114,7 @@
   },
   {
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 337,
+   "line": 342,
    "title": "Team leave tracker",
    "heading_level": 2,
    "has_card_key": false,
@@ -2358,7 +2299,7 @@
   },
   {
    "template": "templates/pages/my_team/index.html",
-   "line": 43,
+   "line": 44,
    "title": "Needs your action",
    "heading_level": 2,
    "has_card_key": false,
@@ -2367,7 +2308,7 @@
   },
   {
    "template": "templates/pages/my_team/index.html",
-   "line": 87,
+   "line": 88,
    "title": "Team roster",
    "heading_level": 2,
    "has_card_key": false,
@@ -2685,7 +2626,7 @@
   },
   {
    "template": "templates/pages/professional_development/index.html",
-   "line": 54,
+   "line": 59,
    "title": "PD Policy &amp; Guidelines",
    "heading_level": 3,
    "has_card_key": false,
@@ -5806,11 +5747,11 @@
   },
   {
    "template": "templates/partials/fund_requests/insights_panel.html",
-   "line": 3,
+   "line": 7,
    "title": "Fund Request Insights",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-5 text-slate-700",
+   "classes": "card p-0 overflow-hidden text-[var(--edify-text)]",
    "branch_path": []
   },
   {
@@ -5824,11 +5765,11 @@
   },
   {
    "template": "templates/partials/fund_requests/source_activities.html",
-   "line": 2,
+   "line": 4,
    "title": "Source Activities from My Plan",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700",
+   "classes": "card p-0 overflow-hidden text-[var(--edify-text)]",
    "branch_path": []
   },
   {
@@ -6654,7 +6595,7 @@
   },
   {
    "template": "templates/partials/priorities/setting_view.html",
-   "line": 68,
+   "line": 71,
    "title": "From source direction to accountable targets",
    "heading_level": 2,
    "has_card_key": false,
@@ -6668,7 +6609,7 @@
   },
   {
    "template": "templates/partials/priorities/setting_view.html",
-   "line": 92,
+   "line": 95,
    "title": "milestones need an RVP definition",
    "heading_level": 2,
    "has_card_key": false,
@@ -6685,22 +6626,8 @@
    ]
   },
   {
-   "template": "templates/partials/priorities/setting_view.html",
-   "line": 210,
-   "title": "No governed priority cycle for FY",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-8 text-center",
-   "branch_path": [
-    [
-     9,
-     1
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/priorities/team_view.html",
-   "line": 65,
+   "line": 74,
    "title": "Team priority distribution",
    "heading_level": 2,
    "has_card_key": false,

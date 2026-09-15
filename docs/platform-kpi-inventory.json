@@ -13267,7 +13267,7 @@
   {
    "audit_id": "KPI-SURFACE-046",
    "template": "templates/pages/leave/personal_time_off.html",
-   "line": 90,
+   "line": 95,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13303,7 +13303,7 @@
   {
    "audit_id": "KPI-SURFACE-047",
    "template": "templates/pages/my_team/index.html",
-   "line": 40,
+   "line": 41,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -15820,7 +15820,7 @@
   {
    "audit_id": "KPI-SURFACE-142",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 78,
+   "line": 83,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15846,7 +15846,7 @@
   {
    "audit_id": "KPI-SURFACE-143",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 126,
+   "line": 131,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15897,7 +15897,7 @@
   {
    "audit_id": "KPI-SURFACE-145",
    "template": "templates/partials/priorities/setting_view.html",
-   "line": 66,
+   "line": 69,
    "source_pattern": "shared-component",
    "items_expression": "priority_cycle_kpis",
    "presentation": "context",
@@ -15927,7 +15927,7 @@
   {
    "audit_id": "KPI-SURFACE-146",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 36,
+   "line": 45,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15952,7 +15952,7 @@
   {
    "audit_id": "KPI-SURFACE-147",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 47,
+   "line": 56,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15977,7 +15977,7 @@
   {
    "audit_id": "KPI-SURFACE-148",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 60,
+   "line": 69,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -16002,7 +16002,7 @@
   {
    "audit_id": "KPI-SURFACE-149",
    "template": "templates/partials/priorities/team_view.html",
-   "line": 65,
+   "line": 74,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",

@@ -97,6 +97,8 @@
         "/business-transformation/government-requirements",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
+        "/leave/policies",
+        "/leave/policies/",
         "/loans"
       ],
       "findings": [],
@@ -5905,7 +5907,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6804,
+      "bytes": 6756,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -6024,7 +6026,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13576,
+      "bytes": 14160,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -6053,7 +6055,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3509,
+      "bytes": 3573,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -6468,7 +6470,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4001,
+      "bytes": 5104,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -6487,6 +6489,8 @@
       "tables": 1,
       "template": "partials/hr/priority_import.html",
       "variants": [
+        "ghost",
+        "primary",
         "{% if row.status == "
       ]
     },
@@ -6680,7 +6684,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3378,
+      "bytes": 3402,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/framework/"
@@ -6793,7 +6797,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 26535,
+      "bytes": 26703,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6879,7 +6883,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6182,
+      "bytes": 6278,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7464,7 +7468,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2930,
+      "bytes": 2829,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7477,8 +7481,7 @@
       "purpose": "Reusable cluster meetings interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 1,
       "template": "partials/my_plan/cluster_meetings.html",
@@ -7486,7 +7489,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3423,
+      "bytes": 3319,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7499,8 +7502,7 @@
       "purpose": "Reusable cluster trainings interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 1,
       "template": "partials/my_plan/cluster_trainings.html",
@@ -7591,7 +7593,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7156,
+      "bytes": 7306,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7732,7 +7734,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2846,
+      "bytes": 2745,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7745,8 +7747,7 @@
       "purpose": "Reusable programme activities interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 1,
       "template": "partials/my_plan/programme_activities.html",
@@ -7801,7 +7802,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2936,
+      "bytes": 2832,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7814,8 +7815,7 @@
       "purpose": "Reusable school visits interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 1,
       "template": "partials/my_plan/school_visits.html",
@@ -8104,7 +8104,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5139,
+      "bytes": 5350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -8724,7 +8724,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 519,
+      "bytes": 515,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -8748,8 +8748,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 9332,
+      "accessibility_requirements": [
+        "keyboard focus visibility"
+      ],
+      "bytes": 10594,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -8781,7 +8783,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31191,
+      "bytes": 31938,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -8845,7 +8847,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5567,
+      "bytes": 5591,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance"
@@ -8873,7 +8875,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8163,
+      "bytes": 8272,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/master"
@@ -8898,7 +8900,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 17839,
+      "bytes": 17692,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
@@ -8930,7 +8932,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13812,
+      "bytes": 14308,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution/team"
@@ -9003,7 +9005,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 21011,
+      "bytes": 20669,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development",
@@ -10702,7 +10704,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5957,
+      "bytes": 5985,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -29879,11 +29881,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
         "text-[16px]",
-        "text-[18px]",
-        "text-[20px]",
-        "text-[36px]"
+        "text-[18px]"
       ]
     },
     {
@@ -51720,7 +51719,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "leave_policies",
-      "primary_action": "Update Policy",
+      "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Policies dashboard - configure entitlements, required documents, and approvals.",
       "remediation": "No automated remediation outstanding",
@@ -51767,10 +51766,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[24px]",
-        "text-[32px]"
+        "text-[20px]"
       ]
     },
     {
@@ -51807,7 +51803,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "leave_policies",
-      "primary_action": "Update Policy",
+      "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Policies dashboard - configure entitlements, required documents, and approvals.",
       "remediation": "No automated remediation outstanding",
@@ -51854,10 +51850,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[24px]",
-        "text-[32px]"
+        "text-[20px]"
       ]
     },
     {
@@ -55265,7 +55258,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -55355,7 +55350,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -55445,7 +55442,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -55535,7 +55534,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -58310,7 +58311,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -81186,7 +81189,7 @@
       "backend_view": "apps.documents.views.new_document_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/documents/new_document.html",
         "test:referenced-by-automated-test",
@@ -81210,7 +81213,7 @@
       "page_type": "planning-or-creation",
       "per_page_css": [],
       "permission_key": "uploads",
-      "primary_action": "Save draft",
+      "primary_action": "Complete planning form",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "This creates a draft. It reaches nobody until it has been reviewed and published.",
       "remediation": "No automated remediation outstanding",
@@ -81256,7 +81259,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
         "text-[13px]"
       ]
     },

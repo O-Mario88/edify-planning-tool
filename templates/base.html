@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260914todayactions1">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260915uiconsistency1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260914themeaudit1">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260914ciland1">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260915uiconsistency1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260914header2">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260914hierarchy1">
-<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260914ciland1">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260915uiconsistency1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,21 +98,21 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260913hrforms2">
+<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260915uiconsistency1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260914recalc1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260915uiconsistency1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260914recalc1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260915uiconsistency1">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260914recalc1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
 <link rel="stylesheet" href="{% static 'css/components/record-views.css' %}?v=20260914records3">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260909anomalies1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260915uiconsistency1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
