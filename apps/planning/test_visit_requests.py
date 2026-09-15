@@ -246,6 +246,10 @@ class RequestingAVisitTest(VisitRequestFixture):
                 self.assertEqual(a.status, "scheduled")
                 self.assertEqual(a.approval_owner_id, "")
                 self.assertEqual(a.responsible_staff_id, who.staff_profile_id)
+                # A client school is visited once a year: free the visit so
+                # the next role can schedule it outright too.
+                a.status = "cancelled"
+                a.save(update_fields=["status"])
 
     def test_never_a_cluster_meeting_or_training(self):
         """Owned or not: cluster work is the cluster owner's programme."""
