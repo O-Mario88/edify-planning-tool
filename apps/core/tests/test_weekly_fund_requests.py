@@ -12,8 +12,15 @@ from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from freezegun import freeze_time
 
 
+# Scheduling refuses a date that has passed (owner, 2026-09-16). The dates
+# below were future when they were written and the wall clock has since
+# moved past them, so the suite runs at a "today" that sits before them —
+# inside the same fiscal year — rather than the dates being chased forward
+# again every few weeks.
+@freeze_time("2026-07-01")
 class WeeklyFundRequestsTest(APITestCase):
     def setUp(self):
         CostCatalogue.objects.get_or_create(

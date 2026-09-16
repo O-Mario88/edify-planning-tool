@@ -16,6 +16,8 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.db import connection
+from freezegun import freeze_time
+
 from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 
@@ -60,6 +62,16 @@ SCORE_MAP = {
 }
 
 
+# Scheduling refuses a date that has passed (owner, 2026-09-16), and staff
+# core support is released in the CURRENT quarter only, so "today" has to sit
+# inside the quarter these slots are scheduled in: FY2026 Q3. The partner
+# booking keeps a later quarter, which is the rule it exists to prove.
+# The dates
+# below were future when they were written and the wall clock has since
+# moved past them, so the suite runs at a "today" that sits before them —
+# inside the same fiscal year — rather than the dates being chased forward
+# again every few weeks.
+@freeze_time("2026-04-01")
 class CoreSchoolsPlanningTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Core R")
@@ -208,7 +220,7 @@ class CoreSchoolsPlanningTest(TestCase):
         return c
 
     def _schedule_visit(
-        self, client=None, school=None, seq="1", when="2026-07-21", partner_id=None
+        self, client=None, school=None, seq="1", when="2026-04-21", partner_id=None
     ):
         payload = {
             "school_id": (school or self.school).school_id,
@@ -480,7 +492,7 @@ class CoreSchoolsPlanningTest(TestCase):
             {
                 "school_id": self.school.school_id,
                 "activity_type": "donor_visit",
-                "scheduled_date": "2026-07-24",
+                "scheduled_date": "2026-04-24",
                 "delivery_type": "staff",
                 "activity_purpose_text": "Introduce a donor to the school.",
             },
@@ -505,7 +517,7 @@ class CoreSchoolsPlanningTest(TestCase):
         # Partner delivery may use the next slot in another quarter of the
         # same fiscal package; the staff quarter release does not apply.
         partner_delivery = self._schedule_visit(
-            seq="2", when="2026-04-21", partner_id=self.partner.id
+            seq="2", when="2026-07-21", partner_id=self.partner.id
         )
         self.assertIn(
             partner_delivery.status_code, (200, 302), partner_delivery.content[:200]
@@ -611,7 +623,7 @@ class CoreSchoolsPlanningTest(TestCase):
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,
                 "responsibleStaffId": self.cceo_sp.id,
-                "scheduledDate": "2026-07-22",
+                "scheduledDate": "2026-04-22",
                 "activityPurposeText": "Partner core coaching",
             },
             principal=self.cceo,
@@ -637,14 +649,14 @@ class CoreSchoolsPlanningTest(TestCase):
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,
                 "responsibleStaffId": self.cceo_sp.id,
-                "scheduledDate": "2026-07-23",
+                "scheduledDate": "2026-04-23",
                 "activityPurposeText": "Partner core coaching",
             },
             principal=self.cceo,
             core_slot_verified=True,
         )
         act = Activity.objects.get(id=result["id"])
-        na = compute_next_action(act, date(2026, 7, 23))
+        na = compute_next_action(act, date(2026, 4, 23))
         self.assertNotIn(na["action"], ("start", "complete", "evidence", "sf_id"))
 
     # ── 15: slot completion gates ────────────────────────────────────────────
@@ -893,7 +905,7 @@ class CoreSchoolsPlanningTest(TestCase):
             {
                 "school_id": self.school.school_id,
                 "training_number": "1",
-                "scheduled_date": "2026-07-21",
+                "scheduled_date": "2026-04-21",
                 "focus_intervention": "teaching_environment",
                 "catalogue_item_id": self.core_training_item.id,
                 "recommendation_reason": (

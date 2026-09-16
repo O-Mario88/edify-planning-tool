@@ -29,8 +29,15 @@ from apps.fund_requests.models import FundRequestItem
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+from freezegun import freeze_time
 
 
+# Scheduling refuses a date that has passed (owner, 2026-09-16). The dates
+# below were future when they were written and the wall clock has since
+# moved past them, so the suite runs at a "today" that sits before them —
+# inside the same fiscal year — rather than the dates being chased forward
+# again every few weeks.
+@freeze_time("2026-07-01")
 class CostingBudgetPeriodTest(APITestCase):
     def setUp(self):
         # Scheduling has a deliberate published-catalogue gate. This suite
