@@ -304,6 +304,31 @@ class CoverageTablesTest(CoverageFixture):
         self.assertContains(page, "Schools with No Training Planned")
         self.assertContains(page, "Uncovered Primary")
         self.assertContains(page, "Scheduled for Visit")
+        # And the lens is offered as a tab to the person who acts on it.
+        self.assertContains(page, "Schools &amp; Coverage")
+
+    def test_the_lens_belongs_to_the_people_who_act_on_it(self):
+        """The Accountant reaches Team Oversight for the money in the plan.
+
+        They are not named anywhere in the coverage brief and have no part in
+        planning a cluster training, so they are offered no tab — and a
+        `?view=coverage` typed into the address bar answers with the planning
+        lens rather than a refusal. This also keeps their first table row above
+        the desktop fold, which a tab strip of one had pushed below it.
+        """
+        accountant = User.objects.create_user(
+            email="coverage-accountant@edify.org",
+            name="Coverage Accountant",
+            roles=["Accountant"],
+            active_role="Accountant",
+            password="x",
+        )
+        StaffProfile.objects.create(user=accountant, country="Uganda")
+        self.client.force_login(accountant)
+        page = self.client.get("/team-planning-oversight/?view=coverage")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotContains(page, "Schools &amp; Coverage")
+        self.assertNotContains(page, "Schools with No Training Planned")
 
 
 class MissingTrainingTodoTest(CoverageFixture):
