@@ -29,6 +29,7 @@ from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from freezegun import freeze_time
 
 
 def _seed_rates(**rates: int) -> None:
@@ -66,6 +67,10 @@ def _seed_rates(**rates: int) -> None:
         )
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-03")
 class CentralizedCostingTest(APITestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Cost Region")

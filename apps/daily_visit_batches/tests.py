@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from freezegun import freeze_time
+
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -35,6 +37,10 @@ SECONDARY_RATES = [
 ]
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-27")
 class DailyVisitBatchTestCase(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Batch Region")
@@ -389,6 +395,10 @@ class DailyVisitBatchTestCase(TestCase):
         self.assertIn("not been classified", str(ctx.exception))
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-20")
 class DailyVisitBatchSystemHealthTestCase(TestCase):
     """Constructs broken states directly via the ORM (bypassing the service's
     own guards) to confirm each new System Health check actually fires."""
@@ -480,6 +490,10 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
         self.assertGreater(health["catalogueMissingDailyBatchKeys"], 0)
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-13")
 class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
     """Transport and personal per-diems accrue once per DAY, irrespective of
     how many activities fill it (owner rule, 2026-08-19): a training on a

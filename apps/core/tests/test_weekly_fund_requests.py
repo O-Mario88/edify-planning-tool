@@ -12,8 +12,13 @@ from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from freezegun import freeze_time
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-06-29")
 class WeeklyFundRequestsTest(APITestCase):
     def setUp(self):
         CostCatalogue.objects.get_or_create(

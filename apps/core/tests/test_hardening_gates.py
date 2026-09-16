@@ -509,6 +509,11 @@ class ConcurrentMutationTest(TransactionTestCase):
         )
 
 
+# Scheduling refuses a date that has passed (owner, 2026-09-16). This walk
+# moves an activity from 15 September back to 14 July and tries 6 October,
+# so "today" sits before all three and the FY-boundary rule is still what
+# decides which of the two moves is refused.
+@freeze_time("2026-07-01")
 class BoundaryTest(TestCase):
     """Fiscal-year and period boundaries (H03)."""
 

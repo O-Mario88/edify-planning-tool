@@ -745,6 +745,10 @@ class ProgrammeWorkPlanHealthTest(_ProgrammeFixture):
 
 
 # ── Concurrency (TransactionTestCase, mirrors test_audit_pipeline) ───────────
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-20")
 class ProgrammeDoubleClickRaceTest(TransactionTestCase):
     """Two identical concurrent submissions must yield exactly ONE activity.
 
