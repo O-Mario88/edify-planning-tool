@@ -1,0 +1,35 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Edit {{ project.name }}{% endblock %}
+{% block drawer_subtitle %}Correct the Project's description, measurement window and budget boundary. Its status stays with the RVP's strategic decision.{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/projects/{{ project.id }}/edit" hx-post="/projects/{{ project.id }}/edit" hx-target="#project-edit-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-sm">
+  {% csrf_token %}
+  <div id="project-edit-errors" aria-live="polite"></div>
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="font-semibold">Project name<input name="name" required maxlength="255" value="{{ project.name }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Stable project code<input name="code" maxlength="64" placeholder="SP-…" value="{{ project.code|default:'' }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Category<select name="category" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">{% for value, label in categories %}<option value="{{ value }}" {% if project.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label class="font-semibold">School focus<select name="schoolFocus" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">{% for value, label in school_focuses %}<option value="{{ value }}" {% if project.school_focus == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label class="font-semibold">Budget ceiling (UGX)<input name="budgetCeilingUgx" type="number" min="0" step="1" value="{{ project.budget_ceiling_ugx|default_if_none:'' }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Measurement start FY<input name="measurementStartFy" placeholder="2027" value="{{ project.measurement_start_fy|default:'' }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Measurement end FY<input name="measurementEndFy" placeholder="2028" value="{{ project.measurement_end_fy|default:'' }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+  </div>
+  <fieldset class="rounded-control border border-[var(--border-card)] p-3">
+    <legend class="px-1 font-semibold">Target SSA interventions</legend>
+    <p class="text-xs text-[var(--edify-text-muted)]">Impact measurement and the school-need check both read these, so at least one is required.</p>
+    <div class="mt-2 grid gap-2 sm:grid-cols-2">{% for value, label in interventions %}<label class="flex items-center gap-2"><input type="checkbox" name="targetInterventions" value="{{ value }}" class="h-4 w-4" {% if value in selected_interventions %}checked{% endif %}><span>{{ label }}</span></label>{% endfor %}</div>
+  </fieldset>
+  {% comment %}
+  The approved Catalogue is not edited here. Activities already scheduled are
+  filed against the item they were planned from, so removing one would leave
+  work pointing at a delivery method the Project no longer allows — a separate
+  decision from correcting a name or a budget.
+  {% endcomment %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn">Cancel</button>
+    <button type="submit" class="btn btn-primary">Save changes</button>
+  </div>
+</form>
+{% endblock %}

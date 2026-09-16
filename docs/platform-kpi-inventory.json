@@ -3640,7 +3640,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3468,
+   "line": 3587,
    "label": null,
    "keys": [
     "label",
@@ -3695,7 +3695,7 @@
    "audit_id": "KPI-SOURCE-195",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3334,
+   "line": 3453,
    "label": "About",
    "keys": [
     "label",
@@ -3712,7 +3712,7 @@
    "audit_id": "KPI-SOURCE-196",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3335,
+   "line": 3454,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3729,7 +3729,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3336,
+   "line": 3455,
    "label": "Flag",
    "keys": [
     "label",
@@ -3746,7 +3746,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3337,
+   "line": 3456,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -13491,7 +13491,7 @@
   {
    "audit_id": "KPI-SURFACE-053",
    "template": "templates/pages/projects/detail.html",
-   "line": 37,
+   "line": 80,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13507,7 +13507,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Add Schools",
+   "primary_action": "Edit Project",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13520,7 +13520,7 @@
   {
    "audit_id": "KPI-SURFACE-054",
    "template": "templates/pages/projects/detail.html",
-   "line": 55,
+   "line": 98,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -13536,7 +13536,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Add Schools",
+   "primary_action": "Edit Project",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -39762,7 +39762,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2970,
+   "line": 3063,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -39784,7 +39784,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3674,
+   "line": 3793,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

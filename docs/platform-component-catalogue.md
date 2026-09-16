@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **451**
+Components and application partials: **452**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -391,6 +391,7 @@ Components and application partials: **451**
 | `partials/projects/bulk_schedule_drawer.html` | application-partial | Reusable bulk schedule drawer interface primitive | canonical; default, empty, error, disabled | explicit responsive contract | accessible name and label | /projects/planning/bulk-schedule | 0 |
 | `partials/projects/create_project_drawer.html` | application-partial | Reusable create project drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /projects/create | 0 |
 | `partials/projects/delta_pill.html` | application-partial | Reusable delta pill interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
+| `partials/projects/edit_project_drawer.html` | application-partial | Reusable edit project drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /projects/<str:project_id>/edit | 0 |
 | `partials/projects/filters_drawer.html` | application-partial | Reusable filters drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /projects/filters-drawer | 0 |
 | `partials/projects/my_plan_activity_table.html` | application-partial | Reusable my plan activity table interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /projects/my-plan | 0 |
 | `partials/projects/my_plan_icon.html` | application-partial | Reusable my plan icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /projects/my-plan | 0 |

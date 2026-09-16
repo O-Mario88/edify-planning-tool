@@ -2213,6 +2213,16 @@ urlpatterns = [
         name="project_bulk_assign_drawer",
     ),
     path(
+        "projects/<str:project_id>/edit",
+        extended_views.project_edit_drawer_view,
+        name="project_edit_drawer",
+    ),
+    path(
+        "projects/<str:project_id>/delete",
+        extended_views.project_delete_action_view,
+        name="project_delete_action",
+    ),
+    path(
         "projects/<str:project_id>",
         extended_views.project_detail_view,
         name="project_detail",

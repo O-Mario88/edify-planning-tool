@@ -425,6 +425,70 @@ class PartnerWorkSharesOneRateTest(SimpleTestCase):
                 self.assertEqual(cost.amount, RATES["partner_meetings"])
 
 
+class ASpecialProjectCostsLikeAnythingElseTest(SimpleTestCase):
+    """Owner, 2026-09-16: "All projects have the same cost for partner visits,
+    training facilitation, staff visit cost remains the same as the normal
+    school visits."
+
+    The recipe never reads `projectId`, which is what makes that true, and
+    these pin it: stamping a project on an activity must not move a shilling,
+    and two different projects must price the same work identically. Without
+    them the next person to add a project-aware branch would find nothing
+    stopping them.
+    """
+
+    def _both(self, activity):
+        bare = cost_for_activity(activity, RATES)
+        stamped = cost_for_activity({**activity, "projectId": "proj-1"}, RATES)
+        other = cost_for_activity({**activity, "projectId": "proj-2"}, RATES)
+        return bare, stamped, other
+
+    def test_a_partner_school_visit_costs_the_same_under_every_project(self):
+        bare, stamped, other = self._both(
+            {"activityType": "school_visit", "deliveryType": "partner"}
+        )
+        self.assertEqual(_keys(bare), ["client_partner_visit"])
+        self.assertEqual((stamped.amount, other.amount), (bare.amount, bare.amount))
+
+    def test_a_partner_visit_to_a_core_school_costs_the_core_partner_rate(self):
+        bare, stamped, other = self._both(
+            {"activityType": "core_visit", "deliveryType": "partner"}
+        )
+        self.assertEqual(_keys(bare), ["core_partner_visit"])
+        self.assertEqual((stamped.amount, other.amount), (bare.amount, bare.amount))
+
+    def test_training_facilitation_is_one_rate_for_every_project(self):
+        activity = {
+            "activityType": "training",
+            "deliveryType": "staff",
+            "expectedParticipants": 20,
+            "days": 2,
+        }
+        bare, stamped, other = self._both(activity)
+        facilitation = [
+            line for line in bare.lines if line.key == "group_training_facilitation_fee"
+        ]
+        self.assertEqual(len(facilitation), 1)
+        # Two days of facilitation, at the one catalogue rate.
+        self.assertEqual(facilitation[0].qty, 2)
+        self.assertEqual(
+            facilitation[0].amount, 2 * RATES["group_training_facilitation_fee"]
+        )
+        self.assertEqual(_keys(stamped), _keys(bare))
+        self.assertEqual((stamped.amount, other.amount), (bare.amount, bare.amount))
+
+    def test_a_staff_visit_costs_the_same_as_a_normal_school_visit(self):
+        activity = {
+            "activityType": "school_visit",
+            "deliveryType": "staff",
+            "districtType": "primary",
+        }
+        bare, stamped, other = self._both(activity)
+        self.assertEqual(_keys(bare), ["primary_transport_per_day", "lunch_per_day"])
+        self.assertEqual(_keys(stamped), _keys(bare))
+        self.assertEqual((stamped.amount, other.amount), (bare.amount, bare.amount))
+
+
 class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
     def test_a_field_event_is_priced_per_day_away(self):
         self.assertEqual(

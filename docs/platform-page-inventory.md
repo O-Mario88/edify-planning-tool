@@ -4,19 +4,19 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **805**
-- All registered routes: **1276**
+- Routed product surfaces: **807**
+- All registered routes: **1278**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **451**
+- Shared component templates: **452**
 - Full pages: **255**
-- Partials and drawers: **261**
-- Permission-gated surfaces: **790**
-- Referenced by automated tests: **696**
-- Findings: critical **0**, high **0**, medium **0**, low **0**
+- Partials and drawers: **262**
+- Permission-gated surfaces: **792**
+- Referenced by automated tests: **698**
+- Findings: critical **0**, high **1**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
 
@@ -689,7 +689,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3AAA4674E0 | /programme-rollout | Programme Rollout | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-AD54323BA8 | /programme-rollout/schools | Programme Rollout Schools | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3B7E4DFD30 | /projects | Projects | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-1B2707901E | /projects/<str:project_id> | Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-1B2707901E | /projects/<str:project_id> | Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / remediation required | 1 | referenced by automated test |
+| UI-PAGE-214BA4DC27 | /projects/<str:project_id>/delete | Project Delete Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-C45287FC41 | /projects/<str:project_id>/edit | Project Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-52061A5059 | /projects/<str:project_id>/schools/assign | Project Assign School Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A067D0C962 | /projects/<str:project_id>/schools/bulk-assign-drawer | Project Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4340ED5A6E | /projects/<str:project_id>/staff/assign | Project Assign Staff Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

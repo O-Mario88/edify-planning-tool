@@ -2337,6 +2337,99 @@ def project_create_action_view(request):
         return error_fragment(exc, status=400)
 
 
+def _project_for_editing(request, project_id):
+    """The project this caller may edit; raises if they may not."""
+    from apps.core.exceptions import NotFoundError
+    from apps.projects.models import Project
+    from apps.projects.services import _assert_project_owner
+
+    project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if not project:
+        raise NotFoundError("Project not found.")
+    _assert_project_owner(project, request.user)
+    return project
+
+
+@require_page_permission("projects")
+def project_edit_drawer_view(request, project_id):
+    """Edit the Project's own description.
+
+    A project could be created and decided upon but never corrected: a typo in
+    the name, a budget ceiling agreed afterwards, a measurement window that
+    moved (owner, 2026-09-16). Its own coordinator edits it; a peer's cohort
+    is refused by the service, not by this view.
+    """
+    from apps.core.enums import SsaIntervention
+    from apps.core.exceptions import Forbidden, NotFoundError
+    from apps.core.htmx_errors import error_fragment
+    from apps.projects.models import ProjectCategory, ProjectSchoolFocus
+    from apps.projects.services import update_project
+
+    try:
+        project = _project_for_editing(request, project_id)
+    except (Forbidden, NotFoundError) as exc:
+        return error_fragment(exc, status=403)
+
+    if request.method == "POST":
+        payload = request.POST.dict()
+        payload["targetInterventions"] = request.POST.getlist("targetInterventions")
+        try:
+            update_project(project.id, payload, request.user)
+        except Exception as exc:  # noqa: BLE001 — surfaced in the drawer
+            return error_fragment(exc, status=400)
+        response = HttpResponse(
+            f'<script>window.location.href="/projects/{project.id}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+
+    return render(
+        request,
+        "partials/projects/edit_project_drawer.html",
+        {
+            "project": project,
+            "categories": ProjectCategory.choices,
+            "school_focuses": ProjectSchoolFocus.choices,
+            "interventions": SsaIntervention.choices,
+            "selected_interventions": set(project.target_intervention_list()),
+        },
+    )
+
+
+@require_POST
+@require_page_permission("projects")
+def project_delete_action_view(request, project_id):
+    """Withdraw a project that never became work.
+
+    Redirects to the fixed Projects list rather than anywhere derived from the
+    request: the project it came from no longer exists.
+    """
+    from django.contrib import messages
+
+    from apps.projects.services import delete_project
+
+    try:
+        result = delete_project(
+            project_id, request.user, reason=request.POST.get("reason", "")
+        )
+    except Exception as exc:  # noqa: BLE001 — the reason belongs on the page
+        messages.error(request, str(exc))
+        return redirect("frontend:project_detail", project_id=project_id)
+
+    released = result["schoolsReleased"]
+    messages.success(
+        request,
+        f"Deleted '{result['name']}'."
+        + (
+            f" {released} school{'s' if released != 1 else ''} released back to "
+            "their portfolio."
+            if released
+            else ""
+        ),
+    )
+    return redirect("/projects")
+
+
 @require_page_permission("projects")
 def projects_filtered_view(request):
     """Filtered Projects view — a distinct URL from the default list.
@@ -2997,6 +3090,28 @@ def project_detail_view(request, project_id):
             .select_related("user")
             .order_by("user__name")
         )
+    # Who may correct this project's own description, and whether deleting it
+    # is still possible. A project that has been delivered against keeps its
+    # activities, so the reason it cannot be deleted is on the control itself
+    # rather than discovered after the press.
+    from apps.core.exceptions import Forbidden
+    from apps.projects.services import _assert_project_owner, project_activity_count
+
+    try:
+        _assert_project_owner(project, request.user)
+        can_edit_project = True
+    except Forbidden:
+        can_edit_project = False
+    delete_block = ""
+    if can_edit_project:
+        filed = project_activity_count(project)
+        if filed:
+            delete_block = (
+                f"{filed} activit{'y has' if filed == 1 else 'ies have'} been "
+                "filed against this Project, so it cannot be deleted. Ask the "
+                "RVP to close it instead."
+            )
+
     scope = resolve_user_scope(request.user)
     # A selector that leads to a cohort assignment, so it offers the direct
     # portfolio only.
@@ -3044,6 +3159,10 @@ def project_detail_view(request, project_id):
         ),
         "kpi_strip_items": kpi_strip_items,
         "project_summary": project_summary,
+        # Editing and deleting are the project owner's, not every role that
+        # may read the page (owner, 2026-09-16).
+        "can_edit_project": can_edit_project,
+        "delete_block": delete_block,
     }
     return render(request, "pages/projects/detail.html", context)
 
