@@ -191,7 +191,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
 
 .portfolio-lead {
   border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg, 12px);
+  border-radius: var(--edify-radius-lg);
   background: var(--edify-surface-raised);
   overflow: hidden;
 }
@@ -233,7 +233,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
-  font-size: var(--edify-text-caption-size, 0.75rem);
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--edify-text-muted);
 }
@@ -247,7 +247,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
 .portfolio-lead__coverage {
   margin-inline-start: auto;
   padding: 2px 0.5rem;
-  border-radius: var(--edify-radius-pill, 999px);
+  border-radius: var(--edify-radius-pill);
   border: 1px solid var(--edify-border);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
@@ -278,7 +278,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
    ordered by an index whose arithmetic is printed above the table. */
 .cluster-index-note {
   margin: 0;
-  font-size: var(--edify-text-caption-size, 0.75rem);
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--edify-text-muted);
 }

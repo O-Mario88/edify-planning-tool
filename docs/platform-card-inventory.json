@@ -4,8 +4,8 @@
   "templates": 261,
   "distinct_titles": 657,
   "with_card_key": 13,
-  "untitled_surfaces": 776,
-  "untitled_chrome": 175,
+  "untitled_surfaces": 777,
+  "untitled_chrome": 176,
   "untitled_nested": 249,
   "untitled_headless": 352,
   "templates_with_same_title_twice": 0,
@@ -6497,7 +6497,7 @@
   {
    "template": "templates/partials/my_plan/cluster_meetings.html",
    "line": 2,
-   "title": "Cluster Meetings Planned for This WeekThis MonthThis QuarterThis FY",
+   "title": "Cluster Meetings \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
@@ -6506,7 +6506,7 @@
   {
    "template": "templates/partials/my_plan/cluster_trainings.html",
    "line": 2,
-   "title": "Trainings Planned for This WeekThis MonthThis QuarterThis FY",
+   "title": "Trainings \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
@@ -6538,7 +6538,7 @@
   {
    "template": "templates/partials/my_plan/programme_activities.html",
    "line": 3,
-   "title": "Programme Activities Planned for This WeekThis MonthThis QuarterThis FY",
+   "title": "Programme Activities \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
@@ -6547,7 +6547,7 @@
   {
    "template": "templates/partials/my_plan/school_visits.html",
    "line": 3,
-   "title": "School Visits Planned for This WeekThis MonthThis QuarterThis FY",
+   "title": "School Visits \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",

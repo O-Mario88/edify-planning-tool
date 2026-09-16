@@ -122,7 +122,12 @@ class RouteAccessTest(OversightPageFixture):
         response = self.as_user(self.pl_user).get(PL_URL)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Team Oversight")
-        self.assertContains(response, "Planning &amp; Portfolio")
+        # The lens strip, renamed when Country Planning Oversight started
+        # drawing the same one (owner, 2026-09-16): "Planning & Portfolio"
+        # became "Team Plan", beside the portfolio lens it used to stand for.
+        self.assertContains(response, "Team Plan")
+        self.assertContains(response, "Team Portfolio")
+        self.assertContains(response, "Cluster Performance")
         self.assertContains(response, "Target Performance")
 
     def test_the_country_page_opens_for_the_country_director(self):

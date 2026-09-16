@@ -4418,7 +4418,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg, 12px);
+  border-radius: var(--edify-radius-lg);
   background: var(--edify-surface-raised);
 }
 
@@ -4440,7 +4440,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 .mp-year__caption {
   margin: 2px 0 0;
-  font-size: var(--edify-text-caption-size, 0.75rem);
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--edify-text-muted);
 }
@@ -4550,7 +4550,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   gap: 14px;
   padding: 18px;
   border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg, 12px);
+  border-radius: var(--edify-radius-lg);
   background: var(--edify-surface);
   box-shadow: var(--edify-shadow-sm);
 }

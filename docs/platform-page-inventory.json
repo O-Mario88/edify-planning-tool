@@ -7412,10 +7412,8 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1823,
+      "accessibility_requirements": [],
+      "bytes": 1096,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7424,14 +7422,14 @@
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
-      "name": " Pager",
-      "purpose": "Reusable  pager interface primitive",
+      "name": " Month Heading",
+      "purpose": "Reusable  month heading interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
       "tables": 0,
-      "template": "partials/my_plan/_pager.html",
+      "template": "partials/my_plan/_month_heading.html",
       "variants": []
     },
     {
@@ -7624,7 +7622,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2829,
+      "bytes": 2759,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7645,7 +7643,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3319,
+      "bytes": 3197,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7749,7 +7747,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7129,
+      "bytes": 6270,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7790,6 +7788,29 @@
       "variants": [
         "executive"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2062,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Month Strip",
+      "purpose": "Reusable month strip interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/month_strip.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -7839,31 +7860,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 2787,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 4,
-      "kind": "application-partial",
-      "name": "Period Tabs",
-      "purpose": "Reusable period tabs interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "selected"
-      ],
-      "tables": 0,
-      "template": "partials/my_plan/period_tabs.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 1691,
       "deprecated_alternatives": [],
@@ -7890,7 +7886,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2745,
+      "bytes": 2650,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7958,7 +7954,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2832,
+      "bytes": 2771,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8069,7 +8065,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1585,
+      "bytes": 1588,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8132,6 +8128,32 @@
       ],
       "tables": 0,
       "template": "partials/notifications/notification_drawer_list.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 980,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Lens Tabs",
+      "purpose": "Reusable  lens tabs interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_lens_tabs.html",
       "variants": []
     },
     {
@@ -8229,6 +8251,34 @@
       ],
       "tables": 1,
       "template": "partials/oversight/cd_workspace.html",
+      "variants": [
+        "executive"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 7357,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Cluster Performance Workspace",
+      "purpose": "Reusable cluster performance workspace interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/cluster_performance_workspace.html",
       "variants": [
         "executive"
       ]
@@ -8436,6 +8486,36 @@
       "template": "partials/oversight/pl_workspace.html",
       "variants": [
         "executive"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 9522,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Portfolio Workspace",
+      "purpose": "Reusable portfolio workspace interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/portfolio_workspace.html",
+      "variants": [
+        "danger",
+        "executive",
+        "{% if lead.coverage is None %}neutral{% elif lead.coverage >= 80 %}success{% elif lead.coverage >= 50 %}warning{% else %}danger{% endif %}"
       ]
     },
     {
@@ -31558,8 +31638,8 @@
       "charts": false,
       "drawers": true,
       "evidence": [
-        "template:partials/oversight/cd_workspace.html",
         "template:pages/oversight/country_planning.html",
+        "template:partials/oversight/cd_workspace.html",
         "test:referenced-by-automated-test",
         "permission:country_planning_oversight"
       ],
@@ -31567,7 +31647,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "fragment-owned-by-parent",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}",
         "POST /country-planning-oversight/send"
@@ -31581,13 +31661,13 @@
       "notifications": false,
       "page_id": "UI-PAGE-3CB2AE6648",
       "page_title": "Country Planning Oversight \u00b7 Edify",
-      "page_type": "interaction-fragment",
+      "page_type": "planning-or-creation",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
       ],
       "permission_key": "country_planning_oversight",
-      "primary_action": "Country Planning Oversight",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "primary_action": "Complete planning form",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "What the country has planned, how it is distributed, and who must act.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -31621,7 +31701,7 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
+      "surface_kind": "page",
       "table_pattern": "shared-table-scroll",
       "tables": true,
       "tablet_status": "pass-automated-contract",
@@ -31630,8 +31710,8 @@
         "type": "none"
       },
       "templates": [
-        "partials/oversight/cd_workspace.html",
-        "pages/oversight/country_planning.html"
+        "pages/oversight/country_planning.html",
+        "partials/oversight/cd_workspace.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -79938,8 +80018,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 4,
-        "type": "segmented-control"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/targets/team/workspace.html",
@@ -80301,8 +80381,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 4,
-        "type": "segmented-control"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/targets/team/workspace.html",
@@ -80399,8 +80479,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 4,
-        "type": "segmented-control"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/targets/team/workspace.html",
@@ -95217,7 +95297,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.country_planning_oversight_view",
-      "kind": "partial",
+      "kind": "page",
       "methods": [
         "GET"
       ],
@@ -95226,8 +95306,8 @@
       "route": "/country-planning-oversight/",
       "route_name": "country_planning_oversight",
       "templates": [
-        "partials/oversight/cd_workspace.html",
-        "pages/oversight/country_planning.html"
+        "pages/oversight/country_planning.html",
+        "partials/oversight/cd_workspace.html"
       ]
     },
     {
@@ -103465,8 +103545,8 @@
     "activity_states": 24,
     "all_routes": 1287,
     "api_routes": 360,
-    "component_templates": 459,
-    "full_pages": 257,
+    "component_templates": 462,
+    "full_pages": 258,
     "mobile_contract_pass": 527,
     "nonvisual_actions": 263,
     "page_types": {
@@ -103474,13 +103554,13 @@
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 530,
+      "interaction-fragment": 529,
       "operational-queue": 149,
-      "planning-or-creation": 11,
+      "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 267,
+    "partials_and_drawers": 266,
     "permission_gated": 800,
     "permission_keys": 120,
     "roles": 15,
