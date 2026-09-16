@@ -6242,7 +6242,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11767,
+      "bytes": 12023,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
