@@ -8,7 +8,7 @@ import datetime
 from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.enums import SsaIntervention
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
@@ -1232,6 +1232,7 @@ class AnalyticsDashboardService:
             "distributed": contract if not narrowed else {"rows": [], "pct": None},
             "filters": {
                 "selected_fy": fy,
+                "fy_options": fy_options(),
                 "selected_quarter": quarter,
                 "selected_region": region_id,
                 "selected_sub_region": sub_region_id,

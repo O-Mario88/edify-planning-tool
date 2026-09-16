@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **807**
-- All registered routes: **1278**
-- API routes: **359**
+- Routed product surfaces: **810**
+- All registered routes: **1282**
+- API routes: **360**
 - Roles: **15**
-- Permission keys: **112**
+- Permission keys: **120**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **452**
-- Full pages: **255**
-- Partials and drawers: **262**
-- Permission-gated surfaces: **792**
-- Referenced by automated tests: **698**
+- Shared component templates: **454**
+- Full pages: **257**
+- Partials and drawers: **263**
+- Permission-gated surfaces: **795**
+- Referenced by automated tests: **700**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -189,10 +189,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster details | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FA80612906 | /clusters/<str:cluster_id>/bulk-assign-drawer | Cluster Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D7135BBA7E | /clusters/<str:cluster_id>/catchment-drawer | Cluster Catchment Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-2C14719015 | /clusters/<str:cluster_id>/catchment/<str:catchment_id>/end | Cluster Catchment End | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C171311DFC | /clusters/<str:cluster_id>/delete | Delete Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-67CB08D75B | /clusters/<str:cluster_id>/edit | Edit Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2F0996F451 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3429DE9B4C | /clusters/<str:cluster_id>/schools/<str:school_id>/remove | Remove School From Cluster | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D1234D25E2 | /clusters/create | Create Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5250FB3393 | /clusters/create-drawer | Create Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -238,6 +239,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-B2C7B8534B | /cost-intelligence | Cost Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-355BFF3F2B | /cost-settings/add | Cost Settings Add | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C2F9E280E0 | /cost-settings/carry-forward | Cost Settings Carry Forward | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6B5ACDE957 | /cost-settings/initialize-default | Initialize Default Catalogue | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B40AF5ED77 | /cost-settings/row/<str:key> | Cost Setting Row | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-172950D3EF | /country-budget | Country Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -407,7 +409,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-F4BFB7C2B0 | /ia/impact-reports/<str:report_id>/release/donor | Ia Impact Report Release Donor | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-E488104A11 | /ia/impact-reports/<str:report_id>/release/donor/request | Ia Impact Report Release Donor Request | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-EF6CDCC94D | /ia/impact-reports/<str:report_id>/release/leadership | Ia Impact Report Release Leadership | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-1BF17E0F65 | /ia/impact-reports/<str:report_id>/release/schools | Ia Impact Report Release Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-1BF17E0F65 | /ia/impact-reports/<str:report_id>/release/schools | Ia Impact Report Release Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-FE1D6A67CB | /ia/impact-reports/<str:report_id>/release/schools/save | Ia Impact Report Release Schools Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8517D2975A | /ia/impact-reports/<str:report_id>/releases/<str:release_id>/ | Ia Impact Report Release | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-6E2CB27363 | /ia/impact-reports/<str:report_id>/releases/<str:release_id>/decide | Ia Impact Report Release Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
@@ -580,6 +582,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3DFE6D3724 | /onboarding/<str:plan_id> | Onboarding Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1E22EB77D2 | /onboarding/<str:plan_id>/record | Onboarding Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9A561927AF | /org-structure | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9E6ABDEFA5 | /ownership-transfers/ | Ownership Transfers | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CED66A2471 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A1BC57DE66 | /partials/costing/preview | Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7094F59CAA | /partner-engagements/<str:engagement_id> | Partner Engagement Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -624,6 +627,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D79E38D41C | /partners/<str:partner_id>/members | Partner Member Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4E3422B820 | /partners/<str:partner_id>/members/drawer | Partner Member Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-748EB16E46 | /partners/<str:partner_id>/status | Partner Status | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7FF4CF6F26 | /partners/<str:partner_id>/user-setup | Partner User Setup | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C6043D2C4C | /partners/create | Create Partner | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4D179B38E1 | /payroll-readiness | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2703FFD952 | /performance-conversation | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -648,6 +652,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-2460A9454D | /planning/assign-partner-action | Planning Assign Partner Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-C5319ED208 | /planning/fiscal-years | Fiscal Year Planning | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CDB4BA67D1 | /planning/intelligence | Planning Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-70E52CFA17 | /planning/route-preview | Planning Route Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-739AAF8574 | /planning/schedule | Schedule Activity - Edify Command Center | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -690,10 +695,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-AD54323BA8 | /programme-rollout/schools | Programme Rollout Schools | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3B7E4DFD30 | /projects | Projects | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1B2707901E | /projects/<str:project_id> | Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-214BA4DC27 | /projects/<str:project_id>/delete | Project Delete Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-C45287FC41 | /projects/<str:project_id>/edit | Project Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-52061A5059 | /projects/<str:project_id>/schools/assign | Project Assign School Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-A067D0C962 | /projects/<str:project_id>/schools/bulk-assign-drawer | Project Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4340ED5A6E | /projects/<str:project_id>/staff/assign | Project Assign Staff Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-987AE1FD65 | /projects/analytics | Overview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6805EDED42 | /projects/create | Project Create Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -744,6 +746,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-43A9299FB0 | /schools/<str:school_id>/delete | School Delete | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9AB62DBEF9 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0E19B43194 | /schools/<str:school_id>/reopen | School Reopen | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-9559BE9B58 | /schools/<str:school_id>/transfer-owner | School Owner Transfer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-755C340D69 | /schools/add-school | Add School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-326063C770 | /schools/bulk-assign-cluster | Bulk Assign Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3B0EF3899D | /schools/bulk-assign-project | Bulk Assign Project | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

@@ -98,6 +98,8 @@ class SchoolDirectoryViewModel:
         active_projects_exist: bool,
         progress: dict | None = None,
         staff_names_by_owner_id: dict[str, str] | None = None,
+        visit_status=None,
+        training_coverage=None,
     ) -> dict:
         is_clustered = (
             school.cluster_id is not None or school.cluster_status == "clustered"
@@ -115,25 +117,20 @@ class SchoolDirectoryViewModel:
         available_actions = []
         disabled_reasons = {}
 
-        # Add to Cluster action. A clustered school is never offered the
-        # button again (owner, 2026-09-15: "all clustered schools button for
-        # adding to cluster should be greyed out to avoid double clustering"),
-        # and the greyed button says which cluster it is already in.
-        if is_clustered:
-            current_cluster = (
-                clusters_dict.get(school.cluster_id) if school.cluster_id else None
-            )
-            disabled_reasons["add_to_cluster"] = (
-                f"Already in {current_cluster}."
-                if current_cluster
-                else "Already in a cluster."
-            )
-        elif can_assign_cluster:
-            available_actions.append("add_to_cluster")
-        else:
+        # Add to Cluster, or Change Cluster for a school already in one. The
+        # owner first greyed the button out for clustered schools to avoid
+        # double clustering; the later brief the same day (2026-09-15) asked
+        # for Change Cluster with a confirmation instead. One active cluster
+        # still holds: the service closes the old membership before opening
+        # the new one.
+        if not can_assign_cluster:
             disabled_reasons["add_to_cluster"] = (
                 "You do not have permission to assign clusters."
             )
+        elif is_clustered:
+            available_actions.append("change_cluster")
+        else:
+            available_actions.append("add_to_cluster")
 
         # Assign to Project action
         if not active_projects_exist:
@@ -149,6 +146,20 @@ class SchoolDirectoryViewModel:
         cluster_name = "—"
         if is_clustered and school.cluster_id:
             cluster_name = clusters_dict.get(school.cluster_id, "—")
+
+        # Visit and training planning status, derived from the canonical
+        # activities (apps.schools.school_status). A caller rendering a page of
+        # schools batches them; a single-school caller derives them here.
+        if visit_status is None or training_coverage is None:
+            from apps.schools.school_status import (
+                cluster_training_coverage,
+                visit_statuses,
+            )
+
+            if visit_status is None:
+                visit_status = visit_statuses([school.id])[school.id]
+            if training_coverage is None:
+                training_coverage = cluster_training_coverage([school])[school.id]
 
         staff_name = (
             (staff_names_by_owner_id or {}).get(school.account_owner_id)
@@ -262,6 +273,17 @@ class SchoolDirectoryViewModel:
             "is_clustered": is_clustered,
             "cluster_id": school.cluster_id,
             "cluster_name": cluster_name,
+            # The derived planning states (apps.schools.school_status). Named
+            # apart from the Core package's own visit/training progression
+            # above, which counts a core school's four visits and trainings.
+            "visit_plan_status_key": visit_status.key,
+            "visit_plan_status_label": visit_status.label,
+            "visit_plan_status_tone": visit_status.tone,
+            "is_scheduled_for_visit": visit_status.is_scheduled,
+            "next_visit_date": visit_status.next_date,
+            "cluster_training_planned": training_coverage.planned,
+            "cluster_training_status_label": training_coverage.label,
+            "cluster_training_reason": training_coverage.reason,
             "project_assignment_count": project_count,
             "available_actions": available_actions,
             "disabled_reasons": disabled_reasons,

@@ -7,16 +7,21 @@ agree, and the drawer offering what the service then refused is the failure
     Eligible cluster
       = active cluster
       + owned by the school's own staff owner
-      + in the school's district
-      + in the school's sub-county, when the school has one
+      + serving the school's district: its own district, or a neighbouring
+        district approved for that cluster (apps.clusters.catchment, owner
+        2026-09-15)
+      + in the school's sub-county, when the school has one and the cluster is
+        in the school's own district
 
 Each clause answers a different question and none is redundant:
 
 * **Owner.** A cluster is somebody's portfolio. Sharing a district is not
   sharing it, and moving a school into another CCEO's cluster hands away work
   that person is accountable for without either of them agreeing to it.
-* **District.** A cluster is built from a district's sub-counties, so a
-  cross-district membership contradicts how the cluster was defined.
+* **District.** A cluster is built from a district's sub-counties. Border
+  communities are the exception the owner named (2026-09-15): a cluster may
+  also serve a neighbouring district a Country Director or Admin approved for
+  it, and never an arbitrary one.
 * **Sub-county.** The narrowest true statement about where a school is. Where
   the school has one, offering the district's other sub-counties is offering a
   cluster the school does not belong in.
@@ -215,18 +220,23 @@ def eligible_clusters_for_school(school, *, scope=None):
     # service exists to end — and with every cluster in the deployment
     # currently unowned, the strict reading emptied the picker for every
     # school. Assigning a school to an unowned cluster is how it gets claimed.
+    from apps.clusters.catchment import clusters_serving_district_q
+
     unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     qs = Cluster.objects.filter(
+        clusters_serving_district_q(school.district_id),
         Q(responsible_staff_id__in=owner_ids) | unassigned,
         deleted_at__isnull=True,
         status=ClusterRecordStatus.ACTIVE,
-        district_id=school.district_id,
     )
 
     sub_county_id = getattr(school, "sub_county_id", None)
     if sub_county_id:
+        # The sub-county narrows the school's own district only: a cluster
+        # serving the district across a border covers none of its sub-counties.
         qs = qs.filter(
-            Q(sub_county_id=sub_county_id)
+            ~Q(district_id=school.district_id)
+            | Q(sub_county_id=sub_county_id)
             | Q(covered_sub_counties__sub_county_id=sub_county_id)
             | Q(sub_county__isnull=True)
         ).distinct()
@@ -245,9 +255,10 @@ def owner_clusters_for_school(school):
     """The active clusters belonging to this school's owner, in any district.
 
     What the directory's Add to Cluster drawer lists (owner, 2026-09-15). Only
-    the owner's: an unowned cluster or another staff member's is not offered.
-    The caller marks clusters outside the school's district, which membership
-    refuses.
+    the owner's: an unowned cluster or another staff member's is not offered
+    (the owner confirmed this again with the catchment rule the same day). The
+    caller marks which of them serve the school's district — its own, or an
+    approved neighbouring district — and only those can be chosen.
     """
     if school is None:
         return Cluster.objects.none()

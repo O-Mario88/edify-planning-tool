@@ -44,7 +44,10 @@ class FieldNavigationRoleTest(SimpleTestCase):
             with self.subTest(role=role):
                 urls = {url for _label, url in self._links(role)}
                 self.assertNotIn("/core-schools", urls)
-                self.assertNotIn("/schools/closed", urls)
+                # Closed Schools is a record the CD and IA read (owner,
+                # 2026-09-15); the other non-field roles still do not.
+                if role not in (CD, IA):
+                    self.assertNotIn("/schools/closed", urls)
 
     def test_field_roles_retain_schools_and_field(self):
         for role in (CCEO, PL, PROJECT_COORDINATOR):
@@ -93,6 +96,23 @@ class FieldNavigationRoleTest(SimpleTestCase):
         for label in ("Team Plans", "Admin My Plan", "Planning", "Schools"):
             with self.subTest(label=label):
                 self.assertIn(label, labels)
+
+    def test_admin_finds_users_and_upload_center_at_the_top(self):
+        """Admin's own administration opens the sidebar: the visit-frequency
+        regroup had left Users and Upload Center deep in a fifty-link WEEKLY
+        group where the owner could not find them (2026-09-15)."""
+        daily = self._groups(ADMIN)["DAILY"]["items"]
+        urls = [item["url"] for item in daily]
+        self.assertEqual(
+            urls[:4], ["/dashboard", "/todos", "/admin-panel/users", "/uploads"]
+        )
+        weekly = [item["url"] for item in self._groups(ADMIN)["WEEKLY"]["items"]]
+        self.assertEqual(weekly[:2], ["/admin-panel/roles-permissions", "/data-repair"])
+        # User administration is not offered to IA or the field roles.
+        for role in (IA, PL, CCEO, PARTNER):
+            with self.subTest(role=role):
+                urls = {url for _label, url in self._links(role)}
+                self.assertNotIn("/admin-panel/users", urls)
 
     def test_ia_reaches_the_school_directory_once(self):
         """IA creates and validates school records without being a field role."""

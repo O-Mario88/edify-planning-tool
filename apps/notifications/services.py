@@ -411,6 +411,42 @@ class NotificationLinkResolver:
                 return f"/ia/impact-reports/{context_id}/{anchor}", label
             return "/ia/impact-reports/", "Open Impact Reports"
         # ── end IA-R ──
+        # ── Owner brief 2026-09-15 ──
+        # Each event opens the record it is about, in the page the recipient
+        # can act from.
+        if event_type == "partner_user_setup_required":
+            return (
+                "/admin-panel/users#partner-directory-title",
+                "Configure Partner Users",
+            )
+        if event_type in (
+            "school_cluster_membership_changed",
+            "school_cross_district_cluster",
+        ):
+            return (f"/schools/{context_id}" if context_id else "/schools"), (
+                "View School"
+            )
+        if event_type == "school_ownership_transferred":
+            return (f"/schools/{context_id}" if context_id else "/schools"), (
+                "Review Transfer"
+            )
+        if event_type == "district_portfolio_transferred":
+            return "/team-planning-oversight/?view=coverage", "Review Portfolio Change"
+        if event_type == "target_reconciliation_required":
+            return "/ownership-transfers/", "Reconcile Targets"
+        if event_type == "fy_planning_opened":
+            return "/planning", "Plan Next FY Activities"
+        if event_type in ("cluster_meeting_scheduled", "school_visit_scheduled"):
+            return (f"/my-plan/{context_id}" if context_id else "/my-plan"), (
+                "View in My Plan"
+            )
+        if event_type in ("project_school_added", "project_school_assigned"):
+            return (
+                f"/projects/{context_id}"
+                if context_type == "Project" and context_id
+                else "/projects"
+            ), "Plan Project Activities"
+        # ── end brief 2026-09-15 ──
 
         # Platform-operations events resolve to the exact affected record, not
         # to a queue the Admin then has to search. A notification that lands on

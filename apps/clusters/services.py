@@ -471,7 +471,15 @@ def create_from_school(data: dict, principal) -> dict:
     return create_cluster(payload, principal)
 
 
-def set_school_cluster_membership(school, cluster, assigned_by: str):
+def set_school_cluster_membership(
+    school,
+    cluster,
+    assigned_by: str,
+    *,
+    reason: str = "",
+    actor_role: str = "",
+    notify: bool = True,
+):
     """Apply the only supported operational cluster-membership transition.
 
     ``School.cluster_id`` is the canonical membership source used by scope,
@@ -479,13 +487,40 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
     a deterministic compatibility/audit projection for older records; readers
     must never use it to decide membership. The school row is locked so two
     concurrent assignments cannot leave competing cluster records behind.
+
+    Where a school may join is the cluster's catchment (owner, 2026-09-15):
+    its own district, or a neighbouring district the Country Director or Admin
+    approved for that cluster (apps.clusters.catchment). The school's own
+    geography is never touched here. Every change opens or closes a row in the
+    membership history with the actor, role and reason.
     """
+    from apps.clusters.catchment import (
+        NOT_IN_CATCHMENT,
+        country_of_district,
+        serving_match,
+    )
+
     if cluster and (cluster.deleted_at or cluster.status != ClusterRecordStatus.ACTIVE):
         raise BadRequest("A school can only be assigned to an active cluster.")
-    if cluster and school.district_id != cluster.district_id:
-        raise BadRequest("A school can only be assigned within its own district.")
-
-    # District is enforced above: a school joins an active cluster in its own district.
+    match = None
+    if cluster:
+        cluster_district = getattr(cluster, "district", None)
+        school_district = getattr(school, "district", None)
+        if (
+            cluster_district is not None
+            and school_district is not None
+            and country_of_district(cluster_district)
+            != country_of_district(school_district)
+        ):
+            raise BadRequest("A school can only join a cluster in its own country.")
+        match = serving_match(cluster, school.district_id)
+        if match is None:
+            raise BadRequest(
+                NOT_IN_CATCHMENT.format(
+                    cluster=cluster.name,
+                    district=getattr(school_district, "name", "the school's district"),
+                )
+            )
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)
@@ -547,10 +582,27 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
             # offered the same manual list, and a later edit to *this* school's
             # sub-county finds its own cluster not covering it and unclusters
             # it. Declining is normal (another cluster already claims the
-            # ground, or the coverage is already there) and is not an error.
+            # ground, the coverage is already there, or the school joined
+            # across a district border) and is not an error.
             from apps.clusters.eligibility import declare_sub_county_coverage
 
             declare_sub_county_coverage(cluster, school.sub_county_id)
+
+        from apps.clusters.membership_history import sync_membership_history
+
+        if old_cluster_id != target_cluster_id:
+            if target_cluster_id and old_cluster_id:
+                verb = "changed"
+            elif target_cluster_id:
+                verb = "added"
+            else:
+                verb = "removed"
+            sync_membership_history(
+                school,
+                actor_id=assigned_by or "",
+                actor_role=actor_role or "",
+                reason=reason or f"Cluster membership {verb}.",
+            )
 
     if old_cluster_id != target_cluster_id:
         # Audit here (the canonical service), not per-caller — audit found
@@ -564,9 +616,86 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
             subject_kind="school",
             subject_id=school.id,
             actor_id=assigned_by,
-            payload={"oldClusterId": old_cluster_id, "newClusterId": target_cluster_id},
+            actor_role=actor_role or None,
+            reason=reason or None,
+            payload={
+                "oldClusterId": old_cluster_id,
+                "newClusterId": target_cluster_id,
+                "previous": {"clusterId": old_cluster_id},
+                "new": {
+                    "clusterId": target_cluster_id,
+                    "relationship": match.relationship_type if match else None,
+                    "crossDistrict": bool(match and match.is_cross_district),
+                    "schoolDistrictId": school.district_id,
+                    "clusterDistrictId": cluster.district_id if cluster else None,
+                },
+            },
         )
+        if notify:
+            _notify_membership_change(
+                school, cluster, old_cluster_id, match, assigned_by
+            )
     return school
+
+
+def _notify_membership_change(school, cluster, old_cluster_id, match, actor_id):
+    """Tell the school's owner (when someone else changed it) and, for a
+    cross-district membership, their supervisor. Information only."""
+    import logging
+
+    try:
+        from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+        from apps.notifications.services import WorkflowNotificationService
+
+        owner = (
+            StaffProfile.objects.filter(
+                Q(id=school.account_owner_id) | Q(user_id=school.account_owner_id)
+            )
+            .select_related("user")
+            .first()
+            if school.account_owner_id
+            else None
+        )
+        recipients = []
+        if owner and owner.user_id and owner.user_id != actor_id:
+            recipients.append(owner.user_id)
+        where = cluster.name if cluster else "no cluster"
+        if recipients:
+            WorkflowNotificationService.trigger(
+                event_type="school_cluster_membership_changed",
+                category="cluster",
+                priority="normal",
+                title="School cluster changed",
+                body=f"{school.name} is now in {where}.",
+                context_type="School",
+                context_id=school.id,
+                recipients=recipients,
+            )
+        if cluster and match and match.is_cross_district and owner:
+            supervisors = list(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisee_id=owner.id
+                ).values_list("supervisor__user_id", flat=True)
+            )
+            supervisors = [s for s in supervisors if s and s != actor_id]
+            if supervisors:
+                WorkflowNotificationService.trigger(
+                    event_type="school_cross_district_cluster",
+                    category="cluster",
+                    priority="normal",
+                    title="Cross-district cluster membership",
+                    body=(
+                        f"{school.name} joined {cluster.name}, which serves its "
+                        "district under an approved neighbouring-district catchment."
+                    ),
+                    context_type="School",
+                    context_id=school.id,
+                    recipients=supervisors,
+                )
+    except Exception:  # noqa: BLE001 - information never undoes a membership
+        logging.getLogger(__name__).warning(
+            "cluster membership notification failed for %s", school.id, exc_info=True
+        )
 
 
 def sync_school_cluster_assignment(school, cluster, assigned_by: str):
@@ -604,7 +733,13 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
     writable = cluster_queryset(scope, direct_only=True)
     if writable is None or not writable.filter(id=cluster.id).exists():
         raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
-    school = set_school_cluster_membership(school, cluster, principal.user_id)
+    school = set_school_cluster_membership(
+        school,
+        cluster,
+        principal.user_id,
+        reason=(data.get("reason") or "").strip(),
+        actor_role=getattr(principal, "active_role", "") or "",
+    )
     return {"ok": True, "schoolId": school.school_id, "clusterId": cluster.id}
 
 

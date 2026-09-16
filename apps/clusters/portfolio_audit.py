@@ -438,6 +438,17 @@ def _membership_geography_mismatch() -> dict:
     from apps.clusters.models import Cluster
     from apps.schools.lifecycle_service import active_schools
 
+    # An approved neighbouring district is a governed catchment, not a
+    # mismatch (owner, 2026-09-15).
+    from apps.clusters.catchment import active_on
+    from apps.clusters.models import ClusterServiceDistrict
+
+    served_districts = set(
+        ClusterServiceDistrict.objects.filter(active_on()).values_list(
+            "cluster_id", "district_id"
+        )
+    )
+
     clusters = {
         c.id: c
         for c in Cluster.objects.filter(deleted_at__isnull=True).select_related(
@@ -454,7 +465,11 @@ def _membership_geography_mismatch() -> dict:
         cluster = clusters.get(school.cluster_id)
         if cluster is None:
             continue
-        if school.district_id and cluster.district_id != school.district_id:
+        if (
+            school.district_id
+            and cluster.district_id != school.district_id
+            and (cluster.id, school.district_id) not in served_districts
+        ):
             rows.append(
                 {
                     "school": school.school_id,
@@ -462,7 +477,7 @@ def _membership_geography_mismatch() -> dict:
                     "cluster": cluster.name,
                     "expected": f"a cluster in {getattr(school.district, 'name', '—')}",
                     "actual": f"{cluster.name} is in {getattr(cluster.district, 'name', '—')}",
-                    "resolution": "End the membership; reassign in the right district.",
+                    "resolution": "Approve the neighbouring district for the cluster, or move the school to a cluster serving its district.",
                 }
             )
         elif (

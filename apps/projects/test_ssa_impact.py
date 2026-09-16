@@ -249,7 +249,24 @@ class CohortTests(ImpactFixture):
         self.assertIsNone(result["limitation"])
 
 
-class BaselineSnapshotTests(ImpactFixture):
+class CoordinatorMixin:
+    def _coordinator(self):
+        from apps.accounts.models import StaffProfile, User
+        from apps.core.rbac import EdifyRole
+
+        user = User.objects.create_user(
+            email=f"pc-{self.project.code or 'x'}@t.org".lower(),
+            name="Project Coordinator",
+            roles=[EdifyRole.PROJECT_COORDINATOR.value],
+            active_role=EdifyRole.PROJECT_COORDINATOR.value,
+            password="x",
+        )
+        return StaffProfile.objects.create(
+            user=user, title=EdifyRole.PROJECT_COORDINATOR.value, country="Uganda"
+        )
+
+
+class BaselineSnapshotTests(CoordinatorMixin, ImpactFixture):
     """The baseline is taken once, at the door, and does not move afterwards."""
 
     def setUp(self):
@@ -259,6 +276,9 @@ class BaselineSnapshotTests(ImpactFixture):
 
         self.project.status = "active"
         self.project.target_interventions = [INTERVENTION]
+        # A project takes schools only once it has a Project Coordinator to
+        # plan their work (owner, 2026-09-15).
+        self.project.manager_staff_id = self._coordinator().id
         self.project.save()
 
         self.user = User.objects.create_user(

@@ -1484,6 +1484,8 @@ def admin_users_view(request):
     from apps.core.navigation import get_user_role_slug
     from apps.core.rbac import EdifyRole
 
+    from apps.partners.services import may_manage_partner_users
+
     can_manage_partners = request.user.is_superuser or get_user_role_slug(
         request.user
     ) in {"ADMIN", "CD"}
@@ -1767,6 +1769,8 @@ def admin_users_view(request):
         "can_configure_management_team": can_configure_management_team,
         "management_candidates": management_candidates,
         "can_manage_partners": can_manage_partners,
+        "can_manage_partner_users": can_manage_partners
+        and may_manage_partner_users(request.user),
         # Permanent deletion is the Admin's alone (owner, 2026-09-07); a
         # Country Director deactivates.
         "can_purge_partners": request.user.is_superuser
@@ -3002,6 +3006,12 @@ def project_detail_view(request, project_id):
         .select_related("school")
         .order_by("school__name")
     )
+    # The coordinator's project portfolio (owner, 2026-09-15): who added each
+    # school, when, why it was eligible, its baseline, and where its planning,
+    # visits, training and partner handover have reached.
+    from apps.projects.portfolio import portfolio_rows
+
+    portfolio = portfolio_rows(project)
     staff_assignments = (
         project.staff_assignments.filter(is_active=True)
         .select_related("staff__user")
@@ -3092,6 +3102,7 @@ def project_detail_view(request, project_id):
         ),
     ]
     can_assign_staff = _can_configure_project_priorities(request.user)
+    schools_needing_planning = sum(1 for row in portfolio if row["needs_planning"])
     staff_options = []
     if can_assign_staff:
         staff_options = list(
@@ -3150,6 +3161,8 @@ def project_detail_view(request, project_id):
     context = {
         "project": project,
         "school_assignments": school_assignments,
+        "project_portfolio": portfolio,
+        "schools_needing_planning": schools_needing_planning,
         "staff_assignments": staff_assignments,
         "staff_options": staff_options,
         "eligible_schools": eligible_schools,

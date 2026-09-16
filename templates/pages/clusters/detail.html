@@ -90,10 +90,16 @@ Delete cluster
 <div id="cluster-delete-errors" class="basis-full"></div>
 {% endif %}
 {% if can_plan_clusters %}
-<a href="/planning?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
+{% comment %}
+These opened `/planning`, the dashboard, which reads neither `action` nor
+`cluster`: the button promised a scheduling form and delivered a list, so a
+cluster meeting could not be started from the cluster it belongs to. The
+scheduling surface is `/planning/schedule`, and it reads both (owner, §12).
+{% endcomment %}
+<a href="/planning/schedule?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
 Schedule Group Training
 </a>
-<a href="/planning?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
+<a href="/planning/schedule?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
 Schedule Cluster Meeting
 </a>
 {% endif %}
@@ -124,6 +130,33 @@ Schedule Cluster Meeting
 <p class="edify-profile-field__label">Leader Phone</p>
 <p class="edify-profile-field__value mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
 </div>
+</div>
+{% comment %}The districts this cluster serves (owner, 2026-09-15): its own, and any neighbouring district approved for border communities. Schools join only from these districts; their own geography never changes.{% endcomment %}
+<div class="border-t border-slate-100 pt-4 space-y-3" data-cluster-catchment>
+<div class="flex flex-wrap items-center justify-between gap-2">
+<p class="edify-profile-field__label">Districts served</p>
+{% if can_manage_catchments %}
+<button type="button" hx-get="/clusters/{{ cluster.id }}/catchment-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8">Approve Neighbouring District</button>
+{% endif %}
+</div>
+<ul class="space-y-2 text-[12px]">
+{% for row in catchment_rows %}
+<li class="flex flex-wrap items-center justify-between gap-2{% if not row.active %} opacity-60{% endif %}">
+<span><strong class="text-slate-800">{{ row.district.name }}</strong> · {{ row.get_relationship_type_display }}{% if row.relationship_type == "neighbouring" %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}{% if row.reason and row.relationship_type == "neighbouring" %}<span class="block edify-text-caption text-slate-500">{{ row.reason }}</span>{% endif %}<span class="block edify-text-caption text-slate-400">From {{ row.effective_from|date:"j M Y" }}{% if row.effective_to %} to {{ row.effective_to|date:"j M Y" }}{% endif %}{% if not row.active %} · Ended{% if row.ended_reason %}: {{ row.ended_reason }}{% endif %}{% endif %}</span></span>
+{% if can_manage_catchments and row.active and row.relationship_type == "neighbouring" %}
+<button type="button" hx-get="/clusters/{{ cluster.id }}/catchment/{{ row.id }}/end" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-ghost h-8">End</button>
+{% endif %}
+</li>
+{% empty %}
+<li class="edify-text-caption text-slate-500">Serves its own district.</li>
+{% endfor %}
+</ul>
+{% if catchment_outside_members %}
+<div class="edify-note" data-tone="warning" data-catchment-review>
+<strong>{{ catchment_outside_members|length }} school{{ catchment_outside_members|length|pluralize }} outside this cluster's catchment.</strong>
+Approve the district, or move the school to a cluster serving it: {% for s in catchment_outside_members %}{{ s.name }} ({{ s.district.name }}){% if not forloop.last %}, {% endif %}{% endfor %}.
+</div>
+{% endif %}
 </div>
 </div>
 

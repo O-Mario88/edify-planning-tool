@@ -5421,15 +5421,15 @@
   {
    "page_permission": "",
    "required_permissions": [
-    "partner.manage"
+    "partnerUser.manage"
    ],
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
     "Admin"
    ],
-   "route": "/api/partners(?:/|)<str:partner_id>",
-   "route_name": "update",
+   "route": "/api/partners(?:/|)<str:partner_id>/user-setup",
+   "route_name": "user-setup",
    "view": "apps.partners.views.view"
   },
   {
@@ -7510,6 +7510,36 @@
    "view": "apps.frontend.views.cluster_views.cluster_bulk_assign_drawer_view"
   },
   {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/catchment-drawer",
+   "route_name": "cluster_catchment_drawer",
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view"
+  },
+  {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+   "route_name": "cluster_catchment_end",
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_end_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -7559,23 +7589,6 @@
    "route": "/clusters/<str:cluster_id>/edit-drawer",
    "route_name": "edit_cluster_drawer",
    "view": "apps.frontend.views.cluster_views.edit_cluster_drawer_view"
-  },
-  {
-   "page_permission": "planning",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
-    "Admin"
-   ],
-   "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-   "route_name": "remove_school_from_cluster",
-   "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view"
   },
   {
    "page_permission": "planning",
@@ -8259,6 +8272,18 @@
    "route": "/cost-settings/add",
    "route_name": "cost_settings_add",
    "view": "apps.frontend.views.finance_views.add_linked_cost_view"
+  },
+  {
+   "page_permission": "cost_settings",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/cost-settings/carry-forward",
+   "route_name": "cost_settings_carry_forward",
+   "view": "apps.frontend.views.finance_views.carry_forward_rate_card_view"
   },
   {
    "page_permission": "cost_settings",
@@ -13758,6 +13783,18 @@
    "view": "apps.frontend.views.hr_views.org_structure_view"
   },
   {
+   "page_permission": "ownership_transfers",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ownership-transfers/",
+   "route_name": "ownership_transfers",
+   "view": "apps.frontend.views.ownership_views.ownership_transfers_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -14562,6 +14599,31 @@
     "MfiLoanOfficer",
     "Admin"
    ],
+   "route": "/partners/<str:partner_id>/user-setup",
+   "route_name": "partner_user_setup",
+   "view": "apps.frontend.views.partner_views.partner_user_setup_drawer_view"
+  },
+  {
+   "page_permission": "partners",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
    "route": "/partners/create",
    "route_name": "create_partner",
    "view": "apps.frontend.views.partner_views.create_partner_view"
@@ -14968,6 +15030,18 @@
    "route": "/planning/bulk-action",
    "route_name": "planning_bulk_action",
    "view": "apps.frontend.views.planning_views.bulk_action_view"
+  },
+  {
+   "page_permission": "fy_planning_policy",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/planning/fiscal-years",
+   "route_name": "fiscal_year_planning",
+   "view": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view"
   },
   {
    "page_permission": "planning",
@@ -15594,57 +15668,9 @@
     "ProjectCoordinator",
     "Admin"
    ],
-   "route": "/projects/<str:project_id>/delete",
-   "route_name": "project_delete_action",
-   "view": "apps.frontend.views.extended_views.project_delete_action_view"
-  },
-  {
-   "page_permission": "projects",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "ProjectCoordinator",
-    "Admin"
-   ],
-   "route": "/projects/<str:project_id>/edit",
-   "route_name": "project_edit_drawer",
-   "view": "apps.frontend.views.extended_views.project_edit_drawer_view"
-  },
-  {
-   "page_permission": "projects",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "ProjectCoordinator",
-    "Admin"
-   ],
    "route": "/projects/<str:project_id>/schools/assign",
    "route_name": "project_assign_school_action",
    "view": "apps.frontend.views.extended_views.project_assign_school_action_view"
-  },
-  {
-   "page_permission": "projects",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "ProjectCoordinator",
-    "Admin"
-   ],
-   "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
-   "route_name": "project_bulk_assign_drawer",
-   "view": "apps.frontend.views.extended_views.project_bulk_assign_drawer_view"
   },
   {
    "page_permission": "projects",
@@ -16375,6 +16401,23 @@
    "route": "/schools/<str:school_id>/reopen",
    "route_name": "school_reopen",
    "view": "apps.frontend.views.school_views.school_reopen_action"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/schools/<str:school_id>/transfer-owner",
+   "route_name": "school_owner_transfer",
+   "view": "apps.frontend.views.ownership_views.school_owner_transfer_drawer"
   },
   {
    "page_permission": "school_directory",
@@ -17703,27 +17746,27 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 403,
-  "Admin": 989,
-  "BusinessTransformationOfficer": 230,
+  "Admin": 992,
+  "BusinessTransformationOfficer": 231,
   "CCEO": 520,
-  "CountryDirector": 746,
-  "HumanResources": 328,
-  "ImpactAssessment": 606,
-  "MfiLoanOfficer": 126,
-  "MfiPartnerAdmin": 129,
-  "PartnerAdmin": 217,
-  "PartnerFieldOfficer": 217,
+  "CountryDirector": 748,
+  "HumanResources": 329,
+  "ImpactAssessment": 607,
+  "MfiLoanOfficer": 127,
+  "MfiPartnerAdmin": 130,
+  "PartnerAdmin": 218,
+  "PartnerFieldOfficer": 218,
   "Program Lead": 603,
-  "ProjectCoordinator": 441,
-  "RegionalProgramLead": 300,
-  "RegionalVicePresident": 363
+  "ProjectCoordinator": 439,
+  "RegionalProgramLead": 302,
+  "RegionalVicePresident": 364
  },
  "summary": {
-  "page_keys_declared": 172,
-  "page_keys_in_navigation": 189,
-  "routes_guarded": 1086,
-  "routes_total": 1278,
-  "routes_unguarded": 192,
+  "page_keys_declared": 174,
+  "page_keys_in_navigation": 191,
+  "routes_guarded": 1089,
+  "routes_total": 1282,
+  "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -18761,6 +18804,13 @@
    "required_permissions": [],
    "route": "/api/partners(?:/|)",
    "route_name": "list",
+   "view": "apps.partners.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/partners(?:/|)<str:partner_id>",
+   "route_name": "update",
    "view": "apps.partners.views.view"
   },
   {

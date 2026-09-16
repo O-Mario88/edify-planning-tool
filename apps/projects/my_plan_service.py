@@ -34,7 +34,7 @@ from apps.my_plan.services import (
 
 from .dashboard_service import DELIVERED_STATUSES
 from .models import Project
-from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
 
 
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
@@ -355,6 +355,14 @@ def get_my_plan(principal, filters=None) -> dict:
         if activity.activity_type in TRAINING_TYPES
         and activity.delivery_type == "staff"
     ]
+    # Staff-delivered project cluster meetings had no list of their own and
+    # fell out of the page entirely (2026-09-15).
+    meetings = [
+        row
+        for row, activity in zip(rows, activities)
+        if activity.activity_type in CLUSTER_MEETING_TYPES
+        and activity.delivery_type == "staff"
+    ]
     partner_activities = [
         row
         for row, activity in zip(rows, activities)
@@ -652,6 +660,7 @@ def get_my_plan(principal, filters=None) -> dict:
         "kpis": kpis,
         "visits": visits[:25],
         "trainings": trainings[:25],
+        "meetings": meetings[:25],
         "partner_activities": partner_activities[:25],
         "upcoming": upcoming,
         "attention": attention,

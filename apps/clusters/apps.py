@@ -6,3 +6,6 @@ class ClustersConfig(AppConfig):
     name = "apps.clusters"
     label = "clusters"
     verbose_name = "Edify Clusters"
+
+    def ready(self):
+        from . import signals  # noqa: F401

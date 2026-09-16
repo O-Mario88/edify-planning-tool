@@ -802,6 +802,16 @@ def _workflow_issues() -> dict:
             "id", "responsible_staff_id", "district_id", "sub_county_id"
         )
     }
+    # A school in a neighbouring district its cluster is approved to serve is
+    # a governed membership, not a mismatch (owner, 2026-09-15).
+    from apps.clusters.catchment import active_on as _catchment_on
+    from apps.clusters.models import ClusterServiceDistrict
+
+    served_districts = set(
+        ClusterServiceDistrict.objects.filter(_catchment_on()).values_list(
+            "cluster_id", "district_id"
+        )
+    )
     covered_sub_counties: dict[str, set] = {}
     for _cid, _scid in ClusterSubCounty.objects.filter(
         cluster__deleted_at__isnull=True
@@ -825,7 +835,8 @@ def _workflow_issues() -> dict:
         if cluster_owner and cluster_owner not in _variants(group["account_owner_id"]):
             membership_owner_mismatch += group["n"]
         if cluster["district_id"] and group["district_id"] != cluster["district_id"]:
-            membership_geography_mismatch += group["n"]
+            if (cluster["id"], group["district_id"]) not in served_districts:
+                membership_geography_mismatch += group["n"]
         elif group["sub_county_id"] and cluster["sub_county_id"]:
             covers = group["sub_county_id"] in covered_sub_counties.get(
                 cluster["id"], set()
@@ -1305,7 +1316,7 @@ def _workflow_issues() -> dict:
         )
     if membership_geography_mismatch:
         blockers.append(
-            f"{membership_geography_mismatch} school(s) sit in a cluster outside their own district or sub-county."
+            f"{membership_geography_mismatch} school(s) sit in a cluster that does not serve their district or sub-county."
         )
     if partner_assigned_still_staff_planning:
         blockers.append(

@@ -50,9 +50,14 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         ).read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        self.assertEqual(directory.count("school-record-action__label--full"), 4)
-        self.assertEqual(directory.count("school-record-action__label--compact"), 4)
-        self.assertEqual(directory.count("_cluster_action_icon.html"), 2)
+        # Every action carries both labels — the phone shows one, the desktop
+        # the other — so the two counts move together whatever actions the row
+        # grows. The cluster action has three states now (add, change, and the
+        # refusal), the project action two.
+        full = directory.count("school-record-action__label--full")
+        self.assertEqual(full, directory.count("school-record-action__label--compact"))
+        self.assertEqual(full, 5)
+        self.assertEqual(directory.count("_cluster_action_icon.html"), 3)
         self.assertEqual(directory.count("_project_action_icon.html"), 2)
         self.assertIn('<circle cx="12" cy="5"', cluster_icon)
         self.assertIn("M3.5 7.5h6", project_icon)

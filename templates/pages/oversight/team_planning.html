@@ -26,7 +26,7 @@
     {% endif %}
   </header>
 
-  {% if can_view_team_planning and can_view_team_targets %}
+  {% if can_view_team_planning %}
   {% comment %}
   These are server-routed views rather than client-side ARIA tabs. Each link
   owns a URL and loads only its dataset, while the shared tab styling makes
@@ -34,7 +34,9 @@
   {% endcomment %}
   <nav data-edify-tablist aria-label="Team oversight views">
     <a href="/team-planning-oversight/" data-edify-tab{% if active_oversight_view == "planning" %} aria-current="page"{% endif %}>Planning &amp; Portfolio</a>
-    <a href="/team-planning-oversight/?view=targets" data-edify-tab{% if active_oversight_view == "targets" %} aria-current="page"{% endif %}>Target Performance</a>
+    {% comment %}The school lens: planned schools, and cluster training coverage (owner, 2026-09-15).{% endcomment %}
+    <a href="/team-planning-oversight/?view=coverage" data-edify-tab{% if active_oversight_view == "coverage" %} aria-current="page"{% endif %}>Schools &amp; Coverage</a>
+    {% if can_view_team_targets %}<a href="/team-planning-oversight/?view=targets" data-edify-tab{% if active_oversight_view == "targets" %} aria-current="page"{% endif %}>Target Performance</a>{% endif %}
   </nav>
   {% endif %}
 
@@ -48,13 +50,16 @@
 
 
     <div id="oversight-workspace">
-      {% if country_lens %}
+      {% if active_oversight_view == "coverage" %}
+        {% include "partials/oversight/coverage_workspace.html" %}
+      {% elif country_lens %}
         {% include "partials/oversight/team_country_workspace.html" %}
       {% else %}
         {% include "partials/oversight/pl_workspace.html" %}
       {% endif %}
     </div>
 
+  {% if active_oversight_view == "planning" %}
   {% comment %}
   Cluster Oversight — who is carrying which clusters.
 
@@ -84,6 +89,7 @@
       </div>
       {% include "partials/oversight/flagged_schools.html" %}
     </section>
+  {% endif %}
   {% endif %}
 </div>
 {% endblock %}

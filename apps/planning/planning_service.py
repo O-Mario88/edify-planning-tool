@@ -476,6 +476,13 @@ class PlanningDashboardService:
 
             # Retrieve latest confirmed SSA records
             school_ids = [s.id for s in paginated_schools]
+            # Where each school's visiting has reached, derived from the
+            # activities themselves (owner, 2026-09-15). The planner sees the
+            # same phrase here as in the Directory, School 360 and Team
+            # Oversight, because all four read one function.
+            from apps.schools.school_status import visit_statuses
+
+            visit_state_by_school = visit_statuses(school_ids, fy=fy)
             ssa_records = (
                 SsaRecord.objects.filter(
                     school_id__in=school_ids,
@@ -711,6 +718,9 @@ class PlanningDashboardService:
                         or "No phone",
                         "enrolment": s.enrollment,
                         "visitCount": completed_visits_by_school.get(s.id, 0),
+                        "visitPlanStatus": visit_state_by_school[s.id].label,
+                        "visitPlanStatusTone": visit_state_by_school[s.id].tone,
+                        "nextVisitDate": visit_state_by_school[s.id].next_date,
                         "trainingCount": completed_trainings_by_school.get(s.id, 0),
                         "data_quality_score": s.data_quality_score,
                         "data_quality_status": s.data_quality_status,

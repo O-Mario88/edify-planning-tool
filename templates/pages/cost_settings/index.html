@@ -83,7 +83,7 @@ panel, whose own padding doubled each card's (32px to the text).{% endcomment %}
 {% if active_catalogue %}
 <div class="edify-note" data-tone="success" role="status">
 <p class="edify-note__title">Published Country Operational Rate Card: {{ active_catalogue }}</p>
-<p class="edify-note__body">Version {{ active_catalogue.version }} · {{ cost_items|length }} reusable rates · {{ governed_activity_count }} governed activities covered</p>
+<p class="edify-note__body">Version {{ active_catalogue.version }} · {{ cost_items|length }} reusable rates · {{ governed_activity_count }} governed activities covered{% if active_catalogue.is_provisional %} · <strong data-provisional-card>Provisional</strong>: {{ active_catalogue.source_note }}{% endif %}</p>
 </div>
 {% endif %}
 
@@ -109,10 +109,20 @@ panel, whose own padding doubled each card's (32px to the text).{% endcomment %}
 {% else %}
 {% include "components/empty_state.html" with message="No cost items configured for this FY" %}
 {% if can_initialize %}
+{% if carry_forward_source %}
+<form method="post" action="/cost-settings/carry-forward" class="flex flex-col items-center gap-2 px-4 pb-5" data-carry-forward>
+{% csrf_token %}
+<input type="hidden" name="fy" value="{{ fy }}">
+<p class="edify-text-caption text-[var(--edify-text-muted)] text-center max-w-[560px]">FY{{ fy }} work cannot be costed until FY{{ fy }} has its own rate card. Start from the FY{{ carry_forward_source.fy }} published rates (v{{ carry_forward_source.version }}); the card is marked provisional until you revise or confirm them.</p>
+<button type="submit" class="btn btn-primary h-8">Carry Forward FY{{ carry_forward_source.fy }} Rates</button>
+</form>
+{% else %}
 <form method="post" action="/cost-settings/initialize-default" class="flex justify-center px-4 pb-5">
 {% csrf_token %}
+<input type="hidden" name="fy" value="{{ fy }}">
 <button type="submit" class="btn btn-primary h-8">Initialize Default Catalogue</button>
 </form>
+{% endif %}
 {% endif %}
 {% endif %}
 </div>

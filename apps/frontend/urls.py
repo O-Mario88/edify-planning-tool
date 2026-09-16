@@ -16,6 +16,8 @@ from .views import (
     school_views,
     cluster_views,
     planning_views,
+    fy_planning_views,
+    ownership_views,
     visit_request_views,
     oversight_views,
     budget_views,
@@ -487,6 +489,16 @@ urlpatterns = [
         name="cluster_impact_partial",
     ),
     path(
+        "clusters/<str:cluster_id>/catchment-drawer",
+        cluster_views.cluster_catchment_drawer_view,
+        name="cluster_catchment_drawer",
+    ),
+    path(
+        "clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+        cluster_views.cluster_catchment_end_view,
+        name="cluster_catchment_end",
+    ),
+    path(
         "clusters/<str:cluster_id>",
         cluster_views.cluster_detail_view,
         name="cluster_detail",
@@ -595,6 +607,11 @@ urlpatterns = [
     ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
+    path(
+        "planning/fiscal-years",
+        fy_planning_views.fiscal_year_planning_view,
+        name="fiscal_year_planning",
+    ),
     path(
         "planning/schedule",
         planning_views.schedule_activity_form_view,
@@ -1736,6 +1753,11 @@ urlpatterns = [
     path("partners", partner_views.partners_list_view, name="partners_list"),
     path("partners/create", partner_views.create_partner_view, name="create_partner"),
     path(
+        "partners/<str:partner_id>/user-setup",
+        partner_views.partner_user_setup_drawer_view,
+        name="partner_user_setup",
+    ),
+    path(
         "partners/<str:partner_id>",
         partner_views.partner_detail_view,
         name="partner_detail",
@@ -1920,6 +1942,16 @@ urlpatterns = [
     path("coverage", extended_views.coverage_view, name="coverage"),
     # ── GROUP 6: Admin, Settings, Messages, Leaves & Search ───────────────────
     path("admin-panel", extended_views.admin_panel_view, name="admin_panel"),
+    path(
+        "ownership-transfers/",
+        ownership_views.ownership_transfers_view,
+        name="ownership_transfers",
+    ),
+    path(
+        "schools/<str:school_id>/transfer-owner",
+        ownership_views.school_owner_transfer_drawer,
+        name="school_owner_transfer",
+    ),
     path("admin-panel/users", extended_views.admin_users_view, name="admin_users"),
     path(
         "admin-panel/users/<str:user_id>",
@@ -2295,6 +2327,11 @@ urlpatterns = [
         "cost-settings/add",
         finance_views.add_linked_cost_view,
         name="cost_settings_add",
+    ),
+    path(
+        "cost-settings/carry-forward",
+        finance_views.carry_forward_rate_card_view,
+        name="cost_settings_carry_forward",
     ),
     path(
         "cost-settings/initialize-default",

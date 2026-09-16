@@ -85,6 +85,28 @@ A labelled lifecycle action, deliberately not a trash icon and deliberately
 not in the Danger Zone beside Delete. Closure preserves everything; borrowing
 deletion's affordance would tell the reader the opposite of what it does.
 {% endcomment %}
+{% if can_assign_project %}
+{% comment %}Add to Project from the school's own profile, the second entry point the brief names.{% endcomment %}
+<button
+type="button"
+hx-get="/schools/{{ school.id }}/assign-to-project"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Add {{ school.name }} to a project"
+class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>Add to Project</button>
+{% endif %}
+{% if can_transfer_owner %}
+{% comment %}Admin and Impact Assessment reassign the school's owner (owner, 2026-09-15). The school's geography is untouched.{% endcomment %}
+<button
+type="button"
+hx-get="/schools/{{ school.school_id }}/transfer-owner"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Reassign the owner of {{ school.name }}"
+class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>Reassign Owner</button>
+{% endif %}
 {% if not school.is_closed %}
 <button
 type="button"
@@ -144,7 +166,33 @@ Not specified
 <p class="edify-profile-field__label">Assigned Staff</p>
 <p class="edify-profile-field__value mt-0.5">{{ school.assigned_staff }}</p>
 </div>
+<div data-school-visit-status>
+<p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="edify-badge" data-tone="{{ visit_status.tone }}">{{ visit_status.label }}</span>{% if visit_status.next_date %} <span class="edify-text-caption">{{ visit_status.next_date|date:"j M Y" }}</span>{% endif %}</p>
 </div>
+<div data-school-training-status>
+<p class="edify-profile-field__label">Cluster training (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {{ training_coverage.cluster_name }}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>
+</div>
+<div data-school-cluster>
+<p class="edify-profile-field__label">Cluster</p>
+<p class="edify-profile-field__value mt-0.5">{% if current_cluster %}<a href="/clusters/{{ current_cluster.id }}" class="hover:underline">{{ current_cluster.name }}</a>{% if current_cluster.district_id != school.district_id %} · {{ current_cluster.district.name }}{% endif %}{% else %}Not in a cluster{% endif %}</p>
+{% if current_cluster_cross_district %}<span class="edify-badge mt-1" data-tone="info">Cross-District Cluster</span>{% elif current_cluster_outside_catchment %}<span class="edify-badge mt-1" data-tone="warning">Outside the cluster's catchment</span>{% endif %}
+</div>
+</div>
+{% if cluster_history %}
+<details class="border-t border-slate-100 pt-4" data-cluster-history>
+<summary class="edify-profile-section-title cursor-pointer">Cluster history ({{ cluster_history|length }})</summary>
+<ul class="mt-3 space-y-2 text-[12px]">
+{% for m in cluster_history %}
+<li>
+<strong class="text-slate-800">{{ m.cluster.name }}</strong>{% if m.is_cross_district %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}
+<span class="block edify-text-caption text-slate-500">{{ m.started_at|date:"j M Y" }} – {% if m.ended_at %}{{ m.ended_at|date:"j M Y" }}{% else %}present{% endif %}{% if m.start_reason %} · {{ m.start_reason }}{% endif %}{% if m.end_reason %} · Ended: {{ m.end_reason }}{% endif %}</span>
+</li>
+{% endfor %}
+</ul>
+</details>
+{% endif %}
 
 <div class="border-t border-slate-100 pt-5">
 <div class="flex items-center justify-between gap-3 mb-4">

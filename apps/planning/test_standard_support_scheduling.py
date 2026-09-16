@@ -257,7 +257,17 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
             activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
         )
 
-    def test_training_follow_up_rejects_missing_source(self):
+    def test_training_follow_up_rejects_missing_source_where_the_policy_requires_it(
+        self,
+    ):
+        """The prerequisite is governed per fiscal year (owner, 2026-09-15).
+        Where a year's policy still requires a prior training, a follow-up
+        without one is refused, exactly as it always was."""
+        from apps.planning.models import FiscalYearPlanningPolicy
+
+        FiscalYearPlanningPolicy.objects.filter(
+            fy=get_operational_fy(_schedulable_date())
+        ).update(follow_up_visit_requires_prior_training=True)
         with self.assertRaisesMessage(BadRequest, "Select the completed"):
             self.schedule(
                 schoolId=self.school.school_id,

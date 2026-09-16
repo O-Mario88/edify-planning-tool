@@ -34,6 +34,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import (
     StaffProfile,
@@ -44,7 +45,7 @@ from apps.accounts.models import (
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.fy import get_fy_date_range, get_operational_fy
+from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
 from apps.hr.models import (
     PerformanceCycle,
@@ -97,14 +98,6 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
 
 
 def _schedulable_date() -> datetime.date:
-    """The day the walk starts on: soon, because the walk is about now.
-
-    It has to be close to today. The conversation page the walk finishes on
-    opens the window for *today's* FY, and the priority whose progress it
-    reads counts work in that FY, so a walk that starts in the next one has
-    nothing to show. Keeping the later visits in the same FY is
-    `_next_schedulable`'s job, not this one's.
-    """
     from apps.core.calendar_policy import SchedulingPolicyService
 
     day = timezone.localdate() + datetime.timedelta(days=7)
@@ -115,79 +108,18 @@ def _schedulable_date() -> datetime.date:
     raise AssertionError("no schedulable date within three weeks")
 
 
-def _publish_catalogue(fy: str) -> CostCatalogue:
-    """A published operational rate card for `fy`, carrying the canonical rates.
-
-    The fixture used to reach for `CostCatalogue.objects.get_or_create(...,
-    is_active=True)` and set one rate on whatever came back. That worked only
-    while every date in the walk sat in the FY seeding had already published a
-    card for.
-    """
-    from apps.budget.models import RateCardKind, RateCardStatus
-    from apps.budget.reference import ensure_cost_reference
-
-    catalogue, _ = CostCatalogue.objects.get_or_create(
-        country="Uganda",
-        fy=fy,
-        kind=RateCardKind.OPERATIONAL,
-        defaults={
-            "version": 1,
-            "status": RateCardStatus.PUBLISHED,
-            "is_active": True,
-            "currency": "UGX",
-        },
-    )
-    ensure_cost_reference(catalogue)
-    CostSetting.objects.update_or_create(
-        catalogue=catalogue,
-        key="primary_transport_per_day",
-        defaults={
-            "label": "Primary Transport Per Day",
-            "unit_cost": TRANSPORT,
-            "fy": fy,
-        },
-    )
-    return catalogue
-
-
 def _next_schedulable(start: datetime.date, offset_days: int) -> datetime.date:
-    """A schedulable day after `start`, inside `start`'s own FY.
-
-    Prefers `offset_days` out, which is what the walk means by "later". The FY
-    turns over on 1 October, and both the rate card that prices a visit and
-    the priority that counts it belong to one FY — so in the fortnight before
-    a rollover, "eight days later" was a visit in an FY with no published
-    catalogue that no longer counted towards the priority under discussion.
-    The journey failed every year for that fortnight and passed again
-    afterwards. When the preferred day falls outside the FY, the search runs
-    backwards from the FY's last day instead: still later than `start`, still
-    the conversation's own FY.
-    """
+    """The first schedulable day at least `offset_days` after `start`."""
     from apps.core.calendar_policy import SchedulingPolicyService
 
     if not offset_days:
         return start
-
-    def _open(day: datetime.date) -> bool:
-        return SchedulingPolicyService.check(None, day)["status"] != "blocked"
-
-    fy = get_operational_fy(start)
     day = start + datetime.timedelta(days=offset_days)
     for _ in range(21):
-        if get_operational_fy(day) != fy:
-            break
-        if _open(day):
+        if SchedulingPolicyService.check(None, day)["status"] != "blocked":
             return day
         day += datetime.timedelta(days=1)
-
-    # Backwards from the last day of `start`'s FY.
-    last = get_fy_date_range(fy)[1].date() - datetime.timedelta(days=1)
-    day = min(last, start + datetime.timedelta(days=offset_days))
-    while day > start:
-        if _open(day):
-            return day
-        day -= datetime.timedelta(days=1)
-    raise AssertionError(f"no schedulable day after {start} inside FY{fy}")
+    raise AssertionError("no schedulable date within three weeks of the offset")
 
 
 def _at(day: datetime.date):
@@ -195,7 +127,36 @@ def _at(day: datetime.date):
 
 
 class QuarterlyConversationJourneyTest(TestCase):
-    """Window opened → reflection → assessment → calibration → acknowledged."""
+    """Window opened → reflection → assessment → calibration → acknowledged.
+
+    The journey is held at a fixed "today" rather than the machine's.
+
+    It delivers two visits eight days apart and then talks about them, so both
+    have to belong to one fiscal year, and to one that may be executed — the
+    next FY may be open for planning and still refuse delivery until it
+    starts. Anchored to the wall clock, the walk passed for eleven months and
+    then broke every late September, when a visit booked a week out landed on
+    1 October: FY2027 work, refused on the calendar rather than on anything
+    the code did. The fixed day is an ordinary Wednesday in the middle of a
+    fiscal year, so the whole conversation sits inside it whatever the date
+    the suite is run on.
+    """
+
+    #: A Wednesday in FY2026, far from both ends of the fiscal year.
+    TODAY = "2026-02-11"
+
+    @classmethod
+    def setUpClass(cls):
+        # Started before setUpTestData so the fixtures are built on the same
+        # day the tests read back.
+        cls._freezer = freeze_time(cls.TODAY)
+        cls._freezer.start()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls._freezer.stop()
 
     @classmethod
     def setUpTestData(cls):
@@ -245,13 +206,38 @@ class QuarterlyConversationJourneyTest(TestCase):
 
         cls.day = _schedulable_date()
         cls.fy = get_operational_fy(cls.day)
-        # `_schedulable_date` keeps the whole walk inside this FY, so one
-        # published card prices all of it. The card is published explicitly
-        # rather than borrowed from whatever `is_active=True` returns: after
-        # the rollover the walk runs in an FY seeding has not published for,
-        # and the old fixture then priced against a draft card with one rate
-        # on it.
-        cls.catalogue = _publish_catalogue(cls.fy)
+        # This journey schedules work days and weeks after `cls.day`, and the
+        # fiscal year turns over on 1 October. Run it in late September and the
+        # later visits land in the next FY, which had no rate card here: the
+        # journey failed with "No active CD Cost Catalogue" on the calendar,
+        # not on anything the code did. Every FY the journey can reach is
+        # given one.
+        from apps.budget.reference import ensure_cost_reference
+
+        cls.catalogue = None
+        for fy in sorted(
+            {
+                get_operational_fy(cls.day + datetime.timedelta(days=offset))
+                for offset in (0, 30, 60, 210)
+            }
+        ):
+            catalogue, _ = CostCatalogue.objects.get_or_create(
+                country="Uganda", fy=fy, is_active=True, defaults={"version": 1}
+            )
+            # Every canonical rate, not just transport: a visit is priced from
+            # several and a missing one refuses the schedule.
+            ensure_cost_reference(catalogue)
+            if fy == cls.fy:
+                cls.catalogue = catalogue
+            CostSetting.objects.update_or_create(
+                key="primary_transport_per_day",
+                fy=fy,
+                defaults={
+                    "label": "Primary Transport Per Day",
+                    "unit_cost": TRANSPORT,
+                    "catalogue": catalogue,
+                },
+            )
 
     # ── Setting the stage: an agreed review to hold a conversation about ──
     def _agreed_review(self):

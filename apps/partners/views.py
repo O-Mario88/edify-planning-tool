@@ -16,6 +16,11 @@ from . import services
 
 VIEW = [Permission.PARTNER_VIEW.value]
 MANAGE = [Permission.PARTNER_MANAGE.value]
+# Organisation records and partner logins are separate authorities (owner,
+# 2026-09-15); the services check them again, these gates keep the API honest.
+ORG_CREATE = [Permission.PARTNER_ORGANISATION_CREATE.value]
+ORG_EDIT = [Permission.PARTNER_ORGANISATION_EDIT.value]
+USER_SETUP = [Permission.PARTNER_USER_MANAGE.value]
 
 
 def _q(request: Request) -> dict:
@@ -25,7 +30,7 @@ def _q(request: Request) -> dict:
 class PartnerListOnboardView(APIView):
     @property
     def required_permissions(self):
-        return MANAGE if self.request.method == "POST" else VIEW
+        return ORG_CREATE if self.request.method == "POST" else VIEW
 
     def get_permissions(self):
         return [IsAuthenticated(), RequirePermissions()]
@@ -141,11 +146,27 @@ class PartnerAssignmentEligibleActivitiesView(APIView):
 
 
 class PartnerUpdateView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = MANAGE
+    @property
+    def required_permissions(self):
+        return ORG_EDIT if self.request.method == "PATCH" else MANAGE
+
+    def get_permissions(self):
+        return [IsAuthenticated(), RequirePermissions()]
 
     def patch(self, request: Request, partner_id: str) -> Response:
         return Response(services.update(partner_id, request.data, request.user))
 
     def delete(self, request: Request, partner_id: str) -> Response:
         return Response(services.delete_partner(partner_id, request.user))
+
+
+class PartnerUserSetupView(APIView):
+    """POST /api/partners/<id>/user-setup — link, invite or waive a login."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = USER_SETUP
+
+    def post(self, request: Request, partner_id: str) -> Response:
+        return Response(
+            services.configure_partner_user(partner_id, request.data, request.user)
+        )

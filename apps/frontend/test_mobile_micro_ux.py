@@ -282,7 +282,6 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
     def test_full_screen_overlays_are_declared_as_named_dialogs(self):
         dialog_contracts = {
-            "templates/partials/partners/create_partner_drawer.html": "onboard-partner-title",
             "templates/partials/core_schools/schedule_visit_drawer.html": "schedule-core-visit-title",
             "templates/partials/core_schools/core_assessment_drawer.html": "core-school-assessment-title",
             "templates/partials/core_schools/champion_review_drawer.html": "champion-review-title",

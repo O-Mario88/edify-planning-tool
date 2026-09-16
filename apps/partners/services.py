@@ -10,7 +10,7 @@ from django.db.models import Q
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
-from .models import Partner, PartnerAssignment
+from .models import Partner, PartnerAssignment, PartnerUserSetupStatus
 
 if TYPE_CHECKING:
     from .models import PartnerMember
@@ -31,8 +31,10 @@ def _assert_partner_directory_manager(principal) -> None:
 
     The Users page is shared with HR, but the business rule for partner
     organisations is deliberately narrower: only the active Admin or Country
-    Director role may add or remove them. Keeping this guard in the canonical
-    service protects the HTML page and the API equally.
+    Director role may activate, deactivate or remove them. Keeping this guard
+    in the canonical service protects the HTML page and the API equally.
+    Creating and correcting an organisation is wider (IA holds it) and is
+    guarded by its own permission below.
     """
     from apps.core.navigation import get_user_role_slug
 
@@ -42,6 +44,39 @@ def _assert_partner_directory_manager(principal) -> None:
         raise Forbidden(
             "Only an Admin or Country Director can manage partner organisations."
         )
+
+
+def _assert_permission(principal, permission, message: str) -> None:
+    from apps.core.permissions import has_permission
+
+    if getattr(principal, "is_superuser", False):
+        return
+    if not has_permission(principal, permission.value):
+        raise Forbidden(message)
+
+
+def may_create_partner_organisation(principal) -> bool:
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    return bool(
+        getattr(principal, "is_superuser", False)
+        or has_permission(principal, Permission.PARTNER_ORGANISATION_CREATE.value)
+    )
+
+
+def may_manage_partner_users(principal) -> bool:
+    """Partner logins are user administration: Admin and the Country Director
+    (owner, 2026-09-15). Impact Assessment adds organisations and never
+    reaches this."""
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if getattr(principal, "is_superuser", False):
+        return True
+    return has_permission(
+        principal, Permission.PARTNER_USER_MANAGE.value
+    ) and has_permission(principal, Permission.USER_MANAGE.value)
 
 
 def assert_partner_activity_allowance(
@@ -119,6 +154,8 @@ def _serialize(p: Partner) -> dict:
         "ssaIntervention": p.ssa_intervention,
         "ssaInterventionLabel": p.ssa_intervention_label,
         "activeStatus": p.active_status,
+        "userSetupStatus": p.user_setup_status,
+        "hasLogin": bool(p.user_id),
     }
 
 
@@ -194,9 +231,26 @@ def eligible(query: dict) -> list[dict]:
 
 @transaction.atomic
 def onboard(data: dict, principal) -> dict:
-    """Onboard a partner organisation from the CD/Admin Users workspace."""
-    _assert_partner_directory_manager(principal)
+    """Add a partner organisation. Creates the organisation and nothing else.
+
+    Held by Admin, the Country Director and Impact Assessment
+    (PARTNER_ORGANISATION_CREATE). Until 2026-09-15 an email on the form also
+    minted an active PartnerAdmin login; with IA now able to add
+    organisations that was a way to create an account without user
+    administration. The organisation is saved with its user setup pending and
+    the user administrators are told (Configure Partner Users); a login is
+    created or linked only through `configure_partner_user`.
+    """
     from django.utils import timezone
+
+    from apps.core.rbac import Permission
+
+    _assert_permission(
+        principal,
+        Permission.PARTNER_ORGANISATION_CREATE,
+        "Only an Admin, Country Director or Impact Assessment can add a partner "
+        "organisation.",
+    )
 
     name = (data.get("name") or "").strip()
     if not name:
@@ -205,21 +259,7 @@ def onboard(data: dict, principal) -> dict:
         raise ConflictError(f"A partner organisation named '{name}' already exists.")
 
     email = (data.get("email") or "").strip().lower()
-    partner_user = None
-    if email:
-        from apps.accounts.models import User
-        from apps.core.rbac import EdifyRole
-
-        partner_user = User.objects.filter(email=email, deleted_at__isnull=True).first()
-        if not partner_user:
-            partner_user = User.objects.create(
-                email=email,
-                name=name,
-                roles=[EdifyRole.PARTNER_ADMIN.value],
-                active_role=EdifyRole.PARTNER_ADMIN.value,
-                is_active=True,
-            )
-
+    actor_id = getattr(principal, "user_id", None) or str(getattr(principal, "id", ""))
     p = Partner.objects.create(
         name=name,
         # Inactive until someone activates it (owner, 2026-09-07: "when it has
@@ -240,10 +280,9 @@ def onboard(data: dict, principal) -> dict:
         is_certified=bool(data.get("isCertified")),
         certification_status=data.get("certificationStatus"),
         expertise_areas=_expertise_list(data.get("expertiseAreas", [])),
-        user=partner_user,
-        onboarded_by_user_id=getattr(
-            principal, "user_id", str(getattr(principal, "id", ""))
-        ),
+        user=None,
+        user_setup_status=PartnerUserSetupStatus.PENDING,
+        onboarded_by_user_id=actor_id,
         onboarded_at=timezone.now(),
     )
     from apps.audit.services import log as audit_log
@@ -254,9 +293,183 @@ def onboard(data: dict, principal) -> dict:
         subject_id=p.id,
         actor_id=getattr(principal, "id", None),
         actor_role=getattr(principal, "active_role", None),
-        payload={"name": p.name, "email": p.email, "region": p.region_name},
+        payload={
+            "previous": None,
+            "new": {
+                "name": p.name,
+                "email": p.email,
+                "region": p.region_name,
+                "userSetupStatus": p.user_setup_status,
+            },
+        },
     )
+    transaction.on_commit(lambda: _notify_partner_user_setup(p.id, principal))
     return _serialize(p)
+
+
+def partner_user_administrators(partner: Partner | None = None) -> list:
+    """Who configures a partner's logins: active Admins and Country Directors."""
+    from apps.accounts.models import User
+    from apps.core.rbac import EdifyRole
+
+    return list(
+        User.objects.filter(
+            Q(roles__contains=[EdifyRole.ADMIN.value])
+            | Q(roles__contains=[EdifyRole.COUNTRY_DIRECTOR.value]),
+            is_active=True,
+            deleted_at__isnull=True,
+        )
+    )
+
+
+def _notify_partner_user_setup(partner_id: str, principal) -> None:
+    """Tell the user administrators an organisation waits for its logins.
+
+    Only when someone who cannot set them up added it: an Admin or Country
+    Director who adds an organisation is already the person who would act.
+    """
+    import logging
+
+    try:
+        if may_manage_partner_users(principal):
+            return
+        partner = Partner.objects.filter(id=partner_id).first()
+        if partner is None:
+            return
+        from apps.notifications.services import WorkflowNotificationService
+
+        actor = getattr(principal, "name", "") or "Impact Assessment"
+        WorkflowNotificationService.trigger(
+            event_type="partner_user_setup_required",
+            category="partner",
+            priority="high",
+            title="Configure Partner Users",
+            body=(
+                f"{actor} added the partner organisation {partner.name}. "
+                "Its sign-in accounts have not been set up."
+            ),
+            context_type="partner",
+            context_id=partner.id,
+            recipients=partner_user_administrators(partner),
+        )
+    except Exception:  # noqa: BLE001 - a notification never undoes the save
+        logging.getLogger(__name__).warning(
+            "partner user setup notification failed for %s", partner_id, exc_info=True
+        )
+
+
+@transaction.atomic
+def configure_partner_user(partner_id: str, data: dict, principal) -> dict:
+    """Set up an organisation's login — the user-administration half.
+
+    ``mode`` is one of:
+
+    * ``link`` — link an existing partner account by email;
+    * ``invite`` — create a Partner Admin account through the canonical user
+      service (an invitation, audited as ``admin.user_created``) and link it;
+    * ``not_required`` — record that the organisation needs no login yet.
+
+    Held only by Admin and the Country Director (PARTNER_USER_MANAGE with
+    USER_MANAGE). Every outcome closes the Configure Partner Users condition.
+    """
+    from django.utils import timezone
+
+    from apps.accounts.models import User
+    from apps.core.rbac import EdifyRole
+
+    if not may_manage_partner_users(principal):
+        raise Forbidden("Only a user administrator can set up partner logins.")
+    partner = Partner.objects.select_for_update().filter(id=partner_id).first()
+    if partner is None:
+        raise NotFoundError("Partner organisation not found.")
+    mode = (data.get("mode") or "").strip()
+    previous = {"userId": partner.user_id, "userSetupStatus": partner.user_setup_status}
+    partner_roles = {
+        EdifyRole.PARTNER_ADMIN.value,
+        EdifyRole.PARTNER_FIELD_OFFICER.value,
+    }
+
+    if mode == "not_required":
+        partner.user_setup_status = PartnerUserSetupStatus.NOT_REQUIRED
+    elif mode in ("link", "invite"):
+        email = (data.get("email") or "").strip().lower()
+        if not email:
+            raise BadRequest("Enter the email address of the partner login.")
+        existing = User.objects.filter(email=email, deleted_at__isnull=True).first()
+        if mode == "link":
+            if existing is None:
+                raise BadRequest(
+                    f"No account uses {email}. Choose Invite to create one."
+                )
+            if not partner_roles.intersection(existing.roles or []):
+                raise BadRequest(
+                    f"{existing.name} is not a partner account. Only a Partner "
+                    "Admin or Partner Field Officer login can be linked."
+                )
+            user = existing
+        else:
+            if existing is not None:
+                raise ConflictError(
+                    f"An account already uses {email}. Choose Link instead."
+                )
+            from apps.admin_users.services import create as create_user
+
+            created = create_user(
+                {
+                    "email": email,
+                    "name": (data.get("name") or "").strip()
+                    or partner.contact_person
+                    or partner.name,
+                    "role": EdifyRole.PARTNER_ADMIN.value,
+                },
+                principal,
+            )
+            user = User.objects.get(id=created["user"]["id"])
+        other = (
+            Partner.objects.filter(user=user, deleted_at__isnull=True)
+            .exclude(id=partner.id)
+            .first()
+        )
+        if other is not None:
+            raise ConflictError(f"{user.email} is already the login for {other.name}.")
+        partner.user = user
+        partner.user_setup_status = PartnerUserSetupStatus.CONFIGURED
+    else:
+        raise BadRequest("Choose Link, Invite or No login required.")
+
+    partner.user_setup_updated_by = getattr(principal, "user_id", None) or str(
+        getattr(principal, "id", "")
+    )
+    partner.user_setup_updated_at = timezone.now()
+    partner.save(
+        update_fields=[
+            "user",
+            "user_setup_status",
+            "user_setup_updated_by",
+            "user_setup_updated_at",
+            "updated_at",
+        ]
+    )
+    from apps.audit.services import log as audit_log
+    from apps.notifications.services import resolve_condition
+
+    audit_log(
+        action="partner.user_setup_changed",
+        subject_kind="partner",
+        subject_id=partner.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "mode": mode,
+            "previous": previous,
+            "new": {
+                "userId": partner.user_id,
+                "userSetupStatus": partner.user_setup_status,
+            },
+        },
+    )
+    resolve_condition("partner_user_setup_required", "partner", partner.id)
+    return _serialize(partner)
 
 
 @transaction.atomic
@@ -468,8 +681,26 @@ def update(partner_id: str, data: dict, principal) -> dict:
     # every partner by design; any role holding PARTNER_MANAGE without country
     # scope is restricted to the partner(s) actually in their resolved scope.
     scope = resolve_user_scope(principal)
-    if not scope.country_scope and p.id not in scope.partner_ids:
-        raise Forbidden("You may only update a partner within your scope.")
+    own_login = p.id in (scope.partner_ids or [])
+    if not own_login:
+        from apps.core.rbac import Permission
+
+        # Country reach alone is not authority over the record (2026-09-15):
+        # the Accountant and the RVP read every partner and correct none.
+        _assert_permission(
+            principal,
+            Permission.PARTNER_ORGANISATION_EDIT,
+            "You may only update a partner organisation you are authorised to edit.",
+        )
+        if not scope.country_scope and not getattr(principal, "is_superuser", False):
+            raise Forbidden("You may only update a partner within your scope.")
+    before = {
+        "name": p.name,
+        "contactPerson": p.contact_person,
+        "email": p.email,
+        "phone": p.phone,
+        "regionName": p.region_name,
+    }
     for field_name in (
         "name",
         "region_name",
@@ -490,8 +721,30 @@ def update(partner_id: str, data: dict, principal) -> dict:
     if "isCertified" in data:
         p.is_certified = bool(data["isCertified"])
     if "activeStatus" in data:
+        # Activation is the directory manager's act (set_partner_status), not
+        # a field any editor of the record may flip.
+        _assert_partner_directory_manager(principal)
         p.active_status = bool(data["activeStatus"])
     p.save()
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner.updated",
+        subject_kind="partner",
+        subject_id=p.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "previous": before,
+            "new": {
+                "name": p.name,
+                "contactPerson": p.contact_person,
+                "email": p.email,
+                "phone": p.phone,
+                "regionName": p.region_name,
+            },
+        },
+    )
     return _serialize(p)
 
 
@@ -517,6 +770,9 @@ __all__ = [
     "schedule_activity",
     "eligible",
     "onboard",
+    "configure_partner_user",
+    "may_create_partner_organisation",
+    "may_manage_partner_users",
     "update",
 ]
 

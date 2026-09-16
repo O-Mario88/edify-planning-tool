@@ -104,6 +104,9 @@ IA_SIDEBAR = [
             ("Leave & Personal Time Off", "/personal-time-off/"),
             ("School Directory", "/schools"),
             ("Closed Schools", "/schools/closed"),
+            # Reassigning a district portfolio is Impact Assessment work
+            # (owner, 2026-09-15) and rare: a reference door, not a daily one.
+            ("Ownership Transfers", "/ownership-transfers/"),
         ],
     ),
 ]

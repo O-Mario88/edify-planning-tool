@@ -1,0 +1,122 @@
+{% comment %}
+Team Oversight · Schools & Coverage (owner brief, 2026-09-15).
+
+Three tables for the selected period, in one scope: every school with planned
+work, the schools attached to a cluster training or meeting, and the schools
+with neither, each with the reason. No wall of KPI tiles — one compact
+attention line, then the tables.
+
+The period selector is the page's own (period_filter_bar); the groups below
+follow it: day inside a week, week inside a month, month inside a quarter,
+quarter inside a year.
+{% endcomment %}
+{% load table_pagination %}
+<div class="space-y-4" data-coverage-workspace>
+
+  <p class="edify-note" data-tone="{% if coverage.missing_count %}warning{% else %}success{% endif %}" data-coverage-attention>
+    <strong>{{ planned_totals.schools }}</strong> school{{ planned_totals.schools|pluralize }} with planned work in {{ period_label }} ·
+    <strong>{{ coverage.planned_count }}</strong> with a cluster training or meeting ·
+    <strong data-missing-count>{{ coverage.missing_count }}</strong> with none.
+  </p>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="planned-schools-title">
+    <div class="border-b border-[var(--edify-border)] px-4 py-3 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 id="planned-schools-title" class="text-[15px] font-semibold">Planned Schools · {{ period_label }}</h2>
+      <span class="edify-text-caption text-[var(--edify-text-muted)]">{{ planned_totals.activities }} activit{{ planned_totals.activities|pluralize:"y,ies" }} across {{ planned_totals.schools }} school{{ planned_totals.schools|pluralize }}</span>
+    </div>
+    {% if planned_groups %}
+    {% for group in planned_groups %}
+    <div class="border-b border-[var(--edify-border)] last:border-0">
+      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.count }} activit{{ group.count|pluralize:"y,ies" }}</h3>
+      <div class="overflow-x-auto edify-record-table-wrap">
+        <table class="edify-data-table edify-record-table w-full">
+          <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Funding</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+          <tbody>
+          {% paginate group.rows group.page_param as group_pager %}
+          {% for row in group_pager.rows %}
+          <tr>
+            <td data-label="School" data-record-title>{{ row.school_name }}</td>
+            <td data-label="CCEO owner">{{ row.owner_name }}</td>
+            <td data-label="District">{{ row.district_name|default:"—" }}</td>
+            <td data-label="Cluster">{{ row.cluster_name|default:"—" }}</td>
+            <td data-label="Planned activity">{{ row.activity_label }}</td>
+            <td data-label="Category">{{ row.category }}</td>
+            <td data-label="Planned date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
+            <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
+            <td data-label="Funding">{{ row.funding_status|default:"—" }}</td>
+            <td data-label="Status">{% firstof row.activity_status row.stage "—" %}</td>
+            <td data-label="Action" data-record-action>{% if row.detail_url %}<a href="{{ row.detail_url }}" hx-get="{{ row.detail_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-card__link">Open</a>{% endif %}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=group_pager param=group.page_param pagination_label="Planned schools pages" %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    {% include "components/empty_state.html" with message="No school work is planned in this period for your team." %}
+    {% endif %}
+  </section>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="planned-training-title">
+    <div class="border-b border-[var(--edify-border)] px-4 py-3">
+      <h2 id="planned-training-title" class="text-[15px] font-semibold">Schools with Planned Cluster Training or Meeting</h2>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.planned_count }} school{{ coverage.planned_count|pluralize }} the planning record attaches to a live cluster session between {{ coverage.period_start|date:"j M Y" }} and {{ coverage.period_end|date:"j M Y" }}.{% if coverage.planned_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
+    </div>
+    <div class="overflow-x-auto edify-record-table-wrap">
+      {% paginate coverage.planned_rows "trained_page" as trained_pager %}
+      <table class="edify-data-table edify-record-table w-full">
+        <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Delivery</th><th scope="col">Status</th><th scope="col">Visit status</th><th scope="col">Training plan</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+        {% for row in trained_pager.rows %}
+        <tr>
+          <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
+          <td data-label="CCEO owner">{{ row.owner_name }}</td>
+          <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name|default:"—" }}{% endif %}</td>
+          <td data-label="Activity">{{ row.activity_label|default:"Cluster session" }}</td>
+          <td data-label="Date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
+          <td data-label="Delivery">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
+          <td data-label="Status">{{ row.status|default:"—" }}</td>
+          <td data-label="Visit status"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>
+          <td data-label="Training plan"><span class="edify-badge" data-tone="success">{{ row.training_status }}</span></td>
+          <td data-label="Action" data-record-action>{% if row.cluster_url %}<a href="{{ row.cluster_url }}" class="rpl-card__link">Open cluster</a>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10">{% include "components/empty_state.html" with message="No cluster training or meeting is planned for these schools in the selected period." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=trained_pager param="trained_page" pagination_label="Schools with planned cluster training pages" %}
+    </div>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="no-training-title" data-no-training-table>
+    <div class="border-b border-[var(--edify-border)] px-4 py-3">
+      <h2 id="no-training-title" class="text-[15px] font-semibold">Schools with No Training Planned</h2>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training or meeting in this period. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
+    </div>
+    <div class="overflow-x-auto edify-record-table-wrap">
+      {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}
+      <table class="edify-data-table edify-record-table w-full">
+        <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Reason</th><th scope="col">Visit status</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+        {% for row in untrained_pager.rows %}
+        <tr>
+          <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
+          <td data-label="CCEO owner">{{ row.owner_name }}</td>
+          <td data-label="District">{{ row.district_name|default:"—" }}</td>
+          <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}Not in a cluster{% endif %}</td>
+          <td data-label="Reason">{{ row.reason }}</td>
+          <td data-label="Visit status"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>
+          <td data-label="Action" data-record-action>{% if row.cluster_url %}<a href="{{ row.cluster_url }}" class="rpl-card__link">Plan a cluster session</a>{% else %}<a href="{{ row.school_url }}" class="rpl-card__link">Open school</a>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">{% include "components/empty_state.html" with message="Every active school in your scope has a cluster training or meeting planned in this period." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=untrained_pager param="untrained_page" pagination_label="Schools with no training planned pages" %}
+    </div>
+  </section>
+</div>

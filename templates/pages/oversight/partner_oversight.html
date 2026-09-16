@@ -13,13 +13,22 @@
       <h1 class="edify-page-title edify-page-header__title">Partner Oversight</h1>
       <p class="edify-page-header__description">Move between partner portfolios, see the responsible CCEO and Programme Lead, and manage delivery without duplicating workflow-status tabs.</p>
     </div>
-    {% if can_grant_allowance %}
+    {% if can_grant_allowance or can_create_partner %}
     <div class="edify-page-header__controls">
+      {% if can_create_partner %}
+      <button type="button"
+              hx-get="/partners/create" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="btn btn-primary h-8" data-add-partner-organisation>
+        Add Partner Organisation
+      </button>
+      {% endif %}
+      {% if can_grant_allowance %}
       <button type="button"
               hx-get="/partner-oversight/allowance-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
               class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-3.5 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
         Grant Extra Allowance
       </button>
+      {% endif %}
     </div>
     {% endif %}
   </header>

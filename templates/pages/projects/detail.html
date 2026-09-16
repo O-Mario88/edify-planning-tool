@@ -182,7 +182,7 @@ hx-swap="outerHTML"
 <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between gap-3">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
 <div class="flex items-center gap-2">
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools{% if schools_needing_planning %} &middot; {{ schools_needing_planning }} awaiting planning{% endif %}</span>
 {% if can_add_schools %}
 <button
 type="button"
@@ -200,20 +200,36 @@ class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-h
 
 <div class="overflow-x-auto">
 {% paginate school_assignments "schools_page" as schools_pager %}
+{% comment %}
+The coordinator's project portfolio (owner, 2026-09-15). Adding a school here
+changes nothing about the school itself: its staff owner, district and cluster
+are unchanged, and the visit and training columns are derived from the
+canonical activities rather than stored on the enrolment.
+{% endcomment %}
+{% paginate project_portfolio "portfolio_page" as portfolio_pager %}
 <table class="edify-record-table w-full">
   <caption class="sr-only">Participating schools in {{ project.name }}</caption>
-  <thead><tr><th scope="col">School</th><th scope="col">School ID</th><th scope="col">Action</th></tr></thead>
+  <thead><tr><th scope="col">School</th><th scope="col">Geography</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
   <tbody>
-    {% for sa in schools_pager.rows %}
+    {% for row in portfolio_pager.rows %}
     <tr>
-      <td data-record-title>{% school_identity sa.school.name sa.school.id %}</td>
-      <td>{{ sa.school.school_id|default:"—" }}</td>
-      <td data-record-action><a href="/schools/{{ sa.school_id }}" class="btn btn-secondary">View Profile</a></td>
+      <td data-record-title data-label="School">{% school_identity row.school_name row.school_id %}<span class="edify-text-caption block">{{ row.school_code }}</span></td>
+      <td data-label="Geography">{{ row.geography|default:"—" }}</td>
+      <td data-label="School owner">{{ row.school_owner }}</td>
+      <td data-label="Added by">{{ row.added_by }}</td>
+      <td data-label="Date added">{{ row.date_added|date:"j M Y" }}</td>
+      <td data-label="Eligibility">{{ row.eligibility_reason }}</td>
+      <td data-label="Baseline SSA">{% if row.baseline_score is not None %}{{ row.baseline_score|floatformat:"-1" }}{% if row.baseline_band %} · {{ row.baseline_band }}{% endif %}{% else %}Not captured{% endif %}</td>
+      <td data-label="Planning"{% if row.needs_planning %} class="is-attention"{% endif %}>{{ row.planning_status }}</td>
+      <td data-label="Visit"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>
+      <td data-label="Training">{{ row.training_status }}</td>
+      <td data-label="Partner">{{ row.partner_status }}</td>
+      <td data-record-action data-label="Action"><a href="{{ row.school_url }}" class="btn btn-secondary">View Profile</a></td>
     </tr>
-    {% empty %}<tr><td colspan="3">No schools assigned to this project yet.</td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="12">No schools assigned to this project yet.</td></tr>{% endfor %}
   </tbody>
 </table>
-{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
+{% include "components/table_pager.html" with pager=portfolio_pager param="portfolio_page" %}
 </div>
 </div>
 

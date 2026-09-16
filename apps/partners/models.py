@@ -9,6 +9,20 @@ from django.db.models.functions import Coalesce
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 
 
+class PartnerUserSetupStatus(models.TextChoices):
+    """Whether the organisation's logins have been set up.
+
+    Separate from the organisation record on purpose (owner, 2026-09-15):
+    Impact Assessment may add an organisation, but only a user administrator
+    creates or links the accounts its people sign in with. An organisation
+    starts `pending` and a user administrator moves it on.
+    """
+
+    PENDING = "pending", "User setup pending"
+    NOT_REQUIRED = "not_required", "No login required yet"
+    CONFIGURED = "configured", "Partner login configured"
+
+
 class Partner(SoftDeleteModel):
     """A partner organization (trains/supports schools on Edify's behalf)."""
 
@@ -47,6 +61,13 @@ class Partner(SoftDeleteModel):
         blank=True,
         related_name="partner",
     )
+    user_setup_status = models.CharField(
+        max_length=16,
+        choices=PartnerUserSetupStatus.choices,
+        default=PartnerUserSetupStatus.PENDING,
+    )
+    user_setup_updated_by = models.CharField(max_length=30, null=True, blank=True)
+    user_setup_updated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "partner"

@@ -961,7 +961,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, 'name="existing_cluster_id"')
         self.assertContains(response, self.cceo_user.name)
-        self.assertContains(response, "Automatic from the school owner")
+        # The drawer says whose it is in its own words now: the owner is
+        # still automatic, and still named.
+        self.assertContains(response, "The school's owner.")
         self.assertContains(response, "cluster-assignment-drawer")
         self.assertNotContains(response, "Cluster selected automatically")
         self.assertNotContains(response, "Assignment Notes")
@@ -1163,6 +1165,7 @@ class FrontendViewsTestCase(TestCase):
                 "responsible_staff_id": other_profile.id,
                 "notes": "This must be ignored.",
             },
+            HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
         self.school.refresh_from_db()
@@ -1194,6 +1197,7 @@ class FrontendViewsTestCase(TestCase):
                 "new_district_id": self.district.id,
                 "new_sub_county_ids": [uncovered_sub_county.id],
             },
+            HTTP_HX_REQUEST="true",
         )
 
         self.assertEqual(response.status_code, 200)
@@ -1253,10 +1257,26 @@ class FrontendViewsTestCase(TestCase):
         # Create a project
         from apps.projects.models import Project
 
+        # Somebody has to be able to plan the project's work before it can
+        # take schools (owner, 2026-09-15): the school joins so that the
+        # Project Coordinator plans for it, and a project nobody holds has
+        # nobody to hand it to.
+        coordinator = StaffProfile.objects.create(
+            user=User.objects.create(
+                id="admin-pc-1",
+                email="tech-upgrade-pc@edify.org",
+                name="Tech Upgrade Coordinator",
+                roles=["ProjectCoordinator"],
+                active_role="ProjectCoordinator",
+                is_active=True,
+            ),
+            title="Project Coordinator",
+        )
         project = Project.objects.create(
             name="Edify Tech Upgrade 2026",
             code="ETU26",
             category="intervention_specific",
+            manager_staff_id=coordinator.id,
         )
 
         # GET drawer

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 684,
-  "templates": 259,
-  "distinct_titles": 650,
+  "titled_cards": 691,
+  "templates": 261,
+  "distinct_titles": 657,
   "with_card_key": 13,
-  "untitled_surfaces": 776,
-  "untitled_chrome": 174,
-  "untitled_nested": 250,
-  "untitled_headless": 352,
+  "untitled_surfaces": 769,
+  "untitled_chrome": 173,
+  "untitled_nested": 248,
+  "untitled_headless": 348,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -463,21 +463,21 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 307,
+   "line": 311,
    "title": "Delete ?",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface max-w-md w-full p-6 shadow-lg relative border border-rose-200 space-y-5",
    "branch_path": [
     [
-     22,
+     26,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 345,
+   "line": 349,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
@@ -911,7 +911,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 108,
+   "line": 114,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -920,7 +920,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 131,
+   "line": 164,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 256,
+   "line": 268,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 291,
+   "line": 303,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 314,
+   "line": 326,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -1015,7 +1015,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 120,
+   "line": 130,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2472,7 +2472,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 42,
+   "line": 46,
    "title": "Organisation &amp; Contact",
    "heading_level": 3,
    "has_card_key": false,
@@ -2481,7 +2481,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 58,
+   "line": 62,
    "title": "Schools supported",
    "heading_level": 3,
    "has_card_key": false,
@@ -2490,7 +2490,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 102,
+   "line": 106,
    "title": "Activity history",
    "heading_level": 3,
    "has_card_key": false,
@@ -2499,7 +2499,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 152,
+   "line": 156,
    "title": "Activities",
    "heading_level": 3,
    "has_card_key": false,
@@ -2508,7 +2508,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 174,
+   "line": 178,
    "title": "Staff and volunteers",
    "heading_level": 3,
    "has_card_key": false,
@@ -2552,6 +2552,29 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/planning/fiscal_years.html",
+   "line": 26,
+   "title": "Fiscal years",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/planning/fiscal_years.html",
+   "line": 64,
+   "title": "Open FY for planning",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 space-y-3",
+   "branch_path": [
+    [
+     7,
+     0
+    ]
+   ]
+  },
+  {
    "template": "templates/pages/planning/index.html",
    "line": 279,
    "title": "Schedule Recommended Activities",
@@ -2571,7 +2594,7 @@
   },
   {
    "template": "templates/pages/planning/schedule.html",
-   "line": 209,
+   "line": 234,
    "title": "Live Costing Breakdown",
    "heading_level": 3,
    "has_card_key": false,
@@ -2672,7 +2695,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 84,
+   "line": 31,
    "title": "Delivery overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2681,7 +2704,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 174,
+   "line": 121,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2690,7 +2713,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 220,
+   "line": 162,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2699,7 +2722,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 239,
+   "line": 181,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -2823,7 +2846,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 106,
+   "line": 128,
    "title": "School Demographics &amp; Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2832,7 +2855,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 196,
+   "line": 244,
    "title": "SSA change between confirmed assessments",
    "heading_level": 3,
    "has_card_key": false,
@@ -2841,7 +2864,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 203,
+   "line": 251,
    "title": "FY vs FY",
    "heading_level": 4,
    "has_card_key": false,
@@ -2850,21 +2873,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 227,
+   "line": 275,
    "title": "School Visit Feedback",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     15,
+     28,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 264,
+   "line": 312,
    "title": "Recent Field Work",
    "heading_level": 3,
    "has_card_key": false,
@@ -2873,21 +2896,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 314,
+   "line": 362,
    "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     22,
+     35,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 352,
+   "line": 400,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2896,7 +2919,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 392,
+   "line": 440,
    "title": "Current confirmed SSA",
    "heading_level": 3,
    "has_card_key": false,
@@ -2905,42 +2928,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 423,
+   "line": 471,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     36,
+     49,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 445,
+   "line": 493,
    "title": "SSA history",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     39,
+     52,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 465,
+   "line": 513,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     42,
+     55,
      0
     ]
    ]
@@ -2979,6 +3002,43 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/schools/ownership_transfers.html",
+   "line": 29,
+   "title": "Target Reconciliation Required",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/schools/ownership_transfers.html",
+   "line": 65,
+   "title": "Reassign District Portfolio Owner",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 space-y-3",
+   "branch_path": [
+    [
+     3,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/schools/ownership_transfers.html",
+   "line": 121,
+   "title": "Transfer history",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": []
   },
   {
@@ -6494,6 +6554,33 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/oversight/coverage_workspace.html",
+   "line": 22,
+   "title": "Planned Schools \u00b7",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/oversight/coverage_workspace.html",
+   "line": 62,
+   "title": "Schools with Planned Cluster Training or Meeting",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/oversight/coverage_workspace.html",
+   "line": 94,
+   "title": "Schools with No Training Planned",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/oversight/flagged_schools.html",
    "line": 21,
    "title": "Flagged schools",
@@ -6531,15 +6618,6 @@
    ]
   },
   {
-   "template": "templates/partials/partners/create_partner_drawer.html",
-   "line": 3,
-   "title": "Onboard New Partner",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/planning/schedule_cluster_drawer.html",
    "line": 49,
    "title": "Cluster need \u00b7 of schools assessed",
@@ -6555,7 +6633,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 149,
+   "line": 151,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
@@ -7001,7 +7079,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 73,
+   "line": 74,
    "title": "Plan Breakdown by Period",
    "heading_level": 2,
    "has_card_key": false,
@@ -7015,7 +7093,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 85,
+   "line": 86,
    "title": "Upcoming Today",
    "heading_level": 2,
    "has_card_key": false,
@@ -7029,7 +7107,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 94,
+   "line": 95,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -7043,7 +7121,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 101,
+   "line": 102,
    "title": "Budget &amp; Workflow Status",
    "heading_level": 2,
    "has_card_key": false,
@@ -7080,7 +7158,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 123,
+   "line": 105,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7094,7 +7172,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 132,
+   "line": 114,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7108,7 +7186,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 149,
+   "line": 131,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7122,7 +7200,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 153,
+   "line": 135,
    "title": "Project Delivery Readiness",
    "heading_level": 2,
    "has_card_key": false,
@@ -7145,20 +7223,20 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 9,
+   "line": 19,
    "title": "School",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface flex items-start gap-2 rounded-surface border border-rose-200 p-3.5 text-[12px] font-bold text-rose-700",
+   "classes": "rounded-surface border border-[var(--border-card)] p-4",
    "branch_path": []
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 120,
-   "title": "Responsible Field Staff",
+   "line": 124,
+   "title": "Responsible field staff",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 p-4",
+   "classes": "rounded-surface border border-[var(--border-card)] p-4",
    "branch_path": []
   },
   {

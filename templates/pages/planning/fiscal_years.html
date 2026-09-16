@@ -1,0 +1,79 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Fiscal Year Planning — Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Owner, 2026-09-15. One page for the governed fiscal-year policy: when a year
+opens for planning, the window its work is delivered in, and whether a school
+visit follow-up needs a prior training. Everything is set through
+apps.planning.fy_policy and audited.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-fy-planning-page>
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Planning cycle</p>
+<h1 class="edify-page-title edify-page-header__title">Fiscal Year Planning</h1>
+<p class="edify-page-header__description">FY{{ operational_fy }} is the operational year. A later year can be planned once it is opened; its work starts on its first day.</p>
+</div>
+</div>
+
+{% if messages %}
+<div class="space-y-2">{% for msg in messages %}<p class="edify-note" data-tone="{% if msg.tags == 'success' %}success{% else %}danger{% endif %}">{{ msg }}</p>{% endfor %}</div>
+{% endif %}
+
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="fy-policy-title">
+  <div class="border-b border-[var(--edify-border)] px-4 py-3">
+    <h2 id="fy-policy-title" class="text-[15px] font-semibold">Fiscal years</h2>
+  </div>
+  <div class="overflow-x-auto edify-record-table-wrap">
+    <table class="edify-data-table edify-record-table w-full">
+      <thead><tr><th scope="col">Fiscal year</th><th scope="col">State</th><th scope="col">Planning opens</th><th scope="col">Delivery window</th><th scope="col">Follow-up needs a prior training</th></tr></thead>
+      <tbody>
+      {% for policy in policies %}
+      <tr>
+        <td data-label="Fiscal year"><strong>FY{{ policy.fy }}</strong></td>
+        <td data-label="State"><span class="edify-badge" data-tone="{% if policy.window_state == 'Open for planning' or policy.window_state == 'Operational' %}success{% elif policy.window_state == 'Not open' %}warning{% else %}neutral{% endif %}">{{ policy.window_state }}</span></td>
+        <td data-label="Planning opens">{{ policy.planning_open_at|date:"j M Y"|default:"—" }}</td>
+        <td data-label="Delivery window">{{ policy.execution_start|date:"j M Y" }} – {{ policy.execution_end|date:"j M Y" }}</td>
+        <td data-label="Follow-up needs a prior training">
+          {% if policy.follow_up_visit_requires_prior_training %}Yes{% else %}No{% endif %}
+          {% if can_manage %}
+          <form method="post" action="/planning/fiscal-years" class="mt-2 flex flex-wrap items-center gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="follow_up_rule">
+            <input type="hidden" name="fy" value="{{ policy.fy }}">
+            <input type="hidden" name="follow_up_requires_training" value="{% if policy.follow_up_visit_requires_prior_training %}no{% else %}yes{% endif %}">
+            <label class="sr-only" for="reason-{{ policy.fy }}">Reason</label>
+            <input id="reason-{{ policy.fy }}" type="text" name="reason" required placeholder="Reason for the change" class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[12px]">
+            <button type="submit" class="btn btn-secondary h-8">{% if policy.follow_up_visit_requires_prior_training %}Allow without training{% else %}Require a training{% endif %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No fiscal year has a planning policy yet. The operational year and earlier years remain plannable.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if can_manage and not next_fy_open %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 space-y-3" aria-labelledby="open-fy-title">
+  <h2 id="open-fy-title" class="text-[15px] font-semibold">Open FY{{ next_fy }} for planning</h2>
+  <p class="edify-text-caption text-[var(--edify-text-muted)]">Staff can plan, schedule and budget FY{{ next_fy }} work for dates from its first day while FY{{ operational_fy }} is still being closed. Prepare the FY{{ next_fy }} rate card in Cost Settings so the work can be costed.</p>
+  <form method="post" action="/planning/fiscal-years" class="grid gap-3 sm:grid-cols-3">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="open">
+    <input type="hidden" name="fy" value="{{ next_fy }}">
+    <div><label for="open-at" class="edify-filter-label">Planning opens</label><input id="open-at" type="datetime-local" name="planning_open_at" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]"></div>
+    <div><label for="follow-up-rule" class="edify-filter-label">Follow-up needs a prior training</label><select id="follow-up-rule" name="follow_up_requires_training" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]"><option value="no">No</option><option value="yes">Yes</option></select></div>
+    <div><label for="open-notes" class="edify-filter-label">Note</label><input id="open-notes" type="text" name="notes" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]"></div>
+    <div class="sm:col-span-3"><button type="submit" class="btn btn-primary h-8">Open FY{{ next_fy }}</button></div>
+  </form>
+</section>
+{% endif %}
+</div>
+{% endblock %}

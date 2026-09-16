@@ -51,7 +51,18 @@ class TableBoundsTest(SimpleTestCase):
     #: at WAITING_LIMIT (8) in apps.frontend.views.today_views, and the card's
     #: header discloses the whole queue ("View all N") — bounded in Python,
     #: and the reader is told there is more.
-    UNBOUNDED_CEILING = 82
+    #:
+    #: 83 rather than 82 for the fiscal-year table on FY Planning Policy
+    #: (pages/planning/fiscal_years.html, owner 2026-09-15): `policies` is one
+    #: row per fiscal year the platform has ever governed — three today, and
+    #: one more each October. A pager over a list that grows once a year would
+    #: be furniture, and the page exists precisely to see the years side by
+    #: side.
+    #:
+    #: The three tables on Team Oversight · Schools & Coverage and the two on
+    #: Ownership Transfers are NOT exempt and are paginated: "Schools with No
+    #: Training Planned" is 694 rows in the country lens on the day it shipped.
+    UNBOUNDED_CEILING = 83
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

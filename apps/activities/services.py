@@ -1597,6 +1597,12 @@ def create(
         if scheduled_date
         else data.get("quarter", get_quarter_for_date())
     )
+    if scheduled_date:
+        # A date is plannable only in an open fiscal year (owner, 2026-09-15:
+        # FY2027 is planned from September 2026, FY2028 is not yet open).
+        from apps.planning.fy_policy import assert_date_plannable
+
+        assert_date_plannable(scheduled_date)
 
     is_ssa_activity = bool(
         activity_type
@@ -1871,6 +1877,11 @@ def create(
     responsible_staff_id = data.get("responsibleStaffId") or (
         None if is_partner else principal_owner_id
     )
+    if responsible_staff_id:
+        # One staff identity per person. A cluster's owner is stored as a User
+        # id by some paths, and a meeting planned from that cluster inherited
+        # it; the StaffProfile id is what budgets and oversight key on.
+        responsible_staff_id = _canonical_staff_identity(responsible_staff_id)
     if approval_owner_id and not is_partner:
         # The requester is the one going. The drawer derives the responsible
         # person from the school's owner, which is right for the owner's own
@@ -1941,7 +1952,14 @@ def create(
         )
     )
     if is_school_training_follow_up and not data.get("sourceActivityId"):
-        raise BadRequest("Select the completed training this visit follows up.")
+        # Governed per country and fiscal year (owner, 2026-09-15): Uganda
+        # plans school visit follow-ups without a prior training. Every other
+        # safeguard below — scope, operating school, duplicates, calendar,
+        # leave, catalogue, evidence, costing — still applies.
+        from apps.planning.fy_policy import follow_up_requires_prior_training
+
+        if follow_up_requires_prior_training(fy):
+            raise BadRequest("Select the completed training this visit follows up.")
     governed_recommendation_reason = data.get("recommendationReason", "")
     governed_recommendation_source = {}
     # Owner, 2026-09-13: every school activity plan is SSA informed. The need
@@ -2591,6 +2609,7 @@ def create(
                 "catalogue_version": activity.catalogue_version,
                 "school_id": activity.school_id,
                 "cluster_id": activity.cluster_id,
+                "project_id": activity.project_id,
                 "fy": activity.fy,
                 "planned_date": (
                     activity.planned_date.isoformat() if activity.planned_date else None
@@ -2606,10 +2625,77 @@ def create(
         from apps.planning.visit_requests import notify_requested
 
         notify_requested(activity, principal)
+    elif activity.scheduled_date:
+        _notify_scheduled_owner(activity, principal)
     if is_certified_agency_booking:
         _notify_certified_agency_booking(activity, certified_agency, principal)
     _ensure_partner_handover(activity, data)
     return _serialize(activity)
+
+
+def _notify_scheduled_owner(activity: Activity, principal) -> None:
+    """Tell the person whose plan a scheduled meeting or visit landed in.
+
+    Owner, 2026-09-15: a cluster meeting must be found in its owner's My Plan,
+    and a scheduled school visit is information for the person responsible.
+    Nobody is told about their own scheduling. A cluster meeting's arrival in
+    a My Plan is also recorded on the audit chain, with the week it sits in.
+    """
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, VISIT_TYPES
+
+    try:
+        if activity.activity_type in CLUSTER_MEETING_TYPES:
+            event = "cluster_meeting_scheduled"
+            where = activity.cluster.name if activity.cluster_id else "the cluster"
+            title = "Cluster meeting in your My Plan"
+        elif activity.activity_type in VISIT_TYPES and activity.school_id:
+            event = "school_visit_scheduled"
+            where = activity.school.name
+            title = "School visit scheduled"
+        else:
+            return
+        day = activity.planned_date or activity.scheduled_date.date()
+        if event == "cluster_meeting_scheduled":
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="activity.cluster_meeting_added_to_my_plan",
+                subject_kind="Activity",
+                subject_id=activity.id,
+                actor_id=getattr(principal, "user_id", None) or "system",
+                actor_role=getattr(principal, "active_role", ""),
+                payload={
+                    "owner": activity.responsible_staff_id,
+                    "monitoredBy": activity.monitored_by_staff_id,
+                    "partner": activity.assigned_partner_id,
+                    "fy": activity.fy,
+                    "plannedDate": day.isoformat(),
+                    "myPlanWeek": min(5, (day.day - 1) // 7 + 1),
+                },
+            )
+        owner = activity.responsible_staff_id or activity.monitored_by_staff_id
+        actor_ids = {
+            getattr(principal, "user_id", None),
+            getattr(principal, "staff_profile_id", None),
+        }
+        if not owner or owner in actor_ids:
+            return
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event,
+            category="planning",
+            priority="normal",
+            title=title,
+            body=f"{where} on {day:%-d %b %Y}.",
+            context_type="activity",
+            context_id=str(activity.id),
+            recipients=[owner],
+        )
+    except Exception:  # noqa: BLE001 - a notice never undoes scheduling
+        logging.getLogger(__name__).warning(
+            "scheduled-owner notification failed for %s", activity.id, exc_info=True
+        )
 
 
 def _ensure_partner_handover(activity: Activity, data: dict) -> None:
@@ -2764,6 +2850,11 @@ def start_completion(
     a = _get_for_execution(activity_id, principal)
     if a.status not in STARTABLE_STATUSES:
         raise BadRequest("Activity must be scheduled before completion can start.")
+    # Planning next year is open; delivering it is not, until its fiscal year
+    # starts (owner, 2026-09-15).
+    from apps.planning.fy_policy import assert_may_execute
+
+    assert_may_execute(a)
     a.status = "completion_started"
     # First Start wins — a resumed activity keeps its original start moment.
     update_fields = ["status", "updated_at"]
@@ -3810,6 +3901,12 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     _assert_not_awaiting_owner(a)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
+    from apps.planning.fy_policy import assert_date_plannable, assert_same_fiscal_year
+
+    assert_date_plannable(new_date)
+    # A reschedule never silently carries FY2026 work into FY2027 (owner,
+    # 2026-09-15): the budget line, fund request and target credit are FY's.
+    assert_same_fiscal_year(old_date, new_date)
 
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
@@ -4106,6 +4203,9 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 raise Forbidden("Assignment outside your scope.")
 
         scheduled_date = _parse_date(data["scheduledDate"])
+        from apps.planning.fy_policy import assert_date_plannable
+
+        assert_date_plannable(scheduled_date)
         delivery_contact_name = str(
             data.get("deliveryContactName") or getattr(principal, "name", "") or ""
         ).strip()
@@ -4457,6 +4557,9 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         a = _get_in_scope(activity_id, principal)
         _assert_may_schedule(a, principal)
         new_date = _parse_date(data["scheduledDate"])
+        from apps.planning.fy_policy import assert_date_plannable
+
+        assert_date_plannable(new_date)
 
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)

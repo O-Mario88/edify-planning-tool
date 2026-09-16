@@ -374,7 +374,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 >
 <option value="">-- Choose Staff --</option>
 {% for p in staff_profiles %}
-<option value="{{ p.id }}" {% if selected_cluster.responsible_staff_id == p.id %}selected{% elif not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+<option value="{{ p.id }}" {% if selected_cluster.responsible_staff_id == p.id or selected_cluster.responsible_staff_id == p.user_id %}selected{% elif not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}selected{% endif %}>{{ p.user.name }}</option>
 {% endfor %}
 </select>
 {% else %}
@@ -384,7 +384,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 disabled
 >
 {% for p in staff_profiles %}
-{% if selected_cluster.responsible_staff_id == p.id or not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}
+{% if selected_cluster.responsible_staff_id == p.id or selected_cluster.responsible_staff_id == p.user_id or not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}
 <option selected>{{ p.user.name }}</option>
 {% endif %}
 {% endfor %}

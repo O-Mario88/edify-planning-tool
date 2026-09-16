@@ -212,6 +212,46 @@ class ProjectSchoolAssignment(TimeStampedModel):
         ]
 
 
+class ProjectSchoolEnrollmentHistory(TimeStampedModel):
+    """A school's finished spell in a project (owner, 2026-09-15).
+
+    ``ProjectSchoolAssignment`` is the current cohort every count reads, so a
+    removal takes that row. This is what it recorded: when the school joined,
+    who added it, the baseline it was measured from and how much the project
+    delivered there. Activities keep their ``project_id``, so the work itself
+    is never erased — this is the enrolment's own history beside it.
+    """
+
+    id = CuidField()
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="school_enrollment_history"
+    )
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.CASCADE,
+        related_name="project_enrollment_history",
+    )
+    joined_at = models.DateTimeField(null=True, blank=True)
+    removed_at = models.DateTimeField()
+    added_by = models.CharField(max_length=30, blank=True, default="")
+    removed_by = models.CharField(max_length=30, blank=True, default="")
+    removal_reason = models.TextField(blank=True, default="")
+    matched_intervention = models.CharField(max_length=64, blank=True, default="")
+    assignment_reason = models.TextField(blank=True, default="")
+    baseline_score = models.FloatField(null=True, blank=True)
+    baseline_band = models.CharField(max_length=16, blank=True, default="")
+    activities_delivered = models.PositiveIntegerField(default=0)
+    snapshot = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "project_school_enrollment_history"
+        ordering = ["-removed_at"]
+        indexes = [models.Index(fields=["project", "-removed_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.school_id} left {self.project_id}"
+
+
 class ProjectStaffAssignment(TimeStampedModel):
     """A Project assigned as an operational priority to one staff member."""
 

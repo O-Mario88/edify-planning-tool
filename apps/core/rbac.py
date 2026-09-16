@@ -93,11 +93,21 @@ class Permission(str, Enum):
     CLUSTER_VIEW = "cluster.view"
     CLUSTER_ASSIGN = "cluster.assign"
     CLUSTER_OVERRIDE = "cluster.override"  # create a 2nd cluster in a sub-county
+    # Approve or end the neighbouring districts a cluster serves (owner,
+    # 2026-09-15). Narrow on purpose: it edits no district, sub-county or
+    # school geography — only which districts' schools may join one cluster.
+    # Held where CLUSTER_OVERRIDE is (Country Director, Admin); not by IA,
+    # which the brief refused unrestricted geography authority.
+    CLUSTER_CATCHMENT_MANAGE = "cluster.catchmentManage"
     PLANNING_RECALC = "planning.recalc"
     SSA_VIEW = "ssa.view"
     SSA_UPLOAD = "ssa.upload"
     PLANNING_VIEW = "planning.view"
     PLANNING_CREATE = "planning.create"
+    # The per-country, per-fiscal-year planning policy (owner, 2026-09-15):
+    # when a year opens for planning and whether a school visit follow-up
+    # needs a prior training. Country Director and Admin.
+    PLANNING_POLICY_MANAGE = "planningPolicy.manage"
     # §5 — the Work Plan "Add Non-School Activity" entry point: dated
     # programme activities (conferences, camps, exhibitions) created outside
     # school/cluster planning but through the same canonical funnel.
@@ -149,11 +159,27 @@ class Permission(str, Enum):
     STRATEGIC_RESERVE_APPROVE = "strategicReserve.approve"
     COST_AMENDMENT_REQUEST = "costAmendment.request"
     COST_AMENDMENT_APPROVE = "costAmendment.approve"
+    # Moving a school, or a district's schools, from one staff member to
+    # another (owner, 2026-09-15). Held by Admin and Impact Assessment alone:
+    # a Programme Lead supervises a portfolio, which is not the same as
+    # deciding who holds it. OPEN_ACTIVITY_TRANSFER is separate because
+    # carrying live work across with the school is a further decision.
+    SCHOOL_OWNERSHIP_TRANSFER = "school.ownershipTransfer"
+    DISTRICT_PORTFOLIO_TRANSFER = "district.portfolioTransfer"
+    OPEN_ACTIVITY_TRANSFER = "activity.ownershipTransfer"
     STAFF_MANAGE = "staff.manage"
     # Provision + onboard user accounts. Held by the people/onboarding roles.
     USER_MANAGE = "user.manage"
     PARTNER_VIEW = "partner.view"
     PARTNER_MANAGE = "partner.manage"
+    # The partner ORGANISATION record and the partner's LOGINS are separate
+    # authorities (owner, 2026-09-15). Impact Assessment may add and correct an
+    # organisation; it may never create, invite or link the accounts people
+    # sign in with — that is user administration, held by Admin and the
+    # Country Director. Creating an organisation creates no account.
+    PARTNER_ORGANISATION_CREATE = "partnerOrganisation.create"
+    PARTNER_ORGANISATION_EDIT = "partnerOrganisation.edit"
+    PARTNER_USER_MANAGE = "partnerUser.manage"
     # Take work back from a partner. Coarse: it says the role does withdrawals
     # at all. WHICH assignment is a scope question, answered per record by
     # partners.withdrawal_service.assert_may_withdraw — a CCEO holds this and
@@ -382,6 +408,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.CLUSTER_VIEW,
         P.CLUSTER_ASSIGN,
         P.CLUSTER_OVERRIDE,
+        P.CLUSTER_CATCHMENT_MANAGE,
+        P.PLANNING_POLICY_MANAGE,
         P.PLANNING_RECALC,
         P.SSA_VIEW,
         P.PLANNING_VIEW,
@@ -415,6 +443,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STAFF_PERFORMANCE_VIEW,
         P.PARTNER_VIEW,
         P.PARTNER_MANAGE,
+        P.PARTNER_ORGANISATION_CREATE,
+        P.PARTNER_ORGANISATION_EDIT,
+        # The CD already holds USER_MANAGE; partner logins are part of it.
+        P.PARTNER_USER_MANAGE,
         # Review escalated partner cases and hold a partner from new work. NOT
         # PARTNER_ASSIGNMENT_WITHDRAW: routine team withdrawals belong to the
         # Program Lead, and a CD reaching past them into one school's
@@ -636,6 +668,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_UPLOAD,
         P.SCHOOL_RESOLVE_DUPLICATE,
+        # Portfolio ownership is registry data IA administers (owner,
+        # 2026-09-15); it plans none of the work that moves with it.
+        P.SCHOOL_OWNERSHIP_TRANSFER,
+        P.DISTRICT_PORTFOLIO_TRANSFER,
+        P.OPEN_ACTIVITY_TRANSFER,
         P.CLUSTER_VIEW,
         # PLANNING_RECALC, RECRUITMENT_INTELLIGENCE_VIEW and LEADERSHIP_ENGINE_VIEW
         # left this block in the IA review (2026-09-13). None is part of the
@@ -658,6 +695,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ANALYTICS_VIEW,
         P.EXPORT,
         P.PARTNER_VIEW,
+        # IA adds and corrects partner organisations (owner, 2026-09-15). Not
+        # PARTNER_USER_MANAGE, USER_MANAGE or PARTNER_MANAGE: an organisation
+        # IA creates waits for an administrator to set up its logins.
+        P.PARTNER_ORGANISATION_CREATE,
+        P.PARTNER_ORGANISATION_EDIT,
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,

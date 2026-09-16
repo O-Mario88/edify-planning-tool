@@ -94,8 +94,15 @@ class BulkAssignmentTests(TestCase):
 
     def test_add_to_cluster_drawer_lists_the_owners_clusters_only(self):
         """Owner, 2026-09-15: the drawer lists the clusters belonging to the
-        school's owner. One in another district is listed but cannot be
-        chosen; an unowned cluster is not listed."""
+        school's owner. One that does not serve the school's district is
+        listed but cannot be chosen; an unowned cluster is not listed.
+
+        What may be chosen is no longer "same district" but the cluster's
+        governed catchment: its own district always, and any neighbouring
+        district a Country Director has approved it to serve. A cluster with
+        no approved catchment covering this school is refused with the reason,
+        not silently dropped from the list.
+        """
         Cluster.objects.filter(id=self.cluster.id).update(
             responsible_staff_id=self.staff_profile.id
         )
@@ -117,17 +124,16 @@ class BulkAssignmentTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-        listed = {
-            c.id: c.in_school_district for c in response.context["owner_clusters"]
-        }
+        listed = {c.id: c.serves_school for c in response.context["owner_clusters"]}
         self.assertEqual(listed, {self.cluster.id: True, far.id: False})
         self.assertNotContains(response, unowned.name)
 
         refused = self.client.post(
             f"/schools/{self.school_other.id}/add-to-cluster",
             {"cluster_action_type": "existing", "existing_cluster_id": far.id},
+            HTTP_HX_REQUEST="true",
         )
-        self.assertContains(refused, "own district")
+        self.assertContains(refused, "does not serve")
         self.school_other.refresh_from_db()
         self.assertIsNone(self.school_other.cluster_id)
 
@@ -142,6 +148,7 @@ class BulkAssignmentTests(TestCase):
                 "new_sub_county_ids": ["sc-2"],
                 "notes": "Grouping Mukono sub-counties.",
             },
+            HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
 
@@ -269,8 +276,12 @@ class BulkAssignmentTests(TestCase):
         self.assertEqual(response.context["preselected_cluster_id"], self.cluster.id)
 
     def test_add_to_cluster_drawer_preselects_per_school(self):
-        """Only a school in a sub-county the owner's cluster covers opens with
-        it selected; the other chooses from the same list."""
+        """Only the cluster covering the school's sub-county opens selected.
+
+        Every other school chooses from the same list with nothing selected,
+        including one whose owner has a single cluster serving it: a choice
+        made for the planner is the automatic routing this drawer removed.
+        """
         StaffSchoolAssignment.objects.create(
             staff=self.staff_profile, school_id=self.school.id
         )
@@ -299,6 +310,7 @@ class BulkAssignmentTests(TestCase):
         response = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
             {"cluster_action_type": "existing", "existing_cluster_id": self.cluster.id},
+            HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
         self.school.refresh_from_db()

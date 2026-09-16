@@ -369,7 +369,7 @@ class School(SoftDeleteModel):
                 elif (
                     current_cluster
                     and not derived_membership
-                    and current_cluster.district_id == self.district_id
+                    and _cluster_serves(current_cluster, self.district_id)
                 ):
                     # Nothing covers this sub-county, and this membership is
                     # not one the lookup could have produced — a person put the
@@ -428,6 +428,22 @@ class School(SoftDeleteModel):
                     cluster_id=self.cluster_id,
                     defaults={"assigned_by": "system_reassign"},
                 )
+            # The membership history follows a membership the geography
+            # re-derived, exactly as it follows one a person set.
+            from apps.clusters.membership_history import sync_membership_history
+
+            sync_membership_history(
+                self,
+                actor_id="system_reassign",
+                reason=("Cluster derived from the school's district and sub-county."),
+            )
+
+
+def _cluster_serves(cluster, district_id) -> bool:
+    """Whether a cluster's catchment includes a district (own or approved)."""
+    from apps.clusters.catchment import serving_match
+
+    return serving_match(cluster, district_id) is not None
 
 
 def dq_condition_key(school_id, issue_type: str) -> str:
@@ -981,6 +997,16 @@ from apps.schools.lifecycle_models import (  # noqa: E402,F401
     ClosureReason,
     ClosureType,
     SchoolClosure,
+)
+
+# Portfolio ownership history — its own module for the same reason closure has
+# one: a different kind of fact from the school record, re-exported here so
+# Django's app loading discovers it.
+from apps.schools.ownership_models import (  # noqa: E402,F401
+    DistrictPortfolioTransfer,
+    OpenActivityDecision,
+    SchoolOwnershipTransfer,
+    TargetReconciliation,
 )
 
 

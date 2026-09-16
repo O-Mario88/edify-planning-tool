@@ -3876,6 +3876,12 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     # ── IA review · IA-R ──
     "apps.impact.report_todos:report_todos",
     # ── end IA-R ──
+    # ── Owner brief 2026-09-15 ──
+    "apps.partners.user_setup_todos:partner_user_setup_todos",
+    "apps.planning.fy_todos:fy_planning_todos",
+    "apps.planning.coverage_todos:missing_training_todos",
+    "apps.projects.portfolio_todos:project_school_planning_todos",
+    # ── end brief 2026-09-15 ──
 )
 
 

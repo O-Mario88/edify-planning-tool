@@ -723,6 +723,10 @@ def cost_settings_view(request):
         "linkable_activities": governed_activities,
         "fy": fy,
         "can_initialize": request.user.active_role == "CountryDirector",
+        # Next year's card starts from this year's rates (2026-09-15).
+        "carry_forward_source": (
+            None if active_catalogue else get_active_cost_catalogue(str(int(fy) - 1))
+        ),
         "can_manage_rates": request.user.active_role == "CountryDirector",
         "can_view_reference": can_view_reference,
         "reference_catalogue": reference_catalogue,
@@ -778,7 +782,7 @@ def fund_allocation_view(request):
 
     # 1. Parse filter inputs & parameters
     month_name = request.GET.get("month", "April").strip()
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
     region_id = request.GET.get("region", "").strip()
     district_id = request.GET.get("district", "").strip()
     search_q = request.GET.get("q", "").strip()
@@ -961,7 +965,7 @@ def admin_budget_drilldown_view(request):
     from apps.budget.admin_budget_service import AdminBudgetAllocationService
 
     month_name = request.GET.get("month", "April").strip()
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
 
     MONTH_MAP = {
         "january": 1,
@@ -996,7 +1000,7 @@ def allocation_drilldown_view(request):
     staff_id = request.GET.get("staff_id", "").strip()
     category = request.GET.get("category", "").strip()
     month_name = request.GET.get("month", "April").strip()
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
 
     MONTH_MAP = {
         "january": 1,
@@ -1078,7 +1082,7 @@ def allocation_drilldown_view(request):
 def export_drawer_view(request):
     """GET to render the CSV export settings floating drawer."""
     month_name = request.GET.get("month", "April").strip()
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
 
     context = {
         "selected_month": month_name,
@@ -1253,8 +1257,14 @@ def initialize_default_catalogue_view(request):
     if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
 
-    fy = get_operational_fy()
-    active = CostCatalogue.objects.filter(fy=fy, is_active=True).first()
+    # The fiscal year on the page, not always the operational one: the page
+    # lets the CD look at next year, and initialising from there used to
+    # initialise this year instead (2026-09-15).
+    requested = (request.POST.get("fy") or "").strip()
+    fy = requested if requested.isdigit() else get_operational_fy()
+    active = CostCatalogue.objects.filter(
+        fy=fy, is_active=True, kind="operational"
+    ).first()
     if not active:
         active = CostCatalogue.objects.create(
             country="Uganda",
@@ -1265,7 +1275,35 @@ def initialize_default_catalogue_view(request):
         )
     ensure_cost_reference(active)
 
-    return redirect("/dashboard")
+    return redirect(f"/cost-settings?fy={fy}")
+
+
+@require_page_permission("cost_settings")
+def carry_forward_rate_card_view(request):
+    """Prepare a fiscal year's rate card from the year before (CD only)."""
+    from django.contrib import messages
+    from django.shortcuts import redirect
+
+    from apps.budget.governance_service import carry_forward_rate_card
+    from apps.core.exceptions import BadRequest, Forbidden
+
+    if request.method != "POST":
+        return redirect("/cost-settings")
+    fy = (request.POST.get("fy") or "").strip()
+    try:
+        card = carry_forward_rate_card(
+            request.user, fy, note=(request.POST.get("note") or "").strip()
+        )
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+        return redirect(f"/cost-settings?fy={fy}")
+    messages.success(
+        request,
+        f"FY{card.fy} rate card prepared from FY{int(card.fy) - 1} "
+        f"({card.rates.count()} rates). It is marked provisional until you revise "
+        "or confirm the rates.",
+    )
+    return redirect(f"/cost-settings?fy={card.fy}")
 
 
 def _country_budget_filters(request):

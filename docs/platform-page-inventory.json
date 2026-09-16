@@ -709,7 +709,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75584,
+      "bytes": 74087,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -1327,7 +1327,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6948,
+      "bytes": 6928,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2164,7 +2164,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21449,
+      "bytes": 18284,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2656,10 +2656,9 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
+        "keyboard focus visibility"
       ],
-      "bytes": 8085,
+      "bytes": 7172,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2686,7 +2685,66 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24913,
+      "bytes": 3597,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/catchment-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Catchment Drawer",
+      "purpose": "Reusable catchment drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/catchment_drawer.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 1581,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Catchment End Drawer",
+      "purpose": "Reusable catchment end drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/catchment_end_drawer.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 23630,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2785,14 +2843,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7734,
+      "bytes": 6807,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 5,
+      "htmx_controls": 4,
       "kind": "application-partial",
       "name": "Cluster Schools Table",
       "purpose": "Reusable cluster schools table interface primitive",
@@ -2841,7 +2899,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10403,
+      "bytes": 8208,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -2855,7 +2913,6 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty",
         "open"
       ],
       "tables": 0,
@@ -3034,36 +3091,6 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
-      ],
-      "bytes": 3767,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/clusters/planner-drawer",
-        "/clusters/schedule-activity",
-        "/clusters/schedule-meeting-drawer",
-        "/clusters/schedule-training-drawer",
-        "/planning/schedule-modal"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 3,
-      "kind": "application-partial",
-      "name": "Training Materials Fields",
-      "purpose": "Reusable training materials fields interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/clusters/training_materials_fields.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
         "keyboard focus visibility"
       ],
       "bytes": 2848,
@@ -3210,7 +3237,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9715,
+      "bytes": 10295,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3477,7 +3504,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22585,
+      "bytes": 23227,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -7690,7 +7717,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7306,
+      "bytes": 7129,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8178,6 +8205,36 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 10148,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Coverage Workspace",
+      "purpose": "Reusable coverage workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 3,
+      "template": "partials/oversight/coverage_workspace.html",
+      "variants": [
+        "success",
+        "{% if coverage.missing_count %}warning{% else %}success{% endif %}",
+        "{{ row.visit_status_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 10291,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -8431,27 +8488,32 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 5664,
+      "bytes": 5749,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Create Partner Drawer",
       "purpose": "Reusable create partner drawer interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "open"
+        "error",
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/partners/create_partner_drawer.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -8595,7 +8657,37 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9816,
+      "bytes": 3239,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/user-setup"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "User Setup Drawer",
+      "purpose": "Reusable user setup drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/partners/user_setup_drawer.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 10440,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -8645,7 +8737,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25786,
+      "bytes": 25109,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -8674,7 +8766,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 35710,
+      "bytes": 36516,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -8723,7 +8815,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6424,
+      "bytes": 6939,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -8742,7 +8834,9 @@
       ],
       "tables": 0,
       "template": "partials/planning/school_row.html",
-      "variants": []
+      "variants": [
+        "{{ school.visitPlanStatusTone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9366,32 +9460,6 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 7438,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/projects/<str:project_id>/schools/bulk-assign-drawer"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Bulk Assign Drawer",
-      "purpose": "Reusable bulk assign drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "disabled",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/projects/bulk_assign_drawer.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 4005,
@@ -9487,31 +9555,6 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
-      ],
-      "bytes": 3707,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/projects/<str:project_id>/edit"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Edit Project Drawer",
-      "purpose": "Reusable edit project drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "disabled"
-      ],
-      "tables": 0,
-      "template": "partials/projects/edit_project_drawer.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 3360,
@@ -9583,7 +9626,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11780,
+      "bytes": 12013,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -9656,7 +9699,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17450,
+      "bytes": 16643,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -9840,7 +9883,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8298,
+      "bytes": 9680,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
@@ -9854,20 +9897,25 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
+        "empty",
         "error",
         "disabled",
         "open"
       ],
       "tables": 0,
       "template": "partials/schools/add_to_cluster_drawer.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "info",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12475,
+      "bytes": 12403,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"
@@ -9968,14 +10016,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6978,
+      "bytes": 8519,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Directory Row",
       "purpose": "Reusable directory row interface primitive",
@@ -9987,7 +10035,9 @@
       ],
       "tables": 0,
       "template": "partials/schools/directory_row.html",
-      "variants": []
+      "variants": [
+        "{{ school.visit_plan_status_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10022,7 +10072,6 @@
         "/partner/assignments/<str:assignment_id>/schedule-drawer",
         "/planning/assign-partner-modal",
         "/planning/schedule-modal",
-        "/projects/<str:project_id>/schools/bulk-assign-drawer",
         "/schools/<str:school_id>/add-to-cluster",
         "/schools/<str:school_id>/assign-to-project"
       ],
@@ -10136,6 +10185,36 @@
       "tables": 0,
       "template": "partials/schools/onboard_drawer.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 5977,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>/transfer-owner"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Owner Transfer Drawer",
+      "purpose": "Reusable owner transfer drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/schools/owner_transfer_drawer.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -10271,8 +10350,6 @@
         "/analytics/customize-dashboard",
         "/analytics/schedule-report",
         "/clusters/<str:cluster_id>/bulk-assign-drawer",
-        "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-        "/projects/<str:project_id>/schools/bulk-assign-drawer",
         "/schools/<str:school_id>/add-to-cluster",
         "/schools/<str:school_id>/assign-to-project"
       ],
@@ -19930,7 +20007,8 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /partners/create"
+        "GET /partners/create",
+        "GET /partners/{{ partner.id }}/user-setup"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -25599,6 +25677,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -25640,7 +25719,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "card_count": 0,
@@ -25660,8 +25739,9 @@
         "GET /clusters/{{ cluster.id }}/edit-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
         "POST /clusters/{{ cluster.id }}/delete",
-        "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
-        "POST /clusters/{{ cluster.id }}/schools/{{ s.id }}/remove"
+        "GET /clusters/{{ cluster.id }}/catchment-drawer",
+        "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
+        "GET /planning/schedule-modal?school_id={{ s.schoolId }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -25695,6 +25775,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -25707,7 +25788,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -25790,6 +25871,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -25825,6 +25907,194 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[14px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/clusters/catchment_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:cluster_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /clusters/{{ cluster.id }}/catchment-drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D7135BBA7E",
+      "page_title": "Cluster Catchment Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cluster_detail",
+      "primary_action": "Approve District",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Approve a neighbouring district for a cluster (CD, Admin).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/clusters/<str:cluster_id>/catchment-drawer",
+      "route_name": "cluster_catchment_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/clusters/{{ cluster.id }}/catchment-drawer"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/clusters/catchment_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.cluster_catchment_end_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/clusters/catchment_end_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:cluster_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-2C14719015",
+      "page_title": "Cluster Catchment End",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cluster_detail",
+      "primary_action": "End Approval",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "End an approved neighbouring district (CD, Admin).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+      "route_name": "cluster_catchment_end",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/clusters/{{ cluster.id }}/catchment/{{ row.id }}/end"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/clusters/catchment_end_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -25880,6 +26150,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -25964,6 +26235,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26000,7 +26272,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.edit_cluster_drawer_view",
       "card_count": 0,
@@ -26053,6 +26325,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26065,7 +26338,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
@@ -26087,95 +26360,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[14px]"
-      ]
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.cluster_views",
-      "backend_view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/schools/toast_success.html",
-        "test:referenced-by-automated-test",
-        "permission:planning"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": true,
-      "page_id": "UI-PAGE-3429DE9B4C",
-      "page_title": "Remove School From Cluster",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "planning",
-      "primary_action": "Remove School From Cluster",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Take one school out of a cluster from its roster (owner, 2026-09-15).",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-      "route_name": "remove_school_from_cluster",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.clusters.models",
-        "apps.clusters.services",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.schools.models"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/schools/toast_success.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
       ]
     },
     {
@@ -26232,6 +26416,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26321,6 +26506,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26410,6 +26596,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26499,6 +26686,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26588,6 +26776,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26675,6 +26864,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26767,6 +26957,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26863,6 +27054,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -26960,6 +27152,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -27057,6 +27250,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -27154,6 +27348,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -30104,6 +30299,7 @@
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/cost-settings",
+        "/cost-settings/carry-forward",
         "/cost-settings/initialize-default"
       ],
       "services_and_models": [
@@ -30234,6 +30430,87 @@
       "typography_exceptions": [
         "text-[13px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.finance_views",
+      "backend_view": "apps.frontend.views.finance_views.carry_forward_rate_card_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:cost_settings"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C2F9E280E0",
+      "page_title": "Cost Settings Carry Forward",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cost_settings",
+      "primary_action": "Cost Settings Carry Forward",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Prepare a fiscal year's rate card from the year before (CD only).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/cost-settings/carry-forward",
+      "route_name": "cost_settings_carry_forward",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.budget.models",
+        "apps.budget.services",
+        "apps.fund_requests.models",
+        "apps.geography.models",
+        "apps.partners.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -45112,7 +45389,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/hr/form_drawer.html",
-        "test:referenced-by-automated-test",
+        "test:coverage-review-required",
         "permission:impact_reports"
       ],
       "filters": "none",
@@ -45175,7 +45452,7 @@
       "templates": [
         "partials/hr/form_drawer.html"
       ],
-      "test_status": "referenced-by-automated-test",
+      "test_status": "coverage-review-required",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -59884,6 +60161,88 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.ownership_views",
+      "backend_view": "apps.frontend.views.ownership_views.ownership_transfers_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/schools/ownership_transfers.html",
+        "test:referenced-by-automated-test",
+        "permission:ownership_transfers"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9E6ABDEFA5",
+      "page_title": "Ownership Transfers",
+      "page_type": "operational-queue",
+      "per_page_css": [],
+      "permission_key": "ownership_transfers",
+      "primary_action": "Transfer Portfolio",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "District portfolio transfers, the history, and targets to reconcile.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/ownership-transfers/",
+      "route_name": "ownership_transfers",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.geography.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/schools/ownership_transfers.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[15px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.cluster_views",
@@ -59904,8 +60263,7 @@
       "htmx_endpoints": [
         "GET /clusters/{{ cluster_id }}/bulk-assign-drawer",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
-        "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}",
-        "POST /clusters/{{ cluster_id }}/schools/{{ s.id }}/remove"
+        "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -59939,6 +60297,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activity_catalogue.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -60812,6 +61171,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /partner-oversight/withdraw/review",
+        "GET /partners/create",
         "GET /partner-oversight/allowance-drawer"
       ],
       "implementation_status": "existing-routed-surface",
@@ -63462,6 +63822,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET /partners/{{ partner.id }}/user-setup",
         "GET /partners/{{ partner.id }}/edit-drawer",
         "GET /partners/{{ partner.id }}/members/drawer",
         "GET /partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}"
@@ -63968,7 +64329,116 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_user_setup_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/partners/user_setup_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:partners"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /partners/{{ partner.id }}/user-setup"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-7FF4CF6F26",
+      "page_title": "Partner User Setup",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partners",
+      "primary_action": "Save Login Setup",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Set up a partner organisation's login: link, invite, or not yet.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/partners/<str:partner_id>/user-setup",
+      "route_name": "partner_user_setup",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/partners/{{ partner.id }}/user-setup"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/partners/user_setup_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.create_partner_view",
       "card_count": 0,
@@ -63984,12 +64454,14 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST {% url "
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-C6043D2C4C",
@@ -63997,9 +64469,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partners",
-      "primary_action": "Create Partner",
+      "primary_action": "Add Partner Organisation",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Legacy partner-onboarding drawer; management now lives under Users.",
+      "purpose": "Add a partner organisation \u2014 the organisation record only.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -64041,12 +64513,12 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -66185,6 +66657,88 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.fy_planning_views",
+      "backend_view": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/planning/fiscal_years.html",
+        "test:referenced-by-automated-test",
+        "permission:fy_planning_policy"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C5319ED208",
+      "page_title": "Fiscal Year Planning",
+      "page_type": "planning-or-creation",
+      "per_page_css": [],
+      "permission_key": "fy_planning_policy",
+      "primary_action": "Open FY",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "FY is the operational year. A later year can be planned once it is opened; its work starts on its first day.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/planning/fiscal-years",
+      "route_name": "fiscal_year_planning",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning/fiscal-years"
+      ],
+      "services_and_models": [
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/planning/fiscal_years.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[15px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -66376,12 +66930,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.planning_views",
       "backend_view": "apps.frontend.views.planning_views.schedule_activity_form_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/planning/schedule.html",
         "test:referenced-by-automated-test",
@@ -66393,9 +66947,9 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "POST /planning/schedule-action",
         "POST /partials/costing/preview",
-        "GET /planning/schedule/schools",
-        "POST /planning/schedule?action={{ action }}"
+        "GET /planning/schedule/schools"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -66427,7 +66981,7 @@
       "route_name": "planning_schedule",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/partials/costing/preview"
+        "/planning/schedule-action"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -66452,7 +67006,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
@@ -69652,12 +70206,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_detail_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/projects/detail.html",
         "test:referenced-by-automated-test",
@@ -69668,12 +70222,7 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [
-        "GET /projects/{{ project.id }}/edit",
-        "POST /projects/{{ project.id }}/delete",
-        "GET /projects/{{ project.id }}",
-        "GET /projects/{{ project.id }}/schools/bulk-assign-drawer"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -69686,7 +70235,7 @@
       "page_type": "record-detail",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Edit Project",
+      "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
       "purpose": "Project detail.",
       "remediation": "No automated remediation outstanding",
@@ -69703,7 +70252,6 @@
       "route_name": "project_detail",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/projects/{{ project.id }}/delete",
         "/projects/{{ project.id }}/staff/assign",
         "/projects/{{ project.id }}/schools/assign"
       ],
@@ -69740,9 +70288,9 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": true,
-        "error": true,
+        "error": false,
         "loading": false
       },
       "surface_kind": "page",
@@ -69766,219 +70314,6 @@
         "text-[14px]",
         "text-[15px]"
       ]
-    },
-    {
-      "accessibility_status": "not-applicable-nonvisual",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.extended_views",
-      "backend_view": "apps.frontend.views.extended_views.project_delete_action_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": false,
-      "evidence": [
-        "test:referenced-by-automated-test",
-        "permission:projects"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "not-applicable-nonvisual-action",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "not-applicable-nonvisual",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-214BA4DC27",
-      "page_title": "Project Delete Action",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "projects",
-      "primary_action": "Project Delete Action",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Withdraw a project that never became work.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "manual-review-required",
-      "role_access": [
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/projects/<str:project_id>/delete",
-      "route_name": "project_delete_action",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.activity_catalogue.services",
-        "apps.admin_users.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.core_schools.models",
-        "apps.documents.services",
-        "apps.flags.models",
-        "apps.geography.models",
-        "apps.geography.services",
-        "apps.notifications.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.projects.models",
-        "apps.projects.scoping",
-        "apps.projects.services",
-        "apps.routes.models",
-        "apps.schools.models",
-        "apps.schools.services",
-        "apps.ssa.models",
-        "apps.ssa.services",
-        "apps.system_health.services",
-        "apps.targets.models"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "action",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "not-applicable-nonvisual",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "not-applicable-nonvisual",
-      "theme_status": "not-applicable-nonvisual",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.7,
-      "backend_module": "apps.frontend.views.extended_views",
-      "backend_view": "apps.frontend.views.extended_views.project_edit_drawer_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/projects/edit_project_drawer.html",
-        "test:referenced-by-automated-test",
-        "permission:projects"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /projects/{{ project.id }}/edit"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-C45287FC41",
-      "page_title": "Project Edit Drawer",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "projects",
-      "primary_action": "Save changes",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Edit the Project's own description.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/projects/<str:project_id>/edit",
-      "route_name": "project_edit_drawer",
-      "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/projects/{{ project.id }}/edit"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.activity_catalogue.services",
-        "apps.admin_users.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.core_schools.models",
-        "apps.documents.services",
-        "apps.flags.models",
-        "apps.geography.models",
-        "apps.geography.services",
-        "apps.notifications.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.projects.models",
-        "apps.projects.scoping",
-        "apps.projects.services",
-        "apps.routes.models",
-        "apps.schools.models",
-        "apps.schools.services",
-        "apps.ssa.models",
-        "apps.ssa.services",
-        "apps.system_health.services",
-        "apps.targets.models"
-      ],
-      "shared_layout": [
-        "components/drawers/base_drawer.html"
-      ],
-      "state_coverage": {
-        "disabled": true,
-        "empty": false,
-        "error": true,
-        "loading": false
-      },
-      "surface_kind": "drawer",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/projects/edit_project_drawer.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -70082,123 +70417,6 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.7,
-      "backend_module": "apps.frontend.views.extended_views",
-      "backend_view": "apps.frontend.views.extended_views.project_bulk_assign_drawer_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/schools/drawer_error.html",
-        "template:partials/schools/toast_success.html",
-        "template:partials/projects/bulk_assign_drawer.html",
-        "test:referenced-by-automated-test",
-        "permission:projects"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /projects/{{ project.id }}/schools/bulk-assign-drawer"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": true,
-      "page_id": "UI-PAGE-A067D0C962",
-      "page_title": "Project Bulk Assign Drawer",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "projects",
-      "primary_action": "Project Bulk Assign Drawer",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Add several schools to a Project in one pass.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
-      "route_name": "project_bulk_assign_drawer",
-      "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/projects/{{ project.id }}/schools/bulk-assign-drawer"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.activity_catalogue.services",
-        "apps.admin_users.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.core_schools.models",
-        "apps.documents.services",
-        "apps.flags.models",
-        "apps.geography.models",
-        "apps.geography.services",
-        "apps.notifications.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.projects.models",
-        "apps.projects.scoping",
-        "apps.projects.services",
-        "apps.routes.models",
-        "apps.schools.models",
-        "apps.schools.services",
-        "apps.ssa.models",
-        "apps.ssa.services",
-        "apps.system_health.services",
-        "apps.targets.models"
-      ],
-      "shared_layout": [
-        "components/drawers/base_drawer.html"
-      ],
-      "state_coverage": {
-        "disabled": true,
-        "empty": false,
-        "error": true,
-        "loading": false
-      },
-      "surface_kind": "drawer",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/toast_success.html",
-        "partials/projects/bulk_assign_drawer.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
-      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -73907,6 +74125,8 @@
       "htmx_endpoints": [
         "POST /schools/{{ school.school_id }}/reopen",
         "GET /schools/{{ school.id }}/edit-drawer",
+        "GET /schools/{{ school.id }}/assign-to-project",
+        "GET /schools/{{ school.school_id }}/transfer-owner",
         "GET /schools/{{ school.school_id }}/close-drawer"
       ],
       "implementation_status": "existing-routed-surface",
@@ -73995,7 +74215,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.add_to_cluster_drawer_view",
       "card_count": 0,
@@ -74028,9 +74248,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Add To Cluster Drawer",
+      "primary_action": "Change Cluster Add to Cluster",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Assign a school straight to one of its owner's clusters.",
+      "purpose": "Add a school to one of its owner's clusters, or change its cluster.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -74069,7 +74289,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -74765,6 +74985,97 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.ownership_views",
+      "backend_view": "apps.frontend.views.ownership_views.school_owner_transfer_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/schools/owner_transfer_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /schools/{{ school.school_id }}/transfer-owner"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9559BE9B58",
+      "page_title": "School Owner Transfer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "Reassign Owner",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Reassign one school's owner.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/<str:school_id>/transfer-owner",
+      "route_name": "school_owner_transfer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/schools/{{ school.school_id }}/transfer-owner"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.geography.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/owner_transfer_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -78873,10 +79184,11 @@
       "backend_view": "apps.frontend.views.oversight_views.team_planning_oversight_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
+        "template:partials/oversight/coverage_workspace.html",
         "test:referenced-by-automated-test",
         "permission:team_planning_oversight"
       ],
@@ -78886,7 +79198,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /team-planning-oversight/"
+        "GET /team-planning-oversight/",
+        "GET {{ row.detail_url }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -78947,18 +79260,21 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
+        "count": 4,
         "type": "segmented-control"
       },
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/oversight/team_planning.html"
+        "pages/oversight/team_planning.html",
+        "partials/oversight/coverage_workspace.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[15px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -79307,7 +79623,7 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
+        "count": 4,
         "type": "segmented-control"
       },
       "templates": [
@@ -79405,7 +79721,7 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
+        "count": 4,
         "type": "segmented-control"
       },
       "templates": [
@@ -82744,11 +83060,13 @@
       "cluster.view",
       "cluster.assign",
       "cluster.override",
+      "cluster.catchmentManage",
       "planning.recalc",
       "ssa.view",
       "ssa.upload",
       "planning.view",
       "planning.create",
+      "planningPolicy.manage",
       "planning.manualActivity.create",
       "activity.assign",
       "activity.complete",
@@ -82787,10 +83105,16 @@
       "strategicReserve.approve",
       "costAmendment.request",
       "costAmendment.approve",
+      "school.ownershipTransfer",
+      "district.portfolioTransfer",
+      "activity.ownershipTransfer",
       "staff.manage",
       "user.manage",
       "partner.view",
       "partner.manage",
+      "partnerOrganisation.create",
+      "partnerOrganisation.edit",
+      "partnerUser.manage",
       "partnerAssignment.withdraw",
       "partnerWithdrawal.review",
       "partner.hold",
@@ -91173,11 +91497,28 @@
         "TRACE"
       ],
       "page_permission": "",
-      "required_permissions": [
-        "partner.manage"
-      ],
+      "required_permissions": [],
       "route": "/api/partners(?:/|)<str:partner_id>",
       "route_name": "update",
+      "templates": []
+    },
+    {
+      "callback": "apps.partners.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "partnerUser.manage"
+      ],
+      "route": "/api/partners(?:/|)<str:partner_id>/user-setup",
+      "route_name": "user-setup",
       "templates": []
     },
     {
@@ -93367,6 +93708,36 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "cluster_detail",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/catchment-drawer",
+      "route_name": "cluster_catchment_drawer",
+      "templates": [
+        "partials/clusters/catchment_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.cluster_views.cluster_catchment_end_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "cluster_detail",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+      "route_name": "cluster_catchment_end",
+      "templates": [
+        "partials/clusters/catchment_end_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.delete_cluster_view",
       "kind": "action",
       "methods": [
@@ -93403,20 +93774,6 @@
       "route_name": "edit_cluster_drawer",
       "templates": [
         "partials/clusters/edit_cluster_drawer.html"
-      ]
-    },
-    {
-      "callback": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
-      "kind": "partial",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "planning",
-      "required_permissions": [],
-      "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
-      "route_name": "remove_school_from_cluster",
-      "templates": [
-        "partials/schools/toast_success.html"
       ]
     },
     {
@@ -94031,6 +94388,18 @@
       "templates": [
         "partials/cost_settings/add_drawer.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.finance_views.carry_forward_rate_card_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cost_settings",
+      "required_permissions": [],
+      "route": "/cost-settings/carry-forward",
+      "route_name": "cost_settings_carry_forward",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.finance_views.initialize_default_catalogue_view",
@@ -98720,6 +99089,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.ownership_views.ownership_transfers_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "ownership_transfers",
+      "required_permissions": [],
+      "route": "/ownership-transfers/",
+      "route_name": "ownership_transfers",
+      "templates": [
+        "pages/schools/ownership_transfers.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.cluster_schools_partial",
       "kind": "partial",
       "methods": [
@@ -99303,6 +99687,21 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.partner_views.partner_user_setup_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "partners",
+      "required_permissions": [],
+      "route": "/partners/<str:partner_id>/user-setup",
+      "route_name": "partner_user_setup",
+      "templates": [
+        "partials/partners/user_setup_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.partner_views.create_partner_view",
       "kind": "drawer",
       "methods": [
@@ -99624,6 +100023,21 @@
       "route": "/planning/bulk-action",
       "route_name": "planning_bulk_action",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "fy_planning_policy",
+      "required_permissions": [],
+      "route": "/planning/fiscal-years",
+      "route_name": "fiscal_year_planning",
+      "templates": [
+        "pages/planning/fiscal_years.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.planning_views.planning_intelligence_view",
@@ -100189,33 +100603,6 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.extended_views.project_delete_action_view",
-      "kind": "action",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "projects",
-      "required_permissions": [],
-      "route": "/projects/<str:project_id>/delete",
-      "route_name": "project_delete_action",
-      "templates": []
-    },
-    {
-      "callback": "apps.frontend.views.extended_views.project_edit_drawer_view",
-      "kind": "drawer",
-      "methods": [
-        "GET",
-        "POST"
-      ],
-      "page_permission": "projects",
-      "required_permissions": [],
-      "route": "/projects/<str:project_id>/edit",
-      "route_name": "project_edit_drawer",
-      "templates": [
-        "partials/projects/edit_project_drawer.html"
-      ]
-    },
-    {
       "callback": "apps.frontend.views.extended_views.project_assign_school_action_view",
       "kind": "action",
       "methods": [
@@ -100226,23 +100613,6 @@
       "route": "/projects/<str:project_id>/schools/assign",
       "route_name": "project_assign_school_action",
       "templates": []
-    },
-    {
-      "callback": "apps.frontend.views.extended_views.project_bulk_assign_drawer_view",
-      "kind": "drawer",
-      "methods": [
-        "GET",
-        "POST"
-      ],
-      "page_permission": "projects",
-      "required_permissions": [],
-      "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
-      "route_name": "project_bulk_assign_drawer",
-      "templates": [
-        "partials/schools/drawer_error.html",
-        "partials/schools/toast_success.html",
-        "partials/projects/bulk_assign_drawer.html"
-      ]
     },
     {
       "callback": "apps.frontend.views.extended_views.project_assign_staff_action_view",
@@ -100929,6 +101299,21 @@
       "route": "/schools/<str:school_id>/reopen",
       "route_name": "school_reopen",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.ownership_views.school_owner_transfer_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/transfer-owner",
+      "route_name": "school_owner_transfer",
+      "templates": [
+        "partials/schools/owner_transfer_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.school_views.add_school_view",
@@ -101721,7 +102106,8 @@
       "route_name": "team_planning_oversight",
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/oversight/team_planning.html"
+        "pages/oversight/team_planning.html",
+        "partials/oversight/coverage_workspace.html"
       ]
     },
     {
@@ -102325,30 +102711,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 520,
+    "accessibility_contract_pass": 523,
     "activity_states": 24,
-    "all_routes": 1278,
-    "api_routes": 359,
-    "component_templates": 452,
-    "full_pages": 255,
-    "mobile_contract_pass": 520,
+    "all_routes": 1282,
+    "api_routes": 360,
+    "component_templates": 454,
+    "full_pages": 257,
+    "mobile_contract_pass": 523,
     "nonvisual_actions": 262,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 524,
-      "operational-queue": 148,
-      "planning-or-creation": 10,
+      "interaction-fragment": 525,
+      "operational-queue": 149,
+      "planning-or-creation": 11,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 262,
-    "permission_gated": 792,
-    "permission_keys": 112,
+    "partials_and_drawers": 263,
+    "permission_gated": 795,
+    "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 807,
+    "routed_surfaces": 810,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -102356,8 +102742,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 520,
-    "test_referenced": 698,
-    "theme_contract_pass": 520
+    "tablet_contract_pass": 523,
+    "test_referenced": 700,
+    "theme_contract_pass": 523
   }
 }

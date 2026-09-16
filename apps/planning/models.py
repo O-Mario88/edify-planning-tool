@@ -75,8 +75,10 @@ from apps.planning.action_models import (  # noqa: E402
     ActionState,
     TeamAction,
 )
+from apps.planning.fy_policy_models import FiscalYearPlanningPolicy  # noqa: E402
 
 __all__ = [
+    "FiscalYearPlanningPolicy",
     "MonthlyPlan",
     "MonthlyPlanActivity",
     "TeamAction",

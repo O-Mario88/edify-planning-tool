@@ -23,14 +23,28 @@
 <div class="grid md:grid-cols-3 gap-6 items-start">
 <!-- Form Panel -->
 <div class="md:col-span-2 edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm">
+{% comment %}
+The form now owns the act, not the preview. It posts to the canonical
+scheduling endpoint on submit — which is what the button is for, and what
+makes the browser's own required-field checks run first. The live costing
+preview keeps its own request on the element below, reading the same fields
+through hx-include, so typing still prices the work as it is filled in.
+{% endcomment %}
 <form
 method="POST"
 class="space-y-4"
-hx-post="/partials/costing/preview"
-hx-target="#cost-preview-output"
-hx-trigger="change, keyup delay:400ms"
+hx-post="/planning/schedule-action"
+hx-target="#schedule-page-errors"
+hx-swap="innerHTML"
 >
 {% csrf_token %}
+<span
+hidden
+hx-post="/partials/costing/preview"
+hx-target="#cost-preview-output"
+hx-trigger="change from:closest form, keyup delay:400ms from:closest form"
+hx-include="closest form"
+></span>
 <input type="hidden" name="activity_type" value="{% if action == 'visit' %}school_visit{% elif action == 'training' %}cluster_training{% else %}cluster_meeting{% endif %}">
 
 <!-- Target Target Selector -->
@@ -191,16 +205,27 @@ class="w-full p-3 rounded-control border border-[var(--edify-border)] text-[12px
 ></textarea>
 </div>
 
+{% comment %}
+This posted to `/planning/schedule`, which only ever renders this form: the
+GET view ignored the body and answered with the page again, so the button
+looked like it worked and scheduled nothing — a cluster meeting started from
+its cluster never reached anybody's plan (owner, §12). The canonical endpoint
+is `/planning/schedule-action`, the one the drawers use; it reads these exact
+field names, records the activity, prices it and redirects to the plan it
+landed on. Refusals come back as a fragment, so they are shown here instead of
+replacing the page the planner is filling in.
+{% endcomment %}
 <!-- Form submit -->
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+<div class="pt-3 border-t border-slate-100 space-y-2">
+<div id="schedule-page-errors"></div>
+<div class="flex items-center justify-between">
 <button
 type="submit"
-hx-post="/planning/schedule?action={{ action }}"
-hx-target="body"
 class="h-8 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors"
 >
 Confirm &amp; Schedule Activity
 </button>
+</div>
 </div>
 </form>
 </div>
