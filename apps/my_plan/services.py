@@ -30,6 +30,155 @@ ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
 )
 
 
+#: The fiscal year runs October → September, and that is the order the plan is
+#: read in. Every month list on this page uses it, so October is first and next
+#: September is last rather than January leading a year that does not start there.
+FY_MONTH_ORDER = (10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+
+#: Rows with no date yet. They belong to the plan and must not vanish between
+#: the last month and the bottom of the card, so they group under their own
+#: heading at the end.
+UNDATED_MONTH_KEY = "undated"
+
+
+def fy_calendar_year(fy: str | int, month: int) -> int:
+    """The calendar year a fiscal month falls in. FY2026 starts October 2025."""
+    return int(fy) - 1 if month >= 10 else int(fy)
+
+
+def fy_months(fy: str | int, *, today: date | None = None) -> list[dict]:
+    """The twelve months of a fiscal year, October first.
+
+    One definition for the month strip, the card sections and the month a row
+    is filed under, so a heading and the rows beneath it cannot disagree about
+    which October they mean.
+    """
+    today = today or date.today()
+    out = []
+    for month in FY_MONTH_ORDER:
+        year = fy_calendar_year(fy, month)
+        first = date(year, month, 1)
+        out.append(
+            {
+                "key": f"{year}-{month:02d}",
+                "month": month,
+                "year": year,
+                "label": f"{first:%B %Y}",
+                "name": f"{first:%B}",
+                "short": f"{first:%b}",
+                "is_current": (month == today.month and year == today.year),
+                "is_past": (year, month) < (today.year, today.month),
+            }
+        )
+    return out
+
+
+def month_sections(rows, *, fy: str | int, today: date | None = None) -> list[dict]:
+    """A card's rows arranged into the fiscal year's months.
+
+    My Plan used to slice the feed a week at a time, which answered "what is on
+    this week" and nothing else: seeing the shape of a year meant clicking
+    through fifty-two of them. The whole plan is shown instead, filed under the
+    month it falls in — October through next September (owner, 2026-09-16).
+
+    Only months that actually hold work become sections; an empty month is
+    still reported by `month_summary` above the cards, where "nothing planned
+    in February" is the finding rather than an empty heading.
+    """
+    today = today or date.today()
+    by_key: dict[str, list] = {}
+    for row in rows:
+        planned = row.get("planned_date")
+        key = f"{planned.year}-{planned.month:02d}" if planned else UNDATED_MONTH_KEY
+        by_key.setdefault(key, []).append(row)
+
+    sections = []
+    for month in fy_months(fy, today=today):
+        group = by_key.pop(month["key"], None)
+        if not group:
+            continue
+        sections.append({**month, "rows": group, "count": len(group)})
+
+    # A planned date outside the fiscal year's own months (a row carried over,
+    # or mis-dated) is still the person's work: file it under its own month
+    # rather than dropping it, in date order after the twelve.
+    for key in sorted(k for k in by_key if k != UNDATED_MONTH_KEY):
+        year, month = (int(part) for part in key.split("-"))
+        first = date(year, month, 1)
+        sections.append(
+            {
+                "key": key,
+                "month": month,
+                "year": year,
+                "label": f"{first:%B %Y}",
+                "name": f"{first:%B}",
+                "short": f"{first:%b}",
+                "is_current": (month == today.month and year == today.year),
+                "is_past": (year, month) < (today.year, today.month),
+                "rows": by_key[key],
+                "count": len(by_key[key]),
+            }
+        )
+
+    undated = by_key.get(UNDATED_MONTH_KEY)
+    if undated:
+        sections.append(
+            {
+                "key": UNDATED_MONTH_KEY,
+                "month": None,
+                "year": None,
+                "label": "No date yet",
+                "name": "No date yet",
+                "short": "—",
+                "is_current": False,
+                "is_past": False,
+                "rows": undated,
+                "count": len(undated),
+            }
+        )
+    return sections
+
+
+def month_summary(fy: str | int, *lists, today: date | None = None) -> list[dict]:
+    """How much of the plan sits in each month of the fiscal year.
+
+    The strip that replaced the week/month/quarter/FY tabs. A month with
+    nothing in it keeps its place and reads zero, because an empty March is
+    something a person needs to see, not something to hide.
+    """
+    today = today or date.today()
+    counts: dict[str, int] = {}
+    undated = 0
+    for rows in lists:
+        for row in rows or ():
+            planned = row.get("planned_date")
+            if not planned:
+                undated += 1
+                continue
+            counts[f"{planned.year}-{planned.month:02d}"] = (
+                counts.get(f"{planned.year}-{planned.month:02d}", 0) + 1
+            )
+    months = [
+        {**month, "count": counts.get(month["key"], 0)}
+        for month in fy_months(fy, today=today)
+    ]
+    if undated:
+        months.append(
+            {
+                "key": UNDATED_MONTH_KEY,
+                "month": None,
+                "year": None,
+                "label": "No date yet",
+                "name": "No date yet",
+                "short": "—",
+                "is_current": False,
+                "is_past": False,
+                "count": undated,
+            }
+        )
+    return months
+
+
 def get_weeks_for_month(year: int, month: int) -> list[dict]:
     """Helper to generate week choices within a month."""
     last_day = calendar.monthrange(year, month)[1]
@@ -605,7 +754,13 @@ def get_frontend_context(principal, query: dict) -> dict:
     staff_id = query.get("staff")
     activity_type = query.get("activity_type")
     status = query.get("status")
-    period = query.get("period", "week")
+    # The fiscal year is the page. My Plan opened on a single week, so the
+    # answer to "what have I planned this year" was fifty-two clicks away and
+    # the three cards each showed a handful of rows out of context. The whole
+    # plan is shown now and arranged by month (owner, 2026-09-16). The narrower
+    # slices stay in the vocabulary for callers that ask for one explicitly —
+    # the CSV export, the API and the tests — but nothing on the page does.
+    period = query.get("period") or "fy"
 
     # 3. Base queryset constrained by user scope. Terminal activities leave
     # the active feed and live in Completed Activities — unless the caller
@@ -651,8 +806,6 @@ def get_frontend_context(principal, query: dict) -> dict:
         {"val": 8, "label": "August"},
         {"val": 9, "label": "September"},
     ]
-
-    weeks_list = get_weeks_for_month(year_int, month_int)
 
     # 5. Apply selected filters to the query
     # My Plan had no search of any kind — not a control, not a query path — so
@@ -1439,37 +1592,35 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     from urllib.parse import urlencode
 
-    from apps.my_plan.pagination import page_from, paginate
-
-    # Every filter except the three page numbers, so paging one card keeps the
-    # period, district and staff choices the person made. Rebuilt rather than
-    # passed through request.GET so a card cannot carry another card's page.
-    _page_params = {
-        "school_visits_page",
-        "cluster_trainings_page",
-        "cluster_meetings_page",
-    }
     _base_query = urlencode(
         {
             key: value
             for key, value in (query or {}).items()
-            if value and key not in _page_params and isinstance(value, (str, int))
+            if value and isinstance(value, (str, int))
         }
     )
     if _base_query:
         _base_query += "&"
 
-    school_visits_page = paginate(
-        school_visits_list, page_from(query, "school_visits_page")
+    # The cards no longer page ten rows at a time. Ten rows out of a year is
+    # the shape of a week, and hiding the rest behind "Next" is what made the
+    # plan unreadable as a plan. Every row is rendered, under the month it
+    # falls in, October through next September.
+    school_visits_months = month_sections(school_visits_list, fy=fy, today=today)
+    cluster_trainings_months = month_sections(
+        cluster_trainings_list, fy=fy, today=today
     )
-    cluster_trainings_page = paginate(
-        cluster_trainings_list, page_from(query, "cluster_trainings_page")
+    cluster_meetings_months = month_sections(cluster_meetings_list, fy=fy, today=today)
+    programme_activities_months = month_sections(
+        programme_activities_list, fy=fy, today=today
     )
-    programme_activities_page = paginate(
-        programme_activities_list, page_from(query, "programme_activities_page")
-    )
-    cluster_meetings_page = paginate(
-        cluster_meetings_list, page_from(query, "cluster_meetings_page")
+    fy_month_strip = month_summary(
+        fy,
+        school_visits_list,
+        cluster_trainings_list,
+        cluster_meetings_list,
+        programme_activities_list,
+        today=today,
     )
 
     return {
@@ -1477,10 +1628,8 @@ def get_frontend_context(principal, query: dict) -> dict:
         "period": period,
         "fy": fy,
         "selected_month": month_int,
-        "selected_week": week_int,
         "selected_quarter": quarter,
         "period_label": period_label,
-        "weeks": weeks_list,
         "months": months,
         "quarters": ["Q1", "Q2", "Q3", "Q4"],
         "districts": districts,
@@ -1507,22 +1656,24 @@ def get_frontend_context(principal, query: dict) -> dict:
         "fy_options": fy_options(),
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
-        # Each card shows ten; the rest sit behind pages that run as far as
-        # the person has actually planned. The full lists stay in the context
-        # under their original names so counts, KPIs and any consumer that
-        # wants the whole set are unaffected by the paging.
-        "school_visits": school_visits_page["rows"],
+        # Each card carries its whole list, and the month sections it is read
+        # through. `*_all` stays because counts, KPIs and the CSV export read
+        # it; it is now the same list as the card's own.
+        "school_visits": school_visits_list,
         "school_visits_all": school_visits_list,
-        "school_visits_pager": school_visits_page,
-        "cluster_trainings": cluster_trainings_page["rows"],
+        "school_visits_months": school_visits_months,
+        "cluster_trainings": cluster_trainings_list,
         "cluster_trainings_all": cluster_trainings_list,
-        "cluster_trainings_pager": cluster_trainings_page,
-        "cluster_meetings": cluster_meetings_page["rows"],
+        "cluster_trainings_months": cluster_trainings_months,
+        "cluster_meetings": cluster_meetings_list,
         "cluster_meetings_all": cluster_meetings_list,
-        "cluster_meetings_pager": cluster_meetings_page,
-        "programme_activities": programme_activities_page["rows"],
+        "cluster_meetings_months": cluster_meetings_months,
+        "programme_activities": programme_activities_list,
         "programme_activities_all": programme_activities_list,
-        "programme_activities_pager": programme_activities_page,
+        "programme_activities_months": programme_activities_months,
+        # October → next September, with what is planned in each. Replaces the
+        # week/month/quarter/FY tab strip.
+        "fy_month_strip": fy_month_strip,
         "waiting_on_me": waiting_on_me_list,
         "due_today": due_today_list,
         "this_week": this_week_list,

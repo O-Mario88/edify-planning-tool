@@ -126,7 +126,9 @@ def my_plan_view(request):
         "staff": request.GET.get("staff"),
         "activity_type": request.GET.get("activity_type"),
         "status": request.GET.get("status"),
-        "period": request.GET.get("period", "week"),
+        # My Plan shows the whole fiscal year, grouped by month. Anything
+        # narrower has to be asked for by URL (the service keeps the slices).
+        "period": request.GET.get("period") or "fy",
         "q": request.GET.get("q", "").strip(),
     }
 

@@ -97,6 +97,23 @@
     return elements;
   }
 
+  /* A menu, dialog or popover that happens to live inside a table cell is not
+   * table-cell content. The row-actions menu is the case that made this a
+   * shared helper: its items were marked `edify-table-action` and
+   * `edify-cell-control` like any other button in the cell, which handed them
+   * platform.css's `display: inline-flex` and consistency.css's 24px control
+   * height. Four stacked menu items became one 34px strip on a single line —
+   * the dropdown opened, and showed one item's worth of itself.
+   *
+   * The popup owns its own geometry (see .row-menu__list in pages.css). The
+   * cell rhythm stops at its boundary. */
+  var popupSelector = '[role="menu"], [role="dialog"], [role="listbox"], .row-menu__list, [popover]';
+
+  function inPopup(element, table) {
+    var popup = element.closest && element.closest(popupSelector);
+    return Boolean(popup && (!table || table.contains(popup)));
+  }
+
   /* Relational :has() selectors in a global stylesheet force Chrome to walk
    * ancestors whenever any descendant class changes. Resolve those stable DOM
    * relationships once into ordinary classes instead. HTMX-added roots pass
@@ -131,7 +148,9 @@
       }
 
       table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
-        action.classList.add('edify-table-action');
+        /* The menu's own trigger is a control in the cell and keeps the row
+           sizing; the items inside the opened menu are not. */
+        action.classList.toggle('edify-table-action', !inPopup(action, table));
       });
       table.querySelectorAll('td *, th *').forEach(function (element) {
         var popup = element.closest('[role="dialog"], [role="menu"], .row-menu, [popover], [x-show].absolute, [x-show].fixed');
@@ -284,6 +303,9 @@
       cell.querySelectorAll('button, label.edify-table-choice, select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), a').forEach(function (control) {
         if (control.matches('a') && read.inlineAnchors.indexOf(control) !== -1) return;
         if (control.matches('.edify-cell-pill, .edify-cell-row')) return;
+        /* A menu item is not a control on the row line — the 24px cell
+           control height would flatten the whole dropdown. */
+        if (inPopup(control, cell)) return;
         control.classList.add('edify-cell-control');
       });
       /* A `.block` line directly in a cell, and a flex row of controls beside

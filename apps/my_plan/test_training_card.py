@@ -69,14 +69,14 @@ class TrainingCardTest(TestCase):
         self.client.force_login(self.user)
 
     def _cards(self):
-        html = self.client.get("/my-plan?period=week").content.decode()
-        v = html.index("School Visits Planned")
-        t = html.index("Trainings Planned")
-        return html, html[v:t] if v < t else html[v:], html[t : t + 20000]
+        """The page is the whole fiscal year now, so it is asked for plainly."""
+        html = self.client.get("/my-plan").content.decode()
+        v = html.index("School Visits \u00b7")
+        t = html.index("Trainings \u00b7", v + 1)
+        return html, html[v:t], html[t : t + 20000]
 
     def test_the_training_sits_on_the_trainings_card_under_its_school(self):
-        html, visits, trainings = self._cards()
-        self.assertIn("Trainings Planned for This Week", html)
+        html, _visits, trainings = self._cards()
         self.assertIn("School / Cluster", trainings)
         self.assertIn(self.training.id, trainings)
         self.assertIn(f'href="/schools/{self.school.id}"', trainings)
@@ -84,6 +84,16 @@ class TrainingCardTest(TestCase):
         self.assertIn("In-school Training", trainings)
         self.assertNotIn("Unknown Cluster", html)
         self.assertNotIn("Cluster Trainings Planned", html)
+
+    def test_both_cards_file_the_pair_under_the_month_it_falls_in(self):
+        """The card is read a month at a time, and today's month says so."""
+        _html, visits, trainings = self._cards()
+        heading = f"{date.today():%B %Y}"
+        for card, name in ((visits, "visits"), (trainings, "trainings")):
+            with self.subTest(card=name):
+                self.assertIn("mp-month-head", card)
+                self.assertIn(heading, card)
+                self.assertIn("This month", card)
 
     def test_the_visit_stays_on_the_visits_card(self):
         _html, visits, trainings = self._cards()

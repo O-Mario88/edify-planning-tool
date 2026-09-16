@@ -1,5 +1,5 @@
 {% load school_identity %}
-<!-- Non-School Programme Activities Card -->
+<!-- Non-School Programme Activities Card — the whole fiscal year, by month -->
 <div class="card overflow-hidden">
 
 <!-- Card Header -->
@@ -7,7 +7,7 @@
 <div class="flex items-center gap-2">
 <span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
-Programme Activities Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
+Programme Activities · FY{{ fy }}
 </h2>
 <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] border border-[var(--edify-primary)]/20">
 {{ programme_activities|length }}
@@ -21,7 +21,7 @@ Open Work Plan
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% if programme_activities %}
+{% if programme_activities_months %}
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
@@ -32,8 +32,10 @@ Open Work Plan
 <th></th>
 </tr>
 </thead>
-<tbody>
-{% for row in programme_activities %}
+{% for group in programme_activities_months %}
+<tbody class="mp-month" data-month="{{ group.key }}">
+{% include "partials/my_plan/_month_heading.html" with group=group columns=5 %}
+{% for row in group.rows %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% school_identity row.school_name row.school_id %}</td>
 <td class="font-semibold text-slate-600" data-label="Purpose">{{ row.purpose }}</td>
@@ -44,15 +46,13 @@ Open Work Plan
 </tr>
 {% endfor %}
 </tbody>
+{% endfor %}
 </table>
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline
 never meets the card edge (it was a hand-built block with its own icon size
 and, for visits and trainings, a danger-red sentence).{% endcomment %}
-<div class="px-5 py-4">{% include "components/empty_state.html" with message="No programme activities planned for this period." cta_label="Open Work Plan" cta_href="/work-plan" icon_path="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" %}</div>
+<div class="px-5 py-4">{% include "components/empty_state.html" with message="No programme activities planned for this fiscal year." cta_label="Open Work Plan" cta_href="/work-plan" icon_path="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" %}</div>
 {% endif %}
 </div>
-
-
-{% include "partials/my_plan/_pager.html" with pager=programme_activities_pager param="programme_activities_page" label="Programme activities" base_query=my_plan_base_query %}
 </div>

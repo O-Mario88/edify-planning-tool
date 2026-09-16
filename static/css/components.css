@@ -5327,3 +5327,81 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   caret-color: var(--edify-text);
 }
+
+/* ═══ GROUP HEADING ROW ════════════════════════════════════════════════════
+   A row inside a table that heads the rows under it: "November 2025" over a
+   month of My Plan, "Sarah Okello" over a Programme Lead's schools, a cluster
+   over its member schools.
+
+   A row rather than a second table per group, so one column header serves the
+   whole card and the columns stay aligned the length of it — which is the
+   point of grouping a table rather than splitting it.
+
+   It is a heading, so it carries `scope="colgroup"` in the markup and the
+   inline-start accent here. The platform's "table content is ink on the table
+   surface" rule (consistency.css) exempts it for the same reason: it is not
+   content, it is where a section starts. */
+/* !important throughout: three platform-wide contracts paint every cell in a
+   table (platform.css's row headers, consistency.css's record-table cells and
+   its plain-table surface), all of them with !important. Each exempts this
+   class by name; the priority here is what keeps the heading intact if a
+   fourth one arrives. */
+.edify-group-head > th {
+  padding: 0.5rem 0.75rem !important;
+  background: var(--edify-surface-muted) !important;
+  border-block: 1px solid var(--edify-border) !important;
+  border-inline-start: 3px solid var(--edify-accent) !important;
+  text-align: start !important;
+  white-space: nowrap;
+  max-inline-size: none;
+  vertical-align: middle;
+}
+
+.edify-group-head__label {
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em !important;
+  text-transform: uppercase !important;
+  color: var(--edify-text) !important;
+}
+
+/* What the heading is counting — always the length of the list beneath it, so
+   a heading and its rows cannot disagree. */
+.edify-group-head__count {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 1px 0.45rem;
+  border-radius: var(--edify-radius-pill, 999px);
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--edify-text-muted);
+}
+
+/* "This month", "Least active" — the one thing about this group the reader
+   should not have to work out from the numbers. */
+.edify-group-head__mark {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 1px 0.45rem;
+  border-radius: var(--edify-radius-pill, 999px);
+  background: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--edify-primary-action-ink, #fff);
+}
+
+.edify-group-head.is-current > th {
+  background: var(--edify-accent-light) !important;
+  border-block-color: var(--edify-accent) !important;
+}
+
+/* The first group in a table sits directly under the column header, which
+   already draws that edge. */
+table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }

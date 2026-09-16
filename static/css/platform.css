@@ -655,8 +655,12 @@ main table,
 
 /* A row header is not a column header. This banding is for the header row;
    applied to a <th scope="row"> it painted the whole first column grey, which
-   reads as a permanently highlighted column. */
-main table tbody th {
+   reads as a permanently highlighted column.
+
+   A group heading (`scope="colgroup"`) is the other way round: it heads the
+   rows under it and is meant to be banded, so it keeps its own treatment from
+   components.css rather than being flattened with the row headers. */
+main table tbody th:not(.edify-group-head > th) {
   background: transparent !important;
   color: var(--edify-text) !important;
   font-size: inherit !important;

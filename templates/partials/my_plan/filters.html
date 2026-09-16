@@ -6,7 +6,9 @@ hx-swap="innerHTML"
 hx-push-url="true"
 class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm"
 >
-<!-- Keep period and other tabs active state -->
+{% comment %}My Plan reads the whole fiscal year. The period travels with the
+form so an explicit ?period= in the URL (the CSV export, a deep link) survives a
+filter change instead of silently reverting.{% endcomment %}
 <input type="hidden" name="period" value="{{ period }}">
 
 <!-- FY Filter -->
@@ -19,29 +21,19 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 </select>
 </div>
 
-<!-- Quarter Filter -->
-<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[100px]">
-<span class="edify-filter-label">Quarter</span>
-<select name="quarter" aria-label="Filter by quarter" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-{% for q in quarters %}
-<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
-{% endfor %}
-</select>
-</div>
-
-<!-- Month Filter -->
-<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[110px]">
-<span class="edify-filter-label">Month</span>
-<select name="month" aria-label="Filter by month" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-{% for m in months %}
-<option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>{{ m.label }}</option>
-{% endfor %}
-</select>
-</div>
+{% comment %}The Quarter and Month selects went with the period tabs. They
+narrowed the feed to one slice, and the page no longer has slices: it shows the
+whole fiscal year with a section per month, so a month is something you scroll
+to rather than something you filter down to. The fiscal year itself stays — a
+different year is a different plan.{% endcomment %}
 
 <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog"
         @click="$refs.advancedFilters.showModal()">
-More filters{% if selected_week or selected_district != "all" or selected_staff != "all" or selected_activity_type != "all" or selected_status != "all" %} · Applied{% endif %}
+{% comment %}`filters_active` is the server's own answer (see the My Plan
+service). The button used to compare each selected value against "all" itself, and an
+unset filter is None rather than "all" — so a page with nothing filtered
+announced "Applied".{% endcomment %}
+More filters{% if filters_active %} · Applied{% endif %}
 </button>
 
 <dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="my-plan-advanced-filter-title">
@@ -50,16 +42,6 @@ More filters{% if selected_week or selected_district != "all" or selected_staff 
 <button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.advancedFilters.close()">×</button>
 </header>
 <div class="edify-filter-drawer__body">
-
-<!-- Week Filter -->
-<div class="flex flex-col min-w-[160px]">
-<span class="edify-filter-label">Week</span>
-<select name="week" aria-label="Filter by week" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-{% for w in weeks %}
-<option value="{{ w.val }}" {% if selected_week == w.val %}selected{% endif %}>{{ w.label }}</option>
-{% endfor %}
-</select>
-</div>
 
 <!-- District Filter -->
 <div class="flex flex-col min-w-[120px]">
