@@ -62,7 +62,7 @@ quarter inside a year.
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="planned-training-title">
     <div class="border-b border-[var(--edify-border)] px-4 py-3">
       <h2 id="planned-training-title" class="text-[15px] font-semibold">Schools with Planned Cluster Training or Meeting</h2>
-      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.planned_count }} school{{ coverage.planned_count|pluralize }} the planning record attaches to a live cluster session between {{ coverage.period_start|date:"j M Y" }} and {{ coverage.period_end|date:"j M Y" }}.</p>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.planned_count }} school{{ coverage.planned_count|pluralize }} the planning record attaches to a live cluster session between {{ coverage.period_start|date:"j M Y" }} and {{ coverage.period_end|date:"j M Y" }}.{% if coverage.planned_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.planned_rows "trained_page" as trained_pager %}
@@ -94,7 +94,7 @@ quarter inside a year.
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="no-training-title" data-no-training-table>
     <div class="border-b border-[var(--edify-border)] px-4 py-3">
       <h2 id="no-training-title" class="text-[15px] font-semibold">Schools with No Training Planned</h2>
-      <p class="edify-text-caption text-[var(--edify-text-muted)]">Active schools in your {{ lens_label|lower }} scope with no live cluster training or meeting in this period. Closed schools are not counted.</p>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training or meeting in this period. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}

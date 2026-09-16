@@ -321,6 +321,13 @@ def training_coverage(
         "total": planned_count + missing_count,
         "period_start": start,
         "period_end": end,
+        # The counts above are the truth; the rows are the first `limit` of
+        # them, because deriving each school's visit and training state is not
+        # free. A page that shows 100 rows under a heading that says 694 is
+        # lying quietly, so it is told how many it is holding and says so.
+        "row_limit": limit,
+        "planned_rows_truncated": planned_count > len(planned_page),
+        "missing_rows_truncated": missing_count > len(missing_page),
     }
 
 
