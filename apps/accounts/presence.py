@@ -183,7 +183,7 @@ def format_duration(seconds: float | None) -> str:
     return f"{minutes}m"
 
 
-def _person(row: dict, *, now, online: bool) -> dict:
+def _person(row: dict, *, now, online: bool, logins: dict | None = None) -> dict:
     from .presence_labels import describe
 
     last_seen = row["last_seen_at"]
@@ -195,6 +195,11 @@ def _person(row: dict, *, now, online: bool) -> dict:
     else:
         duration = None
     described = describe(row["last_seen_path"] or "", row["last_seen_action"] or "")
+    # This person's own sign-ins. Distinct from `last_seen_at`, which is the
+    # last page they touched and keeps moving through a sitting; `last_login_at`
+    # is when that sitting began.
+    signin = (logins or {}).get(row["id"]) or {}
+    last_login = signin.get("last_at")
     return {
         **row,
         "online": online,
@@ -202,6 +207,13 @@ def _person(row: dict, *, now, online: bool) -> dict:
         "duration_label": format_duration(duration) if last_seen else "never",
         "section": described["section"] if last_seen else "—",
         "working_on": described["working_on"] if last_seen else "Never signed in",
+        "last_login_at": last_login,
+        "login_count": signin.get("total", 0),
+        "logins_today": signin.get("today_count", 0),
+        "logins_this_week": signin.get("week_count", 0),
+        "last_login_label": (
+            format_duration((now - last_login).total_seconds()) if last_login else None
+        ),
     }
 
 
@@ -295,7 +307,7 @@ def presence_groups(people: list[dict]) -> list[dict]:
 
 
 def presence_summary(*, now=None) -> dict:
-    from django.db.models import Count, F
+    from django.db.models import Count, F, Max, Q
     from django.db.models.functions import TruncDate
 
     from .models import LoginEvent, User
@@ -305,6 +317,29 @@ def presence_summary(*, now=None) -> dict:
     today = local_now.date()
     week_start = today - timedelta(days=today.weekday())  # Monday
     since_online = now - ONLINE_WINDOW
+
+    # Sign-ins per person (owner, 2026-09-16: "sign-ins should be a column
+    # inside Who's Online so that we can tell when they last signed in").
+    # The panel already counted sign-ins for the whole country; this is the
+    # same LoginEvent rows grouped by who they belong to, in one query, so a
+    # roster of a hundred people still costs one read rather than a hundred.
+    # `last_seen_at` is not this: it is the last page touched in a sitting,
+    # which keeps moving long after the sign-in that began it.
+    day_start = timezone.make_aware(
+        timezone.datetime.combine(today, timezone.datetime.min.time()),
+        timezone.get_current_timezone(),
+    )
+    week_start_dt = day_start - timedelta(days=today.weekday())
+    events = LoginEvent.objects.filter(user__deleted_at__isnull=True)
+    logins_by_user = {
+        row["user_id"]: row
+        for row in events.values("user_id").annotate(
+            last_at=Max("at"),
+            total=Count("id"),
+            today_count=Count("id", filter=Q(at__gte=day_start)),
+            week_count=Count("id", filter=Q(at__gte=week_start_dt)),
+        )
+    }
 
     people = User.objects.filter(is_active=True, deleted_at__isnull=True).values(
         "id",
@@ -317,7 +352,7 @@ def presence_summary(*, now=None) -> dict:
         "last_seen_action",
     )
     online = [
-        _person(person, now=now, online=True)
+        _person(person, now=now, online=True, logins=logins_by_user)
         for person in people.filter(last_seen_at__gte=since_online).order_by(
             "-last_seen_at"
         )[:PRESENCE_LIST_LIMIT]
@@ -325,7 +360,7 @@ def presence_summary(*, now=None) -> dict:
     # Offline: seen before the window, or never. Most recently seen first, and
     # the people who have never signed in last.
     offline = [
-        _person(person, now=now, online=False)
+        _person(person, now=now, online=False, logins=logins_by_user)
         for person in people.exclude(last_seen_at__gte=since_online).order_by(
             F("last_seen_at").desc(nulls_last=True), "name"
         )[:PRESENCE_LIST_LIMIT]
@@ -339,17 +374,12 @@ def presence_summary(*, now=None) -> dict:
             online=bool(
                 person["last_seen_at"] and person["last_seen_at"] >= since_online
             ),
+            logins=logins_by_user,
         )
         for person in people.order_by("name")
     ]
     groups = presence_groups(everyone)
 
-    events = LoginEvent.objects.filter(user__deleted_at__isnull=True)
-    day_start = timezone.make_aware(
-        timezone.datetime.combine(today, timezone.datetime.min.time()),
-        timezone.get_current_timezone(),
-    )
-    week_start_dt = day_start - timedelta(days=today.weekday())
     logins_today = events.filter(at__gte=day_start).count()
     logins_this_week = events.filter(at__gte=week_start_dt).count()
     logins_last_7_days = events.filter(at__gte=now - timedelta(days=7)).count()

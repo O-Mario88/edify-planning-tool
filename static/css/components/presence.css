@@ -83,6 +83,17 @@
 .presence-duration--online { color: var(--edify-success-text); font-weight: 650; }
 .presence-duration small { display: block; color: var(--edify-text-subtle); font-weight: 400; }
 .presence-duration--never { color: var(--edify-text-subtle); font-style: italic; }
+/* Sign-ins: when this person last signed in, and how often (owner,
+   2026-09-16). Sits beside Duration and reads the same way — a figure with
+   its detail underneath — so the two columns scan as one block of numbers.
+   The link is the person's user record; the Country Director's copy of the
+   table renders the same cell as a span, so both spellings must look alike. */
+.presence-table__signins { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.presence-signin { color: inherit; text-decoration: none; }
+.presence-signin small { display: block; color: var(--edify-text-subtle); font-weight: 400; }
+a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: underline; }
+.presence-signin--never { color: var(--edify-text-subtle); font-style: italic; }
+
 .presence-table__working { min-width: 12rem; }
 .presence-table__section { white-space: nowrap; }
 .presence-table__empty { padding: 1.4rem; text-align: center; color: var(--edify-text-subtle); font-weight: 600; }

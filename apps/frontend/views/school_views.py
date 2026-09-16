@@ -45,9 +45,13 @@ from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import has_permission, render_access_denied
 from apps.core.rbac import Permission
 from apps.projects.models import (
-    OPEN_PROJECT_STATUSES,
     Project,
     ProjectSchoolAssignment,
+)
+from apps.projects.scoping import (
+    annotate_coordinator_names,
+    assignable_projects,
+    enrollable_schools,
 )
 from apps.core.enums import ClusterRecordStatus
 from apps.core.scoping import (
@@ -751,24 +755,14 @@ def school_directory_view(request):
             )
             .order_by("name")
         )
-    from apps.projects.scoping import scoped_projects
-
-    projects = scoped_projects(user).filter(
-        status__in=[status.value for status in OPEN_PROJECT_STATUSES],
-    )
-    if user.active_role not in (
-        "ImpactAssessment",
-        "CountryDirector",
-        "Admin",
-    ):
-        projects = projects.filter(
-            Q(manager_staff_id=getattr(user, "staff_profile_id", None))
-            | Q(
-                staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
-                staff_assignments__is_active=True,
-            )
-        )
-    projects = projects.distinct().order_by("name")
+    # The Assign Project bulk modal below this list. `assignable_projects`, not
+    # `scoped_projects` narrowed to the projects the caller runs: enrolling a
+    # school is a decision about the school, which belongs to its CCEO or
+    # Programme Lead, and the Project Coordinator who created the cohort is
+    # never its owner. The old narrowing left every school-scoped role with an
+    # empty dropdown, so the bulk path could not fill a new project at all
+    # (owner, 2026-09-16) — the single-school drawer answers the same way.
+    projects = annotate_coordinator_names(assignable_projects(user))
 
     # An empty table says why it is empty (controls audit F-03, 2026-09-14):
     # a filter with no matches used to tell the reader no schools had ever
@@ -1297,7 +1291,9 @@ def assign_to_project_drawer_view(request, school_id):
         # that filter is why Add to Project offered them nothing.
         from apps.projects.services import projects_open_for_enrolment
 
-        projects = projects_open_for_enrolment(user, school)
+        # Whose cohort each one is, so the person enrolling a school can tell
+        # the coordinator's projects apart in a country-wide list.
+        projects = annotate_coordinator_names(projects_open_for_enrolment(user, school))
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
@@ -1762,13 +1758,17 @@ def bulk_assign_project_view(request):
                     "schools can be assigned to it.",
                 )
                 return redirect("/schools")
-            # Same scope constraint as bulk_match_staff_view above: the
-            # project.assignSchool permission gates *whether* the caller may
-            # assign, not *which* schools they may reach.
-            scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope, direct_only=True).filter(
-                id__in=school_ids, deleted_at__isnull=True
-            )
+            # Scope-constrained, like every bulk path here — but on the
+            # project one the reachable set is `enrollable_schools`: own
+            # portfolio and supervised team. A Programme Lead holds no school
+            # directly, so the direct-only set left them with an empty bulk
+            # selection and a refusal on save (owner, 2026-09-16). Editing,
+            # clustering and staff-matching stay direct-only; this widening is
+            # project enrolment alone.
+            schools = enrollable_schools(request.user)
+            if schools is None:
+                schools = School.objects.none()
+            schools = schools.filter(id__in=school_ids, deleted_at__isnull=True)
 
             from apps.projects.services import assign_school as assign_project_school
 

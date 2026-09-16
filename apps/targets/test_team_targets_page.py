@@ -13,6 +13,8 @@ from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
+
 from django.test import Client, TestCase
 from django.utils import timezone
 
@@ -743,6 +745,9 @@ class TeamTargetsPageTest(TestCase):
         self.assertIsNone(act.scheduled_date)
         self.assertEqual(act.responsible_staff_id, self.cceo1_sp.id)
 
+    # Schedules 21 July 2026, which has passed; the rest of this class
+    # reads a whole fiscal year, so only this test moves its "today".
+    @freeze_time("2026-07-01")
     def test_recovery_schedule_creates_budget_lines(self):
         from apps.budget.models import CostCatalogue, CostSetting
 

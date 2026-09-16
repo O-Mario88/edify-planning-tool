@@ -30,9 +30,9 @@ window.subregionMap = function (){
     geo:null, subcountyIndex:null, subcountyCache:{},
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
     boundaryExitHandler:null,
-    // The distribution table's three wide columns (visited, trained,
-    // students) show where the table has the room: below the map on a tablet
-    // and on desktop screens from 100rem. A stylesheet cannot decide this —
+    // The distribution table's three wide columns (the "# planned" figures
+    // beside each achieved/planned ratio) show where the table has the room:
+    // below the map from tablet width up. A stylesheet cannot decide this —
     // the platform forces every table cell visible with a ten-part
     // !important rule (mobile-micro-ux.css), which yields only to an inline
     // display:none, i.e. to x-show. So the component watches the two bands.
@@ -90,8 +90,13 @@ window.subregionMap = function (){
           .filter(metric => this.districtKey(metric.district) === districtKey)
           .map(metric => ({
             level:'subcounty', name:metric.subcounty,
-            visited:metric.visited ?? null, trained:metric.trained ?? null,
-            students:metric.enrollment ?? null,
+            visits_planned:metric.visits_planned || 0,
+            visits_achieved:metric.visits_achieved || 0,
+            cluster_meetings_planned:metric.cluster_meetings_planned || 0,
+            cluster_meetings_achieved:metric.cluster_meetings_achieved || 0,
+            cluster_trainings_planned:metric.cluster_trainings_planned || 0,
+            cluster_trainings_achieved:metric.cluster_trainings_achieved || 0,
+            assigned_to_partner:metric.assigned_to_partner || 0,
             schools:metric.schools || 0, clusters:metric.clusters || 0,
             ssa_avg:metric.ssa_avg,
             colour:this.colourOf(metric.subregion),
@@ -103,8 +108,13 @@ window.subregionMap = function (){
           .filter(metric => metric.subregion === this.focusedSubregion)
           .map(metric => ({
             level:'district', name:metric.district,
-            visited:metric.visited || 0, trained:metric.trained || 0,
-            students:metric.enrollment || 0,
+            visits_planned:metric.visits_planned || 0,
+            visits_achieved:metric.visits_achieved || 0,
+            cluster_meetings_planned:metric.cluster_meetings_planned || 0,
+            cluster_meetings_achieved:metric.cluster_meetings_achieved || 0,
+            cluster_trainings_planned:metric.cluster_trainings_planned || 0,
+            cluster_trainings_achieved:metric.cluster_trainings_achieved || 0,
+            assigned_to_partner:metric.assigned_to_partner || 0,
             schools:metric.schools || 0, clusters:metric.clusters || 0,
             ssa_avg:metric.ssa_avg,
             colour:this.colourOf(metric.subregion),
@@ -113,23 +123,21 @@ window.subregionMap = function (){
       }
       return this.subregionDistributionRows.map(row => ({
         level:'subregion', name:row.name,
-        visited:row.schools_visited || 0, trained:row.schools_trained || 0,
-        students:row.enrollment || 0,
+        visits_planned:row.visits_planned || 0,
+        visits_achieved:row.visits_achieved || 0,
+        cluster_meetings_planned:row.cluster_meetings_planned || 0,
+        cluster_meetings_achieved:row.cluster_meetings_achieved || 0,
+        cluster_trainings_planned:row.cluster_trainings_planned || 0,
+        cluster_trainings_achieved:row.cluster_trainings_achieved || 0,
+        assigned_to_partner:row.assigned_to_partner || 0,
         schools:row.schools || 0, clusters:row.clusters || 0,
         ssa_avg:row.ssa_avg, colour:row.colour || this.colourOf(row.name),
       }));
     },
-    distributionCoverageText(){
-      const rows = this.distributionRows();
-      const assessed = rows.filter(row => row.ssa_avg != null).length;
-      const nouns = {
-        'Sub-Region':['sub-region', 'sub-regions'],
-        'District':['district', 'districts'],
-        'Sub-County':['sub-county', 'sub-counties'],
-      };
-      const names = nouns[this.distributionLevel()];
-      const noun = names[rows.length === 1 ? 0 : 1];
-      return `Coverage: ${assessed} of ${rows.length} ${noun}.`;
+    achievedOfPlanned(achieved, planned){
+      /* Display only: the two counts come from the server
+         (apps.analytics.plan_progress) and are shown side by side. */
+      return `${(achieved || 0).toLocaleString()}/${(planned || 0).toLocaleString()}`;
     },
     isDistributionRowActive(row){
       if(row.level === 'subregion') return this.focusedSubregion === row.name;
@@ -616,6 +624,10 @@ window.subregionMap = function (){
         ssa_avg:null, ssa_avg_cluster:null, ssa_avg_core:null,
         best:null, worst:null, trained:0, visited:0,
         teachers_trained:0, leaders_trained:0,
+        visits_planned:0, visits_achieved:0,
+        cluster_meetings_planned:0, cluster_meetings_achieved:0,
+        cluster_trainings_planned:0, cluster_trainings_achieved:0,
+        assigned_to_partner:0,
         subregion: this.metrics[this.focusedDistrict]?.subregion || '',
       };
       /* No served row yet (the combine request is still in flight, or it
@@ -1345,6 +1357,13 @@ window.subregionMap = function (){
           level:'subcounty', name:properties.n,
           schools:metric.schools || 0, clusters:metric.clusters || 0,
           ssa_avg:metric.ssa_avg,
+          visits_planned:metric.visits_planned || 0,
+          visits_achieved:metric.visits_achieved || 0,
+          cluster_meetings_planned:metric.cluster_meetings_planned || 0,
+          cluster_meetings_achieved:metric.cluster_meetings_achieved || 0,
+          cluster_trainings_planned:metric.cluster_trainings_planned || 0,
+          cluster_trainings_achieved:metric.cluster_trainings_achieved || 0,
+          assigned_to_partner:metric.assigned_to_partner || 0,
           colour:this.colourOf(metric.subregion),
         });
         const path = document.createElementNS(this.NS, 'path');

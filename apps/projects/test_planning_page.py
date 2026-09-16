@@ -104,6 +104,27 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertEqual(rows[self.project_b.id]["weakest"], "Learning Environment")
         self.assertEqual(rows[self.project_b.id]["average"], 4.7)
 
+    def test_the_queue_is_grouped_by_project(self):
+        """Owner, 2026-09-16: "planning page should be grouped by projects
+        created". The queue was a flat list ordered by school, so a
+        coordinator running four cohorts read one undifferentiated backlog."""
+        context = get_planning(
+            self.admin, {"fy": self.fy, "quarter": self.quarter, "per_page": 25}
+        )
+        groups = context["row_groups"]
+        self.assertEqual(
+            [group["project_name"] for group in groups],
+            ["Leadership Growth Project", "Reading Excellence Initiative"],
+        )
+        self.assertEqual([group["count"] for group in groups], [1, 1])
+        # Every visible row sits in exactly one group — none is dropped by the
+        # grouping, which is what a page of rows silently losing one looks like.
+        self.assertEqual(
+            sum(len(group["rows"]) for group in groups), len(context["rows"])
+        )
+        page = self.client.get("/projects/planning")
+        self.assertContains(page, "spp-group-head")
+
     def test_kpi_strip_keeps_six_distinct_planning_signals(self):
         context = get_planning(
             self.admin, {"fy": self.fy, "quarter": self.quarter, "per_page": 25}

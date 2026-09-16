@@ -69,6 +69,16 @@
             {% else %}
               <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ s.assignPartnerReason }}" data-assign-locked="{% if not s.canAssignPartner %}true{% else %}false{% endif %}" aria-label="Assign {{ s.name }} to a partner unavailable{% if s.assignPartnerReason %}: {{ s.assignPartnerReason }}{% endif %}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg><span>Assign</span></button>
             {% endif %}
+
+            {% if can_edit_cluster %}
+              {% comment %}A school added by mistake leaves the cluster from
+              its row (owner, 2026-09-15). The roster re-fetches on the same
+              trigger the add-schools drawer fires.{% endcomment %}
+              <button type="button" class="school-record-action school-record-action--danger" hx-post="/clusters/{{ cluster_id }}/schools/{{ s.id }}/remove" hx-swap="none" hx-confirm="Remove {{ s.name }} from this cluster? It goes back to unclustered and can be added to another cluster." aria-label="Remove {{ s.name }} from this cluster">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9.5 7V5.5h5V7M8 7l.7 12h6.6L16 7M10.5 10.5v6M13.5 10.5v6"/></svg>
+                <span>Remove</span>
+              </button>
+            {% endif %}
           </div>
         </div>
 

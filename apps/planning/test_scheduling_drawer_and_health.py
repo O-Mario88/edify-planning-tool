@@ -48,6 +48,10 @@ def _check(report: dict, key: str) -> dict:
     return next(c for c in report["checks"] if c["key"] == key)
 
 
+#: What the cost preview receives when the planner has typed no materials.
+NO_MATERIALS = {"printingPages": "", "photocopyPages": "", "photocopyCopies": ""}
+
+
 class AvailableActivityTypeServiceTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -474,6 +478,54 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200)
         return response.content.decode("utf-8")
 
+    def _drawer_for(self, action: str) -> str:
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(
+            f"/planning/schedule-modal?cluster_id={self.cluster.id}&action={action}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode("utf-8")
+
+    def test_the_drawer_switches_between_training_and_meeting(self):
+        """Owner, 2026-09-16: "when you switch from training to meeting, it
+        has to close the cluster training drawer and reopen".
+
+        The two modes were only reachable from two separate buttons behind the
+        drawer, so changing your mind meant closing this one and hunting for
+        the other — which is what made it look like two unrelated drawers. The
+        switch reopens this one in the other mode.
+        """
+        training = self._drawer_for("training")
+        meeting = self._drawer_for("meeting")
+
+        for html in (training, meeting):
+            # Both choices are offered, from either mode.
+            self.assertIn('id="planning-activity-training"', html)
+            self.assertIn('id="planning-activity-meeting"', html)
+            # Each reopens the whole drawer rather than hiding half a form.
+            self.assertEqual(html.count('hx-target="#drawer-container"'), 2)
+            self.assertIn(
+                f"/planning/schedule-modal?cluster_id={self.cluster.id}"
+                "&amp;action=meeting",
+                html,
+            )
+            # The switch is outside the form, so it is never posted with it.
+            self.assertLess(
+                html.index('name="cluster_activity_type"'),
+                html.index('hx-post="/planning/schedule-action"'),
+            )
+
+        # The mode that is open is the one ticked, and the one the form posts.
+        self.assertIn('value="cluster_training"', training)
+        self.assertNotIn('value="cluster_meeting"', training)
+        self.assertIn('value="cluster_meeting"', meeting)
+        self.assertNotIn('value="cluster_training"', meeting)
+        # Exactly one radio carries `checked`, in either mode.
+        self.assertEqual(training.count("\nchecked\n"), 1)
+        self.assertEqual(meeting.count("\nchecked\n"), 1)
+
     def test_it_submits_the_agency_booking_workflow(self):
         html = self._drawer()
         self.assertIn('value="certified_partner_agency"', html)
@@ -561,11 +613,12 @@ class ClusterDrawerDeliveryTest(TestCase):
 
     def test_cluster_card_cost_preview_refreshes_for_numeric_input(self):
         html = self._cluster_card_drawer()
-        # Every input that moves the total re-prices it. The three typed
-        # figures debounce, because they are typed; the school ticks fire on
-        # change, because a tick is already a finished decision.
+        # Every input that moves the total re-prices it. The six typed
+        # figures (three per school, three materials by the page) debounce,
+        # because they are typed; the school ticks fire on change, because a
+        # tick is already a finished decision.
         self.assertEqual(
-            html.count('hx-trigger="input changed delay:250ms, change"'), 3
+            html.count('hx-trigger="input changed delay:250ms, change"'), 6
         )
         self.assertEqual(
             html.count('hx-trigger="change" hx-include="#action-planner-form"'), 3
@@ -605,6 +658,7 @@ class ClusterDrawerDeliveryTest(TestCase):
             self.cluster.id,
             planned_date=None,
             responsible_user_id=self.user.id,
+            materials=NO_MATERIALS,
         )
 
     def test_cost_preview_adds_the_per_school_categories_up_itself(self):
@@ -644,7 +698,183 @@ class ClusterDrawerDeliveryTest(TestCase):
             self.cluster.id,
             planned_date=None,
             responsible_user_id=self.user.id,
+            materials=NO_MATERIALS,
         )
+
+    def test_cost_preview_prices_the_materials_the_planner_typed(self):
+        """Printing by the page, photocopying by the page and the copy
+        (owner, 2026-09-15). The preview receives the three inputs as typed;
+        a blank one is no materials, never a default."""
+        client = Client()
+        client.force_login(self.user)
+        with patch(
+            "apps.frontend.views.cluster_views._get_cost_preview_data",
+            return_value={
+                "catalogue_version": "test",
+                "lines": [],
+                "amount": 0,
+                "can_schedule": True,
+                "blockers": [],
+            },
+        ) as preview:
+            response = client.get(
+                "/clusters/cost-preview",
+                {
+                    "activity_type": "meeting",
+                    "cluster_id": self.cluster.id,
+                    "teachers_per_school": "1",
+                    "leaders_per_school": "1",
+                    "other_per_school": "",
+                    "printing_pages": "12",
+                    "photocopy_pages": "4",
+                    "photocopy_copies": "",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+        self.assertEqual(response.status_code, 200)
+        preview.assert_called_once_with(
+            "meeting",
+            6,
+            self.cluster.id,
+            planned_date=None,
+            responsible_user_id=self.user.id,
+            materials={
+                "printingPages": "12",
+                "photocopyPages": "4",
+                "photocopyCopies": "",
+            },
+        )
+
+    def test_the_planner_drawer_asks_for_materials_and_reads_blank_as_zero(self):
+        """Owner, 2026-09-15: the per-school fields are not required, and a
+        field the planner cleared comes back as 0 on a re-render rather than
+        the first-open default quietly restored."""
+        first_open = self._cluster_card_drawer()
+        for needle in (
+            'name="printing_pages"',
+            'name="photocopy_pages"',
+            'name="photocopy_copies"',
+        ):
+            self.assertIn(needle, first_open)
+        self.assertNotIn('step="1" required', first_open)
+        # First open: the training default of two teachers per school.
+        self.assertIn("teachers: 2,", first_open)
+
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(
+            f"/clusters/planner-drawer?cluster_id={self.cluster.id}"
+            "&activity_type=training&fixed_cluster=true"
+            "&teachers_per_school=&leaders_per_school=1&other_per_school="
+            "&printing_pages=9&photocopy_pages=&photocopy_copies=30",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertIn("teachers: 0,", html)
+        self.assertIn("leaders: 1,", html)
+        self.assertIn("other: 0,", html)
+        # Materials round-trip exactly as typed.
+        self.assertIn("printingPages: '9',", html)
+        self.assertIn("photocopyPages: '',", html)
+        self.assertIn("photocopyCopies: '30',", html)
+        self.assertIn("copiesTouched: true,", html)
+
+    def test_the_posted_materials_are_stored_and_priced_by_the_page(self):
+        """The whole seam for materials: the Cluster Action Planner posts
+        pages and copies, the service stores them, and the cost lines carry
+        printing = pages x rate and photocopying = pages x copies x rate."""
+        from apps.budget.costing_service import active_catalogue
+        from apps.budget.models import CostSetting
+
+        catalogue = active_catalogue("2026")
+        CostSetting.objects.filter(
+            catalogue=catalogue, key="printing_training_materials"
+        ).update(unit_cost=500, approved_minimum=500)
+        CostSetting.objects.filter(
+            catalogue=catalogue, key="photocopying_training_materials"
+        ).update(unit_cost=100, approved_minimum=100)
+
+        client = Client()
+        client.force_login(self.user)
+        scheduled = timezone.localdate() + datetime.timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += datetime.timedelta(days=1)
+        response = client.post(
+            "/clusters/schedule-activity",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "meeting",
+                "scheduled_date": scheduled.isoformat(),
+                "teachers_per_school": "",
+                "leaders_per_school": "2",
+                "other_per_school": "",
+                "printing_pages": "10",
+                "photocopy_pages": "4",
+                "photocopy_copies": "6",
+                "responsible_staff_id": self.user_profile.id,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(cluster_id=self.cluster.id)
+        self.assertEqual(activity.activity_type, "cluster_meeting")
+        # Blank per-school fields are zero, not a refusal.
+        self.assertEqual(
+            (
+                activity.teachers_per_school,
+                activity.leaders_per_school,
+                activity.other_per_school,
+            ),
+            (0, 2, 0),
+        )
+        self.assertEqual(activity.expected_participants, 6)
+        self.assertEqual(
+            (
+                activity.printing_pages,
+                activity.photocopy_pages,
+                activity.photocopy_copies,
+            ),
+            (10, 4, 6),
+        )
+        by_key = {
+            line.cost_setting_key: line for line in activity.schedule_cost_lines.all()
+        }
+        self.assertEqual(by_key["printing_training_materials"].amount, 10 * 500)
+        self.assertEqual(by_key["photocopying_training_materials"].amount, 4 * 6 * 100)
+
+    def test_a_meeting_with_no_pages_carries_no_materials_line(self):
+        """Left blank or at zero, printing fetches no cost (owner,
+        2026-09-15)."""
+        client = Client()
+        client.force_login(self.user)
+        scheduled = timezone.localdate() + datetime.timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += datetime.timedelta(days=1)
+        response = client.post(
+            "/clusters/schedule-activity",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "meeting",
+                "scheduled_date": scheduled.isoformat(),
+                "leaders_per_school": "2",
+                "printing_pages": "0",
+                "photocopy_pages": "",
+                "photocopy_copies": "6",
+                "responsible_staff_id": self.user_profile.id,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(cluster_id=self.cluster.id)
+        self.assertIsNone(activity.printing_pages)
+        self.assertIsNone(activity.photocopy_pages)
+        self.assertEqual(activity.photocopy_copies, 6)
+        keys = set(
+            activity.schedule_cost_lines.values_list("cost_setting_key", flat=True)
+        )
+        self.assertNotIn("printing_training_materials", keys)
+        self.assertNotIn("photocopying_training_materials", keys)
 
     def _cluster_card_drawer(self) -> str:
         client = Client()

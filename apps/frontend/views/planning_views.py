@@ -1461,6 +1461,16 @@ def schedule_action_view(request):
     ):
         if raw:
             payload[key] = raw
+    # Training materials by the page (owner, 2026-09-15). Passed through as
+    # typed; the service reads a blank as none and refuses a non-number.
+    for key, form_key in (
+        ("printingPages", "printing_pages"),
+        ("photocopyPages", "photocopy_pages"),
+        ("photocopyCopies", "photocopy_copies"),
+    ):
+        raw = request.POST.get(form_key, "").strip()
+        if raw:
+            payload[key] = raw
     for key, raw in (
         ("teachersAttended", teachers_attended),
         ("leadersAttended", leaders_attended),

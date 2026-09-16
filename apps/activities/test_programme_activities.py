@@ -15,6 +15,8 @@ from io import BytesIO
 from datetime import date
 
 from django.db import connections
+from freezegun import freeze_time
+
 from django.test import TestCase, TransactionTestCase
 from openpyxl import load_workbook
 
@@ -43,9 +45,9 @@ from apps.projects.models import Project
 # costs").
 # Since the owner's catalogue of 2026-09-06 a student conference is a group
 # session with its own Student Conference rate, the room and the facilitator
-# per day, printing and photocopying of materials, and the staff day; only a
-# TOT training feeds its participants. The conference rate and the two
-# materials rates default to 0 until the Country Director sets them.
+# per day, the materials it states by the page (none here), and the staff
+# day; only a TOT training feeds its participants. The conference rate
+# defaults to 0 until the Country Director sets it.
 VENUE = 30_000
 FACILITATION = 50_000
 TRANSPORT_PER_DAY = 50_000
@@ -53,9 +55,9 @@ LUNCH_PER_DAY = 12_000
 STAFF_DAY = TRANSPORT_PER_DAY + LUNCH_PER_DAY
 
 THREE_DAY_TOTAL = 3 * VENUE + 3 * FACILITATION + 3 * STAFF_DAY
-# One line per component: the conference rate, venue, facilitation, printing,
-# photocopying, transport and lunch.
-COMPONENT_LINES = 7
+# One line per component: the conference rate, venue, facilitation,
+# transport and lunch. No pages stated, so no materials line.
+COMPONENT_LINES = 5
 
 FY = "2026"  # Aug/Sep 2026 both sit in operational FY2026 (Oct 1 boundary)
 
@@ -109,6 +111,10 @@ def _schedule(principal, **over) -> Activity:
     return Activity.objects.get(id=result["id"])
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-27")
 class _ProgrammeFixture(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -312,11 +318,9 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         self.assertEqual(
             by_key,
             {
-                # The event's own rate and the materials rates are one line
-                # each (a 0 amount has nothing to split across months).
+                # The event's own rate is one line (a 0 amount has nothing
+                # to split across months).
                 "student_conference": 0,
-                "printing_training_materials": 0,
-                "photocopying_training_materials": 0,
                 # August hosts 1 of the 3 service days.
                 "group_training_venue_cost#m202608": VENUE,
                 "group_training_facilitation_fee#m202608": FACILITATION,
@@ -741,6 +745,10 @@ class ProgrammeWorkPlanHealthTest(_ProgrammeFixture):
 
 
 # ── Concurrency (TransactionTestCase, mirrors test_audit_pipeline) ───────────
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-20")
 class ProgrammeDoubleClickRaceTest(TransactionTestCase):
     """Two identical concurrent submissions must yield exactly ONE activity.
 

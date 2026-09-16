@@ -25,6 +25,8 @@ from __future__ import annotations
 import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from freezegun import freeze_time
+
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
@@ -58,6 +60,10 @@ INTERVENTION_SCORES = [
 
 
 @override_settings(EVIDENCE_STORAGE_DIR=tempfile.mkdtemp(prefix="edify-evidence-flow-"))
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-06-24")
 class PartnerAndClusterFlowTest(APITestCase):
     """Proves Demo Flows 4 + 6 (and DOCX evidence) against authenticated API calls."""
 

@@ -6,6 +6,14 @@
   so a country roster reads as a dozen groups and not a hundred rows; a
   group opens by itself when somebody in it is online.
 
+  Sign-ins (owner, 2026-09-16) is each person's own column: when they last
+  signed in and how many times, which the header only had as a country total.
+  It is not the Duration column — that is the sitting, which keeps growing
+  after the sign-in that started it. With `staff_links` the cell links to that
+  person's user record, where their history lives; the Country Director's copy
+  of this table leaves it as plain text, because the admin panel is not theirs
+  to open.
+
   Expects `presence` (apps.accounts.presence.presence_summary).
 {% endcomment %}
 <section class="presence-panel" aria-labelledby="presence-title" data-admin-presence>
@@ -22,6 +30,7 @@
         <tr>
           <th scope="col" class="presence-table__status"><span class="sr-only">Status</span></th>
           <th scope="col">Staff name</th>
+          <th scope="col">Sign-ins</th>
           <th scope="col">Duration</th>
           <th scope="col">Working on what</th>
           <th scope="col">Part of the system accessed</th>
@@ -30,7 +39,7 @@
       {% for group in presence.groups %}
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="presence-group__row">
-          <td colspan="5">
+          <td colspan="6">
             <button type="button" class="presence-group__toggle" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="presence-group-{{ forloop.counter }}">
               <span class="presence-group__chevron" aria-hidden="true"></span>
               <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
@@ -42,7 +51,7 @@
         {% for person in group.members %}{% include "partials/dashboards/_whos_online_row.html" with is_lead=False %}{% endfor %}
       </tbody>
       {% empty %}
-      <tbody><tr><td colspan="5" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
+      <tbody><tr><td colspan="6" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
       {% endfor %}
     </table>
   </div>

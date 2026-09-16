@@ -29,6 +29,7 @@ from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from freezegun import freeze_time
 
 
 def _seed_rates(**rates: int) -> None:
@@ -66,6 +67,10 @@ def _seed_rates(**rates: int) -> None:
         )
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-03")
 class CentralizedCostingTest(APITestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Cost Region")
@@ -276,6 +281,12 @@ class CentralizedCostingTest(APITestCase):
                 "costingProfile": "TOT_TRAINING",
                 "deliveryType": "staff",
                 "expectedParticipants": 20,
+                # One page printed, one page copied once: the materials
+                # rates are by the page (owner, 2026-09-15), and a session
+                # that states no pages carries no materials line.
+                "printingPages": 1,
+                "photocopyPages": 1,
+                "photocopyCopies": 1,
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
@@ -321,6 +332,7 @@ class CentralizedCostingTest(APITestCase):
         """Meetings include their venue and staff travel, but no training fee."""
         _seed_rates(
             cluster_meetings_trainings=7000,
+            cluster_meetings_trainings_meals=6000,
             group_training_venue_cost=30000,
             primary_transport_per_day=15000,
             lunch_per_day=8000,
@@ -333,16 +345,21 @@ class CentralizedCostingTest(APITestCase):
                 "activityType": "cluster_meeting",
                 "deliveryType": "staff",
                 "expectedParticipants": 12,
+                "printingPages": 2,
+                "photocopyPages": 3,
+                "photocopyCopies": 12,
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # The session's own rate, the room, the materials (0 until set) and
-        # the staff day. Nobody is fed at a meeting in the 2026-09-06 catalogue.
-        self.assertEqual(prev["amount"], 7000 + 30000 + 15000 + 8000)
+        # The session's own rate, the twelve participants fed at the cluster
+        # meals rate (owner, 2026-09-15), the room, the materials (by the
+        # page, 0 until the rates are set) and the staff day.
+        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
             {
                 "cluster_meetings_trainings",
+                "cluster_meetings_trainings_meals",
                 "group_training_venue_cost",
                 "printing_training_materials",
                 "photocopying_training_materials",
@@ -351,15 +368,29 @@ class CentralizedCostingTest(APITestCase):
             },
         )
         self.assertEqual(prev["lines"][0]["label"], "Cluster Meetings/ Trainings")
+        meals = next(
+            line for line in prev["lines"] if line["key"].endswith("trainings_meals")
+        )
+        self.assertEqual((meals["qty"], meals["amount"]), (12, 72000))
+        self.assertEqual(meals["label"], "Cluster Meetings/ Trainings - Meals")
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertEqual(
-            labels, {"activity_rate", "venue", "materials", "transport", "lunch"}
+            labels,
+            {
+                "activity_rate",
+                "participant_meals",
+                "venue",
+                "materials",
+                "transport",
+                "lunch",
+            },
         )
         self.assertIn("venue", labels)
         self.assertNotIn("facilitation", labels)
+        # The retired legacy snack key never prices a new meeting.
         self.assertNotIn(
-            "participant_meals", labels
-        )  # group-training rate must NOT appear
+            "meals_per_participant", {line["key"] for line in prev["lines"]}
+        )
 
     def test_a_tot_training_requires_participants(self):
         """Missing headcounts must not invent ten participants: the session

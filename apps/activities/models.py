@@ -394,6 +394,14 @@ class Activity(SoftDeleteModel):
     teachers_per_school = models.IntegerField(null=True, blank=True)
     leaders_per_school = models.IntegerField(null=True, blank=True)
     other_per_school = models.IntegerField(null=True, blank=True)
+    # Training materials, as planned for a cluster session (owner,
+    # 2026-09-15): printing is priced by the page, photocopying by the page
+    # and the copy. Stored so a reschedule re-prices the same materials, not
+    # a session that silently forgot its handouts. Null or zero means none
+    # was planned and no materials line is charged.
+    printing_pages = models.IntegerField(null=True, blank=True)
+    photocopy_pages = models.IntegerField(null=True, blank=True)
+    photocopy_copies = models.IntegerField(null=True, blank=True)
     teachers_attended = models.IntegerField(null=True, blank=True)
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)

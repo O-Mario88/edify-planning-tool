@@ -5,6 +5,21 @@
    branch.{% endcomment %}
 <div id="project-list" class="space-y-6">
 
+  {% comment %}
+  One card per project, each opening on the schools that belong to it (owner,
+  2026-09-16). The table below stays: it is the wide comparison across
+  projects — budget, interventions, follow-up — which a stack of cards cannot
+  give. The cards answer the other question, "which schools are in this one,
+  and what needs doing to them".
+  {% endcomment %}
+  {% if portfolio %}
+  <section class="space-y-4" aria-label="Projects and their schools">
+    {% for row in portfolio %}
+      {% include "partials/projects/project_card.html" %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <!-- =========== PROJECT TABLE (desktop / tablet) =========== -->
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">

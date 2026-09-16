@@ -1,0 +1,50 @@
+{% comment %}
+  Training materials for a cluster session, planned by the page (owner,
+  2026-09-15): printing is pages x the per-page printing rate; photocopying
+  is pages x copies x the per-page photocopying rate. Blank or 0 means none
+  is planned and no materials line is charged — the rates used to be fetched
+  once per session whether or not anything was printed.
+
+  Copies follow the planned participant total (one handout each) until the
+  planner types their own number, which is how the participant count moves
+  the cost of a session whose other components are flat per day.
+
+  Expects the enclosing Alpine component to expose `printingPages`,
+  `photocopyPages`, `photocopyCopies`, `copiesTouched`, `copies` and
+  `photocopiedPages`. `materials_preview` adds the live cost-preview
+  triggers of the Cluster Action Planner; the planning drawer has none.
+{% endcomment %}
+<div>
+  <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Training materials <span class="text-slate-400 normal-case tracking-normal font-medium">(optional)</span></span>
+  <div class="grid grid-cols-3 gap-2" data-keep-columns>
+    <div>
+      <label for="printing_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Printing (pages)</label>
+      <input aria-label="Pages to print" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+        id="printing_pages" name="printing_pages" x-model="printingPages"
+        {% if materials_preview %}hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
+        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"{% endif %}
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
+    </div>
+    <div>
+      <label for="photocopy_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Photocopying (pages)</label>
+      <input aria-label="Pages to photocopy" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+        id="photocopy_pages" name="photocopy_pages" x-model="photocopyPages"
+        {% if materials_preview %}hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
+        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"{% endif %}
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
+    </div>
+    <div>
+      <label for="photocopy_copies" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Copies</label>
+      <input aria-label="Photocopies to make" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+        id="photocopy_copies" name="photocopy_copies" :value="copies"
+        @input="copiesTouched = true; photocopyCopies = $event.target.value"
+        {% if materials_preview %}hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
+        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"{% endif %}
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
+    </div>
+  </div>
+  <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400" aria-live="polite">
+    Pages &times; the printing rate; pages &times; copies &times; the photocopying rate. Leave blank or 0 for no materials cost.
+    <span x-show="photocopiedPages" x-cloak x-text="`${Number(photocopyPages) || 0} pages × ${Number(copies) || 0} copies = ${photocopiedPages.toLocaleString()} pages to photocopy.`"></span>
+  </p>
+</div>

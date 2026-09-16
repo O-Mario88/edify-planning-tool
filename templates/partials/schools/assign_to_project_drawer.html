@@ -83,7 +83,7 @@ required
 >
 <option value="">-- Choose Project --</option>
 {% for p in projects %}
-<option value="{{ p.id }}">{{ p.name }} ({{ p.code|default:"No Code" }})</option>
+<option value="{{ p.id }}">{{ p.name }} ({{ p.code|default:"No Code" }}){% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
 {% endfor %}
 </select>
 </div>

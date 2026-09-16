@@ -3457,6 +3457,21 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-record-action__label--compact { display: none; }
 
+/* Removing a school from its cluster: a quiet danger action, red ink on
+   the surface, filled on hover. Named "danger" so the interaction sheet's
+   quiet-button hover (which excludes [class*="danger"]) leaves it alone. */
+.school-record-action--danger {
+  border-color: color-mix(in oklab, var(--edify-danger-text, #b91c1c) 35%, var(--edify-border));
+  background: var(--edify-surface);
+  color: var(--edify-danger-text, #b91c1c);
+}
+
+.school-record-action--danger:hover:not(:disabled) {
+  background: var(--edify-danger-text, #b91c1c);
+  border-color: var(--edify-danger-text, #b91c1c);
+  color: var(--edify-on-accent, #fff);
+}
+
 .school-record-action:disabled {
   border-color: color-mix(in oklab, var(--edify-border) 72%, transparent);
   background: color-mix(in oklab, var(--edify-surface-muted) 82%, var(--edify-surface));

@@ -1,9 +1,19 @@
-"""FY2027 opens for planning while FY2026 closes (owner brief, 2026-09-15).
+"""The fiscal year boundary: what it still governs, and what it no longer does.
 
-FY2027 runs 1 October 2026 – 30 September 2027. Staff plan, schedule and budget
-it from 15 September 2026; nothing in it is delivered before 1 October; no
-FY2026 activity is carried into FY2027 by a reschedule; and FY2027 work is
-priced against an FY2027 rate card, never FY2026's.
+FY2027 runs 1 October 2026 – 30 September 2027. Nothing in it is delivered
+before 1 October, and no FY2026 activity is carried into it by a reschedule —
+its budget line, fund request and target credit belong to the year it was
+planned in.
+
+Two rules from the 2026-09-15 brief were lifted on 2026-09-16 at the owner's
+request, because together they made every 1 October a wall:
+
+- A date is plannable from today onwards, whatever year it falls in; the year
+  no longer has to be "opened" first, so a team can plan the term ahead, and
+  nothing is planned backwards into a day that has gone.
+- The cost catalogue is universal, not a fiscal year's. A year with no card of
+  its own is priced by the Country Director's live one instead of showing
+  "Ver: None active" and refusing every date in it.
 """
 
 from __future__ import annotations
@@ -53,21 +63,31 @@ class FiscalYearBoundaryTest(TestCase):
         before = timezone.make_aware(datetime.datetime(2026, 9, 1, 10))
         self.assertFalse(fy_policy.is_planning_open("2027", at=before))
 
-    def test_october_2026_accepted_and_fy2028_refused(self):
+    def test_any_future_date_is_plannable_whatever_its_fiscal_year(self):
+        """Scheduling is no longer gated on the year being opened.
+
+        Owner, 2026-09-16: "people can schedule any date ahead ... irrespective
+        of which FY". A team planning the term ahead was being told to ask the
+        Country Director for a date four weeks away, because the year it fell
+        in had not been opened. The year still governs delivery and pricing —
+        those are asked elsewhere — but not whether a date may be chosen.
+        """
         at = timezone.make_aware(datetime.datetime(2026, 9, 20, 10))
         fy_policy.assert_date_plannable(datetime.date(2026, 10, 1), at=at)
-        fy_policy.assert_date_plannable(SEP_29_2026, at=at)
-        with self.assertRaisesMessage(BadRequest, "FY2028 is not open"):
-            fy_policy.assert_date_plannable(datetime.date(2027, 10, 4), at=at)
+        fy_policy.assert_date_plannable(datetime.date(2026, 9, 20), at=at)
+        # FY2028, which nobody has opened, and a year beyond that.
+        fy_policy.assert_date_plannable(datetime.date(2027, 10, 4), at=at)
+        fy_policy.assert_date_plannable(datetime.date(2031, 2, 3), at=at)
 
-    def test_a_fy2027_date_outside_its_window_is_refused(self):
-        from apps.planning.models import FiscalYearPlanningPolicy
-
-        FiscalYearPlanningPolicy.objects.filter(fy="2027").update(
-            execution_start=datetime.date(2026, 10, 5)
-        )
-        with self.assertRaisesMessage(BadRequest, "take place between"):
-            fy_policy.assert_date_plannable(datetime.date(2026, 10, 2))
+    def test_a_date_that_has_passed_is_refused(self):
+        """Owner, 2026-09-16: "it can be today onwards but not yesterday or any
+        date before today". Today is still a working day, so today counts."""
+        at = timezone.make_aware(datetime.datetime(2026, 9, 20, 10))
+        with self.assertRaisesMessage(BadRequest, "has passed"):
+            fy_policy.assert_date_plannable(datetime.date(2026, 9, 19), at=at)
+        with self.assertRaisesMessage(BadRequest, "has passed"):
+            fy_policy.assert_date_plannable(datetime.date(2025, 3, 1), at=at)
+        fy_policy.assert_date_plannable(datetime.date(2026, 9, 20), at=at)
 
     def test_fy2027_work_cannot_start_before_1_october(self):
         activity = Activity(fy="2027", planned_date=OCT_6_2026)
@@ -113,10 +133,52 @@ class Fy2027CostingTest(StandardSupportBase):
             self.user,
         )
 
-    def test_fy2027_cannot_be_costed_before_its_rate_card(self):
-        self.assertIsNone(active_catalogue("2027"))
-        with self.assertRaises(BadRequest):
-            self._visit_on(OCT_6_2026)
+    def test_fy2027_is_costed_on_the_universal_catalogue(self):
+        """A year with no card of its own still prices (owner, 2026-09-16).
+
+        The catalogue is the Country Director's, not a fiscal year's, so
+        October work is priced by the live card rather than refused with
+        "Ver: None active" until someone publishes a year-stamped copy.
+        """
+        live = active_catalogue("2027")
+        self.assertIsNotNone(live)
+        self.assertEqual(live.id, self.fy26_card.id)
+        activity = Activity.objects.get(id=self._visit_on(OCT_6_2026)["id"])
+        self.assertEqual(activity.fy, "2027")
+        self.assertFalse(activity.cost_missing)
+        self.assertEqual(
+            set(
+                ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
+                    "catalogue_id", flat=True
+                )
+            ),
+            {live.id},
+        )
+
+    def test_a_future_year_prices_every_kind_of_scheduling(self):
+        """The surface the owner reported: "Cost Preview (Cluster Meeting)
+        Ver: None active — that is why next FY or future months are not
+        accepting to schedule activities". No card meant no version, which
+        meant a blocker, which meant the date was refused. One universal
+        catalogue answers for every year and every kind of work.
+        """
+        from apps.budget.costing_service import preview
+
+        for activity_type in ("cluster_meeting", "cluster_training", "school_visit"):
+            for fy in ("2027", "2031"):
+                with self.subTest(activity_type=activity_type, fy=fy):
+                    result = preview(
+                        {
+                            "activityType": activity_type,
+                            "deliveryType": "staff",
+                            "districtType": "primary",
+                            "expectedParticipants": 20,
+                            "fy": fy,
+                        }
+                    )
+                    self.assertEqual(result["blockers"], [])
+                    self.assertTrue(result["canSchedule"])
+                    self.assertIsNotNone(result["catalogueVersion"])
 
     def test_only_the_cd_carries_forward_and_only_once(self):
         with self.assertRaises(Forbidden):

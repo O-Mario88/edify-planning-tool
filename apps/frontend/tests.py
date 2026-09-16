@@ -2,6 +2,8 @@ from datetime import date
 from unittest.mock import patch
 
 from django.core.cache import cache
+from freezegun import freeze_time
+
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -11,6 +13,10 @@ from apps.schools.models import School
 from apps.clusters.models import Cluster, ClusterSubCounty
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-06-24")
 class FrontendViewsTestCase(TestCase):
     def setUp(self):
         User = get_user_model()

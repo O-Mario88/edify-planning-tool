@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import datetime
 
+from freezegun import freeze_time
+
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -26,6 +28,10 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-08-04")
 class ProductionGateRelaxationTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Gate Region")

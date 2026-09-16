@@ -239,6 +239,21 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
           {{ subregion_performance.totals.schools }} schools
         </p>
       </div>
+      {% comment %}
+        The columns (owner, 2026-09-15): Sub-Region, School, Cluster, # Visit
+        Planned, School Visit achieved (Achieved/Planned), # Cluster Meeting
+        Planned, Cluster Meetings Achieved (Achieved/Planned), # Cluster
+        Trainings Planned, Cluster trainings achieved (Achieved/Planned),
+        # Assigned to Partner. The figures come from apps.analytics.plan_progress
+        at every level of the table -- sub-region, district and sub-county --
+        so the same activity is counted the same way wherever it is read.
+
+        Every screen shows the name, the school and cluster counts, the three
+        achieved/planned ratios and the partner count. The three "# Planned"
+        columns repeat the denominator of the ratio beside them, so they are
+        the ones that give way on a phone: they show from tablet width up
+        (`wideColumns`), where the table has the room.
+      {% endcomment %}
       <div class="sr-distribution-scroll max-h-[620px]">
         <table class="sr-distribution-table w-full text-left text-table-cell"
                data-mobile-table="fit">
@@ -246,21 +261,30 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
             <col class="sr-distribution-col--name">
             <col class="sr-distribution-col--schools">
             <col class="sr-distribution-col--clusters">
-            <col class="sr-distribution-col--ssa">
+            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--achieved">
+            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--achieved">
+            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--achieved">
+            <col class="sr-distribution-col--partner">
           </colgroup>
           <thead class="sticky top-0 z-10 edify-surface">
             <tr class="text-table-header font-bold uppercase tracking-wider text-slate-400">
               <th class="pb-1.5 pr-1" x-text="distributionLevel()">Sub-region</th>
-              <th class="pb-1.5 px-1 text-right">Sch</th>
-              <th class="pb-1.5 px-1 text-right">Clu</th>
-              <th class="pb-1.5 pl-1 text-right">SSA</th>
-              {% comment %}Shown where the table has the room: from tablet width up,
-              now that the table sits below the map at every size and takes the
-              whole row (owner, 2026-09-14; before that, only a tablet and a
-              1600px desktop had the room beside the map).{% endcomment %}
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="Schools visited this year">Visited</th>
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="Schools trained this year">Trained</th>
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="Students impacted: the enrolment of every school">Students</th>
+              <th class="pb-1.5 px-1 text-right" title="Schools" x-text="wideColumns ? 'Schools' : 'Sch'">Sch</th>
+              <th class="pb-1.5 px-1 text-right" title="Clusters" x-text="wideColumns ? 'Clusters' : 'Clu'">Clu</th>
+              {% comment %}Shown where the table has the room: from tablet width up.
+              The platform forces every table cell visible with a ten-part
+              !important rule (mobile-micro-ux.css), which yields only to an
+              inline display:none, i.e. to x-show.{% endcomment %}
+              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Visit Planned">Visits planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="School Visit achieved (Achieved/Planned)" x-text="wideColumns ? 'Visits achieved' : 'Visits'">Visits</th>
+              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Cluster Meeting Planned">Meetings planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="Cluster Meetings Achieved (Achieved/Planned)" x-text="wideColumns ? 'Meetings achieved' : 'Meet'">Meet</th>
+              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Cluster Trainings Planned">Trainings planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="Cluster trainings achieved (Achieved/Planned)" x-text="wideColumns ? 'Trainings achieved' : 'Train'">Train</th>
+              <th class="pb-1.5 pl-1 text-right" title="# Assigned to Partner" x-text="wideColumns ? 'Partner' : 'Ptnr'">Ptnr</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
@@ -288,27 +312,36 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
                     x-text="row.schools"></td>
                 <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600"
                     x-text="row.clusters"></td>
-                <td class="py-1.5 pl-1 text-right font-bold tabular-nums"
-                    :class="row.ssa_avg == null ? 'text-slate-300' : 'text-slate-800'"
-                    x-text="row.ssa_avg == null ? '—' : `${row.ssa_avg}/10`"></td>
                 <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
-                    x-text="row.visited == null ? '—' : row.visited.toLocaleString()"></td>
+                    x-text="row.visits_planned.toLocaleString()"></td>
+                <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
+                    :title="`${row.visits_achieved} of ${row.visits_planned} planned school visits achieved`"
+                    x-text="achievedOfPlanned(row.visits_achieved, row.visits_planned)"></td>
                 <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
-                    x-text="row.trained == null ? '—' : row.trained.toLocaleString()"></td>
+                    x-text="row.cluster_meetings_planned.toLocaleString()"></td>
+                <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
+                    :title="`${row.cluster_meetings_achieved} of ${row.cluster_meetings_planned} planned cluster meetings achieved`"
+                    x-text="achievedOfPlanned(row.cluster_meetings_achieved, row.cluster_meetings_planned)"></td>
                 <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
-                    x-text="row.students == null ? '—' : row.students.toLocaleString()"></td>
+                    x-text="row.cluster_trainings_planned.toLocaleString()"></td>
+                <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
+                    :title="`${row.cluster_trainings_achieved} of ${row.cluster_trainings_planned} planned cluster trainings achieved`"
+                    x-text="achievedOfPlanned(row.cluster_trainings_achieved, row.cluster_trainings_planned)"></td>
+                <td class="py-1.5 pl-1 text-right font-semibold tabular-nums text-slate-600"
+                    :title="`${row.assigned_to_partner} activities assigned to a partner`"
+                    x-text="row.assigned_to_partner.toLocaleString()"></td>
               </tr>
             </template>
             <tr x-show="distributionRows().length === 0" x-cloak>
-              <td colspan="7" class="py-6 text-center edify-text-caption font-semibold text-slate-400"
+              <td colspan="10" class="py-6 text-center edify-text-caption font-semibold text-slate-400"
                   x-text="`No ${distributionLevel().toLowerCase()} data is available.`"></td>
             </tr>
           </tbody>
         </table>
       </div>
       <details class="edify-text-caption text-slate-400 font-semibold mt-2">
-        <summary class="cursor-pointer">About SSA · <span x-text="distributionCoverageText()"></span></summary>
-        <p class="mt-1">Confirmed assessments, weighted within each boundary. A dash means no confirmed assessment, rather than zero.</p>
+        <summary class="cursor-pointer">About these figures</summary>
+        <p class="mt-1">Planned counts every school visit, cluster meeting or cluster training planned for the financial year, including the ones already delivered; achieved counts those completed, shown as achieved/planned. Assigned to partner counts activities handed to a partner. Cluster sessions count in the district and sub-county the cluster is filed under.</p>
       </details>
     </div>
   </div>

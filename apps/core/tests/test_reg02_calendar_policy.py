@@ -54,6 +54,10 @@ def _user(email: str, role: str) -> User:
     )
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-08-08")
 class Reg02CalendarPolicyTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="REG02 Region")
@@ -339,9 +343,13 @@ class Reg02CalendarPolicyTest(TestCase):
         self.assertEqual(planned.planned_date.isoformat(), SUNDAY)
         self.assertEqual(planned.status, "scheduled")
 
-    @freeze_time("2031-03-12")  # an arbitrary real "today" far from the
-    # fixed 2026 business dates used throughout this file — proves nothing
-    # here secretly depends on date.today()/timezone.now().
+    @freeze_time("2021-03-12")  # an arbitrary real "today" far from the
+    # fixed 2026 business dates used throughout this file — proves the fiscal
+    # year and planned date are derived from the date given, never from the
+    # clock: a 2021 "today" would yield FY2021, and this asserts FY2026.
+    # It sits BEFORE those dates rather than after, because scheduling now
+    # refuses a date that has passed (owner, 2026-09-16); what the clock may
+    # not do is decide which year or day the work belongs to.
     def test_frozen_clock_independent_of_real_today(self):
         result = self._create(SUNDAY)
         self.assertEqual(result["status"], "scheduled")

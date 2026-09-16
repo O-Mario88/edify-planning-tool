@@ -10,6 +10,8 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
+
 from django.test import TestCase
 
 from apps.activities import services as asvc
@@ -24,6 +26,10 @@ User = get_user_model()
 FY = "2026"
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-13")
 class ActivitySchedulingAtomicityTest(TestCase):
     def setUp(self):
         # get_or_create (not create): a shared --keepdb test database can

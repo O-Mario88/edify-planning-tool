@@ -112,6 +112,41 @@ class PresenceServiceTest(TestCase):
         self.assertEqual(sum(w["count"] for w in summary["weekly"]), 5)
         self.assertGreaterEqual(summary["logins_this_week"], 2)
 
+    def test_each_person_carries_their_own_sign_ins(self):
+        """Owner, 2026-09-16: "sign-ins should be a column inside Who's Online
+        so that we can tell when they last signed in".
+
+        The panel already had the country's totals; this is the same rows
+        grouped by whose they are. It is not `last_seen_at`, which keeps
+        moving through a sitting after the sign-in that began it.
+        """
+        now = timezone.now()
+        for days_ago in (0, 0, 3):
+            LoginEvent.objects.create(
+                user=self.anna, at=now - timedelta(days=days_ago), role="CCEO"
+            )
+        summary = presence_summary(now=now)
+        listed = [
+            person
+            for group in summary["groups"]
+            for person in ([group["lead"]] if group.get("lead") else [])
+            + group["members"]
+        ]
+        by_name = {p["name"]: p for p in listed}
+
+        anna = by_name[self.anna.name]
+        self.assertEqual(anna["login_count"], 3)
+        self.assertEqual(anna["logins_today"], 2)
+        self.assertEqual(
+            anna["last_login_at"],
+            max(LoginEvent.objects.filter(user=self.anna).values_list("at", flat=True)),
+        )
+
+        # Somebody who has never signed in carries zeroes, not None.
+        never = next(p for p in listed if p["name"] != self.anna.name)
+        self.assertIsNone(never["last_login_at"])
+        self.assertEqual(never["login_count"], 0)
+
     def test_a_malformed_address_never_breaks_the_sign_in(self):
         request = self.rf.post("/login", REMOTE_ADDR="2001:db8::a237098e4ed6691c")
         record_login(request, self.anna)  # must not raise
@@ -277,11 +312,14 @@ class PresenceSurfaceTest(TestCase):
         # The table: status light, name, duration, working on, section.
         for column in (
             "Staff name",
+            "Sign-ins",
             "Duration",
             "Working on what",
             "Part of the system accessed",
         ):
             self.assertIn(column, html)
+        # The Admin's copy links each person's sign-ins to their own record.
+        self.assertIn(f'href="/admin-panel/users/{self.cceo.id}"', html)
         # Cara is online: a pulsing green light. Root, who has never signed in,
         # is offline with a grey one.
         self.assertIn('data-presence="online"', html)
@@ -322,6 +360,10 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn("Cara", html)
         self.assertIn('data-presence="online"', html)
         self.assertIn("Part of the system accessed", html)
+        # The same Sign-ins column, but as plain text: the admin panel is not
+        # the Country Director's to open, so it is never linked here.
+        self.assertIn("Sign-ins", html)
+        self.assertNotIn("/admin-panel/users/", html)
         # Cara folds under Paula, whose own row leads the group.
         self.assertIn("PL · Paula", html)
         self.assertIn("presence-row--lead", html)

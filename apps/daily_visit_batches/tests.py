@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from freezegun import freeze_time
+
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -35,6 +37,10 @@ SECONDARY_RATES = [
 ]
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-27")
 class DailyVisitBatchTestCase(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Batch Region")
@@ -389,6 +395,10 @@ class DailyVisitBatchTestCase(TestCase):
         self.assertIn("not been classified", str(ctx.exception))
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-20")
 class DailyVisitBatchSystemHealthTestCase(TestCase):
     """Constructs broken states directly via the ORM (bypassing the service's
     own guards) to confirm each new System Health check actually fires."""
@@ -480,6 +490,10 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
         self.assertGreater(health["catalogueMissingDailyBatchKeys"], 0)
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-13")
 class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
     """Transport and personal per-diems accrue once per DAY, irrespective of
     how many activities fill it (owner rule, 2026-08-19): a training on a
@@ -647,15 +661,22 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
                 cost_setting_key="group_training_facilitation_fee"
             ).exists()
         )
-        # A cluster training feeds nobody in the 2026-09-06 catalogue: only a
-        # TOT training carries the meals rate.
+        # A cluster session feeds its participants at the cluster meals rate
+        # (owner, 2026-09-15; 5,000 by default): 12 + 8 + 4 heads. The TOT
+        # meals rate is a TOT training's alone.
         self.assertFalse(
             training.schedule_cost_lines.filter(
                 cost_setting_key="tot_trainings_meals"
             ).exists()
         )
         self.assertEqual(
-            sum(activities.values_list("est_cost_cents", flat=True)), 580000
+            lines.filter(cost_setting_key="cluster_meetings_trainings_meals").aggregate(
+                total=Sum("amount")
+            )["total"],
+            24 * 5000,
+        )
+        self.assertEqual(
+            sum(activities.values_list("est_cost_cents", flat=True)), 700000
         )
         # Transport may be paid directly to a vendor: request only staff-payable lines.
         from apps.fund_requests.fundable import vendor_direct_filter
@@ -670,7 +691,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         self.assertEqual(request.total_amount, payable)
         self.assertEqual(
             TransportPayment.objects.get(batch_id=result["batchId"]).amount + payable,
-            580000,
+            700000,
         )
 
     def test_participant_edit_reprices_session_but_does_not_duplicate_daily_pool(self):
@@ -683,13 +704,20 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         result = patch_activity(
             training.id, {"expectedParticipants": 20}, self.principal
         )
-        # Facilitation, venue and the shared staff day; no meals at a cluster
-        # training (2026-09-06 catalogue), so the headcount changes nothing.
-        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000)
+        # Facilitation, venue, the shared staff day and the twenty
+        # participants fed at the cluster meals rate (owner, 2026-09-15): the
+        # headcount moves the session's own cost and nothing else.
+        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000 + 20 * 5000)
         self.assertFalse(
             training.schedule_cost_lines.filter(
                 cost_setting_key="tot_trainings_meals"
             ).exists()
+        )
+        self.assertEqual(
+            training.schedule_cost_lines.get(
+                cost_setting_key="cluster_meetings_trainings_meals"
+            ).quantity,
+            20,
         )
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(
@@ -885,7 +913,9 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["success"])
-        self.assertEqual(response.context["preview"]["amount"], 105001)
+        # The shared minimum day plus the twelve participants fed at the
+        # cluster meals minimum (5,000 by default).
+        self.assertEqual(response.context["preview"]["amount"], 105001 + 12 * 5000)
         self.assertContains(response, "3 planned activities")
         self.assertNotContains(response, "280,000")
 

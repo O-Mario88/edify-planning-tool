@@ -945,3 +945,223 @@ def _serialize(p: Project) -> dict:
             for mapping in catalogue_activities
         ],
     }
+
+
+def _assert_project_owner(project: Project, principal) -> None:
+    """Only the person running a project may edit or delete it.
+
+    `_assert_project_configurer` answers "may this role touch projects at
+    all", which is not the same question: every Project Coordinator holds that
+    permission, and a coordinator has no business editing a peer's cohort.
+    Country roles (CD, IA, Admin) keep the oversight they have everywhere else.
+    """
+    from apps.core.exceptions import Forbidden
+
+    _assert_project_configurer(principal)
+    if getattr(principal, "active_role", "") in PROJECT_COUNTRY_ASSIGNER_ROLES:
+        return
+    staff_id = str(getattr(principal, "staff_profile_id", "") or "")
+    if staff_id and str(project.manager_staff_id or "") == staff_id:
+        return
+    raise Forbidden(
+        f"'{project.name}' is run by someone else. Its own coordinator edits it."
+    )
+
+
+def project_activity_count(project: Project) -> int:
+    """Activities filed against this project, whatever their state.
+
+    Deliberately counts cancelled and rejected work too. They are the record
+    that the project was delivered against, and a project that has been
+    delivered against is a thing that happened — the audit trail of its
+    activities has to keep pointing somewhere real.
+    """
+    from apps.activities.models import Activity
+
+    return Activity.objects.filter(
+        project_id=project.id, deleted_at__isnull=True
+    ).count()
+
+
+@transaction.atomic
+def delete_project(project_id: str, principal, reason: str = "") -> dict:
+    """Withdraw a project that never became work.
+
+    A coordinator who mistypes a cohort had no way to take it back: projects
+    could be created and paused, never removed, so the picker filled with
+    corrections nobody could clear (owner, 2026-09-16). Deletion is soft, the
+    way every other record on this platform is deleted, and it is refused the
+    moment a single activity has been filed against the project — at that
+    point the honest move is to close it, which keeps the history.
+
+    The enrolled schools are released: their assignments are the only thing
+    holding them to a project that no longer exists, and a coordinator's own
+    scope is derived from them.
+    """
+    from apps.audit.services import log as audit_log
+    from django.utils import timezone
+
+    project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if not project:
+        raise NotFoundError("Project not found.")
+    _assert_project_owner(project, principal)
+
+    activities = project_activity_count(project)
+    if activities:
+        raise BadRequest(
+            f"'{project.name}' already has {activities} "
+            f"activit{'y' if activities == 1 else 'ies'} filed against it, so it "
+            "cannot be deleted. Ask the RVP to close it instead — closing keeps "
+            "the record of the work."
+        )
+
+    released = list(
+        ProjectSchoolAssignment.objects.filter(project=project).values_list(
+            "school__name", flat=True
+        )
+    )
+    ProjectSchoolAssignment.objects.filter(project=project).delete()
+    project.deleted_at = timezone.now()
+    project.save(update_fields=["deleted_at", "updated_at"])
+
+    audit_log(
+        action="project_delete",
+        subject_kind="Project",
+        subject_id=project.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason or None,
+        payload={
+            "name": project.name,
+            "code": project.code,
+            "schoolsReleased": released,
+        },
+    )
+    return {"id": project.id, "name": project.name, "schoolsReleased": len(released)}
+
+
+#: The fields the project's own coordinator may change after creation. Status
+#: is absent on purpose: the lifecycle moves through the RVP's strategic
+#: decision, and a coordinator who could edit `status` could reactivate a
+#: project the RVP paused.
+EDITABLE_PROJECT_FIELDS = (
+    "name",
+    "code",
+    "category",
+    "targetInterventions",
+    "measurementStartFy",
+    "measurementEndFy",
+    "budgetCeilingUgx",
+    "schoolFocus",
+)
+
+
+@transaction.atomic
+def update_project(project_id: str, data: dict, principal) -> dict:
+    """Edit a project's own description.
+
+    Projects could be created and decided upon but never corrected: a typo in
+    a cohort's name, a budget ceiling agreed after the fact or a measurement
+    window that moved all needed a new project (owner, 2026-09-16). Only the
+    keys the caller actually sends are touched, so a drawer that shows three
+    fields cannot blank the other five.
+
+    The validation is create's, deliberately: two spellings of "a project must
+    declare a target intervention" is how the two drift apart.
+    """
+    from apps.audit.services import log as audit_log
+    from apps.core.enums import SsaIntervention
+
+    project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if not project:
+        raise NotFoundError("Project not found.")
+    _assert_project_owner(project, principal)
+
+    changes: dict[str, tuple] = {}
+
+    def _set(field: str, value) -> None:
+        before = getattr(project, field)
+        if before != value:
+            changes[field] = (before, value)
+            setattr(project, field, value)
+
+    if "name" in data:
+        name = (data.get("name") or "").strip()
+        if not name:
+            raise BadRequest("A project name is required.")
+        _set("name", name)
+
+    if "code" in data:
+        code = (data.get("code") or "").strip() or None
+        if code and Project.objects.filter(code=code).exclude(id=project.id).exists():
+            raise BadRequest(f"Project code '{code}' is already in use.")
+        _set("code", code)
+
+    if "category" in data:
+        category = (data.get("category") or "").strip()
+        valid_categories = {c.value for c in ProjectCategory}
+        if category not in valid_categories:
+            raise BadRequest(
+                f"Category must be one of: {', '.join(sorted(valid_categories))}."
+            )
+        _set("category", category)
+
+    if "targetInterventions" in data:
+        targets = data.get("targetInterventions") or []
+        if isinstance(targets, str):
+            targets = [t.strip() for t in targets.split(",") if t.strip()]
+        valid_interventions = {i.value for i in SsaIntervention}
+        unknown = [t for t in targets if t not in valid_interventions]
+        if unknown:
+            raise BadRequest(f"Unknown target intervention(s): {', '.join(unknown)}.")
+        if not targets:
+            raise BadRequest(
+                "Declare at least one target SSA intervention — impact "
+                "measurement and the school-assignment need check both depend "
+                "on it."
+            )
+        _set("target_interventions", list(dict.fromkeys(targets)))
+
+    for key, field in (
+        ("measurementStartFy", "measurement_start_fy"),
+        ("measurementEndFy", "measurement_end_fy"),
+    ):
+        if key in data:
+            _set(field, (data.get(key) or "").strip() or None)
+
+    if "budgetCeilingUgx" in data:
+        ceiling = data.get("budgetCeilingUgx")
+        try:
+            ceiling = int(ceiling) if ceiling not in (None, "") else None
+        except (TypeError, ValueError):
+            raise BadRequest("Budget ceiling must be a whole number of UGX.")
+        if ceiling is not None and ceiling < 0:
+            raise BadRequest("Budget ceiling cannot be negative.")
+        _set("budget_ceiling_ugx", ceiling)
+
+    if "schoolFocus" in data:
+        school_focus = (data.get("schoolFocus") or "").strip()
+        if school_focus not in ProjectSchoolFocus.values:
+            raise BadRequest("School focus must be all, client, or core.")
+        # Narrowing the focus cannot orphan the schools already enrolled: they
+        # were admitted under the old rule and the capacity check reads the
+        # focus at assignment time, so a project that tightens its focus keeps
+        # its cohort and applies the new rule to the next school only.
+        _set("school_focus", school_focus)
+
+    if not changes:
+        return _serialize(project)
+
+    project.save(update_fields=[*changes.keys(), "updated_at"])
+    audit_log(
+        action="project_update",
+        subject_kind="Project",
+        subject_id=project.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            field: {"from": before, "to": after}
+            for field, (before, after) in changes.items()
+        },
+    )
+    return _serialize(project)

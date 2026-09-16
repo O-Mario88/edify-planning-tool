@@ -449,6 +449,11 @@ urlpatterns = [
         name="edit_cluster",
     ),
     path(
+        "clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+        cluster_views.remove_school_from_cluster_view,
+        name="remove_school_from_cluster",
+    ),
+    path(
         "clusters/<str:cluster_id>/delete",
         cluster_views.delete_cluster_view,
         name="delete_cluster",
@@ -2233,6 +2238,26 @@ urlpatterns = [
         "projects/<str:project_id>/schools/assign",
         extended_views.project_assign_school_action_view,
         name="project_assign_school_action",
+    ),
+    path(
+        "partials/projects/<str:project_id>/schools",
+        extended_views.project_schools_partial,
+        name="project_schools_partial",
+    ),
+    path(
+        "projects/<str:project_id>/schools/bulk-assign-drawer",
+        extended_views.project_bulk_assign_drawer_view,
+        name="project_bulk_assign_drawer",
+    ),
+    path(
+        "projects/<str:project_id>/edit",
+        extended_views.project_edit_drawer_view,
+        name="project_edit_drawer",
+    ),
+    path(
+        "projects/<str:project_id>/delete",
+        extended_views.project_delete_action_view,
+        name="project_delete_action",
     ),
     path(
         "projects/<str:project_id>",

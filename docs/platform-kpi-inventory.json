@@ -1844,7 +1844,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 679,
+   "line": 690,
    "label": null,
    "keys": [
     "amount",
@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1090,
+   "line": 1142,
    "label": null,
    "keys": [
     "label",
@@ -3001,7 +3001,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 109,
+   "line": 146,
    "label": null,
    "keys": [
     "amount",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 546,
+   "line": 591,
    "label": null,
    "keys": [
     "label",
@@ -3640,7 +3640,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3357,
+   "line": 3642,
    "label": null,
    "keys": [
     "label",
@@ -3695,7 +3695,7 @@
    "audit_id": "KPI-SOURCE-195",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3223,
+   "line": 3508,
    "label": "About",
    "keys": [
     "label",
@@ -3712,7 +3712,7 @@
    "audit_id": "KPI-SOURCE-196",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3224,
+   "line": 3509,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3729,7 +3729,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3225,
+   "line": 3510,
    "label": "Flag",
    "keys": [
     "label",
@@ -3746,7 +3746,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3226,
+   "line": 3511,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8438,7 +8438,7 @@
    "audit_id": "KPI-SOURCE-467",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 273,
+   "line": 290,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8457,7 +8457,7 @@
    "audit_id": "KPI-SOURCE-468",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 283,
+   "line": 300,
    "label": "My Work",
    "keys": [
     "count",
@@ -8476,7 +8476,7 @@
    "audit_id": "KPI-SOURCE-469",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 320,
+   "line": 337,
    "label": null,
    "keys": [
     "count",
@@ -8495,7 +8495,7 @@
    "audit_id": "KPI-SOURCE-470",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 293,
+   "line": 310,
    "label": null,
    "keys": [
     "count",
@@ -8514,7 +8514,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1022,
+   "line": 1052,
    "label": "All Partners",
    "keys": [
     "count",
@@ -8532,7 +8532,7 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1028,
+   "line": 1058,
    "label": null,
    "keys": [
     "count",
@@ -8754,7 +8754,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 806,
+   "line": 800,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -11260,7 +11260,7 @@
    "audit_id": "KPI-SOURCE-621",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 750,
+   "line": 776,
    "label": null,
    "keys": [
     "label",
@@ -11277,7 +11277,7 @@
    "audit_id": "KPI-SOURCE-622",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 759,
+   "line": 785,
    "label": "Staff-led",
    "keys": [
     "label",
@@ -11294,7 +11294,7 @@
    "audit_id": "KPI-SOURCE-623",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 760,
+   "line": 786,
    "label": "Partner-led",
    "keys": [
     "label",
@@ -11311,7 +11311,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 761,
+   "line": 787,
    "label": "Not assigned",
    "keys": [
     "label",
@@ -11328,7 +11328,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 764,
+   "line": 790,
    "label": null,
    "keys": [
     "label",
@@ -13491,7 +13491,7 @@
   {
    "audit_id": "KPI-SURFACE-053",
    "template": "templates/pages/projects/detail.html",
-   "line": 37,
+   "line": 90,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13507,7 +13507,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Review record",
+   "primary_action": "Edit Project",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13520,7 +13520,7 @@
   {
    "audit_id": "KPI-SURFACE-054",
    "template": "templates/pages/projects/detail.html",
-   "line": 55,
+   "line": 108,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -13536,7 +13536,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Review record",
+   "primary_action": "Edit Project",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -39465,7 +39465,7 @@
   {
    "audit_id": "KPI-PAYLOAD-002",
    "module": "apps/clusters/services.py",
-   "line": 1829,
+   "line": 1866,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -39762,7 +39762,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2980,
+   "line": 3114,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -39784,7 +39784,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3563,
+   "line": 3848,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -39867,7 +39867,7 @@
   {
    "audit_id": "KPI-PAYLOAD-017",
    "module": "apps/frontend/views/school_views.py",
-   "line": 537,
+   "line": 541,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -40270,7 +40270,7 @@
   {
    "audit_id": "KPI-PAYLOAD-030",
    "module": "apps/projects/planning_service.py",
-   "line": 524,
+   "line": 550,
    "function": "get_planning",
    "target": "kpis",
    "source_item_count": 6,
@@ -40300,7 +40300,7 @@
   {
    "audit_id": "KPI-PAYLOAD-031",
    "module": "apps/projects/planning_service.py",
-   "line": 569,
+   "line": 595,
    "function": "get_planning",
    "target": "band_cards",
    "source_item_count": 3,
@@ -40324,7 +40324,7 @@
   {
    "audit_id": "KPI-PAYLOAD-032",
    "module": "apps/projects/planning_service.py",
-   "line": 645,
+   "line": 671,
    "function": "get_planning",
    "target": "delivery",
    "source_item_count": 5,

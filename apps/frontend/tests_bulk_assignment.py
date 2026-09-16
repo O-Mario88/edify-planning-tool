@@ -416,3 +416,131 @@ class BulkAssignmentTests(TestCase):
         self.assertEqual(
             rows["CS-888"]["next_missing_milestone"], "Missing First Training"
         )
+
+
+class ClusterMembershipEditingTest(TestCase):
+    """Owner, 2026-09-15: the add-schools drawer's save button must be in
+    view, and a school added by mistake must be removable — from the edit
+    drawer (untick and save) and from the roster (Remove)."""
+
+    def setUp(self):
+        BulkAssignmentTests.setUp(self)
+        from apps.clusters.services import set_school_cluster_membership
+
+        for school in (self.school, self.school_other):
+            set_school_cluster_membership(school, self.cluster, self.user.id)
+        self.client.force_login(self.user)
+
+    def test_the_add_schools_drawer_pins_its_save_button_to_the_footer(self):
+        from apps.clusters.services import set_school_cluster_membership
+
+        # Give the drawer something to list.
+        set_school_cluster_membership(self.school, None, self.user.id)
+        response = self.client.get(f"/clusters/{self.cluster.id}/bulk-assign-drawer")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="bulk-assign-save"')
+        self.assertContains(response, "Save schools to cluster")
+        self.assertContains(response, "sticky bottom-[-28px]")
+        self.assertContains(response, "max-h-[42vh]")
+
+    def test_the_edit_drawer_lists_the_member_schools_ticked(self):
+        response = self.client.get(f"/clusters/{self.cluster.id}/edit-drawer")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="manage_members"')
+        self.assertContains(response, 'name="member_school_ids"', count=2)
+        self.assertContains(response, 'value="sch-1"')
+        self.assertContains(response, 'value="sch-2"')
+        self.assertContains(response, "Untick a school added by mistake")
+
+    def _save_edit(self, **extra):
+        return self.client.post(
+            f"/clusters/{self.cluster.id}/edit",
+            {
+                "name": self.cluster.name,
+                "district_id": self.district.id,
+                "cluster_type": "mixed",
+                **extra,
+            },
+        )
+
+    def test_saving_the_edit_drawer_removes_the_unticked_schools(self):
+        response = self._save_edit(manage_members="1", member_school_ids=["sch-2"])
+        self.assertEqual(response.status_code, 302)
+        self.school.refresh_from_db()
+        self.school_other.refresh_from_db()
+        self.assertIsNone(self.school.cluster_id)
+        self.assertEqual(self.school.cluster_status, "unclustered")
+        self.assertFalse(
+            SchoolClusterAssignment.objects.filter(school=self.school).exists()
+        )
+        self.assertEqual(self.school_other.cluster_id, self.cluster.id)
+        self.assertEqual(self.school_other.cluster_status, "clustered")
+
+    def test_a_save_that_never_showed_the_list_keeps_every_school(self):
+        """An API client or an older form must not empty the cluster by
+        omission: only the drawer's own member list can remove."""
+        response = self._save_edit()
+        self.assertEqual(response.status_code, 302)
+        self.school.refresh_from_db()
+        self.school_other.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.cluster.id)
+        self.assertEqual(self.school_other.cluster_id, self.cluster.id)
+
+    def test_remove_from_the_roster_unclusters_the_school(self):
+        response = self.client.post(
+            f"/clusters/{self.cluster.id}/schools/sch-1/remove",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIn(
+            f"cluster-schools-updated-{self.cluster.id}", response["HX-Trigger"]
+        )
+        self.school.refresh_from_db()
+        self.assertIsNone(self.school.cluster_id)
+        self.assertEqual(self.school.cluster_status, "unclustered")
+        self.assertFalse(
+            SchoolClusterAssignment.objects.filter(school=self.school).exists()
+        )
+        # Removing it again is refused by name, not silently accepted.
+        again = self.client.post(
+            f"/clusters/{self.cluster.id}/schools/sch-1/remove",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(again.status_code, 400)
+        self.assertContains(again, "is not in", status_code=400)
+        # A school outside the district (and the cluster) is not found.
+        outside = self.client.post(
+            f"/clusters/{self.cluster.id}/schools/sch-3/remove",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(outside.status_code, 400)
+        # GET is not a removal.
+        self.assertEqual(
+            self.client.get(
+                f"/clusters/{self.cluster.id}/schools/sch-2/remove"
+            ).status_code,
+            405,
+        )
+
+    def test_the_profile_and_the_card_roster_offer_remove(self):
+        profile = self.client.get(f"/clusters/{self.cluster.id}")
+        self.assertEqual(profile.status_code, 200)
+        self.assertContains(
+            profile, f"/clusters/{self.cluster.id}/schools/sch-1/remove"
+        )
+        self.assertContains(profile, 'hx-confirm="Remove Mukono Primary School from')
+        roster = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
+        self.assertEqual(roster.status_code, 200)
+        self.assertContains(roster, f"/clusters/{self.cluster.id}/schools/sch-2/remove")
+        self.assertContains(roster, "school-record-action--danger")
+
+    def test_a_plain_remove_redirects_to_a_fixed_destination(self):
+        """Without htmx the view redirects: to the profile of the cluster
+        the service resolved on success, and to the list on refusal --
+        never to a URL built from the path value (CodeQL, PR #104)."""
+        ok = self.client.post(f"/clusters/{self.cluster.id}/schools/sch-1/remove")
+        self.assertEqual(ok.status_code, 302)
+        self.assertEqual(ok["Location"], f"/clusters/{self.cluster.id}")
+        refused = self.client.post(f"/clusters/{self.cluster.id}/schools/sch-1/remove")
+        self.assertEqual(refused.status_code, 302)
+        self.assertEqual(refused["Location"], "/clusters")

@@ -2341,6 +2341,112 @@ def project_create_action_view(request):
         return error_fragment(exc, status=400)
 
 
+def _project_for_editing(request, project_id):
+    """The project this caller may edit; raises if they may not."""
+    from apps.core.exceptions import NotFoundError
+    from apps.projects.models import Project
+    from apps.projects.services import _assert_project_owner
+
+    project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if not project:
+        raise NotFoundError("Project not found.")
+    _assert_project_owner(project, request.user)
+    return project
+
+
+@require_page_permission("projects")
+def project_edit_drawer_view(request, project_id):
+    """Edit the Project's own description.
+
+    A project could be created and decided upon but never corrected: a typo in
+    the name, a budget ceiling agreed afterwards, a measurement window that
+    moved (owner, 2026-09-16). Its own coordinator edits it; a peer's cohort
+    is refused by the service, not by this view.
+    """
+    from apps.core.enums import SsaIntervention
+    from apps.core.exceptions import Forbidden, NotFoundError
+    from apps.core.htmx_errors import error_fragment
+    from apps.projects.models import ProjectCategory, ProjectSchoolFocus
+    from apps.projects.services import update_project
+
+    try:
+        project = _project_for_editing(request, project_id)
+    except (Forbidden, NotFoundError) as exc:
+        return error_fragment(exc, status=403)
+
+    if request.method == "POST":
+        payload = request.POST.dict()
+        payload["targetInterventions"] = request.POST.getlist("targetInterventions")
+        try:
+            update_project(project.id, payload, request.user)
+        except Exception as exc:  # noqa: BLE001 — surfaced in the drawer
+            return error_fragment(exc, status=400)
+        response = HttpResponse(
+            f'<script>window.location.href="/projects/{project.id}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+
+    return render(
+        request,
+        "partials/projects/edit_project_drawer.html",
+        {
+            "project": project,
+            "categories": ProjectCategory.choices,
+            "school_focuses": ProjectSchoolFocus.choices,
+            "interventions": SsaIntervention.choices,
+            "selected_interventions": set(project.target_intervention_list()),
+        },
+    )
+
+
+@require_POST
+@require_page_permission("projects")
+def project_delete_action_view(request, project_id):
+    """Withdraw a project that never became work.
+
+    Redirects to the fixed Projects list rather than anywhere derived from the
+    request: the project it came from no longer exists.
+    """
+    from django.contrib import messages
+    from django.utils.html import escape
+
+    from apps.projects.services import delete_project
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    try:
+        result = delete_project(
+            project_id, request.user, reason=request.POST.get("reason", "")
+        )
+    except Exception as exc:  # noqa: BLE001 — the reason belongs on the page
+        if is_htmx:
+            # Into the panel beside the control, where the person is looking.
+            return HttpResponse(
+                f'<div class="edify-note" data-tone="danger" role="alert">'
+                f'<p class="edify-note__body">{escape(str(exc))}</p></div>',
+                status=400,
+            )
+        messages.error(request, str(exc))
+        return redirect("frontend:project_detail", project_id=project_id)
+
+    released = result["schoolsReleased"]
+    messages.success(
+        request,
+        f"Deleted '{result['name']}'."
+        + (
+            f" {released} school{'s' if released != 1 else ''} released back to "
+            "their portfolio."
+            if released
+            else ""
+        ),
+    )
+    if is_htmx:
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = "/projects"
+        return response
+    return redirect("/projects")
+
+
 @require_page_permission("projects")
 def projects_filtered_view(request):
     """Filtered Projects view — a distinct URL from the default list.
@@ -2887,6 +2993,34 @@ def pl_partner_invoice_download(request, invoice_id):
 
 
 @require_page_permission("projects")
+def project_schools_partial(request, project_id):
+    """The schools of one project, for its card on the Projects page.
+
+    Loaded when the card is opened (owner, 2026-09-16), so a portfolio of
+    twenty projects costs one page of headers rather than twenty rosters.
+    `get_scoped_project` is the same scoping the project profile uses, so a
+    project outside the caller's scope 404s here exactly as it does there.
+    """
+    from apps.projects.portfolio import portfolio_rows
+    from apps.projects.scoping import enrollable_schools, get_scoped_project
+
+    project = get_scoped_project(project_id, request.user)
+    eligible = enrollable_schools(request.user)
+    context = {
+        "rows": portfolio_rows(project),
+        "project_id": project.id,
+        "project_name": project.name,
+        # The same permissions the drawers these buttons open enforce, so a
+        # control is present exactly when it works.
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
+        or RolePermissionService.can_request_school_visit(request.user),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "can_add_schools": bool(eligible),
+    }
+    return render(request, "partials/projects/project_schools_table.html", context)
+
+
+@require_page_permission("projects")
 def project_detail_view(request, project_id):
     """Project detail."""
     from apps.activities.models import ActivityScheduleCostLine
@@ -3008,6 +3142,28 @@ def project_detail_view(request, project_id):
             .select_related("user")
             .order_by("user__name")
         )
+    # Who may correct this project's own description, and whether deleting it
+    # is still possible. A project that has been delivered against keeps its
+    # activities, so the reason it cannot be deleted is on the control itself
+    # rather than discovered after the press.
+    from apps.core.exceptions import Forbidden
+    from apps.projects.services import _assert_project_owner, project_activity_count
+
+    try:
+        _assert_project_owner(project, request.user)
+        can_edit_project = True
+    except Forbidden:
+        can_edit_project = False
+    delete_block = ""
+    if can_edit_project:
+        filed = project_activity_count(project)
+        if filed:
+            delete_block = (
+                f"{filed} activit{'y has' if filed == 1 else 'ies have'} been "
+                "filed against this Project, so it cannot be deleted. Ask the "
+                "RVP to close it instead."
+            )
+
     scope = resolve_user_scope(request.user)
     # A selector that leads to a cohort assignment, so it offers the direct
     # portfolio only.
@@ -3040,8 +3196,14 @@ def project_detail_view(request, project_id):
         "eligible_schools": eligible_schools,
         "can_assign_staff": can_assign_staff,
         "assignment_fy": (project.measurement_start_fy or get_operational_fy()),
+        # Also true for anyone holding schools of their own: the CCEO or
+        # Programme Lead who owns a school decides which projects it joins,
+        # whoever created the project (`_assert_staff_can_plan_project`).
+        # Gating on running the project hid the control from the only people
+        # who could use it (owner, 2026-09-16).
         "can_add_schools": (
             can_assign_staff
+            or bool(eligible_schools)
             or str(project.manager_staff_id or "")
             == str(getattr(request.user, "staff_profile_id", None) or "")
             or project.staff_assignments.filter(
@@ -3051,6 +3213,10 @@ def project_detail_view(request, project_id):
         ),
         "kpi_strip_items": kpi_strip_items,
         "project_summary": project_summary,
+        # Editing and deleting are the project owner's, not every role that
+        # may read the page (owner, 2026-09-16).
+        "can_edit_project": can_edit_project,
+        "delete_block": delete_block,
     }
     return render(request, "pages/projects/detail.html", context)
 
@@ -3100,6 +3266,125 @@ def project_assign_school_action_view(request, project_id):
     except Exception as exc:
         messages.error(request, str(exc))
     return redirect("frontend:project_detail", project_id=project_id)
+
+
+@require_page_permission("projects")
+def project_bulk_assign_drawer_view(request, project_id):
+    """Add several schools to a Project in one pass.
+
+    The Project side had a one-at-a-time `<select>` while the Cluster side had
+    a searchable checklist; filling a cohort of thirty schools meant thirty
+    round trips (owner, 2026-09-16: "Bulk assign to project should work like
+    the way cluster bulk assign works"). This is the Cluster drawer's shape,
+    with the Project rules kept intact: each school still goes through
+    `assign_school`, so the SSA-need check, the override reason and the
+    per-school Project limit all apply, and a school the service refuses is
+    reported by name rather than silently dropped.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.core.permissions import has_permission
+    from apps.projects.models import OPEN_PROJECT_STATUSES
+    from apps.projects.scoping import get_scoped_project
+    from apps.projects.services import assign_school
+
+    project = get_scoped_project(project_id, request.user)
+    if not has_permission(request.user, "project.assignSchool"):
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {"error": "You do not have permission to assign projects."},
+        )
+
+    # Own portfolio and supervised team, the same set `assign_school` accepts:
+    # a Programme Lead holds no school directly, so a direct-only list left
+    # them a drawer with nothing in it (owner, 2026-09-16).
+    from apps.projects.scoping import enrollable_schools
+
+    writable = enrollable_schools(request.user)
+    if writable is None:
+        writable = School.objects.none()
+
+    if request.method == "POST":
+        if not project.accepts_new_work:
+            # One refusal for the batch rather than the same BadRequest
+            # repeated once per ticked school.
+            response = render(
+                request,
+                "partials/schools/toast_success.html",
+                {
+                    "message": (
+                        f"{project.name} is {project.status_label.lower()} — "
+                        "no new schools can be added to it."
+                    )
+                },
+            )
+            return response
+        reason = (request.POST.get("reason") or "").strip()
+        schools = writable.filter(id__in=request.POST.getlist("school_ids"))
+        assigned, duplicates, refused = [], [], []
+        for school in schools:
+            if ProjectSchoolAssignment.objects.filter(
+                project=project, school=school
+            ).exists():
+                duplicates.append(school.name)
+                continue
+            try:
+                assign_school(
+                    project.id,
+                    {
+                        "schoolId": school.school_id,
+                        "reason": reason,
+                        "notes": reason,
+                    },
+                    request.user,
+                )
+            except (BadRequest, Forbidden) as exc:
+                refused.append(f"{school.name}: {exc}")
+                continue
+            assigned.append(school.name)
+
+        message = f"Added {len(assigned)} school(s) to {project.name}."
+        if duplicates:
+            message += f" {len(duplicates)} already in the cohort."
+        if refused:
+            shown = "; ".join(refused[:3])
+            more = f" and {len(refused) - 3} more" if len(refused) > 3 else ""
+            message += f" Skipped {len(refused)}: {shown}{more}."
+        response = render(
+            request, "partials/schools/toast_success.html", {"message": message}
+        )
+        response["HX-Trigger"] = (
+            f"project-schools-updated-{project.id}, schools-updated"
+        )
+        return response
+
+    enrolled_ids = ProjectSchoolAssignment.objects.filter(project=project).values_list(
+        "school_id", flat=True
+    )
+    candidates = (
+        writable.exclude(id__in=enrolled_ids)
+        .annotate(
+            active_project_count=Count(
+                "project_assignments",
+                filter=Q(
+                    project_assignments__project__deleted_at__isnull=True,
+                    project_assignments__project__status__in=[
+                        status.value for status in OPEN_PROJECT_STATUSES
+                    ],
+                ),
+            )
+        )
+        .select_related("sub_county")
+        .order_by("sub_county__name", "name")[:300]
+    )
+    context = {
+        "project": project,
+        "schools": candidates,
+        "accepts_new_work": project.accepts_new_work,
+        "drawer_type": "center",
+        "drawer_size": "md",
+    }
+    return render(request, "partials/projects/bulk_assign_drawer.html", context)
 
 
 @require_page_permission("quality_checks")

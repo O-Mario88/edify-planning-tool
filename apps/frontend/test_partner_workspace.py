@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from unittest.mock import patch
 
+from freezegun import freeze_time
+
 from django.test import TestCase
 from django.utils import timezone
 
@@ -15,6 +17,10 @@ from apps.partners.models import Partner, PartnerAssignment
 from apps.schools.models import School
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-12")
 class PartnerWorkspaceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

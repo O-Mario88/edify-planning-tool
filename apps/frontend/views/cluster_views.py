@@ -72,6 +72,29 @@ def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
     return "healthy"
 
 
+#: Form field -> costing key for the training materials a cluster session
+#: plans (owner, 2026-09-15): printing by the page, photocopying by the page
+#: and the copy. Read from the drawer's GET (preview, re-render) and POST
+#: (schedule) alike, so the two cannot price different handouts.
+MATERIALS_FIELDS = (
+    ("printing_pages", "printingPages"),
+    ("photocopy_pages", "photocopyPages"),
+    ("photocopy_copies", "photocopyCopies"),
+)
+
+
+def _materials_from(source) -> dict:
+    """The materials inputs as typed, keyed for costing; blank stays blank.
+
+    Blank means "none planned" everywhere downstream — the engine prices a
+    blank or zero page count as no materials line — so nothing is defaulted
+    here; the service refuses anything that is not a whole number."""
+    return {
+        payload_key: str(source.get(form_key, "") or "").strip()
+        for form_key, payload_key in MATERIALS_FIELDS
+    }
+
+
 def _get_cost_preview_data(
     activity_type,
     participants,
@@ -79,28 +102,42 @@ def _get_cost_preview_data(
     *,
     planned_date=None,
     responsible_user_id=None,
+    materials=None,
 ):
     """Cost preview via the central CostingService — no fallback/fabricated rates.
 
     Missing rates surface as blockers instead of fake prices."""
+    from apps.budget.costing import _nonnegative_count
     from apps.budget.costing_service import preview
 
     act_type = "cluster_training" if activity_type == "training" else "cluster_meeting"
+    materials = materials or {}
     result = preview(
         {
             "activityType": act_type,
             "expectedParticipants": participants,
             "clusterId": cluster_id,
             "plannedDate": planned_date,
+            **materials,
         },
         minimum=True,
         responsible_user_id=responsible_user_id,
     )
+    printing_pages = _nonnegative_count(materials.get("printingPages"))
+    photocopy_pages = _nonnegative_count(materials.get("photocopyPages"))
+    photocopy_copies = _nonnegative_count(materials.get("photocopyCopies"))
 
     cost_lines = []
     for line in result["lines"]:
         if line["missing"]:
             formula = "Rate not set"
+        elif line["key"] == "printing_training_materials":
+            formula = f"{printing_pages} pages x UGX {line['unit']:,.0f}"
+        elif line["key"] == "photocopying_training_materials":
+            formula = (
+                f"{photocopy_pages} pages x {photocopy_copies} copies "
+                f"x UGX {line['unit']:,.0f}"
+            )
         elif line["qty"] and line["qty"] > 1:
             formula = f"{line['qty']} x UGX {line['unit']:,.0f}"
         else:
@@ -355,6 +392,10 @@ def cluster_schools_partial(request, cluster_id):
         "can_schedule": RolePermissionService.can_schedule_activity(request.user)
         or RolePermissionService.can_request_school_visit(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        # The same check the edit drawer and the remove endpoint enforce.
+        "can_edit_cluster": RolePermissionService.can_view_page(
+            request.user, "planning"
+        ),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
 
@@ -376,6 +417,7 @@ def cluster_cost_preview_partial(request):
             responsible_user_id=planning_preview_owner(
                 request.user, request.GET.get("responsible_staff_id")
             ),
+            materials=_materials_from(request.GET),
         )
         context = {
             "success": True,
@@ -462,6 +504,9 @@ def cluster_schedule_activity_view(request):
         per_school = request.POST.get("participants_per_school", "").strip()
         if per_school:
             data["participantsPerSchool"] = per_school
+        # Pages to print, pages to photocopy and copies — validated and
+        # stored by the service; a blank one is no materials.
+        data.update(_materials_from(request.POST))
         # Ticked by name. The count the budget multiplies by is derived from
         # the list rather than typed beside it, so the two cannot disagree.
         invited_school_ids = [
@@ -576,7 +621,10 @@ def cluster_schedule_activity_view(request):
                 if selected_cluster:
                     try:
                         cost_preview = ClusterCostPreviewService.preview_cost(
-                            activity_type, participants, selected_cluster.id
+                            activity_type,
+                            participants,
+                            selected_cluster.id,
+                            materials=_materials_from(request.POST),
                         )
                     except Exception:
                         pass
@@ -602,6 +650,10 @@ def cluster_schedule_activity_view(request):
                     or 0,
                     "other_per_school": request.POST.get("other_per_school", "").strip()
                     or 0,
+                    **{
+                        form_key: request.POST.get(form_key, "").strip()
+                        for form_key, _payload_key in MATERIALS_FIELDS
+                    },
                     "schools_invited": len(retry_invited),
                     "member_schools": [
                         {
@@ -1115,19 +1167,26 @@ def planner_drawer_view(request):
     # Who the planner is inviting from each school. The drawer re-renders on
     # every cluster / activity-type change, so these come back from the form
     # rather than resetting to the defaults each time.
-    per_school_categories = {
-        key: (
-            int(request.GET.get(key, "").strip())
-            if request.GET.get(key, "").strip().isdigit()
-            else default
-        )
-        for key, default in (
-            ("teachers_per_school", 2 if activity_type == "training" else 0),
-            ("leaders_per_school", 0 if activity_type == "training" else 2),
-            ("other_per_school", 0),
-        )
-    }
-    participants_per_school = sum(per_school_categories.values()) or 2
+    per_school_defaults = (
+        ("teachers_per_school", 2 if activity_type == "training" else 0),
+        ("leaders_per_school", 0 if activity_type == "training" else 2),
+        ("other_per_school", 0),
+    )
+    # The defaults are for a first open only. Once the form has been through
+    # a re-render (a cluster or activity-type change), a field the planner
+    # cleared is zero — not the default quietly put back (owner, 2026-09-15:
+    # "leaving a field blank should automatically translate to zero").
+    per_school_submitted = any(
+        key in request.GET for key, _default in per_school_defaults
+    )
+    per_school_categories = {}
+    for key, default in per_school_defaults:
+        raw = request.GET.get(key, "").strip()
+        if raw.isdigit():
+            per_school_categories[key] = int(raw)
+        else:
+            per_school_categories[key] = 0 if per_school_submitted else default
+    participants_per_school = sum(per_school_categories.values())
     schools_invited = len(invited_ids)
 
     raw_participants = request.GET.get("expected_participants", "").strip()
@@ -1151,7 +1210,10 @@ def planner_drawer_view(request):
     cost_preview = None
     if selected_cluster:
         cost_preview = ClusterCostPreviewService.preview_cost(
-            activity_type, participants, selected_cluster.id
+            activity_type,
+            participants,
+            selected_cluster.id,
+            materials=_materials_from(request.GET),
         )
 
     from apps.activity_catalogue.availability import (
@@ -1191,6 +1253,11 @@ def planner_drawer_view(request):
         "cost_preview": cost_preview,
         "default_date": default_date,
         "drawer_type": "center",
+        # Materials as typed, so a re-render keeps them.
+        **{
+            form_key: request.GET.get(form_key, "").strip()
+            for form_key, _payload_key in MATERIALS_FIELDS
+        },
         "training_activity_options": training_options,
         "training_activity_options_json": json.dumps(training_options),
         "selected_training_activity_id": selected_training_activity_id,
@@ -1486,6 +1553,9 @@ def edit_cluster_drawer_view(request, cluster_id):
     ]
 
     staff = get_eligible_staff(cluster.district_id)
+    # The schools in the cluster, each ticked (owner, 2026-09-15): untick a
+    # school added by mistake and save, and it goes back to unclustered.
+    from apps.clusters.services import active_schools
 
     context = {
         "cluster": cluster,
@@ -1493,6 +1563,7 @@ def edit_cluster_drawer_view(request, cluster_id):
         "sub_counties_json": json.dumps(sub_counties_list),
         "covered_ids": covered_ids,
         "staff": staff,
+        "member_schools": list(active_schools(cluster.id)),
         "drawer_size": "md",
         "drawer_type": "center",
     }
@@ -1524,13 +1595,91 @@ def edit_cluster_view(request, cluster_id):
             }
             try:
                 update_cluster(cluster_id, payload, request.user)
-                messages.success(request, f"Successfully updated cluster '{name}'.")
+                removed = _remove_unticked_members(request, cluster_id)
+                messages.success(
+                    request,
+                    f"Successfully updated cluster '{name}'."
+                    + (
+                        f" Removed {len(removed)} school"
+                        f"{'' if len(removed) == 1 else 's'}: {', '.join(removed)}."
+                        if removed
+                        else ""
+                    ),
+                )
             except Exception as e:
                 messages.error(request, f"Failed to update cluster: {e}")
         else:
             messages.error(request, "Failed to update cluster: missing fields.")
 
     return redirect("/clusters")
+
+
+def _remove_unticked_members(request, cluster_id: str) -> list[str]:
+    """Take out every member school the edit drawer left unticked.
+
+    Only when the drawer sent its member list (``manage_members``): an API
+    client or an older form that never showed the schools must not empty
+    the cluster by omission. Each removal goes through the canonical
+    service, so the ownership rule and the audit trail are the roster's.
+    """
+    if not request.POST.get("manage_members"):
+        return []
+    from apps.clusters.services import active_schools, remove_school_from_cluster
+
+    kept = {s.strip() for s in request.POST.getlist("member_school_ids") if s.strip()}
+    removed = []
+    for school in list(active_schools(cluster_id)):
+        if school.id in kept:
+            continue
+        remove_school_from_cluster(school.id, cluster_id, request.user)
+        removed.append(school.name)
+    return removed
+
+
+@require_page_permission("planning")
+def remove_school_from_cluster_view(request, cluster_id, school_id):
+    """Take one school out of a cluster from its roster (owner, 2026-09-15).
+
+    The service decides who may: the school and the cluster must both be in
+    the caller's direct portfolio. On success the cluster cards re-fetch
+    their rosters (the same trigger the add-schools drawer fires) and the
+    profile page reloads itself.
+    """
+    from django.http import HttpResponse, HttpResponseNotAllowed
+
+    from apps.clusters.services import remove_school_from_cluster
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    is_htmx = bool(request.headers.get("HX-Request"))
+    try:
+        result = remove_school_from_cluster(school_id, cluster_id, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        if is_htmx:
+            return HttpResponse(
+                f'<div class="edify-note" data-tone="danger" role="alert">'
+                f'<p class="edify-note__body">{escape(str(exc))}</p></div>',
+                status=400,
+            )
+        messages.error(request, str(exc))
+        # A fixed destination: the id in the path is the caller's, and a
+        # redirect built from it is an open-redirect finding (CodeQL, PR
+        # #104). The list page shows the message either way.
+        return redirect("/clusters")
+    message = f"Removed {result['schoolId']} from the cluster; it is unclustered again."
+    if is_htmx:
+        response = render(
+            request, "partials/schools/toast_success.html", {"message": message}
+        )
+        response["HX-Trigger"] = (
+            f"cluster-schools-updated-{cluster_id}, schools-updated"
+        )
+        return response
+    messages.success(request, message)
+    # Back to the profile of the cluster the service resolved -- its own id
+    # from the database, reversed through the route, never the path value.
+    return redirect("frontend:cluster_detail", cluster_id=result["clusterId"])
 
 
 @require_page_permission("planning")

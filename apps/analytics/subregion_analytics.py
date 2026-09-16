@@ -21,6 +21,11 @@ from typing import Any
 
 import pandas as pd
 
+from apps.analytics.plan_progress import (
+    PLAN_PROGRESS_FIELDS,
+    plan_progress_by_district,
+    plan_progress_frame,
+)
 from apps.analytics.platform_engine import engine_metadata
 
 # SSA rows only count once a reviewer has confirmed them.
@@ -161,8 +166,14 @@ def district_frame(
     cluster_counts = _counts(cluster_qs, "district_id", "clusters")
     ssa = _ssa_frame(fy, ssa_records)
     reach = _reach_frames(fy, school_qs)
+    # Planned vs achieved visits, cluster meetings and cluster trainings, and
+    # the work assigned to a partner (owner, 2026-09-15) -- one definition
+    # for every level of the table (apps.analytics.plan_progress).
+    progress = plan_progress_frame(
+        plan_progress_by_district(fy, schools=school_qs, clusters=cluster_qs)
+    )
 
-    for part in (school_counts, cluster_counts, ssa, *reach):
+    for part in (school_counts, cluster_counts, ssa, *reach, progress):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
 
@@ -173,6 +184,7 @@ def district_frame(
         "enrollment",
         "schools_visited",
         "schools_trained",
+        *PLAN_PROGRESS_FIELDS,
     ):
         if col not in base:
             base[col] = 0
@@ -271,6 +283,7 @@ _ADDITIVE_FIELDS = (
     "visited",
     "teachers_trained",
     "leaders_trained",
+    *PLAN_PROGRESS_FIELDS,
 )
 
 
@@ -366,6 +379,7 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
         enrollment=("enrollment", "sum"),
         schools_visited=("schools_visited", "sum"),
         schools_trained=("schools_trained", "sum"),
+        **{field: (field, "sum") for field in PLAN_PROGRESS_FIELDS},
     )
     # Guard the divide: ssa_n is 0 for a group with no confirmed assessment,
     # and that must stay absent rather than becoming NaN-as-zero.
@@ -387,6 +401,7 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
                 "enrollment": int(row["enrollment"]),
                 "schools_visited": int(row["schools_visited"]),
                 "schools_trained": int(row["schools_trained"]),
+                **{field: int(row[field]) for field in PLAN_PROGRESS_FIELDS},
                 "school_share": (
                     round(float(row["schools"]) / total_schools * 100, 1)
                     if total_schools
@@ -431,6 +446,7 @@ def subregion_performance(
                     "enrollment": int(r["enrollment"]),
                     "schools_visited": int(r["schools_visited"]),
                     "schools_trained": int(r["schools_trained"]),
+                    **{field: int(r[field]) for field in PLAN_PROGRESS_FIELDS},
                 }
             )
 
