@@ -9811,7 +9811,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10102,
+      "bytes": 10703,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -9833,6 +9833,56 @@
       "variants": [
         "sm"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 4538,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/projects",
+        "/projects/filter"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Project Card",
+      "purpose": "Reusable project card interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/projects/project_card.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6489,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partials/projects/<str:project_id>/schools"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Project Schools Table",
+      "purpose": "Reusable project schools table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/projects/project_schools_table.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -60615,6 +60665,118 @@
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_schools_partial",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/projects/project_schools_table.html",
+        "test:referenced-by-automated-test",
+        "permission:projects"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /projects/{{ project_id }}/schools/bulk-assign-drawer",
+        "GET /planning/schedule-modal?school_id={{ row.school_code }}",
+        "GET /planning/assign-partner-modal?school_id={{ row.school_code }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": true,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-02255FCCB9",
+      "page_title": "Project Schools Partial",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "projects",
+      "primary_action": "Project Schools Partial",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The schools of one project, for its card on the Projects page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/partials/projects/<str:project_id>/schools",
+      "route_name": "project_schools_partial",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/projects/project_schools_table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.partner_engagement_views",
       "backend_view": "apps.frontend.views.partner_engagement_views.engagement_drawer",
       "card_count": 0,
@@ -99662,6 +99824,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.extended_views.project_schools_partial",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "projects",
+      "required_permissions": [],
+      "route": "/partials/projects/<str:project_id>/schools",
+      "route_name": "project_schools_partial",
+      "templates": [
+        "partials/projects/project_schools_table.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.partner_engagement_views.engagement_drawer",
       "kind": "drawer",
       "methods": [
@@ -103285,30 +103461,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 526,
+    "accessibility_contract_pass": 527,
     "activity_states": 24,
-    "all_routes": 1286,
+    "all_routes": 1287,
     "api_routes": 360,
-    "component_templates": 457,
+    "component_templates": 459,
     "full_pages": 257,
-    "mobile_contract_pass": 526,
+    "mobile_contract_pass": 527,
     "nonvisual_actions": 263,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 529,
+      "interaction-fragment": 530,
       "operational-queue": 149,
       "planning-or-creation": 11,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 266,
-    "permission_gated": 799,
+    "partials_and_drawers": 267,
+    "permission_gated": 800,
     "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 814,
+    "routed_surfaces": 815,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -103316,8 +103492,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 526,
-    "test_referenced": 705,
-    "theme_contract_pass": 526
+    "tablet_contract_pass": 527,
+    "test_referenced": 706,
+    "theme_contract_pass": 527
   }
 }

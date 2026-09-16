@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **814**
-- All registered routes: **1286**
+- Routed product surfaces: **815**
+- All registered routes: **1287**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **120**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **457**
+- Shared component templates: **459**
 - Full pages: **257**
-- Partials and drawers: **266**
-- Permission-gated surfaces: **799**
-- Referenced by automated tests: **705**
+- Partials and drawers: **267**
+- Permission-gated surfaces: **800**
+- Referenced by automated tests: **706**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -586,6 +586,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9E6ABDEFA5 | /ownership-transfers/ | Ownership Transfers | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CED66A2471 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A1BC57DE66 | /partials/costing/preview | Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-02255FCCB9 | /partials/projects/<str:project_id>/schools | Project Schools Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7094F59CAA | /partner-engagements/<str:engagement_id> | Partner Engagement Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2428BF151D | /partner-engagements/<str:engagement_id>/follow-up | Partner Engagement Follow Up Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-120A43A500 | /partner-engagements/<str:engagement_id>/follow-up/save | Partner Engagement Follow Up | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

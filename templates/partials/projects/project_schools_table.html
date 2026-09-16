@@ -1,0 +1,115 @@
+{% comment %}
+  The schools belonging to one project, inside that project's card (owner,
+  2026-09-16: "the projects created should all be in their own cards so that
+  it is easy for the project coordinator to look at which schools belong to
+  which project and to be able to either schedule activities or assign to
+  partner").
+
+  Loaded only when the card is opened, the same way the cluster card loads its
+  roster, so a portfolio of twenty projects is one page of headers rather than
+  twenty school tables nobody asked for.
+
+  The rows are `apps.projects.portfolio.portfolio_rows` — the same reading the
+  project profile shows, so the card and the profile cannot disagree about
+  where a school's planning has reached.
+
+  The card is a glance, so it holds the first twelve and sends the rest to the
+  profile. A pager would not work here: this fragment is fetched into an open
+  card, and the shared pager's plain page links would navigate the whole page
+  away from it.
+{% endcomment %}
+<div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center gap-3">
+  <div>
+    <h4 class="text-[12px] font-semibold text-slate-800">Schools in {{ project_name }} ({{ rows|length }})</h4>
+    <p class="edify-text-caption text-slate-400 mt-0.5">Schedule the work, or hand a school to a partner, without leaving the card.</p>
+  </div>
+  {% if can_add_schools %}
+  <button
+    type="button"
+    hx-get="/projects/{{ project_id }}/schools/bulk-assign-drawer"
+    hx-target="#drawer-container"
+    hx-swap="innerHTML"
+    class="h-7 px-3 btn-premium-primary text-white edify-text-caption font-bold rounded-control shadow-sm flex items-center gap-1.5 transition-colors"
+  >
+    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+    Add Schools
+  </button>
+  {% endif %}
+</div>
+
+{% if rows %}
+<div class="overflow-x-auto">
+  <table class="edify-record-table w-full text-left border-collapse text-[12px]">
+    <caption class="sr-only">Schools assigned to {{ project_name }}, with where each one's planning has reached</caption>
+    <thead>
+      <tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/40">
+        <th scope="col" class="px-4 py-2.5">School</th>
+        <th scope="col" class="px-4 py-2.5 hidden md:table-cell">Where it is</th>
+        <th scope="col" class="px-4 py-2.5">Planning</th>
+        <th scope="col" class="px-4 py-2.5 hidden lg:table-cell">Visit</th>
+        <th scope="col" class="px-4 py-2.5 hidden lg:table-cell">Partner</th>
+        <th scope="col" class="px-3 py-2.5 text-right"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for row in rows|slice:":12" %}
+      <tr class="hover:bg-slate-50/50 transition-colors">
+        <td class="px-4 py-3 align-top" data-record-title>
+          <a href="{{ row.school_url }}" class="font-bold edify-primary-text edify-primary-text-hover hover:underline leading-tight">{{ row.school_name }}</a>
+          <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ row.school_code }}</p>
+        </td>
+        <td class="px-4 py-3 align-top hidden md:table-cell text-slate-600 font-semibold">{{ row.geography|default:"—" }}</td>
+        <td class="px-4 py-3 align-top">
+          <span class="edify-status-badge {% if row.needs_planning %}warning{% else %}success{% endif %}">{{ row.planning_status }}</span>
+        </td>
+        <td class="px-4 py-3 align-top hidden lg:table-cell">
+          <span class="edify-status-badge {{ row.visit_status_tone|default:'neutral' }}">{{ row.visit_status }}</span>
+        </td>
+        <td class="px-4 py-3 align-top hidden lg:table-cell text-slate-600 font-semibold">{{ row.partner_status }}</td>
+        <td class="px-3 py-3 align-top">
+          <div class="flex items-center justify-end gap-1.5">
+            {% if can_schedule %}
+            <button
+              type="button"
+              class="school-record-action school-record-action--schedule"
+              hx-get="/planning/schedule-modal?school_id={{ row.school_code }}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              aria-label="Schedule an activity for {{ row.school_name }}"
+            >
+              <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <span class="school-record-action__label">Schedule</span>
+            </button>
+            {% endif %}
+            {% if can_assign_partner %}
+            <button
+              type="button"
+              class="school-record-action school-record-action--assign"
+              hx-get="/planning/assign-partner-modal?school_id={{ row.school_code }}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              aria-label="Assign {{ row.school_name }} to a partner"
+            >
+              <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m12-11a4 4 0 10-8 0 4 4 0 008 0zm4 1v6m3-3h-6" /></svg>
+              <span class="school-record-action__label">Partner</span>
+            </button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if rows|length > 12 %}
+<div class="px-4 py-3 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between gap-3">
+  <p class="edify-text-caption font-semibold text-slate-400">Showing the first 12 of {{ rows|length }} schools.</p>
+  <a href="/projects/{{ project_id }}#participating-schools" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover hover:underline">See all {{ rows|length }} &rarr;</a>
+</div>
+{% endif %}
+{% else %}
+<div class="px-6 py-8 text-center">
+  <p class="text-[12px] font-semibold text-slate-500">No schools in this project yet.</p>
+  <p class="edify-text-caption text-slate-400 mt-1">Add schools to it and their planning will show up here.</p>
+</div>
+{% endif %}

@@ -2993,6 +2993,34 @@ def pl_partner_invoice_download(request, invoice_id):
 
 
 @require_page_permission("projects")
+def project_schools_partial(request, project_id):
+    """The schools of one project, for its card on the Projects page.
+
+    Loaded when the card is opened (owner, 2026-09-16), so a portfolio of
+    twenty projects costs one page of headers rather than twenty rosters.
+    `get_scoped_project` is the same scoping the project profile uses, so a
+    project outside the caller's scope 404s here exactly as it does there.
+    """
+    from apps.projects.portfolio import portfolio_rows
+    from apps.projects.scoping import enrollable_schools, get_scoped_project
+
+    project = get_scoped_project(project_id, request.user)
+    eligible = enrollable_schools(request.user)
+    context = {
+        "rows": portfolio_rows(project),
+        "project_id": project.id,
+        "project_name": project.name,
+        # The same permissions the drawers these buttons open enforce, so a
+        # control is present exactly when it works.
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
+        or RolePermissionService.can_request_school_visit(request.user),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "can_add_schools": bool(eligible),
+    }
+    return render(request, "partials/projects/project_schools_table.html", context)
+
+
+@require_page_permission("projects")
 def project_detail_view(request, project_id):
     """Project detail."""
     from apps.activities.models import ActivityScheduleCostLine

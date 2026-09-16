@@ -2240,6 +2240,11 @@ urlpatterns = [
         name="project_assign_school_action",
     ),
     path(
+        "partials/projects/<str:project_id>/schools",
+        extended_views.project_schools_partial,
+        name="project_schools_partial",
+    ),
+    path(
         "projects/<str:project_id>/schools/bulk-assign-drawer",
         extended_views.project_bulk_assign_drawer_view,
         name="project_bulk_assign_drawer",

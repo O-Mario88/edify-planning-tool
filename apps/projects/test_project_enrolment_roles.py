@@ -200,3 +200,58 @@ class TheProgrammeLeadEnrolsBothWaysTest(_Roles):
             },
         )
         self.assertFalse(self._enrolled(self.outsider))
+
+
+class TheCoordinatorWorksFromTheProjectCardTest(_Roles):
+    """Owner, 2026-09-16: "the projects created should all be in their own
+    cards so that it is easy for the project coordinator to look at which
+    schools belong to which project and to be able to either schedule
+    activities or assign to partner"."""
+
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.client.force_login(self.coordinator)
+        ProjectSchoolAssignment.objects.get_or_create(
+            project=self.project,
+            school=self.cceo_school,
+            defaults={"assigned_by": self.coordinator.id},
+        )
+
+    def test_every_project_gets_a_card_that_opens_on_its_schools(self):
+        html = self.client.get("/projects").content.decode()
+        self.assertIn(f'data-project-card="{self.project.id}"', html)
+        self.assertIn("Roles Project", html)
+        # The roster is fetched when the card opens, not with the page: the
+        # card ships the request, not the rows.
+        self.assertIn(f'hx-get="/partials/projects/{self.project.id}/schools"', html)
+        self.assertIn("Loading the schools in this project", html)
+
+    def test_the_card_lists_the_schools_with_both_actions(self):
+        response = self.client.get(
+            f"/partials/projects/{self.project.id}/schools",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(self.cceo_school.name, html)
+        self.assertIn(
+            f"/planning/schedule-modal?school_id={self.cceo_school.school_id}", html
+        )
+        self.assertIn(
+            f"/planning/assign-partner-modal?school_id={self.cceo_school.school_id}",
+            html,
+        )
+        # A school in nobody's project is not listed by it.
+        self.assertNotIn(self.outsider.name, html)
+
+    def test_the_coordinator_may_assign_a_school_to_a_partner(self):
+        from apps.core.permissions import RolePermissionService
+
+        self.assertTrue(RolePermissionService.can_assign_to_partner(self.coordinator))
+        response = self.client.get(
+            f"/planning/assign-partner-modal?school_id={self.cceo_school.school_id}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Access Denied", response.content.decode())

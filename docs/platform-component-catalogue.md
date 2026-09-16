@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **457**
+Components and application partials: **459**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -404,6 +404,8 @@ Components and application partials: **457**
 | `partials/projects/planning_icon.html` | application-partial | Reusable planning icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /projects/analytics<br>/projects/planning | 0 |
 | `partials/projects/planning_workspace.html` | application-partial | Reusable planning workspace interface primitive | executive; default, loading, empty, disabled, selected | inherits containing page contract | accessible name and label | /projects/planning | 0 |
 | `partials/projects/portfolio_list.html` | application-partial | Reusable portfolio list interface primitive | sm; default, open | explicit responsive contract | accessible name and label | /projects<br>/projects/filter | 0 |
+| `partials/projects/project_card.html` | application-partial | Reusable project card interface primitive | canonical; default, loading, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /projects<br>/projects/filter | 0 |
+| `partials/projects/project_schools_table.html` | application-partial | Reusable project schools table interface primitive | canonical; default | explicit responsive contract | accessible name and label | /partials/projects/<str:project_id>/schools | 0 |
 | `partials/projects/workspace_nav.html` | application-partial | Reusable workspace nav interface primitive | canonical; default | inherits containing page contract | accessible name and label | /projects/<str:project_id><br>/projects/analytics<br>/projects/my-plan<br>/projects/planning | 0 |
 | `partials/pwa_head.html` | application-partial | Reusable pwa head interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/pwa_launch.html` | application-partial | Reusable pwa launch interface primitive | canonical; default, loading | explicit responsive contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
