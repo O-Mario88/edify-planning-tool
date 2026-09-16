@@ -180,12 +180,34 @@ def _assert_school_capacity(project, school) -> None:
 
 
 def _assert_staff_can_plan_project(project, school, principal) -> None:
+    """Refuse an enrolment the caller has no standing to make.
+
+    Two standings, either of which is enough (owner, 2026-09-16):
+
+    * the school is in the caller's DIRECT portfolio — the CCEO or Programme
+      Lead who holds a school decides which projects it joins, whoever created
+      the project. This is the ordinary path, and the one the school-side Add
+      to Project drawer uses;
+    * the caller runs the project AND the school is within their scope — the
+      older path, kept for a coordinator or lead building out a cohort they
+      already reach.
+
+    Requiring BOTH, as this did, deadlocked the Project Coordinator: their
+    portfolio is derived from the schools already enrolled in their projects
+    (`apps.core.scoping`), so a project created moments ago put every school
+    out of scope and no first enrolment was possible from any surface.
+    """
     if principal is None or getattr(principal, "active_role", "") in (
         PROJECT_COUNTRY_ASSIGNER_ROLES
     ):
         return
     from apps.core.exceptions import Forbidden
-    from apps.core.scoping import resolve_user_scope
+    from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+
+    scope = resolve_user_scope(principal)
+    owned = direct_portfolio_schools(scope)
+    if owned is not None and owned.filter(id=school.id).exists():
+        return
 
     staff_id = getattr(principal, "staff_profile_id", None)
     assigned = staff_id and (
@@ -197,8 +219,10 @@ def _assert_staff_can_plan_project(project, school, principal) -> None:
         ).exists()
     )
     if not assigned:
-        raise Forbidden("This Project is not assigned to you as a staff priority.")
-    scope = resolve_user_scope(principal)
+        raise Forbidden(
+            f"{school.name} is not in your portfolio, and this Project is not "
+            "assigned to you. The school's own CCEO or Programme Lead adds it."
+        )
     if school.id not in set(scope.school_ids or []):
         raise Forbidden("You may add only Schools in your own or supervised portfolio.")
 

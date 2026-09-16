@@ -4,10 +4,10 @@
   "templates": 259,
   "distinct_titles": 650,
   "with_card_key": 13,
-  "untitled_surfaces": 770,
+  "untitled_surfaces": 774,
   "untitled_chrome": 173,
-  "untitled_nested": 249,
-  "untitled_headless": 348,
+  "untitled_nested": 250,
+  "untitled_headless": 351,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -2690,7 +2690,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 146,
+   "line": 167,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2699,7 +2699,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 165,
+   "line": 186,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -7080,7 +7080,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 105,
+   "line": 123,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7094,7 +7094,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 114,
+   "line": 132,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7108,7 +7108,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 131,
+   "line": 149,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7122,7 +7122,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 135,
+   "line": 153,
    "title": "Project Delivery Readiness",
    "heading_level": 2,
    "has_card_key": false,

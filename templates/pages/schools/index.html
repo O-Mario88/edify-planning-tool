@@ -260,7 +260,7 @@ style="display: none;"
 <select aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Project --</option>
 {% for p in projects %}
-<option value="{{ p.id }}">{{ p.name }}</option>
+<option value="{{ p.id }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
 {% endfor %}
 </select>
 </div>

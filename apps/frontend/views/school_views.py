@@ -45,10 +45,10 @@ from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import has_permission, render_access_denied
 from apps.core.rbac import Permission
 from apps.projects.models import (
-    OPEN_PROJECT_STATUSES,
     Project,
     ProjectSchoolAssignment,
 )
+from apps.projects.scoping import annotate_coordinator_names, assignable_projects
 from apps.core.enums import ClusterRecordStatus
 from apps.core.scoping import (
     assert_may_write_school,
@@ -737,24 +737,14 @@ def school_directory_view(request):
             )
             .order_by("name")
         )
-    from apps.projects.scoping import scoped_projects
-
-    projects = scoped_projects(user).filter(
-        status__in=[status.value for status in OPEN_PROJECT_STATUSES],
-    )
-    if user.active_role not in (
-        "ImpactAssessment",
-        "CountryDirector",
-        "Admin",
-    ):
-        projects = projects.filter(
-            Q(manager_staff_id=getattr(user, "staff_profile_id", None))
-            | Q(
-                staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
-                staff_assignments__is_active=True,
-            )
-        )
-    projects = projects.distinct().order_by("name")
+    # The Assign Project bulk modal below this list. `assignable_projects`, not
+    # `scoped_projects` narrowed to the projects the caller runs: enrolling a
+    # school is a decision about the school, which belongs to its CCEO or
+    # Programme Lead, and the Project Coordinator who created the cohort is
+    # never its owner. The old narrowing left every school-scoped role with an
+    # empty dropdown, so the bulk path could not fill a new project at all
+    # (owner, 2026-09-16) — the single-school drawer answers the same way.
+    projects = annotate_coordinator_names(assignable_projects(user))
 
     # An empty table says why it is empty (controls audit F-03, 2026-09-14):
     # a filter with no matches used to tell the reader no schools had ever
@@ -1159,29 +1149,22 @@ def assign_to_project_drawer_view(request, school_id):
             )
         except Exception:  # noqa: BLE001
             coordinators = []
-        from apps.projects.scoping import scoped_projects
-
-        projects = scoped_projects(user).filter(
-            status__in=[s.value for s in OPEN_PROJECT_STATUSES],
-        )
-        if user.active_role not in (
-            "ImpactAssessment",
-            "CountryDirector",
-            "Admin",
-        ):
-            projects = projects.filter(
-                Q(manager_staff_id=getattr(user, "staff_profile_id", None))
-                | Q(
-                    staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
-                    staff_assignments__is_active=True,
-                )
-            )
+        # Every project still accepting work, not only the ones this person
+        # runs (owner, 2026-09-16: "when the user clicks add school to
+        # project, it should bring a dropdown of the projects created by the
+        # project coordinator"). Narrowing to managed projects left a CCEO or
+        # Programme Lead with an empty dropdown, which is why a coordinator's
+        # new cohort could never be filled. `assignable_projects` is the one
+        # place that decides this.
+        # Whose cohort each one is, so the person enrolling a school can tell
+        # the coordinator's projects apart in a country-wide list.
+        projects = annotate_coordinator_names(assignable_projects(user))
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
             # Only projects still accepting work are offerable — a paused or
             # closed project should not be selectable in the first place.
-            "projects": projects.distinct().order_by("name"),
+            "projects": projects,
             "interventions": SsaIntervention.choices,
             "coordinators": coordinators,
         }

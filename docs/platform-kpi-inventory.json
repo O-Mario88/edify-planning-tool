@@ -3640,7 +3640,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3344,
+   "line": 3468,
    "label": null,
    "keys": [
     "label",
@@ -3695,7 +3695,7 @@
    "audit_id": "KPI-SOURCE-195",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3210,
+   "line": 3334,
    "label": "About",
    "keys": [
     "label",
@@ -3712,7 +3712,7 @@
    "audit_id": "KPI-SOURCE-196",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3211,
+   "line": 3335,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3729,7 +3729,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3212,
+   "line": 3336,
    "label": "Flag",
    "keys": [
     "label",
@@ -3746,7 +3746,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3213,
+   "line": 3337,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8754,7 +8754,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 792,
+   "line": 782,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -11260,7 +11260,7 @@
    "audit_id": "KPI-SOURCE-621",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 750,
+   "line": 776,
    "label": null,
    "keys": [
     "label",
@@ -11277,7 +11277,7 @@
    "audit_id": "KPI-SOURCE-622",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 759,
+   "line": 785,
    "label": "Staff-led",
    "keys": [
     "label",
@@ -11294,7 +11294,7 @@
    "audit_id": "KPI-SOURCE-623",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 760,
+   "line": 786,
    "label": "Partner-led",
    "keys": [
     "label",
@@ -11311,7 +11311,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 761,
+   "line": 787,
    "label": "Not assigned",
    "keys": [
     "label",
@@ -11328,7 +11328,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 764,
+   "line": 790,
    "label": null,
    "keys": [
     "label",
@@ -13507,7 +13507,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Review record",
+   "primary_action": "Add Schools",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -13536,7 +13536,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Project detail.",
-   "primary_action": "Review record",
+   "primary_action": "Add Schools",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -39784,7 +39784,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3550,
+   "line": 3674,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -40270,7 +40270,7 @@
   {
    "audit_id": "KPI-PAYLOAD-030",
    "module": "apps/projects/planning_service.py",
-   "line": 524,
+   "line": 550,
    "function": "get_planning",
    "target": "kpis",
    "source_item_count": 6,
@@ -40300,7 +40300,7 @@
   {
    "audit_id": "KPI-PAYLOAD-031",
    "module": "apps/projects/planning_service.py",
-   "line": 569,
+   "line": 595,
    "function": "get_planning",
    "target": "band_cards",
    "source_item_count": 3,
@@ -40324,7 +40324,7 @@
   {
    "audit_id": "KPI-PAYLOAD-032",
    "module": "apps/projects/planning_service.py",
-   "line": 645,
+   "line": 671,
    "function": "get_planning",
    "target": "delivery",
    "source_item_count": 5,

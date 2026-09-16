@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **803**
-- All registered routes: **1274**
+- Routed product surfaces: **804**
+- All registered routes: **1275**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **449**
+- Shared component templates: **450**
 - Full pages: **255**
-- Partials and drawers: **259**
-- Permission-gated surfaces: **788**
-- Referenced by automated tests: **693**
+- Partials and drawers: **260**
+- Permission-gated surfaces: **789**
+- Referenced by automated tests: **694**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -690,6 +690,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3B7E4DFD30 | /projects | Projects | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1B2707901E | /projects/<str:project_id> | Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-52061A5059 | /projects/<str:project_id>/schools/assign | Project Assign School Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-A067D0C962 | /projects/<str:project_id>/schools/bulk-assign-drawer | Project Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4340ED5A6E | /projects/<str:project_id>/staff/assign | Project Assign Staff Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-987AE1FD65 | /projects/analytics | Overview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6805EDED42 | /projects/create | Project Create Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

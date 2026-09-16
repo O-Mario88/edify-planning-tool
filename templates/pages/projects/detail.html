@@ -96,7 +96,7 @@ Project
 {% if can_add_schools %}
 <details class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="add-project-school-title">
   <summary><h2 id="add-project-school-title" class="text-[15px] font-extrabold text-slate-800">Add Schools to This Priority</h2></summary>
-  <p class="mt-1 text-[12px] leading-5 text-slate-500">Client Schools may join one active Project. Core Schools may join up to four. SSA need and Project school focus are validated on save.</p>
+  <p class="mt-1 text-[12px] leading-5 text-slate-500">Client Schools may join one active Project. Core Schools may join up to four. SSA need and Project school focus are validated on save. For a whole cohort at once, use <strong>Add Schools</strong> on the Participating Schools table below.</p>
   <form method="post" action="/projects/{{ project.id }}/schools/assign" class="mt-4 space-y-3">
     {% csrf_token %}
     <label class="block edify-text-caption font-bold text-slate-600">School
@@ -118,10 +118,31 @@ Project
 
 <div class="edify-record-workspace grid lg:grid-cols-3 gap-6 items-start">
 <div class="lg:col-span-2 space-y-6">
-<div id="participating-schools" class="card overflow-hidden scroll-mt-24">
-<div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
+<div
+id="participating-schools"
+class="card overflow-hidden scroll-mt-24"
+hx-get="/projects/{{ project.id }}"
+hx-trigger="project-schools-updated-{{ project.id }} from:body"
+hx-select="#participating-schools"
+hx-swap="outerHTML"
+>
+<div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between gap-3">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
+<div class="flex items-center gap-2">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>
+{% if can_add_schools %}
+<button
+type="button"
+hx-get="/projects/{{ project.id }}/schools/bulk-assign-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Add schools to {{ project.name }}"
+class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add Schools
+</button>
+{% endif %}
+</div>
 </div>
 
 <div class="overflow-x-auto">
