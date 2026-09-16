@@ -184,10 +184,11 @@ def _assert_staff_can_plan_project(project, school, principal) -> None:
 
     Two standings, either of which is enough (owner, 2026-09-16):
 
-    * the school is in the caller's DIRECT portfolio — the CCEO or Programme
-      Lead who holds a school decides which projects it joins, whoever created
-      the project. This is the ordinary path, and the one the school-side Add
-      to Project drawer uses;
+    * the school is one the caller holds or supervises — the CCEO who holds a
+      school, and the Programme Lead who answers for it, decide which projects
+      it joins, whoever created the project. This is the ordinary path, and
+      the one both the school-side Add to Project drawer and the directory's
+      bulk assign use;
     * the caller runs the project AND the school is within their scope — the
       older path, kept for a coordinator or lead building out a cohort they
       already reach.
@@ -196,17 +197,24 @@ def _assert_staff_can_plan_project(project, school, principal) -> None:
     portfolio is derived from the schools already enrolled in their projects
     (`apps.core.scoping`), so a project created moments ago put every school
     out of scope and no first enrolment was possible from any surface.
+
+    `enrollable_schools` rather than `direct_portfolio_schools`: a Programme
+    Lead holds no school directly, so the direct rule offered them the project
+    and then refused the save. See that function for why this is a narrow
+    exception to the directory's ownership rule rather than a repeal of it.
     """
     if principal is None or getattr(principal, "active_role", "") in (
         PROJECT_COUNTRY_ASSIGNER_ROLES
     ):
         return
     from apps.core.exceptions import Forbidden
-    from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+    from apps.core.scoping import resolve_user_scope
+
+    from .scoping import enrollable_schools
 
     scope = resolve_user_scope(principal)
-    owned = direct_portfolio_schools(scope)
-    if owned is not None and owned.filter(id=school.id).exists():
+    reachable = enrollable_schools(principal)
+    if reachable is not None and reachable.filter(id=school.id).exists():
         return
 
     staff_id = getattr(principal, "staff_profile_id", None)
@@ -220,8 +228,9 @@ def _assert_staff_can_plan_project(project, school, principal) -> None:
     )
     if not assigned:
         raise Forbidden(
-            f"{school.name} is not in your portfolio, and this Project is not "
-            "assigned to you. The school's own CCEO or Programme Lead adds it."
+            f"{school.name} is neither in your portfolio nor your team's, and "
+            "this Project is not assigned to you. The school's own CCEO or "
+            "Programme Lead adds it."
         )
     if school.id not in set(scope.school_ids or []):
         raise Forbidden("You may add only Schools in your own or supervised portfolio.")

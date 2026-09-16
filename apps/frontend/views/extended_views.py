@@ -3241,13 +3241,14 @@ def project_bulk_assign_drawer_view(request, project_id):
             {"error": "You do not have permission to assign projects."},
         )
 
-    scope = resolve_user_scope(request.user)
-    # Direct portfolio only, as everywhere else that enrols a school: a
-    # supervisor reading a team's schools may not enrol them.
-    writable = school_queryset(scope, direct_only=True)
+    # Own portfolio and supervised team, the same set `assign_school` accepts:
+    # a Programme Lead holds no school directly, so a direct-only list left
+    # them a drawer with nothing in it (owner, 2026-09-16).
+    from apps.projects.scoping import enrollable_schools
+
+    writable = enrollable_schools(request.user)
     if writable is None:
         writable = School.objects.none()
-    writable = writable.filter(deleted_at__isnull=True)
 
     if request.method == "POST":
         if not project.accepts_new_work:

@@ -112,7 +112,9 @@ class TheSchoolOwnerEnrolsItTest(_Fixture):
                 {"schoolId": self.other_school.school_id, "reason": "x"},
                 self.cceo,
             )
-        self.assertIn("not in your portfolio", str(caught.exception))
+        self.assertIn(
+            "neither in your portfolio nor your team's", str(caught.exception)
+        )
 
     def test_the_first_enrolment_unblocks_the_coordinators_scope(self):
         """The deadlock: the coordinator's portfolio comes from the schools

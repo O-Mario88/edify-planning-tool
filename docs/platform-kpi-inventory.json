@@ -3640,7 +3640,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3587,
+   "line": 3588,
    "label": null,
    "keys": [
     "label",
@@ -3695,7 +3695,7 @@
    "audit_id": "KPI-SOURCE-195",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3453,
+   "line": 3454,
    "label": "About",
    "keys": [
     "label",
@@ -3712,7 +3712,7 @@
    "audit_id": "KPI-SOURCE-196",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3454,
+   "line": 3455,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3729,7 +3729,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3455,
+   "line": 3456,
    "label": "Flag",
    "keys": [
     "label",
@@ -3746,7 +3746,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3456,
+   "line": 3457,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8754,7 +8754,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 782,
+   "line": 786,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -39784,7 +39784,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3793,
+   "line": 3794,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -39867,7 +39867,7 @@
   {
    "audit_id": "KPI-PAYLOAD-017",
    "module": "apps/frontend/views/school_views.py",
-   "line": 532,
+   "line": 536,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,

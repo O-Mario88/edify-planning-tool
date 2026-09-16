@@ -109,6 +109,34 @@ def assignable_projects(principal, base=None):
     return qs.filter(status__in=open_statuses).distinct().order_by("name")
 
 
+def enrollable_schools(principal, base=None):
+    """The schools this principal may enrol into a project.
+
+    Own portfolio *and* supervised team, which is wider than the
+    `direct_portfolio_schools` rule the School Directory's other bulk actions
+    use. That rule exists for a good reason — a Programme Lead was editing,
+    clustering and staff-matching their CCEOs' schools as if they were their
+    own — and this is a deliberate, narrow exception to it (owner, 2026-09-16:
+    "the cceo and PL should be able to assign schools to projects created by
+    the project coordinator"). A PL holds no school directly, so under the
+    direct rule they could see a coordinator's project in the dropdown and
+    still be refused on save, which is the worst of both.
+
+    It stays an exception: enrolling a school in a project, and nothing else.
+    Editing the school, clustering it and matching its staff are still the
+    owner's alone, and a school outside both the caller's portfolio and their
+    team is refused here as everywhere.
+    """
+    from apps.core.scoping import school_queryset
+
+    scope = resolve_user_scope(principal)
+    qs = school_queryset(scope)
+    if qs is None:  # pragma: no cover - schools app not ready
+        return None
+    qs = qs.filter(deleted_at__isnull=True)
+    return qs if base is None else qs.filter(id__in=base.values("id"))
+
+
 def annotate_coordinator_names(projects):
     """Tag each project with the name of the coordinator who runs it.
 
@@ -148,6 +176,7 @@ def get_scoped_project(project_id: str, principal) -> Project:
 
 __all__ = [
     "annotate_coordinator_names",
+    "enrollable_schools",
     "assignable_projects",
     "scoped_projects",
     "get_scoped_project",

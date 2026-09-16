@@ -48,7 +48,11 @@ from apps.projects.models import (
     Project,
     ProjectSchoolAssignment,
 )
-from apps.projects.scoping import annotate_coordinator_names, assignable_projects
+from apps.projects.scoping import (
+    annotate_coordinator_names,
+    assignable_projects,
+    enrollable_schools,
+)
 from apps.core.enums import ClusterRecordStatus
 from apps.core.scoping import (
     assert_may_write_school,
@@ -1574,13 +1578,17 @@ def bulk_assign_project_view(request):
                     "schools can be assigned to it.",
                 )
                 return redirect("/schools")
-            # Same scope constraint as bulk_match_staff_view above: the
-            # project.assignSchool permission gates *whether* the caller may
-            # assign, not *which* schools they may reach.
-            scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope, direct_only=True).filter(
-                id__in=school_ids, deleted_at__isnull=True
-            )
+            # Scope-constrained, like every bulk path here — but on the
+            # project one the reachable set is `enrollable_schools`: own
+            # portfolio and supervised team. A Programme Lead holds no school
+            # directly, so the direct-only set left them with an empty bulk
+            # selection and a refusal on save (owner, 2026-09-16). Editing,
+            # clustering and staff-matching stay direct-only; this widening is
+            # project enrolment alone.
+            schools = enrollable_schools(request.user)
+            if schools is None:
+                schools = School.objects.none()
+            schools = schools.filter(id__in=school_ids, deleted_at__isnull=True)
 
             from apps.projects.services import assign_school as assign_project_school
 
