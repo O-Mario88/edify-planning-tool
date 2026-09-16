@@ -159,6 +159,19 @@ class LensAccessTest(TestCase):
         self.assertIn("Country Portfolio", body)
         self.assertNotIn("Team Portfolio", body)
 
+    def test_the_accountant_keeps_a_page_with_no_strip_on_it(self):
+        """They come here for the money in the plan, not for a programme lens.
+        The same reasoning that gives them no coverage tab gives them no
+        portfolio or cluster tab — and it is what keeps their first table row
+        above the fold, which e2e/calm-workspace.spec.js measures."""
+        self._sign_in("lens-accountant@edify.org", "Accountant")
+
+        body = self.client.get("/team-planning-oversight/").content.decode()
+
+        self.assertNotIn("data-edify-tablist", body)
+        for lens in ("Country Portfolio", "Team Portfolio", "Cluster Performance"):
+            self.assertNotIn(lens, body, lens)
+
     def test_the_country_director_reads_the_same_two_lenses(self):
         self._sign_in("lens-cd@edify.org", "CountryDirector")
 

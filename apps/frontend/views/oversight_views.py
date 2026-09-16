@@ -600,14 +600,16 @@ def team_planning_oversight_view(request):
     can_view_coverage = can_view_planning and (request.user.active_role or "") in (
         COVERAGE_LENS_ROLES
     )
-    # The country portfolio reads every school under its lead and its CCEO, so
-    # it goes to the people who hold the country: the same readers the school
-    # coverage lens is for. Cluster performance is scoped by
-    # `cluster_queryset`, so a Programme Lead sees their own clusters in it and
-    # a country role sees the country — everyone who reads this page gets it.
+    # The portfolio and cluster lenses go to the people the school coverage
+    # lens is for — the programme roles. The Accountant reaches Team Oversight
+    # for the money in the plan, and the same reasoning that gives them no
+    # coverage tab gives them no portfolio or cluster tab: those are programme
+    # questions. It also keeps their page at one lens, which is why it has no
+    # strip at all and why its first table row stays above the fold.
     can_view_portfolio = can_view_planning and (request.user.active_role or "") in (
         PORTFOLIO_LENS_ROLES
     )
+    can_view_clusters = can_view_portfolio
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     active_view = (
         requested_view
@@ -620,6 +622,8 @@ def team_planning_oversight_view(request):
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
+    if active_view == "clusters" and not can_view_clusters:
+        active_view = "planning"
     if (
         active_view in ("planning", "coverage", "portfolio", "clusters")
         and not can_view_planning
@@ -631,7 +635,7 @@ def team_planning_oversight_view(request):
         for key, allowed in (
             ("planning", can_view_planning),
             ("portfolio", can_view_portfolio),
-            ("clusters", can_view_planning),
+            ("clusters", can_view_clusters),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
         )
