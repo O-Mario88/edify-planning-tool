@@ -73,8 +73,21 @@
           <th scope="col" class="spp-check"><input type="checkbox" aria-label="Select all schools on this page" :checked="selected.length === {{ rows|length }} && {{ rows|length }} > 0" @change="togglePage([{% for row in rows %}'{{ row.assignment_id }}'{% if not forloop.last %},{% endif %}{% endfor %}])"></th>
           <th scope="col">School</th><th scope="col">Project</th><th scope="col">SSA Score</th><th scope="col">Planning readiness</th><th scope="col">Weakest intervention</th><th scope="col">Recommended action</th><th scope="col">Partner</th><th scope="col">Actions</th>
         </tr></thead>
+        {% for group in row_groups %}
         <tbody>
-          {% for row in rows %}
+          {% comment %}
+          One <tbody> per project, headed by the project it belongs to. The
+          queue used to be a flat alphabetical list of schools with the project
+          repeated in a column, which read as a single undifferentiated backlog
+          however many cohorts it spanned (owner, 2026-09-16).
+          {% endcomment %}
+          <tr class="spp-group-row">
+            <th scope="colgroup" colspan="9" class="spp-group-head">
+              <a href="{{ group.project_url }}">{{ group.project_name }}</a>
+              <small>{{ group.project_type }} · {{ group.count }} school{{ group.count|pluralize }} on this page</small>
+            </th>
+          </tr>
+          {% for row in group.rows %}
           <tr class="{% if selected_row.assignment_id == row.assignment_id %}is-selected{% endif %}">
             <td class="spp-check"><input type="checkbox" value="{{ row.assignment_id }}" aria-label="Select {{ row.school_name }} for bulk action" :checked="selected.includes('{{ row.assignment_id }}')" @change="toggle('{{ row.assignment_id }}')"></td>
             <td data-record-title><a class="spp-school" href="{{ row.select_url }}" hx-get="{{ row.select_url }}" hx-target="#spp-workspace" hx-push-url="true"><strong>{{ row.school_name }}</strong><small>{{ row.school_id }} · {{ row.district }}</small></a></td>
@@ -89,8 +102,13 @@
               {% if can_assign_partner %}<button type="button" class="is-secondary" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Partner</button>{% endif %}
             </div></td>
           </tr>
-          {% empty %}<tr><td colspan="9"><div class="spp-table-empty"><strong>No project schools match these filters</strong><span>Clear the filters or assign schools to a project from the School Directory.</span></div></td></tr>{% endfor %}
+          {% endfor %}
         </tbody>
+        {% empty %}
+        <tbody>
+          <tr><td colspan="9"><div class="spp-table-empty"><strong>No project schools match these filters</strong><span>Clear the filters or assign schools to a project from the School Directory.</span></div></td></tr>
+        </tbody>
+        {% endfor %}
       </table>
     </div>
 

@@ -3027,8 +3027,14 @@ def project_detail_view(request, project_id):
         "eligible_schools": eligible_schools,
         "can_assign_staff": can_assign_staff,
         "assignment_fy": (project.measurement_start_fy or get_operational_fy()),
+        # Also true for anyone holding schools of their own: the CCEO or
+        # Programme Lead who owns a school decides which projects it joins,
+        # whoever created the project (`_assert_staff_can_plan_project`).
+        # Gating on running the project hid the control from the only people
+        # who could use it (owner, 2026-09-16).
         "can_add_schools": (
             can_assign_staff
+            or bool(eligible_schools)
             or str(project.manager_staff_id or "")
             == str(getattr(request.user, "staff_profile_id", None) or "")
             or project.staff_assignments.filter(
@@ -3087,6 +3093,124 @@ def project_assign_school_action_view(request, project_id):
     except Exception as exc:
         messages.error(request, str(exc))
     return redirect("frontend:project_detail", project_id=project_id)
+
+
+@require_page_permission("projects")
+def project_bulk_assign_drawer_view(request, project_id):
+    """Add several schools to a Project in one pass.
+
+    The Project side had a one-at-a-time `<select>` while the Cluster side had
+    a searchable checklist; filling a cohort of thirty schools meant thirty
+    round trips (owner, 2026-09-16: "Bulk assign to project should work like
+    the way cluster bulk assign works"). This is the Cluster drawer's shape,
+    with the Project rules kept intact: each school still goes through
+    `assign_school`, so the SSA-need check, the override reason and the
+    per-school Project limit all apply, and a school the service refuses is
+    reported by name rather than silently dropped.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.core.permissions import has_permission
+    from apps.projects.models import OPEN_PROJECT_STATUSES
+    from apps.projects.scoping import get_scoped_project
+    from apps.projects.services import assign_school
+
+    project = get_scoped_project(project_id, request.user)
+    if not has_permission(request.user, "project.assignSchool"):
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {"error": "You do not have permission to assign projects."},
+        )
+
+    scope = resolve_user_scope(request.user)
+    # Direct portfolio only, as everywhere else that enrols a school: a
+    # supervisor reading a team's schools may not enrol them.
+    writable = school_queryset(scope, direct_only=True)
+    if writable is None:
+        writable = School.objects.none()
+    writable = writable.filter(deleted_at__isnull=True)
+
+    if request.method == "POST":
+        if not project.accepts_new_work:
+            # One refusal for the batch rather than the same BadRequest
+            # repeated once per ticked school.
+            response = render(
+                request,
+                "partials/schools/toast_success.html",
+                {
+                    "message": (
+                        f"{project.name} is {project.status_label.lower()} — "
+                        "no new schools can be added to it."
+                    )
+                },
+            )
+            return response
+        reason = (request.POST.get("reason") or "").strip()
+        schools = writable.filter(id__in=request.POST.getlist("school_ids"))
+        assigned, duplicates, refused = [], [], []
+        for school in schools:
+            if ProjectSchoolAssignment.objects.filter(
+                project=project, school=school
+            ).exists():
+                duplicates.append(school.name)
+                continue
+            try:
+                assign_school(
+                    project.id,
+                    {
+                        "schoolId": school.school_id,
+                        "reason": reason,
+                        "notes": reason,
+                    },
+                    request.user,
+                )
+            except (BadRequest, Forbidden) as exc:
+                refused.append(f"{school.name}: {exc}")
+                continue
+            assigned.append(school.name)
+
+        message = f"Added {len(assigned)} school(s) to {project.name}."
+        if duplicates:
+            message += f" {len(duplicates)} already in the cohort."
+        if refused:
+            shown = "; ".join(refused[:3])
+            more = f" and {len(refused) - 3} more" if len(refused) > 3 else ""
+            message += f" Skipped {len(refused)}: {shown}{more}."
+        response = render(
+            request, "partials/schools/toast_success.html", {"message": message}
+        )
+        response["HX-Trigger"] = (
+            f"project-schools-updated-{project.id}, schools-updated"
+        )
+        return response
+
+    enrolled_ids = ProjectSchoolAssignment.objects.filter(project=project).values_list(
+        "school_id", flat=True
+    )
+    candidates = (
+        writable.exclude(id__in=enrolled_ids)
+        .annotate(
+            active_project_count=Count(
+                "project_assignments",
+                filter=Q(
+                    project_assignments__project__deleted_at__isnull=True,
+                    project_assignments__project__status__in=[
+                        status.value for status in OPEN_PROJECT_STATUSES
+                    ],
+                ),
+            )
+        )
+        .select_related("sub_county")
+        .order_by("sub_county__name", "name")[:300]
+    )
+    context = {
+        "project": project,
+        "schools": candidates,
+        "accepts_new_work": project.accepts_new_work,
+        "drawer_type": "center",
+        "drawer_size": "md",
+    }
+    return render(request, "partials/projects/bulk_assign_drawer.html", context)
 
 
 @require_page_permission("quality_checks")

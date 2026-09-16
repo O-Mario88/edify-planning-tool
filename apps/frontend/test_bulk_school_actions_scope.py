@@ -12,9 +12,12 @@ lose: account ownership is the root of the scoping chain, writing
 StaffSchoolAssignment, which is what resolve_user_scope reads to decide
 planning, targets and budget scope. A CCEO posting ids they had no
 relationship to could move any school in the country onto any staff profile.
-bulk-assign-project reads the same unscoped queryset but is unreachable — the
-projects service refuses first — so it was hardened for consistency, not
-because it leaked. See the note where its test would otherwise sit.
+bulk-assign-project read the same unscoped queryset. It used to be unreachable
+— the projects service refused any project the caller did not run, before
+school scope was ever consulted — so it was hardened for consistency rather
+than because it leaked. Since 2026-09-16 the school's own owner may enrol it
+in any open project, which makes this view's own scope constraint the only
+guard, and the test below exercises it.
 
 The single-school paths in school_views were never affected — school_edit,
 change-type and add-to-cluster all go through get_scoped_object_or_404 or
@@ -134,16 +137,46 @@ class BulkSchoolActionsRespectScopeTest(TestCase):
             "the in-scope half of the request must still be applied",
         )
 
-    # There is deliberately no bulk-assign-project test here.
-    #
-    # That view got the same scope constraint, for consistency, but it was never
-    # reachable: apps.projects.services.assign_school raises
-    # Forbidden("This Project is not assigned to you as a staff priority")
-    # before school scope is ever consulted. A view-level test therefore cannot
-    # tell the fixed code from the unfixed code — it passes either way, on the
-    # service's refusal rather than on anything this module does. A test that
-    # cannot fail is worse than no test, because it reads like coverage.
-    # The project path's real guard is tested where it lives, in the projects app.
+    def test_bulk_assign_project_cannot_reach_a_school_outside_scope(self):
+        """This test used to be impossible to write honestly.
+
+        `assign_school` refused any project the caller did not run before
+        school scope was consulted, so a view-level test passed on the
+        service's refusal whether or not this view scoped anything. Now that
+        the school's own owner enrols it (owner, 2026-09-16), the view's
+        `school_queryset(..., direct_only=True)` is the only thing standing
+        between a typed id and another CCEO's school.
+        """
+        from apps.projects.models import Project, ProjectSchoolAssignment
+
+        project = Project.objects.create(
+            name="Bulk Project",
+            code="SP-BULK-1",
+            category="intervention_specific",
+            status="active",
+        )
+        self.client.post(
+            "/schools/bulk-assign-project",
+            {
+                "school_ids": f"{self.mine.id},{self.theirs.id}",
+                "project_id": project.id,
+                "override_reason": "Cohort pilot",
+            },
+        )
+        self.assertFalse(
+            ProjectSchoolAssignment.objects.filter(
+                project=project, school=self.theirs
+            ).exists(),
+            "an out-of-scope school must not be enrolled by another actor",
+        )
+        # The in-scope half still lands, or a "fix" that refuses everything
+        # would pass.
+        self.assertTrue(
+            ProjectSchoolAssignment.objects.filter(
+                project=project, school=self.mine
+            ).exists(),
+            "the actor's own school must still be enrolled",
+        )
 
     def test_bulk_assign_cluster_cannot_reach_a_school_outside_scope(self):
         from apps.clusters.models import Cluster

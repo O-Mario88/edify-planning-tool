@@ -2208,6 +2208,11 @@ urlpatterns = [
         name="project_assign_school_action",
     ),
     path(
+        "projects/<str:project_id>/schools/bulk-assign-drawer",
+        extended_views.project_bulk_assign_drawer_view,
+        name="project_bulk_assign_drawer",
+    ),
+    path(
         "projects/<str:project_id>",
         extended_views.project_detail_view,
         name="project_detail",

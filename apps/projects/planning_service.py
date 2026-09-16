@@ -280,7 +280,13 @@ def get_planning(principal, filters=None) -> dict:
         ProjectSchoolAssignment.objects.filter(project_id__in=project_ids)
         .select_related("project", "school", "school__region", "school__district")
         .prefetch_related(ssa_prefetch)
-        .order_by("school__name", "project__name")
+        # Project first, school second. The queue reads as one block per
+        # project rather than an alphabetical mix of every cohort at once
+        # (owner, 2026-09-16: "planning page should be grouped by projects
+        # created"), and because the ordering is applied before pagination, a
+        # project's schools stay together on the page instead of being split
+        # across two.
+        .order_by("project__name", "school__name")
     )
     if selected_project:
         assignments_qs = assignments_qs.filter(project_id=selected_project)
@@ -467,6 +473,26 @@ def get_planning(principal, filters=None) -> dict:
     paginator = Paginator(rows, page_size)
     page_obj = paginator.get_page(filters.get("page") or 1)
     page_rows = list(page_obj.object_list)
+
+    # The visible page, in project blocks. Grouped here rather than in the
+    # template: `{% regroup %}` needs the rows pre-sorted anyway, and the
+    # header carries a count and a link the template would otherwise have to
+    # recompute per row.
+    row_groups = []
+    for row in page_rows:
+        if not row_groups or row_groups[-1]["project_id"] != row["project_id"]:
+            row_groups.append(
+                {
+                    "project_id": row["project_id"],
+                    "project_name": row["project_name"],
+                    "project_type": row["project_type"],
+                    "project_url": row["project_url"],
+                    "rows": [],
+                }
+            )
+        row_groups[-1]["rows"].append(row)
+    for group in row_groups:
+        group["count"] = len(group["rows"])
 
     selected_assignment = str(filters.get("selected") or "")
     selected_row = next(
@@ -771,6 +797,7 @@ def get_planning(principal, filters=None) -> dict:
         "quarters": ["Q1", "Q2", "Q3", "Q4"],
         "selected": selected,
         "rows": page_rows,
+        "row_groups": row_groups,
         "export_rows": all_filtered_rows,
         "selected_row": selected_row,
         "page_obj": page_obj,
