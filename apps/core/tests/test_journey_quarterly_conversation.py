@@ -44,7 +44,7 @@ from apps.accounts.models import (
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_fy_date_range, get_operational_fy
 from apps.geography.models import District, Region
 from apps.hr.models import (
     PerformanceCycle,
@@ -97,6 +97,14 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
 
 
 def _schedulable_date() -> datetime.date:
+    """The day the walk starts on: soon, because the walk is about now.
+
+    It has to be close to today. The conversation page the walk finishes on
+    opens the window for *today's* FY, and the priority whose progress it
+    reads counts work in that FY, so a walk that starts in the next one has
+    nothing to show. Keeping the later visits in the same FY is
+    `_next_schedulable`'s job, not this one's.
+    """
     from apps.core.calendar_policy import SchedulingPolicyService
 
     day = timezone.localdate() + datetime.timedelta(days=7)
@@ -107,18 +115,79 @@ def _schedulable_date() -> datetime.date:
     raise AssertionError("no schedulable date within three weeks")
 
 
+def _publish_catalogue(fy: str) -> CostCatalogue:
+    """A published operational rate card for `fy`, carrying the canonical rates.
+
+    The fixture used to reach for `CostCatalogue.objects.get_or_create(...,
+    is_active=True)` and set one rate on whatever came back. That worked only
+    while every date in the walk sat in the FY seeding had already published a
+    card for.
+    """
+    from apps.budget.models import RateCardKind, RateCardStatus
+    from apps.budget.reference import ensure_cost_reference
+
+    catalogue, _ = CostCatalogue.objects.get_or_create(
+        country="Uganda",
+        fy=fy,
+        kind=RateCardKind.OPERATIONAL,
+        defaults={
+            "version": 1,
+            "status": RateCardStatus.PUBLISHED,
+            "is_active": True,
+            "currency": "UGX",
+        },
+    )
+    ensure_cost_reference(catalogue)
+    CostSetting.objects.update_or_create(
+        catalogue=catalogue,
+        key="primary_transport_per_day",
+        defaults={
+            "label": "Primary Transport Per Day",
+            "unit_cost": TRANSPORT,
+            "fy": fy,
+        },
+    )
+    return catalogue
+
+
 def _next_schedulable(start: datetime.date, offset_days: int) -> datetime.date:
-    """The first schedulable day at least `offset_days` after `start`."""
+    """A schedulable day after `start`, inside `start`'s own FY.
+
+    Prefers `offset_days` out, which is what the walk means by "later". The FY
+    turns over on 1 October, and both the rate card that prices a visit and
+    the priority that counts it belong to one FY — so in the fortnight before
+    a rollover, "eight days later" was a visit in an FY with no published
+    catalogue that no longer counted towards the priority under discussion.
+    The journey failed every year for that fortnight and passed again
+    afterwards. When the preferred day falls outside the FY, the search runs
+    backwards from the FY's last day instead: still later than `start`, still
+    the conversation's own FY.
+    """
     from apps.core.calendar_policy import SchedulingPolicyService
 
     if not offset_days:
         return start
+
+    def _open(day: datetime.date) -> bool:
+        return SchedulingPolicyService.check(None, day)["status"] != "blocked"
+
+    fy = get_operational_fy(start)
     day = start + datetime.timedelta(days=offset_days)
     for _ in range(21):
-        if SchedulingPolicyService.check(None, day)["status"] != "blocked":
+        if get_operational_fy(day) != fy:
+            break
+        if _open(day):
             return day
         day += datetime.timedelta(days=1)
-    raise AssertionError("no schedulable date within three weeks of the offset")
+
+    # Backwards from the last day of `start`'s FY.
+    last = get_fy_date_range(fy)[1].date() - datetime.timedelta(days=1)
+    day = min(last, start + datetime.timedelta(days=offset_days))
+    while day > start:
+        if _open(day):
+            return day
+        day -= datetime.timedelta(days=1)
+    raise AssertionError(f"no schedulable day after {start} inside FY{fy}")
 
 
 def _at(day: datetime.date):
@@ -176,18 +245,13 @@ class QuarterlyConversationJourneyTest(TestCase):
 
         cls.day = _schedulable_date()
         cls.fy = get_operational_fy(cls.day)
-        cls.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy=cls.fy, is_active=True, defaults={"version": 1}
-        )
-        CostSetting.objects.update_or_create(
-            key="primary_transport_per_day",
-            defaults={
-                "label": "Primary Transport Per Day",
-                "unit_cost": TRANSPORT,
-                "fy": cls.fy,
-                "catalogue": cls.catalogue,
-            },
-        )
+        # `_schedulable_date` keeps the whole walk inside this FY, so one
+        # published card prices all of it. The card is published explicitly
+        # rather than borrowed from whatever `is_active=True` returns: after
+        # the rollover the walk runs in an FY seeding has not published for,
+        # and the old fixture then priced against a draft card with one rate
+        # on it.
+        cls.catalogue = _publish_catalogue(cls.fy)
 
     # ── Setting the stage: an agreed review to hold a conversation about ──
     def _agreed_review(self):
