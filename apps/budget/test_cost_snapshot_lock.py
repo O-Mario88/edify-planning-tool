@@ -18,6 +18,8 @@ from __future__ import annotations
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
+
 from django.test import TestCase
 from django.utils import timezone
 
@@ -38,6 +40,12 @@ from apps.schools.models import School
 User = get_user_model()
 
 
+# The reschedule target below is a fixed 2026 date and the fixture it moves
+# starts at "now", so both have to sit in one fiscal year and ahead of
+# today: scheduling refuses a date that has passed (owner, 2026-09-16) and
+# a reschedule never crosses 30 September. Freezing "today" inside FY2026
+# holds both without the test drifting as the wall clock moves.
+@freeze_time("2026-07-01")
 class CostSnapshotLockTest(TestCase):
     def setUp(self):
         self.cceo = User.objects.create_user(

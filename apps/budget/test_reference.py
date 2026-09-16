@@ -70,10 +70,41 @@ class CostReferenceTest(TestCase):
         self.assertEqual(visible_keys, CANONICAL_RATE_KEYS)
         self.assertTrue(visible_keys.isdisjoint(RETIRED_COST_SETTING_KEYS))
 
-    def test_default_catalogue_resolution_stays_in_the_operational_fy(self):
+    def test_the_catalogue_is_universal_and_the_newest_published_one_prices(self):
+        """One catalogue prices every year (owner, 2026-09-16).
+
+        Rates are not a fiscal year's. Resolution used to be per FY, so every
+        1 October opened a year with no card and refused every date in it.
+        Now the Country Director's live card prices work whatever year it
+        falls in, and publishing a newer one supersedes it.
+        """
         from django.conf import settings
 
         from apps.budget.costing_service import active_catalogue
+        from apps.core.fy import get_operational_fy
+
+        country = getattr(settings, "COUNTRY", "Uganda")
+        operational = active_catalogue()
+        self.assertIsNotNone(operational)
+        # The same card answers for a year nobody has stamped a card with.
+        self.assertEqual(
+            active_catalogue(str(int(get_operational_fy()) + 5)).id, operational.id
+        )
+
+        newer = CostCatalogue.objects.create(
+            country=country,
+            fy=str(int(get_operational_fy()) + 1),
+            version=99,
+            is_active=True,
+            label="The Country Director's newer card",
+        )
+        self.assertEqual(active_catalogue().id, newer.id)
+
+    def test_only_a_published_active_catalogue_ever_prices(self):
+        from django.conf import settings
+
+        from apps.budget.costing_service import active_catalogue
+        from apps.budget.models import RateCardStatus
         from apps.core.fy import get_operational_fy
 
         operational = active_catalogue()
@@ -83,7 +114,8 @@ class CostReferenceTest(TestCase):
             fy=str(int(get_operational_fy()) + 1),
             version=99,
             is_active=True,
-            label="Future catalogue that must not price current work",
+            status=RateCardStatus.DRAFT,
+            label="A draft the CD has not published",
         )
 
         self.assertEqual(active_catalogue().id, operational.id)

@@ -9,6 +9,8 @@ payable channel.
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from freezegun import freeze_time
+
 from django.test import TransactionTestCase
 
 from apps.activities import services as asvc
@@ -27,6 +29,12 @@ from apps.schools.models import School
 User = get_user_model()
 
 
+# Scheduling refuses a date that has passed (owner, 2026-09-16), and the
+# fixtures below pin real 2026 calendar facts — a Sunday, a month
+# boundary, a fiscal year. Running them at a "today" before those dates
+# keeps every one of those facts true instead of chasing the dates
+# forward each time the wall clock moves past them.
+@freeze_time("2026-07-25")
 class _PipelineFixture(TransactionTestCase):
     """TransactionTestCase on purpose: partner_schedule's row lock previously
     sat OUTSIDE transaction.atomic(), which TestCase's implicit wrapping
@@ -67,6 +75,7 @@ class _PipelineFixture(TransactionTestCase):
         return asvc.create(data, self.admin)
 
 
+@freeze_time("2026-07-25")
 class OneActivityOneCostOneChannelTest(_PipelineFixture):
     def test_staff_visit_creates_cost_set_weekly_request_and_advances(self):
         result = self._schedule_staff_visit()
@@ -121,6 +130,7 @@ class OneActivityOneCostOneChannelTest(_PipelineFixture):
             self.assertEqual(wfr.total_amount, expected)
 
 
+@freeze_time("2026-07-25")
 class PartnerSingleChannelTest(_PipelineFixture):
     def test_partner_schedule_from_assignment_outside_atomic_and_costed_once(self):
         pa = PartnerAssignment.objects.create(

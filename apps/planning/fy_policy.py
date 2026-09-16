@@ -134,27 +134,29 @@ def _format(day: date) -> str:
 
 
 def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None):
-    """Refuse a date whose fiscal year is not open for planning.
+    """Refuse a date in the past. Any day from today on is plannable.
 
-    Also refuses a date outside the policy's execution window, which is how
-    "no FY2027 date before 1 October 2026" reads for a year whose dates are
-    derived from the calendar anyway — a defence against a policy row whose
-    window someone narrowed.
+    The fiscal year a date falls in no longer decides whether it may be
+    scheduled (owner, 2026-09-16). Planning ran into a wall every 1 October:
+    a year had to be opened before anyone could put a school visit, cluster
+    meeting or cluster training into it, and a team planning the term ahead
+    was told to "ask the Country Director" for a date four weeks away. Staff
+    now schedule as far forward as they need, in whichever year the date
+    lands.
+
+    What the fiscal year still governs is unchanged, because those are
+    different questions asked elsewhere: `assert_may_execute` keeps work from
+    being *delivered* before its year starts, `assert_same_fiscal_year` keeps
+    a reschedule from re-stamping an activity's budget line into another
+    year, and costing still prices a date against its own year's rate card.
     """
     if scheduled_for is None:
         return
     day = scheduled_for.date() if isinstance(scheduled_for, datetime) else scheduled_for
-    fy = get_operational_fy(day)
-    if not is_planning_open(fy, at=at, country=country):
+    today = _as_datetime(at).astimezone(timezone.get_current_timezone()).date()
+    if day < today:
         raise BadRequest(
-            f"FY{fy} is not open for planning yet. Plan dates in an open "
-            "fiscal year, or ask the Country Director to open it."
-        )
-    policy = policy_for(fy, country)
-    if policy and not (policy.execution_start <= day <= policy.execution_end):
-        raise BadRequest(
-            f"FY{fy} activities take place between {_format(policy.execution_start)} "
-            f"and {_format(policy.execution_end)}."
+            f"{_format(day)} has passed. Schedule work for today or a later day."
         )
 
 

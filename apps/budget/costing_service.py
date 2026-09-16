@@ -41,16 +41,26 @@ def active_catalogue(
     kind: str = RateCardKind.OPERATIONAL,
     on_date=None,
 ) -> CostCatalogue | None:
-    """Resolve the one published rate card applicable to the activity date."""
+    """Resolve the country's live published rate card.
+
+    The catalogue is universal, not a fiscal year's (owner, 2026-09-16): one
+    set of rates the Country Director maintains, applying to work in whatever
+    year it is planned for. It used to be resolved per FY, which meant every
+    1 October arrived with no card for the new year — "Ver: None active" — and
+    refused every date in it until someone published one. A rate is a rate;
+    the year a visit happens in does not change what transport costs.
+
+    `fy` is still accepted so callers need not change, and is ignored. The
+    newest published card wins, so a Country Director who publishes a fresh
+    one supersedes the old for everything priced from then on; activities keep
+    the catalogue id and version they were priced against, so history is
+    unaffected.
+    """
     from django.conf import settings
 
-    from apps.core.fy import get_operational_fy
-
-    resolved_fy = str(fy or get_operational_fy())
     country = getattr(settings, "COUNTRY", "Uganda")
     qs = CostCatalogue.objects.filter(
         country=country,
-        fy=resolved_fy,
         kind=kind,
         status=RateCardStatus.PUBLISHED,
         is_active=True,
@@ -62,7 +72,7 @@ def active_catalogue(
             Q(effective_from__isnull=True) | Q(effective_from__lte=on_date),
             Q(effective_to__isnull=True) | Q(effective_to__gte=on_date),
         )
-    return qs.order_by("-version").first()
+    return qs.order_by("-fy", "-version").first()
 
 
 def _rate_card(
