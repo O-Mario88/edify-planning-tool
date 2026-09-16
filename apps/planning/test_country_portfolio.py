@@ -255,7 +255,14 @@ class PortfolioPlanningTest(PortfolioFixture):
         self.assertFalse(self._school_row(portfolio, "Unplanned Primary")["is_planned"])
 
     def test_a_verified_activity_counts_as_completed_on_a_school(self):
-        """Same phantom-status trap on the portfolio side."""
+        """The same phantom status trap, on the portfolio side.
+
+        Two words, no hyphen, deliberately: the CSS build scans apps/ for
+        candidate class names, so a hyphenated pair in a docstring is harvested
+        as one and lands in every `[class*="status"]` expansion in the
+        generated bundle. This docstring did exactly that and turned the CSS
+        gate red.
+        """
         self._activity(
             school=self.unplanned_school, day=_fy_day(2, 3), status="ia_verified"
         )
