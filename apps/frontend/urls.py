@@ -16,6 +16,7 @@ from .views import (
     school_views,
     cluster_views,
     planning_views,
+    fy_planning_views,
     visit_request_views,
     oversight_views,
     budget_views,
@@ -600,6 +601,11 @@ urlpatterns = [
     ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
+    path(
+        "planning/fiscal-years",
+        fy_planning_views.fiscal_year_planning_view,
+        name="fiscal_year_planning",
+    ),
     path(
         "planning/schedule",
         planning_views.schedule_activity_form_view,
@@ -2290,6 +2296,11 @@ urlpatterns = [
         "cost-settings/add",
         finance_views.add_linked_cost_view,
         name="cost_settings_add",
+    ),
+    path(
+        "cost-settings/carry-forward",
+        finance_views.carry_forward_rate_card_view,
+        name="cost_settings_carry_forward",
     ),
     path(
         "cost-settings/initialize-default",

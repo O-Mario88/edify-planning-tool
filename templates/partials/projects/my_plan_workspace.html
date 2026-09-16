@@ -68,6 +68,7 @@
   <div class="sp-plan-main">
     {% include "partials/projects/my_plan_activity_table.html" with title="Project School Visits Planned" count=visits|length rows=visits kind="visits" accent="blue" empty="No project school visits match this period." %}
     {% include "partials/projects/my_plan_activity_table.html" with title="Project Trainings Planned" count=trainings|length rows=trainings kind="trainings" accent="purple" empty="No project trainings match this period." %}
+    {% include "partials/projects/my_plan_activity_table.html" with title="Project Cluster Meetings Planned" count=meetings|length rows=meetings kind="meetings" accent="blue" empty="No project cluster meetings match this period." %}
     {% include "partials/projects/my_plan_activity_table.html" with title="Partner-Planned Project Activities" count=partner_activities|length rows=partner_activities kind="partners" accent="teal" readonly=True empty="No partner-planned project activities match this period." %}
 
     <section class="sp-card sp-breakdown" aria-labelledby="plan-breakdown-title">

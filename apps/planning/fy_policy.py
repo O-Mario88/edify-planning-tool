@@ -83,12 +83,50 @@ def plannable_fys(*, at=None, country: str | None = None) -> list[str]:
     return years
 
 
-def next_open_fy(*, at=None, country: str | None = None) -> str | None:
-    """The future fiscal year open for planning now, if there is one."""
+def next_open_policy(
+    *, at=None, country: str | None = None
+) -> FiscalYearPlanningPolicy | None:
+    """The policy of the nearest future fiscal year open for planning now."""
     at = _as_datetime(at)
     operational = int(get_operational_fy(at))
-    future = [y for y in plannable_fys(at=at, country=country) if int(y) > operational]
-    return future[0] if future else None
+    from apps.core.request_cache import memoize
+
+    def compute():
+        from django.db.models import Exists, OuterRef
+
+        from apps.budget.models import CostCatalogue, RateCardKind, RateCardStatus
+
+        # Whether the year has its published operational rate card, read in
+        # the same query: the To-Do queue asks both questions on every load.
+        has_card = Exists(
+            CostCatalogue.objects.filter(
+                country=OuterRef("country"),
+                fy=OuterRef("fy"),
+                kind=RateCardKind.OPERATIONAL,
+                status=RateCardStatus.PUBLISHED,
+                is_active=True,
+            )
+        )
+        for policy in (
+            FiscalYearPlanningPolicy.objects.filter(
+                country=country or default_country(), planning_open_at__lte=at
+            )
+            .annotate(has_operational_rate_card=has_card)
+            .order_by("fy")
+        ):
+            if int(policy.fy) > operational:
+                return policy
+        return None
+
+    return memoize(
+        ("fy_next_open_policy", country or default_country(), operational), compute
+    )
+
+
+def next_open_fy(*, at=None, country: str | None = None) -> str | None:
+    """The future fiscal year open for planning now, if there is one."""
+    policy = next_open_policy(at=at, country=country)
+    return policy.fy if policy else None
 
 
 def _format(day: date) -> str:
@@ -367,6 +405,7 @@ __all__ = [
     "is_planning_open",
     "may_manage",
     "next_open_fy",
+    "next_open_policy",
     "open_fy_planning",
     "plannable_fys",
     "policy_for",

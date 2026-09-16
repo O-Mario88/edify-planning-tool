@@ -335,6 +335,145 @@ def publish_rate_card(principal, card_id: str) -> dict:
     return _card_dict(card, include_lines=True)
 
 
+def carry_forward_rate_card(principal, fy: str, *, note: str = "") -> CostCatalogue:
+    """Open next year's rate card from this year's, for planning (2026-09-15).
+
+    FY2027 could not be costed: no FY2027 card existed, and the only way to
+    make one from the Cost Settings page initialised generic defaults for the
+    *operational* year. The Country Director carries the previous year's
+    published operational rates — every canonical rate and every cost added
+    for one activity — into a new, provisional card for ``fy``, effective from
+    1 October to 30 September. FY2027 work is then priced against an FY2027
+    card, never against FY2026's, and the CD revises any rate through the
+    normal versioned rate change.
+    """
+    from datetime import date as _date
+
+    from apps.planning.fy_policy import is_planning_open
+
+    _require(
+        principal,
+        Permission.RATE_CARD_OPERATIONAL_MANAGE,
+        "Only the Country Director prepares a fiscal year's rate card.",
+    )
+    if getattr(principal, "active_role", None) != "CountryDirector":
+        raise Forbidden("Only the Country Director prepares a fiscal year's rate card.")
+    fy = str(fy or "").strip()
+    if not fy.isdigit():
+        raise BadRequest("Choose the fiscal year to prepare.")
+    if not is_planning_open(fy):
+        raise BadRequest(f"FY{fy} is not open for planning yet.")
+    previous_fy = str(int(fy) - 1)
+    country = "Uganda"
+    with transaction.atomic():
+        if CostCatalogue.objects.filter(
+            country=country,
+            fy=fy,
+            kind=RateCardKind.OPERATIONAL,
+            status=RateCardStatus.PUBLISHED,
+            is_active=True,
+        ).exists():
+            raise BadRequest(f"FY{fy} already has a published operational rate card.")
+        now = timezone.now()
+        created_cards = []
+        for kind in (RateCardKind.OPERATIONAL, RateCardKind.REFERENCE):
+            source = (
+                CostCatalogue.objects.filter(
+                    country=country,
+                    fy=previous_fy,
+                    kind=kind,
+                    status=RateCardStatus.PUBLISHED,
+                    is_active=True,
+                )
+                .order_by("-version")
+                .first()
+            )
+            if source is None:
+                if kind == RateCardKind.OPERATIONAL:
+                    raise BadRequest(
+                        f"FY{previous_fy} has no published operational rate card to "
+                        "carry forward."
+                    )
+                continue
+            if CostCatalogue.objects.filter(
+                country=country, fy=fy, kind=kind, is_active=True
+            ).exists():
+                continue
+            latest = (
+                CostCatalogue.objects.select_for_update()
+                .filter(country=country, fy=fy, kind=kind)
+                .order_by("-version")
+                .first()
+            )
+            card = CostCatalogue.objects.create(
+                country=country,
+                fy=fy,
+                kind=kind,
+                version=(latest.version + 1) if latest else 1,
+                status=RateCardStatus.PUBLISHED,
+                is_active=True,
+                label=(source.label or "").replace(f"FY{previous_fy}", f"FY{fy}")
+                or f"Uganda FY{fy} Country Cost Catalogue",
+                effective_from=_date(int(fy) - 1, 10, 1),
+                effective_to=_date(int(fy), 9, 30),
+                currency=source.currency,
+                created_by=_user_id(principal),
+                approved_by=_user_id(principal),
+                published_by=_user_id(principal),
+                published_at=now,
+                activated_at=now,
+                is_provisional=True,
+                source_note=(
+                    f"Carried forward from FY{previous_fy} v{source.version} on "
+                    f"{now:%-d %B %Y}. Confirm or revise the rates for FY{fy}."
+                )[:512],
+                notes=note or None,
+                material_difference_threshold_bps=source.material_difference_threshold_bps,
+                required_school_visits_per_day=source.required_school_visits_per_day,
+            )
+            CostSetting.objects.bulk_create(
+                [
+                    CostSetting(
+                        catalogue=card,
+                        key=line.key,
+                        label=line.label,
+                        unit_cost=line.unit_cost,
+                        fy=fy,
+                        version=line.version,
+                        unit=line.unit,
+                        approved_minimum=line.approved_minimum,
+                        geographic_scope=line.geographic_scope,
+                        costing_profile_scope=line.costing_profile_scope,
+                        catalogue_item_id=line.catalogue_item_id,
+                        created_by=_user_id(principal),
+                    )
+                    for line in source.rates.all()
+                ]
+            )
+            audit_log(
+                action="rate_card.carried_forward",
+                subject_kind="CostCatalogue",
+                subject_id=card.id,
+                actor_id=_user_id(principal),
+                actor_role=getattr(principal, "active_role", None),
+                reason=note or None,
+                payload={
+                    "kind": kind,
+                    "fy": fy,
+                    "version": card.version,
+                    "previous": {
+                        "catalogueId": source.id,
+                        "fy": previous_fy,
+                        "version": source.version,
+                    },
+                    "new": {"catalogueId": card.id, "rates": card.rates.count()},
+                },
+                required=True,
+            )
+            created_cards.append(card)
+    return created_cards[0]
+
+
 def request_cost_review(principal, activity_id: str, data: dict) -> dict:
     _require(
         principal,

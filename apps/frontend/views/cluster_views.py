@@ -433,6 +433,19 @@ def cluster_schedule_activity_view(request):
         if activity_type == "training":
             data["catalogueItemId"] = catalogue_item_id
             data["requireCatalogue"] = True
+        else:
+            # A cluster meeting is costed, evidenced and counted through its
+            # catalogue item like every other activity. This path used to
+            # create meetings with no catalogue item at all (2026-09-15), so
+            # they carried no version snapshot or costing profile.
+            from apps.activity_catalogue.services import (
+                resolve_item_for_workflow_kind,
+            )
+
+            meeting_item = resolve_item_for_workflow_kind("cluster_meeting")
+            if meeting_item is not None:
+                data["catalogueItemId"] = meeting_item.id
+                data["requireCatalogue"] = True
         # Cluster work plans people per school, by category, across the schools
         # actually invited. All of it is passed raw: the service validates the
         # categories, adds them into the per-school figure, recounts the
@@ -471,15 +484,39 @@ def cluster_schedule_activity_view(request):
                 # Catalogue authority wins over any stale or crafted hidden
                 # input. "Other" courses deliberately save no SSA dimension.
                 data["focusIntervention"] = selected_training["ssaIntervention"] or None
-            ClusterActionPlannerService.schedule_activity(data, request.user)
-            messages.success(
-                request,
-                f"Successfully scheduled {activity_type.replace('_', ' ')} for cluster.",
+            created = ClusterActionPlannerService.schedule_activity(data, request.user)
+            from apps.frontend.views.planning_views import (
+                _calendar_url_for_scheduled_date,
+                _my_plan_url_for_scheduled_date,
+                _scheduled_into_own_plan,
             )
+
+            lands_here, owner_name = _scheduled_into_own_plan(created, request.user)
+            noun = (
+                "Cluster training" if activity_type == "training" else "Cluster meeting"
+            )
+            if lands_here:
+                messages.success(
+                    request, f"{noun} scheduled. It is on your My Plan for that week."
+                )
+                plan_url = _my_plan_url_for_scheduled_date(scheduled_date_str)
+            else:
+                messages.success(
+                    request,
+                    f"{noun} scheduled. It is on {owner_name}'s My Plan; you will "
+                    "find it on the Calendar.",
+                )
+                plan_url = _calendar_url_for_scheduled_date(scheduled_date_str)
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("")
+                # The week the meeting sits in, not the Clusters page: a future
+                # meeting was invisible on the current week of My Plan and read
+                # as never having been saved (2026-09-15).
+                response = HttpResponse(
+                    f'<script>window.location.href = "{escape(plan_url)}";</script>'
+                )
                 response["HX-Trigger"] = "close-drawer, refresh-clusters"
                 return response
+            return redirect(plan_url)
         except Exception as e:
             messages.error(request, f"Failed to schedule activity: {e}")
             if request.headers.get("HX-Request") == "true":

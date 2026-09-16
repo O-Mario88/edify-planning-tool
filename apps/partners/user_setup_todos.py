@@ -25,20 +25,17 @@ def partner_user_setup_todos(principal, role, today) -> list[dict]:
     try:
         if not may_manage_partner_users(principal):
             return []
+        pending_qs = Partner.objects.filter(
+            deleted_at__isnull=True,
+            user_setup_status=PartnerUserSetupStatus.PENDING,
+        )
         pending = list(
-            Partner.objects.filter(
-                deleted_at__isnull=True,
-                user_setup_status=PartnerUserSetupStatus.PENDING,
-            )
-            .order_by("created_at")
-            .values_list("name", flat=True)[:4]
+            pending_qs.order_by("created_at").values_list("name", flat=True)[:4]
         )
         if not pending:
             return []
-        total = Partner.objects.filter(
-            deleted_at__isnull=True,
-            user_setup_status=PartnerUserSetupStatus.PENDING,
-        ).count()
+        # One query in the common case; the count only when the list overflows.
+        total = len(pending) if len(pending) < 4 else pending_qs.count()
         names = ", ".join(pending[:3]) + (" and more" if total > 3 else "")
         return [
             todo_row(

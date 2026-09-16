@@ -538,6 +538,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # evidence dataset linked from its verification workspace.
     "evidence_center": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, CD, IA, ADMIN},
     "cost_settings": {CD, ADMIN},
+    # When a fiscal year opens for planning and whether a follow-up visit needs
+    # a prior training (owner, 2026-09-15). planningPolicy.manage holders.
+    "fy_planning_policy": {CD, ADMIN},
     "cost_intelligence": {RVP, ACCOUNTANT},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
@@ -802,6 +805,7 @@ ICONS.update(
         "admin_incidents": ICONS["recovery_plans"],
         "admin_maintenance": ICONS["calendar"],
         "data_repair": ICONS["cost_settings"],
+        "fy_planning_policy": ICONS["calendar"],
         "leave_policies": ICONS["policies"],
         "policy_compliance": ICONS["compliance_register"],
         "business_transformation": ICONS["partners"],
@@ -2280,6 +2284,11 @@ SIDEBAR_ITEMS = [
                 "label": "Cost Settings",
                 "url": "/cost-settings",
                 "page_key": "cost_settings",
+            },
+            {
+                "label": "Fiscal Year Planning",
+                "url": "/planning/fiscal-years",
+                "page_key": "fy_planning_policy",
             },
             {
                 "label": "Cost Intelligence",

@@ -12,8 +12,9 @@ tiles and the panel move together and can never describe different scopes.{% end
     <label class="analytics-filter-field">
       <span class="edify-filter-label">Financial year</span>
       <select aria-label="Fiscal year" name="fy">
-        <option value="2025" {% if filters.selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
-        <option value="2026" {% if filters.selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+        {% for option in filters.fy_options %}
+        <option value="{{ option }}" {% if filters.selected_fy == option %}selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
       </select>
     </label>
 

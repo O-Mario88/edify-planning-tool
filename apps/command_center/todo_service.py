@@ -3878,6 +3878,7 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     # ── end IA-R ──
     # ── Owner brief 2026-09-15 ──
     "apps.partners.user_setup_todos:partner_user_setup_todos",
+    "apps.planning.fy_todos:fy_planning_todos",
     # ── end brief 2026-09-15 ──
 )
 

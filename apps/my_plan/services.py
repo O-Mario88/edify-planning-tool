@@ -14,7 +14,7 @@ from apps.activities.services import is_partner_ssa_support_activity
 from apps.geography.models import District
 from apps.accounts.models import User
 from apps.partners.models import Partner
-from apps.core.fy import get_operational_fy, get_quarter_for_date
+from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
 
@@ -1500,6 +1500,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             ]
         ),
         "my_plan_base_query": _base_query,
+        # The canonical fiscal-year list. The select was hard-coded to
+        # FY2023–FY2026, so an October 2026 cluster meeting (FY2027) had no
+        # year to be shown under, and a link to it rendered with nothing
+        # selected — the next filter change posted FY2023 (2026-09-15).
+        "fy_options": fy_options(),
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
         # Each card shows ten; the rest sit behind pages that run as far as
