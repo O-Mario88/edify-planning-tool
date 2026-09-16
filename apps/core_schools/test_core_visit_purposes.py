@@ -39,7 +39,12 @@ class _CoreFixture(TestCase):
 
     # Borrowed from the module, not imported as a class: an imported TestCase
     # would be collected here and its 45 tests run twice.
-    setUp = _planning.CoreSchoolsPlanningTest.setUp
+    # The plain fixture function, not the class attribute: that one is
+    # freezegun's wrapper (CoreSchoolsPlanningTest freezes its clock so its
+    # staff slots fall in the current quarter), and borrowing it alone starts
+    # that clock without the tearDown that stops it — silently moving "today"
+    # for every test here and in the module that subclasses this fixture.
+    setUp = _planning.core_planning_setup
     _staff = _planning.CoreSchoolsPlanningTest._staff
     _school = _planning.CoreSchoolsPlanningTest._school
     _plan = _planning.CoreSchoolsPlanningTest._plan

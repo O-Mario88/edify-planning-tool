@@ -62,6 +62,110 @@ SCORE_MAP = {
 }
 
 
+def core_planning_setup(case):
+    """The Core planning fixture, as a plain function.
+
+    CoreSchoolsPlanningTest freezes its clock, and two other modules borrow
+    this setup by assignment. Borrowing the decorated method would hand them
+    freezegun's wrapper, which starts that clock without the tearDown that
+    stops it — silently moving "today" for every test in those modules. They
+    borrow this instead, and the class calls it.
+    """
+    case.region = Region.objects.create(name="Core R")
+    case.district = District.objects.create(
+        name="Core D", region=case.region, district_type="primary"
+    )
+    case.cluster = Cluster.objects.create(
+        name="Core Cluster", region=case.region, district=case.district
+    )
+
+    case.cceo, case.cceo_sp = case._staff(
+        "cc@core.org", "Core Cceo", EdifyRole.CCEO.value
+    )
+    case.other_cceo, case.other_sp = case._staff(
+        "oc@core.org", "Other Cceo", EdifyRole.CCEO.value
+    )
+    case.pl, case.pl_sp = case._staff(
+        "pl@core.org", "Core PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    )
+    case.other_pl, case.other_pl_sp = case._staff(
+        "opl@core.org", "Other PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    )
+    case.ia, _ = case._staff(
+        "ia@core.org", "Core IA", EdifyRole.IMPACT_ASSESSMENT.value
+    )
+    case.accountant, _ = case._staff(
+        "acc@core.org", "Core Acc", EdifyRole.PROGRAM_ACCOUNTANT.value
+    )
+    case.partner_user, _ = case._staff(
+        "pa@core.org", "Partner Admin", EdifyRole.PARTNER_ADMIN.value
+    )
+    StaffSupervisorAssignment.objects.create(
+        supervisor=case.pl_sp, supervisee=case.cceo_sp
+    )
+
+    case.school = case._school("CORE-1", "Alpha Core School", case.cceo_sp)
+    case.other_school = case._school("CORE-2", "Beta Core School", case.other_sp)
+
+    case.partner = Partner.objects.create(name="Core Helper Org", region_name="Core R")
+
+    case.plan = case._plan(case.school)
+    case._plan(case.other_school)
+    case.core_visit_item = ActivityCatalogueItem.objects.get(
+        stable_code="CORE_SCHOOL_FOLLOWUP_VISIT"
+    )
+    case.core_training_item = ActivityCatalogueItem.objects.get(
+        stable_code="EARLY_CHILDHOOD_EDUCATION_PROJECT"
+    )
+
+    # Verified annual SSA with all eight interventions.
+    case.ssa = SsaRecord.objects.create(
+        school=case.school,
+        fy=FY,
+        quarter="Q1",
+        average_score=5.6,
+        verification_status="confirmed",
+        date_of_ssa=date(int(FY) - 1, 11, 5),
+        uploaded_by="test",
+    )
+    for code, score in SCORE_MAP.items():
+        SsaScore.objects.create(ssa_record=case.ssa, intervention=code, score=score)
+
+    # Costing so core visit scheduling can price.
+    catalogue, _ = CostCatalogue.objects.get_or_create(
+        country="Uganda",
+        fy=FY,
+        version=1,
+        defaults={"is_active": True, "label": "Core Test Catalogue"},
+    )
+    catalogue.is_active = True
+    catalogue.save(update_fields=["is_active"])
+    for key, cost in (
+        ("staff_visit_transport_primary", 250000),
+        ("lunch", 30000),
+        ("primary_transport_per_day", 250000),
+        ("primary_lunch_per_day", 30000),
+        ("partner_visit_lump_sum", 40000),
+        ("partner_training_lump_sum", 60000),
+        ("group_training_facilitation_fee", 50000),
+        ("group_training_venue_cost", 80000),
+        ("group_training_participant_meal_cost_per_head", 15000),
+    ):
+        CostSetting.objects.update_or_create(
+            key=key,
+            defaults={
+                "label": key,
+                "unit_cost": cost,
+                "fy": FY,
+                "catalogue": catalogue,
+                "version": 1,
+            },
+        )
+
+
+# ── fixtures ─────────────────────────────────────────────────────────────
+
+
 # Scheduling refuses a date that has passed (owner, 2026-09-16), and staff
 # core support is released in the CURRENT quarter only — so "today" has to
 # sit inside the quarter these slots are scheduled in, FY2026 Q3. The partner
@@ -69,100 +173,8 @@ SCORE_MAP = {
 @freeze_time("2026-04-01")
 class CoreSchoolsPlanningTest(TestCase):
     def setUp(self):
-        self.region = Region.objects.create(name="Core R")
-        self.district = District.objects.create(
-            name="Core D", region=self.region, district_type="primary"
-        )
-        self.cluster = Cluster.objects.create(
-            name="Core Cluster", region=self.region, district=self.district
-        )
+        core_planning_setup(self)
 
-        self.cceo, self.cceo_sp = self._staff(
-            "cc@core.org", "Core Cceo", EdifyRole.CCEO.value
-        )
-        self.other_cceo, self.other_sp = self._staff(
-            "oc@core.org", "Other Cceo", EdifyRole.CCEO.value
-        )
-        self.pl, self.pl_sp = self._staff(
-            "pl@core.org", "Core PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        )
-        self.other_pl, self.other_pl_sp = self._staff(
-            "opl@core.org", "Other PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        )
-        self.ia, _ = self._staff(
-            "ia@core.org", "Core IA", EdifyRole.IMPACT_ASSESSMENT.value
-        )
-        self.accountant, _ = self._staff(
-            "acc@core.org", "Core Acc", EdifyRole.PROGRAM_ACCOUNTANT.value
-        )
-        self.partner_user, _ = self._staff(
-            "pa@core.org", "Partner Admin", EdifyRole.PARTNER_ADMIN.value
-        )
-        StaffSupervisorAssignment.objects.create(
-            supervisor=self.pl_sp, supervisee=self.cceo_sp
-        )
-
-        self.school = self._school("CORE-1", "Alpha Core School", self.cceo_sp)
-        self.other_school = self._school("CORE-2", "Beta Core School", self.other_sp)
-
-        self.partner = Partner.objects.create(
-            name="Core Helper Org", region_name="Core R"
-        )
-
-        self.plan = self._plan(self.school)
-        self._plan(self.other_school)
-        self.core_visit_item = ActivityCatalogueItem.objects.get(
-            stable_code="CORE_SCHOOL_FOLLOWUP_VISIT"
-        )
-        self.core_training_item = ActivityCatalogueItem.objects.get(
-            stable_code="EARLY_CHILDHOOD_EDUCATION_PROJECT"
-        )
-
-        # Verified annual SSA with all eight interventions.
-        self.ssa = SsaRecord.objects.create(
-            school=self.school,
-            fy=FY,
-            quarter="Q1",
-            average_score=5.6,
-            verification_status="confirmed",
-            date_of_ssa=date(int(FY) - 1, 11, 5),
-            uploaded_by="test",
-        )
-        for code, score in SCORE_MAP.items():
-            SsaScore.objects.create(ssa_record=self.ssa, intervention=code, score=score)
-
-        # Costing so core visit scheduling can price.
-        catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda",
-            fy=FY,
-            version=1,
-            defaults={"is_active": True, "label": "Core Test Catalogue"},
-        )
-        catalogue.is_active = True
-        catalogue.save(update_fields=["is_active"])
-        for key, cost in (
-            ("staff_visit_transport_primary", 250000),
-            ("lunch", 30000),
-            ("primary_transport_per_day", 250000),
-            ("primary_lunch_per_day", 30000),
-            ("partner_visit_lump_sum", 40000),
-            ("partner_training_lump_sum", 60000),
-            ("group_training_facilitation_fee", 50000),
-            ("group_training_venue_cost", 80000),
-            ("group_training_participant_meal_cost_per_head", 15000),
-        ):
-            CostSetting.objects.update_or_create(
-                key=key,
-                defaults={
-                    "label": key,
-                    "unit_cost": cost,
-                    "fy": FY,
-                    "catalogue": catalogue,
-                    "version": 1,
-                },
-            )
-
-    # ── fixtures ─────────────────────────────────────────────────────────────
     def _staff(self, email, name, role):
         u = User.objects.create_user(
             email=email,
