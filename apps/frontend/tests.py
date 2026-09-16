@@ -2,8 +2,6 @@ from datetime import date
 from unittest.mock import patch
 
 from django.core.cache import cache
-from freezegun import freeze_time
-
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -13,12 +11,6 @@ from apps.schools.models import School
 from apps.clusters.models import Cluster, ClusterSubCounty
 
 
-# Scheduling refuses a date that has passed (owner, 2026-09-16). The dates
-# below were future when they were written and the wall clock has since
-# moved past them, so the suite runs at a "today" that sits before them —
-# inside the same fiscal year — rather than the dates being chased forward
-# again every few weeks.
-@freeze_time("2026-06-25")
 class FrontendViewsTestCase(TestCase):
     def setUp(self):
         User = get_user_model()

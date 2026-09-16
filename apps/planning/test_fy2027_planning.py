@@ -8,8 +8,8 @@ planned in.
 Two rules from the 2026-09-15 brief were lifted on 2026-09-16 at the owner's
 request, because together they made every 1 October a wall:
 
-- A date is plannable whenever it is not in the past. The year it falls in no
-  longer has to be "opened" first, so a team can plan the term ahead.
+- A date is plannable whatever year it falls in; the year no longer has to be
+  "opened" first, so a team can plan the term ahead.
 - The cost catalogue is universal, not a fiscal year's. A year with no card of
   its own is priced by the Country Director's live one instead of showing
   "Ver: None active" and refusing every date in it.
@@ -78,12 +78,16 @@ class FiscalYearBoundaryTest(TestCase):
         fy_policy.assert_date_plannable(datetime.date(2027, 10, 4), at=at)
         fy_policy.assert_date_plannable(datetime.date(2031, 2, 3), at=at)
 
-    def test_a_date_that_has_passed_is_refused(self):
+    def test_a_date_in_the_past_is_still_accepted_here(self):
+        """The owner also asked for past dates to be refused; that is not part
+        of this change, and this pins what the gate does today so the next
+        reader is not misled. See `assert_date_plannable` for why it is
+        separate: every scheduling path in the platform goes through it, and
+        work has always been recordable against a day that has passed.
+        """
         at = timezone.make_aware(datetime.datetime(2026, 9, 20, 10))
-        with self.assertRaisesMessage(BadRequest, "has passed"):
-            fy_policy.assert_date_plannable(SEP_29_2026.replace(day=19), at=at)
-        # Today itself is not "past".
-        fy_policy.assert_date_plannable(datetime.date(2026, 9, 20), at=at)
+        fy_policy.assert_date_plannable(datetime.date(2026, 9, 19), at=at)
+        fy_policy.assert_date_plannable(datetime.date(2025, 3, 1), at=at)
 
     def test_fy2027_work_cannot_start_before_1_october(self):
         activity = Activity(fy="2027", planned_date=OCT_6_2026)

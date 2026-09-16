@@ -15,8 +15,6 @@ from io import BytesIO
 from datetime import date
 
 from django.db import connections
-from freezegun import freeze_time
-
 from django.test import TestCase, TransactionTestCase
 from openpyxl import load_workbook
 
@@ -111,12 +109,6 @@ def _schedule(principal, **over) -> Activity:
     return Activity.objects.get(id=result["id"])
 
 
-# Scheduling refuses a date that has passed (owner, 2026-09-16), and the
-# fixtures below pin real 2026 calendar facts — a Sunday, a month
-# boundary, a fiscal year. Running them at a "today" before those dates
-# keeps every one of those facts true instead of chasing the dates
-# forward each time the wall clock moves past them.
-@freeze_time("2026-08-01")
 class _ProgrammeFixture(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -130,7 +122,6 @@ class _ProgrammeFixture(TestCase):
 
 
 # ── Creation contract ────────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeActivityCreateTest(_ProgrammeFixture):
     def test_authorized_staff_can_create_non_school_activity(self):
         a = _schedule(self.cceo)
@@ -196,7 +187,6 @@ class ProgrammeActivityCreateTest(_ProgrammeFixture):
 
 
 # ── Validation ───────────────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeActivityValidationTest(_ProgrammeFixture):
     def test_activity_requires_valid_rationale(self):
         for bad in (_OMIT, "", "because-i-said-so"):
@@ -272,7 +262,6 @@ class ProgrammeActivityValidationTest(_ProgrammeFixture):
 
 
 # ── Permission gate ──────────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeActivityPermissionTest(_ProgrammeFixture):
     AUTHORIZED_ROLES = (
         "CCEO",
@@ -307,7 +296,6 @@ class ProgrammeActivityPermissionTest(_ProgrammeFixture):
 
 
 # ── Costing (§9) ─────────────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeCostingTest(_ProgrammeFixture):
     def test_cross_month_costs_allocate_correctly(self):
         # Mon 31 Aug → Wed 2 Sep 2026, 40 participants: 1 August day and
@@ -404,7 +392,6 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         self.assertEqual(ActivityScheduleCostLine.objects.count(), 0)
 
 
-@freeze_time("2026-08-01")
 class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
     def test_drawer_contains_the_required_planning_fields(self):
         from django.test import Client
@@ -560,7 +547,6 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         self.assertIn("Export Excel", html)
 
 
-@freeze_time("2026-08-01")
 class ProgrammeWorkPlanApprovalTest(_ProgrammeFixture):
     def test_cd_submits_completed_plan_and_rvp_approves_it(self):
         from apps.monthly_work_plan.models import CountryAnnualBudgetStatus
@@ -583,7 +569,6 @@ class ProgrammeWorkPlanApprovalTest(_ProgrammeFixture):
 
 
 # ── Budget flow, cancel, reschedule ──────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeFundingFlowTest(_ProgrammeFixture):
     def _cross_month_activity(self) -> Activity:
         return _schedule(self.cceo, scheduledDate=MON_AUG_31, endDate="2026-09-02")
@@ -697,7 +682,6 @@ class ProgrammeFundingFlowTest(_ProgrammeFixture):
 
 
 # ── Health (§35) ─────────────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeWorkPlanHealthTest(_ProgrammeFixture):
     def test_work_plan_health_passes_after_wellformed_schedule(self):
         _schedule(self.cceo, scheduledDate=MON_AUG_31, endDate="2026-09-02")
@@ -755,7 +739,6 @@ class ProgrammeWorkPlanHealthTest(_ProgrammeFixture):
 
 
 # ── Concurrency (TransactionTestCase, mirrors test_audit_pipeline) ───────────
-@freeze_time("2026-08-01")
 class ProgrammeDoubleClickRaceTest(TransactionTestCase):
     """Two identical concurrent submissions must yield exactly ONE activity.
 
@@ -804,7 +787,6 @@ class ProgrammeDoubleClickRaceTest(TransactionTestCase):
 
 
 # ── §19 My Plan handoff ──────────────────────────────────────────────────────
-@freeze_time("2026-08-01")
 class ProgrammeMyPlanHandoffTest(_ProgrammeFixture):
     """A school-less programme activity must reach the responsible person's
     My Plan — and must not take the page down on the way.

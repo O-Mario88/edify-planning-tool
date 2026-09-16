@@ -1,8 +1,6 @@
 from datetime import date, timedelta
 from unittest.mock import patch
 
-from freezegun import freeze_time
-
 from django.test import TestCase
 from django.utils import timezone
 
@@ -17,12 +15,6 @@ from apps.partners.models import Partner, PartnerAssignment
 from apps.schools.models import School
 
 
-# Scheduling refuses a date that has passed (owner, 2026-09-16). The dates
-# below were future when they were written and the wall clock has since
-# moved past them, so the suite runs at a "today" that sits before them —
-# inside the same fiscal year — rather than the dates being chased forward
-# again every few weeks.
-@freeze_time("2026-07-12")
 class PartnerWorkspaceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

@@ -10,8 +10,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from freezegun import freeze_time
-
 from django.test import TestCase
 
 from apps.activities import services as asvc
@@ -26,12 +24,6 @@ User = get_user_model()
 FY = "2026"
 
 
-# Scheduling refuses a date that has passed (owner, 2026-09-16), and the
-# fixtures below pin real 2026 calendar facts — a Sunday, a month
-# boundary, a fiscal year. Running them at a "today" before those dates
-# keeps every one of those facts true instead of chasing the dates
-# forward each time the wall clock moves past them.
-@freeze_time("2026-07-15")
 class ActivitySchedulingAtomicityTest(TestCase):
     def setUp(self):
         # get_or_create (not create): a shared --keepdb test database can
