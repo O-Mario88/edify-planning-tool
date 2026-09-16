@@ -2672,7 +2672,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 74,
+   "line": 84,
    "title": "Delivery overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2681,7 +2681,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 164,
+   "line": 174,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2690,7 +2690,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 210,
+   "line": 220,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2699,7 +2699,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 229,
+   "line": 239,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,

@@ -2405,14 +2405,23 @@ def project_delete_action_view(request, project_id):
     request: the project it came from no longer exists.
     """
     from django.contrib import messages
+    from django.utils.html import escape
 
     from apps.projects.services import delete_project
 
+    is_htmx = request.headers.get("HX-Request") == "true"
     try:
         result = delete_project(
             project_id, request.user, reason=request.POST.get("reason", "")
         )
     except Exception as exc:  # noqa: BLE001 — the reason belongs on the page
+        if is_htmx:
+            # Into the panel beside the control, where the person is looking.
+            return HttpResponse(
+                f'<div class="edify-note" data-tone="danger" role="alert">'
+                f'<p class="edify-note__body">{escape(str(exc))}</p></div>',
+                status=400,
+            )
         messages.error(request, str(exc))
         return redirect("frontend:project_detail", project_id=project_id)
 
@@ -2427,6 +2436,10 @@ def project_delete_action_view(request, project_id):
             else ""
         ),
     )
+    if is_htmx:
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = "/projects"
+        return response
     return redirect("/projects")
 
 

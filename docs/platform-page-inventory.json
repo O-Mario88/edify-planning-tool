@@ -69648,11 +69648,11 @@
       ]
     },
     {
-      "accessibility_status": "remediation-required",
+      "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 8.8,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_detail_view",
       "card_count": 0,
@@ -69664,20 +69664,13 @@
         "permission:projects"
       ],
       "filters": "none",
-      "findings": [
-        {
-          "evidence": "Inline browser event handlers bypass the shared interaction layer.",
-          "finding_id": "UI-FINDING-794D86988C",
-          "key": "inline-event-handler",
-          "recommended_action": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
-          "severity": "high"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /projects/{{ project.id }}/edit",
+        "POST /projects/{{ project.id }}/delete",
         "GET /projects/{{ project.id }}",
         "GET /projects/{{ project.id }}/schools/bulk-assign-drawer"
       ],
@@ -69696,7 +69689,7 @@
       "primary_action": "Edit Project",
       "primary_user_decision": "What is the correct next action for this record?",
       "purpose": "Project detail.",
-      "remediation": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -69749,7 +69742,7 @@
       "state_coverage": {
         "disabled": true,
         "empty": true,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
@@ -102332,7 +102325,7 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 519,
+    "accessibility_contract_pass": 520,
     "activity_states": 24,
     "all_routes": 1278,
     "api_routes": 359,
@@ -102359,7 +102352,7 @@
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
-      "high": 1,
+      "high": 0,
       "low": 0,
       "medium": 0
     },
