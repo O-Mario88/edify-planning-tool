@@ -2540,6 +2540,7 @@ def create(
                 "catalogue_version": activity.catalogue_version,
                 "school_id": activity.school_id,
                 "cluster_id": activity.cluster_id,
+                "project_id": activity.project_id,
                 "fy": activity.fy,
                 "planned_date": (
                     activity.planned_date.isoformat() if activity.planned_date else None

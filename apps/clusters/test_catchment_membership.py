@@ -377,6 +377,20 @@ class AddToClusterDrawerTests(CatchmentFixture):
         response = self.client.get(self.url, HTTP_HX_REQUEST="true")
         self.assertNotIn(theirs.id, [c.id for c in response.context["owner_clusters"]])
 
+    def test_a_post_without_the_alpine_written_action_type_still_adds(self):
+        """The drawer's hidden action field is written by Alpine, so it can
+        arrive blank (a plain form post, or the drawer rendered outside the
+        shell). A chosen cluster used to be answered with "Enter a cluster
+        name to continue" — the server now reads what was actually posted."""
+        response = self.client.post(
+            self.url,
+            {"existing_cluster_id": self.home_cluster.id},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(response, "added to Home Cluster")
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.home_cluster.id)
+
     def test_full_page_fallback_redirects_to_the_directory(self):
         response = self.client.post(
             self.url,

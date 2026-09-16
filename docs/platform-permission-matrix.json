@@ -7510,6 +7510,36 @@
    "view": "apps.frontend.views.cluster_views.cluster_bulk_assign_drawer_view"
   },
   {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/catchment-drawer",
+   "route_name": "cluster_catchment_drawer",
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view"
+  },
+  {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end",
+   "route_name": "cluster_catchment_end",
+   "view": "apps.frontend.views.cluster_views.cluster_catchment_end_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -8242,6 +8272,18 @@
    "route": "/cost-settings/add",
    "route_name": "cost_settings_add",
    "view": "apps.frontend.views.finance_views.add_linked_cost_view"
+  },
+  {
+   "page_permission": "cost_settings",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/cost-settings/carry-forward",
+   "route_name": "cost_settings_carry_forward",
+   "view": "apps.frontend.views.finance_views.carry_forward_rate_card_view"
   },
   {
    "page_permission": "cost_settings",
@@ -13741,6 +13783,18 @@
    "view": "apps.frontend.views.hr_views.org_structure_view"
   },
   {
+   "page_permission": "ownership_transfers",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ownership-transfers/",
+   "route_name": "ownership_transfers",
+   "view": "apps.frontend.views.ownership_views.ownership_transfers_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -14976,6 +15030,18 @@
    "route": "/planning/bulk-action",
    "route_name": "planning_bulk_action",
    "view": "apps.frontend.views.planning_views.bulk_action_view"
+  },
+  {
+   "page_permission": "fy_planning_policy",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/planning/fiscal-years",
+   "route_name": "fiscal_year_planning",
+   "view": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view"
   },
   {
    "page_permission": "planning",
@@ -16349,6 +16415,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/schools/<str:school_id>/transfer-owner",
+   "route_name": "school_owner_transfer",
+   "view": "apps.frontend.views.ownership_views.school_owner_transfer_drawer"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/schools/add-school",
    "route_name": "add_school",
    "view": "apps.frontend.views.school_views.add_school_view"
@@ -17663,26 +17746,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 403,
-  "Admin": 986,
+  "Admin": 992,
   "BusinessTransformationOfficer": 231,
-  "CCEO": 517,
-  "CountryDirector": 743,
+  "CCEO": 520,
+  "CountryDirector": 748,
   "HumanResources": 329,
-  "ImpactAssessment": 603,
+  "ImpactAssessment": 607,
   "MfiLoanOfficer": 127,
   "MfiPartnerAdmin": 130,
   "PartnerAdmin": 218,
   "PartnerFieldOfficer": 218,
-  "Program Lead": 600,
-  "ProjectCoordinator": 438,
-  "RegionalProgramLead": 301,
+  "Program Lead": 603,
+  "ProjectCoordinator": 439,
+  "RegionalProgramLead": 302,
   "RegionalVicePresident": 364
  },
  "summary": {
-  "page_keys_declared": 172,
-  "page_keys_in_navigation": 189,
-  "routes_guarded": 1083,
-  "routes_total": 1276,
+  "page_keys_declared": 174,
+  "page_keys_in_navigation": 191,
+  "routes_guarded": 1089,
+  "routes_total": 1282,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

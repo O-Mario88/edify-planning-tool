@@ -38,6 +38,8 @@ def on_partner_assignment_created(sender, instance, created, **kwargs):
                 "partner_id": instance.partner_id,
                 "school_id": instance.school_id,
                 "cluster_id": instance.cluster_id,
+                # A project handover is answerable as one (owner, 2026-09-15).
+                "project_id": instance.project_id,
             },
         )
     except Exception:  # pragma: no cover — bookkeeping must never break the flow

@@ -211,3 +211,75 @@ class ProjectMyPlanListsClusterMeetingsTest(StandardSupportBase):
             {"fy": meeting.fy, "period": "fy"},
         )
         self.assertIn(meeting.id, {row["id"] for row in data["meetings"]})
+
+
+class ClusterMeetingEntryPointsTest(StandardSupportBase):
+    """The two doors into cluster scheduling, both of which led nowhere.
+
+    * The cluster's own page offered "Schedule Cluster Meeting" and "Schedule
+      Group Training" pointing at `/planning` — the dashboard, which reads
+      neither `action` nor `cluster`. The planner got a list of schools.
+    * `/planning/schedule` rendered the form, but its submit posted back to
+      that same GET-only view, which answered with the form again. Nothing was
+      recorded, and nothing said so.
+    """
+
+    def setUp(self):
+        ensure_cost_reference(ensure_active_catalogue())
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.staff.id
+        )
+        self.cluster.refresh_from_db()
+        self.client.force_login(self.user)
+
+    def test_the_cluster_page_links_to_the_scheduling_surface(self):
+        page = self.client.get(f"/clusters/{self.cluster.id}")
+        body = page.content.decode()
+        self.assertIn(
+            f"/planning/schedule?action=meeting&cluster={self.cluster.id}", body
+        )
+        self.assertIn(
+            f"/planning/schedule?action=training&cluster={self.cluster.id}", body
+        )
+        # And never at the dashboard, which cannot act on either parameter.
+        self.assertNotIn(f'"/planning?action=meeting&cluster={self.cluster.id}"', body)
+
+    def test_the_schedule_page_form_posts_to_the_action(self):
+        page = self.client.get(
+            f"/planning/schedule?action=meeting&cluster={self.cluster.id}"
+        )
+        body = page.content.decode()
+        self.assertIn('hx-post="/planning/schedule-action"', body)
+        # The costing preview still runs, but it no longer owns the form.
+        self.assertIn('hx-post="/partials/costing/preview"', body)
+        self.assertNotIn('hx-post="/planning/schedule?action=meeting"', body)
+        # The cluster arrives preselected, so the planner does not re-pick it.
+        self.assertIn(f'value="{self.cluster.id}" selected', body)
+
+    def test_scheduling_from_that_page_records_the_meeting(self):
+        day = _schedulable_date()
+        before = set(Activity.objects.values_list("id", flat=True))
+        response = self.client.post(
+            "/planning/schedule-action",
+            {
+                # Exactly the field names the page's form sends.
+                "activity_type": "cluster_meeting",
+                "cluster_id": self.cluster.id,
+                "scheduled_date": day.isoformat(),
+                "purpose_type": "planning_meeting",
+                "expected_participants": "18",
+                "activity_purpose_text": "Termly planning meeting.",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("/my-plan?", response.content.decode())
+        meeting = Activity.objects.exclude(id__in=before).get(
+            activity_type="cluster_meeting"
+        )
+        self.assertEqual(meeting.status, "scheduled")
+        self.assertEqual(meeting.responsible_staff_id, self.staff.id)
+        self.assertIsNotNone(meeting.catalogue_item_id)
+        self.assertTrue(
+            ActivityScheduleCostLine.objects.filter(activity=meeting).exists()
+        )

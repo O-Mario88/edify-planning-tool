@@ -1099,7 +1099,19 @@ def add_to_cluster_drawer_view(request, school_id):
         )
 
     if request.method == "POST":
-        action_type = request.POST.get("cluster_action_type", "existing")
+        # Which half of the drawer was used. The hidden field is written by
+        # Alpine, so it can arrive blank (a full-page post, or the drawer
+        # opened outside the shell). Blank is read from what was actually
+        # posted rather than defaulting to "create a new cluster", which
+        # answered a chosen cluster with "Enter a cluster name to continue".
+        action_type = (request.POST.get("cluster_action_type") or "").strip().lower()
+        if action_type not in {"existing", "new"}:
+            action_type = (
+                "new"
+                if (request.POST.get("new_cluster_name") or "").strip()
+                and not (request.POST.get("existing_cluster_id") or "").strip()
+                else "existing"
+            )
         reason = (request.POST.get("reason") or "").strip()
         posted = {
             "cluster_id": request.POST.get("existing_cluster_id", "").strip(),

@@ -90,10 +90,16 @@ Delete cluster
 <div id="cluster-delete-errors" class="basis-full"></div>
 {% endif %}
 {% if can_plan_clusters %}
-<a href="/planning?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
+{% comment %}
+These opened `/planning`, the dashboard, which reads neither `action` nor
+`cluster`: the button promised a scheduling form and delivered a list, so a
+cluster meeting could not be started from the cluster it belongs to. The
+scheduling surface is `/planning/schedule`, and it reads both (owner, §12).
+{% endcomment %}
+<a href="/planning/schedule?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
 Schedule Group Training
 </a>
-<a href="/planning?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
+<a href="/planning/schedule?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
 Schedule Cluster Meeting
 </a>
 {% endif %}
