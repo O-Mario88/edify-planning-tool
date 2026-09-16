@@ -119,6 +119,7 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "my_professional_development": (CYCLE, 45),
     "cost_settings": (CYCLE, 50),
     "fy_planning_policy": (CYCLE, 55),
+    "ownership_transfers": (REFERENCE, 52),
     # For reference: time off, directories, policies and administration.
     "personal_time_off": (REFERENCE, 10),
     "team_availability": (REFERENCE, 15),

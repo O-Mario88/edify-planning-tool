@@ -159,6 +159,14 @@ class Permission(str, Enum):
     STRATEGIC_RESERVE_APPROVE = "strategicReserve.approve"
     COST_AMENDMENT_REQUEST = "costAmendment.request"
     COST_AMENDMENT_APPROVE = "costAmendment.approve"
+    # Moving a school, or a district's schools, from one staff member to
+    # another (owner, 2026-09-15). Held by Admin and Impact Assessment alone:
+    # a Programme Lead supervises a portfolio, which is not the same as
+    # deciding who holds it. OPEN_ACTIVITY_TRANSFER is separate because
+    # carrying live work across with the school is a further decision.
+    SCHOOL_OWNERSHIP_TRANSFER = "school.ownershipTransfer"
+    DISTRICT_PORTFOLIO_TRANSFER = "district.portfolioTransfer"
+    OPEN_ACTIVITY_TRANSFER = "activity.ownershipTransfer"
     STAFF_MANAGE = "staff.manage"
     # Provision + onboard user accounts. Held by the people/onboarding roles.
     USER_MANAGE = "user.manage"
@@ -660,6 +668,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_UPLOAD,
         P.SCHOOL_RESOLVE_DUPLICATE,
+        # Portfolio ownership is registry data IA administers (owner,
+        # 2026-09-15); it plans none of the work that moves with it.
+        P.SCHOOL_OWNERSHIP_TRANSFER,
+        P.DISTRICT_PORTFOLIO_TRANSFER,
+        P.OPEN_ACTIVITY_TRANSFER,
         P.CLUSTER_VIEW,
         # PLANNING_RECALC, RECRUITMENT_INTELLIGENCE_VIEW and LEADERSHIP_ENGINE_VIEW
         # left this block in the IA review (2026-09-13). None is part of the

@@ -433,7 +433,7 @@ class NotificationLinkResolver:
         if event_type == "district_portfolio_transferred":
             return "/team-planning-oversight/?view=coverage", "Review Portfolio Change"
         if event_type == "target_reconciliation_required":
-            return "/team-planning-oversight/?view=targets", "Reconcile Targets"
+            return "/ownership-transfers/", "Reconcile Targets"
         if event_type == "fy_planning_opened":
             return "/planning", "Plan Next FY Activities"
         if event_type in ("cluster_meeting_scheduled", "school_visit_scheduled"):

@@ -17,6 +17,7 @@ from .views import (
     cluster_views,
     planning_views,
     fy_planning_views,
+    ownership_views,
     visit_request_views,
     oversight_views,
     budget_views,
@@ -1936,6 +1937,16 @@ urlpatterns = [
     path("coverage", extended_views.coverage_view, name="coverage"),
     # ── GROUP 6: Admin, Settings, Messages, Leaves & Search ───────────────────
     path("admin-panel", extended_views.admin_panel_view, name="admin_panel"),
+    path(
+        "ownership-transfers/",
+        ownership_views.ownership_transfers_view,
+        name="ownership_transfers",
+    ),
+    path(
+        "schools/<str:school_id>/transfer-owner",
+        ownership_views.school_owner_transfer_drawer,
+        name="school_owner_transfer",
+    ),
     path("admin-panel/users", extended_views.admin_users_view, name="admin_users"),
     path(
         "admin-panel/users/<str:user_id>",

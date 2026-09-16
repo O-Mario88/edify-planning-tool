@@ -85,6 +85,17 @@ A labelled lifecycle action, deliberately not a trash icon and deliberately
 not in the Danger Zone beside Delete. Closure preserves everything; borrowing
 deletion's affordance would tell the reader the opposite of what it does.
 {% endcomment %}
+{% if can_transfer_owner %}
+{% comment %}Admin and Impact Assessment reassign the school's owner (owner, 2026-09-15). The school's geography is untouched.{% endcomment %}
+<button
+type="button"
+hx-get="/schools/{{ school.school_id }}/transfer-owner"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Reassign the owner of {{ school.name }}"
+class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>Reassign Owner</button>
+{% endif %}
 {% if not school.is_closed %}
 <button
 type="button"

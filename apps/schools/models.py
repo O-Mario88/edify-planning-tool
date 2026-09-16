@@ -999,6 +999,16 @@ from apps.schools.lifecycle_models import (  # noqa: E402,F401
     SchoolClosure,
 )
 
+# Portfolio ownership history — its own module for the same reason closure has
+# one: a different kind of fact from the school record, re-exported here so
+# Django's app loading discovers it.
+from apps.schools.ownership_models import (  # noqa: E402,F401
+    DistrictPortfolioTransfer,
+    OpenActivityDecision,
+    SchoolOwnershipTransfer,
+    TargetReconciliation,
+)
+
 
 SSA_COLLECTION_DONE_STATUSES = ("cancelled", "completed", "ia_verified")
 

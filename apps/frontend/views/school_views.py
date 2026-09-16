@@ -1624,6 +1624,7 @@ def school_detail_view(request, school_id):
         serving_match(current_cluster, school.district_id) if current_cluster else None
     )
 
+    from apps.schools.ownership_transfer import may_transfer_school
     from apps.schools.school_status import cluster_training_coverage, visit_statuses
 
     fy_now = get_operational_fy()
@@ -1652,6 +1653,8 @@ def school_detail_view(request, school_id):
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",
+        # Admin and Impact Assessment reassign portfolio ownership.
+        "can_transfer_owner": may_transfer_school(request.user),
     }
     return render(request, "pages/schools/detail.html", context)
 

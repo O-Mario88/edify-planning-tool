@@ -541,6 +541,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # When a fiscal year opens for planning and whether a follow-up visit needs
     # a prior training (owner, 2026-09-15). planningPolicy.manage holders.
     "fy_planning_policy": {CD, ADMIN},
+    # Moving a school or a district portfolio between staff (owner,
+    # 2026-09-15). Admin and Impact Assessment; never the supervisor.
+    "ownership_transfers": {ADMIN, IA},
     "cost_intelligence": {RVP, ACCOUNTANT},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
@@ -806,6 +809,7 @@ ICONS.update(
         "admin_maintenance": ICONS["calendar"],
         "data_repair": ICONS["cost_settings"],
         "fy_planning_policy": ICONS["calendar"],
+        "ownership_transfers": ICONS["staff"],
         "leave_policies": ICONS["policies"],
         "policy_compliance": ICONS["compliance_register"],
         "business_transformation": ICONS["partners"],
@@ -2849,6 +2853,11 @@ SIDEBAR_ITEMS = [
                 "label": "Users",
                 "url": "/admin-panel/users",
                 "page_key": "users",
+            },
+            {
+                "label": "Ownership Transfers",
+                "url": "/ownership-transfers/",
+                "page_key": "ownership_transfers",
             },
             {
                 "label": "Roles & Permissions",

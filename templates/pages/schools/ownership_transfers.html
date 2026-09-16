@@ -1,0 +1,151 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Ownership Transfers — Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Owner, 2026-09-15. Two governed actions and their history: reassigning one
+school's owner (from the school's own profile) and reassigning every school one
+person holds in a district. Neither changes a school's geography. Approved
+targets are never rewritten — the ones a transfer affects are listed here to be
+reconciled through the amendment workflow.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-ownership-transfers>
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Portfolio administration</p>
+<h1 class="edify-page-title edify-page-header__title">Ownership Transfers</h1>
+<p class="edify-page-header__description">Move a district portfolio between staff, and reconcile the targets a transfer affects. A school's own owner is reassigned from its profile.</p>
+</div>
+</div>
+
+{% if messages %}
+<div class="space-y-2">{% for msg in messages %}<p class="edify-note" data-tone="{% if msg.tags == 'success' %}success{% else %}danger{% endif %}">{{ msg }}</p>{% endfor %}</div>
+{% endif %}
+
+{% if reconciliations %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="reconcile-title" data-target-reconciliation>
+  <div class="border-b border-[var(--edify-border)] px-4 py-3">
+    <h2 id="reconcile-title" class="text-[15px] font-semibold">Target Reconciliation Required</h2>
+    <p class="edify-text-caption text-[var(--edify-text-muted)]">Approved allocations counted a portfolio that has moved. The figures are unchanged; reconcile them through the amendment workflow, then record it here.</p>
+  </div>
+  <div class="overflow-x-auto edify-record-table-wrap">
+    <table class="edify-data-table edify-record-table w-full">
+      <thead><tr><th scope="col">School</th><th scope="col">Moved to</th><th scope="col">Effective</th><th scope="col">Note</th><th scope="col">Record</th></tr></thead>
+      <tbody>
+      {% for row in reconciliations %}
+      <tr>
+        <td data-label="School" data-record-title><a href="/schools/{{ row.school.school_id }}">{{ row.school.name }}</a></td>
+        <td data-label="Moved to">{{ row.to_staff.user.name }}</td>
+        <td data-label="Effective">{{ row.effective_date|date:"j M Y" }}</td>
+        <td data-label="Note">{{ row.target_reconciliation_note }}</td>
+        <td data-label="Record" data-record-action>
+          <form method="post" class="flex flex-wrap items-center gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resolve_targets">
+            <input type="hidden" name="transfer_id" value="{{ row.id }}">
+            <label class="sr-only" for="note-{{ row.id }}">How the targets were reconciled</label>
+            <input id="note-{{ row.id }}" type="text" name="note" required placeholder="How they were reconciled" class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[12px]">
+            <button type="submit" class="btn btn-secondary h-8">Mark reconciled</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if may_transfer_district %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 space-y-3" aria-labelledby="district-transfer-title">
+  <h2 id="district-transfer-title" class="text-[15px] font-semibold">Reassign District Portfolio Owner</h2>
+  <form method="get" class="grid gap-3 sm:grid-cols-4" aria-label="Preview a district portfolio transfer">
+    <div><label for="dt-district" class="edify-filter-label">District</label>
+      <select id="dt-district" name="district" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+        <option value="">Choose…</option>
+        {% for d in districts %}<option value="{{ d.id }}"{% if preview_district == d.id %} selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select></div>
+    <div><label for="dt-from" class="edify-filter-label">Current owner</label>
+      <select id="dt-from" name="from_staff" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+        <option value="">Choose…</option>
+        {% for staff in staff_options %}<option value="{{ staff.id }}"{% if preview_from == staff.id %} selected{% endif %}>{{ staff.user.name }}</option>{% endfor %}
+      </select></div>
+    <div><label for="dt-to" class="edify-filter-label">New owner</label>
+      <select id="dt-to" name="to_staff" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+        <option value="">Choose…</option>
+        {% for staff in staff_options %}<option value="{{ staff.id }}">{{ staff.user.name }}</option>{% endfor %}
+      </select></div>
+    <div class="self-end"><button type="submit" class="btn btn-secondary h-8">Preview</button></div>
+  </form>
+
+  {% if preview %}
+  <div class="rounded-surface border border-[var(--border-card)] p-3 space-y-1" data-district-preview>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What would move</p>
+    <ul class="text-[12px] text-slate-700 space-y-0.5">
+      <li><strong>{{ preview.school_count }}</strong> school{{ preview.school_count|pluralize }} in {{ preview.district_name }} from {{ preview.current_owner_name }}{% if preview.new_owner_name %} to {{ preview.new_owner_name }}{% endif %}</li>
+      <li>{{ preview.open_activities }} open activit{{ preview.open_activities|pluralize:"y,ies" }} ({{ preview.scheduled_activities }} scheduled) · {{ preview.settled_activities }} settled and never moved</li>
+      <li>{{ preview.partner_assignments }} live partner assignment{{ preview.partner_assignments|pluralize }} · {{ preview.project_memberships }} project membership{{ preview.project_memberships|pluralize }} · {{ preview.open_team_actions }} open team action{{ preview.open_team_actions|pluralize }}</li>
+      <li>School geography: unchanged</li>
+    </ul>
+    {% for warning in preview.warnings %}<p class="edify-note" data-tone="warning">{{ warning }}</p>{% endfor %}
+    <form method="post" class="grid gap-3 sm:grid-cols-4 pt-2">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="transfer_district">
+      <input type="hidden" name="district_id" value="{{ preview_district }}">
+      <input type="hidden" name="from_staff_id" value="{{ preview_from }}">
+      <div><label for="dt-confirm-to" class="edify-filter-label">New owner</label>
+        <select id="dt-confirm-to" name="new_owner_id" required class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          <option value="">Choose…</option>
+          {% for staff in staff_options %}<option value="{{ staff.id }}"{% if preview.new_owner_id == staff.id %} selected{% endif %}>{{ staff.user.name }}</option>{% endfor %}
+        </select></div>
+      <div><label for="dt-date" class="edify-filter-label">Effective date</label><input id="dt-date" type="date" name="effective_date" required class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]"></div>
+      <div><label for="dt-open" class="edify-filter-label">Open activities</label>
+        <select id="dt-open" name="open_activity_decision" class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          <option value="keep">Keep with their current owner</option>
+          <option value="transfer">Transfer eligible open activities</option>
+        </select></div>
+      <div><label for="dt-reason" class="edify-filter-label">Reason</label><input id="dt-reason" type="text" name="reason" required class="mt-1 h-9 w-full rounded-control border border-[var(--edify-border)] px-2 text-[13px]"></div>
+      <label class="sm:col-span-3 flex items-start gap-2 text-[12px] font-semibold text-amber-800"><input type="checkbox" name="confirm" value="yes" required class="mt-0.5"><span>I confirm these {{ preview.school_count }} school{{ preview.school_count|pluralize }} move to the chosen owner.</span></label>
+      <div class="self-end"><button type="submit" class="btn btn-primary h-8">Transfer Portfolio</button></div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="history-title">
+  <div class="border-b border-[var(--edify-border)] px-4 py-3"><h2 id="history-title" class="text-[15px] font-semibold">Transfer history</h2></div>
+  <div class="overflow-x-auto edify-record-table-wrap">
+    <table class="edify-data-table edify-record-table w-full">
+      <thead><tr><th scope="col">What moved</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Effective</th><th scope="col">Open work</th><th scope="col">Reason</th></tr></thead>
+      <tbody>
+      {% for batch in batches %}
+      <tr>
+        <td data-label="What moved" data-record-title>{{ batch.school_count }} school{{ batch.school_count|pluralize }} · {{ batch.district.name }}</td>
+        <td data-label="From">{{ batch.from_staff.user.name|default:"Unassigned" }}</td>
+        <td data-label="To">{{ batch.to_staff.user.name }}</td>
+        <td data-label="Effective">{{ batch.effective_date|date:"j M Y" }}</td>
+        <td data-label="Open work">{{ batch.get_open_activity_decision_display }} · {{ batch.activities_transferred }} moved</td>
+        <td data-label="Reason">{{ batch.reason }}</td>
+      </tr>
+      {% endfor %}
+      {% for row in transfers %}
+      <tr>
+        <td data-label="What moved" data-record-title><a href="/schools/{{ row.school.school_id }}">{{ row.school.name }}</a></td>
+        <td data-label="From">{{ row.from_staff.user.name|default:"Unassigned" }}</td>
+        <td data-label="To">{{ row.to_staff.user.name }}</td>
+        <td data-label="Effective">{{ row.effective_date|date:"j M Y" }}</td>
+        <td data-label="Open work">{{ row.get_open_activity_decision_display }} · {{ row.transferred_activity_ids|length }} moved</td>
+        <td data-label="Reason">{{ row.reason }}</td>
+      </tr>
+      {% empty %}
+      {% if not batches %}<tr><td colspan="6">{% include "components/empty_state.html" with message="No ownership transfer has been recorded yet." %}</td></tr>{% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+{% endblock %}
