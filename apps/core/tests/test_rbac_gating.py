@@ -292,7 +292,13 @@ class RbacGatingTestCase(TestCase):
             )
 
     def test_partner_onboarding_rbac(self):
-        """Verify that only Admin or CD can onboard partner organisations."""
+        """Who may register a partner organisation, and who may give it a login.
+
+        Admin, the Country Director and Impact Assessment register partner
+        ORGANISATIONS. Only Admin and the CD administer partner USERS — the
+        two were one act until 2026-09-15, which is why registering a partner
+        used to mint a Partner Admin login nobody had asked for.
+        """
         from apps.partners import services as partner_services
         from apps.accounts.models import User
         from apps.core.rbac import EdifyRole
@@ -331,10 +337,15 @@ class RbacGatingTestCase(TestCase):
         partner_cd = partner_services.onboard(data, cd_user)
         self.assertEqual(partner_cd["name"], "CD Test Partner")
 
-        # IA verifies impact data but does not administer partner identities.
+        # Impact Assessment registers the partner ORGANISATIONS it works with
+        # (owner, 2026-09-15) and still administers no logins: creating the
+        # organisation no longer mints a Partner Admin user, and setting one
+        # up is a separate permission IA does not hold.
         data["name"] = "IA Test Partner"
-        with self.assertRaises(Forbidden):
-            partner_services.onboard(data, ia_user)
+        partner_ia = partner_services.onboard(data, ia_user)
+        self.assertEqual(partner_ia["name"], "IA Test Partner")
+        self.assertFalse(partner_services.may_manage_partner_users(ia_user))
+        self.assertTrue(partner_services.may_create_partner_organisation(ia_user))
 
         # Other roles (e.g., CCEO, Accountant) must be blocked
         with self.assertRaises(Forbidden):

@@ -20,6 +20,7 @@ from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
+from apps.core.tests.fy_windows import open_fy_for_planning
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -632,6 +633,11 @@ class EntitlementGateTest(TestCase):
         from apps.activities.services import create
 
         future_fy = get_operational_fy(future_fy_date)
+        # A fiscal year has to be open before anything can be planned into it
+        # (owner, 2026-09-15). This walk is about entitlement slots being
+        # counted per FY, so the year is opened the way a Country Director
+        # would open it, and the entitlement question is asked after.
+        open_fy_for_planning(future_fy)
         future_catalogue = CostCatalogue.objects.get_or_create(
             fy=future_fy,
             version=1,

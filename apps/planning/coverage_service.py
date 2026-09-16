@@ -79,6 +79,17 @@ class CoverageGroup:
     def school_count(self) -> int:
         return len({row["school_id"] for row in self.rows if row["school_id"]})
 
+    @property
+    def page_param(self) -> str:
+        """This group's own page parameter.
+
+        Each group is its own table, so paging one must not page the others:
+        a country lens in the FY view puts two hundred schools in a quarter
+        and four in the next, and one shared parameter would move both.
+        """
+        safe = "".join(ch if ch.isalnum() else "_" for ch in self.key).strip("_")
+        return f"planned_{safe or 'group'}_page"
+
 
 def _period_days(*, fy: str, period: str, month, quarter, date_start, date_end):
     """The [start, end] the selected period covers, inclusive."""

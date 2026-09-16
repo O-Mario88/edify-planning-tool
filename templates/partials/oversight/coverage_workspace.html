@@ -10,6 +10,7 @@ The period selector is the page's own (period_filter_bar); the groups below
 follow it: day inside a week, week inside a month, month inside a quarter,
 quarter inside a year.
 {% endcomment %}
+{% load table_pagination %}
 <div class="space-y-4" data-coverage-workspace>
 
   <p class="edify-note" data-tone="{% if coverage.missing_count %}warning{% else %}success{% endif %}" data-coverage-attention>
@@ -31,7 +32,8 @@ quarter inside a year.
         <table class="edify-data-table edify-record-table w-full">
           <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Funding</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
           <tbody>
-          {% for row in group.rows %}
+          {% paginate group.rows group.page_param as group_pager %}
+          {% for row in group_pager.rows %}
           <tr>
             <td data-label="School" data-record-title>{{ row.school_name }}</td>
             <td data-label="CCEO owner">{{ row.owner_name }}</td>
@@ -42,12 +44,13 @@ quarter inside a year.
             <td data-label="Planned date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
             <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
             <td data-label="Funding">{{ row.funding_status|default:"—" }}</td>
-            <td data-label="Status">{{ row.activity_status|default:row.stage }}</td>
+            <td data-label="Status">{% firstof row.activity_status row.stage "—" %}</td>
             <td data-label="Action" data-record-action>{% if row.detail_url %}<a href="{{ row.detail_url }}" hx-get="{{ row.detail_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-card__link">Open</a>{% endif %}</td>
           </tr>
           {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=group_pager param=group.page_param pagination_label="Planned schools pages" %}
       </div>
     </div>
     {% endfor %}
@@ -62,10 +65,11 @@ quarter inside a year.
       <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.planned_count }} school{{ coverage.planned_count|pluralize }} the planning record attaches to a live cluster session between {{ coverage.period_start|date:"j M Y" }} and {{ coverage.period_end|date:"j M Y" }}.</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
+      {% paginate coverage.planned_rows "trained_page" as trained_pager %}
       <table class="edify-data-table edify-record-table w-full">
         <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Delivery</th><th scope="col">Status</th><th scope="col">Visit status</th><th scope="col">Training plan</th><th scope="col">Action</th></tr></thead>
         <tbody>
-        {% for row in coverage.planned_rows %}
+        {% for row in trained_pager.rows %}
         <tr>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
@@ -83,6 +87,7 @@ quarter inside a year.
         {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=trained_pager param="trained_page" pagination_label="Schools with planned cluster training pages" %}
     </div>
   </section>
 
@@ -92,10 +97,11 @@ quarter inside a year.
       <p class="edify-text-caption text-[var(--edify-text-muted)]">Active schools in your {{ lens_label|lower }} scope with no live cluster training or meeting in this period. Closed schools are not counted.</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
+      {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}
       <table class="edify-data-table edify-record-table w-full">
         <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Reason</th><th scope="col">Visit status</th><th scope="col">Action</th></tr></thead>
         <tbody>
-        {% for row in coverage.missing_rows %}
+        {% for row in untrained_pager.rows %}
         <tr>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
@@ -110,6 +116,7 @@ quarter inside a year.
         {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=untrained_pager param="untrained_page" pagination_label="Schools with no training planned pages" %}
     </div>
   </section>
 </div>

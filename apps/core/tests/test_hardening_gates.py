@@ -26,6 +26,7 @@ from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
@@ -523,7 +524,21 @@ class BoundaryTest(TestCase):
         self.assertEqual(get_quarter_for_date(sep30), "Q4")
         self.assertEqual(get_quarter_for_date(oct1), "Q1")
 
-    def test_cross_fy_reschedule_moves_all_period_fields(self):
+    def test_a_reschedule_across_the_fy_boundary_is_refused(self):
+        """No silent FY moves (owner brief, 2026-09-15).
+
+        This walk used to prove that rescheduling from 15 September to 6
+        October carried every period field — activity fy and quarter, and the
+        cost line's fiscal_year, quarter and month — over to FY2027. Carrying
+        them is the right behaviour for a move that is allowed; the move
+        itself is not. Money planned, costed and approved inside FY2026 must
+        not become FY2027 money because somebody picked a later day: the year
+        it belongs to is a decision, not a side effect of a date picker.
+
+        So the reschedule is refused and says what to do instead, and nothing
+        moves. A move WITHIN the year still carries all five fields, which is
+        the hardening this test was written for; that half is below.
+        """
         from apps.activities import services as activity_services
         from apps.budget.models import CostCatalogue, CostSetting
 
@@ -539,6 +554,11 @@ class BoundaryTest(TestCase):
         catalogue = CostCatalogue.objects.get_or_create(
             fy="2027", version=1, defaults={"label": "FY 2027 boundary test catalogue"}
         )[0]
+        # The year the work actually belongs to needs rates of its own: the
+        # move inside FY2026 below re-prices against FY2026.
+        fy2026 = CostCatalogue.objects.get_or_create(
+            fy="2026", version=1, defaults={"label": "FY 2026 boundary test catalogue"}
+        )[0]
         # update_or_create, not get_or_create: migration budget/0005 already
         # seeds these exact keys (globally unique) attached to whichever
         # catalogue was active at migration time — get_or_create would
@@ -548,10 +568,16 @@ class BoundaryTest(TestCase):
             ("primary_transport_per_day", "Primary transport"),
             ("primary_lunch_per_day", "Primary lunch"),
         ):
-            CostSetting.objects.update_or_create(
-                key=key,
-                defaults={"label": label, "unit_cost": 10_000, "catalogue": catalogue},
-            )
+            for fy, card in (("2027", catalogue), ("2026", fy2026)):
+                CostSetting.objects.update_or_create(
+                    key=key,
+                    fy=fy,
+                    defaults={
+                        "label": label,
+                        "unit_cost": 10_000,
+                        "catalogue": card,
+                    },
+                )
         activity = Activity.objects.create(
             school=school,
             activity_type="school_visit",
@@ -576,18 +602,34 @@ class BoundaryTest(TestCase):
             quarter="Q4",
             month=9,
         )
+        with self.assertRaisesMessage(BadRequest, "FY2026 work"):
+            activity_services.reschedule(
+                activity.id,
+                {"scheduledDate": "2026-10-06", "reason": "FY-boundary hardening test"},
+                cceo,
+            )
+        activity.refresh_from_db()
+        line = activity.schedule_cost_lines.first()
+        self.assertEqual((activity.fy, activity.quarter), ("2026", "Q4"))
+        self.assertEqual(activity.planned_date, _dt(2026, 9, 15).date())
+        self.assertEqual(
+            (line.fiscal_year, line.quarter, line.month), ("2026", "Q4", 9)
+        )
+
+        # A move inside the year carries every period field with it: the
+        # hardening this walk exists for, on the move that is allowed.
         activity_services.reschedule(
             activity.id,
-            {"scheduledDate": "2026-10-06", "reason": "FY-boundary hardening test"},
+            {"scheduledDate": "2026-07-14", "reason": "Moved earlier in the year"},
             cceo,
         )
         activity.refresh_from_db()
-        self.assertEqual(activity.fy, "2027")
-        self.assertEqual(activity.quarter, "Q1")
         line = activity.schedule_cost_lines.first()
-        self.assertEqual(line.fiscal_year, "2027")
-        self.assertEqual(line.quarter, "Q1")
-        self.assertEqual(line.month, 10)
+        self.assertEqual((activity.fy, activity.quarter), ("2026", "Q4"))
+        self.assertEqual(activity.planned_date, _dt(2026, 7, 14).date())
+        self.assertEqual(
+            (line.fiscal_year, line.quarter, line.month), ("2026", "Q4", 7)
+        )
 
 
 class FailureIsolationTest(TestCase):

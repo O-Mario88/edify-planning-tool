@@ -34,6 +34,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import (
     StaffProfile,
@@ -126,7 +127,36 @@ def _at(day: datetime.date):
 
 
 class QuarterlyConversationJourneyTest(TestCase):
-    """Window opened → reflection → assessment → calibration → acknowledged."""
+    """Window opened → reflection → assessment → calibration → acknowledged.
+
+    The journey is held at a fixed "today" rather than the machine's.
+
+    It delivers two visits eight days apart and then talks about them, so both
+    have to belong to one fiscal year, and to one that may be executed — the
+    next FY may be open for planning and still refuse delivery until it
+    starts. Anchored to the wall clock, the walk passed for eleven months and
+    then broke every late September, when a visit booked a week out landed on
+    1 October: FY2027 work, refused on the calendar rather than on anything
+    the code did. The fixed day is an ordinary Wednesday in the middle of a
+    fiscal year, so the whole conversation sits inside it whatever the date
+    the suite is run on.
+    """
+
+    #: A Wednesday in FY2026, far from both ends of the fiscal year.
+    TODAY = "2026-02-11"
+
+    @classmethod
+    def setUpClass(cls):
+        # Started before setUpTestData so the fixtures are built on the same
+        # day the tests read back.
+        cls._freezer = freeze_time(cls.TODAY)
+        cls._freezer.start()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls._freezer.stop()
 
     @classmethod
     def setUpTestData(cls):
@@ -176,18 +206,38 @@ class QuarterlyConversationJourneyTest(TestCase):
 
         cls.day = _schedulable_date()
         cls.fy = get_operational_fy(cls.day)
-        cls.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy=cls.fy, is_active=True, defaults={"version": 1}
-        )
-        CostSetting.objects.update_or_create(
-            key="primary_transport_per_day",
-            defaults={
-                "label": "Primary Transport Per Day",
-                "unit_cost": TRANSPORT,
-                "fy": cls.fy,
-                "catalogue": cls.catalogue,
-            },
-        )
+        # This journey schedules work days and weeks after `cls.day`, and the
+        # fiscal year turns over on 1 October. Run it in late September and the
+        # later visits land in the next FY, which had no rate card here: the
+        # journey failed with "No active CD Cost Catalogue" on the calendar,
+        # not on anything the code did. Every FY the journey can reach is
+        # given one.
+        from apps.budget.reference import ensure_cost_reference
+
+        cls.catalogue = None
+        for fy in sorted(
+            {
+                get_operational_fy(cls.day + datetime.timedelta(days=offset))
+                for offset in (0, 30, 60, 210)
+            }
+        ):
+            catalogue, _ = CostCatalogue.objects.get_or_create(
+                country="Uganda", fy=fy, is_active=True, defaults={"version": 1}
+            )
+            # Every canonical rate, not just transport: a visit is priced from
+            # several and a missing one refuses the schedule.
+            ensure_cost_reference(catalogue)
+            if fy == cls.fy:
+                cls.catalogue = catalogue
+            CostSetting.objects.update_or_create(
+                key="primary_transport_per_day",
+                fy=fy,
+                defaults={
+                    "label": "Primary Transport Per Day",
+                    "unit_cost": TRANSPORT,
+                    "catalogue": catalogue,
+                },
+            )
 
     # ── Setting the stage: an agreed review to hold a conversation about ──
     def _agreed_review(self):

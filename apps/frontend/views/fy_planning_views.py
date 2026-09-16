@@ -64,13 +64,14 @@ def fiscal_year_planning_view(request):
     operational = get_operational_fy()
     now = timezone.now()
     policies = list(FiscalYearPlanningPolicy.objects.order_by("-fy"))
+    # A display annotation, derived by the policy service and never saved.
+    # It is `window_state`, not `state`: a year's state is what the service
+    # decides, and a view that writes a field called `state` on a workflow
+    # record is exactly what the production-readiness scanner exists to catch.
     for policy in policies:
-        if int(policy.fy) <= int(operational):
-            policy.state = "Operational" if policy.fy == operational else "Closed year"
-        elif policy.planning_open_at and policy.planning_open_at <= now:
-            policy.state = "Open for planning"
-        else:
-            policy.state = "Not open"
+        policy.window_state = fy_policy.window_state(
+            policy, at=now, operational=operational
+        )
     next_fy = str(int(operational) + 1)
     context = {
         "policies": policies,

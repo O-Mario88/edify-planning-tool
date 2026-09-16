@@ -430,14 +430,29 @@ class ProjectNeedGateTest(TestCase):
     """Special Project assignment uses verified SSA need or a reason (Chain 4 H2)."""
 
     def setUp(self):
+        from apps.accounts.models import StaffProfile, User
         from apps.projects.models import Project
 
         region = Region.objects.create(name="Eco R8")
         self.district = District.objects.create(name="Eco D8", region=region)
+        # A project takes schools only if somebody is there to plan its work
+        # (owner, 2026-09-15) — the school joins so that the Project
+        # Coordinator plans for it.
+        coordinator = StaffProfile.objects.create(
+            user=User.objects.create_user(
+                email="eco-project-pc@edify.org",
+                name="Eco Project Coordinator",
+                roles=["ProjectCoordinator"],
+                active_role="ProjectCoordinator",
+                password="x",
+            ),
+            title="Project Coordinator",
+        )
         self.project = Project.objects.create(
             name="Leadership Project",
             category="intervention_specific",
             target_interventions=["leadership"],
+            manager_staff_id=coordinator.id,
         )
         self.fy = get_operational_fy()
 

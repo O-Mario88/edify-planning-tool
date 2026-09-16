@@ -378,6 +378,28 @@ def announce_fy_planning(policy_id: str) -> int:
         return 0
 
 
+def window_state(policy, *, at=None, operational: str | None = None) -> str:
+    """How a fiscal year reads today: one phrase for the governed page.
+
+    Derived, never stored. A year the platform is operating is "Operational";
+    one it has finished with is "Closed year"; a future year is "Open for
+    planning" once its opening moment has passed, and "Not open" until then.
+    """
+    from apps.core.fy import get_operational_fy
+
+    now = at or timezone.now()
+    operational = operational or get_operational_fy()
+    try:
+        year, current = int(policy.fy), int(operational)
+    except (TypeError, ValueError):
+        return "Not open"
+    if year <= current:
+        return "Operational" if year == current else "Closed year"
+    if policy.planning_open_at and policy.planning_open_at <= now:
+        return "Open for planning"
+    return "Not open"
+
+
 def planners() -> list:
     """Active staff whose roles plan field work."""
     from apps.accounts.models import User
@@ -410,4 +432,5 @@ __all__ = [
     "plannable_fys",
     "policy_for",
     "set_follow_up_rule",
+    "window_state",
 ]

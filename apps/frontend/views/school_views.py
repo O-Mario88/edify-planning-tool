@@ -1058,11 +1058,11 @@ def add_to_cluster_drawer_view(request, school_id):
     covering = (
         active_cluster_for_school_geography(school) if school.sub_county_id else None
     )
-    preselected_id = (
-        covering.id
-        if covering and covering.id in selectable_ids
-        else (selectable[0].id if len(selectable) == 1 else "")
-    )
+    # Only the cluster that already covers this school's sub-county opens
+    # selected. A sole remaining option is NOT preselected: the drawer exists
+    # so the planner chooses, and a choice made for them is the automatic
+    # routing this page was rebuilt to remove.
+    preselected_id = covering.id if covering and covering.id in selectable_ids else ""
     current_relationship = relationship_for(current_cluster)
 
     def drawer_context(validation_error=None, posted=None):

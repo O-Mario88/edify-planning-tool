@@ -3006,7 +3006,7 @@
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
-   "line": 28,
+   "line": 29,
    "title": "Target Reconciliation Required",
    "heading_level": 2,
    "has_card_key": false,
@@ -3020,7 +3020,7 @@
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
-   "line": 62,
+   "line": 65,
    "title": "Reassign District Portfolio Owner",
    "heading_level": 2,
    "has_card_key": false,
@@ -3034,7 +3034,7 @@
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
-   "line": 118,
+   "line": 121,
    "title": "Transfer history",
    "heading_level": 2,
    "has_card_key": false,
@@ -6555,7 +6555,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 21,
+   "line": 22,
    "title": "Planned Schools \u00b7",
    "heading_level": 2,
    "has_card_key": false,
@@ -6564,7 +6564,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 59,
+   "line": 62,
    "title": "Schools with Planned Cluster Training or Meeting",
    "heading_level": 2,
    "has_card_key": false,
@@ -6573,7 +6573,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 89,
+   "line": 94,
    "title": "Schools with No Training Planned",
    "heading_level": 2,
    "has_card_key": false,

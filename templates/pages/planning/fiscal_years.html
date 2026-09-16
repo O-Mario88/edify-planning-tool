@@ -34,7 +34,7 @@ apps.planning.fy_policy and audited.
       {% for policy in policies %}
       <tr>
         <td data-label="Fiscal year"><strong>FY{{ policy.fy }}</strong></td>
-        <td data-label="State"><span class="edify-badge" data-tone="{% if policy.state == 'Open for planning' or policy.state == 'Operational' %}success{% elif policy.state == 'Not open' %}warning{% else %}neutral{% endif %}">{{ policy.state }}</span></td>
+        <td data-label="State"><span class="edify-badge" data-tone="{% if policy.window_state == 'Open for planning' or policy.window_state == 'Operational' %}success{% elif policy.window_state == 'Not open' %}warning{% else %}neutral{% endif %}">{{ policy.window_state }}</span></td>
         <td data-label="Planning opens">{{ policy.planning_open_at|date:"j M Y"|default:"—" }}</td>
         <td data-label="Delivery window">{{ policy.execution_start|date:"j M Y" }} – {{ policy.execution_end|date:"j M Y" }}</td>
         <td data-label="Follow-up needs a prior training">
