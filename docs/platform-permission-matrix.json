@@ -7603,6 +7603,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+   "route_name": "remove_school_from_cluster",
+   "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/clusters/cost-preview",
    "route_name": "cluster_cost_preview",
    "view": "apps.frontend.views.cluster_views.cluster_cost_preview_partial"
@@ -15668,9 +15685,57 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/projects/<str:project_id>/delete",
+   "route_name": "project_delete_action",
+   "view": "apps.frontend.views.extended_views.project_delete_action_view"
+  },
+  {
+   "page_permission": "projects",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/<str:project_id>/edit",
+   "route_name": "project_edit_drawer",
+   "view": "apps.frontend.views.extended_views.project_edit_drawer_view"
+  },
+  {
+   "page_permission": "projects",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/projects/<str:project_id>/schools/assign",
    "route_name": "project_assign_school_action",
    "view": "apps.frontend.views.extended_views.project_assign_school_action_view"
+  },
+  {
+   "page_permission": "projects",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
+   "route_name": "project_bulk_assign_drawer",
+   "view": "apps.frontend.views.extended_views.project_bulk_assign_drawer_view"
   },
   {
    "page_permission": "projects",
@@ -17745,27 +17810,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 403,
-  "Admin": 992,
+  "Accountant": 404,
+  "Admin": 996,
   "BusinessTransformationOfficer": 231,
-  "CCEO": 520,
-  "CountryDirector": 748,
+  "CCEO": 524,
+  "CountryDirector": 752,
   "HumanResources": 329,
-  "ImpactAssessment": 607,
+  "ImpactAssessment": 611,
   "MfiLoanOfficer": 127,
   "MfiPartnerAdmin": 130,
   "PartnerAdmin": 218,
   "PartnerFieldOfficer": 218,
-  "Program Lead": 603,
-  "ProjectCoordinator": 439,
+  "Program Lead": 607,
+  "ProjectCoordinator": 443,
   "RegionalProgramLead": 302,
   "RegionalVicePresident": 364
  },
  "summary": {
   "page_keys_declared": 174,
   "page_keys_in_navigation": 191,
-  "routes_guarded": 1089,
-  "routes_total": 1282,
+  "routes_guarded": 1093,
+  "routes_total": 1286,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

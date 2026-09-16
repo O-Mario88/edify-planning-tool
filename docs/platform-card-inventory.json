@@ -4,10 +4,10 @@
   "templates": 261,
   "distinct_titles": 657,
   "with_card_key": 13,
-  "untitled_surfaces": 769,
-  "untitled_chrome": 173,
-  "untitled_nested": 248,
-  "untitled_headless": 348,
+  "untitled_surfaces": 775,
+  "untitled_chrome": 174,
+  "untitled_nested": 249,
+  "untitled_headless": 352,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 268,
+   "line": 289,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 303,
+   "line": 324,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 326,
+   "line": 347,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2695,7 +2695,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 31,
+   "line": 84,
    "title": "Delivery overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2704,7 +2704,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 121,
+   "line": 174,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2713,7 +2713,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 162,
+   "line": 236,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2722,7 +2722,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 181,
+   "line": 255,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -7158,7 +7158,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 105,
+   "line": 123,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7172,7 +7172,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 114,
+   "line": 132,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7186,7 +7186,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 131,
+   "line": 149,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7200,7 +7200,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 135,
+   "line": 153,
    "title": "Project Delivery Readiness",
    "heading_level": 2,
    "has_card_key": false,

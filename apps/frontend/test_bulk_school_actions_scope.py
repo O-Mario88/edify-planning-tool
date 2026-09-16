@@ -147,13 +147,30 @@ class BulkSchoolActionsRespectScopeTest(TestCase):
         `school_queryset(..., direct_only=True)` is the only thing standing
         between a typed id and another CCEO's school.
         """
+        from apps.accounts.models import StaffProfile
         from apps.projects.models import Project, ProjectSchoolAssignment
 
+        # A project nobody holds takes no schools at all
+        # (`_assert_project_accepts_school`), so this one has its coordinator:
+        # the refusal under test is about school scope, and a project-side
+        # refusal would pass the assertion for the wrong reason.
+        coordinator = User.objects.create(
+            id="bulk-pc",
+            email="bulk-pc@edify.org",
+            name="Bulk Coordinator",
+            roles=["ProjectCoordinator"],
+            active_role="ProjectCoordinator",
+            is_active=True,
+        )
+        coordinator_sp = StaffProfile.objects.create(
+            id="bulk-pc-sp", user=coordinator, title="Project Coordinator"
+        )
         project = Project.objects.create(
             name="Bulk Project",
             code="SP-BULK-1",
             category="intervention_specific",
             status="active",
+            manager_staff_id=coordinator_sp.id,
         )
         self.client.post(
             "/schools/bulk-assign-project",
