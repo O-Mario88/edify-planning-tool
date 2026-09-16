@@ -66,5 +66,12 @@ accounts. Screenshots: `outputs/brief-evidence-2026-09-16/` (git-ignored).
 * **FY2026 and FY2027 policies were opened by migration**, so there is no
   `fy.planning_opened` audit row for them. A year opened through the page is
   audited and announced.
+* **The derived visit status is not on the SSA-effectiveness analytics page.**
+  It is shown in the School Directory, School 360, Planning, Team Oversight ·
+  Schools & Coverage and the Project Coordinator's portfolio — all reading the
+  same `apps.schools.school_status.visit_statuses`. The analytics page asks a
+  different question ("are visits reaching the right schools with enough
+  quality and frequency"), and the counting surface for visit status is the
+  Coverage workspace.
 * **Target reconciliation is flagged, never rewritten.** A transfer that
   affects an approved allocation lists it for the amendment workflow.
