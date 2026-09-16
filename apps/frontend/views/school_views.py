@@ -644,6 +644,13 @@ def school_directory_view(request):
     # (was a confirmed N+1 on the school directory list).
     page_school_ids = [s.id for s in page_obj]
     progress_by_school = SchoolDirectoryViewModel.bulk_progress(page_school_ids, fy=fy)
+    # Derived from the canonical activities, never a stored flag (owner,
+    # 2026-09-15): Scheduled for Visit, and whether a cluster training or
+    # meeting is planned for the school this year.
+    from apps.schools.school_status import cluster_training_coverage, visit_statuses
+
+    visit_by_school = visit_statuses(page_school_ids, fy=fy)
+    training_by_school = cluster_training_coverage(list(page_obj), fy=fy)
     owner_ids = {
         school.account_owner_id for school in page_obj if school.account_owner_id
     }
@@ -667,6 +674,8 @@ def school_directory_view(request):
             active_projects_exist,
             progress=progress_by_school.get(s.id),
             staff_names_by_owner_id=staff_names_by_owner_id,
+            visit_status=visit_by_school.get(s.id),
+            training_coverage=training_by_school.get(s.id),
         )
         if group_by_owner:
             # Group headers, drawn where the owner changes.
@@ -1615,8 +1624,17 @@ def school_detail_view(request, school_id):
         serving_match(current_cluster, school.district_id) if current_cluster else None
     )
 
+    from apps.schools.school_status import cluster_training_coverage, visit_statuses
+
+    fy_now = get_operational_fy()
+    visit_state = visit_statuses([school.id], fy=fy_now)[school.id]
+    training_state = cluster_training_coverage([school], fy=fy_now)[school.id]
+
     context = {
         "school": school,
+        "visit_status": visit_state,
+        "training_coverage": training_state,
+        "status_fy": fy_now,
         "current_cluster": current_cluster,
         "current_cluster_cross_district": bool(
             current_match and current_match.is_cross_district

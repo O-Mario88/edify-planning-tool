@@ -144,6 +144,14 @@ Not specified
 <p class="edify-profile-field__label">Assigned Staff</p>
 <p class="edify-profile-field__value mt-0.5">{{ school.assigned_staff }}</p>
 </div>
+<div data-school-visit-status>
+<p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="edify-badge" data-tone="{{ visit_status.tone }}">{{ visit_status.label }}</span>{% if visit_status.next_date %} <span class="edify-text-caption">{{ visit_status.next_date|date:"j M Y" }}</span>{% endif %}</p>
+</div>
+<div data-school-training-status>
+<p class="edify-profile-field__label">Cluster training (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {{ training_coverage.cluster_name }}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>
+</div>
 <div data-school-cluster>
 <p class="edify-profile-field__label">Cluster</p>
 <p class="edify-profile-field__value mt-0.5">{% if current_cluster %}<a href="/clusters/{{ current_cluster.id }}" class="hover:underline">{{ current_cluster.name }}</a>{% if current_cluster.district_id != school.district_id %} · {{ current_cluster.district.name }}{% endif %}{% else %}Not in a cluster{% endif %}</p>

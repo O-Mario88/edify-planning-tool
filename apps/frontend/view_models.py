@@ -98,6 +98,8 @@ class SchoolDirectoryViewModel:
         active_projects_exist: bool,
         progress: dict | None = None,
         staff_names_by_owner_id: dict[str, str] | None = None,
+        visit_status=None,
+        training_coverage=None,
     ) -> dict:
         is_clustered = (
             school.cluster_id is not None or school.cluster_status == "clustered"
@@ -144,6 +146,20 @@ class SchoolDirectoryViewModel:
         cluster_name = "—"
         if is_clustered and school.cluster_id:
             cluster_name = clusters_dict.get(school.cluster_id, "—")
+
+        # Visit and training planning status, derived from the canonical
+        # activities (apps.schools.school_status). A caller rendering a page of
+        # schools batches them; a single-school caller derives them here.
+        if visit_status is None or training_coverage is None:
+            from apps.schools.school_status import (
+                cluster_training_coverage,
+                visit_statuses,
+            )
+
+            if visit_status is None:
+                visit_status = visit_statuses([school.id])[school.id]
+            if training_coverage is None:
+                training_coverage = cluster_training_coverage([school])[school.id]
 
         staff_name = (
             (staff_names_by_owner_id or {}).get(school.account_owner_id)
@@ -257,6 +273,17 @@ class SchoolDirectoryViewModel:
             "is_clustered": is_clustered,
             "cluster_id": school.cluster_id,
             "cluster_name": cluster_name,
+            # The derived planning states (apps.schools.school_status). Named
+            # apart from the Core package's own visit/training progression
+            # above, which counts a core school's four visits and trainings.
+            "visit_plan_status_key": visit_status.key,
+            "visit_plan_status_label": visit_status.label,
+            "visit_plan_status_tone": visit_status.tone,
+            "is_scheduled_for_visit": visit_status.is_scheduled,
+            "next_visit_date": visit_status.next_date,
+            "cluster_training_planned": training_coverage.planned,
+            "cluster_training_status_label": training_coverage.label,
+            "cluster_training_reason": training_coverage.reason,
             "project_assignment_count": project_count,
             "available_actions": available_actions,
             "disabled_reasons": disabled_reasons,

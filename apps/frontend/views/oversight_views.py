@@ -350,10 +350,12 @@ def team_planning_oversight_view(request):
     )
     can_view_targets = RolePermissionService.can_view_page(request.user, "team_targets")
     requested_view = (request.GET.get("view") or "planning").strip().lower()
-    active_view = "targets" if requested_view == "targets" else "planning"
+    active_view = (
+        requested_view if requested_view in {"targets", "coverage"} else "planning"
+    )
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
-    if active_view == "planning" and not can_view_planning:
+    if active_view in ("planning", "coverage") and not can_view_planning:
         active_view = "targets"
 
     if active_view == "targets":
@@ -378,6 +380,47 @@ def team_planning_oversight_view(request):
     items = oversight.build_items(
         request.user, filters=advanced, **_service_period(period)
     )
+    if active_view == "coverage":
+        # The school lens: which schools have planned work in the period, which
+        # have a cluster training or meeting, and which have neither (owner,
+        # 2026-09-15). Same period selector, same scope, same canonical items.
+        from apps.planning import coverage_service
+
+        planned_groups, planned_totals = coverage_service.planned_schools(
+            items, period=period["period"]
+        )
+        coverage = coverage_service.training_coverage(
+            request.user,
+            fy=period["fy"],
+            period=period["period"],
+            month=period["selected_month"] if period["period"] == "month" else None,
+            quarter=period["selected_quarter"]
+            if period["period"] == "quarter"
+            else None,
+            date_start=period["date_start"],
+            date_end=period["date_end"],
+        )
+        context = {
+            **period,
+            "active_oversight_view": "coverage",
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+            "lens_label": {"region": "Regional", "country": "Country", "team": "Team"}[
+                "region"
+                if scope.is_region
+                else ("country" if scope.is_country else "team")
+            ],
+            "planned_groups": planned_groups,
+            "planned_totals": planned_totals,
+            "coverage": coverage,
+            "fy_options": fy_options(),
+            "coverage_url": "/team-planning-oversight/?view=coverage",
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(
+                request, "partials/oversight/coverage_workspace.html", context
+            )
+        return render(request, "pages/oversight/team_planning.html", context)
     # Both the country lens and the Regional Programme Lead's region lens read
     # many Programme Leads, so both are organised in Lead tabs; only the copy
     # and the headline tiles differ (owner, 2026-09-12).
