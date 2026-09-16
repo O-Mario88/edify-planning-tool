@@ -29,6 +29,7 @@ from django.db.models import Count, Max, Min, Q, Sum
 
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
 )
@@ -229,7 +230,11 @@ def _planning_by_school(school_ids, *, fy: str) -> dict[str, dict]:
             visits=Count("id", filter=Q(activity_type__in=VISIT_TYPES)),
             trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
             meetings=Count("id", filter=Q(activity_type__in=CLUSTER_MEETING_TYPES)),
-            completed=Count("id", filter=Q(status="completed")),
+            # The whole verified chain, not the bare "completed" status: no
+            # production transition writes that one, so a count filtered on it
+            # matches seeded rows and skips every activity a person actually
+            # delivered (apps.core.tests.test_verification_criticals).
+            completed=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
             first_date=Min("planned_date"),
             last_date=Max("planned_date"),
         )

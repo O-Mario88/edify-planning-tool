@@ -32,7 +32,12 @@ from datetime import date
 
 from django.db.models import Count, Max, Q
 
-from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 from apps.planning.portfolio_service import NO_LEAD_KEY, NO_LEAD_LABEL
 from apps.schools.school_status import CLUSTER_SESSION_TYPES, DEAD_STATUSES
 
@@ -136,7 +141,11 @@ def _sessions_by_cluster(cluster_ids, *, fy: str) -> dict[str, dict]:
         .values("cluster_id")
         .annotate(
             planned=Count("id"),
-            done=Count("id", filter=Q(status="completed")),
+            # The whole verified chain. "completed" alone is a status no
+            # production transition writes, so delivery counted on it would
+            # read zero for work that was delivered and verified
+            # (apps.core.tests.test_verification_criticals).
+            done=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
             trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
             meetings=Count("id", filter=Q(activity_type__in=CLUSTER_MEETING_TYPES)),
             last=Max("planned_date"),
@@ -175,7 +184,7 @@ def _visits_by_cluster(school_ids_by_cluster, *, fy: str) -> dict[str, dict]:
         .values("school_id")
         .annotate(
             planned=Count("id"),
-            done=Count("id", filter=Q(status="completed")),
+            done=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
             last=Max("planned_date"),
         )
     )

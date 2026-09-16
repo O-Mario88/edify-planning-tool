@@ -254,6 +254,18 @@ class PortfolioPlanningTest(PortfolioFixture):
         self.assertTrue(self._school_row(portfolio, "Planned Primary")["is_planned"])
         self.assertFalse(self._school_row(portfolio, "Unplanned Primary")["is_planned"])
 
+    def test_a_verified_activity_counts_as_completed_on_a_school(self):
+        """Same phantom-status trap on the portfolio side."""
+        self._activity(
+            school=self.unplanned_school, day=_fy_day(2, 3), status="ia_verified"
+        )
+
+        row = self._school_row(
+            country_portfolio(self.ia.user, fy=FY), "Unplanned Primary"
+        )
+        self.assertEqual(row["activities"], 1)
+        self.assertEqual(row["completed"], 1)
+
     def test_a_school_row_carries_what_is_planned_and_what_it_costs(self):
         row = self._school_row(
             country_portfolio(self.ia.user, fy=FY), "Planned Primary"
@@ -357,11 +369,15 @@ class ClusterPerformanceTest(PortfolioFixture):
         School.objects.filter(id=self.eve_school.id).update(
             cluster_id=self.quiet_cluster.id, cluster_status="clustered"
         )
+        # `ia_verified`, not "completed": the bare status is a phantom no
+        # production transition writes, and a fixture that used it would let a
+        # delivery count filtered on it pass while reading zero in production
+        # (apps.core.tests.test_verification_criticals).
         session = self._activity(
             cluster=self.cluster,
             day=_fy_day(11, 6),
             kind="cluster_training",
-            status="completed",
+            status="ia_verified",
             cost=40_000,
         )
         ClusterActivityAttendance.objects.create(
@@ -393,6 +409,23 @@ class ClusterPerformanceTest(PortfolioFixture):
         self.assertEqual(alpha.visits_planned, 1)
         self.assertEqual(alpha.ssa_schools, 1)
         self.assertEqual(alpha.budget, 50_000)
+
+    def test_delivery_counts_the_whole_verified_chain(self):
+        """A session that reached `ia_verified` or `closed` was delivered. Only
+        the seed writes the bare "completed" status, so a count filtered on it
+        reads zero for work people actually did."""
+        self._activity(
+            cluster=self.cluster,
+            day=_fy_day(12, 9),
+            kind="cluster_meeting",
+            status="closed",
+        )
+
+        rows, _ = self._rows()
+        alpha = rows["Alpha Cluster"]["row"]
+
+        self.assertEqual(alpha.sessions_planned, 3)
+        self.assertEqual(alpha.sessions_done, 2)
 
     def test_reach_counts_member_schools_the_work_actually_touched(self):
         rows, _ = self._rows()

@@ -8514,7 +8514,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1391,
+   "line": 1395,
    "label": "All Partners",
    "keys": [
     "count",
@@ -8532,7 +8532,7 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1397,
+   "line": 1401,
    "label": null,
    "keys": [
     "count",
