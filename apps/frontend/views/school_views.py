@@ -1293,9 +1293,7 @@ def assign_to_project_drawer_view(request, school_id):
 
         # Whose cohort each one is, so the person enrolling a school can tell
         # the coordinator's projects apart in a country-wide list.
-        projects = annotate_coordinator_names(
-            projects_open_for_enrolment(user, school)
-        )
+        projects = annotate_coordinator_names(projects_open_for_enrolment(user, school))
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
