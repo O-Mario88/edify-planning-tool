@@ -134,35 +134,41 @@ def _format(day: date) -> str:
 
 
 def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None):
-    """Whether a date may be planned. Every date may.
+    """Refuse a date that has passed. Today onwards is plannable.
 
-    The fiscal year a date falls in no longer decides this (owner,
-    2026-09-16). Planning ran into a wall every 1 October: a year had to be
-    opened before anyone could put a school visit, cluster meeting or cluster
+    Two rules, both the owner's, 2026-09-16.
+
+    The fiscal year a date falls in no longer decides whether it may be
+    planned. Planning ran into a wall every 1 October: a year had to be opened
+    before anyone could put a school visit, cluster meeting or cluster
     training into it, and a team planning the term ahead was told to "ask the
     Country Director" for a date four weeks away. Staff now schedule as far
     forward as they need, in whichever year the date lands.
 
-    The owner also asked that a date in the past be refused. That is NOT done
-    here, deliberately. This one function is the gate for every scheduling
-    path there is — the drawers, the API, reschedules, partner bookings, and
-    the services that schedule on someone's behalf (catch-up plans, recovery
-    schedules, daily visit batches) — and roughly 150 tests across twenty
-    modules schedule dates that have since gone by, because the platform has
-    always allowed work to be recorded against a day that has passed. Refusing
-    it is a real change to what the product does, not a validation tidy-up,
-    and it needs its own pass over those fixtures and over the flows that
-    legitimately backdate. It is not folded into the fiscal-year lift, which
-    stands on its own and breaks nothing.
+    And work is scheduled forward, never backward: "users cannot schedule
+    backward like yesterday", and "it can be today onwards but not yesterday
+    or any date before today". Today itself is still a working day, so it is
+    still a date somebody may plan on.
 
-    What the fiscal year still governs is unchanged, because those are
-    different questions asked elsewhere: `assert_may_execute` keeps work from
-    being *delivered* before its year begins on 1 October, and
-    `assert_same_fiscal_year` keeps a reschedule from re-stamping an
-    activity's budget line into another year. Pricing no longer asks the year
-    at all — the cost catalogue is universal.
+    This is a change of principle, not a tightening. Scheduling used to be
+    deliberately independent of the current date (REG-02), which is why work
+    could be entered against a day that had passed. Anything that needs to
+    record what already happened does it through completion and evidence,
+    which is a different question asked elsewhere — as are the two the fiscal
+    year still governs: `assert_may_execute` keeps work from being delivered
+    before its year begins on 1 October, and `assert_same_fiscal_year` keeps a
+    reschedule from re-stamping an activity's budget line into another year.
+    Pricing no longer asks the year at all; the cost catalogue is universal.
     """
-    return
+    if scheduled_for is None:
+        return
+    day = scheduled_for.date() if isinstance(scheduled_for, datetime) else scheduled_for
+    today = _as_datetime(at).astimezone(timezone.get_current_timezone()).date()
+    if day < today:
+        raise BadRequest(
+            f"{_format(day)} has passed. Schedule work from {_format(today)} "
+            "onwards."
+        )
 
 
 def assert_may_execute(activity, *, today: date | None = None) -> None:
