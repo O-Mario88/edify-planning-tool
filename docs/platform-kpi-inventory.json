@@ -3640,7 +3640,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3588,
+   "line": 3601,
    "label": null,
    "keys": [
     "label",
@@ -3695,7 +3695,7 @@
    "audit_id": "KPI-SOURCE-195",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3454,
+   "line": 3467,
    "label": "About",
    "keys": [
     "label",
@@ -3712,7 +3712,7 @@
    "audit_id": "KPI-SOURCE-196",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3455,
+   "line": 3468,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3729,7 +3729,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3456,
+   "line": 3469,
    "label": "Flag",
    "keys": [
     "label",
@@ -3746,7 +3746,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3457,
+   "line": 3470,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -13491,7 +13491,7 @@
   {
    "audit_id": "KPI-SURFACE-053",
    "template": "templates/pages/projects/detail.html",
-   "line": 80,
+   "line": 90,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13520,7 +13520,7 @@
   {
    "audit_id": "KPI-SURFACE-054",
    "template": "templates/pages/projects/detail.html",
-   "line": 98,
+   "line": 108,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -39762,7 +39762,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3063,
+   "line": 3076,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -39784,7 +39784,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3794,
+   "line": 3807,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
