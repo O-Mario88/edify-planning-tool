@@ -9,12 +9,15 @@ from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.permissions import has_permission
 from apps.core.rbac import EdifyRole, Permission
 
+from django.utils import timezone
+
 from .models import (
     OPEN_PROJECT_STATUSES,
     Project,
     ProjectCategory,
     ProjectPartnerAssignment,
     ProjectSchoolAssignment,
+    ProjectSchoolEnrollmentHistory,
     ProjectSchoolFocus,
     ProjectStaffAssignment,
     ProjectStatus,
@@ -180,27 +183,142 @@ def _assert_school_capacity(project, school) -> None:
 
 
 def _assert_staff_can_plan_project(project, school, principal) -> None:
+    """Who may put a school into a project (owner, 2026-09-15).
+
+    Adding a school is a registry act on the SCHOOL, not on the project: the
+    staff member who works the school records that it takes part, and the
+    Project Coordinator plans the project's work. Requiring the adder to be
+    assigned to the project — which this guard used to do — meant the officer
+    who owns the school could not add it at all, which is the whole complaint
+    behind "Add to Project does not work".
+
+    So the question here is the adder's authority over the SCHOOL: the
+    permission, and the school being theirs (or their country's). Adding a
+    school grants the adder nothing on the project.
+    """
     if principal is None or getattr(principal, "active_role", "") in (
         PROJECT_COUNTRY_ASSIGNER_ROLES
     ):
         return
     from apps.core.exceptions import Forbidden
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
     from apps.core.scoping import resolve_user_scope
 
-    staff_id = getattr(principal, "staff_profile_id", None)
-    assigned = staff_id and (
-        str(project.manager_staff_id or "") == str(staff_id)
-        or ProjectStaffAssignment.objects.filter(
-            project=project,
-            staff_id=staff_id,
-            is_active=True,
-        ).exists()
-    )
-    if not assigned:
-        raise Forbidden("This Project is not assigned to you as a staff priority.")
+    if not has_permission(principal, Permission.PROJECT_ASSIGN_SCHOOL.value):
+        raise Forbidden("You do not have permission to assign schools to projects.")
     scope = resolve_user_scope(principal)
     if school.id not in set(scope.school_ids or []):
         raise Forbidden("You may add only Schools in your own or supervised portfolio.")
+
+
+def _assert_project_accepts_school(project, school) -> None:
+    """The project's own side of the question."""
+    from apps.core.exceptions import BadRequest
+    from apps.schools.lifecycle_service import assert_operating
+
+    assert_operating(school)
+    assert_accepts_new_work(project)
+    # Somebody has to plan the work a school joins for. The offer list is
+    # stricter still — it shows only projects a Project Coordinator governs
+    # (projects_open_for_enrolment) — but a project with staff assigned to it
+    # is planned by them, so only a project nobody holds is refused here.
+    if not coordinator_for(project) and not _has_active_staff(project):
+        raise BadRequest(
+            f"'{project.name}' has nobody assigned to plan its work, so it cannot "
+            "take schools. Ask country leadership to assign a Project Coordinator."
+        )
+    country = project_country(project)
+    school_country = getattr(getattr(school, "region", None), "country", None)
+    if country and school_country and country != school_country:
+        raise BadRequest(
+            f"'{project.name}' runs in {country}; {school.name} is in {school_country}."
+        )
+
+
+def _has_active_staff(project) -> bool:
+    return ProjectStaffAssignment.objects.filter(
+        project=project, is_active=True
+    ).exists()
+
+
+def coordinator_for(project):
+    """The Project Coordinator who governs a project, if it has one."""
+    from apps.accounts.models import StaffProfile
+
+    if project.manager_staff_id:
+        manager = (
+            StaffProfile.objects.filter(id=project.manager_staff_id)
+            .select_related("user")
+            .first()
+        )
+        if manager is not None:
+            return manager
+    assignment = (
+        ProjectStaffAssignment.objects.filter(
+            project=project,
+            is_active=True,
+            staff__user__roles__contains=[EdifyRole.PROJECT_COORDINATOR.value],
+        )
+        .select_related("staff__user")
+        .first()
+    )
+    return assignment.staff if assignment else None
+
+
+def project_country(project) -> str | None:
+    """Where a project runs: its coordinator's country, else its schools'."""
+    coordinator = coordinator_for(project)
+    if coordinator is not None and coordinator.country:
+        return coordinator.country
+    return (
+        ProjectSchoolAssignment.objects.filter(project=project)
+        .values_list("school__region__country", flat=True)
+        .first()
+    )
+
+
+def projects_open_for_enrolment(principal, school):
+    """The projects this school may be added to right now.
+
+    Active (or otherwise open) projects, governed by a Project Coordinator,
+    running in the school's country, whose school focus admits this school and
+    which the school has not already joined. Never filtered by whether the
+    ADDER belongs to the project.
+    """
+    from apps.accounts.models import StaffProfile
+
+    qs = Project.objects.filter(
+        deleted_at__isnull=True,
+        status__in=[status.value for status in OPEN_PROJECT_STATUSES],
+    ).exclude(school_assignments__school_id=school.id)
+    if school.school_type == "core":
+        qs = qs.exclude(school_focus=ProjectSchoolFocus.CLIENT)
+    else:
+        qs = qs.exclude(school_focus=ProjectSchoolFocus.CORE)
+    coordinator_ids = set(
+        StaffProfile.objects.filter(
+            user__roles__contains=[EdifyRole.PROJECT_COORDINATOR.value],
+            deleted_at__isnull=True,
+        ).values_list("id", flat=True)
+    )
+    country = getattr(getattr(school, "region", None), "country", None)
+    keep = []
+    for project in qs.distinct().order_by("name"):
+        governed = project.manager_staff_id in coordinator_ids or (
+            ProjectStaffAssignment.objects.filter(
+                project=project,
+                is_active=True,
+                staff_id__in=coordinator_ids,
+            ).exists()
+        )
+        if not governed:
+            continue
+        project_place = project_country(project)
+        if country and project_place and project_place != country:
+            continue
+        keep.append(project)
+    return keep
 
 
 @transaction.atomic
@@ -226,6 +344,7 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
     if not school:
         raise BadRequest("Unknown school.")
     _assert_staff_can_plan_project(p, school, principal)
+    _assert_project_accepts_school(p, school)
     _assert_school_capacity(p, school)
 
     targets = p.target_intervention_list()
@@ -468,11 +587,73 @@ def revoke_staff(project_id: str, staff_id: str, principal) -> dict:
     return {"ok": True, "projectId": project_id, "staffId": staff_id}
 
 
-def remove_school(project_id: str, school_id: str) -> dict:
-    ProjectSchoolAssignment.objects.filter(
-        project_id=project_id, school__school_id=school_id
-    ).delete()
-    return {"ok": True}
+@transaction.atomic
+def remove_school(project_id: str, school_id: str, principal=None, *, reason: str = ""):
+    """Remove a school from a project, keeping the project's history.
+
+    The enrolment row is what every current count reads, so it goes; what it
+    recorded — when the school joined, who added it, the baseline it was
+    measured from and what the project delivered there — is copied into
+    ProjectSchoolEnrollment history first. Activities keep their project, so a
+    removal never erases delivered work (owner, 2026-09-15).
+    """
+    from apps.activities.models import Activity
+
+    assignment = (
+        ProjectSchoolAssignment.objects.select_related("project", "school")
+        .filter(
+            Q(school__school_id=school_id) | Q(school_id=school_id),
+            project_id=project_id,
+        )
+        .first()
+    )
+    if assignment is None:
+        raise NotFoundError("This school is not enrolled in the project.")
+    activities = Activity.objects.filter(
+        project_id=project_id, school_id=assignment.school_id, deleted_at__isnull=True
+    )
+    ProjectSchoolEnrollmentHistory.objects.create(
+        project_id=project_id,
+        school_id=assignment.school_id,
+        joined_at=assignment.created_at,
+        removed_at=timezone.now(),
+        added_by=assignment.assigned_by or "",
+        removed_by=str(
+            getattr(principal, "user_id", None) or getattr(principal, "id", "") or ""
+        ),
+        removal_reason=(reason or "").strip(),
+        matched_intervention=assignment.matched_intervention or "",
+        assignment_reason=assignment.assignment_reason or "",
+        baseline_score=assignment.baseline_score,
+        baseline_band=assignment.baseline_band or "",
+        activities_delivered=activities.count(),
+        snapshot={
+            "projectType": assignment.project_type,
+            "participationType": assignment.participation_type,
+            "startDate": assignment.start_date.isoformat()
+            if assignment.start_date
+            else None,
+            "supportArea": assignment.support_area,
+            "impactClassification": assignment.impact_classification,
+        },
+    )
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="project.school_removed",
+        subject_kind="School",
+        subject_id=assignment.school_id,
+        actor_id=getattr(principal, "user_id", None) if principal else None,
+        actor_role=getattr(principal, "active_role", None) if principal else None,
+        reason=reason or None,
+        payload={
+            "previous": {"projectId": project_id, "enrolled": True},
+            "new": {"projectId": project_id, "enrolled": False},
+            "activitiesKept": activities.count(),
+        },
+    )
+    assignment.delete()
+    return {"ok": True, "historyKept": True}
 
 
 def assign_partner(project_id: str, data: dict) -> dict:

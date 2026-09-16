@@ -440,8 +440,12 @@ class NotificationLinkResolver:
             return (f"/my-plan/{context_id}" if context_id else "/my-plan"), (
                 "View in My Plan"
             )
-        if event_type == "project_school_added":
-            return "/projects", "Plan Project Activities"
+        if event_type in ("project_school_added", "project_school_assigned"):
+            return (
+                f"/projects/{context_id}"
+                if context_type == "Project" and context_id
+                else "/projects"
+            ), "Plan Project Activities"
         # ── end brief 2026-09-15 ──
 
         # Platform-operations events resolve to the exact affected record, not

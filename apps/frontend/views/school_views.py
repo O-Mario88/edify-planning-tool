@@ -1277,29 +1277,19 @@ def assign_to_project_drawer_view(request, school_id):
             )
         except Exception:  # noqa: BLE001
             coordinators = []
-        from apps.projects.scoping import scoped_projects
+        # Which projects this school may join (owner, 2026-09-15): open,
+        # governed by a Project Coordinator, running in the school's country
+        # and compatible with its type. Deliberately NOT filtered by whether
+        # the person adding the school belongs to the project — the officer
+        # who owns the school is exactly who records that it takes part, and
+        # that filter is why Add to Project offered them nothing.
+        from apps.projects.services import projects_open_for_enrolment
 
-        projects = scoped_projects(user).filter(
-            status__in=[s.value for s in OPEN_PROJECT_STATUSES],
-        )
-        if user.active_role not in (
-            "ImpactAssessment",
-            "CountryDirector",
-            "Admin",
-        ):
-            projects = projects.filter(
-                Q(manager_staff_id=getattr(user, "staff_profile_id", None))
-                | Q(
-                    staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
-                    staff_assignments__is_active=True,
-                )
-            )
+        projects = projects_open_for_enrolment(user, school)
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
-            # Only projects still accepting work are offerable — a paused or
-            # closed project should not be selectable in the first place.
-            "projects": projects.distinct().order_by("name"),
+            "projects": projects,
             "interventions": SsaIntervention.choices,
             "coordinators": coordinators,
         }
@@ -1407,16 +1397,18 @@ def assign_to_project_drawer_view(request, school_id):
                 )
                 if sp and sp.user_id:
                     WorkflowNotificationService.trigger(
-                        event_type="project_school_assigned",
+                        event_type="project_school_added",
                         category="project",
                         priority="normal",
-                        title="New project school assigned",
+                        title="New project school added",
                         body=(
-                            f"{school.name} has been assigned to {project.name}. "
-                            "Review it in your project planning queue."
+                            f"{school.name} joined {project.name}. Plan the "
+                            "project's work for it."
                         ),
-                        context_type="School",
-                        context_id=school.id,
+                        # The project, so the notice opens the portfolio the
+                        # coordinator plans from (owner, 2026-09-15).
+                        context_type="Project",
+                        context_id=project.id,
                         recipients=[sp.user_id],
                     )
             except Exception:  # noqa: BLE001 - notification must never block assignment
@@ -1431,6 +1423,7 @@ def assign_to_project_drawer_view(request, school_id):
             actor_id=user.user_id,
             actor_role=user.active_role,
             success=True,
+            reason=notes or None,
             payload={
                 "project_id": project.id,
                 "project_name": project.name,
@@ -1438,6 +1431,16 @@ def assign_to_project_drawer_view(request, school_id):
                 "participation_type": participation_type,
                 "support_area": support_area,
                 "coordinator_staff_id": target_staff_id,
+                "previous": {"enrolled": False},
+                "new": {
+                    "enrolled": True,
+                    "projectId": project.id,
+                    # The school's own record is untouched by joining a
+                    # project (owner, 2026-09-15).
+                    "schoolOwnerId": school.account_owner_id,
+                    "districtId": school.district_id,
+                    "clusterId": school.cluster_id,
+                },
             },
         )
 
@@ -1624,6 +1627,7 @@ def school_detail_view(request, school_id):
         serving_match(current_cluster, school.district_id) if current_cluster else None
     )
 
+    from apps.core.permissions import has_permission
     from apps.schools.ownership_transfer import may_transfer_school
     from apps.schools.school_status import cluster_training_coverage, visit_statuses
 
@@ -1655,6 +1659,7 @@ def school_detail_view(request, school_id):
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",
         # Admin and Impact Assessment reassign portfolio ownership.
         "can_transfer_owner": may_transfer_school(request.user),
+        "can_assign_project": has_permission(request.user, "project.assignSchool"),
     }
     return render(request, "pages/schools/detail.html", context)
 
