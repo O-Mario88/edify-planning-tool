@@ -166,15 +166,26 @@
   min-inline-size: 0;
 }
 
-/* The map is a fixed 30cm × 42cm portrait box for every role (owner,
-   2026-09-15), centred in the card; a card narrower than 30cm shrinks it in
-   proportion. The country is drawn centred inside it (the SVG keeps its
-   aspect), so the sheet reads the same on every screen. */
+/* A portrait sheet that fits the screen (owner, 2026-09-16: "the map is too
+   large ... make it fit exactly so that the users don't have to scroll").
+
+   It was a fixed 30cm × 42cm box, which is 1134 × 1587px — taller than any
+   laptop, so on a 1080px screen the card stood 2186px and the map could only
+   be read by scrolling it past the window in two goes.
+
+   The sheet keeps its 30:42 proportions and is now bounded by the height
+   actually left below the page and card headers (the map's top sits ~276px
+   into the scroll container; --sr-map-chrome covers that plus a margin). The
+   width follows from the ratio, so the country is never stretched, and
+   max-inline-size keeps a narrow card shrinking it in proportion as before.
+   svh, not vh, so a phone's retracting toolbar does not crop it. */
 .analytics-geo-card .sr-map-viewport {
+  --sr-map-chrome: 19rem;
   margin-inline: auto;
-  inline-size: min(30cm, 100%);
   aspect-ratio: 30 / 42;
-  block-size: auto;
+  block-size: min(calc(100svh - var(--sr-map-chrome)), 42cm);
+  inline-size: auto;
+  max-inline-size: min(30cm, 100%);
 }
 .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
 
@@ -1524,14 +1535,13 @@ main #impact-workspace .impact-group-pagination a {
     min-width: 0;
     width: 100%;
   }
-  /* The same 30cm × 42cm sheet on desktop (owner, 2026-09-15). It used to
-     be a square sized to the window's height; the page scrolls to it like
-     any other card. */
+  /* Desktop has more room above the map than a phone does, but the rule is
+     the same one: fit the window rather than overflow it (owner,
+     2026-09-16). This override used to reinstate the unbounded 30cm box and
+     would have undone the fitting rule above, so it now only widens the cap
+     the sheet may grow to. */
   .analytics-geo-card .sr-map-viewport {
-    inline-size: min(30cm, 100%);
-    aspect-ratio: 30 / 42;
-    block-size: auto;
-    max-inline-size: none;
+    max-inline-size: 30cm;
   }
   .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
   /* The distribution table: a full-width band under the map, every column

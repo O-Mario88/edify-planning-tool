@@ -9,6 +9,53 @@ Configure cluster activity details for {{ cluster.name }}
 {% endblock %}
 
 {% block drawer_body %}
+{% comment %}
+Switching the kind of cluster activity reopens this drawer in the other mode
+(owner, 2026-09-16: "when you switch from training to meeting, it has to close
+the cluster training drawer and reopen"). Until now the two modes were only
+reachable from two separate buttons behind the drawer, so changing your mind
+meant closing this one and finding the other — which is what made it look like
+two unrelated drawers.
+
+The server renders the drawer afresh rather than hiding half a form, because
+the modes genuinely differ: a training picks a course from the governed
+catalogue and carries materials, a meeting picks the focus intervention and
+invites leaders instead of teachers. The controls sit outside the form so they
+are never posted with it, and the swap replaces the whole drawer — the same
+mechanism the cluster planner's own type switch uses.
+{% endcomment %}
+<fieldset class="mb-4">
+<legend class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1.5">Activity Type <span class="text-rose-500">*</span></legend>
+<div class="cluster-activity-type-options">
+<label for="planning-activity-training" class="cluster-activity-type-option text-[12px] font-semibold text-slate-700">
+<input
+id="planning-activity-training"
+type="radio"
+name="cluster_activity_type"
+value="training"
+{% if action != 'meeting' %}checked{% endif %}
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+<span>Group Training</span>
+</label>
+<label for="planning-activity-meeting" class="cluster-activity-type-option text-[12px] font-semibold text-slate-700">
+<input
+id="planning-activity-meeting"
+type="radio"
+name="cluster_activity_type"
+value="meeting"
+{% if action == 'meeting' %}checked{% endif %}
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+<span>Cluster Meeting</span>
+</label>
+</div>
+</fieldset>
+
 <form
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"

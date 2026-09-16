@@ -144,11 +144,14 @@ def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None)
     now schedule as far forward as they need, in whichever year the date
     lands.
 
-    What the fiscal year still governs is unchanged, because those are
-    different questions asked elsewhere: `assert_may_execute` keeps work from
-    being *delivered* before its year starts, `assert_same_fiscal_year` keeps
-    a reschedule from re-stamping an activity's budget line into another
-    year, and costing still prices a date against its own year's rate card.
+    This is the planning half of the owner's rule: planning happens in the
+    last month of the current year so the work is ready on the first day of
+    the next. The delivery half is `assert_may_execute`, which still keeps
+    that work from being *started* before its year begins on 1 October, and
+    `assert_same_fiscal_year` still keeps a reschedule from re-stamping an
+    activity's budget line into another year. Both are different questions,
+    asked elsewhere. Pricing no longer asks the year at all — the cost
+    catalogue is universal.
     """
     if scheduled_for is None:
         return

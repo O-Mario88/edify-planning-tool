@@ -3798,7 +3798,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3826,
+      "bytes": 4345,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3819,7 +3819,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1409,
+      "bytes": 2395,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3885,7 +3885,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3160,
+      "bytes": 3182,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8769,14 +8769,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25786,
+      "bytes": 27960,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Schedule Cluster Drawer",
       "purpose": "Reusable schedule cluster drawer interface primitive",
@@ -67323,6 +67323,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}",
+        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}",
         "POST /planning/schedule-action",
         "POST {% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
       ],

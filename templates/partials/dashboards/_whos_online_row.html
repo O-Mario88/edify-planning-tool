@@ -1,6 +1,21 @@
 <tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}">
   <td class="presence-table__status"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" title="{% if person.online %}Online{% else %}Offline{% endif %}"></i><span class="sr-only">{% if person.online %}Online{% else %}Offline{% endif %}</span></td>
   <td class="presence-table__name"><strong>{{ person.name }}</strong><small>{{ person.active_role|default:"—" }}{% if is_lead %} · lead{% endif %}</small></td>
+  <td class="presence-table__signins">
+    {% if person.last_login_at %}
+      {% if staff_links %}
+      <a href="/admin-panel/users/{{ person.id }}" class="presence-signin" title="{{ person.name }} last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} sign-in{{ person.login_count|pluralize }} recorded">
+        {{ person.last_login_at|date:"j M, H:i" }}<small>{{ person.logins_today }} today · {{ person.logins_this_week }} this week</small>
+      </a>
+      {% else %}
+      <span class="presence-signin" title="Last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} sign-in{{ person.login_count|pluralize }} recorded">
+        {{ person.last_login_at|date:"j M, H:i" }}<small>{{ person.logins_today }} today · {{ person.logins_this_week }} this week</small>
+      </span>
+      {% endif %}
+    {% else %}
+      <span class="presence-signin presence-signin--never">never signed in</span>
+    {% endif %}
+  </td>
   <td class="presence-table__duration">
     {% if person.online %}
       <span class="presence-duration presence-duration--online" title="Online since {{ person.online_since|date:'j M Y, H:i' }}">{{ person.duration_label }}</span>

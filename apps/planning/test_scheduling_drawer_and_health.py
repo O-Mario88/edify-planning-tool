@@ -478,6 +478,54 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200)
         return response.content.decode("utf-8")
 
+    def _drawer_for(self, action: str) -> str:
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(
+            f"/planning/schedule-modal?cluster_id={self.cluster.id}&action={action}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode("utf-8")
+
+    def test_the_drawer_switches_between_training_and_meeting(self):
+        """Owner, 2026-09-16: "when you switch from training to meeting, it
+        has to close the cluster training drawer and reopen".
+
+        The two modes were only reachable from two separate buttons behind the
+        drawer, so changing your mind meant closing this one and hunting for
+        the other — which is what made it look like two unrelated drawers. The
+        switch reopens this one in the other mode.
+        """
+        training = self._drawer_for("training")
+        meeting = self._drawer_for("meeting")
+
+        for html in (training, meeting):
+            # Both choices are offered, from either mode.
+            self.assertIn('id="planning-activity-training"', html)
+            self.assertIn('id="planning-activity-meeting"', html)
+            # Each reopens the whole drawer rather than hiding half a form.
+            self.assertEqual(html.count('hx-target="#drawer-container"'), 2)
+            self.assertIn(
+                f"/planning/schedule-modal?cluster_id={self.cluster.id}"
+                "&amp;action=meeting",
+                html,
+            )
+            # The switch is outside the form, so it is never posted with it.
+            self.assertLess(
+                html.index('name="cluster_activity_type"'),
+                html.index('hx-post="/planning/schedule-action"'),
+            )
+
+        # The mode that is open is the one ticked, and the one the form posts.
+        self.assertIn('value="cluster_training"', training)
+        self.assertNotIn('value="cluster_meeting"', training)
+        self.assertIn('value="cluster_meeting"', meeting)
+        self.assertNotIn('value="cluster_training"', meeting)
+        # Exactly one radio carries `checked`, in either mode.
+        self.assertEqual(training.count("\nchecked\n"), 1)
+        self.assertEqual(meeting.count("\nchecked\n"), 1)
+
     def test_it_submits_the_agency_booking_workflow(self):
         html = self._drawer()
         self.assertIn('value="certified_partner_agency"', html)

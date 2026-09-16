@@ -35,7 +35,7 @@
 
   {% with presence=admin_ops.presence %}
   <div class="admin-panel admin-panel--presence">
-    {% include "partials/dashboards/_whos_online.html" %}
+    {% include "partials/dashboards/_whos_online.html" with staff_links=True %}
   </div>
 
   <section class="admin-panel" aria-labelledby="admin-ops-logins-title" data-admin-logins>
