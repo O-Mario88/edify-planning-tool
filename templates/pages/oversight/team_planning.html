@@ -26,16 +26,21 @@
     {% endif %}
   </header>
 
-  {% if can_view_team_planning %}
+  {% if can_view_team_planning and can_view_team_targets or can_view_school_coverage %}
   {% comment %}
   These are server-routed views rather than client-side ARIA tabs. Each link
   owns a URL and loads only its dataset, while the shared tab styling makes
   their relationship clear and preserves normal browser navigation.
+
+  The strip is drawn only when there is more than one lens to choose between.
+  A reader with a single view — the Accountant, who comes here for the money
+  in the plan — was given no strip before and is given none now: a tab bar of
+  one is furniture, and it costs the first table row its place above the fold.
   {% endcomment %}
   <nav data-edify-tablist aria-label="Team oversight views">
     <a href="/team-planning-oversight/" data-edify-tab{% if active_oversight_view == "planning" %} aria-current="page"{% endif %}>Planning &amp; Portfolio</a>
     {% comment %}The school lens: planned schools, and cluster training coverage (owner, 2026-09-15).{% endcomment %}
-    <a href="/team-planning-oversight/?view=coverage" data-edify-tab{% if active_oversight_view == "coverage" %} aria-current="page"{% endif %}>Schools &amp; Coverage</a>
+    {% if can_view_school_coverage %}<a href="/team-planning-oversight/?view=coverage" data-edify-tab{% if active_oversight_view == "coverage" %} aria-current="page"{% endif %}>Schools &amp; Coverage</a>{% endif %}
     {% if can_view_team_targets %}<a href="/team-planning-oversight/?view=targets" data-edify-tab{% if active_oversight_view == "targets" %} aria-current="page"{% endif %}>Target Performance</a>{% endif %}
   </nav>
   {% endif %}

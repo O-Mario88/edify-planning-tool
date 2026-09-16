@@ -257,6 +257,23 @@ def _items_owned_by(items, owner_ids) -> list:
 #: list grouped by the person answerable for each row.
 WHOLE_TEAM_TAB = "team"
 
+#: Who gets the Schools & Coverage lens on Team Oversight (owner, 2026-09-15).
+#: The Programme Lead and Impact Assessment act on schools with no cluster
+#: training planned; the Country Director and Regional VP read the same table
+#: over them. Everyone else who can reach Team Oversight — the Accountant, for
+#: the money in the plan — is not offered the tab, and a `?view=coverage` in
+#: the address bar falls back to the planning lens rather than refusing.
+COVERAGE_LENS_ROLES = frozenset(
+    {
+        "Program Lead",
+        "ImpactAssessment",
+        "CountryDirector",
+        "RegionalVP",
+        "RegionalProgramLead",
+        "Admin",
+    }
+)
+
 
 def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list]:
     """Whole team, My Work, then one tab per supervised officer.
@@ -349,11 +366,21 @@ def team_planning_oversight_view(request):
         request.user, "team_planning_oversight"
     )
     can_view_targets = RolePermissionService.can_view_page(request.user, "team_targets")
+    # Who the school lens is for. The brief names the Programme Lead and
+    # Impact Assessment as the people who act on schools with no cluster
+    # training planned, and the Country Director and Regional VP read the same
+    # table over them. The Accountant reaches Team Oversight for the money in
+    # the plan, not for training coverage, and gets no tab for it.
+    can_view_coverage = can_view_planning and (request.user.active_role or "") in (
+        COVERAGE_LENS_ROLES
+    )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     active_view = (
         requested_view if requested_view in {"targets", "coverage"} else "planning"
     )
     if active_view == "targets" and not can_view_targets:
+        active_view = "planning"
+    if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
     if active_view in ("planning", "coverage") and not can_view_planning:
         active_view = "targets"
@@ -369,6 +396,7 @@ def team_planning_oversight_view(request):
             "active_oversight_view": "targets",
             "can_view_team_targets": can_view_targets,
             "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/targets/team/workspace.html", context)
@@ -405,6 +433,7 @@ def team_planning_oversight_view(request):
             "active_oversight_view": "coverage",
             "can_view_team_targets": can_view_targets,
             "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
             "lens_label": {"region": "Regional", "country": "Country", "team": "Team"}[
                 "region"
                 if scope.is_region
@@ -478,6 +507,7 @@ def team_planning_oversight_view(request):
         "active_oversight_view": "planning",
         "can_view_team_targets": can_view_targets,
         "can_view_team_planning": can_view_planning,
+        "can_view_school_coverage": can_view_coverage,
         # The header link to completed work missing its evidence, drawn only
         # for readers who may open the Evidence Centre (the Accountant and the
         # RVP reach this page and may not).
