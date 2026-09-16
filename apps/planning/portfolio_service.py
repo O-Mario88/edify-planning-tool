@@ -359,6 +359,10 @@ def country_portfolio(
         key=lambda pair: pair[1],
     )
 
+    # The lead filter's options come from the whole portfolio, so choosing one
+    # lead never empties the control that did the choosing.
+    lead_options = _lead_options(rows)
+
     if program_lead_id and program_lead_id not in ("all", "All"):
         rows = [r for r in rows if r["lead_id"] == program_lead_id]
 
@@ -374,6 +378,7 @@ def country_portfolio(
 
     return {
         "leads": _group(rows, shown=shown),
+        "lead_options": lead_options,
         "totals": totals,
         "districts": [{"id": i, "name": n} for i, n in districts],
         "fy": str(fy),
@@ -438,16 +443,29 @@ def _totals(rows) -> dict:
     }
 
 
-def program_lead_options(portfolio: dict) -> list[dict]:
-    """The leads actually holding schools in this lens, for its filter.
+def _lead_options(rows) -> list[dict]:
+    """Every lead holding a school in this lens, with how many they hold.
 
-    Built from the portfolio rather than from the staff table so the filter
-    cannot offer a lead whose selection returns nothing.
+    Built from the rows rather than from the staff table, so the filter cannot
+    offer a lead whose selection returns nothing — and built before the filter
+    is applied, so choosing one lead does not remove the rest from the control.
     """
+    counts: dict[tuple[str, str], int] = {}
+    for row in rows:
+        key = (row["lead_id"], row["lead_name"])
+        counts[key] = counts.get(key, 0) + 1
     return [
-        {"id": lead.key, "name": lead.name, "count": lead.count}
-        for lead in portfolio["leads"]
+        {"id": lead_id, "name": name, "count": count}
+        for (lead_id, name), count in sorted(
+            counts.items(),
+            key=lambda kv: (kv[0][0] == NO_LEAD_KEY, kv[0][1].casefold()),
+        )
     ]
+
+
+def program_lead_options(portfolio: dict) -> list[dict]:
+    """The lead filter's options for this portfolio."""
+    return portfolio["lead_options"]
 
 
 __all__ = [

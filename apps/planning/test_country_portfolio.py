@@ -315,6 +315,21 @@ class PortfolioPlanningTest(PortfolioFixture):
 
         self.assertEqual([lead.name for lead in portfolio["leads"]], ["Bruno Lead"])
 
+    def test_choosing_a_lead_does_not_empty_the_lead_filter(self):
+        """The options are built before the filter is applied. Built after, the
+        control that narrowed the page would be left offering one choice — the
+        one already made."""
+        from apps.planning.portfolio_service import program_lead_options
+
+        narrowed = country_portfolio(
+            self.ia.user, fy=FY, program_lead_id=self.lead_b.id
+        )
+
+        self.assertEqual(
+            [option["name"] for option in program_lead_options(narrowed)],
+            ["Alice Lead", "Bruno Lead", NO_LEAD_LABEL],
+        )
+
     def test_a_district_filter_offers_only_districts_that_are_there(self):
         portfolio = country_portfolio(self.ia.user, fy=FY)
 
@@ -428,6 +443,24 @@ class ClusterPerformanceTest(PortfolioFixture):
         self.assertEqual(totals["reached"], 1)
         self.assertEqual(totals["ssa_schools"], 1)
         self.assertEqual(totals["budget"], 50_000)
+
+    def test_an_activity_on_both_a_school_and_a_cluster_is_counted_once(self):
+        """Both columns are nullable and nothing forbids a row setting each.
+        Counted on the cluster's calendar and again through its member school,
+        one plan would be worth twice its cost."""
+        self._activity(
+            school=self.planned_school,
+            cluster=self.cluster,
+            day=_fy_day(1, 20),
+            kind="school_visit",
+            cost=25_000,
+        )
+
+        rows, _ = self._rows()
+        alpha = rows["Alpha Cluster"]["row"]
+
+        self.assertEqual(alpha.budget, 75_000)
+        self.assertEqual(alpha.visits_planned, 1)
 
     def test_the_lens_costs_a_fixed_number_of_queries(self):
         for index in range(10):

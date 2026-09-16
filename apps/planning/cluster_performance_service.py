@@ -167,6 +167,9 @@ def _visits_by_cluster(school_ids_by_cluster, *, fy: str) -> dict[str, dict]:
             fy=str(fy),
             activity_type__in=VISIT_TYPES,
             deleted_at__isnull=True,
+            # Counted on the cluster's own calendar if it has one (see
+            # `_sessions_by_cluster`); a visit is the member school's.
+            cluster_id__isnull=True,
         )
         .exclude(status__in=DEAD_STATUSES)
         .values("school_id")
@@ -228,6 +231,11 @@ def _budget_by_cluster(
                 activity__school_id__in=school_to_cluster,
                 activity__fy=str(fy),
                 activity__deleted_at__isnull=True,
+                # An activity carrying both a school and a cluster was already
+                # counted on the cluster side above. Both columns are nullable
+                # and nothing forbids a row setting each, so without this the
+                # same cost lands in the cluster's total twice.
+                activity__cluster_id__isnull=True,
             )
             .exclude(activity__status__in=DEAD_STATUSES)
             .values("activity__school_id")
