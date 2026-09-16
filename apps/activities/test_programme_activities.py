@@ -15,6 +15,8 @@ from io import BytesIO
 from datetime import date
 
 from django.db import connections
+from freezegun import freeze_time
+
 from django.test import TestCase, TransactionTestCase
 from openpyxl import load_workbook
 
@@ -109,6 +111,10 @@ def _schedule(principal, **over) -> Activity:
     return Activity.objects.get(id=result["id"])
 
 
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-07-27")
 class _ProgrammeFixture(TestCase):
     @classmethod
     def setUpTestData(cls):
