@@ -1,0 +1,22 @@
+{% comment %}
+The oversight lens strip, shared by every oversight page.
+
+Server-routed links rather than client-side ARIA tabs: each lens owns a URL and
+loads only its own dataset, while the shared tab styling makes their
+relationship clear and normal browser navigation keeps working.
+
+One strip, built once (`_lens_tabs` in oversight_views), because Team Oversight
+and Country Planning Oversight had each grown their own — the same person
+moving between them had to relearn where things were, and a new lens had to be
+added twice (owner, 2026-09-16).
+
+The view returns an empty list when a reader holds only one lens: a tab bar of
+one is furniture, and it costs the first table row its place above the fold.
+{% endcomment %}
+{% if lens_tabs %}
+<nav data-edify-tablist aria-label="Oversight views">
+  {% for tab in lens_tabs %}
+  <a href="{{ tab.href }}" data-edify-tab{% if tab.is_active %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+  {% endfor %}
+</nav>
+{% endif %}

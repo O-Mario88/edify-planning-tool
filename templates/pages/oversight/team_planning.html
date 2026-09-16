@@ -3,7 +3,7 @@
 
 {% block title %}Team Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260914ui1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260916oversight1">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
@@ -11,7 +11,7 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif active_oversight_view == "clusters" %}What every cluster planned, delivered, assessed and reached this year, most active first.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
@@ -21,29 +21,18 @@
       <span>Updated {{ last_refreshed|date:"H:i" }}</span>
     </div>
     {% endif %}
-    {% if active_oversight_view != "targets" %}
+    {% comment %}The portfolio and cluster lenses are fiscal-year lenses and
+    carry their own FY control, so the period bar would offer them a week they
+    do not read.{% endcomment %}
+    {% if active_oversight_view == "planning" or active_oversight_view == "coverage" %}
     {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
     {% endif %}
   </header>
 
-  {% if can_view_team_planning and can_view_team_targets or can_view_school_coverage %}
-  {% comment %}
-  These are server-routed views rather than client-side ARIA tabs. Each link
-  owns a URL and loads only its dataset, while the shared tab styling makes
-  their relationship clear and preserves normal browser navigation.
-
-  The strip is drawn only when there is more than one lens to choose between.
-  A reader with a single view — the Accountant, who comes here for the money
-  in the plan — was given no strip before and is given none now: a tab bar of
-  one is furniture, and it costs the first table row its place above the fold.
-  {% endcomment %}
-  <nav data-edify-tablist aria-label="Team oversight views">
-    <a href="/team-planning-oversight/" data-edify-tab{% if active_oversight_view == "planning" %} aria-current="page"{% endif %}>Planning &amp; Portfolio</a>
-    {% comment %}The school lens: planned schools, and cluster training coverage (owner, 2026-09-15).{% endcomment %}
-    {% if can_view_school_coverage %}<a href="/team-planning-oversight/?view=coverage" data-edify-tab{% if active_oversight_view == "coverage" %} aria-current="page"{% endif %}>Schools &amp; Coverage</a>{% endif %}
-    {% if can_view_team_targets %}<a href="/team-planning-oversight/?view=targets" data-edify-tab{% if active_oversight_view == "targets" %} aria-current="page"{% endif %}>Target Performance</a>{% endif %}
-  </nav>
-  {% endif %}
+  {% comment %}The shared lens strip — the same one Country Planning Oversight
+  draws, built once in `_lens_tabs` (owner, 2026-09-16). A reader with a single
+  lens gets no strip: the view returns an empty list for them.{% endcomment %}
+  {% include "partials/oversight/_lens_tabs.html" %}
 
   {% if active_oversight_view == "targets" %}
   <section class="tt-page team-oversight-targets"
@@ -55,7 +44,11 @@
 
 
     <div id="oversight-workspace">
-      {% if active_oversight_view == "coverage" %}
+      {% if active_oversight_view == "portfolio" %}
+        {% include "partials/oversight/portfolio_workspace.html" %}
+      {% elif active_oversight_view == "clusters" %}
+        {% include "partials/oversight/cluster_performance_workspace.html" %}
+      {% elif active_oversight_view == "coverage" %}
         {% include "partials/oversight/coverage_workspace.html" %}
       {% elif country_lens %}
         {% include "partials/oversight/team_country_workspace.html" %}

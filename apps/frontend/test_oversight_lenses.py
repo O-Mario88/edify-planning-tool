@@ -1,0 +1,216 @@
+"""One oversight format, on every oversight page (2026-09-16 brief).
+
+Owner: "All Oversight Should have the same format. CD should also have the same
+country oversight with all plans reflecting on the budget and the oversight
+format having the same."
+
+Team Oversight and Country Planning Oversight had each grown their own strip of
+views. The same person moving between them had to relearn where things were,
+and the two lenses added with this change would have had to be built twice. One
+builder, one set of workspaces; each page passes its own base URL.
+
+These pin the shared shape — the same lens names in the same order on both
+pages, pointing at the page they were drawn on — and the two new lenses'
+access, since a country portfolio is not a Programme Lead's to read.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from django.test import SimpleTestCase, TestCase
+
+from apps.accounts.models import StaffProfile, User
+from apps.clusters.models import Cluster
+from apps.geography.models import District, Region, SubCounty
+from apps.frontend.views.oversight_views import (
+    COUNTRY_OVERSIGHT_PATH,
+    TEAM_OVERSIGHT_PATH,
+    _lens_tabs,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _read(relative_path: str) -> str:
+    return (ROOT / relative_path).read_text(encoding="utf-8")
+
+
+class LensStripTest(SimpleTestCase):
+    def test_both_pages_name_the_lenses_in_the_same_order(self):
+        every = {"planning", "portfolio", "clusters", "coverage", "targets"}
+
+        team = _lens_tabs(TEAM_OVERSIGHT_PATH, "planning", every)
+        country = _lens_tabs(COUNTRY_OVERSIGHT_PATH, "planning", every)
+
+        self.assertEqual(
+            [tab["key"] for tab in team],
+            ["planning", "portfolio", "clusters", "coverage", "targets"],
+        )
+        self.assertEqual([t["key"] for t in team], [c["key"] for c in country])
+        # Only the first differs, because "Team Plan" and "Country Plan" are
+        # not the same plan.
+        self.assertEqual(
+            [t["label"] for t in team][1:], [c["label"] for c in country][1:]
+        )
+
+    def test_a_lens_links_to_the_page_it_was_drawn_on(self):
+        """A tab that jumps a Programme Lead to the Country Director's page is
+        a scope change dressed up as navigation."""
+        tabs = _lens_tabs(TEAM_OVERSIGHT_PATH, "portfolio", {"planning", "portfolio"})
+
+        for tab in tabs:
+            self.assertTrue(tab["href"].startswith(TEAM_OVERSIGHT_PATH), tab)
+
+    def test_the_active_lens_is_the_only_one_marked(self):
+        tabs = _lens_tabs(
+            TEAM_OVERSIGHT_PATH, "clusters", {"planning", "portfolio", "clusters"}
+        )
+
+        self.assertEqual([t["key"] for t in tabs if t["is_active"]], ["clusters"])
+
+    def test_a_reader_with_one_lens_gets_no_strip(self):
+        """A tab bar of one is furniture, and it costs the first table row its
+        place above the fold."""
+        self.assertEqual(_lens_tabs(TEAM_OVERSIGHT_PATH, "planning", {"planning"}), [])
+
+    def test_both_new_lenses_carry_the_planned_budget_in_their_tables(self):
+        """Owner: "all plans reflecting on the budget". The headline tile is
+        one number; the column is where a reader finds which plan it came
+        from."""
+        portfolio = _read("templates/partials/oversight/portfolio_workspace.html")
+        clusters = _read(
+            "templates/partials/oversight/cluster_performance_workspace.html"
+        )
+
+        for body in (portfolio, clusters):
+            self.assertIn("Planned budget", body)
+            self.assertIn("UGX {{", body)
+
+    def test_the_strip_is_one_shared_partial(self):
+        """Two copies of it is how the two pages drifted apart the first time."""
+        partial = _read("templates/partials/oversight/_lens_tabs.html")
+        self.assertIn("{% for tab in lens_tabs %}", partial)
+
+        for page in (
+            "templates/pages/oversight/team_planning.html",
+            "templates/pages/oversight/country_planning.html",
+        ):
+            body = _read(page)
+            self.assertIn('{% include "partials/oversight/_lens_tabs.html" %}', body)
+            # And no page keeps its own hand-rolled copy.
+            self.assertNotIn('aria-label="Team oversight views"', body)
+
+
+class LensAccessTest(TestCase):
+    """Who reads which lens, checked through the routes rather than the flags."""
+
+    def _a_cluster(self) -> Cluster:
+        """One cluster, so the lens has a table rather than an empty state."""
+        region = Region.objects.create(name="Lens Region")
+        district = District.objects.create(name="Lens District", region=region)
+        return Cluster.objects.create(
+            name="Lens Cluster",
+            region=region,
+            district=district,
+            sub_county=SubCounty.objects.create(name="Lens SC", district=district),
+            status="active",
+        )
+
+    def _sign_in(self, email, role):
+        user = User.objects.create_user(
+            email=email, name=email, roles=[role], active_role=role, password="x"
+        )
+        StaffProfile.objects.create(user=user, country="Uganda")
+        self.client.force_login(user)
+        return user
+
+    def test_impact_assessment_reads_the_country_portfolio(self):
+        self._sign_in("lens-ia@edify.org", "ImpactAssessment")
+
+        response = self.client.get("/team-planning-oversight/?view=portfolio")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("Country portfolio", body)
+        self.assertIn("Schools With No Plan", body)
+
+    def test_a_programme_lead_reads_their_own_portfolio_called_that(self):
+        """The lens is the same one, bounded by the reader's scope. A Programme
+        Lead reading their own CCEOs' schools under a tab called "Country
+        Portfolio" is being told something untrue about what they are seeing."""
+        self._sign_in("lens-pl@edify.org", "Program Lead")
+
+        body = self.client.get(
+            "/team-planning-oversight/?view=portfolio"
+        ).content.decode()
+
+        self.assertIn("Team Portfolio", body)
+        self.assertNotIn("Country Portfolio", body)
+        self.assertIn("Team portfolio", body)
+
+    def test_a_country_role_reads_the_same_lens_called_the_country(self):
+        self._sign_in("lens-ia-label@edify.org", "ImpactAssessment")
+
+        body = self.client.get(
+            "/team-planning-oversight/?view=portfolio"
+        ).content.decode()
+
+        self.assertIn("Country Portfolio", body)
+        self.assertNotIn("Team Portfolio", body)
+
+    def test_the_country_director_reads_the_same_two_lenses(self):
+        self._sign_in("lens-cd@edify.org", "CountryDirector")
+
+        for view, marker in (
+            ("portfolio", "Country portfolio"),
+            ("clusters", "Cluster performance"),
+        ):
+            with self.subTest(view=view):
+                response = self.client.get(f"/country-planning-oversight/?view={view}")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(marker, response.content.decode())
+
+    def test_the_country_directors_lenses_carry_the_budget(self):
+        """Owner: "CD should also have the same country oversight with all
+        plans reflecting on the budget"."""
+        self._sign_in("lens-cd-budget@edify.org", "CountryDirector")
+        self._a_cluster()
+
+        portfolio = self.client.get(
+            "/country-planning-oversight/?view=portfolio"
+        ).content.decode()
+        clusters = self.client.get(
+            "/country-planning-oversight/?view=clusters"
+        ).content.decode()
+
+        self.assertIn("Portfolio Planned Budget", portfolio)
+        self.assertIn("Cluster Planned Budget", clusters)
+        # And on the rows, not only in the headline tile.
+        self.assertIn("Planned budget", clusters)
+
+    def test_the_cluster_lens_states_its_own_ranking(self):
+        """A weighting nobody can read is a ranking nobody can argue with."""
+        self._sign_in("lens-ia-rank@edify.org", "ImpactAssessment")
+        self._a_cluster()
+
+        body = self.client.get(
+            "/team-planning-oversight/?view=clusters"
+        ).content.decode()
+
+        self.assertIn("Activity index = ", body)
+        self.assertIn("cluster sessions", body)
+        self.assertIn("busiest cluster", body)
+
+    def test_the_lenses_swap_in_place_for_htmx(self):
+        """A filter change must replace the workspace, not the whole page."""
+        self._sign_in("lens-ia-htmx@edify.org", "ImpactAssessment")
+
+        response = self.client.get(
+            "/team-planning-oversight/?view=portfolio", HTTP_HX_REQUEST="true"
+        )
+
+        body = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("<html", body)
+        self.assertIn("Country portfolio", body)

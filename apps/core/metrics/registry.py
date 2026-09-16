@@ -1461,6 +1461,248 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "queue rather than opening a TeamAction against an individual."
         ),
     ),
+    # ── The country portfolio lens ───────────────────────────────────────────
+    # Every school under the Programme Lead and the CCEO who hold it, and
+    # whether anything is planned for it this year (owner, 2026-09-16). The
+    # denominator is deliberately the ACTIVE school population: a closed school
+    # takes no work, so counting it as unplanned would be a red row nobody can
+    # ever clear.
+    MetricSpec(
+        key="portfolio_schools_in_scope",
+        label="Schools In Portfolio",
+        definition=(
+            "Every active school the reader's scope covers, grouped by the "
+            "Programme Lead and, under them, the CCEO who owns it."
+        ),
+        question="How big is the portfolio these people are carrying?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.portfolio_service.country_portfolio",
+        source_models=("schools.School", "accounts.StaffProfile"),
+        numerator="Active schools in the reader's scope",
+        date_basis=DateBasis.NOT_TIME_BOUND,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=portfolio",
+        refresh_events=("school_created", "school_owner_changed"),
+    ),
+    MetricSpec(
+        key="portfolio_schools_planned_share",
+        label="Schools With A Plan",
+        definition=(
+            "Share of the portfolio with at least one live activity planned in "
+            "the fiscal year. A school visited in October and not since has "
+            "been planned for; a school with nothing at all has not."
+        ),
+        question="How much of the portfolio has anything planned for it?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.portfolio_service.country_portfolio",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Schools with one or more live activities in the fiscal year",
+        denominator="All active schools in the reader's scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=portfolio&planned=unplanned",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="portfolio_schools_unplanned",
+        label="Schools With No Plan",
+        definition=(
+            "Active schools in scope with no live activity planned anywhere in "
+            "the fiscal year — the other side of Schools With A Plan, as a "
+            "count, because the list is the work."
+        ),
+        question="Which schools has nobody planned anything for?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.portfolio_service.country_portfolio",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Active schools with no live activity in the fiscal year",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=portfolio&planned=unplanned",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="portfolio_planned_budget",
+        label="Portfolio Planned Budget",
+        definition=(
+            "What the portfolio's fiscal-year plan costs: the sum of schedule "
+            "cost lines on every live activity at a school in scope. Planned "
+            "money, before any approval or disbursement."
+        ),
+        question="What does the plan across this portfolio cost?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.portfolio_service.country_portfolio",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost-line amounts on live activities at schools in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=portfolio",
+        refresh_events=("activity_scheduled", "activity_costed"),
+    ),
+    # ── The cluster performance lens ─────────────────────────────────────────
+    MetricSpec(
+        key="cluster_performance_clusters",
+        label="Clusters In Scope",
+        definition="Every cluster the reader may see, whatever its activity.",
+        question="How many clusters are being carried here?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=("clusters.Cluster",),
+        numerator="Clusters in the reader's scope",
+        date_basis=DateBasis.NOT_TIME_BOUND,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("cluster_created",),
+    ),
+    MetricSpec(
+        key="cluster_performance_dormant",
+        label="Dormant Clusters",
+        definition=(
+            "Clusters with nothing planned in the fiscal year — no session of "
+            "their own and no visit to a member school. Not a low score: an "
+            "absence, which is why it is counted rather than ranked."
+        ),
+        question="Which clusters have gone quiet entirely?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=("clusters.Cluster", "activities.Activity"),
+        numerator="Clusters with no live activity of any kind in the fiscal year",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="cluster_performance_sessions",
+        label="Cluster Sessions Planned",
+        definition=(
+            "Trainings and meetings on the clusters' own calendars this "
+            "fiscal year. Visits to member schools are counted separately: "
+            "convening a cluster and visiting its schools are different work."
+        ),
+        question="How much convening have the clusters committed to?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=("activities.Activity",),
+        numerator="Live cluster trainings and meetings in the fiscal year",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="cluster_performance_reach",
+        label="Member Schools Reached",
+        definition=(
+            "Share of member schools that any cluster work actually touched "
+            "this fiscal year — a session they were invited to or attended, or "
+            "a visit of their own. An invitation is planned reach, not "
+            "attendance; both count here, and the cluster page separates them."
+        ),
+        question="Is cluster work reaching the schools in the clusters?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=(
+            "schools.School",
+            "activities.ClusterActivityAttendance",
+            "activities.Activity",
+        ),
+        numerator="Member schools touched by a cluster session or a visit",
+        denominator="All active member schools of the clusters in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("activity_scheduled", "cluster_attendance_recorded"),
+    ),
+    MetricSpec(
+        key="cluster_performance_ssa_coverage",
+        label="Member Schools Assessed",
+        definition=(
+            "Share of member schools with an SSA record in the fiscal year. "
+            "Counted from the assessment record itself, not from the activity "
+            "that was meant to collect it."
+        ),
+        question="Is the assessment reaching the clusters' schools?",
+        category=Category.QUALITY,
+        unit=Unit.PERCENT,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=("schools.School", "ssa.SsaRecord"),
+        numerator="Member schools with an SSA record in the fiscal year",
+        denominator="All active member schools of the clusters in scope",
+        date_basis=DateBasis.SSA_ASSESSMENT_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("ssa_record_created",),
+    ),
+    MetricSpec(
+        key="cluster_performance_budget",
+        label="Cluster Planned Budget",
+        definition=(
+            "What the clusters' fiscal-year plan costs: schedule cost lines on "
+            "their own sessions plus those on visits to their member schools. "
+            "Planned money, before any approval or disbursement."
+        ),
+        question="What does the cluster plan cost?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.cluster_performance_service.cluster_performance",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost-line amounts on cluster sessions and member-school visits",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's cluster scope (apps.core.scoping.cluster_queryset)",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?view=clusters",
+        refresh_events=("activity_scheduled", "activity_costed"),
+    ),
     MetricSpec(
         key="partner_oversight_active_partners",
         label="Active Partners",

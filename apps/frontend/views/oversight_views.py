@@ -275,6 +275,232 @@ COVERAGE_LENS_ROLES = frozenset(
 )
 
 
+# ── The shared lenses ────────────────────────────────────────────────────────
+# Owner, 2026-09-16: "All Oversight Should have the same format. CD should also
+# have the same country oversight with all plans reflecting on the budget."
+#
+# Team Oversight and Country Planning Oversight had each grown their own strip
+# of views, so the same person moving between them had to relearn where things
+# were — and the Portfolio and Cluster lenses would have had to be built twice.
+# One list, one builder, one set of workspaces; each page passes its own base
+# URL and says which lenses it holds.
+PORTFOLIO_LENS_ROLES = COVERAGE_LENS_ROLES
+
+
+def is_country_reader(user) -> bool:
+    """Whether this reader's scope is the country rather than a team.
+
+    The portfolio lens is the same lens either way — it is bounded by
+    `scoped_school_queryset`, like every other analytics surface — but a
+    Programme Lead reading their own CCEOs' schools under a tab called "Country
+    Portfolio" is being told something untrue about what they are looking at.
+    """
+    from apps.core.scoping import COUNTRY_ROLES
+
+    role = getattr(user, "active_role", "") or ""
+    return role in COUNTRY_ROLES or bool(getattr(user, "is_superuser", False))
+
+
+def _lens_tabs(
+    base_url: str, active: str, available, *, country: bool = True
+) -> list[dict]:
+    """The lens strip, in one order, for whichever page is drawing it."""
+    labels = (
+        (
+            "planning",
+            "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
+        ),
+        ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
+        ("clusters", "Cluster Performance"),
+        ("coverage", "Schools & Coverage"),
+        ("targets", "Target Performance"),
+    )
+    tabs = []
+    for key, label in labels:
+        if key not in available:
+            continue
+        query = "" if key == "planning" else f"?view={key}"
+        tabs.append(
+            {
+                "key": key,
+                "label": label,
+                "href": f"{base_url}{query}",
+                "is_active": key == active,
+            }
+        )
+    # A strip of one is furniture: it costs the first table row its place above
+    # the fold and chooses nothing.
+    return tabs if len(tabs) > 1 else []
+
+
+def _portfolio_context(request, period: dict, *, base_url: str) -> dict:
+    """The country portfolio lens — schools under their lead and their CCEO."""
+    from apps.planning.portfolio_service import country_portfolio, program_lead_options
+
+    portfolio = country_portfolio(
+        request.user,
+        fy=period["fy"],
+        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+        district_id=(request.GET.get("district") or "").strip() or None,
+        planned=(request.GET.get("planned") or "").strip() or None,
+    )
+    totals = portfolio["totals"]
+    return {
+        "portfolio": portfolio,
+        "portfolio_totals": totals,
+        "portfolio_leads": program_lead_options(portfolio),
+        "portfolio_districts": portfolio["districts"],
+        "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
+        "selected_district": (request.GET.get("district") or "").strip(),
+        "selected_planned": (request.GET.get("planned") or "").strip(),
+        "portfolio_url": f"{base_url}?view=portfolio",
+        "kpis": _portfolio_kpis(totals, base_url=base_url),
+    }
+
+
+def _portfolio_kpis(totals, *, base_url: str) -> list[dict]:
+    """Four tiles, each folded from the rows below them.
+
+    The planned share carries its denominator: a portfolio with no schools in
+    it has not planned 0% of them, and MetricValue is where that distinction
+    lives rather than in the template.
+    """
+    return [
+        render_kpi_item(
+            "portfolio_schools_in_scope",
+            MetricValue.measured(totals["schools"]),
+            helper=f"{totals['leads']} lead{'' if totals['leads'] == 1 else 's'} · "
+            f"{totals['officers']} officer{'' if totals['officers'] == 1 else 's'}",
+            icon="school",
+        ),
+        render_kpi_item(
+            "portfolio_schools_planned_share",
+            (
+                MetricValue.ratio(totals["planned"], totals["schools"])
+                if totals["schools"]
+                else MetricValue.absent(
+                    DataState.NOT_YET_MEASURABLE, note="No schools in scope"
+                )
+            ),
+            helper=f"{totals['planned']} of {totals['schools']} schools",
+            icon="check",
+        ),
+        render_kpi_item(
+            "portfolio_schools_unplanned",
+            MetricValue.measured(totals["unplanned"]),
+            helper="Nothing planned all year",
+            tone="danger" if totals["unplanned"] else "neutral",
+            icon="warning",
+            drilldown_url=f"{base_url}?view=portfolio&planned=unplanned",
+        ),
+        render_kpi_item(
+            "portfolio_planned_budget",
+            MetricValue.measured(totals["budget"]),
+            helper=f"Across {totals['activities']} planned activities",
+            icon="currency",
+        ),
+    ]
+
+
+def _cluster_performance_context(request, period: dict, *, base_url: str) -> dict:
+    """The cluster lens — activity, planning, SSA and reach, most active first."""
+    from apps.planning.cluster_performance_service import (
+        ACTIVE_SHARE,
+        QUIET_SHARE,
+        WEIGHT_SESSION,
+        WEIGHT_SSA,
+        WEIGHT_VISIT,
+        cluster_performance,
+    )
+
+    performance = cluster_performance(
+        request.user,
+        fy=period["fy"],
+        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+    )
+    totals = performance["totals"]
+    return {
+        "cluster_performance": performance,
+        "cluster_totals": totals,
+        "cluster_leads": performance["leads"],
+        "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
+        "cluster_performance_url": f"{base_url}?view=clusters",
+        # The weighting is on the page. A ranking whose arithmetic nobody can
+        # read is a ranking nobody can argue with, which is worse than a rough
+        # one they can.
+        "cluster_index_note": (
+            f"Activity index = {WEIGHT_SESSION}× cluster sessions + "
+            f"{WEIGHT_VISIT}× member-school visits + "
+            f"{WEIGHT_SSA}× member schools assessed."
+        ),
+        "cluster_band_note": (
+            f"High activity is at or above {round(ACTIVE_SHARE * 100)}% of the "
+            f"busiest cluster's index; low activity at or below "
+            f"{round(QUIET_SHARE * 100)}%."
+        ),
+        "kpis": _cluster_kpis(totals),
+    }
+
+
+def _cluster_kpis(totals) -> list[dict]:
+    return [
+        render_kpi_item(
+            "cluster_performance_clusters",
+            MetricValue.measured(totals["clusters"]),
+            helper=f"{totals['schools']} member schools",
+            icon="users",
+        ),
+        render_kpi_item(
+            "cluster_performance_dormant",
+            MetricValue.measured(totals["dormant"]),
+            helper="No session and no visit all year",
+            tone="danger" if totals["dormant"] else "neutral",
+            icon="warning",
+        ),
+        render_kpi_item(
+            "cluster_performance_sessions",
+            MetricValue.measured(totals["sessions"]),
+            helper=f"{totals['sessions_done']} delivered · "
+            f"{totals['visits']} member visits",
+            icon="calendar",
+        ),
+        # Both shares go through MetricValue.ratio, which is what carries the
+        # denominator: the registry refuses a percentage without one, because
+        # "71%" that cannot be checked against "64 of 90" is a number nobody
+        # can argue with.
+        render_kpi_item(
+            "cluster_performance_reach",
+            (
+                MetricValue.ratio(totals["reached"], totals["schools"])
+                if totals["schools"]
+                else MetricValue.absent(
+                    DataState.NOT_YET_MEASURABLE, note="No member schools"
+                )
+            ),
+            helper=f"{totals['reached']} of {totals['schools']} member schools",
+            icon="target",
+        ),
+        render_kpi_item(
+            "cluster_performance_ssa_coverage",
+            (
+                MetricValue.ratio(totals["ssa_schools"], totals["schools"])
+                if totals["schools"]
+                else MetricValue.absent(
+                    DataState.NOT_YET_MEASURABLE, note="No member schools"
+                )
+            ),
+            helper=f"{totals['ssa_schools']} with an SSA record this year",
+            icon="clipboard",
+        ),
+        render_kpi_item(
+            "cluster_performance_budget",
+            MetricValue.measured(totals["budget"]),
+            helper="Sessions and member-school visits",
+            icon="currency",
+        ),
+    ]
+
+
 def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list]:
     """Whole team, My Work, then one tab per supervised officer.
 
@@ -374,16 +600,47 @@ def team_planning_oversight_view(request):
     can_view_coverage = can_view_planning and (request.user.active_role or "") in (
         COVERAGE_LENS_ROLES
     )
+    # The country portfolio reads every school under its lead and its CCEO, so
+    # it goes to the people who hold the country: the same readers the school
+    # coverage lens is for. Cluster performance is scoped by
+    # `cluster_queryset`, so a Programme Lead sees their own clusters in it and
+    # a country role sees the country — everyone who reads this page gets it.
+    can_view_portfolio = can_view_planning and (request.user.active_role or "") in (
+        PORTFOLIO_LENS_ROLES
+    )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     active_view = (
-        requested_view if requested_view in {"targets", "coverage"} else "planning"
+        requested_view
+        if requested_view in {"targets", "coverage", "portfolio", "clusters"}
+        else "planning"
     )
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
     if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
-    if active_view in ("planning", "coverage") and not can_view_planning:
+    if active_view == "portfolio" and not can_view_portfolio:
+        active_view = "planning"
+    if (
+        active_view in ("planning", "coverage", "portfolio", "clusters")
+        and not can_view_planning
+    ):
         active_view = "targets"
+
+    available_lenses = {
+        key
+        for key, allowed in (
+            ("planning", can_view_planning),
+            ("portfolio", can_view_portfolio),
+            ("clusters", can_view_planning),
+            ("coverage", can_view_coverage),
+            ("targets", can_view_targets),
+        )
+        if allowed
+    }
+    country_reader = is_country_reader(request.user)
+    lens_tabs = _lens_tabs(
+        TEAM_OVERSIGHT_PATH, active_view, available_lenses, country=country_reader
+    )
 
     if active_view == "targets":
         # Do not calculate the planning, cluster and school oversight datasets
@@ -394,15 +651,50 @@ def team_planning_oversight_view(request):
         context = {
             **_team_targets_page_context(request),
             "active_oversight_view": "targets",
+            "lens_tabs": lens_tabs,
             "can_view_team_targets": can_view_targets,
             "can_view_team_planning": can_view_planning,
             "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/targets/team/workspace.html", context)
         return render(request, "pages/oversight/team_planning.html", context)
 
     period = _period_filters(request)
+
+    # The portfolio and cluster lenses stand on the school and cluster records,
+    # not on the period's planning items. Answering them before `build_items`
+    # keeps the expensive one out of the way: these are independent lenses, and
+    # the inactive one must not delay the active one.
+    if active_view in ("portfolio", "clusters"):
+        builder = (
+            _portfolio_context
+            if active_view == "portfolio"
+            else _cluster_performance_context
+        )
+        context = {
+            **period,
+            **builder(request, period, base_url=TEAM_OVERSIGHT_PATH),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": TEAM_OVERSIGHT_PATH,
+            "portfolio_is_country": country_reader,
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
+            "fy_options": fy_options(),
+        }
+        template = (
+            "partials/oversight/portfolio_workspace.html"
+            if active_view == "portfolio"
+            else "partials/oversight/cluster_performance_workspace.html"
+        )
+        if request.headers.get("HX-Request") == "true":
+            return render(request, template, context)
+        return render(request, "pages/oversight/team_planning.html", context)
+
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
     items = oversight.build_items(
@@ -431,9 +723,12 @@ def team_planning_oversight_view(request):
         context = {
             **period,
             "active_oversight_view": "coverage",
+            "lens_tabs": lens_tabs,
+            "lens_base_url": TEAM_OVERSIGHT_PATH,
             "can_view_team_targets": can_view_targets,
             "can_view_team_planning": can_view_planning,
             "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
             "lens_label": {"region": "Regional", "country": "Country", "team": "Team"}[
                 "region"
                 if scope.is_region
@@ -505,9 +800,12 @@ def team_planning_oversight_view(request):
             request.user, fy=period["fy"], month=period.get("month")
         ),
         "active_oversight_view": "planning",
+        "lens_tabs": lens_tabs,
+        "lens_base_url": TEAM_OVERSIGHT_PATH,
         "can_view_team_targets": can_view_targets,
         "can_view_team_planning": can_view_planning,
         "can_view_school_coverage": can_view_coverage,
+        "can_view_portfolio": can_view_portfolio,
         # The header link to completed work missing its evidence, drawn only
         # for readers who may open the Evidence Centre (the Accountant and the
         # RVP reach this page and may not).
@@ -567,6 +865,44 @@ def country_planning_oversight_view(request):
     period = _period_filters(request)
     program_lead_id = (request.GET.get("program_lead") or "").strip() or None
 
+    # The same lens strip Team Oversight draws, so the Country Director reads
+    # one format rather than a second one (owner, 2026-09-16). The country
+    # reader holds every lens by definition: this route is already gated on
+    # `country_planning_oversight`.
+    requested_view = (request.GET.get("view") or "planning").strip().lower()
+    active_view = (
+        requested_view if requested_view in {"portfolio", "clusters"} else "planning"
+    )
+    lens_tabs = _lens_tabs(
+        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio", "clusters"}
+    )
+
+    if active_view in ("portfolio", "clusters"):
+        builder = (
+            _portfolio_context
+            if active_view == "portfolio"
+            else _cluster_performance_context
+        )
+        context = {
+            **period,
+            **builder(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": COUNTRY_OVERSIGHT_PATH,
+            # This route is gated on country_planning_oversight: everyone who
+            # reaches it reads the country.
+            "portfolio_is_country": True,
+            "fy_options": fy_options(),
+        }
+        template = (
+            "partials/oversight/portfolio_workspace.html"
+            if active_view == "portfolio"
+            else "partials/oversight/cluster_performance_workspace.html"
+        )
+        if request.headers.get("HX-Request") == "true":
+            return render(request, template, context)
+        return render(request, "pages/oversight/country_planning.html", context)
+
     advanced = oversight.read_filters(request)
     items = oversight.build_items(
         request.user,
@@ -586,6 +922,9 @@ def country_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
+        "active_oversight_view": "planning",
+        "lens_tabs": lens_tabs,
+        "lens_base_url": COUNTRY_OVERSIGHT_PATH,
         # The RVP reads this page for Cluster Oversight below and does not
         # delegate from it.
         "may_delegate": may_delegate(request.user, country=True),

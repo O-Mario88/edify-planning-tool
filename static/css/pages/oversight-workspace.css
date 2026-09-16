@@ -180,3 +180,156 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   inline-size: min(22rem, calc(100vw - 2rem));
   box-shadow: var(--edify-shadow-lg) !important;
 }
+
+/* ─── THE COUNTRY PORTFOLIO LENS ─────────────────────────────────────────────
+   Every school under the Programme Lead and the CCEO who hold it (owner,
+   2026-09-16). Two levels of grouping: a collapsible column per lead, and a
+   group-headed table per officer inside it. Seven hundred schools sorted by
+   name is a directory; this is the same seven hundred as a set of portfolios
+   somebody can be asked about. */
+.oversight-portfolio-filters { margin: 0; }
+
+.portfolio-lead {
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg, 12px);
+  background: var(--edify-surface-raised);
+  overflow: hidden;
+}
+
+.portfolio-lead__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.portfolio-lead__summary::-webkit-details-marker { display: none; }
+
+/* The disclosure triangle, drawn rather than inherited, so it rotates with the
+   open state in every browser this runs in. */
+.portfolio-lead__summary::before {
+  content: "";
+  inline-size: 0;
+  block-size: 0;
+  border-inline-start: 5px solid currentColor;
+  border-block: 4px solid transparent;
+  transition: transform .15s ease;
+  color: var(--edify-text-muted);
+}
+.portfolio-lead[open] > .portfolio-lead__summary::before { transform: rotate(90deg); }
+
+.portfolio-lead__name {
+  font-size: var(--edify-text-body-size);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--edify-text);
+}
+
+.portfolio-lead__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--edify-text-caption-size, 0.75rem);
+  font-weight: 600;
+  color: var(--edify-text-muted);
+}
+.portfolio-lead__facts strong { color: var(--edify-text); font-variant-numeric: tabular-nums; }
+
+/* Schools nobody has planned anything for is the finding this page exists for,
+   so it is the one fact in the row that changes colour. */
+.portfolio-lead__gap.is-open,
+.portfolio-lead__gap.is-open strong { color: var(--edify-danger-text); }
+
+.portfolio-lead__coverage {
+  margin-inline-start: auto;
+  padding: 2px 0.5rem;
+  border-radius: var(--edify-radius-pill, 999px);
+  border: 1px solid var(--edify-border);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.portfolio-lead__coverage[data-tone="success"] { color: var(--edify-success-text); border-color: var(--edify-success); }
+.portfolio-lead__coverage[data-tone="warning"] { color: var(--edify-warning-text); border-color: var(--edify-warning); }
+.portfolio-lead__coverage[data-tone="danger"] { color: var(--edify-danger-text); border-color: var(--edify-danger); }
+.portfolio-lead__coverage[data-tone="neutral"] { color: var(--edify-text-muted); }
+
+.portfolio-officer { border-block-start: 1px solid var(--edify-border); }
+
+/* A school with nothing planned carries a quiet edge rather than a filled row:
+   there can be hundreds of them, and a page of red reads as decoration. */
+.portfolio-row--unplanned > td:first-child {
+  box-shadow: inset 3px 0 0 var(--edify-danger) !important;
+}
+
+/* The officer heading's "n with no plan" is a warning, not the neutral mark
+   the shared component draws by default. */
+.edify-group-head__mark[data-tone="danger"] {
+  background: var(--edify-danger);
+}
+
+/* ─── THE CLUSTER PERFORMANCE LENS ───────────────────────────────────────────
+   Every cluster measured on what it planned, delivered, assessed and reached,
+   ordered by an index whose arithmetic is printed above the table. */
+.cluster-index-note {
+  margin: 0;
+  font-size: var(--edify-text-caption-size, 0.75rem);
+  font-weight: 600;
+  color: var(--edify-text-muted);
+}
+
+/* Ink, not a filled chip. Inside a data cell the platform's rule is that table
+   content reads as ink on the table surface (consistency.css), and a chip
+   drawn here has its fill stripped — which, with light label text on it, is a
+   label nobody can see. The colour carries the band instead. */
+.cluster-band {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+}
+
+.cluster-band__index {
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--edify-text);
+}
+
+.cluster-band__label {
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--edify-text-muted);
+}
+
+.cluster-band[data-band="active"] .cluster-band__label { color: var(--edify-success-text); }
+.cluster-band[data-band="quiet"] .cluster-band__label { color: var(--edify-warning-text); }
+.cluster-band[data-band="dormant"] .cluster-band__label { color: var(--edify-danger-text); }
+
+/* A cluster with nothing planned all year is the one row a reader must not
+   scroll past, so it keeps an edge of its own. */
+.cluster-row[data-band="dormant"] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--edify-danger) !important;
+}
+
+/* The two superlatives. Only one cluster is the most active and only one is
+   the least, so these are single chips rather than a band applied to a third
+   of the table — "Most active" against ten rows answers nothing. */
+.cluster-super {
+  display: inline-block;
+  margin-inline-start: 0.375rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  color: var(--edify-accent-text);
+}
+.cluster-super::before { content: "★ "; }

@@ -4132,7 +4132,11 @@ main textarea,
   background-color: var(--edify-surface-raised) !important;
   background-image: none !important;
 }
-:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content {
+/* The group heading's own chips are part of the heading, not content inside
+   it: the count beside "November 2025" and the "518 with no plan" mark are how
+   the heading says what it heads. Flattening them to ink left white label text
+   on a stripped fill — invisible. */
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:not(.edify-group-head *) {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
