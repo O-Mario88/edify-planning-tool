@@ -5127,9 +5127,8 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 .priority-portfolio__items > li { min-inline-size: 0; overflow-wrap: anywhere; }
 
 /* ═══ GROUP HEADING ROW ════════════════════════════════════════════════════
-   A row inside a table that heads the rows under it: "November 2025" over a
-   month of My Plan, "Sarah Okello" over a Programme Lead's schools, a cluster
-   over its member schools.
+   A row inside a table that heads the rows under it: "Sarah Okello" over a
+   Programme Lead's schools, a cluster over its member schools.
 
    A row rather than a second table per group, so one column header serves the
    whole card and the columns stay aligned the length of it — which is the
@@ -5180,7 +5179,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   color: var(--edify-text-muted);
 }
 
-/* "This month", "Least active" — the one thing about this group the reader
+/* "Least active", "3 with no plan" — the one thing about this group the reader
    should not have to work out from the numbers. */
 .edify-group-head__mark {
   display: inline-block;
@@ -5193,11 +5192,6 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   text-transform: uppercase;
   letter-spacing: .05em;
   color: var(--edify-on-accent);
-}
-
-.edify-group-head.is-current > th {
-  background: var(--edify-accent-light) !important;
-  border-block-color: var(--edify-accent) !important;
 }
 
 /* The first group in a table sits directly under the column header, which

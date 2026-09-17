@@ -29,154 +29,31 @@ ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
     "awaiting_owner_approval",
 )
 
+#: The calendar month a quarter opens on. The fiscal year starts in October,
+#: so Q1 is October–December. Mirrors `_QUARTER_START_MONTH` in apps.core.fy,
+#: which is private to that module.
+QUARTER_FIRST_MONTH = {"Q1": 10, "Q2": 1, "Q3": 4, "Q4": 7}
 
-#: The fiscal year runs October → September, and that is the order the plan is
-#: read in. Every month list on this page uses it, so October is first and next
-#: September is last rather than January leading a year that does not start there.
-FY_MONTH_ORDER = (10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-
-#: Rows with no date yet. They belong to the plan and must not vanish between
-#: the last month and the bottom of the card, so they group under their own
-#: heading at the end.
-UNDATED_MONTH_KEY = "undated"
-
-
-def fy_calendar_year(fy: str | int, month: int) -> int:
-    """The calendar year a fiscal month falls in. FY2026 starts October 2025."""
-    return int(fy) - 1 if month >= 10 else int(fy)
+#: What the filter selects say for "no narrowing". An unselected filter arrives
+#: as "all" from the form and as None from a URL that simply omits it; both mean
+#: the same thing and neither is a month.
+_UNSET_FILTER_VALUES = {"", "all", "any", "none"}
 
 
-def fy_months(fy: str | int, *, today: date | None = None) -> list[dict]:
-    """The twelve months of a fiscal year, October first.
+def _unset(value) -> bool:
+    """True when a filter value means "not narrowed"."""
+    return value is None or str(value).strip().lower() in _UNSET_FILTER_VALUES
 
-    One definition for the month strip, the card sections and the month a row
-    is filed under, so a heading and the rows beneath it cannot disagree about
-    which October they mean.
+
+def _widened(previous, current) -> bool:
+    """True when the caller just moved a filter off the value it was rendered with.
+
+    Only a submitted form carries `previous`; without it nothing is cleared, so
+    a hand-written URL means exactly what it says.
     """
-    today = today or date.today()
-    out = []
-    for month in FY_MONTH_ORDER:
-        year = fy_calendar_year(fy, month)
-        first = date(year, month, 1)
-        out.append(
-            {
-                "key": f"{year}-{month:02d}",
-                "month": month,
-                "year": year,
-                "label": f"{first:%B %Y}",
-                "name": f"{first:%B}",
-                "short": f"{first:%b}",
-                "is_current": (month == today.month and year == today.year),
-                "is_past": (year, month) < (today.year, today.month),
-            }
-        )
-    return out
-
-
-def month_sections(rows, *, fy: str | int, today: date | None = None) -> list[dict]:
-    """A card's rows arranged into the fiscal year's months.
-
-    My Plan used to slice the feed a week at a time, which answered "what is on
-    this week" and nothing else: seeing the shape of a year meant clicking
-    through fifty-two of them. The whole plan is shown instead, filed under the
-    month it falls in — October through next September (owner, 2026-09-16).
-
-    Only months that actually hold work become sections; an empty month is
-    still reported by `month_summary` above the cards, where "nothing planned
-    in February" is the finding rather than an empty heading.
-    """
-    today = today or date.today()
-    by_key: dict[str, list] = {}
-    for row in rows:
-        planned = row.get("planned_date")
-        key = f"{planned.year}-{planned.month:02d}" if planned else UNDATED_MONTH_KEY
-        by_key.setdefault(key, []).append(row)
-
-    sections = []
-    for month in fy_months(fy, today=today):
-        group = by_key.pop(month["key"], None)
-        if not group:
-            continue
-        sections.append({**month, "rows": group, "count": len(group)})
-
-    # A planned date outside the fiscal year's own months (a row carried over,
-    # or mis-dated) is still the person's work: file it under its own month
-    # rather than dropping it, in date order after the twelve.
-    for key in sorted(k for k in by_key if k != UNDATED_MONTH_KEY):
-        year, month = (int(part) for part in key.split("-"))
-        first = date(year, month, 1)
-        sections.append(
-            {
-                "key": key,
-                "month": month,
-                "year": year,
-                "label": f"{first:%B %Y}",
-                "name": f"{first:%B}",
-                "short": f"{first:%b}",
-                "is_current": (month == today.month and year == today.year),
-                "is_past": (year, month) < (today.year, today.month),
-                "rows": by_key[key],
-                "count": len(by_key[key]),
-            }
-        )
-
-    undated = by_key.get(UNDATED_MONTH_KEY)
-    if undated:
-        sections.append(
-            {
-                "key": UNDATED_MONTH_KEY,
-                "month": None,
-                "year": None,
-                "label": "No date yet",
-                "name": "No date yet",
-                "short": "—",
-                "is_current": False,
-                "is_past": False,
-                "rows": undated,
-                "count": len(undated),
-            }
-        )
-    return sections
-
-
-def month_summary(fy: str | int, *lists, today: date | None = None) -> list[dict]:
-    """How much of the plan sits in each month of the fiscal year.
-
-    The strip that replaced the week/month/quarter/FY tabs. A month with
-    nothing in it keeps its place and reads zero, because an empty March is
-    something a person needs to see, not something to hide.
-    """
-    today = today or date.today()
-    counts: dict[str, int] = {}
-    undated = 0
-    for rows in lists:
-        for row in rows or ():
-            planned = row.get("planned_date")
-            if not planned:
-                undated += 1
-                continue
-            counts[f"{planned.year}-{planned.month:02d}"] = (
-                counts.get(f"{planned.year}-{planned.month:02d}", 0) + 1
-            )
-    months = [
-        {**month, "count": counts.get(month["key"], 0)}
-        for month in fy_months(fy, today=today)
-    ]
-    if undated:
-        months.append(
-            {
-                "key": UNDATED_MONTH_KEY,
-                "month": None,
-                "year": None,
-                "label": "No date yet",
-                "name": "No date yet",
-                "short": "—",
-                "is_current": False,
-                "is_past": False,
-                "count": undated,
-            }
-        )
-    return months
+    if previous is None or current is None:
+        return False
+    return str(previous) != str(current)
 
 
 def get_weeks_for_month(year: int, month: int) -> list[dict]:
@@ -735,12 +612,35 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     # 2. Extract selected filters
     fy = query.get("fy") or get_operational_fy(today)
-    quarter = query.get("quarter") or get_quarter_for_date(today)
-    month = query.get("month") or str(today.month)
+
+    # My Plan's period filters nest: a fiscal year holds quarters, a quarter
+    # holds months. Widening clears what it contains, so picking FY2027 answers
+    # "the whole of FY2027" instead of quietly keeping the October that was
+    # selected under the old year. A GET form submits every select, not only
+    # the one that changed, so the widening is detected by comparing each value
+    # against the one the page was rendered with (the `*_prev` hidden inputs).
+    # A URL without them — a deep link, the API, the CSV export — is read
+    # exactly as written (owner, 2026-09-17).
+    raw_quarter = query.get("quarter")
+    raw_month = query.get("month")
+    if _widened(query.get("fy_prev"), query.get("fy")):
+        raw_quarter = raw_month = None
+    elif _widened(query.get("quarter_prev"), raw_quarter):
+        raw_month = None
+
+    selected_quarter = None if _unset(raw_quarter) else str(raw_quarter)
+    selected_month = None if _unset(raw_month) else int(raw_month)
+    # A quarter on its own opens at its first month — October for Q1, January
+    # for Q2 — which is the month someone choosing a quarter is looking for.
+    if selected_month is None and selected_quarter in QUARTER_FIRST_MONTH:
+        selected_month = QUARTER_FIRST_MONTH[selected_quarter]
+
     week = query.get("week") or str(min(5, (today.day - 1) // 7 + 1))
 
-    # Convert parameters to integers where needed
-    month_int = int(month) if month else today.month
+    # Concrete values for the period slicing below, which always needs a real
+    # month and quarter even when the page is showing the whole year.
+    quarter = selected_quarter or get_quarter_for_date(today)
+    month_int = selected_month if selected_month is not None else today.month
     week_int = int(week) if week else min(5, (today.day - 1) // 7 + 1)
 
     # Handle Year calculations for the operational FY (Starts Oct 1st)
@@ -754,13 +654,18 @@ def get_frontend_context(principal, query: dict) -> dict:
     staff_id = query.get("staff")
     activity_type = query.get("activity_type")
     status = query.get("status")
-    # The fiscal year is the page. My Plan opened on a single week, so the
-    # answer to "what have I planned this year" was fifty-two clicks away and
-    # the three cards each showed a handful of rows out of context. The whole
-    # plan is shown now and arranged by month (owner, 2026-09-16). The narrower
-    # slices stay in the vocabulary for callers that ask for one explicitly —
-    # the CSV export, the API and the tests — but nothing on the page does.
-    period = query.get("period") or "fy"
+    # The fiscal year is the page's resting state: a year with nothing else
+    # selected shows every activity in it, oldest first, rather than the one
+    # week My Plan used to open on. Narrowing to a month is the filter's job,
+    # and an explicit ?period= still wins so the CSV export, the API and links
+    # built elsewhere keep asking for the slice they name.
+    explicit_period = str(query.get("period") or "").strip()
+    if explicit_period:
+        period = explicit_period
+    elif selected_month is not None:
+        period = "month"
+    else:
+        period = "fy"
 
     # 3. Base queryset constrained by user scope. Terminal activities leave
     # the active feed and live in Completed Activities — unless the caller
@@ -1604,31 +1509,23 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     # The cards no longer page ten rows at a time. Ten rows out of a year is
     # the shape of a week, and hiding the rest behind "Next" is what made the
-    # plan unreadable as a plan. Every row is rendered, under the month it
-    # falls in, October through next September.
-    school_visits_months = month_sections(school_visits_list, fy=fy, today=today)
-    cluster_trainings_months = month_sections(
-        cluster_trainings_list, fy=fy, today=today
-    )
-    cluster_meetings_months = month_sections(cluster_meetings_list, fy=fy, today=today)
-    programme_activities_months = month_sections(
-        programme_activities_list, fy=fy, today=today
-    )
-    fy_month_strip = month_summary(
-        fy,
-        school_visits_list,
-        cluster_trainings_list,
-        cluster_meetings_list,
-        programme_activities_list,
-        today=today,
-    )
-
+    # plan unreadable as a plan. Every row the selected period holds is
+    # rendered, oldest first.
     return {
         "live": True,
         "period": period,
+        # Only an explicitly requested period rides along with the filter form.
+        # Echoing a derived one would pin the page to the month it happens to
+        # be showing, and the next filter change could never widen back out.
+        "period_param": explicit_period,
         "fy": fy,
-        "selected_month": month_int,
-        "selected_quarter": quarter,
+        # The selects show what is actually narrowing the feed: None reads as
+        # "All" rather than as this month, which is the difference between a
+        # year and one of its twelve parts.
+        "selected_month": selected_month,
+        "selected_quarter": selected_quarter,
+        "fy_prev": fy,
+        "quarter_prev": selected_quarter or "all",
         "period_label": period_label,
         "months": months,
         "quarters": ["Q1", "Q2", "Q3", "Q4"],
@@ -1638,10 +1535,24 @@ def get_frontend_context(principal, query: dict) -> dict:
         "selected_staff": staff_id,
         "selected_activity_type": activity_type,
         "selected_status": status,
-        # Whether any filter is narrowing the view — drives Clear Filters.
+        # What the advanced-filter drawer holds, and nothing else — the
+        # drawer's "· Applied" badge would otherwise light up for a quarter or
+        # month chosen out in the toolbar.
+        "advanced_filters_active": any(
+            [
+                district_id and district_id != "all",
+                staff_id and staff_id != "all",
+                activity_type and activity_type != "all",
+                status and status != "all",
+            ]
+        ),
+        # Whether any filter is narrowing the view — drives Clear Filters, so
+        # it answers for the whole toolbar, quarter and month included.
         # Computed server-side because the URL, not Alpine, is authoritative.
         "filters_active": any(
             [
+                selected_quarter,
+                selected_month is not None,
                 district_id and district_id != "all",
                 staff_id and staff_id != "all",
                 activity_type and activity_type != "all",
@@ -1656,24 +1567,17 @@ def get_frontend_context(principal, query: dict) -> dict:
         "fy_options": fy_options(),
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
-        # Each card carries its whole list, and the month sections it is read
-        # through. `*_all` stays because counts, KPIs and the CSV export read
-        # it; it is now the same list as the card's own.
+        # Each card carries every row of the selected period. `*_all` stays
+        # because counts, KPIs and the CSV export read it; it is now the same
+        # list as the card's own.
         "school_visits": school_visits_list,
         "school_visits_all": school_visits_list,
-        "school_visits_months": school_visits_months,
         "cluster_trainings": cluster_trainings_list,
         "cluster_trainings_all": cluster_trainings_list,
-        "cluster_trainings_months": cluster_trainings_months,
         "cluster_meetings": cluster_meetings_list,
         "cluster_meetings_all": cluster_meetings_list,
-        "cluster_meetings_months": cluster_meetings_months,
         "programme_activities": programme_activities_list,
         "programme_activities_all": programme_activities_list,
-        "programme_activities_months": programme_activities_months,
-        # October → next September, with what is planned in each. Replaces the
-        # week/month/quarter/FY tab strip.
-        "fy_month_strip": fy_month_strip,
         "waiting_on_me": waiting_on_me_list,
         "due_today": due_today_list,
         "this_week": this_week_list,

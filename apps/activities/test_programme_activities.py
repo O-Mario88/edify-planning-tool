@@ -834,10 +834,7 @@ class ProgrammeMyPlanHandoffTest(_ProgrammeFixture):
         )
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        # The card headings lost "Planned for This <period>" when My Plan
-        # stopped slicing by period and started grouping by month
-        # (owner, 2026-09-16).
-        self.assertIn("Programme Activities \u00b7 FY", html)
+        self.assertIn("Programme Activities Planned", html)
         self.assertIn(activity.id, html)
 
     def test_programme_row_names_the_venue_not_unknown_school(self):

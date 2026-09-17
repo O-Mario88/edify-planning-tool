@@ -4119,9 +4119,9 @@ main textarea,
 /* Table content is ink on the table surface. Only action buttons keep a
    bounded treatment. Structural markers also cover HTMX-inserted rows.
 
-   `.edify-group-head` is exempt: a row that heads the rows under it — a month
-   of My Plan, a Programme Lead's schools, a cluster's members — is not content
-   on the surface, it is where a section of the table starts, and flattening it
+   `.edify-group-head` is exempt: a row that heads the rows under it — a
+   Programme Lead's schools, a cluster's members — is not content on the
+   surface, it is where a section of the table starts, and flattening it
    to the table surface left a grouped card reading as one undivided list
    (owner, 2026-09-16). Its own treatment is in components.css. */
 :root :is(main, .drawer-body, [role="dialog"])

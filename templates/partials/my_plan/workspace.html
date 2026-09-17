@@ -17,22 +17,19 @@ to read the same thing and two places to keep it true. My Plan is the list of
 work; the Dashboard is where the day is summarised.
 {% endcomment %}
 
-<!-- The fiscal year by month — what the period tabs used to slice. -->
-{% include "partials/my_plan/month_strip.html" %}
-
 <!-- KPI context follows the next-action queue. -->
 {% include "partials/my_plan/kpi_cards.html" %}
 
 <!-- Activity Tables Grouped by Category -->
 <div class="space-y-8">
 
-<!-- 1. School Visits, by month -->
+<!-- 1. School Visits -->
 {% include "partials/my_plan/school_visits.html" %}
 
-<!-- 2. Trainings, by month -->
+<!-- 2. Trainings -->
 {% include "partials/my_plan/cluster_trainings.html" %}
 
-<!-- 3. Cluster Meetings, by month -->
+<!-- 3. Cluster Meetings -->
 {% include "partials/my_plan/cluster_meetings.html" %}
 
 <!-- 4. Non-school programme activities (conferences, camps, exhibitions) -->

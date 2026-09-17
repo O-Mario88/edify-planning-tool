@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 0,
   "labels_in_several_modules": 0,
-  "breakdown_rows": 530,
+  "breakdown_rows": 527,
   "registered_metrics": 545,
   "rendered_summaries": 162,
   "context_summaries": 162,
@@ -8059,7 +8059,7 @@
    "audit_id": "KPI-SOURCE-446",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 136,
+   "line": 141,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -8082,7 +8082,7 @@
    "audit_id": "KPI-SOURCE-447",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 297,
+   "line": 302,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -8101,7 +8101,7 @@
    "audit_id": "KPI-SOURCE-448",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1329,
+   "line": 1334,
    "label": "SSA basis",
    "keys": [
     "label",
@@ -8118,7 +8118,7 @@
    "audit_id": "KPI-SOURCE-449",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1367,
+   "line": 1372,
    "label": "Officer",
    "keys": [
     "label",
@@ -8135,7 +8135,7 @@
    "audit_id": "KPI-SOURCE-450",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1368,
+   "line": 1373,
    "label": "Activity",
    "keys": [
     "label",
@@ -8152,7 +8152,7 @@
    "audit_id": "KPI-SOURCE-451",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1373,
+   "line": 1378,
    "label": "School or cluster",
    "keys": [
     "label",
@@ -8169,7 +8169,7 @@
    "audit_id": "KPI-SOURCE-452",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1374,
+   "line": 1379,
    "label": "Delivered",
    "keys": [
     "label",
@@ -8186,7 +8186,7 @@
    "audit_id": "KPI-SOURCE-453",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1375,
+   "line": 1380,
    "label": "Intervention",
    "keys": [
     "label",
@@ -8203,7 +8203,7 @@
    "audit_id": "KPI-SOURCE-454",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1380,
+   "line": 1385,
    "label": "Attendance",
    "keys": [
     "label",
@@ -8220,7 +8220,7 @@
    "audit_id": "KPI-SOURCE-455",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1381,
+   "line": 1386,
    "label": "Evidence",
    "keys": [
     "label",
@@ -8237,7 +8237,7 @@
    "audit_id": "KPI-SOURCE-456",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1389,
+   "line": 1394,
    "label": "Salesforce ID",
    "keys": [
     "label",
@@ -8254,7 +8254,7 @@
    "audit_id": "KPI-SOURCE-457",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1390,
+   "line": 1395,
    "label": "Purpose",
    "keys": [
     "label",
@@ -8271,7 +8271,7 @@
    "audit_id": "KPI-SOURCE-458",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1391,
+   "line": 1396,
    "label": "Outcome",
    "keys": [
     "label",
@@ -8288,7 +8288,7 @@
    "audit_id": "KPI-SOURCE-459",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1392,
+   "line": 1397,
    "label": "Observations",
    "keys": [
     "label",
@@ -8305,7 +8305,7 @@
    "audit_id": "KPI-SOURCE-460",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1393,
+   "line": 1398,
    "label": "Follow-up",
    "keys": [
     "label",
@@ -8322,7 +8322,7 @@
    "audit_id": "KPI-SOURCE-461",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2322,
+   "line": 2327,
    "label": null,
    "keys": [
     "count",
@@ -8340,7 +8340,7 @@
    "audit_id": "KPI-SOURCE-462",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2433,
+   "line": 2438,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8363,7 +8363,7 @@
    "audit_id": "KPI-SOURCE-463",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 304,
+   "line": 309,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -8382,7 +8382,7 @@
    "audit_id": "KPI-SOURCE-464",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 314,
+   "line": 319,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -8401,7 +8401,7 @@
    "audit_id": "KPI-SOURCE-465",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1291,
+   "line": 1296,
    "label": "Officer",
    "keys": [
     "blank",
@@ -8421,7 +8421,7 @@
    "audit_id": "KPI-SOURCE-466",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1333,
+   "line": 1338,
    "label": "Why it departs from the SSA",
    "keys": [
     "label",
@@ -10715,80 +10715,6 @@
   {
    "audit_id": "KPI-SOURCE-591",
    "kind": "breakdown-row",
-   "module": "apps/my_plan/services.py",
-   "line": 109,
-   "label": "{\u2026}",
-   "keys": [
-    "count",
-    "is_current",
-    "is_past",
-    "key",
-    "label",
-    "month",
-    "name",
-    "rows",
-    "short",
-    "year"
-   ],
-   "has_metric_key": false,
-   "has_drilldown": false,
-   "recommendation": "retain-as-breakdown",
-   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
-   "priority": "low",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SOURCE-592",
-   "kind": "breakdown-row",
-   "module": "apps/my_plan/services.py",
-   "line": 126,
-   "label": "No date yet",
-   "keys": [
-    "count",
-    "is_current",
-    "is_past",
-    "key",
-    "label",
-    "month",
-    "name",
-    "rows",
-    "short",
-    "year"
-   ],
-   "has_metric_key": false,
-   "has_drilldown": false,
-   "recommendation": "retain-as-breakdown",
-   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
-   "priority": "low",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SOURCE-593",
-   "kind": "breakdown-row",
-   "module": "apps/my_plan/services.py",
-   "line": 167,
-   "label": "No date yet",
-   "keys": [
-    "count",
-    "is_current",
-    "is_past",
-    "key",
-    "label",
-    "month",
-    "name",
-    "short",
-    "year"
-   ],
-   "has_metric_key": false,
-   "has_drilldown": false,
-   "recommendation": "retain-as-breakdown",
-   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
-   "priority": "low",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SOURCE-594",
-   "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 121,
    "label": "Not clustered",
@@ -10806,7 +10732,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-595",
+   "audit_id": "KPI-SOURCE-592",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 127,
@@ -10825,7 +10751,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-596",
+   "audit_id": "KPI-SOURCE-593",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 133,
@@ -10844,7 +10770,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-597",
+   "audit_id": "KPI-SOURCE-594",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 139,
@@ -10863,7 +10789,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-598",
+   "audit_id": "KPI-SOURCE-595",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 145,
@@ -10882,7 +10808,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-599",
+   "audit_id": "KPI-SOURCE-596",
    "kind": "breakdown-row",
    "module": "apps/professional_development/health.py",
    "line": 16,
@@ -10903,7 +10829,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-600",
+   "audit_id": "KPI-SOURCE-597",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
    "line": 522,
@@ -10920,7 +10846,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-601",
+   "audit_id": "KPI-SOURCE-598",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
    "line": 463,
@@ -10939,7 +10865,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-602",
+   "audit_id": "KPI-SOURCE-599",
    "kind": "other",
    "module": "apps/projects/dashboard_service.py",
    "line": 800,
@@ -10958,7 +10884,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-603",
+   "audit_id": "KPI-SOURCE-600",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 779,
@@ -10975,7 +10901,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-604",
+   "audit_id": "KPI-SOURCE-601",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 780,
@@ -10992,7 +10918,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-605",
+   "audit_id": "KPI-SOURCE-602",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 781,
@@ -11009,7 +10935,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-606",
+   "audit_id": "KPI-SOURCE-603",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 782,
@@ -11026,7 +10952,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-607",
+   "audit_id": "KPI-SOURCE-604",
    "kind": "breakdown-row",
    "module": "apps/projects/health.py",
    "line": 85,
@@ -11053,7 +10979,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-608",
+   "audit_id": "KPI-SOURCE-605",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 588,
@@ -11072,7 +10998,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-609",
+   "audit_id": "KPI-SOURCE-606",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1091,
@@ -11090,7 +11016,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-610",
+   "audit_id": "KPI-SOURCE-607",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1161,
@@ -11107,7 +11033,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-611",
+   "audit_id": "KPI-SOURCE-608",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1162,
@@ -11124,7 +11050,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-612",
+   "audit_id": "KPI-SOURCE-609",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1163,
@@ -11141,7 +11067,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-613",
+   "audit_id": "KPI-SOURCE-610",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1164,
@@ -11158,7 +11084,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-614",
+   "audit_id": "KPI-SOURCE-611",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1165,
@@ -11175,7 +11101,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-615",
+   "audit_id": "KPI-SOURCE-612",
    "kind": "other",
    "module": "apps/projects/my_plan_service.py",
    "line": 80,
@@ -11193,7 +11119,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-616",
+   "audit_id": "KPI-SOURCE-613",
    "kind": "other",
    "module": "apps/projects/my_plan_service.py",
    "line": 97,
@@ -11212,7 +11138,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-617",
+   "audit_id": "KPI-SOURCE-614",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 637,
@@ -11229,7 +11155,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-618",
+   "audit_id": "KPI-SOURCE-615",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 646,
@@ -11246,7 +11172,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-619",
+   "audit_id": "KPI-SOURCE-616",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 647,
@@ -11263,7 +11189,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-620",
+   "audit_id": "KPI-SOURCE-617",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 648,
@@ -11280,7 +11206,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-621",
+   "audit_id": "KPI-SOURCE-618",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 649,
@@ -11297,7 +11223,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-622",
+   "audit_id": "KPI-SOURCE-619",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 650,
@@ -11314,7 +11240,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-623",
+   "audit_id": "KPI-SOURCE-620",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 651,
@@ -11331,7 +11257,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-624",
+   "audit_id": "KPI-SOURCE-621",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 776,
@@ -11348,7 +11274,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-625",
+   "audit_id": "KPI-SOURCE-622",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 785,
@@ -11365,7 +11291,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-626",
+   "audit_id": "KPI-SOURCE-623",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 786,
@@ -11382,7 +11308,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-627",
+   "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 787,
@@ -11399,7 +11325,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-628",
+   "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 790,
@@ -11416,7 +11342,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-629",
+   "audit_id": "KPI-SOURCE-626",
    "kind": "other",
    "module": "apps/projects/staff_priorities.py",
    "line": 166,
@@ -11434,7 +11360,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-630",
+   "audit_id": "KPI-SOURCE-627",
    "kind": "other",
    "module": "apps/schools/closure_analytics.py",
    "line": 184,
@@ -11456,7 +11382,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-631",
+   "audit_id": "KPI-SOURCE-628",
    "kind": "breakdown-row",
    "module": "apps/system_health/kpi_inventory.py",
    "line": 808,
@@ -11473,7 +11399,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-632",
+   "audit_id": "KPI-SOURCE-629",
    "kind": "breakdown-row",
    "module": "apps/system_health/page_inventory.py",
    "line": 1388,
@@ -11490,7 +11416,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-633",
+   "audit_id": "KPI-SOURCE-630",
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
    "line": 69,
@@ -11513,7 +11439,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-634",
+   "audit_id": "KPI-SOURCE-631",
    "kind": "breakdown-row",
    "module": "apps/system_health/portfolio_access_health.py",
    "line": 67,
@@ -11536,7 +11462,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-635",
+   "audit_id": "KPI-SOURCE-632",
    "kind": "breakdown-row",
    "module": "apps/system_health/school_closure_health.py",
    "line": 26,
@@ -11559,7 +11485,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-636",
+   "audit_id": "KPI-SOURCE-633",
    "kind": "breakdown-row",
    "module": "apps/system_health/ui_quality.py",
    "line": 235,
@@ -11580,7 +11506,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-637",
+   "audit_id": "KPI-SOURCE-634",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 983,
@@ -11606,7 +11532,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-638",
+   "audit_id": "KPI-SOURCE-635",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1136,
@@ -11623,7 +11549,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-639",
+   "audit_id": "KPI-SOURCE-636",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 1064,
@@ -11647,7 +11573,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-640",
+   "audit_id": "KPI-SOURCE-637",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1255,
@@ -11664,7 +11590,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-641",
+   "audit_id": "KPI-SOURCE-638",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 260,
@@ -11687,7 +11613,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-642",
+   "audit_id": "KPI-SOURCE-639",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 727,
@@ -11708,7 +11634,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-643",
+   "audit_id": "KPI-SOURCE-640",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 735,
@@ -11729,7 +11655,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-644",
+   "audit_id": "KPI-SOURCE-641",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 743,
@@ -11750,7 +11676,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-645",
+   "audit_id": "KPI-SOURCE-642",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 751,
@@ -11771,7 +11697,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-646",
+   "audit_id": "KPI-SOURCE-643",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 768,
@@ -11792,7 +11718,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-647",
+   "audit_id": "KPI-SOURCE-644",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 825,
@@ -11814,7 +11740,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-648",
+   "audit_id": "KPI-SOURCE-645",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 834,
@@ -11836,7 +11762,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-649",
+   "audit_id": "KPI-SOURCE-646",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 843,
@@ -11858,7 +11784,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-650",
+   "audit_id": "KPI-SOURCE-647",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 852,
@@ -11880,7 +11806,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-651",
+   "audit_id": "KPI-SOURCE-648",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 861,
@@ -11902,7 +11828,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-652",
+   "audit_id": "KPI-SOURCE-649",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 902,
@@ -11919,7 +11845,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-653",
+   "audit_id": "KPI-SOURCE-650",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 244,
@@ -11941,7 +11867,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-654",
+   "audit_id": "KPI-SOURCE-651",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 883,
@@ -11964,7 +11890,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-655",
+   "audit_id": "KPI-SOURCE-652",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1322,
@@ -11982,7 +11908,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-656",
+   "audit_id": "KPI-SOURCE-653",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1374,
@@ -11999,7 +11925,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-657",
+   "audit_id": "KPI-SOURCE-654",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 342,
@@ -12023,7 +11949,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-658",
+   "audit_id": "KPI-SOURCE-655",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1317,
@@ -12040,7 +11966,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-659",
+   "audit_id": "KPI-SOURCE-656",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1319,
@@ -12057,7 +11983,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-660",
+   "audit_id": "KPI-SOURCE-657",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1252,

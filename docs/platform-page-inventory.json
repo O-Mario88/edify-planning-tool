@@ -7413,27 +7413,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1096,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Month Heading",
-      "purpose": "Reusable  month heading interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/my_plan/_month_heading.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 2154,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -7622,7 +7601,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2759,
+      "bytes": 2663,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7643,7 +7622,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3197,
+      "bytes": 3150,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7747,7 +7726,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6270,
+      "bytes": 8629,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7788,29 +7767,6 @@
       "variants": [
         "executive"
       ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 2062,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Month Strip",
-      "purpose": "Reusable month strip interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/my_plan/month_strip.html",
-      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -7886,7 +7842,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2650,
+      "bytes": 2567,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7954,7 +7910,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2771,
+      "bytes": 2935,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8065,7 +8021,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1588,
+      "bytes": 1433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -103545,7 +103501,7 @@
     "activity_states": 24,
     "all_routes": 1287,
     "api_routes": 360,
-    "component_templates": 462,
+    "component_templates": 460,
     "full_pages": 258,
     "mobile_contract_pass": 527,
     "nonvisual_actions": 263,

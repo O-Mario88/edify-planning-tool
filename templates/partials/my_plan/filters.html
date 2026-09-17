@@ -4,36 +4,75 @@ hx-get="/my-plan"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
 hx-push-url="true"
+{% comment %}`change` is listed here, on the form, because that is the only
+place it works. `hx-get` is not one of htmx's inherited attributes, so the
+`hx-trigger="change"` each select used to carry named an event on an element
+with no request to make and did nothing: picking a fiscal year, quarter or
+month changed the select and left the page exactly as it was, and the filters
+only ever applied on a submit the toolbar has no button for. A change event
+bubbles from every control in this form — the advanced drawer's included — up
+to the form, where the request lives (owner, 2026-09-17).{% endcomment %}
+hx-trigger="change, submit"
 class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm"
 >
-{% comment %}My Plan reads the whole fiscal year. The period travels with the
-form so an explicit ?period= in the URL (the CSV export, a deep link) survives a
-filter change instead of silently reverting.{% endcomment %}
-<input type="hidden" name="period" value="{{ period }}">
+{% comment %}Only a period the caller actually asked for travels with the form.
+An explicit ?period= (the CSV export, a deep link) must survive a filter change;
+a period the server derived from the month select must not, or the page would be
+pinned to that month and no later change could widen it back out.{% endcomment %}
+{% if period_param %}<input type="hidden" name="period" value="{{ period_param }}">{% endif %}
+
+{% comment %}What the page was rendered with. A GET form submits every select,
+not only the one that changed, so these are how the server tells "the user
+picked a new year" from "the year was already this". Widening clears what it
+contains: a new fiscal year drops the quarter and month, a new quarter drops the
+month (owner, 2026-09-17).{% endcomment %}
+<input type="hidden" name="fy_prev" value="{{ fy_prev }}">
+<input type="hidden" name="quarter_prev" value="{{ quarter_prev }}">
 
 <!-- FY Filter -->
 <div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[90px]">
 <span class="edify-filter-label">Fiscal year</span>
-<select name="fy" aria-label="Filter by fiscal year" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<select name="fy" aria-label="Filter by fiscal year" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for option in fy_options %}
 <option value="{{ option }}" {% if fy == option %}selected{% endif %}>FY {{ option }}</option>
 {% endfor %}
 </select>
 </div>
 
-{% comment %}The Quarter and Month selects went with the period tabs. They
-narrowed the feed to one slice, and the page no longer has slices: it shows the
-whole fiscal year with a section per month, so a month is something you scroll
-to rather than something you filter down to. The fiscal year itself stays — a
-different year is a different plan.{% endcomment %}
+{% comment %}Quarter and Month both default to All, which is what makes a bare
+fiscal year mean the whole fiscal year. Picking a quarter opens it at its first
+month; picking a month goes straight there.{% endcomment %}
+
+<!-- Quarter Filter -->
+<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[100px]">
+<span class="edify-filter-label">Quarter</span>
+<select name="quarter" aria-label="Filter by quarter" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="all" {% if not selected_quarter %}selected{% endif %}>All quarters</option>
+{% for q in quarters %}
+<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Month Filter -->
+<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[110px]">
+<span class="edify-filter-label">Month</span>
+<select name="month" aria-label="Filter by month" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="all" {% if not selected_month %}selected{% endif %}>All months</option>
+{% for m in months %}
+<option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>{{ m.label }}</option>
+{% endfor %}
+</select>
+</div>
 
 <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog"
         @click="$refs.advancedFilters.showModal()">
-{% comment %}`filters_active` is the server's own answer (see the My Plan
-service). The button used to compare each selected value against "all" itself, and an
-unset filter is None rather than "all" — so a page with nothing filtered
-announced "Applied".{% endcomment %}
-More filters{% if filters_active %} · Applied{% endif %}
+{% comment %}`advanced_filters_active` is the server's own answer for what is
+inside this drawer, and nothing else — the badge would otherwise light up for a
+quarter or month chosen out here in the toolbar. The button used to compare each
+selected value against "all" itself, and an unset filter is None rather than
+"all", so a page with nothing filtered announced "Applied".{% endcomment %}
+More filters{% if advanced_filters_active %} · Applied{% endif %}
 </button>
 
 <dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="my-plan-advanced-filter-title">
@@ -46,7 +85,7 @@ More filters{% if filters_active %} · Applied{% endif %}
 <!-- District Filter -->
 <div class="flex flex-col min-w-[120px]">
 <span class="edify-filter-label">District</span>
-<select name="district" aria-label="Filter by district" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<select name="district" aria-label="Filter by district" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all">All districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
@@ -57,7 +96,7 @@ More filters{% if filters_active %} · Applied{% endif %}
 <!-- Staff Filter -->
 <div class="flex flex-col min-w-[130px]">
 <span class="edify-filter-label">Staff member</span>
-<select name="staff" aria-label="Filter by staff member" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<select name="staff" aria-label="Filter by staff member" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all">All staff</option>
 {% for s in staff_users %}
 <option value="{{ s.id }}" {% if selected_staff == s.id %}selected{% endif %}>{{ s.name }}</option>
@@ -68,7 +107,7 @@ More filters{% if filters_active %} · Applied{% endif %}
 <!-- Activity Type Filter -->
 <div class="flex flex-col min-w-[140px]">
 <span class="edify-filter-label">Activity type</span>
-<select name="activity_type" aria-label="Filter by activity type" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<select name="activity_type" aria-label="Filter by activity type" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_activity_type or selected_activity_type == 'all' %}selected{% endif %}>All types</option>
 <option value="school_visit" {% if selected_activity_type == 'school_visit' %}selected{% endif %}>School Visit</option>
 <option value="cluster_training" {% if selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster Training</option>
@@ -79,7 +118,7 @@ More filters{% if filters_active %} · Applied{% endif %}
 <!-- Status Filter -->
 <div class="flex flex-col min-w-[120px]">
 <span class="edify-filter-label">Status</span>
-<select name="status" aria-label="Filter by status" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<select name="status" aria-label="Filter by status" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>All statuses</option>
 <option value="scheduled" {% if selected_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>

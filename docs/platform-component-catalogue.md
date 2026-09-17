@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **462**
+Components and application partials: **460**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -308,7 +308,6 @@ Components and application partials: **462**
 | `partials/messages/recipient_suggestions.html` | application-partial | Reusable recipient suggestions interface primitive | canonical; default, disabled | inherits containing page contract | inherits semantic parent contract | /messages/new<br>/messages/new/<br>/messages/new/suggestions | 0 |
 | `partials/messages/thread_list.html` | application-partial | Reusable thread list interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /messages<br>/messages/ | 0 |
 | `partials/messages/unread_badge_oob.html` | application-partial | Reusable unread badge oob interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /messages<br>/messages/<br>/messages/thread/<str:thread_id><br>/messages/thread/<str:thread_id>/reply | 0 |
-| `partials/my_plan/_month_heading.html` | application-partial | Reusable  month heading interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/_priority_group.html` | application-partial | Reusable  priority group interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/accountability_drawer.html` | application-partial | Reusable accountability drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/accountability | 0 |
 | `partials/my_plan/activity_detail_drawer.html` | application-partial | Reusable activity detail drawer interface primitive | canonical; default, selected, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id><br>/my-plan/<str:activity_id> | 0 |
@@ -324,7 +323,6 @@ Components and application partials: **462**
 | `partials/my_plan/evidence_drawer.html` | application-partial | Reusable evidence drawer interface primitive | success, warning; default, empty, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/evidence | 0 |
 | `partials/my_plan/filters.html` | application-partial | Reusable filters interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan | 0 |
 | `partials/my_plan/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
-| `partials/my_plan/month_strip.html` | application-partial | Reusable month strip interface primitive | canonical; default | inherits containing page contract | accessible name and label | /my-plan | 0 |
 | `partials/my_plan/partner_ssa_completion_drawer.html` | application-partial | Reusable partner ssa completion drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/partner-ssa-complete | 0 |
 | `partials/my_plan/period_breakdown.html` | application-partial | Reusable period breakdown interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/priority_queue.html` | application-partial | Reusable priority queue interface primitive | amber, rose, slate; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
