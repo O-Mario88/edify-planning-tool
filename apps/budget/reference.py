@@ -32,7 +32,15 @@ PARTNER_RATES: tuple[tuple[str, str, int], ...] = (
     ("partner_meetings", "Partner Meetings", 40000),
 )
 GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
-    ("cluster_meetings_trainings", "Cluster Meetings/ Trainings", 0),
+    # Owner, 2026-09-17: "cluster meeting is not fetching the right cost for
+    # cluster meeting". It could not: a meeting and a training shared one row,
+    # so the Country Director had no way to price them apart. They are two
+    # rows now. `cluster_meetings_trainings` stays, still priced and still the
+    # training's rate, so every saved cost line, snapshot and test that names
+    # it keeps reading; the meeting gets its own key and is seeded from the
+    # shared row's value, so splitting them reprices nothing on its own.
+    ("cluster_meetings_trainings", "Cluster Training", 0),
+    ("cluster_meeting", "Cluster Meeting", 0),
     ("tot_trainings", "TOT trainings", 0),
     ("tot_trainings_meals", "TOT trainings - Meals", 5000),
     # Owner, 2026-09-15: a cluster meeting or training feeds its participants
@@ -63,6 +71,7 @@ RATE_UNITS: dict[str, str] = {
     "core_partner_visit": "per visit",
     "partner_meetings": "per meeting",
     "cluster_meetings_trainings": "per session",
+    "cluster_meeting": "per meeting",
     "tot_trainings": "per training",
     "tot_trainings_meals": "per participant per day",
     "cluster_meetings_trainings_meals": "per participant per day",
@@ -92,6 +101,7 @@ OPTIONAL_RATE_KEYS = frozenset(
     {
         "onetest",
         "cluster_meetings_trainings",
+        "cluster_meeting",
         "tot_trainings",
         "cluster_meetings_trainings_meals",
         "student_conference",
@@ -113,6 +123,10 @@ RATE_ALIASES: dict[str, tuple[str, ...]] = {
         "cluster_meeting_participant_meal_cost_per_head",
         "meals_per_participant",
     ),
+    # A rate card written before meetings and trainings were priced apart
+    # carries only the shared row; a meeting costed against it prices exactly
+    # as it did before the split rather than falling to zero.
+    "cluster_meeting": ("cluster_meetings_trainings",),
 }
 
 

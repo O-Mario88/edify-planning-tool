@@ -152,7 +152,22 @@ def assert_may_withdraw(principal, assignment, kind: str) -> str:
     scope = resolve_user_scope(principal)
     supervised = _both_id_spaces(set(scope.supervised_staff_ids or []))
 
-    managing = {assignment.monitoring_staff_id, assignment.assigning_staff_id} - {
+    # Whose assignment this is. The two staff ids on the record are who set it
+    # up and who watches it — but the person who holds the school holds the
+    # work done at it, and they are often neither. Every assignment in a
+    # seeded country had a school owner outside this set, so the owner of the
+    # school could not withdraw a partner from their own school at all
+    # (owner, 2026-09-17). The cluster's responsible staff member is here for
+    # the same reason on a cluster assignment. The rule below is unchanged:
+    # a CCEO still only withdraws while the work is unscheduled.
+    school = getattr(assignment, "school", None)
+    cluster = getattr(assignment, "cluster", None)
+    managing = {
+        assignment.monitoring_staff_id,
+        assignment.assigning_staff_id,
+        getattr(school, "account_owner_id", None),
+        getattr(cluster, "responsible_staff_id", None),
+    } - {
         None,
         "",
     }

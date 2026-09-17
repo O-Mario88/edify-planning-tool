@@ -496,6 +496,73 @@ class AuthorityTest(WithdrawalFixture):
         with self.assertRaises(Forbidden):
             svc.withdraw(a.id, self.payload(), self.other_pl_user)
 
+    def test_the_school_owner_may_withdraw_a_partner_from_their_own_school(self):
+        """Owner, 2026-09-17: "The School owner cannot withdraw the assignment
+        from the partner."
+
+        They could not. Whose assignment it was, was read from the two staff
+        ids on the record — who set it up and who watches it — and when a
+        Programme Lead makes the assignment neither of those is the CCEO who
+        holds the school. Every assignment in a seeded country was in exactly
+        that shape, so no school owner could withdraw a partner from their own
+        school. The person who holds the school holds the work done at it.
+        """
+        owned = School.objects.create(
+            school_id="s-owned",
+            name="Owned Primary",
+            district=self.district,
+            region=self.region,
+            account_owner_id=self.cceo.id,
+        )
+        a = PartnerAssignment.objects.create(
+            school=owned,
+            partner=self.partner,
+            # The Programme Lead set it up and watches it. The CCEO does not
+            # appear on the record at all — only on the school.
+            assigning_staff_id=self.pl.id,
+            monitoring_staff_id=self.pl.id,
+            expected_activity_type="school_visit",
+            focus_intervention="financial_health",
+            support_type="school_visit",
+            status=PartnerAssignment.STATUS_ASSIGNED,
+        )
+
+        w = svc.withdraw(a.id, self.payload(), self.cceo_user)
+
+        self.assertEqual(w.requested_by_role, EdifyRole.CCEO.value)
+
+    def test_the_school_owner_still_may_not_cancel_planned_work(self):
+        """Owning the school does not widen the rule, only who it applies to:
+        once the partner has committed to a date it is the Programme Lead's
+        call, as it already was for the assigning CCEO."""
+        owned = School.objects.create(
+            school_id="s-owned-2",
+            name="Owned Two",
+            district=self.district,
+            region=self.region,
+            account_owner_id=self.cceo.id,
+        )
+        a = PartnerAssignment.objects.create(
+            school=owned,
+            partner=self.partner,
+            assigning_staff_id=self.pl.id,
+            monitoring_staff_id=self.pl.id,
+            expected_activity_type="school_visit",
+            focus_intervention="financial_health",
+            support_type="school_visit",
+            status=PartnerAssignment.STATUS_ASSIGNED,
+        )
+        self.schedule(a)
+
+        with self.assertRaises(Forbidden) as caught:
+            svc.withdraw(
+                a.id,
+                self.payload(reason_category=WithdrawalReason.CAPACITY),
+                self.cceo_user,
+            )
+
+        self.assertIn("Program Lead", str(caught.exception))
+
 
 class ValidationTest(WithdrawalFixture):
     def test_a_reason_category_is_required(self):

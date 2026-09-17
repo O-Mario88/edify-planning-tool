@@ -42,7 +42,7 @@ Open Planning
 </span>
 </td>
 <td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td class="text-center font-semibold text-slate-700" data-label="Participants">{{ row.expected_participants }}</td>
+<td class="text-center font-semibold text-slate-700" data-label="Participants">{{ row.expected_participants|default:"—" }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}

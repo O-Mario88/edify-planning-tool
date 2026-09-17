@@ -7487,14 +7487,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4711,
+      "bytes": 5464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 10,
+      "htmx_controls": 8,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -7622,7 +7622,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3150,
+      "bytes": 3164,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10185,14 +10185,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8519,
+      "bytes": 9789,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 4,
       "kind": "application-partial",
       "name": "Directory Row",
       "purpose": "Reusable directory row interface primitive",

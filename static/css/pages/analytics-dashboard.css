@@ -166,25 +166,31 @@
   min-inline-size: 0;
 }
 
-/* A portrait sheet that fits the screen (owner, 2026-09-16: "the map is too
-   large ... make it fit exactly so that the users don't have to scroll").
+/* A portrait sheet that fills the card's width (owner, 2026-09-17: "the map
+   size has reduced to too small ... increase only the map size to fill the
+   page. the tables can be scrolled").
 
-   It was a fixed 30cm × 42cm box, which is 1134 × 1587px — taller than any
-   laptop, so on a 1080px screen the card stood 2186px and the map could only
-   be read by scrolling it past the window in two goes.
+   Uganda's sheet is 30:42 — portrait — and a workspace is landscape, so the
+   two cannot both be satisfied: a sheet bounded by the window's HEIGHT leaves
+   most of the card's width empty. That is what it did, and on a 1440 × 950
+   screen it drew 461px wide inside a 1174px card, a third of the room it had.
 
-   The sheet keeps its 30:42 proportions and is now bounded by the height
-   actually left below the page and card headers (the map's top sits ~276px
-   into the scroll container; --sr-map-chrome covers that plus a margin). The
-   width follows from the ratio, so the country is never stretched, and
-   max-inline-size keeps a narrow card shrinking it in proportion as before.
-   svh, not vh, so a phone's retracting toolbar does not crop it. */
+   So the width leads now and the height follows the ratio. The sheet takes the
+   card, up to its 30cm sheet width, and runs past the fold — which is the
+   trade the owner asked for and named: the map is the thing to look at, the
+   distribution table beneath it is the thing to scroll to. The ratio is
+   untouched, so the country is never stretched.
+
+   (The previous rule answered the opposite request on 2026-09-16 — "make it
+   fit exactly so that the users don't have to scroll" — after a fixed
+   30cm × 42cm box stood 2186px on a 1080px screen. What made that unreadable
+   was the card, not the map: the sheet is bounded by the card's width now
+   rather than by a physical measure.) */
 .analytics-geo-card .sr-map-viewport {
-  --sr-map-chrome: 19rem;
   margin-inline: auto;
   aspect-ratio: 30 / 42;
-  block-size: min(calc(100svh - var(--sr-map-chrome)), 42cm);
-  inline-size: auto;
+  inline-size: min(30cm, 100%);
+  block-size: auto;
   max-inline-size: min(30cm, 100%);
 }
 .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
@@ -1535,12 +1541,11 @@ main #impact-workspace .impact-group-pagination a {
     min-width: 0;
     width: 100%;
   }
-  /* Desktop has more room above the map than a phone does, but the rule is
-     the same one: fit the window rather than overflow it (owner,
-     2026-09-16). This override used to reinstate the unbounded 30cm box and
-     would have undone the fitting rule above, so it now only widens the cap
-     the sheet may grow to. */
+  /* Desktop: the same rule as everywhere — the sheet takes the card's width,
+     up to 30cm. Stated here so the cap is not narrowed by a container query
+     further up the cascade. */
   .analytics-geo-card .sr-map-viewport {
+    inline-size: min(30cm, 100%);
     max-inline-size: 30cm;
   }
   .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }

@@ -1249,11 +1249,20 @@ def get_frontend_context(principal, query: dict) -> dict:
             ).count()
             if a.cluster
             else 0,
-            "expected_participants": (a.teachers_attended or 0)
-            + (a.leaders_attended or 0)
-            + (a.other_participants or 0)
+            # Who turned up if the activity has been delivered, otherwise who
+            # was planned for — and nothing at all when neither is recorded.
+            # This used to fall through to a literal 20, so every school visit
+            # and cluster meeting in the platform (all of which store None)
+            # reported twenty expected participants that nobody had planned
+            # for (owner, 2026-09-17). A made-up number on a planning page is
+            # worse than a blank: it is budgeted against.
+            "expected_participants": (
+                (a.teachers_attended or 0)
+                + (a.leaders_attended or 0)
+                + (a.other_participants or 0)
+            )
             or a.expected_participants
-            or 20,
+            or None,
             # Core details
             "is_core": is_core,
             "visit_number": visit_number,
