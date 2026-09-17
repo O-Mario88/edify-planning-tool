@@ -166,29 +166,29 @@
   min-inline-size: 0;
 }
 
-/* A portrait sheet that fills the card's width (owner, 2026-09-17: "the map
-   size has reduced to too small ... increase only the map size to fill the
-   page. the tables can be scrolled").
+/* A SQUARE map that fills the card (owner, 2026-09-17: "The map should be
+   square much as it will fill the desktop page. i dont mind the dead space on
+   the sides").
 
-   Uganda's sheet is 30:42 — portrait — and a workspace is landscape, so the
-   two cannot both be satisfied: a sheet bounded by the window's HEIGHT leaves
-   most of the card's width empty. That is what it did, and on a 1440 × 950
-   screen it drew 461px wide inside a 1174px card, a third of the room it had.
+   The sheet was 30:42 — a portrait print convention — while the SVG is a
+   square viewBox (0 0 620 620) holding a country whose own bounds are 570 x
+   600. Fitting that square drawing into a portrait box wasted a band the full
+   width of the card, top and bottom: roughly 380px of nothing on a 1440 x 950
+   screen, which is why the map kept reading as small however it was sized.
 
-   So the width leads now and the height follows the ratio. The sheet takes the
-   card, up to its 30cm sheet width, and runs past the fold — which is the
-   trade the owner asked for and named: the map is the thing to look at, the
-   distribution table beneath it is the thing to scroll to. The ratio is
-   untouched, so the country is never stretched.
+   Square matches what is actually drawn, so the country fills the box and the
+   only empty space is at the sides, where the owner has said they want it.
+   The height follows the width, so the map is as big as the card allows and
+   runs past the fold — the map is the thing to look at, the distribution table
+   beneath it the thing to scroll to.
 
-   (The previous rule answered the opposite request on 2026-09-16 — "make it
-   fit exactly so that the users don't have to scroll" — after a fixed
-   30cm × 42cm box stood 2186px on a 1080px screen. What made that unreadable
-   was the card, not the map: the sheet is bounded by the card's width now
-   rather than by a physical measure.) */
+   (Two earlier rules answered narrower versions of this: a fixed 30cm x 42cm
+   box on 2026-09-15, then a height-bounded sheet on 2026-09-16 — "make it fit
+   exactly so that the users don't have to scroll" — which left the map 461px
+   wide inside a 1174px card.) */
 .analytics-geo-card .sr-map-viewport {
   margin-inline: auto;
-  aspect-ratio: 30 / 42;
+  aspect-ratio: 1 / 1;
   inline-size: min(30cm, 100%);
   block-size: auto;
   max-inline-size: min(30cm, 100%);
