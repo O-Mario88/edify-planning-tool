@@ -1524,7 +1524,7 @@ def _assigned_intake(request, *, school_scoped: bool):
         ).values_list("id", "user__name")
     )
     # The school's own visit rule (owner, 2026-09-15): a client school is
-    # visited once a year, a core school's partner side holds two visits. The
+    # a capped allowance, a core school's partner side holds two visits. The
     # Schedule button greys out with the reason; Return stays available.
     from apps.planning.visit_gate import visit_gates
 

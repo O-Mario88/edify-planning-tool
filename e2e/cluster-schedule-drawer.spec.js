@@ -3,6 +3,18 @@ const { signIn } = require('./helpers/auth');
 
 test.use({ video: 'off', trace: 'off', serviceWorkers: 'block' });
 
+// Every cluster entry point opens the SAME drawer since 2026-09-17 — the
+// Planning one, which the Clusters page's own buttons now target (owner: "use
+// the same cluster meeting planning drawer ... everywhere there is cluster
+// planning"). The contract this spec has always pinned is unchanged: the
+// drawer opens, it does not flash away when the cost preview fires, and the
+// preview lands INSIDE the drawer rather than replacing #drawer-container.
+// Only the element names moved: #action-planner-form -> #cluster-planner-form,
+// #planner-cost-preview-container -> #cluster-cost-preview.
+//
+// The preview assertion earns its keep: htmx inherits hx-target, so the new
+// drawer's preview was briefly swapped into the form's error box instead of
+// its own container.
 test.describe('Cluster Schedule Drawers stay open and contain cost preview', () => {
   test('Cluster card Schedule button opens planner drawer and stays open', async ({ page }) => {
     test.setTimeout(60000);
@@ -26,15 +38,15 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await expect(surface).toBeVisible();
 
     // Verify the action planner form is present inside the drawer
-    const form = surface.locator('#action-planner-form');
+    const form = surface.locator('#cluster-planner-form');
     await expect(form).toBeVisible();
 
     // Verify the cost preview container is inside the drawer and visible
-    const costPreview = surface.locator('#planner-cost-preview-container');
+    const costPreview = surface.locator('#cluster-cost-preview');
     await expect(costPreview).toBeVisible();
 
     // Verify that the cost preview did NOT replace #drawer-container (it must be inside the drawer surface)
-    const previewInsideDrawer = await surface.locator('#planner-cost-preview-container').count();
+    const previewInsideDrawer = await surface.locator('#cluster-cost-preview').count();
     expect(previewInsideDrawer).toBe(1);
 
     // Close the drawer
@@ -60,7 +72,7 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await page.waitForTimeout(1500);
     await expect(surface).toBeVisible();
 
-    const form = surface.locator('#action-planner-form');
+    const form = surface.locator('#cluster-planner-form');
     await expect(form).toBeVisible();
 
     const closeBtn = surface.locator('.drawer-close-btn');
@@ -85,7 +97,7 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await page.waitForTimeout(1500);
     await expect(surface).toBeVisible();
 
-    const form = surface.locator('#action-planner-form');
+    const form = surface.locator('#cluster-planner-form');
     await expect(form).toBeVisible();
 
     const closeBtn = surface.locator('.drawer-close-btn');

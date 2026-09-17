@@ -264,7 +264,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
             supervisor=cls.pl_sp, supervisee=cls.cceo_sp
         )
         StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=cls.school.id)
-        # A client school is visited once a year (owner, 2026-09-15), so a
+        # A client school's visits are capped (owner, 2026-09-15), so a
         # week with two visit days visits two schools in the portfolio.
         cls.school_two = School.objects.create(
             school_id="SCH-WK-COMPILE-2",

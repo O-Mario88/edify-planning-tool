@@ -169,7 +169,7 @@ class VisitRequestFixture(TestCase):
 
     def _owned_school(self, suffix: str) -> School:
         """Another school in the CCEO's portfolio, for a walk that needs more
-        than one approved visit: a client school is visited once a year."""
+        than its allowance of approved visits (CLIENT_VISIT_CAP)."""
         school = School.objects.create(
             school_id=f"VR-OWNED-{suffix}",
             name=f"Owned Primary {suffix}",
@@ -262,7 +262,7 @@ class RequestingAVisitTest(VisitRequestFixture):
                 self.assertEqual(a.status, "scheduled")
                 self.assertEqual(a.approval_owner_id, "")
                 self.assertEqual(a.responsible_staff_id, who.staff_profile_id)
-                # A client school is visited once a year: free the visit so
+                # A client school's visits are capped: free one so
                 # the next role can schedule it outright too.
                 a.status = "cancelled"
                 a.save(update_fields=["status"])

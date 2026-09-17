@@ -1,6 +1,7 @@
 """Activity planning with strict duplicate funding safeguards.
 
-A client school is visited once a year (owner, 2026-09-15; the rule lives in
+A client school's visits are capped for the year (owner, 2026-09-15; the rule
+lives in
 apps.planning.visit_gate). Core activities still require reserved package
 slots, each cost line belongs in only one weekly request, and scheduled costs
 follow the activity's week.

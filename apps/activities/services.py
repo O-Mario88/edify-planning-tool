@@ -975,7 +975,8 @@ def _assert_schedule_entitlement(
     activity_type=core_visit to the generic endpoint would create a core
     activity with no slot behind it.
 
-    A client school is visited once a year, by staff or by a partner, and a
+    A client school's visits are capped for the year (CLIENT_VISIT_CAP, two
+    since 2026-09-17), counted across staff and partner alike, and a
     school handed to a partner is the partner's to schedule until they return
     it (owner, 2026-09-15; apps.planning.visit_gate is the one definition the
     greyed buttons and this refusal share). The annual training entitlement
@@ -4307,7 +4308,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 exclude_activity_id=pa.scheduled_activity_id,
             )
             # The school's own visit rule (owner, 2026-09-15): a client school
-            # is visited once a year, a core school's partner side holds two
+            # has a capped allowance, a core school's partner side holds two
             # visits. Same answer as the greyed Schedule button in the
             # partner's queue.
             from apps.planning.visit_gate import (
