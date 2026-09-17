@@ -232,7 +232,20 @@ class CoreBypassTests(Fixture):
 class StaffCoreAnnualCapTests(TestCase):
     """C4 — the staff share of a core package is 2+2 per FY, not per quarter."""
 
-    def test_the_annual_cap_is_checked_before_the_quarter_window(self):
+    def test_the_staff_cap_counts_the_package_and_no_narrower_window(self):
+        """Two staff visits per package, counted over the whole package.
+
+        This used to read "the ANNUAL cap is checked before the QUARTER
+        window", because the gate had three layers: a per-quarter window, a
+        per-fiscal-year cap and the package. The quarter window and the
+        fiscal-year filter are gone (owner, 2026-09-17: "Lift all FY
+        restriction and package restrictions. Only block staff visit schedule
+        after 2 scheduling"), so the cap is now counted on the package itself.
+
+        That is the stronger rule, not the weaker one: work on one package can
+        now fall in more than one fiscal year, and a cap filtered by
+        `fy=current_fy` would have reset itself the moment it did.
+        """
         import inspect
 
         from apps.core_schools.core_planning_services import (
@@ -240,10 +253,12 @@ class StaffCoreAnnualCapTests(TestCase):
         )
 
         source = inspect.getsource(CorePackageSchedulingService.assert_can_schedule)
-        self.assertIn("STAFF_ANNUAL_CAP", source)
-        # The FY-level count must not be quarter-filtered.
-        annual_block = source.split("STAFF_ANNUAL_CAP")[1].split("staff_already")[0]
-        self.assertNotIn("quarter=current_quarter", annual_block)
+        self.assertIn("STAFF_CAP = 2", source)
+        cap_block = source.split("STAFF_CAP = 2")[1]
+        # Counted on the package. Neither the quarter nor the year narrows it.
+        self.assertIn("core_plan=plan", cap_block)
+        self.assertNotIn("quarter=", cap_block)
+        self.assertNotIn("fy=", cap_block)
 
 
 class ClusterAttendanceMembershipTests(Fixture):

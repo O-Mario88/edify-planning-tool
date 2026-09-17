@@ -29,12 +29,16 @@ from apps.planning.test_standard_support_scheduling import (
 )
 
 
-def _week_query(day):
+def _month_query(day):
+    """The My Plan filter a just-saved activity opens on.
+
+    The week — and the week view it opened — is gone: My Plan filters by FY,
+    quarter and month now, and groups its rows by month (owner, 2026-09-17).
+    """
     return {
         "fy": "2027" if day >= datetime.date(2026, 10, 1) else "2026",
         "month": str(day.month),
-        "week": str(min(5, (day.day - 1) // 7 + 1)),
-        "period": "week",
+        "period": "month",
     }
 
 
@@ -71,19 +75,21 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
     def _my_plan_meeting_ids(self, day):
         from apps.my_plan.services import get_frontend_context
 
-        context = get_frontend_context(self.user, _week_query(day))
+        context = get_frontend_context(self.user, _month_query(day))
         return {row["id"] for row in context["cluster_meetings_all"]}
 
     def test_a_scheduled_meeting_is_costed_owned_and_in_my_plan(self):
         day = _schedulable_date()
         response, meeting = self._schedule(day)
         self.assertEqual(response.status_code, 200)
-        # Lands on the week it sits in.
+        # Lands on the month it sits in.
         body = response.content.decode()
         self.assertIn("/my-plan?", body)
         url = body.split('window.location.href = "')[1].split('"')[0]
         query = parse_qs(urlsplit(url.replace("&amp;", "&")).query)
-        self.assertEqual(query["week"], [_week_query(day)["week"]])
+        self.assertEqual(query["month"], [_month_query(day)["month"]])
+        self.assertEqual(query["period"], ["month"])
+        self.assertNotIn("week", query)
         # Governed and owned once, by the StaffProfile id.
         self.assertIsNotNone(meeting.catalogue_item_id)
         self.assertEqual(meeting.catalogue_item.workflow_kind, "cluster_meeting")
@@ -95,17 +101,22 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
             ActivityScheduleCostLine.objects.filter(activity=meeting).exists()
         )
 
-    def test_rescheduling_moves_the_week_without_duplicating_cost(self):
+    def test_rescheduling_moves_the_period_without_duplicating_cost(self):
+        """It moved the WEEK until 2026-09-17, when the week view was retired.
+
+        A month is the narrowest period My Plan now filters on, so the move
+        has to cross one for "it left the old plan and joined the new" to be
+        observable at all. The cost half of this test is unchanged and is the
+        half that matters: re-priced in place, never duplicated.
+        """
         from apps.activities.services import reschedule
 
         day = _schedulable_date()
         _response, meeting = self._schedule(day)
         lines_before = ActivityScheduleCostLine.objects.filter(activity=meeting).count()
-        later = day + datetime.timedelta(days=7)
+        later = day + datetime.timedelta(days=35)
         if later.weekday() == 6:
             later += datetime.timedelta(days=1)
-        if later.month != day.month and later >= datetime.date(2026, 10, 1) > day:
-            self.skipTest("A week later crosses into FY2027 on this clock.")
         reschedule(
             meeting.id,
             {"scheduledDate": later.isoformat(), "reason": "Venue moved"},
@@ -141,15 +152,24 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
         october = datetime.date(2026, 10, 6)
         _response, meeting = self._schedule(october)
         self.assertEqual(meeting.fy, "2027")
-        context = get_frontend_context(self.user, _week_query(october))
+        context = get_frontend_context(self.user, _month_query(october))
         self.assertIn("2027", context["fy_options"])
         self.assertIn(meeting.id, {r["id"] for r in context["cluster_meetings_all"]})
         page = self.client.get(
-            "/my-plan?fy=2027&month=10&week=1&period=week", HTTP_HX_REQUEST="true"
+            "/my-plan?fy=2027&month=10&period=month", HTTP_HX_REQUEST="true"
         )
         self.assertContains(page, 'value="2027" selected')
 
-    def test_fy2027_meeting_cannot_start_before_october(self):
+    def test_a_next_year_meeting_may_be_started_when_it_happens(self):
+        """The fiscal year no longer gates delivery.
+
+        This pinned the opposite until 2026-09-17: starting an FY2027 meeting
+        before 1 October 2026 was refused. Planning forward was already
+        allowed, so the rule's only effect was that a team who had entered the
+        term ahead could not act on it — the same wall, one step later. Lifted
+        on the owner's instruction, "can you make sure all restrictions are
+        lifted throughout the platform".
+        """
         from apps.activities.services import start_completion
 
         meeting = Activity.objects.create(
@@ -163,12 +183,9 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
             responsible_staff_id=self.staff.id,
             delivery_type="staff",
         )
-        if timezone.localdate() >= datetime.date(2026, 10, 1):
-            self.skipTest("FY2027 has started on this clock.")
-        from apps.core.exceptions import BadRequest
-
-        with self.assertRaisesMessage(BadRequest, "1 October 2026"):
-            start_completion(meeting.id, {}, self.user)
+        start_completion(meeting.id, {}, self.user)
+        meeting.refresh_from_db()
+        self.assertNotEqual(meeting.status, "scheduled")
 
 
 class ProjectMyPlanListsClusterMeetingsTest(StandardSupportBase):

@@ -725,6 +725,10 @@ def _line_item_type(key: str) -> str:
         "ssa_support",
         "onetest",
         "cluster_meetings_trainings",
+        # The cluster meeting's own rate, split from the shared row on
+        # 2026-09-17. Without it here the meeting's headline line reported as
+        # "other" in every itemized budget.
+        "cluster_meeting",
         "tot_trainings",
         "student_conference",
         "proprietor_conference",

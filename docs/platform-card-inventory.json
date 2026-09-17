@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 691,
-  "templates": 261,
-  "distinct_titles": 657,
+  "titled_cards": 693,
+  "templates": 263,
+  "distinct_titles": 659,
   "with_card_key": 13,
   "untitled_surfaces": 777,
   "untitled_chrome": 176,
@@ -6507,6 +6507,24 @@
    "template": "templates/partials/my_plan/cluster_trainings.html",
    "line": 2,
    "title": "Trainings Planned for This WeekThis MonthThis QuarterThis FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/my_plan/core_school_trainings.html",
+   "line": 15,
+   "title": "Core School Trainings Planned for This WeekThis MonthThis QuarterThis FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/my_plan/core_school_visits.html",
+   "line": 15,
+   "title": "Core School Visits Planned for This WeekThis MonthThis QuarterThis FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",

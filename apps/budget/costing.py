@@ -269,15 +269,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         if photocopying:
             add_rate("photocopying_training_materials", photocopying)
 
-    def add_meals(meals_key: str, days: int) -> None:
+    def add_meals(meals_key: str, days: int) -> bool:
         """Participants fed per head per day. The TOT meals rate is a
         required rate; the cluster meals rate was added on 2026-09-15 and is
         charged only on a card that carries it, like the other added rates.
         A session priced with meals but no headcount is unfundable (see the
-        expectedParticipants check at the end), never priced for nobody."""
+        expectedParticipants check at the end), never priced for nobody.
+
+        Returns whether a meal line was actually booked, which is what decides
+        whether the staff member delivering the session eats from it.
+        """
         if meals_key in OPTIONAL_RATE_KEYS and meals_key not in rates:
-            return
+            return False
         add(RATE_LABELS[meals_key], meals_key, _participants_of(a, 0) * days)
+        return True
 
     def add_group_session(
         days: int, rate_key: str | None, meals_key: str | None = None
@@ -288,8 +293,12 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         copied, and the staff member travels."""
         if rate_key:
             add_rate(rate_key)
-        if meals_key:
-            add_meals(meals_key, days)
+        # fed is whether a participant-meal line was actually BOOKED, not
+        # whether this kind of session has a meals rate at all. A card that
+        # has not set its cluster meals rate feeds nobody, so the staff member
+        # delivering the session still needs their own lunch; reading the
+        # intent instead of the outcome dropped it from an unfed session.
+        fed = bool(meals_key) and add_meals(meals_key, days)
         add(
             RATE_LABELS["group_training_facilitation_fee"],
             "group_training_facilitation_fee",
@@ -297,7 +306,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
-        add_staff_day(days, fed=bool(meals_key))
+        add_staff_day(days, fed=fed)
 
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")

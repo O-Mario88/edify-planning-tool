@@ -29,7 +29,13 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertIn("--edify-desktop-list-icon-size: 2rem", css)
         self.assertIn("--edify-action-button-block-size: 2.5rem", css)
         self.assertIn("--edify-action-button-icon-size: 0.875rem", css)
-        self.assertIn("padding: 0.625rem 0.875rem !important", css)
+        # 0.3rem block padding, not the 0.625rem this pinned until
+        # 2026-09-17: "School list rows are so large even though the items are
+        # smaller. can you make it compact just like planning list rows".
+        # The inline padding is unchanged — it was the row HEIGHT that read as
+        # large, and narrowing the gutters would have cost legibility for
+        # nothing.
+        self.assertIn("padding: 0.3rem 0.875rem !important", css)
 
     def test_shared_mobile_controls_use_compact_accessible_scale(self):
         """The rebuild uses 40px page actions at every breakpoint.

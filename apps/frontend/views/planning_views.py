@@ -206,7 +206,14 @@ def _calendar_url_for_scheduled_date(raw_date: str | None) -> str:
 
 
 def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
-    """Open My Plan on the exact week containing a just-saved activity."""
+    """Open My Plan on the month containing a just-saved activity.
+
+    It used to open the WEEK, back when My Plan's own view was a week. That
+    view is gone — My Plan now filters by FY, quarter and month and groups the
+    rows by month (owner, 2026-09-17) — so a week=N&period=week link landed
+    the scheduler on a slice the filter bar can no longer show or clear, and
+    any other work they had that month was missing from it.
+    """
     from datetime import date
 
     try:
@@ -218,8 +225,7 @@ def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
         {
             "fy": get_operational_fy(scheduled_for),
             "month": scheduled_for.month,
-            "week": min(5, (scheduled_for.day - 1) // 7 + 1),
-            "period": "week",
+            "period": "month",
         }
     )
 

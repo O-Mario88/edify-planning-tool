@@ -26,7 +26,6 @@ from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
-from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
@@ -529,20 +528,22 @@ class BoundaryTest(TestCase):
         self.assertEqual(get_quarter_for_date(sep30), "Q4")
         self.assertEqual(get_quarter_for_date(oct1), "Q1")
 
-    def test_a_reschedule_across_the_fy_boundary_is_refused(self):
-        """No silent FY moves (owner brief, 2026-09-15).
+    def test_a_reschedule_across_the_fy_boundary_carries_the_money_with_it(self):
+        """The money follows the date, across the year boundary and within it.
 
-        This walk used to prove that rescheduling from 15 September to 6
-        October carried every period field — activity fy and quarter, and the
-        cost line's fiscal_year, quarter and month — over to FY2027. Carrying
-        them is the right behaviour for a move that is allowed; the move
-        itself is not. Money planned, costed and approved inside FY2026 must
-        not become FY2027 money because somebody picked a later day: the year
-        it belongs to is a decision, not a side effect of a date picker.
+        The refusal this pinned (owner brief, 2026-09-15: "no silent FY
+        moves") was lifted on 2026-09-17 — "can you make sure all restrictions
+        are lifted throughout the platform". What it guarded against is real:
+        money planned inside FY2026 must not stay FY2026 money once the work
+        happens in October. But that is `reschedule`'s own job, and it already
+        does it — rewriting the activity's fy, quarter and planned_month and
+        the cost line's fiscal_year, quarter and month in one transaction. The
+        refusal added nothing to the correctness; it only made a one-date move
+        into a cancel-and-re-plan with a new activity id and a lost trail.
 
-        So the reschedule is refused and says what to do instead, and nothing
-        moves. A move WITHIN the year still carries all five fields, which is
-        the hardening this test was written for; that half is below.
+        So this now asserts the carrying rather than the refusal, across the
+        boundary AND within the year — which is the hardening it was written
+        for either way.
         """
         from apps.activities import services as activity_services
         from apps.budget.models import CostCatalogue, CostSetting
@@ -607,22 +608,23 @@ class BoundaryTest(TestCase):
             quarter="Q4",
             month=9,
         )
-        with self.assertRaisesMessage(BadRequest, "FY2026 work"):
-            activity_services.reschedule(
-                activity.id,
-                {"scheduledDate": "2026-10-06", "reason": "FY-boundary hardening test"},
-                cceo,
-            )
+        # 15 September 2026 is FY2026 Q4; 6 October 2026 is FY2027 Q1. Both
+        # the activity and its cost line move.
+        activity_services.reschedule(
+            activity.id,
+            {"scheduledDate": "2026-10-06", "reason": "FY-boundary hardening test"},
+            cceo,
+        )
         activity.refresh_from_db()
         line = activity.schedule_cost_lines.first()
-        self.assertEqual((activity.fy, activity.quarter), ("2026", "Q4"))
-        self.assertEqual(activity.planned_date, _dt(2026, 9, 15).date())
+        self.assertEqual((activity.fy, activity.quarter), ("2027", "Q1"))
+        self.assertEqual(activity.planned_date, _dt(2026, 10, 6).date())
         self.assertEqual(
-            (line.fiscal_year, line.quarter, line.month), ("2026", "Q4", 9)
+            (line.fiscal_year, line.quarter, line.month), ("2027", "Q1", 10)
         )
 
-        # A move inside the year carries every period field with it: the
-        # hardening this walk exists for, on the move that is allowed.
+        # A move inside a year carries every period field with it too: the
+        # hardening this walk exists for. Back into FY2026 Q4.
         activity_services.reschedule(
             activity.id,
             {"scheduledDate": "2026-07-14", "reason": "Moved earlier in the year"},

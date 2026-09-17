@@ -27,6 +27,7 @@ from apps.partners import services as partner_services
 from apps.partners.purposes import PARTNER_VISIT_PURPOSES
 from apps.activities.models import Activity
 from apps.core_schools.models import (
+    CoreActivitySlot,
     CorePlan,
     CoreSchoolProfile,
 )
@@ -172,27 +173,38 @@ def core_schools_view(request):
 
     delta_points = perf_insights["delta_points"]
 
-    visits_scheduled = (
-        Activity.objects.filter(
-            school__in=core_schools_qs,
-            activity_type="core_visit",
-            fy=fy,
-            deleted_at__isnull=True,
-        )
-        .exclude(status="cancelled")
-        .count()
-    )
-
-    trainings_scheduled = (
-        Activity.objects.filter(
-            school__in=core_schools_qs,
-            activity_type="core_training",
-            fy=fy,
-            deleted_at__isnull=True,
-        )
-        .exclude(status="cancelled")
-        .count()
-    )
+    # What is scheduled against the package is the SLOT, not an Activity of a
+    # particular type, and these two counters are "how many of the 4 + 4
+    # package slots are taken" — the same question available_options and
+    # assert_can_schedule answer. Counting activities by type answered a
+    # different one and got trainings wrong: a Core training is delivered by
+    # the standard In-school Training workflow (activity_type
+    # "in_school_training", the course naming it), so "core_training" matched
+    # nothing ever written and the tile read 0 / 412 however many were
+    # scheduled — which is what scheduling one and seeing nothing looks like
+    # (owner, 2026-09-17: "Core school training scheduling ... is not
+    # saving"). It saved; only the count could not see it.
+    #
+    # Read through the slots and the two paths that book a training — this
+    # drawer and the In-school Training option on the visit drawer — are both
+    # counted, because both commit a slot. is_allocated, rather than a status
+    # filter, because slot status is stored in mixed case and carries the
+    # workflow's later states as well as "Scheduled".
+    # "Scheduled" here means committed: dated, or handed to a partner who has
+    # not dated it yet. See status_is_taken.
+    slot_states = CoreActivitySlot.objects.filter(
+        core_plan__school_id__in=core_schools_qs.values_list("school_id", flat=True),
+        core_plan__fy=fy,
+    ).values_list("activity_type", "status")
+    visits_scheduled = 0
+    trainings_scheduled = 0
+    for slot_kind, slot_status in slot_states:
+        if not CorePackageSchedulingService.status_is_taken(slot_status):
+            continue
+        if slot_kind == "visit":
+            visits_scheduled += 1
+        elif slot_kind == "training":
+            trainings_scheduled += 1
 
     total_target = total_core * 4
     regions_covered = core_schools_qs.values("region").distinct().count()
@@ -284,10 +296,19 @@ def core_schools_view(request):
         .order_by("name")
     )
 
+    from apps.core.permissions import has_permission
+
     context = {
         "fy": fy,
         "selected_fy": fy,
         "fy_options": fy_options(),
+        # Add to Project, the same one the School Directory offers (owner,
+        # 2026-09-17: "core schools should be able to be added to project as
+        # well ... replicate the exact add to project functionality on client
+        # schools"). The drawer and the enrolment service already handle a core
+        # school — projects_open_for_enrolment excludes client-only projects
+        # for one — so the whole of what was missing was the way in.
+        "can_assign_project": has_permission(request.user, "project.assignSchool"),
         "selected_region": filters["region"],
         "selected_district": filters["district"],
         "selected_staff": filters["staff"],
@@ -514,7 +535,9 @@ def core_schedule_visit_drawer(request):
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
-    first_visit = bool(plan) and CorePackageSchedulingService.first_visit_pending(plan)
+    # The package's first visit no longer has to be SSA Support, so every
+    # purpose is offered from the start (owner, 2026-09-17).
+    first_visit = False
     # Trainings are the owner's; a request-only country role asks for visits.
     is_requester = bool(approval_owner_for(school, request.user))
     purposes = [
@@ -522,8 +545,6 @@ def core_schedule_visit_drawer(request):
         for value, label in STAFF_VISIT_PURPOSES
         if not (is_requester and value == "in_school_training")
     ]
-    if first_visit:
-        purposes = [(v, label) for v, label in purposes if v == "ssa_support"]
 
     from apps.frontend.views.planning_views import _school_training_follow_up_options
 
@@ -650,14 +671,14 @@ def core_schedule_visit_action(request):
             )
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
-            first_visit = CorePackageSchedulingService.first_visit_pending(plan)
-            if first_visit and not purpose_of_visit:
+            # SSA Support remains the DEFAULT when a caller names no purpose —
+            # a core package opens by collecting the year's SSA data, and that
+            # is still the sensible reading of an unspecified visit. What is
+            # gone (2026-09-17) is the refusal that used to follow: the first
+            # visit of a package no longer HAS to be SSA Support, and the
+            # drawer offers every purpose from the start.
+            if not purpose_of_visit:
                 purpose_of_visit = "ssa_support"
-            if first_visit and purpose_of_visit != "ssa_support":
-                raise BadRequest(
-                    "The first Core visit of the fiscal year is SSA Support: it "
-                    "collects this year's SSA data before any other support."
-                )
             if purpose_of_visit:
                 payload["purposeType"] = purpose_of_visit
             if purpose_of_visit == "ssa_support":
@@ -802,11 +823,10 @@ def _schedule_core_in_school_training(
         )
         if not plan:
             raise BadRequest("This school does not have an active core package.")
-        if CorePackageSchedulingService.first_visit_pending(plan):
-            raise BadRequest(
-                "The first Core visit of the fiscal year is SSA Support: it "
-                "collects this year's SSA data before any other support."
-            )
+        # No first-visit gate here any more: a TRAINING slot is not a visit
+        # slot, and refusing one on the state of the other is how a core
+        # school with an unstarted package could be given no training at all
+        # (owner, 2026-09-17).
         requested = request.POST.get("training_number", "").strip()
         options = CorePackageSchedulingService.available_options(plan, "training")
         if not options:
@@ -1063,12 +1083,14 @@ def core_assign_partner_drawer(request):
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
-    first_visit = bool(plan) and CorePackageSchedulingService.first_visit_pending(plan)
-    purposes = [
-        (value, label)
-        for value, label in PARTNER_VISIT_PURPOSES
-        if not first_visit or value == "ssa_support"
-    ]
+    # The same three purposes the client school's assign drawer offers, from
+    # the same tuple (owner, 2026-09-17: "the purpose options are the same as
+    # the options on the client school assign to partner"). They used to be
+    # filtered down to SSA Support alone until the package's first visit was
+    # taken; that rule is lifted, so the filter is gone rather than left here
+    # as a no-op that could quietly come back to life.
+    first_visit = False
+    purposes = PARTNER_VISIT_PURPOSES
     from apps.frontend.views.planning_views import _school_training_follow_up_options
 
     context = {
@@ -1180,15 +1202,8 @@ def core_assign_partner_action(request):
             )
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
-            if (
-                CorePackageSchedulingService.first_visit_pending(plan)
-                and purpose_of_visit != "ssa_support"
-            ):
-                raise BadRequest(
-                    "The first Core visit of the fiscal year is SSA Support: it "
-                    "collects this year's SSA data before any other support."
-                )
-
+            # A handoff may be any of the three partner purposes from the
+            # start; the first-visit-is-SSA rule is lifted (owner, 2026-09-17).
             training_course = None
             source_activity = None
             focus_intervention = None

@@ -111,11 +111,19 @@ class ClosedSchoolTakesNoWorkTest(_purposes._CoreFixture):
             )
 
 
-class CoreScheduledOpensItsWeekTest(_purposes._CoreFixture):
-    def test_a_saved_core_visit_opens_my_plan_on_its_own_week(self):
+class CoreScheduledOpensItsMonthTest(_purposes._CoreFixture):
+    def test_a_saved_core_visit_opens_my_plan_on_its_own_month(self):
+        """A bare /my-plan looks like a failed save; the saved month does not.
+
+        This pinned the WEEK until 2026-09-17, when My Plan's week view was
+        replaced by month-grouped plans filtered on FY, quarter and month.
+        A week= link then landed the scheduler on a slice that page can no
+        longer show or clear, so the redirect moved up to the month holding
+        the activity — still narrow enough that the new row is on screen.
+        """
         response = self._post_visit(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
-        week = min(5, (TODAY.day - 1) // 7 + 1)
         self.assertContains(response, f"month={TODAY.month}")
-        self.assertContains(response, f"week={week}")
+        self.assertContains(response, "period=month")
+        self.assertNotContains(response, "week=")
         self.assertNotContains(response, 'href = "/my-plan";')

@@ -53,10 +53,13 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         # Every action carries both labels — the phone shows one, the desktop
         # the other — so the two counts move together whatever actions the row
         # grows. The cluster action has three states now (add, change, and the
-        # refusal), the project action two.
+        # refusal), the project action two, and Schedule is the sixth: the
+        # Impact Assessment role plans straight from the directory (owner,
+        # 2026-09-17, "he can plan direct from the school directory. ONLY and
+        # ONLY IA can plan from the school directory").
         full = directory.count("school-record-action__label--full")
         self.assertEqual(full, directory.count("school-record-action__label--compact"))
-        self.assertEqual(full, 5)
+        self.assertEqual(full, 6)
         self.assertEqual(directory.count("_cluster_action_icon.html"), 3)
         self.assertEqual(directory.count("_project_action_icon.html"), 2)
         self.assertIn('<circle cx="12" cy="5"', cluster_icon)

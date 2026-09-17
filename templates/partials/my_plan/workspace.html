@@ -32,7 +32,20 @@ work; the Dashboard is where the day is summarised.
 <!-- 3. Cluster Meetings -->
 {% include "partials/my_plan/cluster_meetings.html" %}
 
-<!-- 4. Non-school programme activities (conferences, camps, exhibitions) -->
+{% comment %}The core package's own two cards. They are rendered only for
+someone who has core work in the period, because on a plan with none they
+would be two empty cards between the tables that do have rows. The cards
+above never hide: an empty week of school visits is a fact about the plan,
+whereas "no core schools" is a fact about the role.{% endcomment %}
+{% if core_school_visits or core_school_trainings %}
+<!-- 4. Core package visits -->
+{% include "partials/my_plan/core_school_visits.html" %}
+
+<!-- 5. Core package trainings -->
+{% include "partials/my_plan/core_school_trainings.html" %}
+{% endif %}
+
+<!-- 6. Non-school programme activities (conferences, camps, exhibitions) -->
 {% if programme_activities %}
 {% include "partials/my_plan/programme_activities.html" %}
 {% endif %}

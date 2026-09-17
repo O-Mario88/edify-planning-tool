@@ -915,7 +915,13 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         self.assertTrue(response.context["success"])
         # The shared minimum day plus the twelve participants fed at the
         # cluster meals minimum (5,000 by default).
-        self.assertEqual(response.context["preview"]["amount"], 105001 + 12 * 5000)
+        #
+        # 98,334 for the day, not the 105,001 this read before 2026-09-17: the
+        # staff member's share of the day's 20,000 lunch is no longer charged
+        # on a session that feeds its participants, and the day is shared
+        # three ways. Transport's share is untouched — the sharing arithmetic
+        # this test exists for is unchanged; one component left the recipe.
+        self.assertEqual(response.context["preview"]["amount"], 98334 + 12 * 5000)
         self.assertContains(response, "3 planned activities")
         self.assertNotContains(response, "280,000")
 

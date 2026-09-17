@@ -32,6 +32,16 @@ logger = logging.getLogger(__name__)
 CORE_ALLOCATED_SLOT_STATUSES = frozenset(
     {
         "scheduled",
+        # A partner-dated slot is a dated slot. The mirror writes the
+        # activity's own status onto the slot, and a partner scheduling their
+        # assignment writes "partner_scheduled" — which was missing here, so
+        # the slot read as FREE: the package offered that sequence again, and
+        # a staff member could book T1 on top of the partner's T1. Found while
+        # fixing the partner path on 2026-09-17; "rescheduled" is the same
+        # class of dated status and was missing for the same reason.
+        "partner_scheduled",
+        "partner scheduled",
+        "rescheduled",
         "in_progress",
         "in progress",
         "evidence uploaded",
@@ -99,8 +109,34 @@ class CorePackageSchedulingService:
         return (value or "").strip().lower()
 
     @classmethod
+    def status_is_allocated(cls, status: str | None) -> bool:
+        """Is a slot in this status taken?
+
+        Split out of is_allocated so a caller reading many slots can ask by
+        status alone — a values_list of 800 rows rather than 800 model
+        instances — without re-deriving the rule or the normalisation.
+        """
+        return cls._normalise_status(status) in CORE_ALLOCATED_SLOT_STATUSES
+
+    @classmethod
     def is_allocated(cls, slot: CoreActivitySlot) -> bool:
-        return cls._normalise_status(slot.status) in CORE_ALLOCATED_SLOT_STATUSES
+        return cls.status_is_allocated(slot.status)
+
+    @classmethod
+    def status_is_taken(cls, status: str | None) -> bool:
+        """Is this slot spoken for — dated, OR handed to a partner?
+
+        The same predicate `available_sequences` uses to decide a slot is no
+        longer offerable. A slot a partner holds but has not yet dated is not
+        "Scheduled", but it is committed: counting it keeps the package
+        counters agreeing with the chooser, so a planner who hands two
+        trainings to a partner sees two fewer open slots AND two more
+        committed, rather than a chooser and a tile that contradict.
+        """
+        return (
+            cls.status_is_allocated(status)
+            or cls._normalise_status(status) == "assigned"
+        )
 
     @classmethod
     def summary(cls, plan: CorePlan, slots=None) -> dict:
@@ -129,16 +165,27 @@ class CorePackageSchedulingService:
 
     @classmethod
     def first_visit_pending(cls, plan: CorePlan) -> bool:
-        """No visit of this package is on the calendar or handed to a partner.
+        """Always False since 2026-09-17. Kept so its call sites stay readable.
 
-        Owner, 2026-09-15: the first Core visit of the fiscal year is SSA
-        Support, linked to data collection, so the drawer offers only that
-        purpose until one visit slot has been taken.
+        It used to answer "no visit of this package is on the calendar or
+        handed to a partner yet", and five call sites turned that into a rule:
+        the first Core visit of the fiscal year had to be SSA Support (owner,
+        2026-09-15), so until one visit slot was taken the assignment drawer
+        offered a single purpose, and a Core TRAINING could not be scheduled
+        at all — the training path refused on a visit-slot question.
+
+        Lifted on the owner's instruction (2026-09-17): "Lift all FY
+        restriction and package restrictions. Only block staff visit schedule
+        after 2 scheduling and block partner assignment and schedule after 2
+        assignment and scheduling", and again, "can you make sure all
+        restrictions are lifted throughout the platform". Those two caps are
+        enforced in assert_can_schedule and assert_can_assign and are
+        untouched.
+
+        A no-op rather than five deletions: a rule that has been lifted is
+        worth being able to find, and the call sites read the same either way.
         """
-        return not any(
-            cls.is_allocated(slot) or cls._normalise_status(slot.status) == "assigned"
-            for slot in plan.slots.filter(activity_type="visit")
-        )
+        return False
 
     @classmethod
     def available_sequences(cls, plan: CorePlan, activity_type: str) -> list[int]:

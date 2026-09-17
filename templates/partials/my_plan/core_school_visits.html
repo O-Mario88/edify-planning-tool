@@ -1,0 +1,77 @@
+{% load school_identity %}
+{% load table_pagination %}
+{% comment %}
+Core package VISITS, on their own card (owner, 2026-09-17: "core planned
+activities should have a separate core school visits planned table ... on each
+table show the count of how many visits based on the completed planned
+activities").
+
+What lands here is work booked into a CoreActivitySlot of kind "visit" — the
+package's own record — so the V1..V4 the row shows is the slot's number, the
+same one the Core Schools matrix and the scheduling drawer speak in. A core
+school's non-package work stays on the School Visits card with everyone
+else's.
+{% endcomment %}
+<div class="card overflow-hidden">
+
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></span>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+Core School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
+</h2>
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] border border-[var(--edify-primary)]/20">
+{{ core_school_visits|length }}
+</span>
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Planned core visits on this card whose work is done">
+{{ core_school_visits_completed }} completed
+</span>
+</div>
+
+<a href="/core-schools" class="btn btn-ghost h-8 edify-text-caption shadow-sm">
+Open Core Schools
+</a>
+</div>
+
+<div class="overflow-x-auto edify-record-table-wrap">
+{% paginate core_school_visits "core_visits_page" 10 as core_school_visits_pager %}
+{% if core_school_visits %}
+<table class="edify-data-table mp-table edify-record-table">
+<thead>
+<tr>
+<th>School Name</th>
+<th>Package</th>
+<th>District</th>
+<th>Planned Date</th>
+<th>Focus Intervention</th>
+<th>Assigned Partner</th>
+<th>Status</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for row in core_school_visits_pager.rows %}
+<tr>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% school_identity row.school_name row.school_id %}</td>
+<td class="font-bold text-slate-700" data-label="Package">{{ row.visit_number|default:"—" }}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
+<td class="font-semibold text-slate-500" data-label="District">{{ row.school_district }}</td>
+<td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td data-label="Intervention">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
+{{ row.focus_intervention }}
+</span>
+</td>
+<td class="font-bold text-slate-700" data-label="Partner">{{ row.owner }}</td>
+<td>{% include "partials/my_plan/row_badges.html" %}</td>
+{% include "partials/my_plan/activity_row.html" %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=core_school_visits_pager param="core_visits_page" pagination_label="Core school visit pages" %}
+{% endif %}
+{% if not core_school_visits %}
+<div class="px-5 py-4">{% include "components/empty_state.html" with message="No core school visits planned for this period." cta_label="Open Core Schools" cta_href="/core-schools" icon_path="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4" %}</div>
+{% endif %}
+</div>
+</div>

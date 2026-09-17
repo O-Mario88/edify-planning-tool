@@ -122,76 +122,49 @@ def is_financially_locked(activity) -> bool:
 
 # ── Authority ────────────────────────────────────────────────────────────────
 def assert_may_withdraw(principal, assignment, kind: str) -> str:
-    """Who may do this, to this, right now. Returns the acting role.
+    """Who may do this. Returns the acting role.
 
-    The rule the spec turns on: a CCEO may withdraw their own school's work
-    only while it is still unscheduled. Once a partner has committed to a date
-    the CCEO must ask their Program Lead, because cancelling work a partner has
-    planned around is a decision with consequences beyond one school.
+    One gate: does this role manage partner work at all. Everything that used
+    to sit after it is gone (owner, 2026-09-17: "The withdraw assignment
+    should work universally for all assignments to partner and by all roles").
+
+    What was removed, and why it was safe to remove:
+
+    * A CCEO could only withdraw while the work was still UNSCHEDULED, and
+      otherwise had to ask their Program Lead. The escalation still exists —
+      `request_withdrawal` below is untouched and is the right move when
+      somebody wants a second opinion — but it is now a choice rather than a
+      wall in front of the person whose school it is.
+    * The scope tests ("this assignment belongs to another team", "this
+      assignment is not yours to withdraw") refused a manager acting on work
+      they could see and were accountable for, and they misfired often: the
+      ids on the record are who set the assignment up and who watches it,
+      which at a seeded school is frequently neither the school's owner nor
+      anybody in their line.
+
+    What has NOT changed, because none of it is a question about roles:
+
+    * WHICH workflow runs is still decided by the record's state, by
+      `classify` — an unscheduled handover, a locked budget and evidence
+      already in are three different operations.
+    * Paid and closed work is still refused outright, and nothing here
+      deletes: every withdrawal is stamped with the role and person who asked
+      for it, so a withdrawal reaching past a team is recorded rather than
+      quiet.
     """
     from apps.core.permissions import has_permission
     from apps.core.rbac import EdifyRole, Permission
-    from apps.core.scoping import owner_ids, resolve_user_scope
 
     role = getattr(principal, "active_role", "") or ""
     if getattr(principal, "is_superuser", False) or role == EdifyRole.ADMIN.value:
         return role
 
-    # The coarse gate first: does this role do withdrawals at all. Checked
-    # server-side rather than inferred from which button rendered, because a
-    # hidden control is not a permission.
+    # Checked server-side rather than inferred from which button rendered,
+    # because a hidden control is not a permission.
     if not has_permission(principal, Permission.PARTNER_ASSIGNMENT_WITHDRAW.value):
         raise Forbidden("Your role cannot withdraw partner assignments.")
 
-    if role == EdifyRole.COUNTRY_DIRECTOR.value:
-        return role
-
-    from apps.planning.oversight_service import _both_id_spaces
-
-    own = _both_id_spaces(set(owner_ids(principal)))
-    scope = resolve_user_scope(principal)
-    supervised = _both_id_spaces(set(scope.supervised_staff_ids or []))
-
-    # Whose assignment this is. The two staff ids on the record are who set it
-    # up and who watches it — but the person who holds the school holds the
-    # work done at it, and they are often neither. Every assignment in a
-    # seeded country had a school owner outside this set, so the owner of the
-    # school could not withdraw a partner from their own school at all
-    # (owner, 2026-09-17). The cluster's responsible staff member is here for
-    # the same reason on a cluster assignment. The rule below is unchanged:
-    # a CCEO still only withdraws while the work is unscheduled.
-    school = getattr(assignment, "school", None)
-    cluster = getattr(assignment, "cluster", None)
-    managing = {
-        assignment.monitoring_staff_id,
-        assignment.assigning_staff_id,
-        getattr(school, "account_owner_id", None),
-        getattr(cluster, "responsible_staff_id", None),
-    } - {
-        None,
-        "",
-    }
-
-    if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
-        if not managing & (own | supervised):
-            raise Forbidden(
-                "This assignment belongs to another team. Ask the Program Lead "
-                "who supervises it."
-            )
-        return role
-
-    if role == EdifyRole.CCEO.value:
-        if not managing & own:
-            raise Forbidden("This assignment is not yours to withdraw.")
-        if kind != WithdrawalKind.WITHDRAW_UNSCHEDULED:
-            raise Forbidden(
-                "The partner has already scheduled this. Request withdrawal "
-                "from your Program Lead rather than cancelling their planned "
-                "work directly."
-            )
-        return role
-
-    raise Forbidden("Your role cannot withdraw partner assignments.")
+    return role
 
 
 # ── Impact preview ───────────────────────────────────────────────────────────

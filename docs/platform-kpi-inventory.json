@@ -3596,7 +3596,7 @@
    "audit_id": "KPI-SOURCE-190",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 325,
+   "line": 346,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -24757,7 +24757,7 @@
     "Admin"
    ],
    "metric_name": "Visits Scheduled",
-   "definition": "The Visits Scheduled value produced by apps.frontend.views.core_schools_views.core_schools_view; the preserved server display expression is `f\"{visits_scheduled} / {total_target}\"`; query provenance: visits_scheduled := Activity.objects.filter(school__in=core_schools_qs, activity_type='core_visit', fy=fy, deleted_at__isnull=True).exclude(status='cancelled').count(); total_core := core_schools_qs.count().",
+   "definition": "The Visits Scheduled value produced by apps.frontend.views.core_schools_views.core_schools_view; the preserved server display expression is `f\"{visits_scheduled} / {total_target}\"`; query provenance: visits_scheduled := the CoreActivitySlot rows of activity_type 'visit' on the in-scope schools' CorePlans for fy, counted where CorePackageSchedulingService.status_is_taken(status) - that is, dated or handed to a partner. Counted from the package SLOT rather than from Activity rows of a given activity_type, because a Core training is delivered by the standard In-school Training workflow and no activity of type 'core_training' is ever written; total_core := core_schools_qs.count().",
    "value_type": "status",
    "period": "point_in_time",
    "scope": "The role- and filter-scoped records in the Core schools workspace",
@@ -24807,7 +24807,7 @@
     "Admin"
    ],
    "metric_name": "Trainings Scheduled",
-   "definition": "The Trainings Scheduled value produced by apps.frontend.views.core_schools_views.core_schools_view; the preserved server display expression is `f\"{trainings_scheduled} / {total_target}\"`; query provenance: trainings_scheduled := Activity.objects.filter(school__in=core_schools_qs, activity_type='core_training', fy=fy, deleted_at__isnull=True).exclude(status='cancelled').count(); total_core := core_schools_qs.count().",
+   "definition": "The Trainings Scheduled value produced by apps.frontend.views.core_schools_views.core_schools_view; the preserved server display expression is `f\"{trainings_scheduled} / {total_target}\"`; query provenance: trainings_scheduled := the CoreActivitySlot rows of activity_type 'training' on the in-scope schools' CorePlans for fy, counted where CorePackageSchedulingService.status_is_taken(status) - that is, dated or handed to a partner. Counted from the package SLOT rather than from Activity rows of a given activity_type, because a Core training is delivered by the standard In-school Training workflow and no activity of type 'core_training' is ever written; total_core := core_schools_qs.count().",
    "value_type": "status",
    "period": "point_in_time",
    "scope": "The role- and filter-scoped records in the Core schools workspace",
@@ -40183,7 +40183,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 201,
+   "line": 213,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,

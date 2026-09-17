@@ -487,20 +487,30 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
 
 class MapIsAFixedSheetTest(SimpleTestCase):
-    """Owner, 2026-09-15: "the map size should be 30cm width x 42cm height —
-    for every role." It replaces the window-height fit of 2026-09-11.
+    """The stylesheet sizes the map; the script only places labels.
 
-    The stylesheet sizes the viewport — a 30cm × 42cm portrait sheet that
-    shrinks in proportion only when the card is narrower — so the script no
-    longer measures the window or writes a height; a resize only re-places
-    the labels.
+    That division is the point of this test and has not moved. The shape has:
+    the 30cm x 42cm portrait sheet of 2026-09-15 became a SQUARE bounded by
+    the room under the page and card headers (owner, 2026-09-17: "The map
+    should be square much as it will fill the desktop page. i dont mind the
+    dead space on the sides", read together with 2026-09-16's "make it fit
+    exactly so that the users don't have to scroll" — a square that spends
+    its height leaves its spare room at the sides, which is the dead space
+    the owner named).
+
+    The script still writes no height: the bound is a CSS calc, not a
+    measurement, so a resize only re-places the labels.
     """
 
     def test_the_stylesheet_sizes_the_sheet_and_the_script_no_longer_does(self):
         template = _regional_source()
         layout = _read("static/css/pages/analytics-dashboard.css")
-        self.assertIn("inline-size: min(30cm, 100%)", layout)
-        self.assertIn("aspect-ratio: 30 / 42", layout)
+        self.assertIn(
+            "inline-size: min(100%, 30cm, calc(100svh - var(--sr-map-chrome)))",
+            layout,
+        )
+        self.assertIn("aspect-ratio: 1 / 1", layout)
+        self.assertNotIn("aspect-ratio: 30 / 42", layout)
         self.assertNotIn("--map-viewport-height", layout)
         # The window fit is gone from the script.
         self.assertNotIn("document.querySelector('.edify-topbar')", template)

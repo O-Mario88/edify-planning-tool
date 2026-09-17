@@ -34,6 +34,19 @@ ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
 #: which is private to that module.
 QUARTER_FIRST_MONTH = {"Q1": 10, "Q2": 1, "Q3": 4, "Q4": 7}
 
+#: Slot statuses that mean the package activity actually happened. The slot
+#: mirrors the activity's workflow status, but in mixed case ("Scheduled",
+#: "IA Verified"), so compare on a normalised value rather than on the raw one.
+_COMPLETE_SLOT_STATUSES = frozenset(
+    {status.replace("_", " ") for status in COMPLETED_WORK_STATUSES}
+    | set(COMPLETED_WORK_STATUSES)
+)
+
+
+def _slot_status_is_complete(status: str | None) -> bool:
+    return (status or "").strip().lower() in _COMPLETE_SLOT_STATUSES
+
+
 #: What the filter selects say for "no narrowing". An unselected filter arrives
 #: as "all" from the form and as None from a URL that simply omits it; both mean
 #: the same thing and neither is a month.
@@ -951,6 +964,8 @@ def get_frontend_context(principal, query: dict) -> dict:
     school_visits_list = []
     cluster_trainings_list = []
     cluster_meetings_list = []
+    core_school_visits_list = []
+    core_school_trainings_list = []
     # Dated non-school programme work (conferences, camps, exhibitions) has no
     # school or cluster, so it matched none of the three category tables above
     # and was invisible on the page even though the urgency buckets held it.
@@ -1004,45 +1019,66 @@ def get_frontend_context(principal, query: dict) -> dict:
         for a in activities
         if a.school_id and a.school and a.school.school_type == "core"
     ]
-    prior_counts: dict[tuple, int] = {}
-    completed_counts: dict[tuple, int] = {}
+    # V1..V4 / T1..T4 and the package progress come from the CoreActivitySlot
+    # the activity was booked into, not from counting activities of a given
+    # type. Two reasons, and the second is a bug this used to have:
+    #
+    # * The slot IS the package. Its sequence_number is the number the Core
+    #   Schools page, the drawer's "First/Second/Third Training" chooser and
+    #   assert_can_schedule all speak in, so reading it keeps every surface
+    #   saying the same V2 or T3 about the same piece of work.
+    # * There is no "core_training" activity. A Core training is delivered by
+    #   the standard In-school Training workflow — activity_type
+    #   "in_school_training", with the catalogue course naming it — so the old
+    #   query matched nothing and every core training on this page was numbered
+    #   "" and counted as no progress at all (owner, 2026-09-17: core training
+    #   scheduling "is not saving"). The visits half worked, which is why only
+    #   trainings looked lost.
+    core_slot_by_activity: dict[str, tuple[str, int]] = {}
+    core_progress_by_activity: dict[str, str] = {}
     if core_activities:
-        core_keys = {(a.school_id, a.fy) for a in core_activities}
-        core_school_ids = {sid for sid, _ in core_keys}
-        core_fys = {fy for _, fy in core_keys}
+        from apps.core_schools.models import CoreActivitySlot
 
-        # Every core visit/training in the relevant partitions, ordered so the
-        # "how many came before me" question is answered by position rather
-        # than by a query per row.
-        sequence_rows = (
-            Activity.objects.filter(
-                school_id__in=core_school_ids,
-                fy__in=core_fys,
-                activity_type__in=["core_visit", "core_training"],
-            )
-            .values_list("school_id", "fy", "activity_type", "planned_date", "status")
-            .order_by("school_id", "fy", "activity_type", "planned_date")
+        core_school_codes = {
+            a.school.school_id for a in core_activities if a.school.school_id
+        }
+        # NOT filtered by the activities' fiscal year. A package belongs to one
+        # FY; its work no longer has to — a partner may date an FY2026
+        # assignment into October, which is FY2027 — so matching the plan's fy
+        # against the ACTIVITY's finds nothing and the row loses its number
+        # and its progress. The activity id is unique, so the school is filter
+        # enough.
+        slot_rows = CoreActivitySlot.objects.filter(
+            core_plan__school_id__in=core_school_codes,
+        ).values_list(
+            "activity_id",
+            "activity_type",
+            "sequence_number",
+            "status",
+            "core_plan__school_id",
+            "core_plan__fy",
         )
-        by_partition: dict[tuple, list] = {}
-        for school_id, fy, activity_type, planned_date, status in sequence_rows:
-            by_partition.setdefault((school_id, fy, activity_type), []).append(
-                planned_date
-            )
-            if status == "completed":
-                key = (school_id, fy)
-                completed_counts[key] = completed_counts.get(key, 0) + 1
-
-        # Mirror the original predicate exactly: strictly-earlier planned_date,
-        # falling back to today when the row has none. Rows with a null
-        # planned_date sort first out of Postgres, so compare explicitly rather
-        # than relying on list position.
-        for a in core_activities:
-            if a.activity_type not in ("core_visit", "core_training"):
-                continue
-            cutoff = a.planned_date if a.planned_date else date.today()
-            dates = by_partition.get((a.school_id, a.fy, a.activity_type), [])
-            prior_counts[(a.school_id, a.fy, a.activity_type, a.id)] = sum(
-                1 for d in dates if d is not None and d < cutoff
+        plan_of_activity: dict[str, tuple] = {}
+        taken: dict[tuple, set] = {}
+        done: dict[tuple, set] = {}
+        for activity_id, slot_kind, sequence, status, plan_school, plan_fy in slot_rows:
+            plan = (plan_school, plan_fy)
+            # The package is spoken of as 4 visits + 4 trainings everywhere
+            # else, so the onboarding assessment slot is not in the
+            # denominator — "1/9" would not match any other surface.
+            if slot_kind in ("visit", "training"):
+                taken.setdefault(plan, set()).add((slot_kind, sequence))
+            if activity_id:
+                core_slot_by_activity[activity_id] = (slot_kind, sequence)
+                plan_of_activity[activity_id] = plan
+            if _slot_status_is_complete(status) and slot_kind in ("visit", "training"):
+                done.setdefault(plan, set()).add((slot_kind, sequence))
+        # Progress is the row's OWN package: how many of its slots are done,
+        # out of how many that package holds. Only a row that occupies a slot
+        # gets one — a core school's non-package work is not 1/8 of anything.
+        for activity_id, plan in plan_of_activity.items():
+            core_progress_by_activity[activity_id] = (
+                f"{len(done.get(plan, ()))}/{len(taken.get(plan, ()))} Completed"
             )
 
     for a in activities:
@@ -1137,20 +1173,16 @@ def get_frontend_context(principal, query: dict) -> dict:
         visit_number = ""
         training_number = ""
         core_progress = ""
+        core_slot_kind = ""
         if is_core:
-            if a.activity_type == "core_visit":
-                prev_visits = prior_counts.get(
-                    (a.school_id, a.fy, "core_visit", a.id), 0
-                )
-                visit_number = f"V{prev_visits + 1}"
-            elif a.activity_type == "core_training":
-                prev_trainings = prior_counts.get(
-                    (a.school_id, a.fy, "core_training", a.id), 0
-                )
-                training_number = f"T{prev_trainings + 1}"
-
-            completed_core = completed_counts.get((a.school_id, a.fy), 0)
-            core_progress = f"{completed_core}/8 Completed"
+            slot = core_slot_by_activity.get(a.id)
+            if slot:
+                core_slot_kind, sequence = slot
+                if core_slot_kind == "visit":
+                    visit_number = f"V{sequence}"
+                elif core_slot_kind == "training":
+                    training_number = f"T{sequence}"
+                core_progress = core_progress_by_activity.get(a.id, "")
 
         # Partner details
         partner_name = ""
@@ -1302,6 +1334,17 @@ def get_frontend_context(principal, query: dict) -> dict:
             a.activity_type in PROGRAMME_EVENT_TYPES
         ):
             programme_activities_list.append(activity_data)
+        elif core_slot_kind == "visit":
+            # Core package work gets its own two tables (owner, 2026-09-17:
+            # "core planned activities should have a separate core school
+            # visits planned table and a separate table for core school
+            # [trainings]"). The test is the SLOT, not the school: a core
+            # school's ordinary work — a social visit, a donor visit — is not
+            # part of the 4 + 4 package and stays in the tables it shares with
+            # every other school.
+            core_school_visits_list.append(activity_data)
+        elif core_slot_kind == "training":
+            core_school_trainings_list.append(activity_data)
         elif a.activity_type in [
             "school_visit",
             "follow_up_visit",
@@ -1579,6 +1622,20 @@ def get_frontend_context(principal, query: dict) -> dict:
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.
+        "core_school_visits": core_school_visits_list,
+        "core_school_visits_all": core_school_visits_list,
+        "core_school_visits_completed": sum(
+            1
+            for row in core_school_visits_list
+            if row["status"] in COMPLETED_WORK_STATUSES
+        ),
+        "core_school_trainings": core_school_trainings_list,
+        "core_school_trainings_all": core_school_trainings_list,
+        "core_school_trainings_completed": sum(
+            1
+            for row in core_school_trainings_list
+            if row["status"] in COMPLETED_WORK_STATUSES
+        ),
         "school_visits": school_visits_list,
         "school_visits_all": school_visits_list,
         "cluster_trainings": cluster_trainings_list,

@@ -2,13 +2,16 @@ const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 const {mapInView}=require('./helpers/map');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
-// The map is a portrait sheet that FITS THE WINDOW (owner, 2026-09-16: "the
-// map is too large ... make it fit exactly so that the users don't have to
-// scroll"). It keeps its 30:42 proportions and is never wider than 30cm or
-// than the card, but its height is now bounded by the room left under the
-// page and card headers — it used to be a fixed 30cm x 42cm box, which is
-// 1134 x 1587px and so taller than any laptop. 1cm is 96/2.54 CSS pixels.
-const CM=96/2.54, SHEET_W=30*CM, RATIO=42/30;
+// The map is a SQUARE sheet that FITS THE WINDOW. Two owner instructions meet
+// here: "make it fit exactly so that the users don't have to scroll"
+// (2026-09-16) and "The map should be square much as it will fill the desktop
+// page. i dont mind the dead space on the sides" (2026-09-17). The second is
+// why the ratio is 1:1 rather than the old 30:42 print sheet; the first is why
+// the sheet is never taller than the room left under the page and card
+// headers. The two agree: a square that spends its height leaves its spare
+// room at the sides, which is the dead space the owner named.
+// 1cm is 96/2.54 CSS pixels.
+const CM=96/2.54, SHEET_W=30*CM, RATIO=1;
 test('the map fits the window on landscape laptop and desktop windows',async({page})=>{
  test.setTimeout(120000);
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
@@ -23,7 +26,7 @@ test('the map fits the window on landscape laptop and desktop windows',async({pa
   expect(map.bottom,label).toBeLessThanOrEqual(height);
   const canvas=await page.locator('.sr-map-canvas').boundingBox();
   const r=await svg.boundingBox();
-  // Portrait proportions are kept, so the country is never stretched.
+  // Square, so the country is never stretched.
   expect(Math.abs(r.height-r.width*RATIO),label).toBeLessThanOrEqual(2);
   // Never wider than the sheet's cap, nor than the card holding it.
   expect(r.width,label).toBeLessThanOrEqual(Math.min(SHEET_W,canvas.width)+2);

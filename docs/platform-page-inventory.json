@@ -3563,14 +3563,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9520,
+      "bytes": 10463,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 4,
       "kind": "application-partial",
       "name": "School Row",
       "purpose": "Reusable school row interface primitive",
@@ -7692,6 +7692,48 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 4392,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Core School Trainings",
+      "purpose": "Reusable core school trainings interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/core_school_trainings.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 3882,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Core School Visits",
+      "purpose": "Reusable core school visits interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/core_school_visits.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
@@ -8021,7 +8063,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1433,
+      "bytes": 2048,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10030,6 +10072,7 @@
       "bytes": 367,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/core-schools",
         "/schools"
       ],
       "findings": [],
@@ -103501,7 +103544,7 @@
     "activity_states": 24,
     "all_routes": 1287,
     "api_routes": 360,
-    "component_templates": 460,
+    "component_templates": 462,
     "full_pages": 258,
     "mobile_contract_pass": 527,
     "nonvisual_actions": 263,

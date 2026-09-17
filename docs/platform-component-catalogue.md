@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **460**
+Components and application partials: **462**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -320,6 +320,8 @@ Components and application partials: **460**
 | `partials/my_plan/cluster_trainings.html` | application-partial | Reusable cluster trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/complete_drawer.html` | application-partial | Reusable complete drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/complete<br>/my-plan/<str:activity_id>/complete-drawer | 0 |
 | `partials/my_plan/confirm_reimbursement_receipt_drawer.html` | application-partial | Reusable confirm reimbursement receipt drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | 0 |
+| `partials/my_plan/core_school_trainings.html` | application-partial | Reusable core school trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/core_school_visits.html` | application-partial | Reusable core school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/evidence_drawer.html` | application-partial | Reusable evidence drawer interface primitive | success, warning; default, empty, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/evidence | 0 |
 | `partials/my_plan/filters.html` | application-partial | Reusable filters interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan | 0 |
 | `partials/my_plan/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
@@ -411,7 +413,7 @@ Components and application partials: **460**
 | `partials/pwa_head.html` | application-partial | Reusable pwa head interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/pwa_launch.html` | application-partial | Reusable pwa launch interface primitive | canonical; default, loading | explicit responsive contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/schools/_cluster_action_icon.html` | application-partial | Reusable  cluster action icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
-| `partials/schools/_project_action_icon.html` | application-partial | Reusable  project action icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
+| `partials/schools/_project_action_icon.html` | application-partial | Reusable  project action icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /core-schools<br>/schools | 0 |
 | `partials/schools/add_to_cluster_drawer.html` | application-partial | Reusable add to cluster drawer interface primitive | danger, info, warning; default, empty, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/add-to-cluster | 0 |
 | `partials/schools/assign_to_project_drawer.html` | application-partial | Reusable assign to project drawer interface primitive | canonical; default, error, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /schools/<str:school_id>/assign-to-project | 0 |
 | `partials/schools/business_transformation.html` | application-partial | Reusable business transformation interface primitive | {{ score.band_tone }}; default, empty | explicit responsive contract | accessible name and label | /schools/<str:school_id> | 0 |
