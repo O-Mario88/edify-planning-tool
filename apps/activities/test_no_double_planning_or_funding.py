@@ -75,9 +75,7 @@ class ClientEntitlementHoldsTest(TestCase):
         """Use up the school's whole visit allowance, a week apart."""
         from apps.planning.visit_gate import CLIENT_VISIT_CAP
 
-        return [
-            self._existing_visit(week) for week in range(1, CLIENT_VISIT_CAP + 1)
-        ]
+        return [self._existing_visit(week) for week in range(1, CLIENT_VISIT_CAP + 1)]
 
     def _schedule_another(self):
         from apps.activities.services import _assert_schedule_entitlement

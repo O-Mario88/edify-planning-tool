@@ -6637,14 +6637,14 @@
   },
   {
    "template": "templates/partials/planning/schedule_cluster_drawer.html",
-   "line": 96,
+   "line": 125,
    "title": "Cluster need \u00b7 of schools assessed",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3",
    "branch_path": [
     [
-     9,
+     14,
      0
     ]
    ]

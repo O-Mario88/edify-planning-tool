@@ -801,12 +801,46 @@ def schedule_modal_view(request):
             allocation_id=priority_allocation_id, principal=request.user
         )
     cluster_id = request.GET.get("cluster_id")
-    if cluster_id:
+    # `action` on its own opens the cluster drawer with no cluster chosen yet:
+    # that is how the Clusters page's own "Schedule Group Training" and
+    # "Schedule Cluster Meeting" buttons arrive, since they name the kind of
+    # session but not which cluster. One drawer serves both (owner,
+    # 2026-09-17: "make sure that the cluster planning (group training and
+    # meeting) scheduling is uniform irrespective of where the user is
+    # planning from"), so the picker appears exactly when the caller did not
+    # bring a cluster.
+    wants_cluster = request.GET.get("action") in ("training", "meeting")
+    if cluster_id or wants_cluster:
         if not RolePermissionService.can_schedule_activity(request.user):
             from apps.planning.visit_requests import CLUSTER_REFUSED
 
             return HttpResponseForbidden(CLUSTER_REFUSED)
-        cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
+        # The same list the Clusters page's own drawer offers, from the same
+        # canonical scoping helper (owner, 2026-09-17: "Use the same cluster
+        # list on the cluster page everywhere"). cluster_queryset is the set
+        # form of cluster_in_scope, so the picker cannot offer a cluster the
+        # service would then refuse.
+        from apps.core.scoping import cluster_queryset, resolve_user_scope
+
+        pickable = cluster_queryset(
+            resolve_user_scope(request.user), direct_only=True
+        ).filter(status="active")
+        if cluster_id:
+            cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
+        else:
+            cluster = pickable.first()
+            if cluster is None:
+                return HttpResponse(
+                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface '
+                    'text-[12px] font-bold">No cluster in your reach yet. '
+                    "Create one on the Clusters page first.</div>",
+                    status=400,
+                )
+        # Fixed when the caller named the cluster — from a cluster card, a
+        # cluster profile or a Planning row. Pickable when they did not, and
+        # `pick` keeps it pickable across the re-render the chooser triggers,
+        # which necessarily arrives WITH a cluster_id.
+        fixed_cluster = bool(cluster_id) and not request.GET.get("pick")
         action = request.GET.get("action", "training")
         partners = assignable_partners()
         from apps.clusters.services import active_school_count, active_schools
@@ -851,8 +885,22 @@ def schedule_modal_view(request):
             )
         training_options.sort(key=lambda option: not option["addressesPriority"])
 
+        from apps.accounts.models import StaffProfile
+
         context = {
             "cluster": cluster,
+            # The picker and its list, so the Clusters page's cluster-less
+            # entry points render one drawer with a chooser rather than a
+            # second drawer of their own.
+            "clusters": pickable.order_by("name"),
+            "fixed_cluster": fixed_cluster,
+            # Who the session belongs to. A Programme Lead or Admin may hand
+            # it to somebody else; everybody else sees their own name, which
+            # is what the Clusters drawer did and the reason it existed
+            # alongside this one.
+            "staff_profiles": StaffProfile.objects.filter(deleted_at__isnull=True)
+            .select_related("user")
+            .order_by("user__name"),
             "action": action,
             "partners": partners,
             "interventions": SsaIntervention.choices,
@@ -1436,6 +1484,19 @@ def schedule_action_view(request):
             payload["responsibleStaffId"] = responsible_staff_id
     if cluster_id:
         payload["clusterId"] = cluster_id
+        # Who the cluster session belongs to. The drawer offers this only to a
+        # Programme Lead or Admin (the roles the Clusters drawer offered it
+        # to), and it is honoured only for those roles here, so a crafted POST
+        # cannot hand somebody else's name to the work. Anyone else's session
+        # is resolved downstream from the cluster, exactly as before.
+        from apps.core.rbac import EdifyRole
+
+        chosen_staff = (request.POST.get("responsible_staff_id") or "").strip()
+        if chosen_staff and getattr(request.user, "active_role", "") in (
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.ADMIN.value,
+        ):
+            payload["responsibleStaffId"] = chosen_staff
     if focus_intervention:
         payload["focusIntervention"] = focus_intervention
         payload["purposeIntervention"] = focus_intervention

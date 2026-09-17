@@ -48,7 +48,7 @@ Create Cluster
 {% endif %}
 {% if can_plan_clusters %}
 <button
-hx-get="/clusters/planner-drawer?activity_type=training"
+hx-get="/planning/schedule-modal?action=training"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="edify-action-button secondary h-9 transition-all shadow-sm"
@@ -58,7 +58,7 @@ Schedule Group Training
 </button>
 
 <button
-hx-get="/clusters/planner-drawer?activity_type=meeting"
+hx-get="/planning/schedule-modal?action=meeting"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="edify-action-button secondary h-9 transition-all shadow-sm"

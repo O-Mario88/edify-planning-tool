@@ -2775,7 +2775,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6701,
+      "bytes": 6675,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -2798,7 +2798,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2040,
+      "bytes": 2037,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/detail-drawer/<str:cluster_id>"
@@ -8847,14 +8847,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 27960,
+      "bytes": 32531,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 3,
+      "htmx_controls": 6,
       "kind": "application-partial",
       "name": "Schedule Cluster Drawer",
       "purpose": "Reusable schedule cluster drawer interface primitive",
@@ -25859,14 +25859,14 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /clusters/create-drawer",
-        "GET /clusters/planner-drawer?activity_type=training",
-        "GET /clusters/planner-drawer?activity_type=meeting"
+        "GET /planning/schedule-modal?action=training",
+        "GET /planning/schedule-modal?action=meeting"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-6297FE3532",
@@ -26958,13 +26958,13 @@
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /clusters/planner-drawer?cluster_id={{ cluster.id }}&fixed_cluster=true"
+        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&action=training"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-F540B4C3EA",
@@ -67568,9 +67568,11 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}",
-        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}",
+        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
+        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
+        "GET /planning/schedule-modal",
         "POST /planning/schedule-action",
+        "GET /clusters/cost-preview",
         "POST {% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
       ],
       "implementation_status": "existing-routed-surface",

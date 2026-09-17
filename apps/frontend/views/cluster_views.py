@@ -402,7 +402,14 @@ def cluster_schools_partial(request, cluster_id):
 
 @require_page_permission("planning")
 def cluster_cost_preview_partial(request):
+    # Both spellings, because one drawer now serves both entry points and the
+    # two arrived here with different vocabularies: the Clusters drawer sent
+    # the short "training"/"meeting" its own radios use, the Planning drawer
+    # sends the canonical activity type it posts to the scheduler. Normalising
+    # here keeps a single preview endpoint rather than a second one.
     activity_type = request.GET.get("activity_type", "training").strip()
+    if activity_type.startswith("cluster_"):
+        activity_type = activity_type[len("cluster_") :]
     participants = _cost_preview_participants(request, activity_type)
     cluster_id = request.GET.get("cluster_id", "").strip()
 
