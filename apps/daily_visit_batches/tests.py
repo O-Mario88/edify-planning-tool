@@ -625,7 +625,18 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         self.assertEqual(sum(minimums.values()), 110002)
         self.assertTrue(all(36665 <= value <= 36669 for value in minimums.values()))
 
-    def test_visit_training_and_two_meetings_share_daily_transport_and_lunch(self):
+    def test_visit_training_and_two_meetings_share_the_daily_transport(self):
+        """The day's transport is bought once and shared; its LUNCH is not
+        bought at all, because sessions on this day feed the room.
+
+        Until 2026-09-17 the shared day always carried a lunch, so a catered
+        session was charged the participants' meal AND a staff lunch on top —
+        the double the owner reported, which the engine had already stopped
+        putting in a session's own recipe but the shared day put back. Asked
+        which way it should fall on a day holding both a catered session and
+        an ordinary visit, the owner chose: if any session that day caters,
+        the day buys no lunch.
+        """
         from django.db.models import Sum
         from apps.fund_requests.models import WeeklyFundRequest
 
@@ -637,13 +648,18 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         activities = Activity.objects.filter(daily_visit_batch_id=result["batchId"])
         self.assertEqual(activities.count(), 4)
         lines = ActivityScheduleCostLine.objects.filter(activity__in=activities)
-        for key, amount in PRIMARY_RATES:
-            self.assertEqual(
-                lines.filter(cost_setting_key=key).aggregate(total=Sum("amount"))[
-                    "total"
-                ],
-                amount,
-            )
+        self.assertEqual(
+            lines.filter(cost_setting_key="primary_transport_per_day").aggregate(
+                total=Sum("amount")
+            )["total"],
+            280000,
+        )
+        # Not a shilling of staff lunch anywhere on the day.
+        self.assertIsNone(
+            lines.filter(cost_setting_key="lunch_per_day").aggregate(
+                total=Sum("amount")
+            )["total"]
+        )
         self.assertEqual(
             lines.filter(cost_setting_key="group_training_venue_cost").aggregate(
                 total=Sum("amount")
@@ -676,7 +692,10 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             24 * 5000,
         )
         self.assertEqual(
-            sum(activities.values_list("est_cost_cents", flat=True)), 700000
+            # 670,000: the day's 30,000 staff lunch is no longer bought at
+            # all, because the sessions on it feed the room (2026-09-17).
+            sum(activities.values_list("est_cost_cents", flat=True)),
+            670000,
         )
         # Transport may be paid directly to a vendor: request only staff-payable lines.
         from apps.fund_requests.fundable import vendor_direct_filter
@@ -689,9 +708,11 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             responsible_user=self.staff_user.id, week_start_date=day
         )
         self.assertEqual(request.total_amount, payable)
+        # The transport provider's obligation plus what staff are paid is the
+        # whole day: 670,000 since the staff lunch left it (2026-09-17).
         self.assertEqual(
             TransportPayment.objects.get(batch_id=result["batchId"]).amount + payable,
-            700000,
+            670000,
         )
 
     def test_participant_edit_reprices_session_but_does_not_duplicate_daily_pool(self):
@@ -707,7 +728,11 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         # Facilitation, venue, the shared staff day and the twenty
         # participants fed at the cluster meals rate (owner, 2026-09-15): the
         # headcount moves the session's own cost and nothing else.
-        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000 + 20 * 5000)
+        #
+        # The share is 140,000 rather than 155,000 since 2026-09-17: a day
+        # holding a catered session buys no staff lunch, so the pool this is
+        # a share of is transport alone.
+        self.assertEqual(result["estCostCents"], 140000 + 60000 + 70000 + 20 * 5000)
         self.assertFalse(
             training.schedule_cost_lines.filter(
                 cost_setting_key="tot_trainings_meals"
@@ -755,7 +780,9 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
         self.assertEqual(
             Activity.objects.get(id=second["activities"][0]["id"]).est_cost_cents,
-            155000,
+            # Transport alone: the training that moved here caters, so this
+            # day buys no staff lunch (2026-09-17).
+            140000,
         )
 
     def test_preview_uses_actual_owner_day_count_and_minimum_rates(self):
