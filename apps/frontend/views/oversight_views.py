@@ -764,6 +764,15 @@ def team_planning_oversight_view(request):
     else:
         tabs, selected, visible = _team_owner_tabs(scope, items, selected)
 
+    # A school visit, a cluster convening and a group training are read for
+    # different questions, so they get a table each rather than one mixed list
+    # (owner, 2026-09-17). The strip narrows what the per-CCEO groups below
+    # hold; "all" is the default and keeps work that belongs to none of the
+    # three — programme events, SSA and partner activities — on the page.
+    activity_family = (request.GET.get("activity") or "all").strip()
+    activity_tabs = oversight.activity_tabs(visible, activity_family)
+    visible = oversight.in_family(visible, activity_family)
+
     summary = oversight.summarize(visible)
     context = {
         **period,
@@ -784,6 +793,8 @@ def team_planning_oversight_view(request):
         and not _resolve_user_scope(request.user).region_assigned,
         "visible_summary": summary,
         "groups": oversight.group_by_owner(visible),
+        "activity_tabs": activity_tabs,
+        "activity_family": activity_family,
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),

@@ -227,3 +227,95 @@ class LensAccessTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("<html", body)
         self.assertIn("Country portfolio", body)
+
+
+class ActivityFamilyStripTest(SimpleTestCase):
+    """A table each for visits, cluster meetings and group trainings.
+
+    Owner, 2026-09-17: "Team oversight should have the table for planned school
+    visits, a separate table for planned cluster meeting and a separate table
+    for planned group training so that the managers (PLs) be able to see all
+    the planned activities grouped by CCEOs in tabs."
+
+    The per-CCEO grouping was already there; what a lead could not do was ask
+    one question at a time. These pin the strip and, more importantly, that
+    "all" is not one of the three — a page that only ever showed visits,
+    meetings and trainings would silently drop programme events, SSA work and
+    partner activities from a team's plan.
+    """
+
+    class _Item:
+        def __init__(self, activity_type):
+            self.activity_type = activity_type
+
+    ITEMS = [
+        _Item("school_visit"),
+        _Item("core_visit"),
+        _Item("cluster_meeting"),
+        _Item("cluster_training"),
+        _Item("in_school_training"),
+        _Item("programme_event"),
+        _Item("ssa_activity"),
+    ]
+
+    def test_the_strip_leads_with_everything_then_the_three_kinds(self):
+        from apps.planning import oversight_service as oversight
+
+        tabs = oversight.activity_tabs(self.ITEMS, "all")
+
+        self.assertEqual(
+            [(tab["key"], tab["label"]) for tab in tabs],
+            [
+                ("all", "All Activities"),
+                ("visits", "School Visits"),
+                ("meetings", "Cluster Meetings"),
+                ("trainings", "Group Trainings"),
+            ],
+        )
+
+    def test_each_tab_carries_the_count_its_table_will_draw(self):
+        from apps.planning import oversight_service as oversight
+
+        tabs = {
+            tab["key"]: tab["count"]
+            for tab in oversight.activity_tabs(self.ITEMS, "all")
+        }
+
+        self.assertEqual(tabs["all"], len(self.ITEMS))
+        self.assertEqual(tabs["visits"], 2)
+        self.assertEqual(tabs["meetings"], 1)
+        self.assertEqual(tabs["trainings"], 2)
+        for key, count in tabs.items():
+            self.assertEqual(
+                count,
+                len(oversight.in_family(self.ITEMS, key)),
+                f"the {key} tab counts what its table draws",
+            )
+
+    def test_no_kind_of_work_falls_off_the_page(self):
+        """A programme event and an SSA activity are in none of the three."""
+        from apps.planning import oversight_service as oversight
+
+        three = set()
+        for key in ("visits", "meetings", "trainings"):
+            three.update(id(item) for item in oversight.in_family(self.ITEMS, key))
+
+        self.assertLess(len(three), len(self.ITEMS))
+        self.assertEqual(len(oversight.in_family(self.ITEMS, "all")), len(self.ITEMS))
+
+    def test_an_unknown_family_shows_everything_rather_than_nothing(self):
+        from apps.planning import oversight_service as oversight
+
+        self.assertEqual(
+            len(oversight.in_family(self.ITEMS, "not-a-family")), len(self.ITEMS)
+        )
+
+    def test_the_strip_is_a_comment_tag_not_a_hash_comment(self):
+        """Django's `{# #}` is single-line: a multi-line one renders as text,
+        and did — a paragraph of rationale appeared above the tabs."""
+        workspace = _read("templates/partials/oversight/pl_workspace.html")
+
+        self.assertIn('aria-label="Activity type"', workspace)
+        self.assertNotIn(
+            "{# ── What kind of work, within that person's plan\n", workspace
+        )
