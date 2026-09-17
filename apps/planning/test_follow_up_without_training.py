@@ -3,7 +3,7 @@
 Uganda plans follow-up visits for schools with no training recorded. The rule
 is governed per fiscal year (FiscalYearPlanningPolicy), not bypassed in a view,
 and lifting it removes nothing else: the school must still be operating and in
-the planner's portfolio, the once-a-year client visit still holds, and the
+the planner's portfolio, the client visit allowance still holds, and the
 calendar and catalogue still apply.
 """
 
@@ -64,10 +64,32 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
         with self.assertRaises(BadRequest):
             self.follow_up(sourceActivityId="does-not-exist")
 
-    def test_duplicate_follow_up_is_still_prevented(self):
-        self.follow_up()
-        with self.assertRaisesMessage(BadRequest, "visited once a year"):
-            self.follow_up()
+    def test_follow_ups_past_the_client_allowance_are_still_prevented(self):
+        """The cap went from one to two on 2026-09-17; the gate still closes.
+
+        Counted from CLIENT_VISIT_CAP rather than a literal, because what this
+        pins is that the allowance is enforced here, not its size.
+        """
+        import datetime
+
+        from apps.planning.test_standard_support_scheduling import (
+            _at,
+            _schedulable_date,
+        )
+        from apps.planning.visit_gate import CLIENT_VISIT_CAP
+
+        # Distinct dates: two identical visits on one day are refused by the
+        # duplicate-activity guard, which is a different rule from this one.
+        day = _schedulable_date()
+        for _ in range(CLIENT_VISIT_CAP):
+            while day.weekday() == 6:
+                day += datetime.timedelta(days=1)
+            self.follow_up(scheduledDate=_at(day).isoformat())
+            day += datetime.timedelta(days=1)
+        while day.weekday() == 6:
+            day += datetime.timedelta(days=1)
+        with self.assertRaisesMessage(BadRequest, "visits a year"):
+            self.follow_up(scheduledDate=_at(day).isoformat())
 
     def test_an_out_of_portfolio_school_is_still_refused(self):
         from apps.accounts.models import StaffSchoolAssignment

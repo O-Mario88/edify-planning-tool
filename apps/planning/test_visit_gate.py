@@ -1,5 +1,6 @@
-"""One visit a year for a client school; two staff and two partner visits for
-a core school; a school handed to a partner is the partner's to schedule.
+"""CLIENT_VISIT_CAP follow-up visits a year for a client school; two staff and
+two partner visits for a core school; a school handed to a partner is the
+partner's to schedule.
 
 Owner, 2026-09-15: "Client school visits: they are supposed to be visited
 once in a year, so if a staff or partner has already scheduled it, the
@@ -7,6 +8,11 @@ schedule buttons should be disabled. Assigned school to a partner should also
 be disabled from staff scheduling — only the partner can schedule it unless
 the partner returns the school back to the staff. Core schools should be
 scheduled by staff twice for visit and assigned twice to a partner."
+
+The client cap went from one to two on 2026-09-17, so these tests count to
+CLIENT_VISIT_CAP rather than to a literal 1: what they are for is that the
+gate closes when the allowance is SPENT and that the buttons and the services
+agree about when that is, not what the number happens to be.
 
 The gate (apps.planning.visit_gate) is the one definition the greyed buttons
 and the refusing services share, so the tests drive it directly and then
@@ -28,6 +34,7 @@ from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region, SubCounty
 from apps.partners.models import Partner, PartnerAssignment
 from apps.planning.visit_gate import (
+    CLIENT_VISIT_CAP,
     CORE_PARTNER_VISIT_CAP,
     CORE_STAFF_VISIT_CAP,
     visit_gate,
@@ -115,6 +122,18 @@ class _GateFixture:
             scheduled_date=when,
         )
 
+    def _spend_client_visits(self, school, *, delivery="staff", **kw):
+        """Use up a client school's whole follow-up allowance.
+
+        The tests below are about the gate closing once the allowance is gone,
+        so they say that rather than scheduling a fixed number of visits and
+        relying on the cap being what it was when they were written.
+        """
+        return [
+            self._visit(school, delivery=delivery, **kw)
+            for _ in range(CLIENT_VISIT_CAP)
+        ]
+
     def _assign(self, school, status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **kw):
         return PartnerAssignment.objects.create(
             school=school,
@@ -125,7 +144,7 @@ class _GateFixture:
         )
 
 
-class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
+class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
     def test_an_unvisited_school_is_open_to_everyone(self):
         gate = visit_gate(self._school("VG-1"))
         self.assertEqual(gate.rule, "client")
@@ -133,30 +152,39 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_a_staff_visit_this_year_uses_the_follow_up_visit(self):
+    def test_spending_the_staff_allowance_closes_the_follow_up_visit(self):
         school = self._school("VG-2")
-        self._visit(school)
+        self._spend_client_visits(school)
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
         self.assertFalse(gate.partner_can_schedule)
         self.assertFalse(gate.can_assign_visit)
-        self.assertIn("visited once a year", gate.staff_reason)
+        self.assertIn("visits a year", gate.staff_reason)
         self.assertIn("scheduled by staff", gate.staff_reason)
         # The row stays open: in-school training, donor and social visits
         # can still be scheduled or assigned there.
         self.assertFalse(gate.staff_locked)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_a_partner_visit_this_year_closes_it_too(self):
+    def test_a_visit_still_in_hand_leaves_the_row_open(self):
+        """The cap is 2 since 2026-09-17, so one visit no longer spends it."""
+        school = self._school("VG-2b")
+        self._visit(school)
+        gate = visit_gate(school)
+        self.assertEqual(gate.total_visits, 1)
+        self.assertTrue(gate.staff_can_schedule)
+        self.assertTrue(gate.partner_can_schedule)
+
+    def test_a_partner_spending_the_allowance_closes_it_too(self):
         school = self._school("VG-3")
-        self._visit(school, delivery="partner")
+        self._spend_client_visits(school, delivery="partner")
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
         self.assertIn("scheduled by a partner", gate.staff_reason)
 
-    def test_a_completed_visit_still_counts_as_the_years_visit(self):
+    def test_completed_visits_still_count_against_the_allowance(self):
         school = self._school("VG-4")
-        self._visit(school, status="completed")
+        self._spend_client_visits(school, status="completed")
         self.assertFalse(visit_gate(school).staff_can_schedule)
 
     def test_a_cancelled_visit_and_last_years_visit_do_not_count(self):
@@ -181,12 +209,14 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
         self.assertTrue(gate.staff_can_schedule)
         self.assertEqual(gate.total_visits, 0)
 
-    def test_a_follow_up_or_ssa_visit_is_the_visit(self):
+    def test_a_follow_up_or_ssa_visit_counts_against_the_allowance(self):
         school = self._school("VG-6b")
-        self._visit(school, kind="training_follow_up_visit", delivery="partner")
+        self._spend_client_visits(
+            school, kind="training_follow_up_visit", delivery="partner"
+        )
         self.assertFalse(visit_gate(school).staff_can_schedule)
         other = self._school("VG-6c")
-        self._visit(other, kind="school_visit_ssa_collection")
+        self._spend_client_visits(other, kind="school_visit_ssa_collection")
         self.assertFalse(visit_gate(other).staff_can_schedule)
 
     def test_a_school_with_a_partner_is_the_partners_to_schedule(self):
@@ -214,8 +244,8 @@ class ClientSchoolIsVisitedOnceAYearTest(_GateFixture, TestCase):
     def test_core_trained_schools_follow_the_client_rule_and_champions_neither(self):
         trained = self._school("VG-9", school_type="core_trained")
         champion = self._school("VG-10", school_type="champion")
-        self._visit(trained, kind="school_visit")
-        self._visit(champion, kind="school_visit")
+        self._spend_client_visits(trained, kind="school_visit")
+        self._spend_client_visits(champion, kind="school_visit")
         gates = visit_gates([trained, champion])
         self.assertFalse(gates[trained.id].staff_can_schedule)
         self.assertEqual(gates[champion.id].rule, "none")
@@ -287,12 +317,12 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
 
         _assert_schedule_entitlement("school_visit", school, self.fy, data)
 
-    def test_a_second_client_visit_is_refused_with_the_gates_sentence(self):
+    def test_a_visit_past_the_allowance_is_refused_with_the_gates_sentence(self):
         school = self._school("VG-S1")
-        self._visit(school)
+        self._spend_client_visits(school)
         with self.assertRaises(BadRequest) as ctx:
             self._entitlement(school)
-        self.assertIn("visited once a year", str(ctx.exception.detail))
+        self.assertIn("visits a year", str(ctx.exception.detail))
 
     def test_the_first_visit_and_in_school_work_pass(self):
         from apps.activities.services import _assert_schedule_entitlement
@@ -317,7 +347,7 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         from apps.planning import visit_requests
 
         school = self._school("VG-S0")
-        self._visit(school)
+        self._spend_client_visits(school)
         # Filing a request at a visited school is allowed…
         _assert_schedule_entitlement(
             "school_visit", school, self.fy, {}, is_request=True
@@ -325,11 +355,12 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         request = self._visit(school, status=visit_requests.AWAITING)
         request.approval_owner_id = self.cceo.id
         request.save(update_fields=["approval_owner_id"])
-        self.assertEqual(visit_gate(school).total_visits, 1)
+        # The pending request is not one of them.
+        self.assertEqual(visit_gate(school).total_visits, CLIENT_VISIT_CAP)
         # …but approving it is where the rule bites.
         with self.assertRaises(BadRequest) as ctx:
             visit_requests.approve(request.id, self.cceo_user)
-        self.assertIn("visited once a year", str(ctx.exception.detail))
+        self.assertIn("visits a year", str(ctx.exception.detail))
 
     def test_staff_cannot_schedule_a_school_that_is_with_a_partner(self):
         school = self._school("VG-S3")
@@ -342,7 +373,7 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         from apps.planning.planning_service import PlanningDashboardService
 
         visited = self._school("VG-S4")
-        self._visit(visited)
+        self._spend_client_visits(visited)
         handed = self._school("VG-S5")
         self._assign(handed)
         self._school("VG-S6")
@@ -366,7 +397,7 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         # visits; the follow-up purpose is what is used.
         self.assertTrue(rows["VG-S4"]["staffCanSchedule"])
         self.assertFalse(rows["VG-S4"]["followUpVisitOpen"])
-        self.assertIn("visited once a year", rows["VG-S4"]["followUpVisitReason"])
+        self.assertIn("visits a year", rows["VG-S4"]["followUpVisitReason"])
         self.assertTrue(rows["VG-S4"]["canAssignPartner"])
         # With a partner: the whole row is the partner's.
         self.assertFalse(rows["VG-S5"]["staffCanSchedule"])
@@ -392,9 +423,9 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         self.assertIn("Only the partner can schedule it", response.content.decode())
         self.assertNotIn('name="purpose_of_visit"', response.content.decode())
 
-    def test_the_drawers_grey_the_follow_up_purposes_of_a_visited_school(self):
+    def test_the_drawers_grey_the_follow_up_purposes_once_it_is_spent(self):
         visited = self._school("VG-S8")
-        self._visit(visited)
+        self._spend_client_visits(visited)
         self.client.force_login(self.cceo_user)
         response = self.client.get(
             f"/planning/schedule-modal?school_id={visited.school_id}"
@@ -403,7 +434,7 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         html = response.content.decode()
         self.assertIn('name="purpose_of_visit"', html)
         self.assertIn("data-visit-locked-reason", html)
-        self.assertIn("visited once a year", html)
+        self.assertIn("visits a year", html)
         self.assertIn('value="training_follow_up" disabled', html)
         self.assertIn('value="ssa_support" disabled', html)
         self.assertNotIn('value="in_school_training" disabled', html)
@@ -418,9 +449,9 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         self.assertIn('value="training_follow_up" disabled', html)
         self.assertNotIn('value="in_school_training" disabled', html)
 
-    def test_the_partner_queue_greys_schedule_at_a_visited_school(self):
+    def test_the_partner_queue_greys_schedule_once_it_is_spent(self):
         school = self._school("VG-S9")
-        self._visit(school)
+        self._spend_client_visits(school)
         assignment = self._assign(school)
         self.client.force_login(self.partner_user)
         response = self.client.get("/partner/assigned-schools")
@@ -428,19 +459,19 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         html = response.content.decode()
         self.assertIn("School VG-S9", html)
         self.assertIn('data-visit-locked="true"', html)
-        self.assertIn("visited once a year", html)
+        self.assertIn("visits a year", html)
         response = self.client.get(
             f"/partner/assignments/{assignment.id}/schedule-drawer"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("visited once a year", response.content.decode())
+        self.assertIn("visits a year", response.content.decode())
         self.assertNotIn('name="scheduled_date"', response.content.decode())
 
-    def test_the_partner_service_refuses_a_second_visit_at_a_client_school(self):
+    def test_the_partner_service_refuses_a_visit_past_the_allowance(self):
         from apps.activities.services import _partner_schedule_from_assignment
 
         school = self._school("VG-S10")
-        self._visit(school)
+        self._spend_client_visits(school)
         assignment = self._assign(school, expected_activity_type="school_visit")
         when = (date.today() + timedelta(days=10)).isoformat()
         with self.assertRaises(BadRequest) as ctx:
@@ -449,4 +480,4 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
                 {"scheduledDate": when, "deliveryContactName": "VG Visitor"},
                 self.partner_user,
             )
-        self.assertIn("visited once a year", str(ctx.exception.detail))
+        self.assertIn("visits a year", str(ctx.exception.detail))

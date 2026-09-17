@@ -31673,6 +31673,7 @@
       "role_access": [
         "ADMIN",
         "CD",
+        "IA",
         "RVP"
       ],
       "route": "/country-planning-oversight/",
@@ -31759,6 +31760,7 @@
       "role_access": [
         "ADMIN",
         "CD",
+        "IA",
         "RVP"
       ],
       "route": "/country-planning-oversight/export",
@@ -31840,6 +31842,7 @@
       "role_access": [
         "ADMIN",
         "CD",
+        "IA",
         "RVP"
       ],
       "route": "/country-planning-oversight/send",
@@ -31922,6 +31925,7 @@
       "role_access": [
         "ADMIN",
         "CD",
+        "IA",
         "RVP"
       ],
       "route": "/country-planning-oversight/team/<str:staff_id>",

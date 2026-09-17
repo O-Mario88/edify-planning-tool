@@ -27,8 +27,13 @@ def _next_monday(weeks: int = 1) -> date:
 
 
 class ClientEntitlementHoldsTest(TestCase):
-    """A client school's visit is once a year; the training entitlement stays
-    advisory."""
+    """A client school gets CLIENT_VISIT_CAP visits a year; the training
+    entitlement stays advisory.
+
+    Counted from the constant, not a literal: the cap went from one to two on
+    2026-09-17, and what these tests are for is that the entitlement is
+    enforced and that a cancelled visit gives its place back.
+    """
 
     @classmethod
     def setUpTestData(cls):
@@ -53,7 +58,8 @@ class ClientEntitlementHoldsTest(TestCase):
         )
         StaffProfile.objects.create(id="entitle-sp", user=cls.user, title="CCEO")
 
-    def _existing_visit(self):
+    def _existing_visit(self, offset_weeks: int = 1):
+        when = _next_monday(offset_weeks)
         return Activity.objects.create(
             activity_type="school_visit",
             delivery_type="staff",
@@ -61,9 +67,17 @@ class ClientEntitlementHoldsTest(TestCase):
             fy=get_operational_fy(_next_monday()),
             school=self.school,
             responsible_staff_id=self.user.id,
-            planned_date=_next_monday(),
-            scheduled_date=_next_monday(),
+            planned_date=when,
+            scheduled_date=when,
         )
+
+    def _spend_the_entitlement(self):
+        """Use up the school's whole visit allowance, a week apart."""
+        from apps.planning.visit_gate import CLIENT_VISIT_CAP
+
+        return [
+            self._existing_visit(week) for week in range(1, CLIENT_VISIT_CAP + 1)
+        ]
 
     def _schedule_another(self):
         from apps.activities.services import _assert_schedule_entitlement
@@ -72,15 +86,20 @@ class ClientEntitlementHoldsTest(TestCase):
             "school_visit", self.school, get_operational_fy(_next_monday()), {}
         )
 
-    def test_a_second_client_visit_in_the_year_is_refused(self):
-        self._existing_visit()
+    def test_a_visit_past_the_years_entitlement_is_refused(self):
+        self._spend_the_entitlement()
         with self.assertRaises(BadRequest):
             self._schedule_another()
+
+    def test_a_visit_still_in_hand_is_allowed(self):
+        """One visit no longer spends the allowance (cap raised 2026-09-17)."""
+        self._existing_visit()
+        self._schedule_another()  # must not raise
 
     def test_a_second_client_training_is_still_allowed(self):
         from apps.activities.services import _assert_schedule_entitlement
 
-        self._existing_visit()
+        self._spend_the_entitlement()
         _assert_schedule_entitlement(
             "in_school_training", self.school, get_operational_fy(_next_monday()), {}
         )
@@ -89,10 +108,11 @@ class ClientEntitlementHoldsTest(TestCase):
         self._schedule_another()  # must not raise
 
     def test_a_cancelled_visit_does_not_consume_the_entitlement(self):
-        visit = self._existing_visit()
-        visit.status = "cancelled"
-        visit.save(update_fields=["status"])
-        self._schedule_another()  # the slot is free again
+        visits = self._spend_the_entitlement()
+        for visit in visits:
+            visit.status = "cancelled"
+            visit.save(update_fields=["status"])
+        self._schedule_another()  # the places are free again
 
     def test_a_core_school_is_not_bound_by_the_client_rule(self):
         """Core schools carry a 4 + 4 package, gated by the slot machinery."""
@@ -127,10 +147,14 @@ class ClientEntitlementHoldsTest(TestCase):
 
 
 class CatalogueEntitlementOwnershipTest(TestCase):
-    """The catalogue's entitlement flags decide what counts as the year's
-    visit (owner, 2026-09-15: a client school is visited once a year), and
-    the rule's counts_toward_entitlement is the governance switch that takes
-    an item out of it. The health detector keeps reporting duplicates.
+    """The catalogue's entitlement flags decide what counts against the year's
+    visit allowance (owner, 2026-09-15; the client cap went from one to two on
+    2026-09-17), and the rule's counts_toward_entitlement is the governance
+    switch that takes an item out of it. The health detector keeps reporting
+    duplicates.
+
+    `_spend` fills the allowance from CLIENT_VISIT_CAP rather than scheduling
+    one activity: what these tests own is WHICH kinds count, not how many.
     """
 
     @classmethod
@@ -159,7 +183,8 @@ class CatalogueEntitlementOwnershipTest(TestCase):
 
         return ActivityCatalogueItem.objects.get(stable_code=stable_code)
 
-    def _activity(self, activity_type, catalogue_item=None):
+    def _activity(self, activity_type, catalogue_item=None, offset_weeks=1):
+        when = _next_monday(offset_weeks)
         return Activity.objects.create(
             activity_type=activity_type,
             catalogue_item=catalogue_item,
@@ -167,9 +192,18 @@ class CatalogueEntitlementOwnershipTest(TestCase):
             status="scheduled",
             fy=self.fy,
             school=self.school,
-            planned_date=_next_monday(),
-            scheduled_date=_next_monday(),
+            planned_date=when,
+            scheduled_date=when,
         )
+
+    def _spend(self, activity_type, catalogue_item=None):
+        """Fill the client visit allowance with activities of this kind."""
+        from apps.planning.visit_gate import CLIENT_VISIT_CAP
+
+        return [
+            self._activity(activity_type, catalogue_item, offset_weeks=week)
+            for week in range(1, CLIENT_VISIT_CAP + 1)
+        ]
 
     def _assert(self, activity_type, catalogue_item=None):
         from apps.activities.services import _assert_schedule_entitlement
@@ -182,19 +216,20 @@ class CatalogueEntitlementOwnershipTest(TestCase):
             catalogue_item=catalogue_item,
         )
 
-    def test_a_second_follow_up_visit_is_refused(self):
-        self._activity("follow_up_visit")
+    def test_a_follow_up_past_the_allowance_is_refused(self):
+        self._spend("follow_up_visit")
         with self.assertRaises(BadRequest):
             self._assert("follow_up_visit")
 
-    def test_a_follow_up_after_the_visit_is_refused(self):
-        self._activity("school_visit")
+    def test_a_follow_up_after_the_visits_are_spent_is_refused(self):
+        """The two kinds draw on ONE allowance, which is the point here."""
+        self._spend("school_visit")
         with self.assertRaises(BadRequest):
             self._assert("follow_up_visit")
 
     def test_the_catalogue_entitlement_flag_is_what_counts(self):
         item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
-        self._activity("follow_up_visit", catalogue_item=item)
+        self._spend("follow_up_visit", catalogue_item=item)
         with self.assertRaises(BadRequest):
             self._assert(item.workflow_kind, catalogue_item=item)
 
@@ -214,7 +249,7 @@ class CatalogueEntitlementOwnershipTest(TestCase):
 
     def test_counts_toward_entitlement_is_the_governance_exemption_switch(self):
         item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
-        self._activity("school_visit")
+        self._spend("school_visit")
         rule = item.eligibility_rule
         rule.counts_toward_entitlement = False
         rule.save(update_fields=["counts_toward_entitlement"])

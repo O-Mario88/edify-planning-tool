@@ -8438,6 +8438,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/country-planning-oversight/",
@@ -8451,6 +8452,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/country-planning-oversight/export",
@@ -8464,6 +8466,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/country-planning-oversight/send",
@@ -8477,6 +8480,7 @@
    "roles": [
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "Admin"
    ],
    "route": "/country-planning-oversight/team/<str:staff_id>",
@@ -17832,7 +17836,7 @@
   "CCEO": 525,
   "CountryDirector": 753,
   "HumanResources": 329,
-  "ImpactAssessment": 612,
+  "ImpactAssessment": 616,
   "MfiLoanOfficer": 127,
   "MfiPartnerAdmin": 130,
   "PartnerAdmin": 218,

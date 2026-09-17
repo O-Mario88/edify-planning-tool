@@ -152,6 +152,33 @@ class TheReadingRolesStillReachThePagesTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Cluster Oversight", response.content.decode())
 
+    def test_ia_opens_the_country_page_and_can_send_nothing_from_it(self):
+        """Owner, 2026-09-17: IA gets country oversight, read-only.
+
+        "Make sure IA has country oversight (All the team activities but he
+        cannot modify or edit any of the team activities)". IA already held the
+        TEAM lens, so the country picture — every Programme Lead at once — was
+        the half it was missing, and the route sent it to its own dashboard.
+
+        Read-only is asserted here rather than assumed: the page opens, and
+        the send endpoint behind it refuses, because delegation gates on
+        `may_delegate(country=True)` rather than on page access.
+        """
+        response = self._get(self.ia, "/country-planning-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Cluster Oversight", response.content.decode())
+
+        # With HX-Request, so the refusal is in the body rather than a
+        # redirect-and-message that would pass against any response.
+        refused = self.client.post(
+            "/country-planning-oversight/send",
+            {"issue": "anything", "program_lead": "whoever"},
+            headers={"HX-Request": "true"},
+        )
+        body = refused.content.decode().lower()
+        self.assertNotIn("sent to", body)
+        self.assertIn("country director", body)
+
     def test_country_reading_roles_open_team_oversight_with_a_country_lens(self):
         for user in (self.ia, self.accountant, self.rvp):
             with self.subTest(role=user.active_role):
