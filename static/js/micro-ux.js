@@ -657,7 +657,7 @@
      beside an icon, is text and may shorten. A pill keeps up to 10rem and
      shortens beyond that (consistency.css gives it the ellipsis). */
   var FIXED_BOXES = 'img, svg, input, select, textarea, progress, .rounded-pill, .rounded-full, ' +
-    '.edify-cell-mark, .edify-cell-pill, .rounded-control, ' +
+    '.edify-cell-mark, .edify-cell-pill, .rounded-control, .row-menu__trigger, ' +
     ':is(a, button)[class*="rounded"], :is(a, button)[class*="border"], :is(a, button)[class*="bg-"], ' +
     '[class*="badge"], [class*="pill"], [class*="chip"], [class*="btn"]';
   var PILL_BOX = '.rounded-pill, .rounded-full, .edify-cell-pill, [class*="badge"], [class*="pill"], [class*="chip"]';
@@ -714,12 +714,18 @@
      with real text beside a control is a text cell — the control keeps
      its width (see `mixed`), the text beside it may shorten. */
   /* A cell's text as a reader sees it: assistive-only text is not on the
-     line and must not decide whether the cell is a figure. */
+     line and must not decide whether the cell is a figure. Neither is a
+     closed popup's contents — the row-actions cell reads "Actions" on the
+     line and carries Complete, Reschedule and Cancel inside its menu, and
+     counting those made an actions column look like a column of sentences.
+     It was planned as text, squeezed to its last floor, and its 90px button
+     painted 36px past the table (owner, 2026-09-17). */
+  var OFF_LINE_TEXT = '.sr-only, .edify-visually-hidden, .edify-record-field-label, ' + popupSelector;
   function visibleText(cell) {
-    var hidden = cell.querySelectorAll('.sr-only, .edify-visually-hidden, .edify-record-field-label');
+    var hidden = cell.querySelectorAll(OFF_LINE_TEXT);
     if (!hidden.length) return cleanText(cell.textContent);
     var clone = cell.cloneNode(true);
-    clone.querySelectorAll('.sr-only, .edify-visually-hidden, .edify-record-field-label').forEach(function (node) { node.remove(); });
+    clone.querySelectorAll(OFF_LINE_TEXT).forEach(function (node) { node.remove(); });
     return cleanText(clone.textContent);
   }
 
@@ -933,6 +939,60 @@
       });
       remaining -= capacity * share;
     });
+    /* GROW, once the region is filled. Every width above comes from a BODY
+       row, so a column can finish narrower than its own heading — "Planned
+       Date" over four dates, "Focus Intervention" over one short pill — and
+       an ellipsis in a heading costs the reader what the column means, not
+       just one value. A cell whose whole content is a control has the same
+       problem: the actions column was planned to the width of the word
+       "Actions" and its 90px button painted past the table.
+
+       So: a column that cannot show its heading, or its one control, takes
+       what it needs from the text columns that have room to spare. Nothing
+       grows past what it asked for, no donor is taken below its own heading,
+       and every pixel taken is given in the same step — this moves width, it
+       does not add any (owner, 2026-09-17). */
+    var headingRow = head.filter(plain)[0];
+    if (headingRow && remaining <= 0.5) {
+      /* What each column is short of showing its own heading — or, where the
+         whole cell is one control, of showing that control. +1 because the
+         plan is written as fractional widths and the cell rounds: asking for
+         exactly the heading's width leaves it clipped by the fraction lost. */
+      var showsItself = widths.map(function (width, index) {
+        var cell = headingRow.children[index];
+        var target = cell ? contentWidth(cell) + TRUNCATE_PADDING * 2 + 1 : 0;
+        if (rigid[index]) target = Math.max(target, need[index] + 1);
+        return target;
+      });
+      var wants = widths.map(function (width, index) {
+        return Math.max(0, showsItself[index] - width);
+      });
+      /* Paid cheapest first, in full, each from the columns that have room
+         above the floor the shrink tiers would have taken them to anyway. A
+         heading is readable or it is not, so half of what "District" asked
+         for buys nothing; spent on the narrowest asks it buys whole columns,
+         and a name column that ends in an ellipsis still says which record
+         the row is. The pool is re-read before each payment, so nothing is
+         taken that is not immediately given: the total is unchanged. */
+      wants
+        .map(function (want, index) { return index; })
+        .filter(function (index) { return wants[index] > 0.5; })
+        .sort(function (a, b) { return wants[a] - wants[b]; })
+        .forEach(function (index) {
+          /* A donor stops at its own heading. Paying one column by clipping
+             another's heading is not a trade, it is the same fault moved. */
+          var spare = widths.map(function (width, i) {
+            if (wants[i] > 0.5 || rigid[i]) return 0;
+            return Math.max(0, width - Math.max(lastFloor[i], showsItself[i]));
+          });
+          var pool = 0;
+          spare.forEach(function (width) { pool += width; });
+          var pay = Math.min(wants[index], pool);
+          if (pay <= 0.5) return;
+          widths = widths.map(function (width, i) { return width - pay * (spare[i] / pool); });
+          widths[index] += pay;
+        });
+    }
     var shrunk = widths.map(function (width, index) { return width < natural[index] - TRUNCATE_PADDING - 0.5; });
     return { widths: widths, rigid: rigid, shrunk: shrunk, mixed: mixed, floor: hardFloor, fits: remaining <= 0.5 };
   }
