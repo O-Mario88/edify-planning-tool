@@ -267,8 +267,7 @@ class SsaUploadTest(APITestCase):
 
     def test_download_template_score_headers_are_accepted(self):
         body = (
-            f"{SSA_TEMPLATE_HEADERS}\n"
-            "SSA-SCH-1,2025-06-15,last,6,6.5,5.5,7,6,5,6.5,6\n"
+            f"{SSA_TEMPLATE_HEADERS}\nSSA-SCH-1,2025-06-15,last,6,6.5,5.5,7,6,5,6.5,6\n"
         )
         res = self._post_and_import(self._csv(body))
 
@@ -335,8 +334,17 @@ class SsaUploadTest(APITestCase):
 
 
 class SsaScoreBandTest(APITestCase):
-    """§5 canonical SSA status bands on the 0-10 score:
-    Critical 0-4.9 / Warning 5-6.9 / Improving 7-7.9 / Strong 8-10."""
+    """Canonical SSA status bands on the 0-10 score.
+
+    Four LABELS, because the label is a vocabulary the platform reasons in and
+    a fifth would be a band no catalogue rule can name:
+    Critical 0-4.9 / Warning 5-5.9 / Improving 6-7.9 / Strong 8-10.
+
+    Five COLOURS, because reading is where a ten deserves to stand apart from
+    an eight (owner, 2026-09-18). The light-green floor moved 7.0 -> 6.0 with
+    that brief; the critical/warning line the platform already reasoned with
+    did not move.
+    """
 
     def test_bands_match_mandate_thresholds(self):
         from apps.core.enums import ssa_score_band
@@ -345,19 +353,62 @@ class SsaScoreBandTest(APITestCase):
         self.assertEqual(ssa_score_band(0.0)[0], "Critical")
         self.assertEqual(ssa_score_band(4.9)[0], "Critical")
         self.assertEqual(ssa_score_band(5.0)[0], "Warning")
-        self.assertEqual(ssa_score_band(6.9)[0], "Warning")
-        self.assertEqual(ssa_score_band(7.0)[0], "Improving")
+        self.assertEqual(ssa_score_band(5.9)[0], "Warning")
+        self.assertEqual(ssa_score_band(6.0)[0], "Improving")
         self.assertEqual(ssa_score_band(7.9)[0], "Improving")
         self.assertEqual(ssa_score_band(8.0)[0], "Strong")
         self.assertEqual(ssa_score_band(10.0)[0], "Strong")
+
+    def test_a_perfect_ten_is_its_own_colour_but_not_its_own_band(self):
+        """The ten is purple to read and Strong to reason with.
+
+        A fifth label would be a band no rule in
+        activity_catalogue.intervention_mapping.SCORE_BANDS can name, so a
+        10/10 school would quietly match nothing.
+        """
+        from apps.activity_catalogue.intervention_mapping import SCORE_BANDS
+        from apps.core.enums import ssa_score_band
+
+        label, colour, tone = ssa_score_band(10.0)
+        self.assertEqual(label, "Strong")
+        self.assertIn(label, SCORE_BANDS)
+        self.assertEqual(tone, "perfect")
+        self.assertNotEqual(colour, ssa_score_band(9.9)[1])
+        for score in (0.0, 4.9, 5.0, 5.9, 6.0, 7.9, 8.0, 9.9, 10.0):
+            self.assertIn(ssa_score_band(score)[0], SCORE_BANDS)
+
+    def test_every_band_has_its_own_colour(self):
+        """Two bands painted the same colour is a band a reader cannot see."""
+        from apps.core.enums import ssa_score_band
+
+        colours = [ssa_score_band(s)[1] for s in (2.0, 5.5, 7.0, 9.0, 10.0)]
+        self.assertEqual(len(set(colours)), 5)
 
     def test_pl_analytics_ssa_band_delegates_to_canonical(self):
         from apps.analytics.pl_analytics_service import ssa_band
 
         # Analytics consumes the same native 0-10 score as the canonical helper.
-        self.assertEqual(ssa_band(6.5)[0], "Warning")
+        self.assertEqual(ssa_band(5.5)[0], "Warning")
+        self.assertEqual(ssa_band(6.5)[0], "Improving")
         self.assertEqual(ssa_band(7.5)[0], "Improving")
         self.assertEqual(ssa_band(None)[0], "No SSA")
+
+    def test_the_filter_paints_the_canonical_colour_and_nothing_else(self):
+        """Templates colour a score through the filter, so it cannot drift."""
+        from apps.core.enums import ssa_score_band
+        from apps.frontend.templatetags.frontend_filters import (
+            ssa_score_band_label,
+            ssa_score_colour,
+        )
+
+        for score in (0, 4.9, 5, 6, 7.9, 8, 9.9, 10):
+            self.assertEqual(ssa_score_colour(score), ssa_score_band(score)[1])
+            self.assertEqual(ssa_score_band_label(score), ssa_score_band(score)[0])
+        # Not a score: paint nothing rather than paint a guess.
+        self.assertEqual(ssa_score_colour(None), "")
+        self.assertEqual(ssa_score_colour(""), "")
+        self.assertEqual(ssa_score_colour("not a number"), "")
+        self.assertEqual(ssa_score_band_label(None), "")
 
 
 class SchoolEnrolmentCountVsSsaScoreTest(APITestCase):

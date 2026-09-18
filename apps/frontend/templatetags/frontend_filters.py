@@ -171,3 +171,40 @@ def can_open(user, url):
     from apps.core.permissions import can_open_url
 
     return can_open_url(user, str(url or ""))
+
+
+@register.filter
+def ssa_score_colour(value):
+    """The font colour for a 0-10 SSA score, from the canonical band.
+
+    Owner, 2026-09-18: SSA scores are colour-coded wherever they are shown.
+    The colour comes from apps.core.enums.ssa_score_band and nowhere else, so
+    a score cannot be red on one page and green on another, and it is applied
+    to the FONT rather than as a highlight.
+
+    Returns an empty string for anything that is not a score, which leaves the
+    span's colour to the stylesheet rather than painting an unknown value.
+    """
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return ""
+    from apps.core.enums import ssa_score_band
+
+    return ssa_score_band(score)[1]
+
+
+@register.filter
+def ssa_score_band_label(value):
+    """The band a 0-10 SSA score falls in, for a title or a screen reader.
+
+    Colour never carries the score on its own: the number is printed beside
+    it, and this names the band for anyone who cannot see the colour.
+    """
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return ""
+    from apps.core.enums import ssa_score_band
+
+    return ssa_score_band(score)[0]

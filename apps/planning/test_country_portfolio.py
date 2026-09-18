@@ -503,9 +503,8 @@ class ClusterPerformanceTest(PortfolioFixture):
         self.assertEqual(alpha.visits_planned, 1)
 
     def test_the_clusters_group_under_their_lead_and_their_cceo(self):
-        """Owner, 2026-09-18: a card of its own for planned cluster activity,
-        grouped by Programme Lead and then by the CCEO under them, so IA can
-        read whether a team is convening its clusters at all."""
+        """Owner, 2026-09-18: group the lens by staff name, and drop the
+        Programme Lead column — the Lead is a heading, not a column."""
         _, performance = self._rows()
         by_lead = {group["lead_name"]: group for group in performance["by_lead"]}
 
@@ -513,7 +512,8 @@ class ClusterPerformanceTest(PortfolioFixture):
         alice = by_lead["Alice Lead"]
         self.assertEqual([o["owner_name"] for o in alice["owners"]], ["Cara Officer"])
         self.assertEqual(
-            [row.name for row in alice["owners"][0]["rows"]], ["Alpha Cluster"]
+            [entry["row"].name for entry in alice["owners"][0]["entries"]],
+            ["Alpha Cluster"],
         )
         self.assertEqual(alice["totals"]["clusters"], 1)
         self.assertEqual(alice["totals"]["sessions"], 2)
@@ -546,13 +546,31 @@ class ClusterPerformanceTest(PortfolioFixture):
 
     def test_the_grouping_adds_no_queries(self):
         """A fold over the rows the page already built. A grouping that
-        re-queries is a second number that can disagree with the table it sits
-        above."""
+        re-queries is a second number that can disagree with the rows it is
+        made of."""
         from apps.planning.cluster_performance_service import plans_by_lead
 
-        rows = [entry["row"] for entry in self._rows()[1]["rows"]]
+        entries = self._rows()[1]["rows"]
         with self.assertNumQueries(0):
-            plans_by_lead(rows)
+            plans_by_lead(entries)
+
+    def test_a_cluster_keeps_the_rank_it_earned_across_the_whole_list(self):
+        """Grouping must not re-rank inside a group: a cluster ranked 4th is
+        4th in the country, not 4th under its officer."""
+        _, performance = self._rows()
+        grouped = {
+            entry["row"].cluster_id: entry
+            for lead in performance["by_lead"]
+            for owner in lead["owners"]
+            for entry in owner["entries"]
+        }
+        flat = {entry["row"].cluster_id: entry for entry in performance["rows"]}
+
+        self.assertEqual(set(grouped), set(flat))
+        for cluster_id, entry in grouped.items():
+            self.assertEqual(entry["rank"], flat[cluster_id]["rank"])
+            self.assertEqual(entry["band"], flat[cluster_id]["band"])
+            self.assertEqual(entry["superlative"], flat[cluster_id]["superlative"])
 
     def test_the_lens_costs_a_fixed_number_of_queries(self):
         for index in range(10):

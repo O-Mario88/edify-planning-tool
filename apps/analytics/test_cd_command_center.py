@@ -744,8 +744,13 @@ class PrioritySchoolsRankBySeverityTest(TestCase):
     def test_a_warning_band_is_named_rather_than_discarded(self):
         # `average_score__lt=5.0` is exactly the Critical band, so every
         # Warning school used to be dropped before ranking began.
+        #
+        # 5.5 rather than 6.0 since 2026-09-18: the Warning band now ends at
+        # 6.0 (apps.core.enums.ssa_score_band), so a 6.0 is Improving and is
+        # deliberately NOT a priority-school issue any more. The band this
+        # test is about is 5.0-5.9.
         warned = self._school("Warned", ssa_done=True)
-        self._ssa(warned, 6.0)
+        self._ssa(warned, 5.5)
         self._act(warned, "training", sf="TR-W")
 
         rows = {r["school"]: r for r in self._rows()}

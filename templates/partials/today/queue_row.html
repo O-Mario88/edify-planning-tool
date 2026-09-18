@@ -31,7 +31,7 @@ at its content width instead of shortening it like prose.
     {% if todo.linked or todo.description %}<span class="block edify-text-caption edify-text-subtle mt-0.5">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</span>{% endif %}
     {% if todo.ssa_scores %}
     <ul class="ml-1.5 inline-flex flex-wrap items-center gap-1 align-middle" aria-label="SSA scores, weakest first">
-      {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" data-tone="{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
+      {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" style="color: {{ s.score|ssa_score_colour }}" title="{{ s.score|ssa_score_band_label }}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
     </ul>
     {% endif %}
   </th>

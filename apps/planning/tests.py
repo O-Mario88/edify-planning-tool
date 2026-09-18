@@ -134,9 +134,14 @@ class PlanningReadinessTestCase(TestCase):
             ),
             verification_status="confirmed",
         )
+        # Average 5.5 — the Warning band, which is what recommends staff
+        # support. It averaged 6.0 until 2026-09-18, when the Warning band
+        # narrowed to 5.0-5.9 (apps.core.enums.ssa_score_band) and a 6.0
+        # became Improving: light green, and deliberately "Monitor" rather
+        # than a recommended visit.
         SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=4)
         SsaScore.objects.create(
-            ssa_record=ssa, intervention="teaching_learning", score=8
+            ssa_record=ssa, intervention="teaching_learning", score=7
         )
 
         res = PlanningReadinessService.get_school_readiness(
@@ -150,6 +155,46 @@ class PlanningReadinessTestCase(TestCase):
         self.assertEqual(
             res["recommendedAction"], "Recommend Staff (Visit/training support)"
         )
+
+    def test_an_improving_school_is_monitored_rather_than_visited(self):
+        """The band that moved on 2026-09-18, held explicitly.
+
+        6.0 used to be Warning and recommended a staff visit; it is now
+        Improving — light green — and the recommendation follows the colour.
+        """
+        school = School.objects.create(
+            school_id="RDY-IMP",
+            name="Improving Primary",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            school_type="client",
+            cluster_id=self.cluster.id,
+            account_owner_id=self.staff.id,
+            current_fy_ssa_status="done",
+        )
+        ssa = SsaRecord.objects.create(
+            school=school,
+            fy="2026",
+            date_of_ssa=timezone.make_aware(
+                datetime(2026, 7, 1), timezone.get_current_timezone()
+            ),
+            verification_status="confirmed",
+        )
+        SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=4)
+        SsaScore.objects.create(
+            ssa_record=ssa, intervention="teaching_learning", score=8
+        )
+
+        res = PlanningReadinessService.get_school_readiness(
+            school,
+            has_catalogue=True,
+            has_scheduled=False,
+            partner_assignment=None,
+            weakest_area="Leadership",
+        )
+        self.assertEqual(res["planningReadiness"], "Ready for Support")
+        self.assertEqual(res["recommendedAction"], "Monitor")
 
     def test_baseline_ssa_visit_is_priced_as_the_school_visit_it_is(self):
         """An SSA visit is a staff school visit. `ssa_visit_rate` was a flat

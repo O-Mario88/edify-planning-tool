@@ -123,8 +123,8 @@ class SsaIntervention(models.TextChoices):
 
 
 # Canonical SSA status bands on the 0-10 intervention/average score. This is
-# the single source of truth (§5): Critical 0-4.9 / Warning 5-6.9 /
-# Improving 7-7.9 / Strong 8-10. Everything that classifies an SSA score
+# the single source of truth (§5): Critical 0-4.9 / Warning 5-5.9 /
+# Improving 6-7.9 / Strong 8-10. Everything that classifies an SSA score
 # (dashboards, analytics, services) must derive from here — never redefine
 # thresholds locally.
 class SsaAlignment(models.TextChoices):
@@ -149,16 +149,51 @@ class SsaAlignment(models.TextChoices):
 
 
 def ssa_score_band(score: float | None) -> tuple[str, str, str]:
-    """Classify a 0-10 SSA score into (label, hex, tone)."""
+    """Classify a 0-10 SSA score into (label, hex, tone).
+
+    **Four labels, five colours, and they are not the same thing.**
+
+    The label is a vocabulary the platform reasons in: catalogue score rules
+    name one of the four in `activity_catalogue.intervention_mapping`
+    (SCORE_BANDS), and an activity carries the label it was planned under.
+    A fifth label would be a band no rule can name, so a school that earned it
+    would quietly match nothing — which is why a perfect ten is still "Strong".
+
+    The colour is what a reader sees, and reading is where the ten deserves to
+    stand apart from the eight (owner, 2026-09-18): red below 5, orange to 6,
+    light green to 8, green to 10, and purple for 10/10 exactly. Only the
+    light-green floor moved — 7.0 down to 6.0 — because that is what the brief
+    asked for; the critical/warning line the platform already reasoned with
+    stays where it was.
+
+    The hex is returned rather than only a tone name because that is what the
+    rendering uses: SSA scores are coloured on the FONT, never as a highlight,
+    and a score is never told by colour alone — the number is always printed
+    and the label carried as its title.
+    """
     if score is None:
         return ("No SSA", "#94a3b8", "neutral")
+    if score >= 10.0:
+        return ("Strong", "#9333ea", "perfect")
     if score >= 8.0:
         return ("Strong", "#16a34a", "success")
-    if score >= 7.0:
+    if score >= 6.0:
         return ("Improving", "#84cc16", "lime")
     if score >= 5.0:
         return ("Warning", "#f59e0b", "warning")
     return ("Critical", "#dc2626", "danger")
+
+
+#: What each colour means, for a legend. The label repeats across the top two
+#: because the band a rule names and the colour a reader sees are different
+#: things — see `ssa_score_band`.
+SSA_SCORE_COLOUR_BANDS: tuple[tuple[str, str, str], ...] = (
+    ("Perfect", "10", "#9333ea"),
+    ("Strong", "8 – 9.9", "#16a34a"),
+    ("Improving", "6 – 7.9", "#84cc16"),
+    ("Warning", "5 – 5.9", "#f59e0b"),
+    ("Critical", "Below 5", "#dc2626"),
+)
 
 
 # ── Activities ────────────────────────────────────────────────────────────────

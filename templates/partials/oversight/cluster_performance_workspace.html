@@ -1,16 +1,28 @@
 {% load frontend_filters table_pagination %}
 {% comment %}
 Cluster performance: what each cluster planned, delivered, assessed and
-reached, ordered by how active it is.
+reached, under the officer who owns it.
 
 Owner, 2026-09-16: "IA should also track all the cluster activities, planning,
 SSA for the member schools, performance for each cluster. Which cluster is more
 active and which cluster is less active."
 
-The order is the finding, so the ranking is stated rather than implied: the
-index's arithmetic and the band thresholds are printed on the page. A weighting
-nobody can read is a ranking nobody can argue with, which is worse than a rough
-one they can.
+Owner, 2026-09-18: group it by staff name, so a Lead can monitor the
+individual; and drop the Programme Lead column, since a Lead reading this page
+sees their own clusters and their team's. Both are one instruction — the Lead
+is a heading, not a column — so the Lead survives as the outer grouping for the
+readers who span teams, and the flat ranked list it replaced is gone rather
+than left beside it saying the same thing twice.
+
+The rank is still the finding, and it is still computed across the whole list
+before grouping: a cluster ranked 4th is 4th in the country, not 4th under its
+officer. The index's arithmetic and the band thresholds stay printed on the
+page — a weighting nobody can read is a ranking nobody can argue with, which is
+worse than a rough one they can.
+
+Every row is one line: this table is wide and scrolls sideways rather than
+wrapping, because a row that wraps to three lines stops being a row you can
+scan down.
 
 Read-only, like every oversight lens. The cluster record is where a cluster is
 changed; this says which ones need the conversation.
@@ -49,144 +61,81 @@ changed; this says which ones need the conversation.
   </form>
 
   {% if cluster_performance.by_lead %}
-  {% comment %}
-  Owner, 2026-09-18: a card of its own for planned cluster activity, grouped by
-  Programme Lead and then by the CCEO under them, so Impact Assessment can read
-  whether a team is convening its clusters at all. The ranked table below
-  answers which cluster is busiest; that is a different question, and a list
-  ordered by cluster cannot answer this one.
-
-  Read-only, like every oversight lens: each cluster links to its own record,
-  where a cluster is changed.
-  {% endcomment %}
-  <section class="card p-0 overflow-hidden" aria-labelledby="cluster-plans-by-lead-title">
-    <div class="border-b edify-border px-4 py-3">
-      <h2 id="cluster-plans-by-lead-title" class="text-[15px] font-semibold">Planned cluster activity by Programme Lead</h2>
-      <p class="edify-text-caption edify-text-muted">Every cluster in scope under the Lead who supervises it and the CCEO who owns it, with what FY {{ fy }} has planned on it. Schools reached counts the member schools a session invited or a visit is planned for.</p>
-    </div>
-    {% for lead in cluster_performance.by_lead %}
-    <details class="border-b edify-border last:border-0" {% if forloop.first %}open{% endif %}>
-      <summary class="px-4 py-3 cursor-pointer flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span class="font-semibold">{{ lead.lead_name }}</span>
-        <span class="edify-text-caption edify-text-muted">
-          {{ lead.totals.clusters }} cluster{{ lead.totals.clusters|pluralize }} ·
-          {{ lead.totals.sessions }} session{{ lead.totals.sessions|pluralize }} planned
-          ({{ lead.totals.trainings }}T · {{ lead.totals.meetings }}M) ·
-          {{ lead.totals.schools_reached }} of {{ lead.totals.schools }} school{{ lead.totals.schools|pluralize }} reached{% if lead.totals.dormant %} ·
-          <span class="cluster-band" data-band="dormant">{{ lead.totals.dormant }} with nothing planned</span>{% endif %}
-        </span>
-      </summary>
-      {% for owner in lead.owners %}
-      <div class="px-4 pb-3">
-        <h3 class="edify-text-caption font-bold uppercase tracking-wider edify-text-subtle py-2">{{ owner.owner_name }} · {{ owner.totals.clusters }} cluster{{ owner.totals.clusters|pluralize }} · {{ owner.totals.sessions }} session{{ owner.totals.sessions|pluralize }} planned</h3>
-        <div class="overflow-x-auto edify-record-table-wrap">
-          <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
-            <caption class="sr-only">Clusters owned by {{ owner.owner_name }}</caption>
-            <thead>
-              <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
-                <th scope="col" class="px-3 py-2 font-semibold">Cluster</th>
-                <th scope="col" class="px-3 py-2 font-semibold text-right">Schools</th>
-                <th scope="col" class="px-3 py-2 font-semibold text-right">Trainings</th>
-                <th scope="col" class="px-3 py-2 font-semibold text-right">Meetings</th>
-                <th scope="col" class="px-3 py-2 font-semibold text-right">Visits</th>
-                <th scope="col" class="px-3 py-2 font-semibold text-right">Schools reached</th>
-                <th scope="col" class="px-3 py-2 font-semibold">Next / last planned</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% paginate owner.rows owner.page_param as owner_pager %}
-              {% for row in owner_pager.rows %}
-              <tr class="border-t edify-border">
-                <td class="px-3 py-2">
-                  <a href="/clusters/{{ row.cluster_id }}" class="font-semibold hover:underline edify-primary-text">{{ row.name }}</a>
-                  <span class="block edify-text-caption edify-text-muted">{{ row.district|default:"No district" }}</span>
-                </td>
-                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ row.schools }}</td>
-                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ row.trainings }}</td>
-                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ row.meetings }}</td>
-                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ row.visits_planned }}</td>
-                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ row.schools_reached }}{% if row.reach is not None %} <span class="edify-text-caption edify-text-muted">({{ row.reach }}%)</span>{% endif %}</td>
-                <td class="px-3 py-2 text-sm whitespace-nowrap">{% if row.last_activity %}{{ row.last_activity|date:"j M Y" }}{% else %}<span class="cluster-band" data-band="dormant">Nothing planned</span>{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% include "components/table_pager.html" with pager=owner_pager param=owner.page_param pagination_label="Clusters by CCEO pages" %}
-        </div>
-      </div>
-      {% endfor %}
-    </details>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if cluster_performance.rows %}
-  {% comment %}Bounded like every other operational table. The ranks are
-  computed over the whole list before it is paged, so page two starts at the
-  rank it says it does.{% endcomment %}
-  {% paginate cluster_performance.rows "clusters_page" as cluster_page %}
   <p class="cluster-index-note">{{ cluster_index_note }} {{ cluster_band_note }} The busiest and the quietest cluster with work planned are named outright.</p>
 
-  <div class="card p-0 overflow-hidden">
-    <div class="overflow-x-auto edify-record-table-wrap">
-      <table class="edify-record-table w-full text-left cluster-performance-table" data-mobile-table="scroll">
-        <caption class="sr-only">Clusters in scope, most active first</caption>
-        <thead>
-          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
-            <th scope="col" class="px-3 py-2 font-semibold">#</th>
-            <th scope="col" class="px-3 py-2 font-semibold">Cluster</th>
-            <th scope="col" class="px-3 py-2 font-semibold">CCEO</th>
-            <th scope="col" class="px-3 py-2 font-semibold">Programme Lead</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Schools</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Sessions</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Visits</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Delivered</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Reach</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">SSA</th>
-            <th scope="col" class="px-3 py-2 font-semibold">Last activity</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Planned budget</th>
-            <th scope="col" class="px-3 py-2 font-semibold text-right">Index</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in cluster_page.rows %}
-          <tr class="border-t edify-border cluster-row" data-band="{{ entry.band }}">
-            <td class="px-3 py-2 text-sm tabular-nums edify-text-muted">{{ entry.rank }}</td>
-            <td class="px-3 py-2">
-              <a href="{{ entry.url }}" class="font-semibold hover:underline edify-primary-text">{{ entry.row.name }}</a>
-              <span class="block edify-text-caption edify-text-muted">{{ entry.row.district|default:"No district" }}</span>
-            </td>
-            <td class="px-3 py-2 text-sm">{{ entry.row.owner_name }}</td>
-            <td class="px-3 py-2 text-sm">{{ entry.row.lead_name }}</td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums">{{ entry.row.schools }}</td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums">
-              {{ entry.row.sessions_planned }}
-              <span class="block edify-text-caption edify-text-muted">{{ entry.row.trainings }}T · {{ entry.row.meetings }}M</span>
-            </td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums">{{ entry.row.visits_planned }}</td>
-            {% comment %}A share always says what it is a share of, and a
-            cluster that planned nothing has not delivered 0% of it.{% endcomment %}
-            <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.delivery is None %}<span class="edify-text-muted" title="Nothing planned to deliver">—</span>{% else %}{{ entry.row.delivery }}%{% endif %}</td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.reach is None %}<span class="edify-text-muted" title="No member schools">—</span>{% else %}{{ entry.row.reach }}%{% endif %}</td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.ssa_coverage is None %}<span class="edify-text-muted" title="No member schools">—</span>{% else %}{{ entry.row.ssa_coverage }}%{% endif %}</td>
-            <td class="px-3 py-2 text-sm whitespace-nowrap">{% if entry.row.last_activity %}{{ entry.row.last_activity|date:"j M Y" }}{% else %}<span class="edify-text-muted">Never</span>{% endif %}</td>
-            <td class="px-3 py-2 text-sm text-right tabular-nums whitespace-nowrap">UGX {{ entry.row.budget|intcomma }}</td>
-            <td class="px-3 py-2 text-right">
-              <span class="cluster-band" data-band="{{ entry.band }}">
-                <span class="cluster-band__index">{{ entry.row.index }}</span>
-                <span class="cluster-band__label">{{ entry.band_label }}</span>
-              </span>
-              {% comment %}Only one cluster is the most active and only one is
-              the least; the band beside it says the level.{% endcomment %}
-              {% if entry.superlative %}<span class="cluster-super">{{ entry.superlative }}</span>{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% include "components/table_pager.html" with pager=cluster_page param="clusters_page" pagination_label="Clusters" %}
+  {% for lead in cluster_performance.by_lead %}
+  <section class="card p-0 overflow-hidden" aria-label="Clusters under {{ lead.lead_name }}">
+    <div class="border-b edify-border px-4 py-3 flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="text-[15px] font-semibold">{{ lead.lead_name }}</h2>
+      <span class="edify-text-caption edify-text-muted">
+        {{ lead.totals.clusters }} cluster{{ lead.totals.clusters|pluralize }} ·
+        {{ lead.totals.sessions }} session{{ lead.totals.sessions|pluralize }} planned
+        ({{ lead.totals.trainings }}T · {{ lead.totals.meetings }}M) ·
+        {{ lead.totals.visits }} visit{{ lead.totals.visits|pluralize }} ·
+        {{ lead.totals.schools_reached }} of {{ lead.totals.schools }} school{{ lead.totals.schools|pluralize }} reached ·
+        UGX {{ lead.totals.budget|intcomma }}{% if lead.totals.dormant %} ·
+        <span class="cluster-band" data-band="dormant">{{ lead.totals.dormant }} with nothing planned</span>{% endif %}
+      </span>
     </div>
-  </div>
+
+    {% for owner in lead.owners %}
+    <div class="border-b edify-border last:border-0">
+      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider edify-text-subtle">{{ owner.owner_name }} · {{ owner.totals.clusters }} cluster{{ owner.totals.clusters|pluralize }} · {{ owner.totals.sessions }} session{{ owner.totals.sessions|pluralize }} planned · {{ owner.totals.schools_reached }} of {{ owner.totals.schools }} school{{ owner.totals.schools|pluralize }} reached</h3>
+      <div class="overflow-x-auto edify-record-table-wrap">
+        <table class="edify-record-table w-full text-left cluster-performance-table whitespace-nowrap" data-mobile-table="scroll">
+          <caption class="sr-only">Clusters owned by {{ owner.owner_name }}, under {{ lead.lead_name }}</caption>
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+              <th scope="col" class="px-3 py-2 font-semibold">#</th>
+              <th scope="col" class="px-3 py-2 font-semibold">Cluster</th>
+              <th scope="col" class="px-3 py-2 font-semibold">District</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Schools</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Sessions</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Visits</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Delivered</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Reach</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">SSA</th>
+              <th scope="col" class="px-3 py-2 font-semibold">Last activity</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Planned budget</th>
+              <th scope="col" class="px-3 py-2 font-semibold text-right">Index</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% paginate owner.entries owner.page_param as owner_pager %}
+            {% for entry in owner_pager.rows %}
+            <tr class="border-t edify-border cluster-row" data-band="{{ entry.band }}">
+              <td class="px-3 py-2 text-sm tabular-nums edify-text-muted">{{ entry.rank }}</td>
+              <td class="px-3 py-2"><a href="{{ entry.url }}" class="font-semibold hover:underline edify-primary-text">{{ entry.row.name }}</a></td>
+              <td class="px-3 py-2 text-sm">{{ entry.row.district|default:"No district" }}</td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{{ entry.row.schools }}</td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{{ entry.row.sessions_planned }} <span class="edify-text-caption edify-text-muted">({{ entry.row.trainings }}T · {{ entry.row.meetings }}M)</span></td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{{ entry.row.visits_planned }}</td>
+              {% comment %}A share always says what it is a share of, and a
+              cluster that planned nothing has not delivered 0% of it.{% endcomment %}
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.delivery is None %}<span class="edify-text-muted" title="Nothing planned to deliver">—</span>{% else %}{{ entry.row.delivery }}%{% endif %}</td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.reach is None %}<span class="edify-text-muted" title="No member schools">—</span>{% else %}{{ entry.row.reach }}%{% endif %}</td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">{% if entry.row.ssa_coverage is None %}<span class="edify-text-muted" title="No member schools">—</span>{% else %}{{ entry.row.ssa_coverage }}%{% endif %}</td>
+              <td class="px-3 py-2 text-sm">{% if entry.row.last_activity %}{{ entry.row.last_activity|date:"j M Y" }}{% else %}<span class="edify-text-muted">Never</span>{% endif %}</td>
+              <td class="px-3 py-2 text-sm text-right tabular-nums">UGX {{ entry.row.budget|intcomma }}</td>
+              <td class="px-3 py-2 text-right">
+                <span class="cluster-band" data-band="{{ entry.band }}">
+                  <span class="cluster-band__index">{{ entry.row.index }}</span>
+                  <span class="cluster-band__label">{{ entry.band_label }}</span>
+                </span>
+                {% comment %}Only one cluster is the most active and only one is
+                the least; the band beside it says the level.{% endcomment %}
+                {% if entry.superlative %}<span class="cluster-super">{{ entry.superlative }}</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=owner_pager param=owner.page_param pagination_label="Clusters by CCEO pages" %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
   {% else %}
   {% include "components/empty_state.html" with title="No clusters in scope" message="Clusters appear here once they are assigned to the staff you oversee." %}
   {% endif %}

@@ -145,7 +145,63 @@ def _quarter_label(day: date) -> str:
     return f"{quarter} · {spans[quarter]}"
 
 
-def _row_of(item, *, school_id, school_name, owner_name, district_name, region_name):
+#: How Impact Assessment's verdict on a piece of work reads in a table.
+#: Pending and Verified are the two the brief names; returned and flagged are
+#: kept rather than folded into "Pending", because a piece of work IA sent
+#: back is not one IA has not looked at yet (owner, 2026-09-18).
+IA_STATUS_LABELS = {
+    "": "Pending",
+    "pending": "Pending",
+    "confirmed": "Verified",
+    "returned": "Returned",
+    "flagged": "Flagged",
+}
+
+BUDGET_NO_COST = "No cost yet"
+BUDGET_CREATED = "Budget created"
+BUDGET_IN_WEEKLY_REQUEST = "In weekly fund request"
+
+
+def _weekly_fund_request_activities(activity_ids) -> set:
+    """Which of these activities are carried on a weekly fund request.
+
+    The money a planned activity needs travels from its cost lines onto a
+    weekly request, and "has it been asked for yet?" is the question the
+    oversight reader is actually holding. Read through
+    WeeklyFundRequestLine.activity_budget_line rather than any status field,
+    because the line's existence IS the answer.
+    """
+    from apps.fund_requests.models import WeeklyFundRequestLine
+
+    ids = {activity_id for activity_id in activity_ids if activity_id}
+    if not ids:
+        return set()
+    return set(
+        WeeklyFundRequestLine.objects.filter(
+            activity_budget_line__activity_id__in=ids
+        ).values_list("activity_budget_line__activity_id", flat=True)
+    )
+
+
+def _budget_status(item, *, requested_ids) -> str:
+    """How far this item's money has travelled: none, costed, or asked for."""
+    if item.activity_id and item.activity_id in requested_ids:
+        return BUDGET_IN_WEEKLY_REQUEST
+    if item.planned_cost:
+        return BUDGET_CREATED
+    return BUDGET_NO_COST
+
+
+def _row_of(
+    item,
+    *,
+    school_id,
+    school_name,
+    owner_name,
+    district_name,
+    region_name,
+    requested_ids=frozenset(),
+):
     """One table row: a piece of planned work, seen at one school."""
     return {
         # What the work IS, so a training invited to twelve schools is twelve
@@ -171,8 +227,14 @@ def _row_of(item, *, school_id, school_name, owner_name, district_name, region_n
         "scheduled_date": item.planned_date,
         "delivery_channel": "Partner" if item.is_partner_work else "Staff",
         "partner_name": item.partner_name,
-        "funding_status": item.finance_status
-        or ("Costed" if item.planned_cost else "No cost yet"),
+        # The money and the verdict, the two states an oversight reader asks
+        # about after "is it planned?" (owner, 2026-09-18). Budget status
+        # replaced a "Funding" column that said "Costed" or "No cost yet" —
+        # the same question, answered one rung short of where the money
+        # actually goes.
+        "budget_status": _budget_status(item, requested_ids=requested_ids),
+        "ia_status": IA_STATUS_LABELS.get(item.ia_status or "", "Pending"),
+        "payment_status": item.finance_status,
         "activity_status": item.activity_status or item.assignment_status,
         "stage": item.stage,
         "detail_url": (
@@ -183,7 +245,7 @@ def _row_of(item, *, school_id, school_name, owner_name, district_name, region_n
     }
 
 
-def _invited_school_rows(items) -> list[dict]:
+def _invited_school_rows(items, *, requested_ids) -> list[dict]:
     """One row per school invited into a planned cluster session.
 
     A cluster training is planned once, on the cluster, and the schools it will
@@ -241,6 +303,7 @@ def _invited_school_rows(items) -> list[dict]:
                 owner_name=owners.get(school.account_owner_id, ""),
                 district_name=school.district.name if school.district_id else "",
                 region_name=school.region.name if school.region_id else "",
+                requested_ids=requested_ids,
             )
         )
     return rows
@@ -255,6 +318,7 @@ def planned_schools(items, *, period: str) -> tuple[list[CoverageGroup], dict]:
     that is read from the attendance record and folded in here — see
     `_invited_school_rows`.
     """
+    requested_ids = _weekly_fund_request_activities(item.activity_id for item in items)
     rows = [
         _row_of(
             item,
@@ -263,10 +327,11 @@ def planned_schools(items, *, period: str) -> tuple[list[CoverageGroup], dict]:
             owner_name=item.operational_owner_name,
             district_name=item.district_name,
             region_name=item.region_name,
+            requested_ids=requested_ids,
         )
         for item in items
         if item.school_id
-    ] + _invited_school_rows(items)
+    ] + _invited_school_rows(items, requested_ids=requested_ids)
 
     groups: dict[str, CoverageGroup] = {}
     for row in rows:

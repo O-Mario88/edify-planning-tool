@@ -391,11 +391,12 @@ def cluster_performance(
         rows = [r for r in rows if r.lead_id == program_lead_id]
 
     rows.sort(key=lambda r: (-r.index, r.name.casefold()))
+    banded = _banded(rows)
     return {
-        "rows": _banded(rows),
+        "rows": banded,
         "totals": _cluster_totals(rows),
         "leads": lead_options,
-        "by_lead": plans_by_lead(rows),
+        "by_lead": plans_by_lead(banded),
     }
 
 
@@ -404,21 +405,25 @@ def _page_param(owner_id: str) -> str:
     return f"clusters_{safe or 'owner'}_page"
 
 
-def plans_by_lead(rows) -> list[dict]:
-    """The same clusters, nested Programme Lead → CCEO → cluster.
+def plans_by_lead(entries) -> list[dict]:
+    """The clusters, nested Programme Lead → CCEO → cluster.
 
-    Owner, 2026-09-18: Impact Assessment needs a card of its own for planned
-    cluster activity, grouped by Programme Lead and then by the CCEO under
-    them. The ranked table below answers "which cluster is busiest"; this one
-    answers "is this Lead's team convening its clusters at all", which is a
-    question about people and cannot be read off a list ordered by cluster.
+    Owner, 2026-09-18: group the lens by staff name, so a Lead can monitor the
+    individual; and drop the Programme Lead column, because a Lead reading this
+    page sees their own clusters and their team's, so naming the Lead on every
+    row says nothing. Both are the same instruction: the Lead is a heading, not
+    a column. A reader who spans teams — Impact Assessment, the Director, the
+    RVP — still needs the Lead, and gets it as the outer grouping.
 
-    A fold over the rows the page already built, never a second query: a
-    grouping that re-queries is a second number that can disagree with the
-    table it sits above.
+    `entries` are the banded rows the page already built, so each cluster keeps
+    the rank, band and superlative it earned against the whole list rather than
+    against its own officer's few. A fold, never a second query: a grouping
+    that re-queries is a second number that can disagree with the rows it is
+    made of.
     """
     leads: dict[str, dict] = {}
-    for row in rows:
+    for entry in entries:
+        row = entry["row"]
         lead = leads.setdefault(
             row.lead_id,
             {
@@ -429,11 +434,12 @@ def plans_by_lead(rows) -> list[dict]:
         )
         owner = lead["owners"].setdefault(
             row.owner_id,
-            {"owner_id": row.owner_id, "owner_name": row.owner_name, "rows": []},
+            {"owner_id": row.owner_id, "owner_name": row.owner_name, "entries": []},
         )
-        owner["rows"].append(row)
+        owner["entries"].append(entry)
 
-    def totals(cluster_rows) -> dict:
+    def totals(cluster_entries) -> dict:
+        cluster_rows = [entry["row"] for entry in cluster_entries]
         schools = sum(r.schools for r in cluster_rows)
         reached = sum(r.schools_reached for r in cluster_rows)
         return {
@@ -456,11 +462,11 @@ def plans_by_lead(rows) -> list[dict]:
     for lead in leads.values():
         owners = []
         for owner in lead["owners"].values():
-            owner["rows"].sort(key=lambda r: r.name.casefold())
+            owner["entries"].sort(key=lambda entry: entry["row"].name.casefold())
             owners.append(
                 {
                     **owner,
-                    "totals": totals(owner["rows"]),
+                    "totals": totals(owner["entries"]),
                     # Each CCEO is its own table, so paging one must not page
                     # the others: a Lead with six officers would otherwise move
                     # all six tables at once.
@@ -473,13 +479,13 @@ def plans_by_lead(rows) -> list[dict]:
                 entry["owner_name"].casefold(),
             )
         )
-        lead_rows = [row for owner in owners for row in owner["rows"]]
+        lead_entries = [entry for owner in owners for entry in owner["entries"]]
         out.append(
             {
                 "lead_id": lead["lead_id"],
                 "lead_name": lead["lead_name"],
                 "owners": owners,
-                "totals": totals(lead_rows),
+                "totals": totals(lead_entries),
             }
         )
     out.sort(

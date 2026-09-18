@@ -2775,7 +2775,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6675,
+      "bytes": 6827,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -2844,7 +2844,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7734,
+      "bytes": 7926,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -3414,7 +3414,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 21234,
+      "bytes": 21350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3563,7 +3563,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10463,
+      "bytes": 10662,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4419,7 +4419,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4020,
+      "bytes": 4154,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4468,7 +4468,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9666,
+      "bytes": 9749,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4492,7 +4492,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 2789,
+      "bytes": 3322,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4674,7 +4674,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2660,
+      "bytes": 2818,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8257,7 +8257,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12383,
+      "bytes": 9206,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -8275,7 +8275,7 @@
       "states": [
         "default"
       ],
-      "tables": 2,
+      "tables": 1,
       "template": "partials/oversight/cluster_performance_workspace.html",
       "variants": [
         "executive"
@@ -8285,7 +8285,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10360,
+      "bytes": 10789,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8843,6 +8843,29 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1764,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Saved Toast",
+      "purpose": "Reusable saved toast interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/planning/saved_toast.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
@@ -8925,7 +8948,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6939,
+      "bytes": 7125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9415,7 +9438,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16941,
+      "bytes": 17208,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9436,9 +9459,7 @@
         "warning",
         "{% if score.delta > 0 %}success{% elif score.delta < 0 %}danger{% else %}neutral{% endif %}",
         "{{ row.biblical_tone }}",
-        "{{ row.tone }}",
-        "{{ score.tone }}",
-        "{{ w.tone }}"
+        "{{ row.tone }}"
       ]
     },
     {
@@ -9446,7 +9467,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11400,
+      "bytes": 11686,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10635,7 +10656,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20783,
+      "bytes": 21495,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -10658,10 +10679,6 @@
       "variants": [
         "danger",
         "executive",
-        "lime",
-        "success",
-        "warning",
-        "{{ cell.band.tone }}",
         "{{ district.band.tone }}",
         "{{ insight.tone }}",
         "{{ intervention.band.tone }}",
@@ -10698,7 +10715,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 911,
+      "bytes": 1034,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -10777,7 +10794,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20130,
+      "bytes": 20266,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -11151,7 +11168,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5985,
+      "bytes": 5978,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -11174,7 +11191,6 @@
       "template": "partials/today/queue_item.html",
       "variants": [
         "danger",
-        "{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}",
         "{{ todo.due_tone|default:"
       ]
     },
@@ -11207,7 +11223,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8372,
+      "bytes": 8365,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -11230,7 +11246,6 @@
       "template": "partials/today/queue_row.html",
       "variants": [
         "danger",
-        "{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}",
         "{{ todo.due_tone|default:",
         "{{ todo.status_tone|default:"
       ]
@@ -103550,7 +103565,7 @@
     "activity_states": 24,
     "all_routes": 1287,
     "api_routes": 360,
-    "component_templates": 462,
+    "component_templates": 463,
     "full_pages": 258,
     "mobile_contract_pass": 527,
     "nonvisual_actions": 263,

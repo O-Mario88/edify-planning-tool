@@ -144,7 +144,7 @@ MONTHS_SHORT = {
 
 
 # ── SSA banding — the canonical mandate bands (§5): Critical 0-4.9 /
-# Warning 5-6.9 / Improving 7-7.9 / Strong 8-10 on the native score. Analytics
+# Warning 5-5.9 / Improving 6-7.9 / Strong 8-10 on the native score. Analytics
 # must never turn an SSA score into a percentage merely for presentation.
 def ssa_band(score: float | None):
     """Classify a native 0-10 SSA score into the canonical four bands."""

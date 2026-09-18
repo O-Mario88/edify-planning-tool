@@ -1,4 +1,4 @@
-
+{% load frontend_filters %}
 {% load kpi_metrics frontend_filters %}
 {% comment %}
   Staff vs Partner Performance — the approved 2+2+1 analytics composition.
@@ -37,7 +37,7 @@
             {% if s.insufficient %}
             <span class="edify-text-caption font-semibold edify-text-muted">Insufficient comparable data</span>
             {% else %}
-            <span class="text-[13px] font-bold edify-text tabular-nums">{{ s.score|floatformat:1 }}<span class="edify-text-caption edify-text-muted font-semibold">/10 · {{ s.school_count }} school{{ s.school_count|pluralize }}</span></span>
+            <span class="text-[13px] font-bold edify-text tabular-nums" style="color: {{ s.score|ssa_score_colour }}" title="{{ s.score|ssa_score_band_label }}">{{ s.score|floatformat:1 }}<span class="edify-text-caption edify-text-muted font-semibold">/10 · {{ s.school_count }} school{{ s.school_count|pluralize }}</span></span>
             {% endif %}
           </div>
           {% if not s.insufficient %}

@@ -9,8 +9,8 @@ class InterventionSeverityClassifier:
     @staticmethod
     def classify_severity(score: float | None) -> str:
         # Single source of truth for the 0-10 bands
-        # (apps.core.enums.ssa_score_band): Critical 0-4.9 / Warning 5-6.9 /
-        # Improving 7-7.9 / Strong 8-10. Those band labels are identical to
+        # (apps.core.enums.ssa_score_band): Critical 0-4.9 / Warning 5-5.9 /
+        # Improving 6-7.9 / Strong 8-10. Those band labels are identical to
         # this classifier's historical vocabulary, so delegating removes a
         # duplicate threshold definition without changing any classification.
         # None (no SSA) now yields the honest canonical "No SSA" instead of

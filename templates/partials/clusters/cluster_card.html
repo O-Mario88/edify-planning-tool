@@ -52,7 +52,7 @@ data-row-disclosure-summary
   </div>
   <div class="school-record-row__ssa {% if cluster.risk == 'critical' %}is-danger{% elif cluster.risk == 'needs_attention' %}is-warning{% else %}is-success{% endif %}">
     <dt>Avg SSA:</dt>
-    <dd>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</dd>
+    <dd{% if cluster.avg_ssa is not None %} style="color: {{ cluster.avg_ssa|ssa_score_colour }}" title="{{ cluster.avg_ssa|ssa_score_band_label }}"{% endif %}>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</dd>
   </div>
   <div>
     <dt>Meetings (FY):</dt>

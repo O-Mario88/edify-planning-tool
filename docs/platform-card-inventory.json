@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 694,
-  "templates": 264,
-  "distinct_titles": 660,
+  "titled_cards": 693,
+  "templates": 263,
+  "distinct_titles": 659,
   "with_card_key": 13,
   "untitled_surfaces": 777,
   "untitled_chrome": 176,
@@ -2576,7 +2576,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 279,
+   "line": 284,
    "title": "Schedule Recommended Activities",
    "heading_level": 4,
    "has_card_key": false,
@@ -2585,7 +2585,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 322,
+   "line": 327,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -6572,22 +6572,8 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/oversight/cluster_performance_workspace.html",
-   "line": 62,
-   "title": "Planned cluster activity by Programme Lead",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     2,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 24,
+   "line": 28,
    "title": "Planned Schools \u00b7",
    "heading_level": 2,
    "has_card_key": false,
@@ -6596,7 +6582,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 64,
+   "line": 69,
    "title": "Schools with Planned Cluster Training or Meeting",
    "heading_level": 2,
    "has_card_key": false,
@@ -6605,7 +6591,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 96,
+   "line": 101,
    "title": "Schools with No Training Planned",
    "heading_level": 2,
    "has_card_key": false,
@@ -7314,7 +7300,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 58,
+   "line": 59,
    "title": "Performance overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -7323,7 +7309,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 76,
+   "line": 77,
    "title": "District SSA performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -7332,7 +7318,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 95,
+   "line": 96,
    "title": "District performance heat panel",
    "heading_level": 2,
    "has_card_key": false,
@@ -7341,7 +7327,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 105,
+   "line": 109,
    "title": "Intervention gaps by district",
    "heading_level": 2,
    "has_card_key": false,
@@ -7350,7 +7336,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 116,
+   "line": 120,
    "title": "Schools requiring urgent attentionUrgent-attention summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7359,7 +7345,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 131,
+   "line": 135,
    "title": "Insights &amp; recommendations",
    "heading_level": 2,
    "has_card_key": false,
@@ -7368,7 +7354,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 141,
+   "line": 145,
    "title": "SSA performance by staff, cluster and partner",
    "heading_level": 2,
    "has_card_key": false,
@@ -7377,7 +7363,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 163,
+   "line": 167,
    "title": "SSA performance FY vs FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -7386,7 +7372,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 205,
+   "line": 209,
    "title": "SSA performance trend by year",
    "heading_level": 2,
    "has_card_key": false,
