@@ -15,7 +15,7 @@ from datetime import date
 
 from django.utils import timezone
 
-from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+from apps.accounts.models import StaffProfile
 from apps.core.fy import get_operational_fy
 
 from apps.professional_development.models import (
@@ -106,15 +106,19 @@ def _staff(user) -> StaffProfile | None:
 
 
 def staff_display_info(user) -> dict:
+    """The header of the PD form, including who it is about to go to.
+
+    This ran its own supervisor query beside the routing engine's. The two
+    agreed only by coincidence, and once routing began reading the reporting
+    line they would have disagreed outright — the form naming an oversight
+    reviewer while the request went to the Director. One resolver answers both.
+    """
+    from apps.professional_development.approval_service import (
+        PDApprovalRoutingService,
+    )
+
     sp = _staff(user)
-    supervisor_sp = None
-    if sp:
-        link = (
-            StaffSupervisorAssignment.objects.filter(supervisee=sp)
-            .select_related("supervisor__user")
-            .first()
-        )
-        supervisor_sp = link.supervisor if link else None
+    supervisor_sp = PDApprovalRoutingService.supervisor_for(sp) if sp else None
     return {
         "staff_id": sp.id if sp else None,
         "staff_name": user.name,
