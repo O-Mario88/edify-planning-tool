@@ -645,15 +645,21 @@ class HRPDDashboardService:
         The approval services already let a supervisor approve or return a
         request and no page listed the requests to decide: a Programme Lead
         learned of one from a notification or not at all (Program Lead
-        alignment, 2026-09-13). The rule is the approval service's —
-        the requester's first supervisor link, or whoever is actively covering
-        that supervisor, never the requester — applied in bulk: four queries
-        whatever the number of requests. Every financial year is listed;
-        waiting is waiting.
+        alignment, 2026-09-13).
+
+        The rule is the approval service's, and it is now literally the
+        approval service's. This used to restate it here as "the requester's
+        first supervisor link" — a copy, which can disagree with the authority
+        it describes, and did: it would list a request for whoever held the
+        earliest row, oversight row or not, while the guard admitted only the
+        reporting line. `supervisors_for` answers both, in bulk, so the list
+        you are shown is the list you may decide. Every financial year is
+        listed; waiting is waiting.
         """
-        from apps.accounts.models import (
-            StaffSupervisorAssignment,
-            TemporaryCoverageAssignment,
+        from apps.accounts.models import StaffProfile, TemporaryCoverageAssignment
+
+        from apps.professional_development.approval_service import (
+            PDApprovalRoutingService,
         )
 
         profile_id = getattr(principal, "staff_profile_id", None)
@@ -669,37 +675,30 @@ class HRPDDashboardService:
             ).values_list("original_staff_id", flat=True)
         )
         acting_for = {profile_id} | covered
-        candidate_staff = set(
-            StaffSupervisorAssignment.objects.filter(
-                supervisor_id__in=acting_for
-            ).values_list("supervisee_id", flat=True)
-        )
-        candidate_staff.discard(profile_id)
-        if not candidate_staff:
-            return []
         waiting = list(
             ProfessionalDevelopmentRequest.objects.filter(
-                staff_id__in=candidate_staff,
                 status=PDStatus.SUBMITTED_TO_SUPERVISOR,
-            ).order_by("submitted_at", "created_at")
+            )
+            .exclude(staff_id=profile_id)
+            .order_by("submitted_at", "created_at")
         )
         if not waiting:
             return []
-        # `supervisor_for` takes the requester's first link (lowest id); a
-        # request whose first link names someone else is theirs to decide.
-        first_supervisor: dict[str, str] = {}
-        for supervisee_id, supervisor_id in (
-            StaffSupervisorAssignment.objects.filter(
-                supervisee_id__in={r.staff_id for r in waiting}
-            )
-            .order_by("id")
-            .values_list("supervisee_id", "supervisor_id")
-        ):
-            first_supervisor.setdefault(supervisee_id, supervisor_id)
+        requesters = list(
+            StaffProfile.objects.filter(
+                id__in={r.staff_id for r in waiting}
+            ).select_related("user")
+        )
+        supervisor_of = {
+            staff_id: supervisor.id
+            for staff_id, supervisor in PDApprovalRoutingService.supervisors_for(
+                requesters
+            ).items()
+        }
         today = date.today()
         rows = []
         for req in waiting:
-            if first_supervisor.get(req.staff_id) not in acting_for:
+            if supervisor_of.get(req.staff_id) not in acting_for:
                 continue
             submitted = req.submitted_at.date() if req.submitted_at else None
             rows.append(
@@ -718,7 +717,7 @@ class HRPDDashboardService:
                     "exception": bool(req.is_exception),
                     "conflict": req.conflict_status,
                     "waited": (today - submitted).days if submitted else None,
-                    "covering": first_supervisor.get(req.staff_id) != profile_id,
+                    "covering": supervisor_of.get(req.staff_id) != profile_id,
                 }
             )
         return rows

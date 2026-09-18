@@ -5,8 +5,10 @@ remit and their portfolio is the access boundary — but it used to be read off
 ``StaffSchoolAssignment``. That table is account ownership, and the school
 upload writes a row into it for every uploaded school whose account-owner cell
 matches a staff profile by name, so the country officer who ran the upload was
-demoted by their own file. The reporting line is what an administrator sets
-deliberately, and it is what this reads now.
+demoted by their own file. An IA officer's supervisor link over another — the
+assurance oversight `StaffSupervisorAssignment` documents, not the reporting
+line, which runs to the Country Director for every IA officer — is what an
+administrator sets deliberately, and it is what this reads now.
 """
 
 from django.test import TestCase
@@ -56,7 +58,7 @@ class ImpactAssessmentAssignmentScopeTest(TestCase):
         self.assertFalse(scope.country_scope)
         self.assertEqual(scope.own_school_ids, [self.assigned.id])
         self.assertEqual(list(school_queryset(scope)), [self.assigned])
-        # The officer they report to keeps the country, portfolio or not.
+        # The officer overseeing them keeps the country, portfolio or not.
         self.assertTrue(resolve_user_scope(officer_user).country_scope)
 
     def test_ia_without_direct_portfolio_retains_country_oversight(self):
@@ -82,7 +84,7 @@ class ImpactAssessmentAssignmentScopeTest(TestCase):
         self.assertTrue(scope.country_scope)
         self.assertEqual(set(school_queryset(scope)), {self.assigned, self.other})
 
-    def test_reporting_to_a_country_director_is_not_an_assistant(self):
+    def test_a_country_director_link_is_not_ia_oversight(self):
         cd = User.objects.create_user(
             email="cd@edify.test",
             name="Country Director",

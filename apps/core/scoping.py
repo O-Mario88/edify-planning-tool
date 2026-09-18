@@ -240,13 +240,21 @@ def _regional_reach(assigned_region_ids) -> tuple[list[str], list[str], bool]:
     return region_ids, countries, assigned
 
 
-def _supervised_by_impact_assessment(assignment_model, staff_id) -> bool:
-    """Whether this staff member reports to an Impact Assessment officer.
+def _overseen_by_impact_assessment(assignment_model, staff_id) -> bool:
+    """Whether an IA officer holds a supervisor link over this staff member.
 
-    The org-chart definition of an IA assistant. Read through the supervisor's
-    user so a person who merely *holds* the role among several still counts —
-    `active_role` is whichever hat they have on right now, and a reporting line
-    does not change when its supervisor switches tabs.
+    Deliberately *not* the reporting line. `StaffSupervisorAssignment` carries
+    two kinds of row and says so: "PL→CCEO and CD→PL rows are direct reporting
+    lines. IA/RVP rows are overlapping management oversight." The reporting line
+    for every Impact Assessment officer runs to the Country Director
+    (`apps.hr.review_authority.REVIEWER_ROLE_FOR`), so reading it would make an
+    assistant impossible to express. An IA officer's assurance oversight of
+    another is exactly the relationship "this person works inside that officer's
+    remit", which is what the narrowed scope means.
+
+    Read through the supervisor's held roles rather than `active_role`, which is
+    whichever hat they have on right now: an oversight link does not lapse when
+    its holder switches tabs.
     """
     from django.db.models import Q
 
@@ -326,21 +334,21 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     # lets the country IA officer retain oversight while an assistant sees only
     # the schools assigned to them.
     #
-    # The discriminator is the reporting line, not `StaffSchoolAssignment`.
-    # That table is *account ownership*, and the school upload writes a row into
-    # it for every uploaded school whose account-owner cell matches a staff
-    # profile by name — so a country IA officer named as the owner on a single
-    # row of their own upload demoted themselves out of the country, silently,
-    # in the same request that loaded it. One row of 16k collapsed the lens to
-    # that row: no directory, no SSA, no country oversight, and no error to say
-    # why. Ownership is written by an import; supervision is set deliberately by
-    # CD, HR or Admin (`apps.accounts.supervisor_service`), so only supervision
-    # can narrow a role's reach.
+    # The discriminator is an IA officer's oversight link, not
+    # `StaffSchoolAssignment`. That table is *account ownership*, and the school
+    # upload writes a row into it for every uploaded school whose account-owner
+    # cell matches a staff profile by name — so a country IA officer named as
+    # the owner on a single row of their own upload demoted themselves out of
+    # the country, silently, in the same request that loaded it. One row of 16k
+    # collapsed the lens to that row: no directory, no SSA, no country
+    # oversight, and no error to say why. Ownership is written by an import;
+    # the oversight link is set deliberately by CD, HR or Admin
+    # (`apps.accounts.supervisor_service`), so only that can narrow the reach.
     if (
         role == EdifyRole.IMPACT_ASSESSMENT.value
         and staff_id
         and StaffSupervisorAssignment
-        and _supervised_by_impact_assessment(StaffSupervisorAssignment, staff_id)
+        and _overseen_by_impact_assessment(StaffSupervisorAssignment, staff_id)
     ):
         country_scope = False
 

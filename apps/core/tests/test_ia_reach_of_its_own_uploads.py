@@ -18,8 +18,8 @@ officer to a portfolio as soon as ``StaffSchoolAssignment`` held a row for them.
 That table is account ownership, and the school upload writes a row into it for
 every uploaded school whose account-owner cell matches a staff profile by name.
 So the officer who ran the upload was demoted by their own file, in the request
-that loaded it, with no message to say so. The reporting line says who is an
-assistant; an import does not.
+that loaded it, with no message to say so. An IA officer's oversight link over
+another says who is an assistant; an import does not.
 
 Both halves are asserted here together because either one alone empties the same
 pages, and a fix for one would look like a fix for both.
@@ -355,7 +355,7 @@ class OwnershipDoesNotDemoteTheOfficer(TestCase):
             {"Kampala Primary"},
         )
 
-    def test_reporting_to_the_country_director_is_not_an_assistant(self):
+    def test_a_country_director_link_is_not_ia_oversight(self):
         cd = _user("demote-cd@t.org", "Uganda CD", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffSupervisorAssignment.objects.create(
             supervisor=cd.staff_profile, supervisee=self.officer.staff_profile
@@ -366,7 +366,7 @@ class OwnershipDoesNotDemoteTheOfficer(TestCase):
         self.assertTrue(resolve_user_scope(self.officer).country_scope)
 
     def test_a_supervisor_holding_the_role_among_several_still_counts(self):
-        """A reporting line does not change when its supervisor switches tabs."""
+        """An oversight link does not lapse when its holder switches tabs."""
         wearer = _user(
             "demote-multi@t.org", "Two-hat IA", EdifyRole.COUNTRY_DIRECTOR.value
         )
