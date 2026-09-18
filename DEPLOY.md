@@ -271,8 +271,19 @@ only to switch the guard off while diagnosing.
 
 `.github/workflows/deploy.yml` creates the App Platform deployment only after
 the CI workflow has passed on `main`. Until the two secrets below exist it
-exits green with a notice and App Platform keeps deploying every push, so
-switch in this order:
+deploys nothing and instead CONFIRMS that App Platform's own `deploy_on_push`
+shipped the commit, polling `/api/health/build` for twenty minutes and failing
+if production never reports it.
+
+That second path exists because a workflow that exits green having done
+nothing cannot be told apart from one that deployed. On 2026-09-18 a merge
+passed CI, the Deploy run went green in six seconds with every deploying step
+skipped, and nothing in GitHub could answer whether production had moved. A
+red Deploy run now means what it says: CI passed on `main` and the commit is
+not being served — either the live spec has `deploy_on_push` off while this
+workflow holds no secrets, so nothing ships at all, or the deployment failed.
+
+Switch in this order:
 
 1. In the repository settings add `DIGITALOCEAN_ACCESS_TOKEN` (a token with
    apps read/write) and `DIGITALOCEAN_APP_ID` (`doctl apps list`).

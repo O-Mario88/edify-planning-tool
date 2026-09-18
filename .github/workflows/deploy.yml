@@ -40,12 +40,54 @@ jobs:
       HAS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN != '' }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      # Unauthenticated on purpose (config.urls._build): "is production running
+      # the build we shipped?" has to be answerable from outside.
+      BUILD_URL: https://edifyplanning.app/api/health/build
     steps:
-      - name: Explain when the secrets are not set yet
+      # Without the secrets this workflow deploys nothing, and it used to say
+      # so in a notice and exit green. A green Deploy run then meant one of two
+      # opposite things — App Platform deployed the push itself, or the live
+      # spec has deploy_on_push off and NOTHING shipped — and the run looked
+      # identical either way. Production could sit frozen behind a wall of
+      # green ticks, which is what happened to the 2026-09-18 merge: the run
+      # passed in six seconds having skipped every deploying step, and the
+      # question "did it deploy?" could not be answered from the run at all.
+      #
+      # So the no-secrets path verifies instead of deploying. Either way the
+      # workflow's green now means the same thing: production is serving this
+      # commit. It polls rather than checking once because App Platform builds
+      # this image itself, and it fails loudly when the commit never arrives —
+      # a frozen production is exactly the finding worth waking someone for.
+      - name: Confirm App Platform deployed the push itself
         if: ${{ env.HAS_TOKEN != 'true' || env.APP_ID == '' }}
         run: |
           echo "::notice::DIGITALOCEAN_ACCESS_TOKEN and DIGITALOCEAN_APP_ID are not both set."
-          echo "::notice::Deploys still follow App Platform's own deploy_on_push until they are. See DEPLOY.md §3b."
+          echo "::notice::Deploys follow App Platform's own deploy_on_push until they are. See DEPLOY.md §3b."
+          echo "Waiting for production to serve $HEAD_SHA"
+          deadline=$(( SECONDS + 1200 ))
+          served=""
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            body=$(curl --fail --silent --max-time 20 "$BUILD_URL" || true)
+            if [ -n "$body" ]; then
+              # `release` falls back to GIT_COMMIT, which App Platform injects
+              # in production; `commit` is the git SHA when a builder supplied
+              # one. Either identifying this commit means it is deployed.
+              served=$(printf '%s' "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("release",""), d.get("commit",""))' || true)
+              case " $served " in
+                *" $HEAD_SHA "*)
+                  echo "production is serving $HEAD_SHA"
+                  exit 0
+                  ;;
+              esac
+              echo "production is serving: $served — waiting"
+            else
+              echo "build endpoint unreachable — waiting"
+            fi
+            sleep 30
+          done
+          echo "::error::Production never reported $HEAD_SHA (last seen: ${served:-nothing})."
+          echo "::error::CI passed on main and no deployment followed. Either the live app spec has deploy_on_push disabled while this workflow holds no secrets — so nothing ships at all — or the deployment failed. See DEPLOY.md §3b."
+          exit 1
 
       - name: Install doctl
         if: ${{ env.HAS_TOKEN == 'true' && env.APP_ID != '' }}
@@ -62,6 +104,6 @@ jobs:
       - name: Confirm what production is serving
         if: ${{ env.HAS_TOKEN == 'true' && env.APP_ID != '' }}
         run: |
-          served=$(curl --fail --silent --max-time 30 https://edifyplanning.app/api/health/build | python3 -c 'import json,sys; print(json.load(sys.stdin).get("release",""))')
+          served=$(curl --fail --silent --max-time 30 "$BUILD_URL" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("release",""))')
           echo "release served: $served"
           test "$served" = "$HEAD_SHA"
