@@ -3674,7 +3674,7 @@ def admin_roles_permissions_view(request):
     return render(request, "pages/admin/roles_permissions.html", context)
 
 
-@require_page_permission("users")
+@require_page_permission("staff_setup_queue")
 def admin_staff_setup_queue_view(request):
     """Staff setup queue - matching raw uploaded staff to user profiles."""
     from apps.schools.models import School

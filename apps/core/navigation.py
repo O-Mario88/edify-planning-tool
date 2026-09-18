@@ -418,6 +418,21 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # HumanResources — this page-permission entry must match, or those
     # roles hold a permission they can never reach a page to exercise.
     "users": {CD, HR, ADMIN},
+    # The Staff Setup Queue: uploaded schools whose account owner did not match
+    # a staff profile, and the control that attaches one. It used to be gated
+    # on `users`, which made it unreachable for Impact Assessment — the only
+    # non-Admin role that runs the school upload, and so the one role that
+    # produces this queue's contents. A school that lands unattached AND
+    # unplaced (its district did not match either) is invisible to everyone:
+    # country roles read `region__country` and its region is null, and no
+    # staffer holds it, so no portfolio contains it. Attaching an owner here is
+    # what hands it to a staffer who can then set its district, which sets its
+    # region and returns it to every country lens.
+    #
+    # Its own key rather than adding IA to `users`: that permission also gates
+    # the user directory and account provisioning, which are not IA's
+    # (owner, 2026-09-18).
+    "staff_setup_queue": {CD, HR, IA, ADMIN},
     "roles_permissions": {ADMIN},
     "system_health": {ADMIN},
     "messages": ALL_ROLES,
@@ -2538,6 +2553,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "upload_history",
                 "visible_to": {IA},
                 "icon_key": "uploads",
+            },
+            {
+                # Where an uploaded school that matched no staff profile waits
+                # for an owner. Until one is attached the row is in nobody's
+                # portfolio, and if its district did not match either it is in
+                # no country lens — so the person who ran the upload is exactly
+                # the person who needs to see it (owner, 2026-09-18: a school
+                # "attached to the staff" is one they can then edit and give a
+                # district to, which is what returns it to every country lens).
+                "label": "Unassigned Schools",
+                "url": "/admin-panel/staff-setup-queue",
+                "page_key": "staff_setup_queue",
+                "visible_to": {IA},
+                "icon_key": "users",
             },
             {
                 # IA creates and validates authoritative school records, but is

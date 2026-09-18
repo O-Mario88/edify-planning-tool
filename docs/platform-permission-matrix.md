@@ -18,7 +18,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | CountryDirector | 753 |
 | RegionalVicePresident | 364 |
 | RegionalProgramLead | 302 |
-| ImpactAssessment | 616 |
+| ImpactAssessment | 617 |
 | Accountant | 404 |
 | HumanResources | 329 |
 | ProjectCoordinator | 444 |
@@ -130,7 +130,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/admin-panel/region-district-setup` | region_district_setup |  |  |  |  |  |  |  |  |  |  |  |  |  |  | Y |
 | `/admin-panel/roles-permissions` | roles_permissions |  |  |  |  |  |  |  |  |  |  |  |  |  |  | Y |
 | `/admin-panel/school-upload-history` | upload_history |  |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
-| `/admin-panel/staff-setup-queue` | users |  |  | Y |  |  |  |  | Y |  |  |  |  |  |  | Y |
+| `/admin-panel/staff-setup-queue` | staff_setup_queue |  |  | Y |  |  | Y |  | Y |  |  |  |  |  |  | Y |
 | `/admin-panel/users` | users |  |  | Y |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/admin-panel/users/<str:user_id>` | users |  |  | Y |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/admin-panel/workflow-rules` | workflow_rules |  |  |  |  |  |  |  |  |  |  |  |  |  |  | Y |
