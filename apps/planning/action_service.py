@@ -1070,7 +1070,12 @@ def _intervention_still_weak(action: TeamAction) -> bool:
         return True
     band = ssa_score_band(score)[0]
     if action.issue_type == "intervention_warning":
-        return band in ("Critical", "Warning")
+        # Still weak means not yet Strong (owner, 2026-09-18: support ends at
+        # 8.0, not before). Naming the bands that are weak meant this closed
+        # an action the moment the intervention crossed into Improving —
+        # 7.0 before the band work, 6.0 after it — while the person it was
+        # delegated to was still owed the work that would carry it to 8.
+        return band != "Strong"
     return band == "Critical"
 
 

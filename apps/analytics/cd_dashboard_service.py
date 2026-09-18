@@ -70,6 +70,10 @@ _PRIORITY_WEIGHTS = {
     "SSA Warning": 2,
     "No Visit": 2,
     "No Training": 2,
+    # A school on its way to Strong but not there yet. Deliberately the
+    # lightest weight there is: below the floor on its own, so it never lists
+    # a school by itself, and only tips one that already has another gap.
+    "SSA Improving": 1,
     "SF ID Missing": 1,
 }
 
@@ -1323,7 +1327,12 @@ class CDDashboardService:
                 # A confirmed assessment with no score is not a weakness. Say
                 # nothing rather than invent one.
                 band, _hex, _tone = ssa_score_band(ssa_scores.get(s.id))
-                if band in ("Critical", "Warning"):
+                # Anything short of Strong is a school still owed support
+                # (owner, 2026-09-18: support ends at 8.0). Improving carries
+                # the lightest weight of the three, so it never lists a school
+                # on its own — it only sharpens the ranking of one that
+                # already has a gap.
+                if band in ("Critical", "Warning", "Improving"):
                     issues.append(f"SSA {band}")
             if s.id in sf_missing:
                 issues.append("SF ID Missing")

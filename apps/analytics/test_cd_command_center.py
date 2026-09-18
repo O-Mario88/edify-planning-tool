@@ -758,6 +758,47 @@ class PrioritySchoolsRankBySeverityTest(TestCase):
         self.assertIn("School Warned", rows)
         self.assertIn("SSA Warning", rows["School Warned"]["issues"])
 
+    def test_a_school_short_of_strong_is_still_owed_support(self):
+        """Owner, 2026-09-18: "only 8.0 and above should stop being
+        recommended."
+
+        A 7.5 school is on its way to Strong, not finished. It used to fall
+        off this list at 7.0 — before any of this FY's band work — and the
+        line now sits at 8.0.
+        """
+        improving = self._school("Improving", ssa_done=True)
+        self._ssa(improving, 7.5)
+        self._act(improving, "training", sf="TR-I")
+
+        rows = {r["school"]: r for r in self._rows()}
+
+        self.assertIn("School Improving", rows)
+        self.assertIn("SSA Improving", rows["School Improving"]["issues"])
+
+    def test_being_short_of_strong_never_lists_a_school_on_its_own(self):
+        """It is the lightest weight there is, deliberately.
+
+        A priority list that names every school below 8 is not a priority
+        list. This one only sharpens the ranking of a school that already has
+        a gap — it cannot reach the floor by itself.
+        """
+        tidy = self._school("TidyImproving", ssa_done=True)
+        self._ssa(tidy, 7.5)
+        self._act(tidy, "school_visit", sf="SV-T")
+        self._act(tidy, "training", sf="TR-T")
+
+        self.assertNotIn("School TidyImproving", [r["school"] for r in self._rows()])
+
+    def test_a_strong_school_carries_no_ssa_issue_at_all(self):
+        strong = self._school("StrongSchool", ssa_done=True)
+        self._ssa(strong, 8.5)
+        self._act(strong, "training", sf="TR-S")
+
+        rows = {r["school"]: r for r in self._rows()}
+        issues = rows.get("School StrongSchool", {}).get("issues", [])
+
+        self.assertFalse([i for i in issues if i.startswith("SSA ")], issues)
+
     def test_missing_paperwork_alone_never_lists_a_school(self):
         tidy = self._school("Tidy", ssa_done=True)
         self._ssa(tidy, 9.0)
