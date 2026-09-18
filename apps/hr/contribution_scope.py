@@ -32,14 +32,19 @@ def scope_activities(queryset, *, staff=None, include_team=False, country=None):
         ).distinct()
     if country:
         from apps.accounts.models import StaffProfile
+        from apps.core.scoping import school_in_country_q
 
         profiles = StaffProfile.objects.filter(country=country)
         ids = {str(x) for x in profiles.values_list("id", flat=True)} | {
             str(x) for x in profiles.values_list("user_id", flat=True) if x
         }
         # An explicit school country takes precedence over the staff country.
+        # The school arm is the shared boundary rather than `region__country`
+        # written out again, so work planned at a school the upload could not
+        # place counts here as it does everywhere else — otherwise the country
+        # rollups silently dropped every activity standing at one.
         return queryset.filter(
-            Q(school__region__country=country)
+            school_in_country_q(country, "school__")
             | Q(school__isnull=True, cluster__district__region__country=country)
             | Q(school__isnull=True, cluster__isnull=True)
             & (Q(responsible_staff_id__in=ids) | Q(monitored_by_staff_id__in=ids))

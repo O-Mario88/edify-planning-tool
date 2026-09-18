@@ -423,11 +423,13 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # on `users`, which made it unreachable for Impact Assessment — the only
     # non-Admin role that runs the school upload, and so the one role that
     # produces this queue's contents. A school that lands unattached AND
-    # unplaced (its district did not match either) is invisible to everyone:
-    # country roles read `region__country` and its region is null, and no
-    # staffer holds it, so no portfolio contains it. Attaching an owner here is
-    # what hands it to a staffer who can then set its district, which sets its
-    # region and returns it to every country lens.
+    # unplaced (its district did not match either) used to be invisible to
+    # everyone: country roles read `region__country`, its region is null, and
+    # no staffer holds it, so no portfolio contained it either. The country
+    # lens reaches it now (`apps.core.scoping.unplaced_school_q`) so it can be
+    # seen and counted; attaching an owner here is still what hands it to a
+    # staffer who can set its district, which sets its region and puts it back
+    # on the region arm for good.
     #
     # Its own key rather than adding IA to `users`: that permission also gates
     # the user directory and account provisioning, which are not IA's
