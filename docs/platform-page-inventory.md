@@ -15,7 +15,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Full pages: **258**
 - Partials and drawers: **266**
 - Permission-gated surfaces: **800**
-- Referenced by automated tests: **706**
+- Referenced by automated tests: **708**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -250,10 +250,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E49086D072 | /country-budget/history/<str:budget_id> | FY | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6C0C6DD33B | /country-budget/plan-sources | Country Budget Plan Sources | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EFEA0EEA3D | /country-budget/return | Country Budget Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Planning Oversight · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-15D0AB1EB0 | /country-planning-oversight/send | Country Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E4DAD286B | /cpd-learning | CPD & Learning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-442BF26C2E | /cpd-learning/action | Pd Dashboard Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -761,7 +761,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-415C2B49E8 | /schools/parishes | School Parish Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D73CAF9D76 | /schools/partial-intelligence/<str:school_id> | School Intelligence Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BDD22B14F6 | /schools/sub-counties | School Sub County Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-232F86FE85 | /schools/upload | Upload School Data - Edify Command Center | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-232F86FE85 | /schools/upload | Upload Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C1A1176BAA | /schools/upload/<str:batch_id>/preview | School Upload Preview | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4E862159DC | /schools/upload/template | School Template Download | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3C4373A6A9 | /schools/uploads/<str:batch_id>/result | Import Results | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
