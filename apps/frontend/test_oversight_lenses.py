@@ -215,6 +215,19 @@ class LensAccessTest(TestCase):
         self.assertIn("cluster sessions", body)
         self.assertIn("busiest cluster", body)
 
+    def test_the_cluster_lens_carries_the_card_grouped_by_lead(self):
+        """Owner, 2026-09-18: IA gets a card of its own for planned cluster
+        activity, grouped by Programme Lead and then by the CCEO under them."""
+        self._sign_in("lens-ia-by-lead@edify.org", "ImpactAssessment")
+        self._a_cluster()
+
+        body = self.client.get(
+            "/team-planning-oversight/?view=clusters"
+        ).content.decode()
+
+        self.assertIn("Planned cluster activity by Programme Lead", body)
+        self.assertIn("Schools reached", body)
+
     def test_the_lenses_swap_in_place_for_htmx(self):
         """A filter change must replace the workspace, not the whole page."""
         self._sign_in("lens-ia-htmx@edify.org", "ImpactAssessment")

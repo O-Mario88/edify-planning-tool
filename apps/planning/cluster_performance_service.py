@@ -48,6 +48,11 @@ WEIGHT_SESSION = 3
 WEIGHT_VISIT = 1
 WEIGHT_SSA = 2
 
+#: A cluster nobody owns still has to appear: an unowned cluster with nothing
+#: planned is the finding, and dropping it from the grouping hides it.
+NO_OWNER_KEY = "unassigned"
+NO_OWNER_LABEL = "Unassigned"
+
 #: Below this share of the busiest cluster's index, a cluster is called out as
 #: quiet. A band rather than "the bottom five", because a country with three
 #: clusters has no bottom five and a country with three hundred has far more
@@ -61,6 +66,7 @@ class ClusterRow:
     cluster_id: str
     name: str
     district: str
+    owner_id: str
     owner_name: str
     lead_id: str
     lead_name: str
@@ -350,7 +356,8 @@ def cluster_performance(
                 cluster_id=cluster.id,
                 name=cluster.name,
                 district=getattr(cluster.district, "name", ""),
-                owner_name=_label(owner) if owner else "Unassigned",
+                owner_id=getattr(owner, "id", "") or NO_OWNER_KEY,
+                owner_name=_label(owner) if owner else NO_OWNER_LABEL,
                 lead_id=getattr(lead, "id", "") or NO_LEAD_KEY,
                 lead_name=_label(lead) if lead else NO_LEAD_LABEL,
                 schools=len(member_ids),
@@ -388,7 +395,100 @@ def cluster_performance(
         "rows": _banded(rows),
         "totals": _cluster_totals(rows),
         "leads": lead_options,
+        "by_lead": plans_by_lead(rows),
     }
+
+
+def _page_param(owner_id: str) -> str:
+    safe = "".join(ch if ch.isalnum() else "_" for ch in owner_id).strip("_")
+    return f"clusters_{safe or 'owner'}_page"
+
+
+def plans_by_lead(rows) -> list[dict]:
+    """The same clusters, nested Programme Lead → CCEO → cluster.
+
+    Owner, 2026-09-18: Impact Assessment needs a card of its own for planned
+    cluster activity, grouped by Programme Lead and then by the CCEO under
+    them. The ranked table below answers "which cluster is busiest"; this one
+    answers "is this Lead's team convening its clusters at all", which is a
+    question about people and cannot be read off a list ordered by cluster.
+
+    A fold over the rows the page already built, never a second query: a
+    grouping that re-queries is a second number that can disagree with the
+    table it sits above.
+    """
+    leads: dict[str, dict] = {}
+    for row in rows:
+        lead = leads.setdefault(
+            row.lead_id,
+            {
+                "lead_id": row.lead_id,
+                "lead_name": row.lead_name,
+                "owners": {},
+            },
+        )
+        owner = lead["owners"].setdefault(
+            row.owner_id,
+            {"owner_id": row.owner_id, "owner_name": row.owner_name, "rows": []},
+        )
+        owner["rows"].append(row)
+
+    def totals(cluster_rows) -> dict:
+        schools = sum(r.schools for r in cluster_rows)
+        reached = sum(r.schools_reached for r in cluster_rows)
+        return {
+            "clusters": len(cluster_rows),
+            "dormant": sum(1 for r in cluster_rows if r.is_dormant),
+            "schools": schools,
+            "sessions": sum(r.sessions_planned for r in cluster_rows),
+            "sessions_done": sum(r.sessions_done for r in cluster_rows),
+            "trainings": sum(r.trainings for r in cluster_rows),
+            "meetings": sum(r.meetings for r in cluster_rows),
+            "visits": sum(r.visits_planned for r in cluster_rows),
+            "schools_reached": reached,
+            # Always beside the number it came from: a share whose denominator
+            # is not on the page cannot be checked.
+            "reach": round(100 * reached / schools) if schools else None,
+            "budget": sum(r.budget for r in cluster_rows),
+        }
+
+    out = []
+    for lead in leads.values():
+        owners = []
+        for owner in lead["owners"].values():
+            owner["rows"].sort(key=lambda r: r.name.casefold())
+            owners.append(
+                {
+                    **owner,
+                    "totals": totals(owner["rows"]),
+                    # Each CCEO is its own table, so paging one must not page
+                    # the others: a Lead with six officers would otherwise move
+                    # all six tables at once.
+                    "page_param": _page_param(owner["owner_id"]),
+                }
+            )
+        owners.sort(
+            key=lambda entry: (
+                entry["owner_id"] == NO_OWNER_KEY,
+                entry["owner_name"].casefold(),
+            )
+        )
+        lead_rows = [row for owner in owners for row in owner["rows"]]
+        out.append(
+            {
+                "lead_id": lead["lead_id"],
+                "lead_name": lead["lead_name"],
+                "owners": owners,
+                "totals": totals(lead_rows),
+            }
+        )
+    out.sort(
+        key=lambda entry: (
+            entry["lead_id"] == NO_LEAD_KEY,
+            entry["lead_name"].casefold(),
+        )
+    )
+    return out
 
 
 def _banded(rows) -> list[dict]:
@@ -461,9 +561,12 @@ def _cluster_totals(rows) -> dict:
 __all__ = [
     "ACTIVE_SHARE",
     "ClusterRow",
+    "NO_OWNER_KEY",
+    "NO_OWNER_LABEL",
     "QUIET_SHARE",
     "WEIGHT_SESSION",
     "WEIGHT_SSA",
     "WEIGHT_VISIT",
     "cluster_performance",
+    "plans_by_lead",
 ]

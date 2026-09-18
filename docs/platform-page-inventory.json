@@ -8257,7 +8257,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7357,
+      "bytes": 12383,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -8275,7 +8275,7 @@
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 2,
       "template": "partials/oversight/cluster_performance_workspace.html",
       "variants": [
         "executive"
@@ -8285,7 +8285,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10148,
+      "bytes": 10360,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",

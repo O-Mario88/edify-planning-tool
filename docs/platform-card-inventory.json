@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 693,
-  "templates": 263,
-  "distinct_titles": 659,
+  "titled_cards": 694,
+  "templates": 264,
+  "distinct_titles": 660,
   "with_card_key": 13,
   "untitled_surfaces": 777,
   "untitled_chrome": 176,
@@ -6572,8 +6572,22 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/oversight/cluster_performance_workspace.html",
+   "line": 62,
+   "title": "Planned cluster activity by Programme Lead",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 22,
+   "line": 24,
    "title": "Planned Schools \u00b7",
    "heading_level": 2,
    "has_card_key": false,
@@ -6582,7 +6596,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 62,
+   "line": 64,
    "title": "Schools with Planned Cluster Training or Meeting",
    "heading_level": 2,
    "has_card_key": false,
@@ -6591,7 +6605,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 94,
+   "line": 96,
    "title": "Schools with No Training Planned",
    "heading_level": 2,
    "has_card_key": false,

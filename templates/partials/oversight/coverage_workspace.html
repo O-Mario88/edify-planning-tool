@@ -3,7 +3,9 @@ Team Oversight · Schools & Coverage (owner brief, 2026-09-15).
 
 Three tables for the selected period, in one scope: every school with planned
 work, the schools attached to a cluster training or meeting, and the schools
-with neither, each with the reason. No wall of KPI tiles — one compact
+with neither, each with the reason. A cluster session is one row per invited
+school, because the question the table answers is which SCHOOLS have work
+planned — hence "12 schools · 1 activity" under a training's group heading. No wall of KPI tiles — one compact
 attention line, then the tables.
 
 The period selector is the page's own (period_filter_bar); the groups below
@@ -27,7 +29,7 @@ quarter inside a year.
     {% if planned_groups %}
     {% for group in planned_groups %}
     <div class="border-b border-[var(--edify-border)] last:border-0">
-      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.count }} activit{{ group.count|pluralize:"y,ies" }}</h3>
+      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.activity_count }} activit{{ group.activity_count|pluralize:"y,ies" }}</h3>
       <div class="overflow-x-auto edify-record-table-wrap">
         <table class="edify-data-table edify-record-table w-full">
           <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Funding</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
