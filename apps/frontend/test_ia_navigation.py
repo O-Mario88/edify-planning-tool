@@ -69,10 +69,22 @@ IA_SIDEBAR = [
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
+            # Every team's planned and delivered work, country-wide and read
+            # only (owner, 2026-09-17). The workspace strip carried it behind
+            # the Data Quality group's overflow menu, and only on a page IA
+            # was already standing on, so it reached the sidebar too on
+            # 2026-09-18.
+            ("Country Oversight", "/country-planning-oversight/"),
             ("Planning", "/planning"),
             ("Field Debrief", "/debriefs"),
             ("School Evidence", "/ia/school-evidence/"),
             ("SSA Upload Center", "/ssa/upload/"),
+            # IA is the only non-Admin role that holds `school_upload` and
+            # `upload_history`, and neither page was registered in any
+            # navigation until 2026-09-18 — the permission existed, the door
+            # did not.
+            ("Upload Schools", "/schools/upload"),
+            ("Upload History", "/admin-panel/school-upload-history"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
             ("Upload Center", "/uploads"),
@@ -154,6 +166,52 @@ class IaSidebarTest(SimpleTestCase):
         ):
             with self.subTest(url=url):
                 self.assertNotIn(url, urls)
+
+    def test_oversight_has_a_door_of_its_own(self):
+        """Owner, 2026-09-18: "make sure IA has the Oversight menu on the
+        sidebar menu. he cant access the oversight".
+
+        IA has read `country_planning_oversight` since 2026-09-17, but the only
+        place the page was registered was the workspace strip, where it shares
+        the Data Quality group's one durable destination — so it was reachable
+        from the strip's overflow menu, on an IA page, and nowhere else. The
+        sidebar carries it now, and it lights on either oversight lens so the
+        single door is never left looking unselected.
+        """
+        doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
+        self.assertEqual(doors.get("/country-planning-oversight/"), "Country Oversight")
+        for path in ("/country-planning-oversight/", "/team-planning-oversight/"):
+            with self.subTest(path=path):
+                lit = [
+                    i["label"]
+                    for g in _groups(IA, path)
+                    for i in g["items"]
+                    if i["active"]
+                ]
+                self.assertEqual(lit, ["Country Oversight"])
+
+    def test_the_upload_pages_it_owns_have_doors(self):
+        """Owner, 2026-09-18: IA "is not accessing any uploaded school or SSA".
+
+        IA uploads the school file the SSA files are matched against, and reads
+        the batch history of both. It held `school_upload` and `upload_history`
+        and had no way to open either: the two pages appeared in no sidebar
+        group and in no workspace strip, so the only route to them was a typed
+        URL. The school directory's own entry must not swallow the upload
+        page's highlight — /schools prefixes /schools/upload.
+        """
+        doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
+        self.assertEqual(doors.get("/schools/upload"), "Upload Schools")
+        self.assertEqual(
+            doors.get("/admin-panel/school-upload-history"), "Upload History"
+        )
+        lit = [
+            i["label"]
+            for g in _groups(IA, "/schools/upload")
+            for i in g["items"]
+            if i["active"]
+        ]
+        self.assertEqual(lit, ["Upload Schools"])
 
     def test_every_page_is_offered_once(self):
         keys = [i["page_key"] for g in _groups(IA) for i in g["items"]]

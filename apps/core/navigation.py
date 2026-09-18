@@ -2515,6 +2515,31 @@ SIDEBAR_ITEMS = [
                 "visible_to": {IA},
             },
             {
+                # The school file itself. IA is the only non-Admin role that
+                # holds `school_upload` — it creates the authoritative school
+                # records the SSA files are then matched against — and the page
+                # was registered in no navigation at all: not the sidebar, not
+                # the workspace strip. The permission existed and the door did
+                # not (owner, 2026-09-18: IA "is not accessing any uploaded
+                # school or SSA").
+                "label": "Upload Schools",
+                "url": "/schools/upload",
+                "page_key": "school_upload",
+                "visible_to": {IA},
+                "icon_key": "ia_upload_center",
+            },
+            {
+                # What both uploads did: school and SSA batches, their row
+                # counts and their errors, in one list. Reaching it meant
+                # typing the URL, which is how an upload that half-landed
+                # stayed invisible to the person who ran it.
+                "label": "Upload History",
+                "url": "/admin-panel/school-upload-history",
+                "page_key": "upload_history",
+                "visible_to": {IA},
+                "icon_key": "uploads",
+            },
+            {
                 # IA creates and validates authoritative school records, but is
                 # not a field-delivery role, so the directory sits with the data
                 # it collects rather than in SCHOOLS & FIELD.
@@ -2604,6 +2629,29 @@ SIDEBAR_ITEMS = [
         "group_label": "DATA QUALITY & VERIFICATION",
         "visible_to": {IA},
         "items": [
+            {
+                # Country Oversight — every team's planned and delivered work,
+                # read only (owner, 2026-09-17). IA held the page and had no
+                # door to it: its only registration was the workspace strip
+                # (IA_SECTIONS), where it is one of several sections sharing
+                # the Data Quality group's single durable destination, so it
+                # was reachable only from the strip's overflow menu and only
+                # once you were already on an IA page. A role that cannot
+                # find a page does not have it (owner, 2026-09-18: "make sure
+                # IA has the Oversight menu on the sidebar").
+                #
+                # The COUNTRY lens rather than the team one: IA supervises no
+                # team, and Team Oversight would offer it a Target Performance
+                # tab over an empty roster — the reason that door was taken
+                # away on 2026-09-13. `extra_active_paths` keeps this item lit
+                # when IA arrives at the team lens from a link, so the one
+                # oversight door never looks unselected on an oversight page.
+                "label": "Country Oversight",
+                "url": "/country-planning-oversight/",
+                "page_key": "country_planning_oversight",
+                "visible_to": {IA},
+                "extra_active_paths": ("/team-planning-oversight/",),
+            },
             {
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
