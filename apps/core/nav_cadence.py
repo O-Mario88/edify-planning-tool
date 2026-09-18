@@ -35,6 +35,10 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "planning": (WEEKLY, 25),
     "schools": (WEEKLY, 30),
     "team_planning_oversight": (WEEKLY, 35),
+    # The country lens on the same work, read by the roles that watch a
+    # country rather than run a team; it is opened on the same rhythm as
+    # the team one, so it sits beside it.
+    "country_planning_oversight": (WEEKLY, 36),
     "my_team": (WEEKLY, 40),
     "team_coaching": (WEEKLY, 45),
     "clusters": (WEEKLY, 50),
@@ -52,6 +56,11 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "cce_training_feedback": (WEEKLY, 110),
     "ia_school_evidence": (WEEKLY, 115),
     "ia_upload_center": (WEEKLY, 120),
+    # The school file the SSA files are matched against, and the record of
+    # what both uploads did. Worked on the same rhythm as the SSA upload
+    # they sit beside.
+    "school_upload": (WEEKLY, 121),
+    "upload_history": (WEEKLY, 122),
     "ia_returned": (WEEKLY, 125),
     "data_quality_center": (WEEKLY, 130),
     "ia_samples": (WEEKLY, 135),
