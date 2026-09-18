@@ -6,7 +6,7 @@ from django.db.models.functions import TruncMonth
 from apps.core.logging_filters import escape_control_characters
 from apps.core.exceptions import BadRequest
 from apps.core.enums import SsaIntervention
-from apps.core.fy import get_operational_fy, get_quarter_for_date
+from apps.core.fy import get_operational_fy
 from apps.schools.models import School
 from apps.geography.models import Region
 from apps.accounts.models import StaffProfile
@@ -32,6 +32,16 @@ logger = logging.getLogger(__name__)
 CORE_ALLOCATED_SLOT_STATUSES = frozenset(
     {
         "scheduled",
+        # A partner-dated slot is a dated slot. The mirror writes the
+        # activity's own status onto the slot, and a partner scheduling their
+        # assignment writes "partner_scheduled" — which was missing here, so
+        # the slot read as FREE: the package offered that sequence again, and
+        # a staff member could book T1 on top of the partner's T1. Found while
+        # fixing the partner path on 2026-09-17; "rescheduled" is the same
+        # class of dated status and was missing for the same reason.
+        "partner_scheduled",
+        "partner scheduled",
+        "rescheduled",
         "in_progress",
         "in progress",
         "evidence uploaded",
@@ -99,8 +109,34 @@ class CorePackageSchedulingService:
         return (value or "").strip().lower()
 
     @classmethod
+    def status_is_allocated(cls, status: str | None) -> bool:
+        """Is a slot in this status taken?
+
+        Split out of is_allocated so a caller reading many slots can ask by
+        status alone — a values_list of 800 rows rather than 800 model
+        instances — without re-deriving the rule or the normalisation.
+        """
+        return cls._normalise_status(status) in CORE_ALLOCATED_SLOT_STATUSES
+
+    @classmethod
     def is_allocated(cls, slot: CoreActivitySlot) -> bool:
-        return cls._normalise_status(slot.status) in CORE_ALLOCATED_SLOT_STATUSES
+        return cls.status_is_allocated(slot.status)
+
+    @classmethod
+    def status_is_taken(cls, status: str | None) -> bool:
+        """Is this slot spoken for — dated, OR handed to a partner?
+
+        The same predicate `available_sequences` uses to decide a slot is no
+        longer offerable. A slot a partner holds but has not yet dated is not
+        "Scheduled", but it is committed: counting it keeps the package
+        counters agreeing with the chooser, so a planner who hands two
+        trainings to a partner sees two fewer open slots AND two more
+        committed, rather than a chooser and a tile that contradict.
+        """
+        return (
+            cls.status_is_allocated(status)
+            or cls._normalise_status(status) == "assigned"
+        )
 
     @classmethod
     def summary(cls, plan: CorePlan, slots=None) -> dict:
@@ -129,16 +165,27 @@ class CorePackageSchedulingService:
 
     @classmethod
     def first_visit_pending(cls, plan: CorePlan) -> bool:
-        """No visit of this package is on the calendar or handed to a partner.
+        """Always False since 2026-09-17. Kept so its call sites stay readable.
 
-        Owner, 2026-09-15: the first Core visit of the fiscal year is SSA
-        Support, linked to data collection, so the drawer offers only that
-        purpose until one visit slot has been taken.
+        It used to answer "no visit of this package is on the calendar or
+        handed to a partner yet", and five call sites turned that into a rule:
+        the first Core visit of the fiscal year had to be SSA Support (owner,
+        2026-09-15), so until one visit slot was taken the assignment drawer
+        offered a single purpose, and a Core TRAINING could not be scheduled
+        at all — the training path refused on a visit-slot question.
+
+        Lifted on the owner's instruction (2026-09-17): "Lift all FY
+        restriction and package restrictions. Only block staff visit schedule
+        after 2 scheduling and block partner assignment and schedule after 2
+        assignment and scheduling", and again, "can you make sure all
+        restrictions are lifted throughout the platform". Those two caps are
+        enforced in assert_can_schedule and assert_can_assign and are
+        untouched.
+
+        A no-op rather than five deletions: a rule that has been lifted is
+        worth being able to find, and the call sites read the same either way.
         """
-        return not any(
-            cls.is_allocated(slot) or cls._normalise_status(slot.status) == "assigned"
-            for slot in plan.slots.filter(activity_type="visit")
-        )
+        return False
 
     @classmethod
     def available_sequences(cls, plan: CorePlan, activity_type: str) -> list[int]:
@@ -175,118 +222,113 @@ class CorePackageSchedulingService:
         scheduled_for: date,
         is_partner_delivery: bool,
     ) -> CoreActivitySlot:
-        """Lock one usable slot and enforce the annual/quarterly policy.
+        """Lock a slot for this core support. Two caps, and nothing else.
 
-        Staff delivery is released one visit and one training at a time in the
-        current operational quarter. Partner delivery can be scheduled in any
-        quarter, but remains inside the non-negotiable annual 4 + 4 cap.
+        Owner, 2026-09-17: "Lift all FY restriction and package restrictions.
+        Only block staff visit schedule after 2 scheduling and block partner
+        assignment and schedule after 2 assignment and scheduling."
+
+        So the calendar no longer refuses anything. What used to be here and
+        is gone: the package had to be scheduled inside its own fiscal year;
+        staff support was released in the current operational quarter only and
+        one at a time within it; and the 4 + 4 package was a hard ceiling, so a
+        ninth piece of core support could not be planned at all even when the
+        school needed it.
+
+        What remains is the split the package exists to protect. Staff deliver
+        at most two visits and two trainings on a package; the rest is the
+        partner's, and the partner's own two are counted by the visit gate.
+        Those two caps are the policy; the dates are the planner's.
         """
         if activity_type not in {"visit", "training"}:
             raise BadRequest("Core support must be a visit or a training.")
 
-        summary = cls.summary(plan)
-        if summary["package_complete"]:
-            raise BadRequest(
-                "This core package is complete: all 4 visits and 4 trainings are already scheduled or completed."
-            )
-
-        count_key = "visits" if activity_type == "visit" else "trainings"
-        target_key = "visits_target" if activity_type == "visit" else "trainings_target"
-        if summary[count_key] >= summary[target_key]:
-            raise BadRequest(
-                f"All {summary[target_key]} core {activity_type}s are already scheduled or completed."
-            )
-
-        slot = (
-            CoreActivitySlot.objects.select_for_update()
-            .filter(
-                core_plan=plan,
-                activity_type=activity_type,
-                sequence_number=sequence_number,
-            )
-            .first()
-        )
-        if not slot:
-            raise BadRequest("That core support slot is unavailable.")
-        if cls.is_allocated(slot):
-            raise BadRequest(
-                "That core support slot is already scheduled or completed."
-            )
-        if cls._normalise_status(slot.status) == "assigned":
-            raise BadRequest(
-                "That slot is assigned to a partner and must be scheduled from the partner queue."
-            )
-
-        requested_fy = get_operational_fy(scheduled_for)
-        if str(requested_fy) != str(plan.fy):
-            raise BadRequest(
-                "Core support must be scheduled within this package's fiscal year."
-            )
-
         if is_partner_delivery and activity_type == "visit":
             # The partner side of the package is two visits, the mirror of
-            # STAFF_ANNUAL_CAP below (owner, 2026-09-15).
+            # STAFF_CAP below (owner, 2026-09-15).
             from apps.planning.visit_gate import assert_partner_may_schedule_visit
 
             assert_partner_may_schedule_visit(school, plan.fy)
 
         if not is_partner_delivery:
-            current_day = date.today()
-            current_fy = get_operational_fy(current_day)
-            current_quarter = get_quarter_for_date(current_day)
-            requested_quarter = get_quarter_for_date(scheduled_for)
-            if (requested_fy, requested_quarter) != (current_fy, current_quarter):
+            # Counted on the PACKAGE, not on a fiscal year. With the year
+            # restriction lifted a package's work can land in more than one,
+            # and a cap that counted `fy=current_fy` would have reset itself
+            # the moment somebody planned across the boundary.
+            STAFF_CAP = 2
+            # Counted in Python through `is_allocated`, which normalises the
+            # status: the column holds "Scheduled" and "Evidence Uploaded"
+            # while the allocated set is lowercase, so a DB `status__in`
+            # would silently match none of them.
+            staff_taken = sum(
+                1
+                for slot in CoreActivitySlot.objects.filter(
+                    core_plan=plan,
+                    activity_type=activity_type,
+                    owner="staff",
+                ).exclude(sequence_number=sequence_number)
+                if cls.is_allocated(slot)
+            )
+            if staff_taken >= STAFF_CAP:
                 raise BadRequest(
-                    f"Staff core support is released in the current {current_quarter} only. "
-                    "Partner delivery may be scheduled in another quarter."
+                    f"Staff may deliver at most {STAFF_CAP} core {activity_type}s "
+                    f"on this package ({staff_taken} already scheduled). The "
+                    "remaining support is delivered by a partner."
                 )
 
-            activity_kind = f"core_{activity_type}"
-            # The staff share of a core package is 2 visits + 2 trainings PER
-            # FISCAL YEAR — the remainder belongs to partners. The previous
-            # check was one-per-quarter, which quietly permitted 4 + 4 across
-            # the year: the whole package staff-delivered, nothing left for a
-            # partner, and the delivery cost moved onto internal staff lines.
-            STAFF_ANNUAL_CAP = 2
-            staff_this_fy = (
-                Activity.objects.filter(
-                    core_training_q()
-                    if activity_type == "training"
-                    else Q(activity_type=activity_kind),
-                    school=school,
-                    fy=current_fy,
-                    delivery_type="staff",
-                    deleted_at__isnull=True,
-                )
-                .exclude(status__in=["cancelled", "rejected", "deferred"])
-                .count()
-            )
-            if staff_this_fy >= STAFF_ANNUAL_CAP:
-                raise BadRequest(
-                    f"Staff may deliver at most {STAFF_ANNUAL_CAP} core {activity_type}s "
-                    f"per year ({staff_this_fy} already scheduled). The remaining "
-                    "slots are reserved for partner delivery."
-                )
-            staff_already_scheduled = (
-                Activity.objects.filter(
-                    core_training_q()
-                    if activity_type == "training"
-                    else Q(activity_type=activity_kind),
-                    school=school,
-                    fy=current_fy,
-                    quarter=current_quarter,
-                    delivery_type="staff",
-                    deleted_at__isnull=True,
-                )
-                .exclude(status__in=["cancelled", "rejected"])
-                .exists()
-            )
-            if staff_already_scheduled:
-                raise BadRequest(
-                    f"One staff-led core {activity_type} is already scheduled in {current_quarter}. "
-                    "The next staff slot opens at the start of the next quarter; partner delivery remains available."
-                )
+        return cls._free_slot(plan, activity_type, sequence_number)
 
+    @classmethod
+    def _free_slot(
+        cls, plan: CorePlan, activity_type: str, sequence_number: int
+    ) -> CoreActivitySlot:
+        """The requested slot, or the next one free, creating it if need be.
+
+        A slot is bookkeeping — which visit of the package this is — not a
+        permission. With the package ceiling lifted it must not become one
+        again by the back door: if the asked-for sequence is taken, the next
+        free one answers, and if the package has run out of slots a new one is
+        made. The id is deterministic (`cslot_id`), so this stays idempotent.
+        """
+        from apps.core_schools.models import cslot_id
+        from apps.core_schools.services import CORE_SLOT_KIND_TO_TYPE
+
+        existing = {
+            slot.sequence_number: slot
+            for slot in CoreActivitySlot.objects.select_for_update().filter(
+                core_plan=plan, activity_type=activity_type
+            )
+        }
+        slot = existing.get(sequence_number)
+        if slot is not None and not cls.is_allocated(slot):
+            return slot
+
+        for sequence in sorted(existing):
+            candidate = existing[sequence]
+            if not cls.is_allocated(candidate):
+                return candidate
+
+        kind = next(
+            (
+                k
+                for k, value in CORE_SLOT_KIND_TO_TYPE.items()
+                if value == activity_type
+            ),
+            activity_type[:1],
+        )
+        next_sequence = (max(existing) if existing else 0) + 1
+        slot, _created = CoreActivitySlot.objects.get_or_create(
+            id=cslot_id(plan.school_id, kind, next_sequence, fy=plan.fy),
+            defaults={
+                "core_plan": plan,
+                "school_id": plan.school_id,
+                "intervention": plan.interventions[0]
+                if getattr(plan, "interventions", None)
+                else SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
+                "activity_type": activity_type,
+                "sequence_number": next_sequence,
+            },
+        )
         return slot
 
     @classmethod

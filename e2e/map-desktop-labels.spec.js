@@ -11,9 +11,12 @@ test('desktop labels survive laptop heights and district drilldown', async({page
   for (const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]]) {
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length)).toBeGreaterThan(15);
-    // The map is a fixed 30cm x 42cm sheet (owner, 2026-09-15): taller than it is wide on every window.
+    // Square (owner, 2026-09-17: "The map should be square much as it will fill the desktop page.
+    // i dont mind the dead space on the sides"). It was a 30cm x 42cm portrait sheet, which wasted a
+    // band the width of the card above and below a square drawing: the SVG viewBox is 0 0 620 620.
     await mapInView(page);
-    await expect.poll(async () => { const r=await svg.boundingBox(); return r ? r.height/r.width : 0; }).toBeGreaterThan(1.3);
+    await expect.poll(async () => { const r=await svg.boundingBox(); return r ? r.height/r.width : 0; }).toBeGreaterThan(0.9);
+    await expect.poll(async () => { const r=await svg.boundingBox(); return r ? r.height/r.width : 99; }).toBeLessThan(1.1);
     if (height === 1440) {
       await expect.poll(async () => (await svg.boundingBox())?.height || 0).toBeGreaterThan(560);
     }

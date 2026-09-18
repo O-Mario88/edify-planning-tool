@@ -292,7 +292,9 @@ class CentralizedCostingTest(APITestCase):
         self.assertTrue(prev["canSchedule"], prev)
         # Session components plus one day of staff transport and lunch; the
         # TOT trainings rate itself is 0 until the Country Director sets it.
-        expected = 60000 + 30000 + (6000 * 20) + 4000 + 1000 + 15000 + 8000
+        # No staff lunch in the sum: a TOT training feeds its participants and
+        # the staff member delivering it eats from that (owner, 2026-09-17).
+        expected = 60000 + 30000 + (6000 * 20) + 4000 + 1000 + 15000
         self.assertEqual(prev["amount"], expected)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
@@ -304,7 +306,6 @@ class CentralizedCostingTest(APITestCase):
                 "printing_training_materials",
                 "photocopying_training_materials",
                 "primary_transport_per_day",
-                "lunch_per_day",
             },
         )
         self.assertEqual(
@@ -317,7 +318,6 @@ class CentralizedCostingTest(APITestCase):
                 "Printing training materials",
                 "Photocopying training materials",
                 "Transport Primary District",
-                "Lunch",
             },
         )
         labels = {l["lineItemType"] for l in prev["lines"]}
@@ -331,6 +331,9 @@ class CentralizedCostingTest(APITestCase):
     ):
         """Meetings include their venue and staff travel, but no training fee."""
         _seed_rates(
+            # A meeting is priced apart from a training since 2026-09-17, so
+            # it has its own rate row; the shared one stays for the training.
+            cluster_meeting=7000,
             cluster_meetings_trainings=7000,
             cluster_meetings_trainings_meals=6000,
             group_training_venue_cost=30000,
@@ -351,23 +354,28 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # The session's own rate, the twelve participants fed at the cluster
+        # The meeting's own rate, the twelve participants fed at the cluster
         # meals rate (owner, 2026-09-15), the room, the materials (by the
-        # page, 0 until the rates are set) and the staff day.
-        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000 + 8000)
+        # page, 0 until the rates are set) and the staff member's transport.
+        #
+        # No staff lunch: the session feeds its participants and the staff
+        # member delivering it eats from that (owner, 2026-09-17, on a cluster
+        # session fetching two meal costs — "make sure that it fetches only 1
+        # meals"). A session whose meals rate is unset still pays the staff
+        # lunch; see test_cluster_training_never_falls_back_to_retired_rate_keys.
+        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
             {
-                "cluster_meetings_trainings",
+                "cluster_meeting",
                 "cluster_meetings_trainings_meals",
                 "group_training_venue_cost",
                 "printing_training_materials",
                 "photocopying_training_materials",
                 "primary_transport_per_day",
-                "lunch_per_day",
             },
         )
-        self.assertEqual(prev["lines"][0]["label"], "Cluster Meetings/ Trainings")
+        self.assertEqual(prev["lines"][0]["label"], "Cluster Meeting")
         meals = next(
             line for line in prev["lines"] if line["key"].endswith("trainings_meals")
         )
@@ -382,11 +390,12 @@ class CentralizedCostingTest(APITestCase):
                 "venue",
                 "materials",
                 "transport",
-                "lunch",
             },
         )
         self.assertIn("venue", labels)
         self.assertNotIn("facilitation", labels)
+        # The staff lunch is not a line at all on a session that feeds them.
+        self.assertNotIn("lunch", labels)
         # The retired legacy snack key never prices a new meeting.
         self.assertNotIn(
             "meals_per_participant", {line["key"] for line in prev["lines"]}

@@ -104,7 +104,10 @@ Disbursed — awaiting the owner's confirmation that the funds arrived.
 {% endif %}
 {% elif active_wfr.status == 'disbursed' and active_wfr.receipt_confirmed_at %}
 <p class="text-sm text-emerald-700">Receipt confirmed by the requester. Accountability is now available.</p>
-{% if viewer_is_wfr_owner %}<a href="{% if accountability_activity_id %}/my-plan/{{ accountability_activity_id }}/accountability{% else %}/my-plan?week={{ selected_week }}{% endif %}" class="btn btn-primary h-8">Start Accountability</a>{% endif %}
+{% comment %}The fallback link drops `?week=`: My Plan stopped slicing by week
+on 2026-09-16 and now shows the whole fiscal year by month, so the parameter
+promised a filter the page no longer has.{% endcomment %}
+{% if viewer_is_wfr_owner %}<a href="{% if accountability_activity_id %}/my-plan/{{ accountability_activity_id }}/accountability{% else %}/my-plan{% endif %}" class="btn btn-primary h-8">Start Accountability</a>{% endif %}
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 &check; Action completed. This weekly request is
@@ -134,7 +137,8 @@ class="h-8 px-2.5 rounded-control border border-slate-200 text-[12px] w-44 focus
 </div>
 {% endif %}
 
-<a href="/my-plan?week={{ selected_week }}" class="btn btn-ghost h-8 ml-auto">View Source Activities</a>
+{% comment %}No `?week=`: My Plan shows the whole fiscal year by month now.{% endcomment %}
+<a href="/my-plan" class="btn btn-ghost h-8 ml-auto">View Source Activities</a>
 </div>
 
 {% else %}

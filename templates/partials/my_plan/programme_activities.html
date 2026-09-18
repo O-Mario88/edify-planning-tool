@@ -52,7 +52,4 @@ and, for visits and trainings, a danger-red sentence).{% endcomment %}
 <div class="px-5 py-4">{% include "components/empty_state.html" with message="No programme activities planned for this period." cta_label="Open Work Plan" cta_href="/work-plan" icon_path="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" %}</div>
 {% endif %}
 </div>
-
-
-{% include "partials/my_plan/_pager.html" with pager=programme_activities_pager param="programme_activities_page" label="Programme activities" base_query=my_plan_base_query %}
 </div>

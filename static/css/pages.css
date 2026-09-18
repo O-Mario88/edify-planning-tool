@@ -4010,6 +4010,44 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .row-menu__item { min-block-size: 2.75rem; line-height: 2.75rem; }
 }
 
+/* The menu is a menu wherever it is opened from.
+ *
+ * Every table control on the platform is compacted to one row-height line
+ * (platform.css ROW ACTION CONTROLS, consistency.css's cell controls), and
+ * micro-ux.js marks the controls those rules match. A menu item sitting in a
+ * table cell was marked with them and took `display: inline-flex` and a 24px
+ * height with it: the four items laid themselves out on one 34px line, all but
+ * the first of them beyond the menu's own right edge. The dropdown opened and
+ * looked like a strip.
+ *
+ * micro-ux.js now stops at the popup boundary, and these two rules hold the
+ * boundary in CSS as well, so the next marker pass cannot flatten the menu
+ * again. Written as two-class selectors so they outrank the compaction rules
+ * on specificity rather than on file order. */
+.row-menu .row-menu__list {
+  display: block;
+  white-space: normal;
+}
+
+.row-menu__list .row-menu__item {
+  display: block !important;
+  inline-size: 100% !important;
+  block-size: auto !important;
+  max-block-size: none !important;
+  min-block-size: 2.125rem !important;
+  line-height: 2.125rem !important;
+  padding-inline: 0.625rem !important;
+  text-align: start !important;
+  justify-content: flex-start;
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  .row-menu__list .row-menu__item {
+    min-block-size: 2.75rem !important;
+    line-height: 2.75rem !important;
+  }
+}
+
 /* ─── TEAM AVAILABILITY CALENDAR ─────────────────────────────────────────────
    FullCalendar ships its own button chrome, which arrived oversized, uppercase
    and unevenly spaced against the rest of the platform. These rules put its
@@ -4312,11 +4350,30 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
    scrolls instead of wrapping, and nothing in the row changes height. */
 /* The strip is not a scroller. It was capped at 10rem and scrolled inside the
    cell, which hid stages behind an invisible scrollbar on a row that had the
-   width to show them. The row is wide enough; the strip takes what it needs. */
+   width to show them.
+
+   Nor does it take whatever it needs any more. Six stages on one line asked
+   for 617px of a 1108px table, and the column planner (micro-ux.js) reads a
+   strip of pills as a rigid column — one that keeps its width while the text
+   columns beside it go to their floors. My Plan rendered as seven ellipses and
+   a status (owner, 2026-09-17).
+
+   The strip is bounded here instead — 15rem so the planner cannot squeeze it
+   to a column of single pills, 18rem so it cannot take the table — and past
+   that it wraps. That trades away the first of the two decisions above: a row
+   carrying six stages stands three lines rather than one. It is the right way
+   round. A three-line row is readable; a row whose other seven columns are
+   ellipses is not, and three stages — what a row actually carries once it is
+   not also carrying its own history — still sit on one line. The second
+   decision stands: nothing is hidden, every stage is still on the row. */
 .mp-badges {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
+  row-gap: 3px;
+  min-inline-size: 15rem;
+  max-inline-size: 18rem;
 }
 
 /* No outline: eight bordered pills across a row read as a fence. Colour alone
@@ -4419,7 +4476,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   gap: 14px;
   padding: 18px;
   border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg, 12px);
+  border-radius: var(--edify-radius-lg);
   background: var(--edify-surface);
   box-shadow: var(--edify-shadow-sm);
 }

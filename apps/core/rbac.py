@@ -447,11 +447,15 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PARTNER_ORGANISATION_EDIT,
         # The CD already holds USER_MANAGE; partner logins are part of it.
         P.PARTNER_USER_MANAGE,
-        # Review escalated partner cases and hold a partner from new work. NOT
-        # PARTNER_ASSIGNMENT_WITHDRAW: routine team withdrawals belong to the
-        # Program Lead, and a CD reaching past them into one school's
-        # assignment is the kind of quiet override that leaves nobody sure who
-        # decided. Admin retains it for support.
+        # Review escalated partner cases and hold a partner from new work.
+        # PARTNER_ASSIGNMENT_WITHDRAW too, since 2026-09-17 ("The withdraw
+        # assignment should work universally for all assignments to partner
+        # and by all roles"). It was withheld so routine withdrawals stayed
+        # with the Program Lead — but the service already returned early for
+        # a Country Director, so the rule contradicted itself and the CD was
+        # refused at the permission gate before reaching the line that let
+        # them through. Who decided is recorded on the withdrawal either way.
+        P.PARTNER_ASSIGNMENT_WITHDRAW,
         P.PARTNER_WITHDRAWAL_REVIEW,
         P.PARTNER_HOLD,
         P.PROJECT_MANAGE,
@@ -813,6 +817,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ACTIVITY_OPERATIONAL_COST_VIEW,
         P.COST_AMENDMENT_REQUEST,
         P.PARTNER_VIEW,
+        # A coordinator schedules partner work on their projects' schools, so
+        # they take it back too (owner, 2026-09-17: withdrawal "by all roles").
+        # Not IA or the Regional Program Lead, whose oversight the same owner
+        # defined as read-only over other people's activities.
+        P.PARTNER_ASSIGNMENT_WITHDRAW,
         P.ANALYTICS_VIEW,
         # Project exports are constrained by the same coordinator project
         # scope as the on-screen planning and impact services.

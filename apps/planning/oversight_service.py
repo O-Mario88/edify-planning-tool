@@ -32,7 +32,12 @@ from datetime import date
 
 from django.db.models import Q, Sum
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 
 # Work that is live: planned, scheduled, in flight or finished. Cancelled,
 # rejected, deferred and never-planned rows are not part of a plan under
@@ -1029,6 +1034,62 @@ def summarize(items) -> dict:
             ]
         ),
     }
+
+
+#: The three kinds of planned work a Programme Lead reads separately (owner,
+#: 2026-09-17: "a table for planned school visits, a separate table for planned
+#: cluster meeting and a separate table for planned group training ... grouped
+#: by CCEOs in tabs"). A school visit, a cluster convening and a group training
+#: are planned differently, cost differently and are read for different
+#: questions, and mixing them in one table made a lead scan for the rows that
+#: answered the question they actually had.
+ACTIVITY_FAMILIES: tuple[tuple[str, str, frozenset], ...] = (
+    ("visits", "School Visits", frozenset(VISIT_TYPES)),
+    ("meetings", "Cluster Meetings", frozenset(CLUSTER_MEETING_TYPES)),
+    ("trainings", "Group Trainings", frozenset(TRAINING_TYPES)),
+)
+_FAMILY_TYPES = {key: types for key, _label, types in ACTIVITY_FAMILIES}
+
+
+def in_family(items, family: str) -> list:
+    """The items of one family, or every item for an unknown key.
+
+    "all" is not a fourth family, it is the absence of one — and it is the
+    default on purpose. A programme event, an SSA activity or a partner
+    activity belongs to none of the three, so a page that only ever showed
+    the three would quietly drop work from a lead's team.
+    """
+    types = _FAMILY_TYPES.get(family)
+    if not types:
+        return list(items)
+    return [item for item in items if item.activity_type in types]
+
+
+def activity_tabs(items, active: str) -> list[dict]:
+    """The family strip, each tab carrying the count it will show.
+
+    Counted from the items themselves so a tab and its table cannot disagree,
+    the same reason `summarize` is a fold rather than a query.
+    """
+    items = list(items)
+    tabs = [
+        {
+            "key": "all",
+            "label": "All Activities",
+            "count": len(items),
+            "is_active": active not in _FAMILY_TYPES,
+        }
+    ]
+    for key, label, types in ACTIVITY_FAMILIES:
+        tabs.append(
+            {
+                "key": key,
+                "label": label,
+                "count": len([i for i in items if i.activity_type in types]),
+                "is_active": key == active,
+            }
+        )
+    return tabs
 
 
 def group_by_owner(items) -> list[dict]:

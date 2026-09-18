@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block drawer_subtitle %}
-Configure cluster activity details for {{ cluster.name }}
+{% if fixed_cluster %}Configure cluster activity details for {{ cluster.name }}{% else %}Choose the cluster and configure the session{% endif %}
 {% endblock %}
 
 {% block drawer_body %}
@@ -34,7 +34,7 @@ type="radio"
 name="cluster_activity_type"
 value="training"
 {% if action != 'meeting' %}checked{% endif %}
-hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}"
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 >
@@ -47,7 +47,7 @@ type="radio"
 name="cluster_activity_type"
 value="meeting"
 {% if action == 'meeting' %}checked{% endif %}
-hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}"
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 >
@@ -56,7 +56,36 @@ hx-swap="innerHTML"
 </div>
 </fieldset>
 
+{% if not fixed_cluster %}
+{% comment %}
+The cluster chooser. It is here rather than in a drawer of its own because the
+Clusters page's "Schedule Group Training" and "Schedule Cluster Meeting"
+buttons name the kind of session but not the cluster, and before 2026-09-17
+they opened a SECOND cluster drawer with a different field set — the two
+drawers the owner reported as "they are different".
+
+Changing the cluster reopens this drawer for the new one, the same way the
+activity-type switch above does: the member schools, the SSA need and the
+course list all belong to one cluster, and re-rendering is the only way they
+stay that cluster's. `pick=1` keeps the chooser on screen across the swap.
+{% endcomment %}
+<div class="mb-4">
+<label for="cluster-picker" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1.5">Cluster <span class="text-rose-500">*</span></label>
+<select id="cluster-picker" aria-label="Cluster"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none cursor-pointer"
+        hx-get="/planning/schedule-modal"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+        name="cluster_id"
+        hx-vals='{"action": "{{ action }}", "pick": "1"}'>
+  {% for c in clusters %}
+  <option value="{{ c.id }}" {% if c.id == cluster.id %}selected{% endif %}>{{ c.name }}</option>
+  {% endfor %}
+</select>
+</div>
+{% endif %}
 <form
+id="cluster-planner-form"
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
@@ -571,6 +600,59 @@ placeholder="Checklist outcome or goals for the cluster..."
 class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
+
+{% comment %}
+Responsible Staff and the live cost preview: the two things the Clusters page's
+own drawer had and this one did not, which is why two drawers existed at all
+(owner, 2026-09-17: "use the same cluster meeting planning drawer ... everywhere
+there is cluster planning").
+
+A Programme Lead or Admin may hand the session to somebody else; everybody else
+sees their own name and cannot change it, which is the rule the other drawer
+enforced. The service resolves the owner again on POST, so this is a choice
+offered to the roles that have it rather than the authority itself.
+{% endcomment %}
+<div>
+<label for="cluster_responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Staff</label>
+{% if request.user.active_role == 'Program Lead' or request.user.active_role == 'Admin' %}
+<select id="cluster_responsible_staff_id" name="responsible_staff_id"
+        aria-label="Responsible staff"
+        hx-get="/clusters/cost-preview" hx-trigger="change"
+        hx-target="#cluster-cost-preview" hx-include="#cluster-planner-form"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 text-[12px] font-bold text-slate-700 focus:outline-none cursor-pointer">
+  <option value="">-- Choose Staff --</option>
+  {% for p in staff_profiles %}
+  <option value="{{ p.id }}" {% if cluster.responsible_staff_id == p.id or cluster.responsible_staff_id == p.user_id %}selected{% endif %}>{{ p.user.name }}</option>
+  {% endfor %}
+</select>
+{% else %}
+<select aria-label="Responsible staff" disabled
+        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 mt-1 text-[12px] font-bold text-slate-400 cursor-not-allowed">
+  {% for p in staff_profiles %}
+  {% if cluster.responsible_staff_id == p.id or cluster.responsible_staff_id == p.user_id or not cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}
+  <option selected>{{ p.user.name }}</option>
+  {% endif %}
+  {% endfor %}
+</select>
+{% endif %}
+</div>
+
+{% comment %}
+The cost this session would carry, from the same endpoint and the same engine
+the Clusters drawer used. It loads once the drawer is open and refreshes when
+the numbers that move it change; the backend recomputes at submission, so this
+is a preview and never the figure that gets costed.
+{% endcomment %}
+{% comment %}
+hx-target is spelled out even though this element IS the target. htmx INHERITS
+hx-target from ancestors (unlike hx-get), and the form above sets
+hx-target="#form-errors" — so without this the cost preview was swapped into
+the form's error box and this container stayed empty.
+{% endcomment %}
+<div id="cluster-cost-preview" class="border-t border-slate-100 pt-4"
+     hx-get="/clusters/cost-preview" hx-trigger="load delay:100ms"
+     hx-target="#cluster-cost-preview" hx-swap="innerHTML"
+     hx-include="#cluster-planner-form"></div>
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">

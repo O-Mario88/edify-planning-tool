@@ -166,25 +166,39 @@
   min-inline-size: 0;
 }
 
-/* A portrait sheet that fits the screen (owner, 2026-09-16: "the map is too
-   large ... make it fit exactly so that the users don't have to scroll").
+/* A SQUARE map, as large as the window leaves room for (owner, 2026-09-17:
+   "The map should be square much as it will fill the desktop page. i dont
+   mind the dead space on the sides").
 
-   It was a fixed 30cm × 42cm box, which is 1134 × 1587px — taller than any
-   laptop, so on a 1080px screen the card stood 2186px and the map could only
-   be read by scrolling it past the window in two goes.
+   Two things the owner has asked for, on consecutive days, and they decide
+   the two axes between them. Square, because the SVG is a square viewBox
+   (0 0 620 620) holding a country whose own bounds are 570 x 600: the 30:42
+   portrait sheet it used to sit in was a print convention, and fitting a
+   square drawing into it wasted a band the full width of the card top and
+   bottom -- roughly 380px of nothing on a 1440 x 950 screen, which is why
+   the map kept reading as small however it was sized.
 
-   The sheet keeps its 30:42 proportions and is now bounded by the height
-   actually left below the page and card headers (the map's top sits ~276px
-   into the scroll container; --sr-map-chrome covers that plus a margin). The
-   width follows from the ratio, so the country is never stretched, and
-   max-inline-size keeps a narrow card shrinking it in proportion as before.
-   svh, not vh, so a phone's retracting toolbar does not crop it. */
+   And bounded by the height actually left below the page and card headers,
+   because that is the request from 2026-09-16 -- "make it fit exactly so
+   that the users don't have to scroll" -- and because it is what "dead space
+   on the sides" means: a square whose height is spent leaves its spare room
+   at the sides, which is exactly the room the owner has said they don't mind.
+   A square bounded by the card's WIDTH instead has no spare room at the
+   sides at all; it runs off the bottom of the window, and on a 1366 x 768
+   laptop it stood 1154px tall.
+
+   So the width leads and carries the height bound with it: the sheet is the
+   narrower of the card, the 30cm sheet cap, and the room under the chrome.
+   Height then follows the ratio and the map is always whole on screen.
+   --sr-map-chrome covers the ~276px the map's top sits into the scroll
+   container, plus a margin. svh, not vh, so a phone's retracting toolbar
+   does not crop it. */
 .analytics-geo-card .sr-map-viewport {
   --sr-map-chrome: 19rem;
   margin-inline: auto;
-  aspect-ratio: 30 / 42;
-  block-size: min(calc(100svh - var(--sr-map-chrome)), 42cm);
-  inline-size: auto;
+  aspect-ratio: 1 / 1;
+  inline-size: min(100%, 30cm, calc(100svh - var(--sr-map-chrome)));
+  block-size: auto;
   max-inline-size: min(30cm, 100%);
 }
 .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
@@ -1536,10 +1550,9 @@ main #impact-workspace .impact-group-pagination a {
     width: 100%;
   }
   /* Desktop has more room above the map than a phone does, but the rule is
-     the same one: fit the window rather than overflow it (owner,
-     2026-09-16). This override used to reinstate the unbounded 30cm box and
-     would have undone the fitting rule above, so it now only widens the cap
-     the sheet may grow to. */
+     the same one: square, and whole on screen rather than past the fold.
+     This override only widens the cap the sheet may grow to — restating
+     inline-size here would drop the height bound the base rule carries. */
   .analytics-geo-card .sr-map-viewport {
     max-inline-size: 30cm;
   }

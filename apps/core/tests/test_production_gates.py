@@ -609,14 +609,22 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_a_second_client_visit_in_the_year_is_refused(self):
-        """A client school is visited once a year (owner, 2026-09-15); the
-        first visit stands untouched by the refusal."""
-        first = self._schedule_visit(5)
+    def test_a_visit_past_the_client_allowance_is_refused(self):
+        """A client school takes CLIENT_VISIT_CAP visits a year (owner,
+        2026-09-15; raised from one to two on 2026-09-17); the visits already
+        made stand untouched by the refusal.
+
+        Counted from the constant so the day the cap moves again, this asserts
+        the gate rather than the number.
+        """
+        from apps.planning.visit_gate import CLIENT_VISIT_CAP
+
+        made = [self._schedule_visit(5 + day) for day in range(CLIENT_VISIT_CAP)]
         with self.assertRaises(BadRequest) as ctx:
-            self._schedule_visit(12)
-        self.assertIn("visited once a year", str(ctx.exception.detail))
-        self.assertEqual(Activity.objects.get(id=first["id"]).status, "scheduled")
+            self._schedule_visit(5 + CLIENT_VISIT_CAP)
+        self.assertIn("visits a year", str(ctx.exception.detail))
+        for visit in made:
+            self.assertEqual(Activity.objects.get(id=visit["id"]).status, "scheduled")
 
     def test_additional_client_training_is_allowed(self):
         first = self._schedule_training(5)

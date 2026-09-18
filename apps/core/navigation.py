@@ -198,7 +198,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The Regional Programme Lead's home: their region's Programme Leads in
     # tabs, with each Lead's CCEOs grouped inside (owner, 2026-09-12).
     "team_planning_oversight": {PL, CD, RVP, RPL, IA, ACCOUNTANT, ADMIN},
-    "country_planning_oversight": {CD, RVP, ADMIN},
+    # IA reads the country lens too (owner, 2026-09-17: "Make sure IA has
+    # country oversight (All the team activities but he cannot modify or edit
+    # any of the team activities)"). They already held the TEAM lens, so the
+    # country picture was the half they were missing and the route bounced
+    # them to their own dashboard.
+    #
+    # Read-only falls out of the structure rather than being asserted: the
+    # "Send to <PL>" action gates on `may_delegate(..., country=True)`, which
+    # an IA does not pass, and both exports carry
+    # `@require_export_permission`. Nothing on this page edits an activity.
+    "country_planning_oversight": {CD, RVP, IA, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a
@@ -1149,6 +1159,26 @@ IA_SECTIONS = [
         "page_key": "decision_log",
         "cluster": "accountability",
         "description": "What leadership decided, by whom, on what evidence.",
+    },
+    {
+        # Country Oversight — every team's planned and delivered work, read
+        # only (owner, 2026-09-17: "Make sure IA has country oversight (All
+        # the team activities but he cannot modify or edit any of the team
+        # activities)"). It supersedes the 2026-09-13 reading that IA needs no
+        # oversight page because it supervises no team: IA assesses what the
+        # country delivered, and could not see the country.
+        #
+        # The COUNTRY lens rather than the team one, because that is the one
+        # that holds every Programme Lead at once. Read-only is structural,
+        # not a promise: "Send to <PL>" gates on may_delegate(country=True)
+        # and the exports on require_export_permission, so an IA opening this
+        # page can read every lens and act on none of it.
+        "key": "country_oversight",
+        "label": "Country Oversight",
+        "url": "/country-planning-oversight/",
+        "page_key": "country_planning_oversight",
+        "cluster": "data_quality",
+        "description": "Every team's planned and delivered work, country-wide and read-only.",
     },
     # The data quality and verification work every judgement above rests on.
     {

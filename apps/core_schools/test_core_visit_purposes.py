@@ -88,23 +88,34 @@ class _CoreFixture(TestCase):
 
 
 class CoreVisitPurposeTest(_CoreFixture):
-    def test_first_visit_drawer_offers_only_ssa_support(self):
+    def test_the_first_visit_drawer_offers_every_purpose(self):
+        """The first visit of a package no longer has to be SSA Support.
+
+        It did until 2026-09-17, when the owner asked for the package rules
+        to come off: "Lift all FY restriction and package restrictions. Only
+        block staff visit schedule after 2 scheduling and block partner
+        assignment and schedule after 2 assignment and scheduling." The rule
+        also reached further than its own name — a Core TRAINING could not be
+        scheduled at all until a VISIT slot was taken — which is how it came
+        to the owner's attention.
+        """
         html = (
             self._client(self.cceo)
             .get(f"/core-schools/schedule-visit?school_id={self.school.school_id}")
             .content.decode()
         )
-        self.assertIn("data-core-first-visit", html)
-        self.assertIn('value="ssa_support"', html)
-        self.assertNotIn('value="donor_visit"', html)
-        self.assertNotIn('value="in_school_training"', html)
+        self.assertNotIn("data-core-first-visit", html)
+        for value in ("ssa_support", "donor_visit", "in_school_training"):
+            self.assertIn(f'value="{value}"', html)
 
-    def test_first_visit_must_be_ssa_support(self):
-        refused = self._post_visit(purpose_of_visit="donor_visit")
-        self.assertEqual(refused.status_code, 400)
-        self.assertIn("SSA Support", refused.content.decode())
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
+    def test_the_first_visit_may_be_any_purpose(self):
+        response = self._post_visit(purpose_of_visit="donor_visit")
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        visit = Activity.objects.get(school=self.school, activity_type="core_visit")
+        self.assertEqual(visit.purpose_type, "donor_visit")
+        self.assertEqual(self._slot("v", 1).activity_id, visit.id)
 
+    def test_ssa_support_still_collects_the_ssa_when_it_is_chosen(self):
         response = self._post_visit(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
         visit = Activity.objects.get(school=self.school, activity_type="core_visit")
@@ -114,6 +125,7 @@ class CoreVisitPurposeTest(_CoreFixture):
         self.assertEqual(self._slot("v", 1).activity_id, visit.id)
 
     def test_a_first_visit_posted_without_a_purpose_is_ssa_support(self):
+        """Unchanged: the DEFAULT is still SSA Support, it is just not forced."""
         response = self._post_visit()
         self.assertEqual(response.status_code, 200, response.content[:300])
         visit = Activity.objects.get(school=self.school, activity_type="core_visit")
@@ -176,13 +188,24 @@ class CoreVisitPurposeTest(_CoreFixture):
             ).exists()
         )
 
-    def test_in_school_training_waits_for_the_first_visit(self):
+    def test_in_school_training_no_longer_waits_for_the_first_visit(self):
+        """A training slot is not a visit slot.
+
+        This was refused until 2026-09-17 on a question about VISIT slots, so
+        a core school whose package had not started could be given no training
+        at all — which is what the owner met as core training scheduling "not
+        saving". The two caps that remain are counted per kind.
+        """
         course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
         response = self._post_visit(
             purpose_of_visit="in_school_training", training_course_id=course.id
         )
-        self.assertEqual(response.status_code, 400)
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.assertTrue(
+            Activity.objects.filter(
+                school=self.school, activity_type="in_school_training"
+            ).exists()
+        )
 
     def test_follow_up_lists_the_trainings_the_school_did(self):
         self._take_first_visit()
@@ -389,9 +412,18 @@ class CorePartnerPurposeTest(_CoreFixture):
         self.assertIn('name="source_activity_id"', html)
         self.assertIn('name="training_course_id"', html)
 
-    def test_the_first_partner_visit_is_ssa_support(self):
-        refused = self._assign(purpose_of_visit="training_follow_up")
-        self.assertEqual(refused.status_code, 400)
+    def test_a_first_partner_visit_may_be_any_purpose(self):
+        """The first-visit-is-SSA rule is lifted for handoffs too (2026-09-17).
+
+        The owner met it as "I cannot assign core school to a partner": the
+        drawer offered a single purpose and a training handoff was refused.
+        """
+        allowed = self._assign(purpose_of_visit="training_follow_up")
+        self.assertEqual(allowed.status_code, 200, allowed.content[:300])
+        PartnerAssignment.objects.filter(school=self.school).delete()
+        self._slot("v", 1).__class__.objects.filter(id=self._slot("v", 1).id).update(
+            status="Planned", assigned_partner_id=None, assigned_partner_name=None
+        )
         response = self._assign(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
         pa = PartnerAssignment.objects.get(school=self.school)

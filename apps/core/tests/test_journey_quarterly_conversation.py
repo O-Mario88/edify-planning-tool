@@ -340,7 +340,7 @@ class QuarterlyConversationJourneyTest(TestCase):
         self._sf_seq = getattr(self, "_sf_seq", 300000) + 1
         day = _next_schedulable(self.day, offset_days)
         item = resolve_item_for_workflow_kind("school_visit")
-        # A client school is visited once a year (owner, 2026-09-15), so a
+        # A client school's visits are capped (owner, 2026-09-15), so a
         # walk that delivers a second visit delivers it at a second school in
         # the officer's portfolio — the conversation counts the officer's
         # visits, wherever they were.

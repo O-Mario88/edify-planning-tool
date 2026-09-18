@@ -172,46 +172,44 @@ def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None)
 
 
 def assert_may_execute(activity, *, today: date | None = None) -> None:
-    """Refuse delivering work before its fiscal year's execution starts.
+    """Nothing. The fiscal year no longer gates delivery.
 
-    Planning FY2027 in September 2026 is allowed; starting, completing or
-    submitting evidence for it before 1 October 2026 is not.
+    Owner, 2026-09-17: "can you make sure all restrictions are lifted
+    throughout the platform", after the core package's fiscal-year refusal was
+    lifted and turned out to be one of several.
+
+    This refused starting, completing or submitting evidence for work before
+    its year's execution_start — so a team that had planned the term ahead
+    (which 2026-09-16 deliberately allowed: "staff now schedule as far forward
+    as they need") could enter the work and then not deliver it. Planning
+    forward and being unable to act on what you planned is the same wall in a
+    different place.
+
+    Kept as a no-op rather than deleted: it is called from four places in
+    apps.activities.services, and a function that does nothing is clearer at
+    those call sites than four deletions that leave nobody able to see the
+    rule is gone.
     """
-    today = today or timezone.localdate()
-    planned = getattr(activity, "planned_date", None) or (
-        activity.scheduled_date.date()
-        if getattr(activity, "scheduled_date", None)
-        else None
-    )
-    fy = getattr(activity, "fy", None) or (
-        get_operational_fy(planned) if planned else None
-    )
-    if not fy:
-        return
-    policy = policy_for(fy)
-    if policy and today < policy.execution_start:
-        raise BadRequest(
-            f"This is FY{fy} work. It can be started from "
-            f"{_format(policy.execution_start)}."
-        )
+    return None
 
 
 def assert_same_fiscal_year(old_date, new_date) -> None:
-    """A reschedule never carries an activity into another fiscal year.
+    """Nothing. A reschedule may cross 30 September (owner, 2026-09-17).
 
-    Moving a date across 30 September silently re-stamped the activity's FY,
-    moving its budget line, fund request and target credit into a year it was
-    never planned for. The planner cancels it and plans it in the new year.
+    This refused moving an activity into another fiscal year, because doing so
+    re-stamps its FY and with it the budget line, fund request and target
+    credit. The refusal told the planner to cancel and re-plan instead — two
+    steps, a lost audit trail and a new activity id, to move one date.
+
+    The re-stamping it guarded against is real, and it is the reschedule's job
+    to carry it: `reschedule` in apps.activities.services already rewrites the
+    activity's fy and quarter with the new date and moves the money with it.
+    What this added was the refusal, not the correctness.
+
+    A no-op rather than a deletion, for the same reason as `assert_may_execute`
+    above.
     """
-    if old_date is None or new_date is None:
-        return
-    old_fy = get_operational_fy(old_date)
-    new_fy = get_operational_fy(new_date)
-    if old_fy != new_fy:
-        raise BadRequest(
-            f"This activity is FY{old_fy} work and the new date is in FY{new_fy}. "
-            f"Choose a date in FY{old_fy}, or cancel it and plan it in FY{new_fy}."
-        )
+    return None
 
 
 def follow_up_requires_prior_training(fy, country: str | None = None) -> bool:

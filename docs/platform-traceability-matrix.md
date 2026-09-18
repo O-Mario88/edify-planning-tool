@@ -15,28 +15,28 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 100 | 37 | 3 | 3 | 5 | 18 | 48 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 37 | 10 | 1 | 11 | 0 | 0 | 14 |
-| `journey-03` | Standard staff school visit | ✓ | 13 | 95 | 39 | 4 | 8 | 9 | 26 | 48 |
-| `journey-04` | Cluster training | ✓ | 1 | 51 | 17 | 1 | 2 | 0 | 1 | 43 |
-| `journey-05` | Partner assignment and payment | ✓ | 1 | 46 | 27 | 2 | 2 | 1 | 4 | 57 |
-| `journey-06` | Special Project | ✓ | 1 | 97 | 35 | 4 | 5 | 5 | 17 | 48 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 70 | 32 | 5 | 11 | 8 | 22 | 48 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 67 | 25 | 3 | 6 | 7 | 18 | 47 |
-| `journey-09` | Leave and temporary coverage | ✓ | 1 | 49 | 15 | 0 | 0 | 1 | 4 | 10 |
-| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 87 | 39 | 3 | 3 | 6 | 24 | 48 |
-| `journey-11` | Professional Development | ✓ | 1 | 39 | 8 | 0 | 0 | 1 | 1 | 0 |
-| `journey-12` | Policy lifecycle | ✓ | 1 | 33 | 12 | 0 | 0 | 1 | 10 | 4 |
-| `journey-13` | PIP | ✓ | 1 | 36 | 7 | 0 | 0 | 0 | 3 | 0 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 50 | 14 | 0 | 0 | 2 | 3 | 10 |
-| `journey-15` | Financial Health | ✓ | 1 | 50 | 17 | 2 | 4 | 1 | 6 | 14 |
-| `journey-16` | Government Requirements | ✓ | 1 | 49 | 17 | 2 | 4 | 1 | 5 | 14 |
-| `journey-17` | Loan | ✓ | 1 | 43 | 25 | 11 | 7 | 3 | 17 | 22 |
-| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 44 | 21 | 9 | 6 | 1 | 9 | 18 |
-| `journey-19` | Cross-role security | ✓ | 4 | 39 | 11 | 2 | 2 | 0 | 1 | 52 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 100 | 37 | 3 | 3 | 5 | 18 | 55 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 37 | 10 | 1 | 11 | 0 | 0 | 19 |
+| `journey-03` | Standard staff school visit | ✓ | 13 | 95 | 39 | 4 | 8 | 9 | 26 | 55 |
+| `journey-04` | Cluster training | ✓ | 1 | 51 | 17 | 1 | 2 | 0 | 1 | 51 |
+| `journey-05` | Partner assignment and payment | ✓ | 1 | 46 | 27 | 2 | 2 | 1 | 4 | 66 |
+| `journey-06` | Special Project | ✓ | 1 | 97 | 35 | 4 | 5 | 5 | 17 | 55 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 70 | 32 | 5 | 11 | 8 | 22 | 55 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 67 | 25 | 3 | 6 | 7 | 18 | 54 |
+| `journey-09` | Leave and temporary coverage | ✓ | 1 | 49 | 15 | 0 | 0 | 1 | 4 | 15 |
+| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 87 | 39 | 3 | 3 | 6 | 24 | 55 |
+| `journey-11` | Professional Development | ✓ | 1 | 39 | 8 | 0 | 0 | 1 | 1 | 1 |
+| `journey-12` | Policy lifecycle | ✓ | 1 | 33 | 12 | 0 | 0 | 1 | 10 | 5 |
+| `journey-13` | PIP | ✓ | 1 | 36 | 7 | 0 | 0 | 0 | 3 | 1 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 50 | 14 | 0 | 0 | 2 | 3 | 15 |
+| `journey-15` | Financial Health | ✓ | 1 | 50 | 17 | 2 | 4 | 1 | 6 | 19 |
+| `journey-16` | Government Requirements | ✓ | 1 | 49 | 17 | 2 | 4 | 1 | 5 | 19 |
+| `journey-17` | Loan | ✓ | 1 | 43 | 25 | 11 | 7 | 3 | 17 | 27 |
+| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 44 | 21 | 9 | 6 | 1 | 9 | 23 |
+| `journey-19` | Cross-role security | ✓ | 4 | 39 | 11 | 2 | 2 | 0 | 1 | 61 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 1 | 49 | 17 | 0 | 0 | 1 | 3 | 52 |
+| `journey-22` | Financial-year rollover | ✓ | 1 | 49 | 17 | 0 | 0 | 1 | 3 | 61 |
 
 ## Each requirement in full
 
@@ -58,7 +58,7 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+10 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+40 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+47 more_ |
 
 ### `journey-02` · SSA to school improvement
 
@@ -78,7 +78,7 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Notifications raised | — |
 | Audit actions (evidence) | — |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed`, `impact_schools_improved_rate`, `partner_assigned_schools` _+6 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed` _+11 more_ |
 
 ### `journey-03` · Standard staff school visit
 
@@ -98,7 +98,7 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready` _+1 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+40 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+47 more_ |
 
 ### `journey-04` · Cluster training
 
@@ -118,7 +118,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+35 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_clusters`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+43 more_ |
 
 ### `journey-05` · Partner assignment and payment
 
@@ -138,7 +138,7 @@ Steps: Assign → Schedule or Return → My Plan → Start → Evidence → IA r
 | Notifications raised | `partner_scheduled_activity` |
 | Audit actions (evidence) | `activity.closed`, `finance.partner_paid`, `notification.partner_scheduled_activity`, `partner.assigned` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget`, `fund_request_monthly_total`, `fund_request_monthly_trainings_budget` _+49 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+58 more_ |
 
 ### `journey-06` · Special Project
 
@@ -158,7 +158,7 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready`, `notification.weekly_fund_request_submitted` _+9 more_ |
 | Metrics computed in the run | `frontend_views_extended_views_assigned_schools`, `frontend_views_extended_views_assigned_staff` |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+40 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+47 more_ |
 
 ### `journey-07` · Fund overspending and reimbursement
 
@@ -178,7 +178,7 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Notifications raised | `accountability_pl_approved`, `activity_submitted_for_review`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability` _+14 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+40 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+47 more_ |
 
 ### `journey-08` · Activity canceled after disbursement
 
@@ -198,7 +198,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_returned_for_correction`, `ia_salesforce_verification_pending`, `ia_verification_overdue` _+39 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+46 more_ |
 
 ### `journey-09` · Leave and temporary coverage
 
@@ -218,7 +218,7 @@ Steps: Leave request → Approval → Calendar block → Access transfer → To-
 | Notifications raised | `leave_approved` |
 | Audit actions (evidence) | `hr.coverage_granted`, `hr.coverage_revoked`, `leave.approved`, `notification.leave_approved` |
 | Metrics computed in the run | `frontend_views_leave_views_approved_7_days`, `frontend_views_leave_views_away_this_week`, `frontend_views_leave_views_balance_alerts`, `frontend_views_leave_views_coverage_ready`, `frontend_views_leave_views_critical_conflicts`, `frontend_views_leave_views_pending_approvals` |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_schools_analysed`, `impact_schools_improved_rate`, `partner_assigned_schools`, `ssa_completion_rate` _+2 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_schools_analysed`, `impact_schools_improved_rate` _+7 more_ |
 
 ### `journey-10` · Quarterly Performance Conversation
 
@@ -238,7 +238,7 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Notifications raised | `activity_submitted_for_review`, `performance_window_opened`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed` _+16 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+40 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+47 more_ |
 
 ### `journey-11` · Professional Development
 
@@ -258,7 +258,7 @@ Steps: Request → Manager review → HR review → Financial approval → Compl
 | Notifications raised | `pd_action_required` |
 | Audit actions (evidence) | `notification.pd_action_required` |
 | Metrics computed in the run | `professional_development_services_accountability_pending`, `professional_development_services_active_courses`, `professional_development_services_annual_pd_allocation`, `professional_development_services_certificates_pending`, `professional_development_services_committed_amount`, `professional_development_services_completed_courses`, `professional_development_services_funds_used_accounted`, `professional_development_services_remaining_fund` |
-| Metrics whose sources it moves | — |
+| Metrics whose sources it moves | `portfolio_schools_in_scope` |
 
 ### `journey-12` · Policy lifecycle
 
@@ -278,7 +278,7 @@ Steps: Upload → Review → Return → Approval → Publication → Employee ac
 | Notifications raised | `documents.policy_published` |
 | Audit actions (evidence) | `documents.audience_changed`, `documents.created`, `documents.help_mapping_created`, `documents.help_mapping_updated`, `documents.policy_agreed`, `documents.published`, `documents.review_completed`, `documents.review_requested` _+2 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `policy_acknowledgements_accepted`, `policy_acknowledgements_overdue`, `uploads_awaiting_review`, `uploads_documents_published` |
+| Metrics whose sources it moves | `policy_acknowledgements_accepted`, `policy_acknowledgements_overdue`, `portfolio_schools_in_scope`, `uploads_awaiting_review`, `uploads_documents_published` |
 
 ### `journey-13` · PIP
 
@@ -298,7 +298,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Notifications raised | — |
 | Audit actions (evidence) | `hr.pip_activated`, `hr.pip_outcome`, `hr.pip_recommended` |
 | Metrics computed in the run | `frontend_views_hr_views_6_12_months`, `frontend_views_hr_views_acting_roles`, `frontend_views_hr_views_active`, `frontend_views_hr_views_applications`, `frontend_views_hr_views_approved`, `frontend_views_hr_views_average_score`, `frontend_views_hr_views_closed`, `frontend_views_hr_views_compensation_profiles` _+85 more_ |
-| Metrics whose sources it moves | — |
+| Metrics whose sources it moves | `portfolio_schools_in_scope` |
 
 ### `journey-14` · Team Oversight and Send School to
 
@@ -318,7 +318,7 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |
 | Metrics computed in the run | `oversight_awaiting_verification`, `oversight_country_activities_at_risk`, `oversight_country_activities_planned`, `oversight_country_planned_budget`, `oversight_execution_progress`, `oversight_partner_awaiting_schedule`, `oversight_region_activities_at_risk`, `oversight_region_activities_planned` _+4 more_ |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_schools_analysed`, `impact_schools_improved_rate`, `partner_assigned_schools`, `ssa_completion_rate` _+2 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_schools_analysed`, `impact_schools_improved_rate` _+7 more_ |
 
 ### `journey-15` · Financial Health
 
@@ -338,7 +338,7 @@ Steps: SSA weakness → BT recommendation → Training → Verification → Prac
 | Notifications raised | `bt.case.recommended` |
 | Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated`, `ssa.recommendation_superseded` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed`, `impact_schools_improved_rate`, `partner_assigned_schools` _+6 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed` _+11 more_ |
 
 ### `journey-16` · Government Requirements
 
@@ -358,7 +358,7 @@ Steps: SSA weakness → Requirement assessment → Registration, tax, or NSSF su
 | Notifications raised | `bt.case.recommended` |
 | Audit actions (evidence) | `bt.compliance.assessment_recorded`, `bt.compliance.assessment_verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed`, `impact_schools_improved_rate`, `partner_assigned_schools` _+6 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `impact_median_school_delta`, `impact_schools_analysed` _+11 more_ |
 
 ### `journey-17` · Loan
 
@@ -378,7 +378,7 @@ Steps: Funding Facility → MFI loan entry → Enrolment → Purpose → Disburs
 | Notifications raised | `bt.loan.disbursed`, `bt.loan.salesforce_confirmed`, `bt.loan.submitted` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+9 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+14 more_ |
+| Metrics whose sources it moves | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+19 more_ |
 
 ### `journey-18` · Repeat borrower and student reach
 
@@ -398,7 +398,7 @@ Steps: Second loan → Loan count increases → Unique school does not duplicate
 | Notifications raised | `bt.loan.disbursed` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+1 more_ |
 | Metrics computed in the run | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+5 more_ |
-| Metrics whose sources it moves | `bt_active_portfolio`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_positive_impact`, `bt_salesforce_backlog`, `bt_schools_financed`, `bt_use_verified` _+10 more_ |
+| Metrics whose sources it moves | `bt_active_portfolio`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_positive_impact`, `bt_salesforce_backlog`, `bt_schools_financed`, `bt_use_verified` _+15 more_ |
 
 ### `journey-19` · Cross-role security
 
@@ -418,7 +418,7 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Notifications raised | — |
 | Audit actions (evidence) | `unauthorized_page_access` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget`, `fund_request_monthly_total`, `fund_request_monthly_trainings_budget` _+44 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+53 more_ |
 
 ### `journey-20` · Offline field activity
 
@@ -450,7 +450,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget`, `fund_request_monthly_total`, `fund_request_monthly_trainings_budget` _+44 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+53 more_ |
 
 ## Requirement sets this matrix does not cover
 

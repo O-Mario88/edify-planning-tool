@@ -29,6 +29,7 @@ Open Planning
 <th>District</th>
 <th>Planned Date</th>
 <th>Purpose</th>
+<th>Focus Intervention</th>
 <th>Assigned Partner</th>
 <th>Status</th>
 <th></th>
@@ -41,6 +42,11 @@ Open Planning
 <td class="font-semibold text-slate-500" data-label="District">{{ row.school_district }}</td>
 <td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-slate-600 font-semibold" data-label="Purpose">{{ row.purpose }}</td>
+<td data-label="Intervention">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
+{{ row.focus_intervention }}
+</span>
+</td>
 <td class="font-bold text-slate-700" data-label="Partner">{{ row.owner }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
@@ -56,7 +62,4 @@ and, for visits and trainings, a danger-red sentence).{% endcomment %}
 <div class="px-5 py-4">{% include "components/empty_state.html" with message="No school visits planned for this period." cta_label="Open Planning" cta_href="/planning" icon_path="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4" %}</div>
 {% endif %}
 </div>
-
-
-{% include "partials/my_plan/_pager.html" with pager=school_visits_pager param="school_visits_page" label="School visits" base_query=my_plan_base_query %}
 </div>

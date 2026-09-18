@@ -32,7 +32,33 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
   {# ── People are the navigation; workflow status stays in the rows. ───── #}
   <nav class="oversight-entity-tabs" aria-label="Team members">
     {% for entry in tabs %}
-    <a href="?owner={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+    <a href="?owner={{ entry.key }}&activity={{ activity_family }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+       class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+       {% if entry.is_active %}aria-current="page"{% endif %}>
+      <span>{{ entry.label }}</span>
+      <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+
+  {# ── What kind of work, within that person's plan ───────────────────── #}
+  {% comment %}Owner, 2026-09-17: "a table for planned school visits, a
+  separate table for planned cluster meeting and a separate table for planned
+  group training ... grouped by CCEOs in tabs". A visit, a cluster convening
+  and a training are planned differently and read for different questions; one
+  mixed table made a lead hunt for the rows that answered theirs.
+
+  All Activities stays first and stays the default: programme events, SSA and
+  partner work belong to none of the three, and a strip of only three would
+  drop them from the page. Each tab carries the count it will show, folded
+  from the same rows the table draws.
+
+  `{% templatetag openvariable %}#  #}` is a SINGLE-LINE comment in Django —
+  a multi-line one renders as text on the page, which is exactly what this
+  block did before it was written as a comment tag.{% endcomment %}
+  <nav class="oversight-entity-tabs" aria-label="Activity type">
+    {% for entry in activity_tabs %}
+    <a href="?owner={{ owner }}&activity={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
        class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
        {% if entry.is_active %}aria-current="page"{% endif %}>
       <span>{{ entry.label }}</span>

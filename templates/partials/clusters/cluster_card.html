@@ -103,7 +103,7 @@ so the button and the endpoint cannot disagree however many roles exist.
 {% endcomment %}
 {% if can_plan_clusters %}
 <button
-hx-get="/clusters/planner-drawer?cluster_id={{ cluster.id }}&activity_type=training&fixed_cluster=true"
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&action=training"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="school-record-action school-record-action--schedule"

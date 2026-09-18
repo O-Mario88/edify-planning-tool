@@ -1,0 +1,167 @@
+{% load frontend_filters school_identity table_pagination %}
+{% comment %}
+The country portfolio: every school, under the Programme Lead and the CCEO who
+hold it.
+
+Owner, 2026-09-16: "IA Team oversight should have all the schools in the entire
+country portfolio but grouped by Program leads, which is further grouped by the
+CCEO under them. IA should also track all the planning to know which schools
+have been planned and which ones have not been planned."
+
+Read-only. This is a supervision lens: it says who holds what and what is
+planned on it, and the acting is done through the people it names. There is no
+control here that schedules, edits or cancels field work.
+
+Two levels of grouping, both collapsible, and both stating their own numbers —
+each folded from the rows beneath it (apps.planning.portfolio_service), so a
+heading and its rows cannot disagree.
+{% endcomment %}
+<section class="space-y-4">
+
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title=portfolio_is_country|yesno:"Country portfolio,Team portfolio" %}
+
+  <form class="edify-filter-bar oversight-portfolio-filters"
+        aria-label="Portfolio filters"
+        hx-get="{{ lens_base_url }}"
+        hx-target="#oversight-workspace"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        hx-push-url="true">
+    <input type="hidden" name="view" value="portfolio">
+
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+      <select name="fy" aria-label="Financial year">
+        {% for option in fy_options %}
+        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
+      <select name="program_lead" aria-label="Programme Lead">
+        <option value="">All leads</option>
+        {% for lead in portfolio_leads %}
+        <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">District</span>
+      <select name="district" aria-label="District">
+        <option value="">All districts</option>
+        {% for district in portfolio_districts %}
+        <option value="{{ district.id }}" {% if selected_district == district.id %}selected{% endif %}>{{ district.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    {% comment %}The question a country role opens this page with. The totals
+    above are always the unnarrowed truth, so choosing "Not planned" cannot
+    move the coverage figure — only the list it explains.{% endcomment %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Planning</span>
+      <select name="planned" aria-label="Planning state">
+        <option value="">Every school</option>
+        <option value="planned" {% if selected_planned == "planned" %}selected{% endif %}>Planned</option>
+        <option value="unplanned" {% if selected_planned == "unplanned" %}selected{% endif %}>Not planned</option>
+      </select>
+    </label>
+  </form>
+
+  {% if portfolio.leads %}
+  <div class="space-y-3">
+    {% for lead in portfolio.leads %}
+    {% comment %}The first lead opens; the rest are a click away. A country
+    with twenty leads and seven hundred schools is otherwise a page nobody can
+    scan.{% endcomment %}
+    <details class="portfolio-lead"{% if forloop.first %} open{% endif %}>
+      <summary class="portfolio-lead__summary">
+        <span class="portfolio-lead__name">{{ lead.name }}</span>
+        <span class="portfolio-lead__facts">
+          <span><strong>{{ lead.count }}</strong> school{{ lead.count|pluralize }}</span>
+          <span aria-hidden="true">·</span>
+          <span><strong>{{ lead.planned }}</strong> planned</span>
+          <span aria-hidden="true">·</span>
+          <span class="portfolio-lead__gap{% if lead.unplanned %} is-open{% endif %}"><strong>{{ lead.unplanned }}</strong> not planned</span>
+          <span aria-hidden="true">·</span>
+          <span>UGX {{ lead.budget|intcomma }}</span>
+        </span>
+        {% comment %}Coverage is a share, so it says what it is a share of. A
+        lead holding no schools reads "no schools" rather than 0%.{% endcomment %}
+        <span class="portfolio-lead__coverage" data-tone="{% if lead.coverage is None %}neutral{% elif lead.coverage >= 80 %}success{% elif lead.coverage >= 50 %}warning{% else %}danger{% endif %}">
+          {% if lead.coverage is None %}No schools{% else %}{{ lead.coverage }}% planned{% endif %}
+        </span>
+      </summary>
+
+      {% for officer in lead.officers %}
+      {% comment %}Each officer's list is bounded and pages on its own
+      parameter: one CCEO can hold four hundred schools, and a table that
+      renders all of them is the page that does not open.{% endcomment %}
+      {% paginate officer.visible officer.page_param as officer_page %}
+      <div class="portfolio-officer">
+        <div class="overflow-x-auto edify-record-table-wrap">
+          <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
+            <caption class="sr-only">Schools owned by {{ officer.name }}, under {{ lead.name }}</caption>
+            <thead>
+              <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+                <th scope="col" class="px-3 py-2 font-semibold">School</th>
+                <th scope="col" class="px-3 py-2 font-semibold">District</th>
+                <th scope="col" class="px-3 py-2 font-semibold">Cluster</th>
+                <th scope="col" class="px-3 py-2 font-semibold">Planning</th>
+                <th scope="col" class="px-3 py-2 font-semibold text-right">Visits</th>
+                <th scope="col" class="px-3 py-2 font-semibold text-right">Trainings</th>
+                <th scope="col" class="px-3 py-2 font-semibold">Next planned</th>
+                <th scope="col" class="px-3 py-2 font-semibold text-right">Planned budget</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="edify-group-head">
+                <th colspan="8" scope="colgroup">
+                  <span class="edify-group-head__label">{{ officer.name }}</span>
+                  {% comment %}Folded from the officer's whole portfolio, not
+                  from the filtered list below it: a heading that reads "0
+                  planned" because the reader asked to see the unplanned
+                  schools is the filter describing itself.{% endcomment %}
+                  <span class="edify-group-head__count">{{ officer.count }} school{{ officer.count|pluralize }} · {{ officer.planned }} planned</span>
+                  {% if officer.unplanned %}<span class="edify-group-head__mark" data-tone="danger">{{ officer.unplanned }} with no plan</span>{% endif %}
+                  {% if officer.shown != officer.count %}<span class="edify-group-head__count">showing {{ officer.shown }}</span>{% endif %}
+                </th>
+              </tr>
+              {% for school in officer_page.rows %}
+              <tr class="border-t edify-border{% if not school.is_planned %} portfolio-row--unplanned{% endif %}">
+                <td class="px-3 py-2">
+                  <a href="{{ school.url }}" class="font-semibold hover:underline edify-primary-text">{% school_identity school.name school.school_code %}</a>
+                </td>
+                <td class="px-3 py-2 text-sm">{{ school.district|default:"—" }}</td>
+                <td class="px-3 py-2 text-sm">
+                  {% if school.cluster_url %}<a href="{{ school.cluster_url }}" class="hover:underline">{{ school.cluster_name|default:"—" }}</a>{% else %}<span class="edify-text-muted">No cluster</span>{% endif %}
+                </td>
+                <td class="px-3 py-2">
+                  {% if school.is_planned %}
+                  <span class="pill pill-success">{{ school.activities }} planned</span>
+                  {% else %}
+                  <span class="pill pill-warn">Nothing planned</span>
+                  {% endif %}
+                </td>
+                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ school.visits }}</td>
+                <td class="px-3 py-2 text-sm text-right tabular-nums">{{ school.trainings }}</td>
+                <td class="px-3 py-2 text-sm whitespace-nowrap">{% if school.first_date %}{{ school.first_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+                <td class="px-3 py-2 text-sm text-right tabular-nums whitespace-nowrap">UGX {{ school.budget|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% include "components/table_pager.html" with pager=officer_page param=officer.page_param pagination_label=officer.name %}
+        </div>
+      </div>
+      {% endfor %}
+    </details>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No schools match this view" message="Widen the filters, or choose another fiscal year." %}
+  {% endif %}
+</section>

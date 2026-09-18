@@ -54,8 +54,11 @@ class ThePlannerSeesANumberTest(TestCase):
             # Facilitation + venue + the staff day, plus the twenty
             # participants fed at the cluster meals default of 5,000 (owner,
             # 2026-09-15). The cluster session's own rate defaults to 0, and
-            # no pages are stated, so there is no materials line.
-            242_000,
+            # no pages are stated, so there is no materials line. The staff
+            # day is the fed one: a session catering for twenty people does
+            # not also buy the staff member a 12,000 lunch (owner,
+            # 2026-09-17), so this is 242,000 less that second meal.
+            230_000,
         ),
     )
 

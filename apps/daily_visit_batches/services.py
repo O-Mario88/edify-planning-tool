@@ -572,6 +572,49 @@ def _recalculate_and_write_lines(
     )
     n = len(activities)
 
+    # Each member's own recipe, computed ONCE here because the day's pool
+    # depends on it and the loop below needs it again.
+    from apps.activities.services import _costing_input
+    from apps.budget.costing import MEALS_RATE_KEYS, cost_for_activity
+    from apps.budget.costing_service import _profiled_input, _with_linked_rates
+
+    recipes: dict[str, tuple[dict, ActivityCost]] = {}
+    for member in activities:
+        member_input = {
+            **_costing_input(member, {}),
+            "plannedDate": batch.visit_date,
+            "districtType": batch.district_type,
+        }
+        recipes[member.id] = (
+            member_input,
+            cost_for_activity(
+                _with_linked_rates(_profiled_input(member_input), _settings_by_key),
+                rates,
+            ),
+        )
+
+    # If ANY session on this day feeds the room, the day buys no staff lunch
+    # (owner, 2026-09-17, asked which way this should fall and chose this one).
+    #
+    # The engine already drops the second meal from a catered session's own
+    # recipe — that is what `add_staff_day(fed=True)` does — but the shared day
+    # is priced from the district's per-diem keys and knew nothing about its
+    # members, then replaced the recipe's staff lines with its own. So the
+    # preview showed one meal and the SAVED lines charged two: exactly the
+    # double the owner reported, surviving on the persisted side.
+    #
+    # The trade this makes, stated because it is real: a day holding one
+    # catered cluster meeting and one ordinary school visit now buys no lunch,
+    # so the visit's lunch is not paid either. The owner chose that over
+    # paying twice, and the alternative (keep the lunch unless EVERY session
+    # caters) is one predicate away if it turns out to bite.
+    if any(
+        line.key in MEALS_RATE_KEYS
+        for _input, recipe in recipes.values()
+        for line in recipe.lines
+    ):
+        pool.pop("lunch_per_day", None)
+
     batch.cost_catalogue = catalogue
     batch.catalogue_version = catalogue.version if catalogue else None
     batch.rate_snapshot = pool
@@ -610,14 +653,7 @@ def _recalculate_and_write_lines(
 
     allocations = allocate_pool(pool, n)
     for index, (activity, alloc) in enumerate(zip(activities, allocations)):
-        from apps.activities.services import _costing_input
-        from apps.budget.costing_service import _profiled_input
-
-        costing_input = {
-            **_costing_input(activity, {}),
-            "plannedDate": batch.visit_date,
-            "districtType": batch.district_type,
-        }
+        costing_input, own = recipes[activity.id]
         lines = [
             CostLine(
                 label=KEY_LABELS.get(key, key.replace("_", " ").title()),
@@ -638,12 +674,6 @@ def _recalculate_and_write_lines(
         # 2026-09-06). A client, core or SSA visit by staff carries nothing
         # but its share (owner, 2026-09-12). Only the daily staff lines are shared;
         # the recipe's copies of those are replaced by the pool.
-        from apps.budget.costing import cost_for_activity
-        from apps.budget.costing_service import _with_linked_rates
-
-        own = cost_for_activity(
-            _with_linked_rates(_profiled_input(costing_input), _settings_by_key), rates
-        )
         lines.extend(line for line in own.lines if line.key not in KEY_LABELS)
         recipe_missing = [key for key in own.missing_items if key not in KEY_LABELS]
         cost = ActivityCost(

@@ -461,24 +461,41 @@ class AuthorityTest(WithdrawalFixture):
         w = svc.withdraw(self.assign().id, self.payload(), self.cceo_user)
         self.assertEqual(w.requested_by_role, EdifyRole.CCEO.value)
 
-    def test_a_cceo_may_not_cancel_work_the_partner_has_planned(self):
+    def test_a_cceo_may_recall_work_the_partner_has_planned(self):
+        """Owner, 2026-09-17: withdrawal works "by all roles".
+
+        A CCEO could only withdraw while the work was still unscheduled and
+        otherwise had to ask their Programme Lead. That escalation still
+        exists — `request_withdrawal` is untouched — but it is a choice now
+        rather than a wall in front of the person whose school it is. What
+        runs is still decided by the record's state: a scheduled assignment
+        is a RECALL, not an outright withdrawal.
+        """
         a = self.assign()
         self.schedule(a)
 
-        with self.assertRaises(Forbidden) as caught:
-            svc.withdraw(
-                a.id,
-                self.payload(reason_category=WithdrawalReason.CAPACITY),
-                self.cceo_user,
-            )
+        w = svc.withdraw(
+            a.id,
+            self.payload(reason_category=WithdrawalReason.CAPACITY),
+            self.cceo_user,
+        )
 
-        self.assertIn("Program Lead", str(caught.exception))
+        self.assertEqual(w.kind, WithdrawalKind.RECALL_SCHEDULED)
 
-    def test_a_cceo_may_not_touch_another_cceos_assignment(self):
+    def test_a_cceo_may_act_on_another_cceos_assignment(self):
+        """The scope tests are gone with the rest (2026-09-17).
+
+        They refused managers acting on work they could see and were
+        accountable for, and misfired often: the ids on the record are who set
+        the assignment up and who watches it, which at a seeded school is
+        frequently neither the school's owner nor anybody in their line. Who
+        asked is still stamped on every withdrawal.
+        """
         a = self.assign(cceo=self.other_cceo)
 
-        with self.assertRaises(Forbidden):
-            svc.withdraw(a.id, self.payload(), self.cceo_user)
+        w = svc.withdraw(a.id, self.payload(), self.cceo_user)
+
+        self.assertEqual(w.requested_by_role, EdifyRole.CCEO.value)
 
     def test_a_program_lead_may_recall_a_supervised_cceos_scheduled_work(self):
         a = self.assign()
@@ -490,11 +507,83 @@ class AuthorityTest(WithdrawalFixture):
 
         self.assertEqual(w.kind, WithdrawalKind.RECALL_SCHEDULED)
 
-    def test_another_program_lead_may_not(self):
+    def test_another_program_lead_may_too(self):
+        """Also unscoped since 2026-09-17 — see the CCEO case above."""
         a = self.assign()
 
-        with self.assertRaises(Forbidden):
-            svc.withdraw(a.id, self.payload(), self.other_pl_user)
+        w = svc.withdraw(a.id, self.payload(), self.other_pl_user)
+
+        self.assertEqual(w.requested_by_role, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+
+    def test_the_school_owner_may_withdraw_a_partner_from_their_own_school(self):
+        """Owner, 2026-09-17: "The School owner cannot withdraw the assignment
+        from the partner."
+
+        They could not. Whose assignment it was, was read from the two staff
+        ids on the record — who set it up and who watches it — and when a
+        Programme Lead makes the assignment neither of those is the CCEO who
+        holds the school. Every assignment in a seeded country was in exactly
+        that shape, so no school owner could withdraw a partner from their own
+        school. The person who holds the school holds the work done at it.
+        """
+        owned = School.objects.create(
+            school_id="s-owned",
+            name="Owned Primary",
+            district=self.district,
+            region=self.region,
+            account_owner_id=self.cceo.id,
+        )
+        a = PartnerAssignment.objects.create(
+            school=owned,
+            partner=self.partner,
+            # The Programme Lead set it up and watches it. The CCEO does not
+            # appear on the record at all — only on the school.
+            assigning_staff_id=self.pl.id,
+            monitoring_staff_id=self.pl.id,
+            expected_activity_type="school_visit",
+            focus_intervention="financial_health",
+            support_type="school_visit",
+            status=PartnerAssignment.STATUS_ASSIGNED,
+        )
+
+        w = svc.withdraw(a.id, self.payload(), self.cceo_user)
+
+        self.assertEqual(w.requested_by_role, EdifyRole.CCEO.value)
+
+    def test_the_school_owner_may_recall_planned_work_too(self):
+        """The half of 2026-09-13 that survived until 2026-09-17.
+
+        Owning the school used not to widen the rule, only who it applied to:
+        once the partner had committed to a date it was the Programme Lead's
+        call. That distinction is gone with the rest of the gates; the
+        workflow the record's state selects is not.
+        """
+        owned = School.objects.create(
+            school_id="s-owned-2",
+            name="Owned Two",
+            district=self.district,
+            region=self.region,
+            account_owner_id=self.cceo.id,
+        )
+        a = PartnerAssignment.objects.create(
+            school=owned,
+            partner=self.partner,
+            assigning_staff_id=self.pl.id,
+            monitoring_staff_id=self.pl.id,
+            expected_activity_type="school_visit",
+            focus_intervention="financial_health",
+            support_type="school_visit",
+            status=PartnerAssignment.STATUS_ASSIGNED,
+        )
+        self.schedule(a)
+
+        w = svc.withdraw(
+            a.id,
+            self.payload(reason_category=WithdrawalReason.CAPACITY),
+            self.cceo_user,
+        )
+
+        self.assertEqual(w.kind, WithdrawalKind.RECALL_SCHEDULED)
 
 
 class ValidationTest(WithdrawalFixture):
@@ -731,10 +820,17 @@ class PermissionGateTest(WithdrawalFixture):
 
         self.assertIn("cannot withdraw", str(caught.exception))
 
-    def test_the_country_director_does_not_do_routine_team_withdrawals(self):
-        """They review escalated cases; routine team work belongs to the PL."""
+    def test_the_country_director_may_withdraw(self):
+        """Owner, 2026-09-17: withdrawal "by all roles".
+
+        The CD was withheld the permission so routine withdrawals stayed with
+        the Programme Lead — while `assert_may_withdraw` returned early for a
+        Country Director. The rule contradicted itself: the CD was refused at
+        the permission gate and never reached the line that let them through.
+        """
         cd, _ = self._staff("cd@w.test", "Director", EdifyRole.COUNTRY_DIRECTOR)
         a = self.assign()
 
-        with self.assertRaises(Forbidden):
-            svc.withdraw(a.id, self.payload(), cd)
+        w = svc.withdraw(a.id, self.payload(), cd)
+
+        self.assertEqual(w.requested_by_role, EdifyRole.COUNTRY_DIRECTOR.value)

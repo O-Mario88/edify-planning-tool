@@ -70,6 +70,22 @@ route, not the cluster, so one constant URL answers it for every row.
                 <span class="core-school-row__action-label">Assign</span>
               </button>
             {% endif %}
+            {% comment %}
+              Add to Project — the same drawer, route and icon the School
+              Directory uses for a client school (owner, 2026-09-17). Keyed on
+              school.id, the primary key, because that is what the shared
+              route takes; the Core drawers above key on school_id, the
+              business code they were built around.
+            {% endcomment %}
+            {% if can_assign_project %}
+            <button type="button" class="school-record-action school-record-action--assign"
+                    hx-get="/schools/{{ school.id }}/assign-to-project"
+                    hx-target="#drawer-container" hx-swap="innerHTML"
+                    aria-label="Add {{ school.name }} to a project">
+              {% include "partials/schools/_project_action_icon.html" %}
+              <span class="core-school-row__action-label">Project</span>
+            </button>
+            {% endif %}
           </div>
         </div>
         <dl class="school-record-row__metadata core-school-row__metadata">

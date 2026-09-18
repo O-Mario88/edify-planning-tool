@@ -25,6 +25,7 @@ from apps.activities.salesforce import normalize_salesforce_id
 from apps.schools.models import School
 from apps.geography.models import Region, District, Parish, SubCounty
 from apps.core.enums import SchoolType, PlanningReadiness
+from apps.core.rbac import EdifyRole
 from apps.schools.upload_service import upload_school_file
 from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
@@ -847,6 +848,14 @@ def school_directory_view(request):
         "can_toggle_core": user.active_role
         in ("Admin", "CountryDirector", "ImpactAssessment"),
         "can_schedule": RolePermissionService.can_schedule_activity(user),
+        # Owner, 2026-09-17: "ONLY and ONLY IA can plan from the school
+        # directory." Impact Assessment reads every school in the country here
+        # and does its own field work, so the directory is where its visits
+        # start; for everyone else this page is a record to read and Planning
+        # is where work is placed. Literally the one role — a Country Director
+        # or an Admin schedules from Planning like everybody else.
+        "can_plan_from_directory": user.active_role
+        == EdifyRole.IMPACT_ASSESSMENT.value,
         "can_upload_schools": _may_upload_schools(request),
         # The upload doors lead to the Upload Center, which a Programme Lead
         # cannot open (Programme Lead walk, 2026-09-14).

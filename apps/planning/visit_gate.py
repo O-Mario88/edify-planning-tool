@@ -55,7 +55,12 @@ from dataclasses import asdict, dataclass, field
 
 from django.db.models import Count
 
-CLIENT_VISIT_CAP = 1
+# Two follow-up visits a year at a client school, raised from one on
+# 2026-09-17 on the owner's instruction, alongside the core package's two. The
+# cap governs the FOLLOW-UP visit only: in-school training, donor, social and
+# invitation visits at a client school were never counted against it, and are
+# not now.
+CLIENT_VISIT_CAP = 2
 CORE_STAFF_VISIT_CAP = 2
 CORE_PARTNER_VISIT_CAP = 2
 
@@ -323,9 +328,12 @@ def _decide(gate: VisitGate) -> None:
                 if gate.partner_visits and not gate.staff_visits
                 else "staff"
             )
+            # Worded from the constant so the sentence and the rule cannot
+            # drift apart the next time the cap moves.
             visited_reason = (
-                f"{gate.school_name} already has its visit for FY{gate.fy} "
-                f"(scheduled by {who}). Client schools are visited once a year."
+                f"{gate.school_name} already has its {CLIENT_VISIT_CAP} visits "
+                f"for FY{gate.fy} (scheduled by {who}). Client schools take "
+                f"{CLIENT_VISIT_CAP} visits a year."
             )
             # The follow-up visit is used; the rest of the drawer (in-school
             # training, donor and social visits) stays open.

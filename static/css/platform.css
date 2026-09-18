@@ -655,8 +655,12 @@ main table,
 
 /* A row header is not a column header. This banding is for the header row;
    applied to a <th scope="row"> it painted the whole first column grey, which
-   reads as a permanently highlighted column. */
-main table tbody th {
+   reads as a permanently highlighted column.
+
+   A group heading (`scope="colgroup"`) is the other way round: it heads the
+   rows under it and is meant to be banded, so it keeps its own treatment from
+   components.css rather than being flattened with the row headers. */
+main table tbody th:not(.edify-group-head > th) {
   background: transparent !important;
   color: var(--edify-text) !important;
   font-size: inherit !important;
@@ -3326,6 +3330,35 @@ main [data-mobile-family="directory"] .school-filter-clear {
   grid-row: 1;
 }
 
+/* A record row is a line to scan, not a card to dwell on (owner, 2026-09-17:
+   "reduce the size of the row make it more compact", then "School list rows
+   are so large even though the items are smaller ... look at any other tables
+   with similar rows are all compact"). 55px a row put seven schools on a 950px
+   window; at 43px eight fit, and the row still holds a 28px control easily.
+
+   One rule for the component, not one per page. `.school-record-row` is the
+   Planning queue, the Schools directory, Core Schools, a cluster's members, a
+   project's schools and the Business Transformation portfolio — they were the
+   same row with the same content, so a density set on one of them and not the
+   others is just drift.
+
+   Fine pointers only. A touch target stays 44px — the one thing a denser list
+   must not buy its density with — so this narrows nothing on a phone, where
+   these rows are stacked cards anyway. */
+@media (pointer: fine) {
+  /* `:not(.is-expanded)` is not decoration: the collapsed-row rule above sets
+     this padding at that specificity, and an expanded row keeps its room. */
+  .school-record-row:not(.is-expanded) .school-record-row__summary {
+    padding-block: 0.3rem;
+    row-gap: 0.4rem;
+  }
+  .school-record-row .school-record-action {
+    min-block-size: 1.75rem;
+    block-size: 1.75rem;
+    padding-block: 0;
+  }
+}
+
 .school-record-row__school-id {
   display: inline-flex;
   min-inline-size: 0;
@@ -4645,9 +4678,13 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   display: flex;
 }
 
+/* The core row keeps `align-items: start` — its metadata line wraps and must
+   hang off the top, not centre against the title. Its padding is the shared
+   record density (owner, 2026-09-17); the row stays taller than a directory
+   row because it carries nine facts, which is content, not padding. */
 .core-school-row--compact.school-record-row:not(.is-expanded) .school-record-row__summary {
   align-items: start;
-  padding-block: 0.55rem;
+  padding-block: 0.3rem;
 }
 
 .core-school-row--compact .core-school-row__metadata {

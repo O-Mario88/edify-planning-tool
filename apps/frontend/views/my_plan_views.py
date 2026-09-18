@@ -122,11 +122,18 @@ def my_plan_view(request):
         "quarter": request.GET.get("quarter"),
         "month": request.GET.get("month"),
         "week": request.GET.get("week"),
+        # What the filter form was rendered with, so the service can tell a
+        # widened filter from an unchanged one. See get_frontend_context.
+        "fy_prev": request.GET.get("fy_prev"),
+        "quarter_prev": request.GET.get("quarter_prev"),
         "district": request.GET.get("district"),
         "staff": request.GET.get("staff"),
         "activity_type": request.GET.get("activity_type"),
         "status": request.GET.get("status"),
-        "period": request.GET.get("period", "week"),
+        # Passed through as given. Defaulting it to "fy" here made every
+        # request an explicitly-periodised one, so the month select could
+        # never move the page off the year it was showing.
+        "period": request.GET.get("period"),
         "q": request.GET.get("q", "").strip(),
     }
 

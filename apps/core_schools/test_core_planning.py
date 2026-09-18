@@ -511,31 +511,63 @@ class CoreSchoolsPlanningTest(TestCase):
             ).exists()
         )
 
-    def test_staff_core_support_is_limited_per_current_quarter_but_partner_is_not(self):
-        first = self._schedule_visit(seq="1")
+    def test_staff_core_support_is_capped_at_two_and_nothing_else(self):
+        """Owner, 2026-09-17: "Lift all FY restriction and package
+        restrictions. Only block staff visit schedule after 2 scheduling."
+
+        Two staff visits go through whatever the calendar says — they used to
+        be released one per operational quarter, so the second was refused on
+        the same day as the first. The third is the cap, and the cap is the
+        only thing left that refuses.
+        """
+        # Different dates: two visits to one school on one day is a duplicate,
+        # which is a separate guard and stays. What changed is that the second
+        # is no longer refused for being in the same QUARTER as the first.
+        first = self._schedule_visit(seq="1", when="2026-04-21")
         self.assertIn(first.status_code, (200, 302), first.content[:200])
 
-        blocked = self._schedule_visit(seq="2")
-        self.assertEqual(blocked.status_code, 400)
-        self.assertIn(
-            "One staff-led core visit is already scheduled", blocked.content.decode()
+        second = self._schedule_visit(seq="2", when="2026-04-28")
+        self.assertIn(second.status_code, (200, 302), second.content[:200])
+
+        third = self._schedule_visit(seq="3", when="2026-05-05")
+        self.assertEqual(third.status_code, 400)
+        self.assertIn("at most 2 core visits", third.content.decode())
+
+    def test_a_partner_may_still_take_the_package_beyond_the_staff_cap(self):
+        """The cap is the staff share, not the school's need."""
+        self._schedule_visit(seq="1", when="2026-04-21")
+        self._schedule_visit(seq="2", when="2026-04-28")
+
+        partner_delivery = self._schedule_visit(
+            seq="3", when="2026-07-21", partner_id=self.partner.id
         )
 
-        # Partner delivery may use the next slot in another quarter of the
-        # same fiscal package; the staff quarter release does not apply.
-        partner_delivery = self._schedule_visit(
-            seq="2", when="2026-07-21", partner_id=self.partner.id
-        )
         self.assertIn(
             partner_delivery.status_code, (200, 302), partner_delivery.content[:200]
         )
-        second_slot = CoreActivitySlot.objects.get(
-            id=cslot_id(self.school.school_id, "v", 2)
+        self.assertTrue(
+            CoreActivitySlot.objects.filter(
+                core_plan=self.plan, activity_type="visit", owner="partner"
+            ).exists()
         )
-        self.assertEqual(second_slot.status, "Scheduled")
-        self.assertEqual(second_slot.owner, "partner")
 
-    def test_full_live_package_disables_actions_and_rejects_new_support(self):
+    def test_core_support_may_be_scheduled_outside_the_packages_year(self):
+        """The fiscal-year refusal is gone. It was the report that started
+        this: "it is returning 'Core support must be scheduled within this
+        package's fiscal year'"."""
+        response = self._schedule_visit(seq="1", when="2028-03-15")
+
+        self.assertIn(response.status_code, (200, 302), response.content[:300])
+        self.assertNotIn(b"fiscal year", response.content)
+
+    def test_a_full_package_still_reads_complete_but_no_longer_refuses(self):
+        """Owner, 2026-09-17: lift the package restrictions.
+
+        A package whose 4 + 4 are all placed still SAYS so — that is the
+        reading the matrix is for, and a lead needs it. What it no longer does
+        is refuse: a school that needs a ninth piece of support gets one, from
+        a partner, because the ceiling was a number and the need is not.
+        """
         CoreActivitySlot.objects.filter(
             core_plan=self.plan, activity_type__in=["visit", "training"]
         ).update(status="Scheduled")
@@ -548,29 +580,13 @@ class CoreSchoolsPlanningTest(TestCase):
         )
         self.assertTrue(row["package_complete"])
         self.assertEqual(row["package_status"], "Package complete")
-        self.assertContains(response, 'disabled title="Package complete"')
-        self.assertContains(
-            response,
-            f"/core-schools/schedule-activity?school_id={self.school.school_id}",
-        )
-        self.assertContains(response, "Package:")
-        self.assertContains(response, "Complete")
 
-        blocked_schedule = self._schedule_visit(seq="1")
-        self.assertEqual(blocked_schedule.status_code, 400)
-        self.assertIn("core package is complete", blocked_schedule.content.decode())
-
-        blocked_assignment = self._client(self.cceo).post(
-            "/core-schools/assign-partner/action",
-            {
-                "school_id": self.school.school_id,
-                "purpose_of_visit": "ssa_support",
-                "visit_training_number": "1",
-                "partner_id": self.partner.id,
-            },
+        beyond = self._schedule_visit(
+            seq="1", when="2026-07-21", partner_id=self.partner.id
         )
-        self.assertEqual(blocked_assignment.status_code, 400)
-        self.assertIn("core package is complete", blocked_assignment.content.decode())
+
+        self.assertIn(beyond.status_code, (200, 302), beyond.content[:300])
+        self.assertNotIn(b"core package is complete", beyond.content)
 
     def test_scheduling_core_slot_creates_budget_line(self):
         self._schedule_visit()

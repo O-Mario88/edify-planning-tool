@@ -79,9 +79,21 @@ Complete Activity
 </button>
 {% endif %}
 
+{% comment %}Upload Evidence and Enter Activity SF ID used to sit here as two
+more items on every row. Both are steps of Complete — the completion drawer is
+Step 1 Upload Evidence and Step 2 the Salesforce ID — and "Enter Activity SF ID"
+opened that very drawer, so a live row offered the same screen under three
+names (owner, 2026-09-17: "Complete should open the drawer for uploading
+evidence and Salesforce ID for that activity").
+
+Work that is already complete has no Complete to open, and its forms can still
+need attaching or correcting before IA verifies it. So the evidence drawer —
+the one the partner workroom and the evidence packet open — is offered exactly
+where Complete is not. The two are never both on the menu.{% endcomment %}
+{% if row.status == 'completed' %}
 <!-- Upload Evidence -->
 <button
-hx-get="/my-plan/{{ row.id }}/complete-drawer"
+hx-get="/activities/{{ row.id }}/evidence"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click="close()"
@@ -89,17 +101,7 @@ class="row-menu__item" role="menuitem"
 >
 Upload Evidence
 </button>
-
-<!-- Enter Activity SF ID -->
-<button
-hx-get="/my-plan/{{ row.id }}/complete-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="close()"
-class="row-menu__item" role="menuitem"
->
-Enter Activity SF ID
-</button>
+{% endif %}
 
 <!-- Submit for Review -->
 {% if row.next_action.action == 'submit' %}
@@ -128,20 +130,16 @@ Update SSA &amp; Complete
 <p class="row-menu__note">Monitoring — partner-owned</p>
 {% endif %}
 
-<!-- View Budget Lines -->
-<button
-hx-get="/my-plan/{{ row.id }}"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="close()"
-class="row-menu__item" role="menuitem"
->
-View Budget Lines
-</button>
+{% comment %}"View Budget Lines" was a second label on the activity drawer —
+the same `/my-plan/<id>` that View Details opens, budget lines and all. A menu
+that offers one screen twice makes the reader choose between identical doors,
+so the label it is filed under is the record's own (owner, 2026-09-17).
+{% endcomment %}
 
 <!-- Cancel (CANCEL-01). Work already finished or already called off has
-     nothing to cancel; everything still live does. The service decides who
-     may actually do it — this menu item is not the guard. -->
+     nothing to cancel; everything still live does — a scheduled activity
+     included (owner, 2026-09-17). The service decides who may actually do
+     it — this menu item is not the guard. -->
 {% if row.status != 'completed' and row.status != 'cancelled' and row.status != 'ia_verified' and row.status != 'accountant_confirmed' and row.status != 'closed' %}
 <button
 type="button"

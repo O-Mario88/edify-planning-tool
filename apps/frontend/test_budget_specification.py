@@ -96,22 +96,32 @@ class BudgetSpecificationTest(TestCase):
         act, payload = self.planned_training()
         minimal = preview(payload, minimum=True)
         # A TOT training carries participant meals, facilitation, a venue,
-        # its materials and the staff member's daily transport/lunch; at the
-        # minimum rates above that is 14,000 + 10,000 + 10 × 3,000 + 5,000 +
-        # 10,000 (the TOT rate and the materials default to 0).
-        self.assertEqual(minimal["amount"], 69000)
+        # its materials and the staff member's daily transport; at the minimum
+        # rates above that is 14,000 + 10 × 3,000 + 5,000 + 10,000 (the TOT
+        # rate and the materials default to 0).
+        #
+        # No 10,000 staff lunch: a session that feeds its participants feeds
+        # the staff member delivering it, and billing both was the double meal
+        # the owner reported on 2026-09-17 ("Cluster training is fetching 2
+        # costs for meals, 5000 and 12000 can you make sure that it fetches
+        # only 1 meals"). add_group_session passes fed=True whenever it books
+        # a participant-meal line, and the staff day then skips lunch_per_day.
+        self.assertEqual(minimal["amount"], 59000)
         self.assertFalse(minimal["costMissing"])
         self.assertNotIn("operationalCost", minimal)
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(activity=act).aggregate(
                 total=Sum("amount")
             )["total"],
-            276000,
+            # 246,000, not the 276,000 this read before 2026-09-17: the same
+            # single-meal rule at operational rates drops the staff member's
+            # 30,000 lunch from a session that already caters for them.
+            246000,
         )
         wfr = self.request()
         # School-anchored transport is routed to the transport-provider
         # channel, so the staff weekly request excludes that UGX 56,000 line.
-        self.assertEqual(wfr.total_amount, 220000)
+        self.assertEqual(wfr.total_amount, 190000)
         for period in ("month", "quarter", "fy"):
             self.assertEqual(
                 budget_workspace(
@@ -124,7 +134,7 @@ class BudgetSpecificationTest(TestCase):
                         "plan_only": True,
                     },
                 )["total"],
-                276000,
+                246000,
             )
         # A larger regional benchmark is metadata, never a top-up to this request.
         ActivityCostSnapshot.objects.filter(activity=act).update(reference_cost=900000)
@@ -133,10 +143,10 @@ class BudgetSpecificationTest(TestCase):
         )
         submitted = country_budget_service.send_to_rvp(self.cd, ctx["budget_id"])
         snapshot = submitted.snapshots.get(version=submitted.submission_version)
-        self.assertEqual(submitted.total_amount, 276000)
-        self.assertEqual(snapshot.total_amount, 276000)
+        self.assertEqual(submitted.total_amount, 246000)
+        self.assertEqual(snapshot.total_amount, 246000)
         self.assertEqual(snapshot.strategic_reserve_requested, 0)
-        self.assertEqual(sum(line["amount"] for line in snapshot.line_items), 276000)
+        self.assertEqual(sum(line["amount"] for line in snapshot.line_items), 246000)
         country_budget_service.approve(self.rvp, submitted.id)
 
     def test_unset_minimum_is_not_replaced_by_an_operational_price(self):
@@ -173,9 +183,10 @@ class BudgetSpecificationTest(TestCase):
         history = cost_setting_history(key, self.cd)[0]
         self.assertEqual(history["oldApprovedMinimum"], 3000)
         self.assertEqual(history["newApprovedMinimum"], 4000)
-        # 69,000 minimal recipe (meals, facilitation, venue, staff day) plus
-        # the 5,000 the CD just added to the participant-meal minimum.
-        self.assertEqual(preview(payload, minimum=True)["amount"], 79000)
+        # 59,000 minimal recipe (participant meals, facilitation, venue, and
+        # the staff member's transport — no second lunch, see above) plus the
+        # 10 × 1,000 the CD just added to the participant-meal minimum.
+        self.assertEqual(preview(payload, minimum=True)["amount"], 69000)
         with self.assertRaises(BadRequest):
             upsert_cost_setting(
                 {

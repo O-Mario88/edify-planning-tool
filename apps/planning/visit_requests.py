@@ -136,7 +136,8 @@ def approve(activity_id: str, principal, note: str = "") -> Activity:
     with transaction.atomic():
         a = _decidable(activity_id, principal)
         # The school's own visit rule applies here, not when the request was
-        # filed: a client school is visited once a year (owner, 2026-09-15).
+        # filed: a client school takes CLIENT_VISIT_CAP follow-up visits a year
+        # (owner, 2026-09-15; the cap went from one to two on 2026-09-17).
         if a.school_id and a.activity_type != "core_visit":
             from apps.planning.visit_gate import (
                 assert_staff_may_schedule_visit,

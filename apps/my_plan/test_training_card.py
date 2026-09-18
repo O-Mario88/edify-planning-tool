@@ -69,14 +69,15 @@ class TrainingCardTest(TestCase):
         self.client.force_login(self.user)
 
     def _cards(self):
-        html = self.client.get("/my-plan?period=week").content.decode()
+        """A bare /my-plan is the whole fiscal year — no quarter, no month."""
+        html = self.client.get("/my-plan").content.decode()
         v = html.index("School Visits Planned")
-        t = html.index("Trainings Planned")
-        return html, html[v:t] if v < t else html[v:], html[t : t + 20000]
+        t = html.index("Trainings Planned", v + 1)
+        return html, html[v:t], html[t : t + 20000]
 
     def test_the_training_sits_on_the_trainings_card_under_its_school(self):
-        html, visits, trainings = self._cards()
-        self.assertIn("Trainings Planned for This Week", html)
+        html, _visits, trainings = self._cards()
+        self.assertIn("Trainings Planned for This FY", html)
         self.assertIn("School / Cluster", trainings)
         self.assertIn(self.training.id, trainings)
         self.assertIn(f'href="/schools/{self.school.id}"', trainings)
@@ -84,6 +85,12 @@ class TrainingCardTest(TestCase):
         self.assertIn("In-school Training", trainings)
         self.assertNotIn("Unknown Cluster", html)
         self.assertNotIn("Cluster Trainings Planned", html)
+
+    def test_both_cards_carry_the_pair_without_being_asked_for_a_week(self):
+        """The year is the resting state: today's work shows with no filtering."""
+        _html, visits, trainings = self._cards()
+        self.assertIn(self.visit.id, visits)
+        self.assertIn(self.training.id, trainings)
 
     def test_the_visit_stays_on_the_visits_card(self):
         _html, visits, trainings = self._cards()

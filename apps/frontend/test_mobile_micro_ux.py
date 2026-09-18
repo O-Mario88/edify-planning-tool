@@ -134,7 +134,6 @@ class MobileMicroUXContractTest(SimpleTestCase):
             "templates/partials/projects/planning_workspace.html",
             "templates/partials/schools/table.html",
             "templates/partials/evidence/workspace.html",
-            "templates/partials/my_plan/_pager.html",
             "templates/partials/dashboards/pl/urgent_schools_page.html",
             # The register (and its pagination) is a shared partial since People
             # Analytics also became a tab of the one Analytics page (2026-09-05).

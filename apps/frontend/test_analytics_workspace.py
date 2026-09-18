@@ -340,13 +340,16 @@ class IAWorkspaceContractTest(TestCase):
         self.client.force_login(self.user)
 
     def test_sections_are_distinct_authorized_backend_routes(self):
-        # 28 as of 2026-09-13: every Impact Assessment page, clustered by the
+        # 29 as of 2026-09-17: every Impact Assessment page, clustered by the
         # role description's responsibilities (IA review), where the strip
         # used to carry 11 verification-first sections. Impact Attribution
-        # left the strip when it became Programme Learning's Training tab.
-        self.assertEqual(len(IA_SECTIONS), 28)
-        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 28)
-        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 28)
+        # left the strip when it became Programme Learning's Training tab;
+        # Country Oversight joined it when the owner gave IA the country lens
+        # read-only ("All the team activities but he cannot modify or edit any
+        # of the team activities").
+        self.assertEqual(len(IA_SECTIONS), 29)
+        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 29)
+        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 29)
         for section in IA_SECTIONS:
             with self.subTest(section=section["key"]):
                 self.assertIn(section["page_key"], PAGE_PERMISSIONS)

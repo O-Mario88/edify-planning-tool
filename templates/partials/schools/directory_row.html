@@ -68,6 +68,27 @@ route's, so one constant URL answers it for every row.
 
     {% if not directory_read_only %}
     <div class="school-record-row__actions">
+      {% comment %}Schedule opens the same drawer the Planning page opens —
+      `/planning/schedule-modal`, one scheduling screen wherever work is
+      placed. Impact Assessment only (owner, 2026-09-17: "ONLY and ONLY IA can
+      plan from the school directory"): IA reads every school in the country
+      here and does its own field work, so this is where its visits start.
+      The drawer refuses anyone else anyway — this is the door, not the guard.
+      {% endcomment %}
+      {% if can_plan_from_directory %}
+        <button
+          type="button"
+          class="school-record-action school-record-action--schedule"
+          hx-get="/planning/schedule-modal?school_id={{ school.id }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          aria-label="Schedule activity for {{ school.school_name }}"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
+          <span class="school-record-action__label--full">Schedule</span>
+          <span class="school-record-action__label--compact" aria-hidden="true">Plan</span>
+        </button>
+      {% endif %}
       {% if "add_to_cluster" in school.available_actions %}
         <button
           type="button"

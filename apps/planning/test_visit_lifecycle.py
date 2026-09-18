@@ -27,7 +27,7 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
                 page = self.client.get(f"/my-plan?fy={a.fy}&period=fy&status=scheduled")
                 self.assertEqual(page.status_code, 200, who.active_role)
                 self.assertContains(page, "Owned Primary")
-                # A client school is visited once a year: free the visit so
+                # A client school's visits are capped: free one so
                 # the next role's request can be approved too.
                 a.status = "cancelled"
                 a.save(update_fields=["status"])

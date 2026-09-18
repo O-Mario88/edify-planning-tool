@@ -359,6 +359,17 @@ def _assert_in_scope(activity: Activity, principal) -> None:
         return
     if scope.school_ids and activity.school_id in scope.school_ids:
         return
+    # The person who HOLDS the school sees the work done at it. scope.school_ids
+    # is built from StaffSchoolAssignment, and a school's account owner is
+    # often not in it — the same gap that stopped a school owner withdrawing a
+    # partner from their own school (owner, 2026-09-17). Withdrawal is settled
+    # by `partners.withdrawal_service`, but the cancel underneath still asks
+    # this question, so lifting it there alone left the recall failing one
+    # layer down.
+    if activity.school_id and getattr(
+        activity.school, "account_owner_id", None
+    ) in owner_ids(principal):
+        return
     raise Forbidden("Activity outside your scope.")
 
 
@@ -964,7 +975,8 @@ def _assert_schedule_entitlement(
     activity_type=core_visit to the generic endpoint would create a core
     activity with no slot behind it.
 
-    A client school is visited once a year, by staff or by a partner, and a
+    A client school's visits are capped for the year (CLIENT_VISIT_CAP, two
+    since 2026-09-17), counted across staff and partner alike, and a
     school handed to a partner is the partner's to schedule until they return
     it (owner, 2026-09-15; apps.planning.visit_gate is the one definition the
     greyed buttons and this refusal share). The annual training entitlement
@@ -4296,7 +4308,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 exclude_activity_id=pa.scheduled_activity_id,
             )
             # The school's own visit rule (owner, 2026-09-15): a client school
-            # is visited once a year, a core school's partner side holds two
+            # has a capped allowance, a core school's partner side holds two
             # visits. Same answer as the greyed Schedule button in the
             # partner's queue.
             from apps.planning.visit_gate import (
@@ -4495,14 +4507,49 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         )
 
         if pa.school and pa.school.school_type == "core":
-            kind_prefix = "v" if pa.support_type == "Visit" else "t"
+            slot_kind = "visit" if pa.support_type == "Visit" else "training"
             try:
                 seq_num = int(pa.visit_number or pa.training_number or 1)
             except ValueError:
                 seq_num = 1
-            slot = CoreActivitySlot.objects.filter(
-                id=cslot_id(pa.school.school_id, kind_prefix, seq_num, fy=fy)
-            ).first()
+            # Find the slot this assignment already HOLDS, rather than
+            # rebuilding its id from the activity's fiscal year.
+            #
+            # The id carries the plan's fy, and since 2026-09-17 a partner may
+            # date the work into a later one: an assignment made against the
+            # FY2026 package and delivered on 14 October 2026 is FY2027 work,
+            # so cslot_id(..., fy="2027") asked for a slot that has never
+            # existed, found nothing, and left the package with an "Assigned"
+            # slot holding no activity — the training was scheduled and costed
+            # but the Core Schools counters and My Plan's core tables could
+            # not see it.
+            #
+            # Matching on (school, kind, sequence) and preferring the slot
+            # already handed to this partner keeps the assignment and its slot
+            # together however the dates fall.
+            candidates = list(
+                CoreActivitySlot.objects.filter(
+                    school_id=pa.school.school_id,
+                    activity_type=slot_kind,
+                    sequence_number=seq_num,
+                )
+            )
+            slot = (
+                next(
+                    (s for s in candidates if s.assigned_partner_id == pa.partner_id),
+                    None,
+                )
+                or next(
+                    (
+                        s
+                        for s in candidates
+                        if s.id
+                        == cslot_id(pa.school.school_id, slot_kind[0], seq_num, fy=fy)
+                    ),
+                    None,
+                )
+                or (candidates[0] if len(candidates) == 1 else None)
+            )
             if slot:
                 slot.status = "Scheduled"
                 slot.activity_id = activity.id

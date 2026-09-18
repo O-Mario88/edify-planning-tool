@@ -1,12 +1,12 @@
 """The fiscal year boundary: what it still governs, and what it no longer does.
 
-FY2027 runs 1 October 2026 – 30 September 2027. Nothing in it is delivered
-before 1 October, and no FY2026 activity is carried into it by a reschedule —
-its budget line, fund request and target credit belong to the year it was
-planned in.
+FY2027 runs 1 October 2026 – 30 September 2027. What the boundary still does
+is decide which year an activity's budget line, fund request and target credit
+belong to — and a reschedule across it moves all of them with the date.
 
-Two rules from the 2026-09-15 brief were lifted on 2026-09-16 at the owner's
-request, because together they made every 1 October a wall:
+What it no longer does is refuse. Four rules made every 1 October a wall, and
+all four are gone at the owner's request — two on 2026-09-16, two more on
+2026-09-17 ("make sure all restrictions are lifted throughout the platform"):
 
 - A date is plannable from today onwards, whatever year it falls in; the year
   no longer has to be "opened" first, so a team can plan the term ahead, and
@@ -14,6 +14,11 @@ request, because together they made every 1 October a wall:
 - The cost catalogue is universal, not a fiscal year's. A year with no card of
   its own is priced by the Country Director's live one instead of showing
   "Ver: None active" and refusing every date in it.
+- Work planned into a future year may be delivered before that year starts.
+  Planning forward and then being unable to act on the plan is the same wall
+  one step later.
+- A reschedule may cross 30 September. The re-stamping this guarded against is
+  the reschedule's own job, and it does it.
 """
 
 from __future__ import annotations
@@ -89,15 +94,25 @@ class FiscalYearBoundaryTest(TestCase):
             fy_policy.assert_date_plannable(datetime.date(2025, 3, 1), at=at)
         fy_policy.assert_date_plannable(datetime.date(2026, 9, 20), at=at)
 
-    def test_fy2027_work_cannot_start_before_1_october(self):
+    def test_the_fiscal_year_no_longer_gates_delivery(self):
+        """Owner, 2026-09-17: "make sure all restrictions are lifted throughout
+        the platform".
+
+        Planning forward was already allowed (2026-09-16: "staff now schedule
+        as far forward as they need"). This refused DELIVERING what had been
+        planned until the year's execution_start, which is the same wall one
+        step later: the work went in and then could not be started.
+        """
         activity = Activity(fy="2027", planned_date=OCT_6_2026)
-        with self.assertRaisesMessage(BadRequest, "started from 1 October 2026"):
-            fy_policy.assert_may_execute(activity, today=datetime.date(2026, 9, 25))
+
+        fy_policy.assert_may_execute(activity, today=datetime.date(2026, 9, 25))
         fy_policy.assert_may_execute(activity, today=datetime.date(2026, 10, 6))
 
-    def test_a_reschedule_never_crosses_the_fiscal_year(self):
-        with self.assertRaisesMessage(BadRequest, "FY2026 work"):
-            fy_policy.assert_same_fiscal_year(SEP_29_2026, OCT_6_2026)
+    def test_a_reschedule_may_cross_the_fiscal_year(self):
+        """The refusal told a planner to cancel and re-plan to move one date —
+        two steps, a new activity id and a lost trail. Crossing is allowed; the
+        activity's year follows its date (see the reschedule test below)."""
+        fy_policy.assert_same_fiscal_year(SEP_29_2026, OCT_6_2026)
         fy_policy.assert_same_fiscal_year(OCT_6_2026, datetime.date(2027, 3, 2))
 
 
@@ -227,18 +242,31 @@ class Fy2027CostingTest(StandardSupportBase):
             {self.fy26_card.id},
         )
 
-    def test_a_fy2026_visit_cannot_be_rescheduled_into_fy2027(self):
+    def test_rescheduling_across_30_september_moves_the_year_with_the_date(self):
+        """Owner, 2026-09-17: lift the restriction. The thing it guarded — an
+        activity keeping a year its date no longer falls in, and with it the
+        budget line, fund request and target credit — is the reschedule's job,
+        and the reschedule does it: fy and quarter are rewritten from the new
+        date in the same transaction as the cost lines.
+
+        So the assertion is not "it is allowed" but "the money went with it".
+        """
         from apps.activities.services import reschedule
 
         carry_forward_rate_card(self.cd, "2027")
         fy26 = self._visit_on(SEP_29_2026)
-        with self.assertRaisesMessage(BadRequest, "FY2026 work"):
-            reschedule(
-                fy26["id"],
-                {"scheduledDate": _at(OCT_6_2026).isoformat(), "reason": "Moved"},
-                self.user,
-            )
         self.assertEqual(Activity.objects.get(id=fy26["id"]).fy, "2026")
+
+        reschedule(
+            fy26["id"],
+            {"scheduledDate": _at(OCT_6_2026).isoformat(), "reason": "Moved"},
+            self.user,
+        )
+
+        moved = Activity.objects.get(id=fy26["id"])
+        self.assertEqual(moved.fy, "2027")
+        self.assertEqual(moved.quarter, "Q1")
+        self.assertEqual(moved.planned_date, OCT_6_2026)
 
     def test_my_plan_offers_fy2027_and_shows_october_work(self):
         from apps.my_plan.services import get_frontend_context

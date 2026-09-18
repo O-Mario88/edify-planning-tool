@@ -62,7 +62,22 @@ class TableBoundsTest(SimpleTestCase):
     #: The three tables on Team Oversight · Schools & Coverage and the two on
     #: Ownership Transfers are NOT exempt and are paginated: "Schools with No
     #: Training Planned" is 694 rows in the country lens on the day it shipped.
-    UNBOUNDED_CEILING = 83
+    #:
+    #: 87 rather than 83 for the four cards on My Plan — School Visits,
+    #: Trainings, Cluster Meetings and Programme Activities (owner,
+    #: 2026-09-16). They were paginated at ten rows a card, which is the shape
+    #: of a week; the page now shows a person's whole fiscal year arranged by
+    #: month, and a pager over it puts the thing the page exists for behind
+    #: "Next". These are bounded by something other than a dataset: one
+    #: person's own plan for one year, which is what one officer can physically
+    #: do in twelve months — tens of rows, not the size of the activity table.
+    #: A CCEO's plan growing past that is a workload finding, and it should
+    #: show on the page rather than be hidden a page at a time.
+    #:
+    #: The lenses added with them — Country Portfolio and Cluster Performance —
+    #: are NOT exempt and are paginated: the portfolio is 700 schools under one
+    #: CCEO on the day it shipped.
+    UNBOUNDED_CEILING = 87
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

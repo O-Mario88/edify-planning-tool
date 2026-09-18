@@ -1055,7 +1055,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         school_page = _read("templates/pages/schools/index.html")
         planning_page = _read("templates/pages/planning/index.html")
         planning_tabs = _read("templates/partials/planning/tabs.html")
-        my_plan_tabs = _read("templates/partials/my_plan/period_tabs.html")
+        my_plan_filters = _read("templates/partials/my_plan/filters.html")
         messages = _read("templates/pages/messages/index.html")
         analytics = _read("templates/partials/analytics/filters.html")
 
@@ -1070,7 +1070,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn('name="q"', planning_page)
         self.assertNotIn("from:input[name='q']", planning_page)
         self.assertIn('role="tablist"', planning_tabs)
-        self.assertNotRegex(my_plan_tabs, r'hx-get="/my-plan\?period=')
+        self.assertNotRegex(my_plan_filters, r'hx-get="/my-plan\?period=')
         self.assertIn("messages-active-tab", messages)
         self.assertNotRegex(messages, r'hx-get="/messages\?tab=')
         self.assertNotIn('hx-get="/analytics?fy=2026&quarter=Q2"', analytics)

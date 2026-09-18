@@ -68,12 +68,18 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         )
         layout = _read("static/css/pages/analytics-dashboard.css")
 
-        # The map is a fixed 30cm × 42cm sheet (owner, 2026-09-15): the
-        # stylesheet sizes it, so the viewport carries no square utility.
+        # The map is a square sheet bounded by the room under the headers
+        # (owner, 2026-09-17: "The map should be square much as it will fill
+        # the desktop page"). The STYLESHEET sizes it — that is what this
+        # assertion is really for — so the viewport still carries no sizing
+        # utility of its own, aspect-square included.
         self.assertIn('class="sr-map-viewport relative w-full"', map_template)
         self.assertNotIn("aspect-square", map_template)
-        self.assertIn("inline-size: min(30cm, 100%)", layout)
-        self.assertIn("aspect-ratio: 30 / 42", layout)
+        self.assertIn(
+            "inline-size: min(100%, 30cm, calc(100svh - var(--sr-map-chrome)))",
+            layout,
+        )
+        self.assertIn("aspect-ratio: 1 / 1", layout)
         self.assertNotIn("--map-viewport-height", layout)
         self.assertNotIn("sr-map-stage", map_template)
         self.assertNotIn("sr-subregion-zoomed", map_template)
