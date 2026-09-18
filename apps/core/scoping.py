@@ -240,6 +240,31 @@ def _regional_reach(assigned_region_ids) -> tuple[list[str], list[str], bool]:
     return region_ids, countries, assigned
 
 
+def _supervised_by_impact_assessment(assignment_model, staff_id) -> bool:
+    """Whether this staff member reports to an Impact Assessment officer.
+
+    The org-chart definition of an IA assistant. Read through the supervisor's
+    user so a person who merely *holds* the role among several still counts —
+    `active_role` is whichever hat they have on right now, and a reporting line
+    does not change when its supervisor switches tabs.
+    """
+    from django.db.models import Q
+
+    ia = EdifyRole.IMPACT_ASSESSMENT.value
+    return (
+        assignment_model.objects.filter(
+            supervisee_id=staff_id,
+            supervisor__deleted_at__isnull=True,
+            supervisor__user__deleted_at__isnull=True,
+        )
+        .filter(
+            Q(supervisor__user__active_role=ia)
+            | Q(supervisor__user__roles__contains=[ia])
+        )
+        .exists()
+    )
+
+
 def resolve_user_scope(user) -> UserScope:
     """Resolve the scope for an AuthPrincipal. Defensive about missing apps —
     schools/partners/staff may not exist yet during the build; return an empty
@@ -295,17 +320,27 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         StaffSchoolAssignment = None  # type: ignore
         StaffSupervisorAssignment = None  # type: ignore
 
-    # Impact Assessment officers normally operate at country scope.  An IA
-    # staff member with an explicit school portfolio is different: that is a
-    # field/assistant assignment and the uploaded portfolio is the access
-    # boundary.  Keeping the distinction data-driven lets the country IA
-    # officer (no direct schools) retain oversight while an IA assistant sees
-    # only the schools assigned to them.
+    # Impact Assessment officers normally operate at country scope. An IA
+    # assistant is different: they do field work inside one officer's remit and
+    # the portfolio is the access boundary. Keeping the distinction data-driven
+    # lets the country IA officer retain oversight while an assistant sees only
+    # the schools assigned to them.
+    #
+    # The discriminator is the reporting line, not `StaffSchoolAssignment`.
+    # That table is *account ownership*, and the school upload writes a row into
+    # it for every uploaded school whose account-owner cell matches a staff
+    # profile by name — so a country IA officer named as the owner on a single
+    # row of their own upload demoted themselves out of the country, silently,
+    # in the same request that loaded it. One row of 16k collapsed the lens to
+    # that row: no directory, no SSA, no country oversight, and no error to say
+    # why. Ownership is written by an import; supervision is set deliberately by
+    # CD, HR or Admin (`apps.accounts.supervisor_service`), so only supervision
+    # can narrow a role's reach.
     if (
         role == EdifyRole.IMPACT_ASSESSMENT.value
         and staff_id
-        and StaffSchoolAssignment
-        and StaffSchoolAssignment.objects.filter(staff_id=staff_id).exists()
+        and StaffSupervisorAssignment
+        and _supervised_by_impact_assessment(StaffSupervisorAssignment, staff_id)
     ):
         country_scope = False
 
@@ -854,10 +889,79 @@ def country_bound(scope: UserScope) -> bool:
 
 
 def school_country_q(scope: UserScope, prefix: str = "") -> Q:
-    """Q for a School queryset (or one reached through ``prefix``)."""
+    """Q for a School queryset (or one reached through ``prefix``).
+
+    A school carries no country of its own; it inherits one through
+    `region -> country`. An upload row whose district cell matched no district
+    leaves `region` null, and `region__country` matches nothing — so on the
+    region arm alone such a row sits in *no* country lens at all, invisible to
+    every country role at once (the failure named in "Impact Assessment can
+    reach the schools its uploads could not attach"). That is not a boundary,
+    it is a hole: the uploader cannot see, count, assess or place the rows they
+    just loaded, and the only role that runs the school upload is the one it
+    hides them from.
+
+    So an unplaced school is reached through its account owner instead, exactly
+    as `activity_country_q` reaches an activity that has neither school nor
+    cluster. With no owner to place it either, it is offered to every country
+    lens rather than to none: a row belonging to nobody has to be somebody's to
+    fix, and placing it (a district, or an owner in the Staff Setup Queue) is
+    what moves it onto the region arm for good.
+    """
     if not country_bound(scope):
         return Q()
-    return Q(**{f"{prefix}region__country": scope.country})
+    return school_in_country_q(scope.country, prefix)
+
+
+def school_in_country_q(country: str, prefix: str = "") -> Q:
+    """The same boundary from a plain country name, for the callers that hold
+    one rather than a scope (`apps.hr.contribution_scope.scope_activities`).
+
+    One implementation, two entry points: two spellings of a boundary
+    eventually disagree about which rows are inside it, and the disagreement
+    shows up as a page whose total does not match the list below it.
+    """
+    if not country:
+        return Q()
+    return Q(**{f"{prefix}region__country": country}) | unplaced_school_q(
+        country, prefix
+    )
+
+
+def unplaced_school_q(country: str, prefix: str = "") -> Q:
+    """The region-less schools a country lens reaches (see above).
+
+    Exported because "unplaced" is a condition the directory, the analytics
+    dashboard and the SSA upload all need to name, and three spellings of one
+    condition eventually disagree about which rows are in it.
+    """
+    from apps.accounts.models import StaffProfile
+
+    owner = f"{prefix}account_owner_id"
+    here = StaffProfile.objects.filter(country=country).values("id")
+    # A staff profile with no country on file places nobody, so a school it
+    # owns is as unplaced as one owned by nobody.
+    stateless = StaffProfile.objects.filter(
+        Q(country__isnull=True) | Q(country="")
+    ).values("id")
+    # `prefix` reaches a *nullable* school on an activity, and a null FK makes
+    # every field behind it read null across the outer join — so without this
+    # first clause "the school has no region" also matched "there is no school",
+    # and a country lens would have swept up every cluster training in every
+    # other country. The condition is "an unplaced school", not "no school";
+    # the row with no school at all is placed by the third arm of
+    # `activity_country_q` instead. On a School queryset the clause is the
+    # primary key, always true and never a join.
+    return (
+        Q(**{f"{prefix}id__isnull": False})
+        & Q(**{f"{prefix}region__isnull": True})
+        & (
+            Q(**{f"{owner}__in": here})
+            | Q(**{f"{owner}__isnull": True})
+            | Q(**{owner: ""})
+            | Q(**{f"{owner}__in": stateless})
+        )
+    )
 
 
 def cluster_country_q(scope: UserScope, prefix: str = "") -> Q:

@@ -110,10 +110,14 @@ class AnalyticsDashboardService:
                 activities_qs = activities_qs.none()
 
         if scope.country:
+            from apps.core.scoping import school_country_q
             from apps.hr.contribution_scope import scope_activities
 
-            schools_qs = schools_qs.filter(region__country=scope.country)
-            ssa_qs = ssa_qs.filter(school__region__country=scope.country)
+            # The shared boundary, not `region__country` written out again: it
+            # also reaches the schools an upload could not place, and a page
+            # that counts schools must count the same ones the directory lists.
+            schools_qs = schools_qs.filter(school_country_q(scope))
+            ssa_qs = ssa_qs.filter(school_country_q(scope, "school__"))
             activities_qs = scope_activities(activities_qs, country=scope.country)
 
         # 3. Apply page filters to Querysets
