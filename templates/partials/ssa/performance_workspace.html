@@ -1,3 +1,4 @@
+{% load frontend_filters %}
 <div id="ssa-performance-workspace" class="sp-workspace" aria-live="polite">
   <form class="edify-filter-bar sp-filter-panel"
         method="get"
@@ -66,7 +67,7 @@
           <span class="sp-rank">{{ forloop.counter }}</span>
           <span class="sp-intervention-name">{{ intervention.label }}</span>
           <span class="sp-meter" aria-hidden="true">{% if intervention.width is not None %}<i style="width:{{ intervention.width }}%; background:{{ intervention.band.color }}"></i>{% endif %}</span>
-          <strong>{% if intervention.average != None %}{{ intervention.average }}{% else %}—{% endif %}</strong>
+          <strong{% if intervention.average != None %} style="color: {{ intervention.band.color }}"{% endif %}>{% if intervention.average != None %}{{ intervention.average }}{% else %}—{% endif %}</strong>
           <span class="sp-band" data-tone="{{ intervention.band.tone }}">{{ intervention.band.label }}</span>
         </li>
         {% endfor %}
@@ -96,10 +97,13 @@
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Portfolio risk</span><h2 id="sp-heat-title">District performance heat panel</h2></div></header>
       <div class="sp-district-tiles">
         {% for district in dashboard.districts %}
-        <article data-tone="{{ district.band.tone }}"><span>{{ district.name }}</span><strong>{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong><small>{{ district.band.label }} · {{ district.completion_rate }}% complete</small></article>
+        <article data-tone="{{ district.band.tone }}"><span>{{ district.name }}</span><strong{% if district.average != None %} style="color: {{ district.band.color }}"{% endif %}>{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong><small>{{ district.band.label }} · {{ district.completion_rate }}% complete</small></article>
         {% empty %}<p class="sp-empty">No district results for this selection.</p>{% endfor %}
       </div>
-      <div class="sp-legend" aria-label="SSA score bands"><span data-tone="danger">Critical</span><span data-tone="warning">Warning</span><span data-tone="lime">Improving</span><span data-tone="success">Strong</span></div>
+      {% comment %}Five colours, from apps.core.enums.ssa_score_band through the
+      same filter the scores use — so the legend cannot drift from what the
+      numbers above it are painted with (owner, 2026-09-18).{% endcomment %}
+      <div class="sp-legend" aria-label="SSA score bands"><span style="color: {{ 4|ssa_score_colour }}">Critical · below 5</span><span style="color: {{ 5|ssa_score_colour }}">Warning · 5 to 5.9</span><span style="color: {{ 6|ssa_score_colour }}">Improving · 6 to 7.9</span><span style="color: {{ 8|ssa_score_colour }}">Strong · 8 to 9.9</span><span style="color: {{ 10|ssa_score_colour }}">Perfect · 10</span></div>
     </section>
 
     <section class="sp-card sp-matrix-card" aria-labelledby="sp-matrix-title">
@@ -108,7 +112,7 @@
         <table class="sp-matrix">
           <caption>Average confirmed intervention scores by district</caption>
           <thead><tr><th scope="col">District</th>{% for intervention in dashboard.interventions %}<th scope="col">{{ intervention.label }}</th>{% endfor %}</tr></thead>
-          <tbody>{% for row in dashboard.matrix %}<tr><th scope="row">{{ row.name }}</th>{% for cell in row.cells %}<td><span data-tone="{{ cell.band.tone }}">{% if cell.value != None %}{{ cell.value }}{% else %}—{% endif %}</span></td>{% endfor %}</tr>{% empty %}<tr><td colspan="9" class="sp-empty-cell">No intervention scores are available.</td></tr>{% endfor %}</tbody>
+          <tbody>{% for row in dashboard.matrix %}<tr><th scope="row">{{ row.name }}</th>{% for cell in row.cells %}<td><span{% if cell.value != None %} style="color: {{ cell.band.color }}" title="{{ cell.band.label }}"{% endif %}>{% if cell.value != None %}{{ cell.value }}{% else %}—{% endif %}</span></td>{% endfor %}</tr>{% empty %}<tr><td colspan="9" class="sp-empty-cell">No intervention scores are available.</td></tr>{% endfor %}</tbody>
         </table>
       </div>
     </section>

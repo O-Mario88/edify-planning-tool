@@ -1,3 +1,4 @@
+{% load frontend_filters %}
 {% if has_ssa_scores %}
   <div class="school-ssa-groups">
     {% for group in ssa_groups %}
@@ -8,7 +9,7 @@
             <li>
               <span class="school-ssa-group__dot" aria-hidden="true"></span>
               <strong>{{ item.label }}</strong>
-              <span class="school-ssa-group__score">({{ item.score|floatformat:"-1" }}/10)</span>
+              <span class="school-ssa-group__score" style="color: {{ item.score|ssa_score_colour }}" title="{{ item.score|ssa_score_band_label }}">({{ item.score|floatformat:"-1" }}/10)</span>
             </li>
           {% empty %}
             <li class="school-ssa-group__empty">No confirmed scores in this group.</li>

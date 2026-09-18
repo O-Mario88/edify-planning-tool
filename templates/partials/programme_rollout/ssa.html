@@ -126,7 +126,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
   </header>
   <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="SSA heatmap; scroll sideways for more interventions">
     <table class="pl-ssa-matrix rpl-table" data-mobile-table="scroll">
-      <caption class="sr-only">Average SSA score out of 10 for each intervention, by cluster. Cells are shaded from red at 0 to green at 10; the score is stated in every cell, so colour never carries the value alone.</caption>
+      <caption class="sr-only">Average SSA score out of 10 for each intervention, by cluster. Each score is coloured by its band — red below 5, orange to 6, light green to 8, green to 10, purple at 10 — and the score is stated in every cell, so colour never carries the value alone.</caption>
       <thead>
         <tr>
           <th scope="col">Cluster</th>
@@ -139,9 +139,9 @@ apps.analytics.programme_rollout_service.ssa_rollout.
         <tr>
           <th scope="row" data-record-title><span>{{ r.name }}</span></th>
           {% for cell in r.cells %}
-          <td class="pl-ssa-heat is-num" data-heat="{{ cell.heat|default_if_none:'none' }}">{% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
+          <td class="pl-ssa-heat is-num"{% if cell.score is not None %} style="color: {{ cell.score|ssa_score_colour }}" title="{{ cell.score|ssa_score_band_label }}"{% endif %}>{% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span class="edify-text-subtle" aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
           {% endfor %}
-          <td class="pl-ssa-heat pl-ssa-heat--overall is-num" data-heat="{{ r.overall_heat|default_if_none:'none' }}">{% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
+          <td class="pl-ssa-heat pl-ssa-heat--overall is-num"{% if r.overall is not None %} style="color: {{ r.overall|ssa_score_colour }}" title="{{ r.overall|ssa_score_band_label }}"{% endif %}>{% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span class="edify-text-subtle" aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
         </tr>
         {% empty %}
         <tr>

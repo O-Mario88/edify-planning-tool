@@ -1,0 +1,30 @@
+{% comment %}
+The confirmation for a save that does NOT leave the page.
+
+Owner, 2026-09-18: "When I schedule it opens my plan immediately upon saving.
+For me to continue planning, I have to go back to the planning page... I want
+it to populate my plan without necessarily opening my plan, so the user can
+keep planning until they are done and then open My Plan to confirm."
+
+So the drawer closes, the list behind it refreshes, and this says what landed
+where. It carries the link rather than following it: the planner decides when
+they are finished, which is the whole point.
+
+Appended out-of-band into the toast container in base.html, because the
+Django messages framework paints its toasts on a page load and this flow
+deliberately has none — a queued message would surface on whatever page the
+planner opened next, long after it stopped meaning anything.
+{% endcomment %}
+<div hx-swap-oob="beforeend:#toast-container">
+  <div
+    x-data="{ show: true }"
+    x-show="show"
+    x-init="setTimeout(() => show = false, 8000)"
+    x-transition
+    data-planning-saved-toast
+    class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if tone == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}"
+  >
+    <span>{{ message }}{% if plan_url %} <a href="{{ plan_url }}" class="underline font-bold">{{ plan_link_label|default:"Open My Plan" }}</a>{% endif %}</span>
+    <button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100 -my-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center text-[16px]" aria-label="Dismiss notification">&times;</button>
+  </div>
+</div>

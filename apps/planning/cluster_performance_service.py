@@ -48,6 +48,11 @@ WEIGHT_SESSION = 3
 WEIGHT_VISIT = 1
 WEIGHT_SSA = 2
 
+#: A cluster nobody owns still has to appear: an unowned cluster with nothing
+#: planned is the finding, and dropping it from the grouping hides it.
+NO_OWNER_KEY = "unassigned"
+NO_OWNER_LABEL = "Unassigned"
+
 #: Below this share of the busiest cluster's index, a cluster is called out as
 #: quiet. A band rather than "the bottom five", because a country with three
 #: clusters has no bottom five and a country with three hundred has far more
@@ -61,6 +66,7 @@ class ClusterRow:
     cluster_id: str
     name: str
     district: str
+    owner_id: str
     owner_name: str
     lead_id: str
     lead_name: str
@@ -350,7 +356,8 @@ def cluster_performance(
                 cluster_id=cluster.id,
                 name=cluster.name,
                 district=getattr(cluster.district, "name", ""),
-                owner_name=_label(owner) if owner else "Unassigned",
+                owner_id=getattr(owner, "id", "") or NO_OWNER_KEY,
+                owner_name=_label(owner) if owner else NO_OWNER_LABEL,
                 lead_id=getattr(lead, "id", "") or NO_LEAD_KEY,
                 lead_name=_label(lead) if lead else NO_LEAD_LABEL,
                 schools=len(member_ids),
@@ -384,11 +391,110 @@ def cluster_performance(
         rows = [r for r in rows if r.lead_id == program_lead_id]
 
     rows.sort(key=lambda r: (-r.index, r.name.casefold()))
+    banded = _banded(rows)
     return {
-        "rows": _banded(rows),
+        "rows": banded,
         "totals": _cluster_totals(rows),
         "leads": lead_options,
+        "by_lead": plans_by_lead(banded),
     }
+
+
+def _page_param(owner_id: str) -> str:
+    safe = "".join(ch if ch.isalnum() else "_" for ch in owner_id).strip("_")
+    return f"clusters_{safe or 'owner'}_page"
+
+
+def plans_by_lead(entries) -> list[dict]:
+    """The clusters, nested Programme Lead → CCEO → cluster.
+
+    Owner, 2026-09-18: group the lens by staff name, so a Lead can monitor the
+    individual; and drop the Programme Lead column, because a Lead reading this
+    page sees their own clusters and their team's, so naming the Lead on every
+    row says nothing. Both are the same instruction: the Lead is a heading, not
+    a column. A reader who spans teams — Impact Assessment, the Director, the
+    RVP — still needs the Lead, and gets it as the outer grouping.
+
+    `entries` are the banded rows the page already built, so each cluster keeps
+    the rank, band and superlative it earned against the whole list rather than
+    against its own officer's few. A fold, never a second query: a grouping
+    that re-queries is a second number that can disagree with the rows it is
+    made of.
+    """
+    leads: dict[str, dict] = {}
+    for entry in entries:
+        row = entry["row"]
+        lead = leads.setdefault(
+            row.lead_id,
+            {
+                "lead_id": row.lead_id,
+                "lead_name": row.lead_name,
+                "owners": {},
+            },
+        )
+        owner = lead["owners"].setdefault(
+            row.owner_id,
+            {"owner_id": row.owner_id, "owner_name": row.owner_name, "entries": []},
+        )
+        owner["entries"].append(entry)
+
+    def totals(cluster_entries) -> dict:
+        cluster_rows = [entry["row"] for entry in cluster_entries]
+        schools = sum(r.schools for r in cluster_rows)
+        reached = sum(r.schools_reached for r in cluster_rows)
+        return {
+            "clusters": len(cluster_rows),
+            "dormant": sum(1 for r in cluster_rows if r.is_dormant),
+            "schools": schools,
+            "sessions": sum(r.sessions_planned for r in cluster_rows),
+            "sessions_done": sum(r.sessions_done for r in cluster_rows),
+            "trainings": sum(r.trainings for r in cluster_rows),
+            "meetings": sum(r.meetings for r in cluster_rows),
+            "visits": sum(r.visits_planned for r in cluster_rows),
+            "schools_reached": reached,
+            # Always beside the number it came from: a share whose denominator
+            # is not on the page cannot be checked.
+            "reach": round(100 * reached / schools) if schools else None,
+            "budget": sum(r.budget for r in cluster_rows),
+        }
+
+    out = []
+    for lead in leads.values():
+        owners = []
+        for owner in lead["owners"].values():
+            owner["entries"].sort(key=lambda entry: entry["row"].name.casefold())
+            owners.append(
+                {
+                    **owner,
+                    "totals": totals(owner["entries"]),
+                    # Each CCEO is its own table, so paging one must not page
+                    # the others: a Lead with six officers would otherwise move
+                    # all six tables at once.
+                    "page_param": _page_param(owner["owner_id"]),
+                }
+            )
+        owners.sort(
+            key=lambda entry: (
+                entry["owner_id"] == NO_OWNER_KEY,
+                entry["owner_name"].casefold(),
+            )
+        )
+        lead_entries = [entry for owner in owners for entry in owner["entries"]]
+        out.append(
+            {
+                "lead_id": lead["lead_id"],
+                "lead_name": lead["lead_name"],
+                "owners": owners,
+                "totals": totals(lead_entries),
+            }
+        )
+    out.sort(
+        key=lambda entry: (
+            entry["lead_id"] == NO_LEAD_KEY,
+            entry["lead_name"].casefold(),
+        )
+    )
+    return out
 
 
 def _banded(rows) -> list[dict]:
@@ -461,9 +567,12 @@ def _cluster_totals(rows) -> dict:
 __all__ = [
     "ACTIVE_SHARE",
     "ClusterRow",
+    "NO_OWNER_KEY",
+    "NO_OWNER_LABEL",
     "QUIET_SHARE",
     "WEIGHT_SESSION",
     "WEIGHT_SSA",
     "WEIGHT_VISIT",
     "cluster_performance",
+    "plans_by_lead",
 ]

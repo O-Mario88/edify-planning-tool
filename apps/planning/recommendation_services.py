@@ -9,8 +9,8 @@ class InterventionSeverityClassifier:
     @staticmethod
     def classify_severity(score: float | None) -> str:
         # Single source of truth for the 0-10 bands
-        # (apps.core.enums.ssa_score_band): Critical 0-4.9 / Warning 5-6.9 /
-        # Improving 7-7.9 / Strong 8-10. Those band labels are identical to
+        # (apps.core.enums.ssa_score_band): Critical 0-4.9 / Warning 5-5.9 /
+        # Improving 6-7.9 / Strong 8-10. Those band labels are identical to
         # this classifier's historical vocabulary, so delegating removes a
         # duplicate threshold definition without changing any classification.
         # None (no SSA) now yields the honest canonical "No SSA" instead of
@@ -144,10 +144,19 @@ class PlanningRecommendationService:
                 "blockedActions": [],
             }
         elif severity == "Improving":
+            # Owner, 2026-09-18: "only 8.0 and above should stop being
+            # recommended." An improving school is not a finished one — it is
+            # a school on its way to Strong, and withdrawing support at 6 is
+            # how it stops improving. Support ends at 8, not before.
+            #
+            # This used to read "Monitor", so 7.0-7.9 schools had already been
+            # dropped from support before any of this FY's band work; the line
+            # moves to 8.0 for every score below it, not just the ones the
+            # recolouring touched.
             return {
                 "planningReadiness": "Ready for Support",
-                "recommendedAction": "Monitor",
-                "reason": f"Stable/improving score ({score_val:.1f}/10.0). Continue light-touch monitoring. Weakest: {weakest_area}.",
+                "recommendedAction": "Recommend Staff (Visit/training support)",
+                "reason": f"Improving score ({score_val:.1f}/10.0) is not yet Strong; targeted staff visits/trainings carry it to 8. Weakest: {weakest_area}.",
                 "availableActions": ["Schedule visit", "Schedule training"],
                 "blockedActions": [],
             }

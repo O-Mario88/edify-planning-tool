@@ -1,4 +1,4 @@
-{% load can_open from frontend_filters %}
+{% load can_open ssa_score_colour ssa_score_band_label from frontend_filters %}
 {% comment %}
 One core school, compact. The summary line carries only the nine facts a
 planner decides on — school, district, owner, assessment, visits, trainings,
@@ -109,7 +109,7 @@ route, not the cluster, so one constant URL answers it for every row.
       <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
       <div><dt>Phone:</dt><dd>{{ school.phone|default:"—" }}</dd></div>
       <div><dt>Primary Contact:</dt><dd>{{ school.school_contact|default:"—" }}</dd></div>
-      <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+      <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssa_average is not None %} style="color: {{ school.ssa_average|ssa_score_colour }}" title="{{ school.ssa_average|ssa_score_band_label }}"{% endif %}>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
     </dl>
     {% include "partials/schools/ssa_score_groups.html" with detail_id="core-school-details-"|add:school.id ssa_groups=school.ssa_groups has_ssa_scores=school.has_ssa_scores selected_fy=selected_fy %}
   </div>

@@ -1,6 +1,7 @@
 import json
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from apps.core.htmx_errors import error_fragment
 from apps.core.exceptions import BadRequest
 from apps.core.permissions import (
@@ -228,6 +229,44 @@ def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
             "period": "month",
         }
     )
+
+
+def _saved_without_leaving(
+    message: str, *, plan_url: str = "", plan_link_label: str = ""
+) -> HttpResponse:
+    """Confirm a save and stay on the page the planner is working on.
+
+    Owner, 2026-09-18: scheduling used to navigate straight to My Plan, so
+    planning a second school meant walking back to the planning page every
+    time. The work still lands on My Plan — that never depended on opening it
+    — and the planner opens it when they are done rather than once per
+    activity.
+
+    Three things have to happen in place of the navigation, or "stay here"
+    becomes "did that save?":
+
+    * the drawer closes (`close-drawer`);
+    * the list behind it refreshes (`planning-saved`), because a row still
+      offering to schedule work that is already scheduled is how the same
+      visit gets planned twice;
+    * the confirmation is painted now, out-of-band into the toast container.
+      `messages.success` paints on a page load, and this flow deliberately has
+      none — a queued message would surface on whatever page the planner
+      opened next, long after it stopped meaning anything.
+
+    The toast carries the link to My Plan rather than following it.
+    """
+    html = render_to_string(
+        "partials/planning/saved_toast.html",
+        {
+            "message": message,
+            "plan_url": plan_url,
+            "plan_link_label": plan_link_label,
+        },
+    )
+    response = HttpResponse(html)
+    response["HX-Trigger"] = json.dumps({"close-drawer": True, "planning-saved": True})
+    return response
 
 
 def _scoped_project_assignments(request, raw_ids):
@@ -1574,48 +1613,42 @@ def schedule_action_view(request):
             from apps.planning.visit_requests import QUEUE_URL, staff_name
 
             who = staff_name(visit_request_owner_id) or "the school's owner"
-            messages.success(
-                request,
-                f"Scheduled, pending {who}'s approval. It takes effect on your "
+            return _saved_without_leaving(
+                f"Requested, pending {who}'s approval. It takes effect on your "
                 "plan and enters your budget once approved.",
+                plan_url=QUEUE_URL,
+                plan_link_label="Open the request queue",
             )
-            response = HttpResponse(
-                f'<script>window.location.href = "{QUEUE_URL}";</script>'
-            )
-            response["HX-Trigger"] = "close-drawer"
-            return response
         # Confirm where it went, not just that it happened. When the work is
         # filed against somebody else the creator must be told so, because the
         # next screen will not show it and silence there reads as a failure.
         lands_here, owner_name = _scheduled_into_own_plan(created, request.user)
-        if lands_here:
-            messages.success(request, f"{noun} scheduled successfully.")
-        else:
-            messages.success(
-                request,
-                f"{noun} scheduled successfully. It is now on {owner_name}'s "
-                "My Plan, because the responsible staff member comes from the "
-                "school's owner — you will find it on the Calendar.",
-            )
-        # Redirect to My Plan and close drawer via client headers.
-        # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
-        # redirect to "/my-plan/" 404s — the activity saves but the user lands
-        # on an error page and never sees confirmation.
+        # The link still has to point somewhere the work is actually visible.
+        # My Plan is scoped to the viewer's own work, so offering it for an
+        # activity filed against somebody else is offering a blank page as
+        # proof of success — that one points at the Calendar instead.
         #
-        # And never to a My Plan the activity is absent from: that page is
-        # scoped to the viewer's own work, so sending somebody there to look at
-        # someone else's is showing them a blank week as proof of success.
+        # "/my-plan" has no trailing-slash route and APPEND_SLASH is off, so
+        # "/my-plan/" 404s; `_my_plan_url_for_scheduled_date` builds the
+        # working form.
         if project_id:
-            plan_url = "/projects/my-plan"
+            plan_url, link_label = "/projects/my-plan", "Open My Plan"
         elif lands_here:
             plan_url = _my_plan_url_for_scheduled_date(scheduled_date)
+            link_label = "Open My Plan"
         else:
             plan_url = _calendar_url_for_scheduled_date(scheduled_date)
-        response = HttpResponse(
-            f'<script>window.location.href = "{plan_url}";</script>'
+            link_label = "Open the Calendar"
+        if lands_here:
+            message = f"{noun} scheduled. It is on your My Plan — keep planning."
+        else:
+            message = (
+                f"{noun} scheduled onto {owner_name}'s My Plan, because the "
+                "responsible staff member comes from the school's owner."
+            )
+        return _saved_without_leaving(
+            message, plan_url=plan_url, plan_link_label=link_label
         )
-        response["HX-Trigger"] = "close-drawer"
-        return response
     except Exception as e:
         return error_fragment(e, status=400)
 
@@ -2018,13 +2051,11 @@ def assign_partner_action_view(request):
             monitoring_staff_id = monitored_by_staff_id
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
-                target = "/projects/my-plan" if project_id else None
-                response = HttpResponse(
-                    f'<script>window.location.href="{target}";</script>'
-                    if target
-                    else "<script>window.location.reload();</script>"
+                response = _saved_without_leaving(
+                    f"{school.name} already has this work planned, so nothing "
+                    "was added.",
+                    plan_url="/projects/my-plan" if project_id else "",
                 )
-                response["HX-Trigger"] = "close-drawer"
                 return response
             # §F fail-fast at ASSIGNMENT: if this school's partner allowance
             # is already used this FY, the assigner finds out here — not the
@@ -2108,14 +2139,17 @@ def assign_partner_action_view(request):
                     notes=notes,
                 )
 
-        # Return refresh trigger and close drawer
-        response = HttpResponse(
-            '<script>window.location.href="/projects/my-plan";</script>'
-            if project_id
-            else "<script>window.location.reload();</script>"
+        # Close the drawer and refresh the list in place rather than reloading
+        # the page or leaving it: an assigner works through a list of schools,
+        # and a full reload costs them their scroll position and their filters
+        # after every single one (owner, 2026-09-18).
+        return _saved_without_leaving(
+            f"Assigned to {partner.name}. The partner schedules it from here.",
+            plan_url="/projects/my-plan" if project_id else "/partner-assignments",
+            plan_link_label=(
+                "Open My Plan" if project_id else "Open partner assignments"
+            ),
         )
-        response["HX-Trigger"] = "close-drawer"
-        return response
     except Exception as e:
         return error_fragment(e, status=400)
 
@@ -2427,11 +2461,10 @@ def bulk_action_view(request):
                         },
                         principal=request.user,
                     )
-            response = HttpResponse(
-                f'<script>window.location.href = "{_my_plan_url_for_scheduled_date(scheduled_date_raw)}";</script>'
+            return _saved_without_leaving(
+                "Scheduled. It is on your My Plan — keep planning.",
+                plan_url=_my_plan_url_for_scheduled_date(scheduled_date_raw),
             )
-            response["HX-Trigger"] = "close-drawer"
-            return response
         except BadRequest as e:
             return error_fragment(e, status=400)
 

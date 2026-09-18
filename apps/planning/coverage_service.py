@@ -6,7 +6,10 @@ Three questions about a supervisor's schools in one selected period:
   grouped by day inside a week, week inside a month, fiscal month inside a
   quarter and quarter inside a year, so the totals reconcile across the
   hierarchy. Built from the canonical planning items the rest of Team
-  Oversight reads, never from a parallel table.
+  Oversight reads, never from a parallel table. A cluster training or meeting
+  is planned on the cluster and names its schools by invitation, so it appears
+  once per invited school: the question is which schools have work planned,
+  and a count by cluster does not answer it.
 * **Schools with Planned Cluster Training or Meeting** — schools the planning
   record explicitly attaches to a live cluster session in the period.
 * **Schools with No Training Planned** — the rest, each with the reason.
@@ -80,6 +83,16 @@ class CoverageGroup:
         return len({row["school_id"] for row in self.rows if row["school_id"]})
 
     @property
+    def activity_count(self) -> int:
+        """Pieces of work, not rows.
+
+        A cluster training invited to twelve schools is twelve rows in this
+        group — twelve schools have it planned — and one activity. Counting
+        rows here would report it as twelve trainings.
+        """
+        return len({row["work_key"] for row in self.rows})
+
+    @property
     def page_param(self) -> str:
         """This group's own page parameter.
 
@@ -132,52 +145,203 @@ def _quarter_label(day: date) -> str:
     return f"{quarter} · {spans[quarter]}"
 
 
+#: How Impact Assessment's verdict on a piece of work reads in a table.
+#: Pending and Verified are the two the brief names; returned and flagged are
+#: kept rather than folded into "Pending", because a piece of work IA sent
+#: back is not one IA has not looked at yet (owner, 2026-09-18).
+IA_STATUS_LABELS = {
+    "": "Pending",
+    "pending": "Pending",
+    "confirmed": "Verified",
+    "returned": "Returned",
+    "flagged": "Flagged",
+}
+
+BUDGET_NO_COST = "No cost yet"
+BUDGET_CREATED = "Budget created"
+BUDGET_IN_WEEKLY_REQUEST = "In weekly fund request"
+
+
+def _weekly_fund_request_activities(activity_ids) -> set:
+    """Which of these activities are carried on a weekly fund request.
+
+    The money a planned activity needs travels from its cost lines onto a
+    weekly request, and "has it been asked for yet?" is the question the
+    oversight reader is actually holding. Read through
+    WeeklyFundRequestLine.activity_budget_line rather than any status field,
+    because the line's existence IS the answer.
+    """
+    from apps.fund_requests.models import WeeklyFundRequestLine
+
+    ids = {activity_id for activity_id in activity_ids if activity_id}
+    if not ids:
+        return set()
+    return set(
+        WeeklyFundRequestLine.objects.filter(
+            activity_budget_line__activity_id__in=ids
+        ).values_list("activity_budget_line__activity_id", flat=True)
+    )
+
+
+def _budget_status(item, *, requested_ids) -> str:
+    """How far this item's money has travelled: none, costed, or asked for."""
+    if item.activity_id and item.activity_id in requested_ids:
+        return BUDGET_IN_WEEKLY_REQUEST
+    if item.planned_cost:
+        return BUDGET_CREATED
+    return BUDGET_NO_COST
+
+
+def _row_of(
+    item,
+    *,
+    school_id,
+    school_name,
+    owner_name,
+    district_name,
+    region_name,
+    requested_ids=frozenset(),
+):
+    """One table row: a piece of planned work, seen at one school."""
+    return {
+        # What the work IS, so a training invited to twelve schools is twelve
+        # rows and still one activity wherever a count is taken.
+        "work_key": item.activity_id
+        or item.partner_assignment_id
+        or f"{item.stage}:{school_id}:{item.planned_date}",
+        "school_id": school_id,
+        "school_name": school_name,
+        "owner_name": owner_name or "Unassigned",
+        "region_name": region_name,
+        "district_name": district_name,
+        "cluster_name": item.cluster_name,
+        "activity_id": item.activity_id,
+        "activity_type": item.activity_type,
+        "activity_label": (item.activity_type or "").replace("_", " ").title(),
+        "category": "Cluster meeting"
+        if item.activity_type in CLUSTER_MEETING_TYPES
+        else "Visit"
+        if "visit" in (item.activity_type or "")
+        else "Training",
+        "planned_date": item.planned_date,
+        "scheduled_date": item.planned_date,
+        "delivery_channel": "Partner" if item.is_partner_work else "Staff",
+        "partner_name": item.partner_name,
+        # The money and the verdict, the two states an oversight reader asks
+        # about after "is it planned?" (owner, 2026-09-18). Budget status
+        # replaced a "Funding" column that said "Costed" or "No cost yet" —
+        # the same question, answered one rung short of where the money
+        # actually goes.
+        "budget_status": _budget_status(item, requested_ids=requested_ids),
+        "ia_status": IA_STATUS_LABELS.get(item.ia_status or "", "Pending"),
+        "payment_status": item.finance_status,
+        "activity_status": item.activity_status or item.assignment_status,
+        "stage": item.stage,
+        "detail_url": (
+            f"/team-planning-oversight/detail?activity={item.activity_id}"
+            if item.activity_id
+            else ""
+        ),
+    }
+
+
+def _invited_school_rows(items, *, requested_ids) -> list[dict]:
+    """One row per school invited into a planned cluster session.
+
+    A cluster training is planned once, on the cluster, and the schools it will
+    reach are named by ticking them during planning — the row
+    `ClusterActivityAttendance` writes. The planning item therefore carries a
+    cluster and no school, so counted as it stands a training is one activity
+    at no schools, and every school in the room is missing from a table about
+    which schools have work planned.
+
+    Owner, 2026-09-18: a school counts as planned once it has been invited into
+    a cluster training or meeting by that checkbox, and Impact Assessment
+    counts those schools by school rather than by cluster. Being in the cluster
+    is still not enough on its own — the invitation is what the planner
+    decided, and it is what is counted here.
+    """
+    from apps.activities.models import ClusterActivityAttendance
+    from apps.schools.models import School
+
+    sessions = {
+        item.activity_id: item
+        for item in items
+        if item.activity_id
+        and not item.school_id
+        and item.activity_type in CLUSTER_SESSION_TYPES
+    }
+    if not sessions:
+        return []
+    attendance = list(
+        ClusterActivityAttendance.objects.filter(activity_id__in=list(sessions))
+        .filter(Q(invited=True) | Q(attended=True))
+        .values_list("activity_id", "school_id")
+    )
+    if not attendance:
+        return []
+    schools = {
+        school.id: school
+        for school in School.objects.filter(
+            id__in={school_id for _, school_id in attendance}
+        ).select_related("district", "region")
+    }
+    owners = _owner_names(schools.values())
+    rows = []
+    for activity_id, school_id in attendance:
+        school = schools.get(school_id)
+        if school is None:
+            continue
+        rows.append(
+            _row_of(
+                sessions[activity_id],
+                school_id=school.id,
+                school_name=school.name,
+                # The CCEO who owns the school, not the person who planned the
+                # session: supervision is not ownership, and the school row is
+                # the school's.
+                owner_name=owners.get(school.account_owner_id, ""),
+                district_name=school.district.name if school.district_id else "",
+                region_name=school.region.name if school.region_id else "",
+                requested_ids=requested_ids,
+            )
+        )
+    return rows
+
+
 def planned_schools(items, *, period: str) -> tuple[list[CoverageGroup], dict]:
     """Planned and scheduled school work, grouped for the selected period.
 
     ``items`` are the oversight items the page already built, so the table can
-    never disagree with the rest of Team Oversight about what is planned.
+    never disagree with the rest of Team Oversight about what is planned. The
+    one thing they cannot carry is which schools a cluster session invited, so
+    that is read from the attendance record and folded in here — see
+    `_invited_school_rows`.
     """
-    school_items = [item for item in items if item.school_id]
+    requested_ids = _weekly_fund_request_activities(item.activity_id for item in items)
+    rows = [
+        _row_of(
+            item,
+            school_id=item.school_id,
+            school_name=item.school_name,
+            owner_name=item.operational_owner_name,
+            district_name=item.district_name,
+            region_name=item.region_name,
+            requested_ids=requested_ids,
+        )
+        for item in items
+        if item.school_id
+    ] + _invited_school_rows(items, requested_ids=requested_ids)
+
     groups: dict[str, CoverageGroup] = {}
-    for item in school_items:
-        day = item.planned_date
+    for row in rows:
+        day = row["planned_date"]
         if period == "fy" and day is not None:
             key, label = MONTH_QUARTER[day.month], _quarter_label(day)
         else:
             key, label = _group_of(day, period=period)
         group = groups.setdefault(key, CoverageGroup(key=key, label=label))
-        group.rows.append(
-            {
-                "school_id": item.school_id,
-                "school_name": item.school_name,
-                "owner_name": item.operational_owner_name or "Unassigned",
-                "region_name": item.region_name,
-                "district_name": item.district_name,
-                "cluster_name": item.cluster_name,
-                "activity_id": item.activity_id,
-                "activity_type": item.activity_type,
-                "activity_label": (item.activity_type or "").replace("_", " ").title(),
-                "category": "Cluster meeting"
-                if item.activity_type in CLUSTER_MEETING_TYPES
-                else "Visit"
-                if "visit" in (item.activity_type or "")
-                else "Training",
-                "planned_date": day,
-                "scheduled_date": item.planned_date,
-                "delivery_channel": "Partner" if item.is_partner_work else "Staff",
-                "partner_name": item.partner_name,
-                "funding_status": item.finance_status
-                or ("Costed" if item.planned_cost else "No cost yet"),
-                "activity_status": item.activity_status or item.assignment_status,
-                "stage": item.stage,
-                "detail_url": (
-                    f"/team-planning-oversight/detail?activity={item.activity_id}"
-                    if item.activity_id
-                    else ""
-                ),
-            }
-        )
+        group.rows.append(row)
 
     def sort_key(group: CoverageGroup):
         if group.key == "undated":
@@ -190,8 +354,18 @@ def planned_schools(items, *, period: str) -> tuple[list[CoverageGroup], dict]:
             key=lambda row: (row["planned_date"] or date.max, row["school_name"])
         )
     totals = {
-        "activities": len(school_items),
-        "schools": len({item.school_id for item in school_items}),
+        # Rows are school-sized and activities are work-sized: one cluster
+        # training invited to twelve schools is twelve rows and one activity.
+        "rows": len(rows),
+        "activities": len({row["work_key"] for row in rows}),
+        "schools": len({row["school_id"] for row in rows if row["school_id"]}),
+        "cluster_session_schools": len(
+            {
+                row["school_id"]
+                for row in rows
+                if row["activity_type"] in CLUSTER_SESSION_TYPES and row["school_id"]
+            }
+        ),
         "groups": len(ordered),
     }
     return ordered, totals

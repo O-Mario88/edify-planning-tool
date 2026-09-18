@@ -15,7 +15,7 @@ Performance page reads them) and each country programme's delivery.
   <div class="rpl-impact">
     <div class="rpl-impact__figure">
       <span class="rpl-impact__label">Average SSA score</span>
-      <strong class="rpl-impact__value">{% if ssa.average_score is not None %}{{ ssa.average_score|floatformat:1 }}<span class="rpl-impact__unit">/10</span>{% else %}No data{% endif %}</strong>
+      <strong class="rpl-impact__value"{% if ssa.average_score is not None %} style="color: {{ ssa.average_score|ssa_score_colour }}" title="{{ ssa.average_score|ssa_score_band_label }}"{% endif %}>{% if ssa.average_score is not None %}{{ ssa.average_score|floatformat:1 }}<span class="rpl-impact__unit">/10</span>{% else %}No data{% endif %}</strong>
       <span class="rpl-impact__meta">{% if ssa.average_score is not None %}Target {{ ssa.target|floatformat:1 }}{% else %}No confirmed assessment this year{% endif %}</span>
     </div>
     <div class="rpl-impact__figure">

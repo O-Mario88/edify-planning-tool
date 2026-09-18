@@ -22,7 +22,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
     {% for score in rollout.scores %}
     <div class="rpl-impact__figure" data-spiritual-score="{{ score.code }}">
       <span class="rpl-impact__label" title="{{ score.name }}">{{ score.abbr }} · {{ score.name }}</span>
-      <strong class="rpl-impact__value">{% if score.score is not None %}{{ score.score|floatformat:1 }}<span class="rpl-impact__unit"> / 10</span>{% else %}No data{% endif %}</strong>
+      <strong class="rpl-impact__value"{% if score.score is not None %} style="color: {{ score.score|ssa_score_colour }}" title="{{ score.score|ssa_score_band_label }}"{% endif %}>{% if score.score is not None %}{{ score.score|floatformat:1 }}<span class="rpl-impact__unit"> / 10</span>{% else %}No data{% endif %}</strong>
       <span class="rpl-impact__meta">{% if score.delta is not None %}<span data-tone="{% if score.delta > 0 %}success{% elif score.delta < 0 %}danger{% else %}neutral{% endif %}">{% if score.delta > 0 %}+{% endif %}{{ score.delta|floatformat:1 }}</span> vs FY {{ rollout.summary.prev_fy }} · {{ score.band }}{% elif score.score is not None %}{{ score.band }} · no earlier cycle{% else %}No confirmed assessment{% endif %}</span>
     </div>
     {% endfor %}
@@ -59,7 +59,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
           <th scope="row" data-record-title><span>{% if row.profile_url %}<a href="{{ row.profile_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</span></th>
           <td class="is-num" data-label="Schools">{{ row.portfolio|intcomma }}</td>
           {% for score in row.scores %}
-          <td class="is-num" data-label="{{ score.abbr }}" title="{{ score.name }}">{% if score.score is not None %}<span data-tone="{{ score.tone }}">{{ score.score|floatformat:1 }}</span>{% else %}<span class="rpl-muted">No SSA</span>{% endif %}</td>
+          <td class="is-num" data-label="{{ score.abbr }}" title="{{ score.name }}">{% if score.score is not None %}<span style="color: {{ score.score|ssa_score_colour }}" title="{{ score.score|ssa_score_band_label }}">{{ score.score|floatformat:1 }}</span>{% else %}<span class="rpl-muted">No SSA</span>{% endif %}</td>
           <td class="is-num" data-label="{{ score.abbr }} change">{% if score.delta is not None %}{% if score.delta > 0 %}+{% endif %}{{ score.delta|floatformat:1 }}{% else %}—{% endif %}</td>
           {% endfor %}
           <td class="is-num" data-label="Weak schools">{{ row.weak_schools|intcomma }}</td>
@@ -106,7 +106,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
           <th scope="row" data-record-title><span>{{ row.name }}</span></th>
           <td data-label="Officer">{{ row.officer|default:"—" }}</td>
           <td data-label="Cluster">{{ row.cluster|default:"Not in a cluster" }}</td>
-          <td data-label="Weak areas">{% for w in row.weak %}<span data-tone="{{ w.tone }}" title="{{ w.name }}">{{ w.abbr }} {{ w.score|floatformat:1 }}</span>{% if not forloop.last %} · {% endif %}{% endfor %}</td>
+          <td data-label="Weak areas">{% for w in row.weak %}<span style="color: {{ w.score|ssa_score_colour }}" title="{{ w.name }} · {{ w.score|ssa_score_band_label }}">{{ w.abbr }} {{ w.score|floatformat:1 }}</span>{% if not forloop.last %} · {% endif %}{% endfor %}</td>
           <td data-label="Planned response">{{ row.responses }}</td>
           <td data-label="State"><span data-tone="{{ row.tone }}">{{ row.state }}</span></td>
           <td class="is-end" data-record-action data-label="Actions">

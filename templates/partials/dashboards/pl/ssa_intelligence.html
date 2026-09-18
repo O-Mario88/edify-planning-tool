@@ -1,13 +1,16 @@
 {% load frontend_filters %}
 {% comment %}
-A heatmap, not a table of highlighted numbers. Every cell used to carry a
-coloured pill, which put eight badges on every row and made the eye read
-badges rather than the pattern across a row or down a column. Colour belongs
-to the cell here: the value is the surface, and the number sits on it.
+The score is the colour, and it is the ink rather than the surface (owner,
+2026-09-18): red below 5, orange to 6, light green to 8, green to 10, and
+purple for a 10/10. This replaced an eleven-step background ramp — colour as
+the cell's fill, the number sitting on it — which read as a heatmap but said
+nothing a reader could name. A band a reader can say out loud ("that cluster
+is orange") is worth more here than a shade they can only compare.
 
-The ramp is per-point (0-10) rather than per-band. Four bands paint 5.0 and
-6.9 identically, and on a matrix whose entire purpose is comparison that hides
-the differences a reader is scanning for.
+Every colour on this page comes from apps.core.enums.ssa_score_band through
+the ssa_score_colour filter, so a score cannot be orange here and green on
+the next page. The number is printed in every cell and the band is the cell's
+title, so colour never carries the value on its own.
 {% endcomment %}
 <div class="space-y-2">
   {% if ssa_matrix.rows %}
@@ -18,9 +21,10 @@ the differences a reader is scanning for.
     <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="{{ district.grouper }} cluster SSA scores">
   <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap" data-mobile-table="scroll">
     <caption class="sr-only">
-      Average SSA score out of 10 for each intervention, by cluster. Cells are
-      shaded from red at 0 to green at 10; the score is stated in every cell,
-      so the colour is never the only carrier of the value.
+      Average SSA score out of 10 for each intervention, by cluster. Each
+      score is coloured by its band — red below 5, orange to 6, light green to
+      8, green to 10, purple at 10 — and the score is stated in every cell, so
+      the colour is never the only carrier of the value.
     </caption>
     <thead>
       <tr>
@@ -36,12 +40,12 @@ the differences a reader is scanning for.
       <tr>
         <th scope="row" class="px-2.5 py-[7px] text-left">{{ r.name }}</th>
         {% for cell in r.cells %}
-        <td class="pl-ssa-heat px-1.5 py-[7px] text-center" data-heat="{{ cell.heat|default_if_none:'none' }}">
-          {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}
+        <td class="pl-ssa-heat px-1.5 py-[7px] text-center"{% if cell.score is not None %} style="color: {{ cell.score|ssa_score_colour }}" title="{{ cell.score|ssa_score_band_label }}"{% endif %}>
+          {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span class="edify-text-subtle" aria-label="No verified SSA">&mdash;</span>{% endif %}
         </td>
         {% endfor %}
-        <td class="pl-ssa-heat pl-ssa-heat--overall px-1.5 py-[7px] text-center" data-heat="{{ r.overall_heat|default_if_none:'none' }}">
-          {% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}
+        <td class="pl-ssa-heat pl-ssa-heat--overall px-1.5 py-[7px] text-center"{% if r.overall is not None %} style="color: {{ r.overall|ssa_score_colour }}" title="{{ r.overall|ssa_score_band_label }}"{% endif %}>
+          {% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span class="edify-text-subtle" aria-label="No verified SSA">&mdash;</span>{% endif %}
         </td>
       </tr>
       {% endfor %}

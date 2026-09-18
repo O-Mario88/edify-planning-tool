@@ -15,7 +15,7 @@ snoozed.
       <p class="edify-text-caption text-slate-500">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</p>
       {% if todo.ssa_scores %}
       <ul class="mt-1.5 flex flex-wrap gap-1" aria-label="SSA scores, weakest first">
-        {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" data-tone="{% if s.score < 5 %}danger{% elif s.score < 7 %}warning{% else %}success{% endif %}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
+        {% for s in todo.ssa_scores %}<li class="edify-badge tabular-nums" style="color: {{ s.score|ssa_score_colour }}" title="{{ s.score|ssa_score_band_label }}">{{ s.label }} {{ s.score|floatformat:1 }}</li>{% endfor %}
       </ul>
       {% endif %}
     </div>

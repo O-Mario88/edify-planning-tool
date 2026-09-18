@@ -1349,7 +1349,7 @@
    "audit_id": "KPI-SOURCE-069",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1423,
+   "line": 1432,
    "label": null,
    "keys": [
     "amount",
@@ -1369,7 +1369,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1096,
+   "line": 1100,
    "label": null,
    "keys": [
     "count",
@@ -1390,7 +1390,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1415,
+   "line": 1424,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -13462,7 +13462,7 @@
   {
    "audit_id": "KPI-SURFACE-051",
    "template": "templates/pages/planning/index.html",
-   "line": 198,
+   "line": 203,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -15740,7 +15740,7 @@
   {
    "audit_id": "KPI-SURFACE-138",
    "template": "templates/partials/oversight/cluster_performance_workspace.html",
-   "line": 20,
+   "line": 32,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -16292,7 +16292,7 @@
   {
    "audit_id": "KPI-SURFACE-158",
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 55,
+   "line": 56,
    "source_pattern": "shared-component",
    "items_expression": "ssa_kpi_items",
    "presentation": "context",

@@ -3,14 +3,20 @@ Team Oversight · Schools & Coverage (owner brief, 2026-09-15).
 
 Three tables for the selected period, in one scope: every school with planned
 work, the schools attached to a cluster training or meeting, and the schools
-with neither, each with the reason. No wall of KPI tiles — one compact
+with neither, each with the reason. A cluster session is one row per invited
+school, because the question the table answers is which SCHOOLS have work
+planned — hence "12 schools · 1 activity" under a training's group heading.
+
+Every row is one line (owner, 2026-09-18): the tables are wide and they scroll
+sideways rather than wrapping, because a row that wraps to three lines stops
+being a row you can scan down. No wall of KPI tiles — one compact
 attention line, then the tables.
 
 The period selector is the page's own (period_filter_bar); the groups below
 follow it: day inside a week, week inside a month, month inside a quarter,
 quarter inside a year.
 {% endcomment %}
-{% load table_pagination %}
+{% load frontend_filters table_pagination %}
 <div class="space-y-4" data-coverage-workspace>
 
   <p class="edify-note" data-tone="{% if coverage.missing_count %}warning{% else %}success{% endif %}" data-coverage-attention>
@@ -27,10 +33,10 @@ quarter inside a year.
     {% if planned_groups %}
     {% for group in planned_groups %}
     <div class="border-b border-[var(--edify-border)] last:border-0">
-      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.count }} activit{{ group.count|pluralize:"y,ies" }}</h3>
+      <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.activity_count }} activit{{ group.activity_count|pluralize:"y,ies" }}</h3>
       <div class="overflow-x-auto edify-record-table-wrap">
-        <table class="edify-data-table edify-record-table w-full">
-          <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Funding</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+        <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
+          <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Budget status</th><th scope="col">IA status</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
           <tbody>
           {% paginate group.rows group.page_param as group_pager %}
           {% for row in group_pager.rows %}
@@ -43,7 +49,8 @@ quarter inside a year.
             <td data-label="Category">{{ row.category }}</td>
             <td data-label="Planned date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
             <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
-            <td data-label="Funding">{{ row.funding_status|default:"—" }}</td>
+            <td data-label="Budget status">{{ row.budget_status }}{% if row.payment_status %} · {{ row.payment_status|status_label }}{% endif %}</td>
+            <td data-label="IA status">{{ row.ia_status }}</td>
             <td data-label="Status">{% firstof row.activity_status row.stage "—" %}</td>
             <td data-label="Action" data-record-action>{% if row.detail_url %}<a href="{{ row.detail_url }}" hx-get="{{ row.detail_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-card__link">Open</a>{% endif %}</td>
           </tr>
@@ -66,7 +73,7 @@ quarter inside a year.
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.planned_rows "trained_page" as trained_pager %}
-      <table class="edify-data-table edify-record-table w-full">
+      <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
         <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Delivery</th><th scope="col">Status</th><th scope="col">Visit status</th><th scope="col">Training plan</th><th scope="col">Action</th></tr></thead>
         <tbody>
         {% for row in trained_pager.rows %}
@@ -98,7 +105,7 @@ quarter inside a year.
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}
-      <table class="edify-data-table edify-record-table w-full">
+      <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
         <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Reason</th><th scope="col">Visit status</th><th scope="col">Action</th></tr></thead>
         <tbody>
         {% for row in untrained_pager.rows %}

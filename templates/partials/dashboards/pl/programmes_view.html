@@ -1,4 +1,4 @@
-{% load kpi_metrics %}
+{% load kpi_metrics frontend_filters %}
 {% load frontend_filters %}
 {% comment %}
 Programme implementation (owner, 2026-09-13): the school self-assessment
@@ -88,7 +88,7 @@ Programme Rollout holds the full picture behind each card.
           <div class="rpl-follow" role="listitem">
             <div class="rpl-follow__head">
               <span class="rpl-follow__who">{{ row.label }} ({{ row.code }})</span>
-              <span class="rpl-follow__due">{% if row.score is not None %}<strong data-tone="{{ row.tone }}">{{ row.score|floatformat:1 }}</strong> / 10{% else %}No confirmed SSA{% endif %}</span>
+              <span class="rpl-follow__due">{% if row.score is not None %}<strong style="color: {{ row.score|ssa_score_colour }}" title="{{ row.score|ssa_score_band_label }}">{{ row.score|floatformat:1 }}</strong> / 10{% else %}No confirmed SSA{% endif %}</span>
             </div>
             <span class="rpl-follow__what">{{ row.change }}</span>
           </div>

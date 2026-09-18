@@ -215,6 +215,24 @@ class LensAccessTest(TestCase):
         self.assertIn("cluster sessions", body)
         self.assertIn("busiest cluster", body)
 
+    def test_the_cluster_lens_groups_by_staff_and_drops_the_lead_column(self):
+        """Owner, 2026-09-18: group by staff name so a Lead can monitor the
+        individual, and drop the Programme Lead column — a Lead reading this
+        page sees their own clusters and their team's, so the Lead is a
+        heading rather than a column. District gets a column of its own."""
+        self._sign_in("lens-ia-by-lead@edify.org", "ImpactAssessment")
+        self._a_cluster()
+
+        body = self.client.get(
+            "/team-planning-oversight/?view=clusters"
+        ).content.decode()
+
+        self.assertIn("Clusters owned by", body)
+        self.assertIn(">District</th>", body)
+        self.assertNotIn(">Programme Lead</th>", body)
+        # One line per row rather than a cell that wraps to three.
+        self.assertIn("cluster-performance-table whitespace-nowrap", body)
+
     def test_the_lenses_swap_in_place_for_htmx(self):
         """A filter change must replace the workspace, not the whole page."""
         self._sign_in("lens-ia-htmx@edify.org", "ImpactAssessment")

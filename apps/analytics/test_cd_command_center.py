@@ -744,14 +744,60 @@ class PrioritySchoolsRankBySeverityTest(TestCase):
     def test_a_warning_band_is_named_rather_than_discarded(self):
         # `average_score__lt=5.0` is exactly the Critical band, so every
         # Warning school used to be dropped before ranking began.
+        #
+        # 5.5 rather than 6.0 since 2026-09-18: the Warning band now ends at
+        # 6.0 (apps.core.enums.ssa_score_band), so a 6.0 is Improving and is
+        # deliberately NOT a priority-school issue any more. The band this
+        # test is about is 5.0-5.9.
         warned = self._school("Warned", ssa_done=True)
-        self._ssa(warned, 6.0)
+        self._ssa(warned, 5.5)
         self._act(warned, "training", sf="TR-W")
 
         rows = {r["school"]: r for r in self._rows()}
 
         self.assertIn("School Warned", rows)
         self.assertIn("SSA Warning", rows["School Warned"]["issues"])
+
+    def test_a_school_short_of_strong_is_still_owed_support(self):
+        """Owner, 2026-09-18: "only 8.0 and above should stop being
+        recommended."
+
+        A 7.5 school is on its way to Strong, not finished. It used to fall
+        off this list at 7.0 — before any of this FY's band work — and the
+        line now sits at 8.0.
+        """
+        improving = self._school("Improving", ssa_done=True)
+        self._ssa(improving, 7.5)
+        self._act(improving, "training", sf="TR-I")
+
+        rows = {r["school"]: r for r in self._rows()}
+
+        self.assertIn("School Improving", rows)
+        self.assertIn("SSA Improving", rows["School Improving"]["issues"])
+
+    def test_being_short_of_strong_never_lists_a_school_on_its_own(self):
+        """It is the lightest weight there is, deliberately.
+
+        A priority list that names every school below 8 is not a priority
+        list. This one only sharpens the ranking of a school that already has
+        a gap — it cannot reach the floor by itself.
+        """
+        tidy = self._school("TidyImproving", ssa_done=True)
+        self._ssa(tidy, 7.5)
+        self._act(tidy, "school_visit", sf="SV-T")
+        self._act(tidy, "training", sf="TR-T")
+
+        self.assertNotIn("School TidyImproving", [r["school"] for r in self._rows()])
+
+    def test_a_strong_school_carries_no_ssa_issue_at_all(self):
+        strong = self._school("StrongSchool", ssa_done=True)
+        self._ssa(strong, 8.5)
+        self._act(strong, "training", sf="TR-S")
+
+        rows = {r["school"]: r for r in self._rows()}
+        issues = rows.get("School StrongSchool", {}).get("issues", [])
+
+        self.assertFalse([i for i in issues if i.startswith("SSA ")], issues)
 
     def test_missing_paperwork_alone_never_lists_a_school(self):
         tidy = self._school("Tidy", ssa_done=True)

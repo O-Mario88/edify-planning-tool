@@ -90,10 +90,15 @@ Open My Plan
 {% endif %}
 
 <!-- Filters Row -->
+{% comment %}`planning-saved` refreshes this list without leaving the page.
+Scheduling used to navigate to My Plan, so a planner walked back here after
+every single activity (owner, 2026-09-18). Staying put only works if the list
+keeps up: a row still offering to schedule work that is already scheduled is
+how the same visit gets planned twice.{% endcomment %}
 <form
 id="filters-form"
 hx-get="/planning"
-hx-trigger="change delay:100ms"
+hx-trigger="change delay:100ms, planning-saved from:body"
 hx-target="#schools-table-container"
 hx-swap="outerHTML"
 hx-push-url="true"

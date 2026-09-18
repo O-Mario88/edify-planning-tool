@@ -294,6 +294,70 @@ class CoverageTablesTest(CoverageFixture):
             groups, totals = coverage_service.planned_schools(items, period=period)
             self.assertEqual(sum(g.count for g in groups), totals["activities"])
 
+    def test_an_invited_school_is_a_planned_school(self):
+        """A cluster training is planned once and reaches many schools.
+
+        Owner, 2026-09-18: a school counts as planned once it has been invited
+        into a cluster training or meeting during planning, and IA counts those
+        schools by school rather than by cluster. The session carries a cluster
+        and no school, so without the invitation it is one activity at no
+        schools, and the schools in the room are missing from the table.
+        """
+        from apps.planning import oversight_service as oversight
+
+        self._session(_fy_day(11, 5), schools=[self.covered, self.uncovered])
+        items = oversight.build_items(self.pl_user, fy=FY)
+        groups, totals = coverage_service.planned_schools(items, period="fy")
+
+        rows = [row for group in groups for row in group.rows]
+        self.assertEqual(
+            {row["school_name"] for row in rows},
+            {"Covered Primary", "Uncovered Primary"},
+        )
+        self.assertEqual(totals["schools"], 2)
+        self.assertEqual(totals["cluster_session_schools"], 2)
+        # Two rows, because two schools have it planned — and one training,
+        # because one training is what was planned.
+        self.assertEqual(totals["rows"], 2)
+        self.assertEqual(totals["activities"], 1)
+        self.assertEqual(sum(g.activity_count for g in groups), 1)
+        self.assertEqual({row["category"] for row in rows}, {"Training"})
+        # The school's own CCEO, not whoever planned the session.
+        self.assertEqual({row["owner_name"] for row in rows}, {"Coverage CCEO"})
+
+    def test_being_in_the_cluster_is_not_being_invited(self):
+        from apps.planning import oversight_service as oversight
+
+        self._session(_fy_day(11, 5), schools=[self.covered])
+        items = oversight.build_items(self.pl_user, fy=FY)
+        groups, totals = coverage_service.planned_schools(items, period="fy")
+
+        rows = [row for group in groups for row in group.rows]
+        self.assertEqual({row["school_name"] for row in rows}, {"Covered Primary"})
+        self.assertEqual(totals["schools"], 1)
+
+    def test_a_visit_and_a_training_at_one_school_are_one_school(self):
+        from apps.planning import oversight_service as oversight
+
+        self._session(_fy_day(11, 5), schools=[self.covered])
+        self._visit(self.covered, _fy_day(11, 10))
+        items = oversight.build_items(self.pl_user, fy=FY)
+        _, totals = coverage_service.planned_schools(items, period="fy")
+
+        self.assertEqual(totals["schools"], 1)
+        self.assertEqual(totals["activities"], 2)
+        self.assertEqual(totals["rows"], 2)
+
+    def test_a_cancelled_session_invites_nobody_into_the_table(self):
+        from apps.planning import oversight_service as oversight
+
+        self._session(_fy_day(11, 5), schools=[self.covered], status="cancelled")
+        items = oversight.build_items(self.pl_user, fy=FY)
+        groups, totals = coverage_service.planned_schools(items, period="fy")
+
+        self.assertEqual(totals["schools"], 0)
+        self.assertEqual(groups, [])
+
     def test_the_page_renders_the_three_tables(self):
         self._session(_fy_day(11, 5), schools=[self.covered])
         self._visit(self.covered, _fy_day(11, 10))

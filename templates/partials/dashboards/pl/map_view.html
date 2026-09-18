@@ -48,7 +48,7 @@ its distribution table, then the team's districts beneath.
           <td class="px-3 py-2 text-right tabular-nums">{{ d.completed|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums font-bold {% if d.tone == 'success' %}text-emerald-600{% elif d.tone == 'danger' %}text-rose-600{% elif d.tone == 'warning' %}text-amber-600{% else %}text-slate-700{% endif %}">{% if d.pct is not None %}{{ d.pct }}%{% else %}—{% endif %}</td>
           <td class="px-3 py-2 text-right tabular-nums {% if d.critical %}text-rose-600 font-bold{% endif %}">{{ d.critical }}</td>
-          <td class="px-3 py-2 text-right tabular-nums">{% if d.avg_ssa is not None %}{{ d.avg_ssa|floatformat:1 }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums"{% if d.avg_ssa is not None %} style="color: {{ d.avg_ssa|ssa_score_colour }}" title="{{ d.avg_ssa|ssa_score_band_label }}"{% endif %}>{% if d.avg_ssa is not None %}{{ d.avg_ssa|floatformat:1 }}{% else %}—{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

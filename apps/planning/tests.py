@@ -134,6 +134,55 @@ class PlanningReadinessTestCase(TestCase):
             ),
             verification_status="confirmed",
         )
+        # Average 5.5 — the Warning band, which is what recommends staff
+        # support. It averaged 6.0 until 2026-09-18, when the Warning band
+        # narrowed to 5.0-5.9 (apps.core.enums.ssa_score_band) and a 6.0
+        # became Improving: light green, and deliberately "Monitor" rather
+        # than a recommended visit.
+        SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=4)
+        SsaScore.objects.create(
+            ssa_record=ssa, intervention="teaching_learning", score=7
+        )
+
+        res = PlanningReadinessService.get_school_readiness(
+            school,
+            has_catalogue=True,
+            has_scheduled=False,
+            partner_assignment=None,
+            weakest_area="Leadership",
+        )
+        self.assertEqual(res["planningReadiness"], "Ready for Support")
+        self.assertEqual(
+            res["recommendedAction"], "Recommend Staff (Visit/training support)"
+        )
+
+    def test_support_continues_until_a_school_is_strong(self):
+        """Owner, 2026-09-18: "only 8.0 and above should stop being
+        recommended."
+
+        An improving school is not a finished one. This used to read
+        "Monitor" — so a 7.5 school was dropped from support long before it
+        was Strong — and the line now sits at 8.0 for every score below it.
+        """
+        school = School.objects.create(
+            school_id="RDY-IMP",
+            name="Improving Primary",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            school_type="client",
+            cluster_id=self.cluster.id,
+            account_owner_id=self.staff.id,
+            current_fy_ssa_status="done",
+        )
+        ssa = SsaRecord.objects.create(
+            school=school,
+            fy="2026",
+            date_of_ssa=timezone.make_aware(
+                datetime(2026, 7, 1), timezone.get_current_timezone()
+            ),
+            verification_status="confirmed",
+        )
         SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=4)
         SsaScore.objects.create(
             ssa_record=ssa, intervention="teaching_learning", score=8
@@ -150,6 +199,42 @@ class PlanningReadinessTestCase(TestCase):
         self.assertEqual(
             res["recommendedAction"], "Recommend Staff (Visit/training support)"
         )
+
+    def test_a_strong_school_is_where_support_stops(self):
+        """The other side of the 8.0 line, so the rule is pinned both ways."""
+        school = School.objects.create(
+            school_id="RDY-STRONG",
+            name="Strong Primary",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            school_type="client",
+            cluster_id=self.cluster.id,
+            account_owner_id=self.staff.id,
+            current_fy_ssa_status="done",
+        )
+        ssa = SsaRecord.objects.create(
+            school=school,
+            fy="2026",
+            date_of_ssa=timezone.make_aware(
+                datetime(2026, 7, 1), timezone.get_current_timezone()
+            ),
+            verification_status="confirmed",
+        )
+        SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=8)
+        SsaScore.objects.create(
+            ssa_record=ssa, intervention="teaching_learning", score=8
+        )
+
+        res = PlanningReadinessService.get_school_readiness(
+            school,
+            has_catalogue=True,
+            has_scheduled=False,
+            partner_assignment=None,
+            weakest_area="Leadership",
+        )
+        self.assertNotIn("Recommend Staff", res["recommendedAction"])
+        self.assertNotIn("Recommend Partner", res["recommendedAction"])
 
     def test_baseline_ssa_visit_is_priced_as_the_school_visit_it_is(self):
         """An SSA visit is a staff school visit. `ssa_visit_rate` was a flat

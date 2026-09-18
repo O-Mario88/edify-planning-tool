@@ -502,6 +502,76 @@ class ClusterPerformanceTest(PortfolioFixture):
         self.assertEqual(alpha.budget, 75_000)
         self.assertEqual(alpha.visits_planned, 1)
 
+    def test_the_clusters_group_under_their_lead_and_their_cceo(self):
+        """Owner, 2026-09-18: group the lens by staff name, and drop the
+        Programme Lead column — the Lead is a heading, not a column."""
+        _, performance = self._rows()
+        by_lead = {group["lead_name"]: group for group in performance["by_lead"]}
+
+        self.assertEqual(list(by_lead), ["Alice Lead", "Bruno Lead"])
+        alice = by_lead["Alice Lead"]
+        self.assertEqual([o["owner_name"] for o in alice["owners"]], ["Cara Officer"])
+        self.assertEqual(
+            [entry["row"].name for entry in alice["owners"][0]["entries"]],
+            ["Alpha Cluster"],
+        )
+        self.assertEqual(alice["totals"]["clusters"], 1)
+        self.assertEqual(alice["totals"]["sessions"], 2)
+        self.assertEqual(alice["totals"]["trainings"], 1)
+        self.assertEqual(alice["totals"]["meetings"], 1)
+        self.assertEqual(alice["totals"]["visits"], 1)
+        self.assertEqual(alice["totals"]["dormant"], 0)
+        # Two member schools, one of them reached — the same school sat in the
+        # training and has the visit planned, and the other has neither. The
+        # share carries both numbers, because a share whose denominator is not
+        # on the page cannot be checked.
+        self.assertEqual(alice["totals"]["schools"], 2)
+        self.assertEqual(alice["totals"]["schools_reached"], 1)
+        self.assertEqual(alice["totals"]["reach"], 50)
+
+        bruno = by_lead["Bruno Lead"]
+        self.assertEqual([o["owner_name"] for o in bruno["owners"]], ["Eve Officer"])
+        self.assertEqual(bruno["totals"]["sessions"], 0)
+        # A cluster with nothing planned is the finding, so it is counted
+        # rather than dropped for having no work to show.
+        self.assertEqual(bruno["totals"]["dormant"], 1)
+
+    def test_the_grouping_follows_the_lead_filter(self):
+        performance = cluster_performance(
+            self.ia.user, fy=FY, program_lead_id=self.lead_b.id
+        )
+        self.assertEqual(
+            [group["lead_name"] for group in performance["by_lead"]], ["Bruno Lead"]
+        )
+
+    def test_the_grouping_adds_no_queries(self):
+        """A fold over the rows the page already built. A grouping that
+        re-queries is a second number that can disagree with the rows it is
+        made of."""
+        from apps.planning.cluster_performance_service import plans_by_lead
+
+        entries = self._rows()[1]["rows"]
+        with self.assertNumQueries(0):
+            plans_by_lead(entries)
+
+    def test_a_cluster_keeps_the_rank_it_earned_across_the_whole_list(self):
+        """Grouping must not re-rank inside a group: a cluster ranked 4th is
+        4th in the country, not 4th under its officer."""
+        _, performance = self._rows()
+        grouped = {
+            entry["row"].cluster_id: entry
+            for lead in performance["by_lead"]
+            for owner in lead["owners"]
+            for entry in owner["entries"]
+        }
+        flat = {entry["row"].cluster_id: entry for entry in performance["rows"]}
+
+        self.assertEqual(set(grouped), set(flat))
+        for cluster_id, entry in grouped.items():
+            self.assertEqual(entry["rank"], flat[cluster_id]["rank"])
+            self.assertEqual(entry["band"], flat[cluster_id]["band"])
+            self.assertEqual(entry["superlative"], flat[cluster_id]["superlative"])
+
     def test_the_lens_costs_a_fixed_number_of_queries(self):
         for index in range(10):
             cluster = Cluster.objects.create(
