@@ -658,12 +658,24 @@ def build_dashboard(principal, query: dict) -> dict:
             }
         )
 
+    # A school the upload could not place carries no district, and a district
+    # table has no row for it: `next(...)` found no name, so the row was built
+    # with `name=None` and the sort below compared None with a string and threw
+    # — a 500 on the whole page. The three sibling tables (staff, cluster,
+    # partner) have always skipped their own ungrouped rows in `_breakdown_rows`
+    # (`if group:`); this loop is written inline and never picked the rule up.
+    # Such schools still count in the header total and in every overall average;
+    # they are absent from the by-district grouping alone, which is the only
+    # honest place for a row with no district. The Data Quality Centre is where
+    # they are named and repaired.
     district_school_counts: dict[str, int] = defaultdict(int)
     for school in schools:
-        district_school_counts[school["district_id"]] += 1
+        if school["district_id"]:
+            district_school_counts[school["district_id"]] += 1
     district_assessed: dict[str, list[dict]] = defaultdict(list)
     for row in assessed:
-        district_assessed[row["district_id"]].append(row)
+        if row["district_id"]:
+            district_assessed[row["district_id"]].append(row)
 
     district_rows = []
     matrix_rows = []

@@ -232,6 +232,26 @@ class UnplacedSchoolsAreReachable(TestCase):
         self.assertIn(here.id, ids)
         self.assertNotIn(there.id, ids)
 
+    def test_the_ssa_performance_page_survives_a_school_with_no_district(self):
+        """A district table has no row for a school that has no district.
+
+        Reaching these schools put them in front of a by-district grouping
+        written inline rather than through `_breakdown_rows`, which skips its
+        own ungrouped rows. The district row was built with `name=None`, the
+        sort compared None with a string, and the whole page 500ed. They still
+        count in the header total and every overall average — the by-district
+        grouping is the one place a district-less school cannot appear.
+        """
+        from apps.analytics.ssa_performance_service import build_dashboard
+
+        data = build_dashboard(self.ia, {})
+        self.assertEqual(
+            data["kpis"]["total_schools"],
+            scoped_school_queryset(resolve_user_scope(self.ia)).count(),
+        )
+        self.assertNotIn(None, [row["id"] for row in data["districts"]])
+        self.assertNotIn(None, [row["name"] for row in data["districts"]])
+
     def test_no_school_at_all_is_not_an_unplaced_one(self):
         """A null FK reads null in every column behind it.
 
