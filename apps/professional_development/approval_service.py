@@ -3,13 +3,16 @@
 The lifecycle is identical for everyone: Supervisor → HR → Finance. Only the
 *people* filling those seats change, resolved generically:
 
-  Stage 1 (Supervisor) = whoever supervises this StaffProfile via
-    StaffSupervisorAssignment. This single rule reproduces every routing
-    example in the mandate (CCEO→PL, PL→CD, CD→RVP, PC/IA/Accountant→their
-    configured supervisor) without a per-role table. If nobody supervises the
-    requester (e.g. an RVP with no configured executive supervisor), stage 1
-    auto-clears with an audit note and the request proceeds straight to HR —
-    documented, not silently skipped.
+  Stage 1 (Supervisor) = the person the organisation's reporting line names,
+    resolved by apps.hr.review_authority — the one place that answers "who
+    reviews whom" (CCEO→PL, PL/IA/Accountant/PC/HR→CD, CD→RVP). This used to
+    be "whoever holds a StaffSupervisorAssignment row", which is not the same
+    thing twice over: the model carries oversight rows beside reporting lines,
+    so an assurance reviewer could end up deciding a Programme Lead's course,
+    and a row nobody had configured meant no supervisor at all. If the chart
+    genuinely names nobody (an RVP with no configured executive supervisor),
+    stage 1 auto-clears with an audit note and the request proceeds straight
+    to HR — documented, not silently skipped.
 
   Stage 2 (HR) = an active HumanResources user. If the requester IS HR, the
     pool excludes them (conflict of interest, §13/§31); if no other HR user
@@ -24,6 +27,7 @@ No employee may approve, sign off, or clear their own request — enforced by
 from __future__ import annotations
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import (
@@ -33,6 +37,11 @@ from apps.accounts.models import (
     User,
 )
 from apps.core.exceptions import BadRequest, Forbidden
+from apps.hr.review_authority import (
+    COUNTRY_DIRECTOR,
+    LIVE_STATES,
+    REVIEWER_ROLE_FOR,
+)
 
 from apps.professional_development.models import (
     FUNDED_TYPES,
@@ -43,6 +52,54 @@ from apps.professional_development.models import (
 HR_ROLE = "HumanResources"
 FINANCE_ROLE = "Accountant"
 LEADERSHIP_ROLES = ("CountryDirector", "RegionalVicePresident", "Admin")
+
+
+def _live(staff: StaffProfile) -> bool:
+    """Authority belongs to someone who still works here.
+
+    A suspended or exited manager holding a queue is how a request stops
+    moving without anyone being told it has stopped.
+    """
+    user = getattr(staff, "user", None)
+    return bool(
+        user
+        and user.is_active
+        and user.deleted_at is None
+        and staff.onboarding_state in LIVE_STATES
+    )
+
+
+def _directors_by_country(countries: set[str]) -> dict[str, StaffProfile]:
+    """The serving Country Director of each country, one query for all of them.
+
+    Only the Director is resolvable from the chart alone, and only as a
+    fallback for someone whose reporting line was never configured. Below the
+    Director the line is a roster rather than a role — a CCEO belongs to one
+    Programme Lead's team, and picking a Lead by country would hand a stranger
+    the approval — so that case keeps waiting for its row, as leave does.
+
+    This is the arm leave has always had (apps.hr.leave_services
+    .is_authorized_approver: "Fallback by country scoping for CD"), which is
+    why the same employee's leave reached their Director while their course
+    did not.
+    """
+    role_held = Q(user__active_role=COUNTRY_DIRECTOR) | Q(
+        user__roles__contains=[COUNTRY_DIRECTOR]
+    )
+    chosen: dict[str, StaffProfile] = {}
+    for profile in (
+        StaffProfile.objects.filter(country__in=countries)
+        .filter(role_held)
+        .filter(
+            user__is_active=True,
+            user__deleted_at__isnull=True,
+            onboarding_state__in=LIVE_STATES,
+        )
+        .select_related("user")
+        .order_by("user__name", "id")
+    ):
+        chosen.setdefault(profile.country, profile)
+    return chosen
 
 
 def _pick_approver(role: str, exclude_user_id: str) -> User | None:
@@ -159,12 +216,72 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
 class PDApprovalRoutingService:
     @staticmethod
     def supervisor_for(staff: StaffProfile) -> StaffProfile | None:
-        link = (
-            StaffSupervisorAssignment.objects.filter(supervisee=staff)
+        return PDApprovalRoutingService.supervisors_for([staff]).get(staff.id)
+
+    @staticmethod
+    def supervisors_for(staff: list[StaffProfile]) -> dict[str, StaffProfile]:
+        """Who reviews each of these people's courses, in three queries.
+
+        The rule is apps.hr.review_authority's, not a second copy of it: a
+        configured row counts when its holder is the role the chart names for
+        this person and is still employed. That is the whole of the fix to two
+        defects review_authority was written for and PD never picked up — an
+        oversight row answering "is this their manager?", and an exited manager
+        keeping the queue.
+
+        Where the chart names the Country Director and no row was ever
+        configured, the Director of that person's country answers, which is
+        what leave does. Everything else with no reviewer clears stage 1 for
+        HR, §13's documented auto-skip.
+
+        Bulk because the supervisor's own queue asks this about every waiting
+        request at once, and it must get the same answer the approval guard
+        will give — a queue that lists what you may not decide, or hides what
+        you must, is worse than no queue.
+        """
+        people = [person for person in staff if person]
+        if not people:
+            return {}
+
+        links: dict[str, list] = {}
+        for link in (
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=[person.id for person in people]
+            )
             .select_related("supervisor__user")
-            .first()
-        )
-        return link.supervisor if link else None
+            .order_by("id")
+        ):
+            links.setdefault(link.supervisee_id, []).append(link)
+
+        resolved: dict[str, StaffProfile] = {}
+        from_chart: list[StaffProfile] = []
+        for person in people:
+            user = getattr(person, "user", None)
+            expected = REVIEWER_ROLE_FOR.get(getattr(user, "active_role", ""), ())
+            if not expected:
+                continue
+            reviewer = next(
+                (
+                    link.supervisor
+                    for link in links.get(person.id, [])
+                    if getattr(link.supervisor.user, "active_role", "") in expected
+                    and _live(link.supervisor)
+                ),
+                None,
+            )
+            if reviewer:
+                resolved[person.id] = reviewer
+            elif expected == (COUNTRY_DIRECTOR,) and person.country:
+                from_chart.append(person)
+
+        if from_chart:
+            directors = _directors_by_country({p.country for p in from_chart})
+            for person in from_chart:
+                director = directors.get(person.country)
+                # Nobody supervises themselves, however the chart reads.
+                if director and director.id != person.id:
+                    resolved[person.id] = director
+        return resolved
 
     @staticmethod
     def acting_supervisor_ids(staff: StaffProfile) -> list[str]:

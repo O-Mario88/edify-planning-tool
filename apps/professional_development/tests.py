@@ -420,9 +420,9 @@ class SelfConflictTests(PDTestBase):
             requested_amount_cents=20_000_00,
             course_fee_cents=20_000_00,
         )
-        # The Accountant test fixture has no configured supervisor, so it
-        # would auto-skip straight to HR on a real submit() — set the status
-        # to match that reality rather than the (unreachable) supervisor stage.
+        # What this test is about starts at the HR stage; the Accountant's
+        # route to it — their Director, by the reporting line — is asserted in
+        # test_reporting_line.py rather than replayed here.
         req.status = PDStatus.SUBMITTED_TO_HR
         req.save()
         PDApprovalRoutingService.hr_approve(req.id, self.hr)
