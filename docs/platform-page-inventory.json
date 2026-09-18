@@ -20122,7 +20122,7 @@
       "evidence": [
         "template:pages/admin/staff_setup_queue.html",
         "test:referenced-by-automated-test",
-        "permission:users"
+        "permission:staff_setup_queue"
       ],
       "filters": "none",
       "findings": [],
@@ -20141,7 +20141,7 @@
       "page_title": "Staff Setup Queue",
       "page_type": "administration-or-configuration",
       "per_page_css": [],
-      "permission_key": "users",
+      "permission_key": "staff_setup_queue",
       "primary_action": "Match",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Staff setup queue - matching raw uploaded staff to user profiles.",
@@ -20150,13 +20150,14 @@
       "role_access": [
         "ADMIN",
         "CD",
-        "HR"
+        "HR",
+        "IA"
       ],
       "route": "/admin-panel/staff-setup-queue",
       "route_name": "admin_staff_setup_queue",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/admin/staff-setup-queue"
+        "/admin-panel/staff-setup-queue"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -85702,7 +85703,7 @@
         "GET",
         "POST"
       ],
-      "page_permission": "users",
+      "page_permission": "staff_setup_queue",
       "required_permissions": [],
       "route": "/admin-panel/staff-setup-queue",
       "route_name": "admin_staff_setup_queue",

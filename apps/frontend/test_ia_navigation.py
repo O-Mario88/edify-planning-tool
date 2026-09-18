@@ -85,6 +85,10 @@ IA_SIDEBAR = [
             # did not.
             ("Upload Schools", "/schools/upload"),
             ("Upload History", "/admin-panel/school-upload-history"),
+            # The rows those uploads could not attach to a staff profile. Its
+            # own page key since 2026-09-18 so IA can reach it without holding
+            # `users`, which also gates the user directory.
+            ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
             ("Upload Center", "/uploads"),
@@ -189,6 +193,30 @@ class IaSidebarTest(SimpleTestCase):
                     if i["active"]
                 ]
                 self.assertEqual(lit, ["Country Oversight"])
+
+    def test_the_unattached_rows_its_uploads_leave_are_reachable(self):
+        """Owner, 2026-09-18: a school "attached to the staff" is one they can
+        edit and give a district to.
+
+        That is how an unplaced school gets back into every country lens — but
+        only once somebody attaches an owner, and the queue where that happens
+        was gated on `users`, which IA does not and should not hold. IA runs
+        the upload, so the rows it fails to attach are IA's to resolve. The
+        queue has its own page key now; `users` is untouched, so IA still
+        cannot reach the user directory or roles and permissions.
+        """
+        doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
+        self.assertEqual(
+            doors.get("/admin-panel/staff-setup-queue"), "Unassigned Schools"
+        )
+        self.assertIn(IA, PAGE_PERMISSIONS["staff_setup_queue"])
+        # The widening is the queue alone — not the pages `users` still gates.
+        self.assertNotIn(IA, PAGE_PERMISSIONS["users"])
+        self.assertNotIn(IA, PAGE_PERMISSIONS["roles_permissions"])
+        # And it does not quietly take the queue away from anyone who had it.
+        for role in PAGE_PERMISSIONS["users"]:
+            with self.subTest(kept=role):
+                self.assertIn(role, PAGE_PERMISSIONS["staff_setup_queue"])
 
     def test_the_upload_pages_it_owns_have_doors(self):
         """Owner, 2026-09-18: IA "is not accessing any uploaded school or SSA".

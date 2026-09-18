@@ -1340,11 +1340,12 @@
    "view": "apps.frontend.views.extended_views.admin_school_upload_history_view"
   },
   {
-   "page_permission": "users",
+   "page_permission": "staff_setup_queue",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
     "CountryDirector",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -17836,7 +17837,7 @@
   "CCEO": 525,
   "CountryDirector": 753,
   "HumanResources": 329,
-  "ImpactAssessment": 616,
+  "ImpactAssessment": 617,
   "MfiLoanOfficer": 127,
   "MfiPartnerAdmin": 130,
   "PartnerAdmin": 218,
@@ -17847,8 +17848,8 @@
   "RegionalVicePresident": 364
  },
  "summary": {
-  "page_keys_declared": 174,
-  "page_keys_in_navigation": 191,
+  "page_keys_declared": 175,
+  "page_keys_in_navigation": 192,
   "routes_guarded": 1094,
   "routes_total": 1287,
   "routes_unguarded": 193,

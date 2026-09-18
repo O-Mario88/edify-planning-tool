@@ -61,6 +61,8 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # they sit beside.
     "school_upload": (WEEKLY, 121),
     "upload_history": (WEEKLY, 122),
+    # The rows those uploads could not attach to anyone, worked off beside them.
+    "staff_setup_queue": (WEEKLY, 123),
     "ia_returned": (WEEKLY, 125),
     "data_quality_center": (WEEKLY, 130),
     "ia_samples": (WEEKLY, 135),

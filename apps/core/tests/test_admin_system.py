@@ -111,6 +111,42 @@ class AdminSystemTestCase(TestCase):
         self.assertEqual(self.school.account_owner_status, "matched")
         self.assertEqual(self.school.account_owner_id, str(self.cceo_profile.id))
 
+    def test_the_queues_own_buttons_post_somewhere_that_exists(self):
+        """The form action the page renders, not the one the test knows.
+
+        `test_staff_setup_queue_renders_and_matches` posts straight to
+        /admin-panel/staff-setup-queue, so it passed for as long as the
+        template's own Match and Ignore forms pointed at
+        /admin/staff-setup-queue — which is not this view's route. That path
+        does not even 404: it resolves to `catch_all_view`, so both buttons
+        posted into nothing and reported no error, for every role that could
+        open the page. A test that posts to the URL it already knows can
+        never see this; read the action out of the HTML and resolve it.
+        """
+        import re
+
+        from django.urls import Resolver404, resolve
+
+        html = self.client.get("/admin-panel/staff-setup-queue").content.decode()
+        # The queue's own forms are the ones carrying its match/ignore verb;
+        # the shell around them has its own (the topbar search), which is not
+        # what this is about.
+        actions = {
+            action
+            for action, body in re.findall(
+                r'<form[^>]*\saction="([^"]+)"[^>]*>(.*?)</form>', html, re.S
+            )
+            if 'name="action"' in body
+        }
+        self.assertTrue(actions, "the queue rendered no match/ignore form")
+        for action in actions:
+            with self.subTest(action=action):
+                try:
+                    match = resolve(action)
+                except Resolver404:  # pragma: no cover - the bug this pins
+                    self.fail(f"{action} resolves to no view")
+                self.assertEqual(match.func.__name__, "admin_staff_setup_queue_view")
+
     def test_school_upload_history_renders_and_rollbacks(self):
         response = self.client.get("/admin-panel/school-upload-history")
         self.assertEqual(response.status_code, 200)

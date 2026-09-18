@@ -326,9 +326,20 @@ class PeoplePageLinkTest(TestCase):
                 self.assertNotIn('href="/leave/team-availability"', html)
         self.assertIn(full_report, self._page(PL, "/personal-time-off/"))
 
-    def test_the_data_quality_center_offers_the_setup_queue_only_where_it_opens(self):
+    def test_the_data_quality_center_offers_the_setup_queue_where_it_opens(self):
+        """Both readers of this page can now follow the link.
+
+        Impact Assessment used to be this test's negative example: it could
+        open the Data Quality Center and not the Staff Setup Queue, so the
+        link was hidden from it. On 2026-09-18 the queue stopped being gated
+        on `users` — IA runs the school upload, so the unattached rows are
+        its own — and the negative case went with it, because the page itself
+        is only `{IA, ADMIN}` and both hold the queue now. The `can_open`
+        gate is unchanged and still covered by this class's other tests; what
+        moved is which side of it IA sits on.
+        """
         queue = 'href="/admin-panel/staff-setup-queue"'
-        self.assertNotIn(queue, self._page(IA, "/admin-panel/data-quality-center"))
+        self.assertIn(queue, self._page(IA, "/admin-panel/data-quality-center"))
         self.assertIn(queue, self._page(ADMIN, "/admin-panel/data-quality-center"))
 
     def test_hr_today_draws_a_row_action_only_where_the_viewer_can_follow_it(self):

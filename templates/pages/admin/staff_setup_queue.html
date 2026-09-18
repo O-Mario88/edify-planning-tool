@@ -46,7 +46,7 @@ Pending Link
 </span>
 </td>
 <td class="px-4 py-4" data-label="Link to Registered Staff">
-<form id="match-form-{{ school.id }}" method="post" action="/admin/staff-setup-queue">
+<form id="match-form-{{ school.id }}" method="post" action="/admin-panel/staff-setup-queue">
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.id }}">
 <input type="hidden" name="action" value="match">
@@ -69,7 +69,7 @@ class="px-2.5 py-1 edify-primary-solid edify-primary-hover text-white rounded-co
 >
 Match
 </button>
-<form method="post" action="/admin/staff-setup-queue" class="inline">
+<form method="post" action="/admin-panel/staff-setup-queue" class="inline">
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.id }}">
 <input type="hidden" name="action" value="ignore">
