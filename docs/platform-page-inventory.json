@@ -31674,7 +31674,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-3CB2AE6648",
-      "page_title": "Country Planning Oversight \u00b7 Edify",
+      "page_title": "Country Oversight",
       "page_type": "planning-or-creation",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
@@ -31746,7 +31746,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:country_planning_oversight"
       ],
       "filters": "none",
@@ -31810,7 +31810,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -31911,7 +31911,7 @@
       "drawers": false,
       "evidence": [
         "template:partials/oversight/cd_team_detail.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:country_planning_oversight"
       ],
       "filters": "none",
@@ -31977,7 +31977,7 @@
       "templates": [
         "partials/oversight/cd_team_detail.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -76738,7 +76738,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-232F86FE85",
-      "page_title": "Upload School Data - Edify Command Center",
+      "page_title": "Upload Schools",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_upload",
@@ -103593,7 +103593,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 527,
-    "test_referenced": 706,
+    "test_referenced": 708,
     "theme_contract_pass": 527
   }
 }
