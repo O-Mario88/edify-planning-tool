@@ -8,7 +8,9 @@
 <th class="px-3 py-2.5">Activity</th>
 <th class="px-3 py-2.5">Planned</th>
 <th class="px-3 py-2.5">Minimum viable cost</th>
-<th class="px-3 py-2.5">Status</th>
+<th class="px-3 py-2.5 min-w-[120px]">Budget status</th>
+<th class="px-3 py-2.5 min-w-[120px]">Verification</th>
+<th class="px-3 py-2.5 min-w-[110px]">Status</th>
 <th class="px-3 py-2.5 text-right">Next action</th>
 <th class="px-3 py-2.5 text-right">Actions</th>
 </tr>
@@ -91,12 +93,14 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 {% comment %}Status badges on ONE line. Stacked, they gave a four-badge row
 three times the height of a two-badge row and made the table impossible to
 scan. The strip scrolls rather than wrapping.{% endcomment %}
-<td class="px-3 py-2.5" data-label="Status">
-<div class="mp-badges">
-{% for label, variant in act.badges %}
-<span class="mp-badge mp-badge--{{ variant }}">{{ label }}</span>
-{% endfor %}
-</div>
+<td class="px-3 py-2.5 whitespace-nowrap" data-label="Budget status">
+  <span class="mp-badge mp-badge--{{ act.budget_status_color|default:'slate' }}">{{ act.budget_status|default:'—' }}</span>
+</td>
+<td class="px-3 py-2.5 whitespace-nowrap" data-label="Verification">
+  <span class="mp-badge mp-badge--{{ act.verification_color|default:'purple' }}">{{ act.verification_status|default:'—' }}</span>
+</td>
+<td class="px-3 py-2.5 whitespace-nowrap" data-label="Status">
+  <span class="mp-badge mp-badge--{{ act.status_tone|default:'slate' }}">{{ act.status_label|default:'—' }}</span>
 </td>
 
 <!-- Column 4: Next Action -->

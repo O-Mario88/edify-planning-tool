@@ -77,53 +77,7 @@ route's, so each is checked once here rather than per row.
     </button>
 
     <div id="cluster-group-{{ group.key }}" x-show="open" x-cloak class="border-t edify-border">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <caption class="sr-only">Clusters held by {{ group.label }}</caption>
-          <thead>
-            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
-              <th scope="col" class="px-4 py-2 font-semibold">Cluster</th>
-              <th scope="col" class="px-4 py-2 font-semibold">District</th>
-              {% if not is_team_lens %}
-              <th scope="col" class="px-4 py-2 font-semibold">Responsible CCEO</th>
-              {% endif %}
-              <th scope="col" class="px-4 py-2 font-semibold text-right">Schools</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% comment %}
-            Bounded, and it says so below when the bound binds. One Programme
-            Lead can hold more clusters than anybody scans in a table, and a
-            silent cap reads as "this is all of them".
-            {% endcomment %}
-            {% for row in group.clusters|slice:":50" %}
-            <tr class="border-t edify-border">
-              <td class="px-4 py-2.5">
-                {% if can_open_cluster %}<a href="/clusters/{{ row.cluster.id }}" class="font-semibold hover:underline edify-primary-text">{{ row.cluster.name }}</a>{% else %}<span class="font-semibold">{{ row.cluster.name }}</span>{% endif %}
-              </td>
-              <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
-              {% if not is_team_lens %}
-              <td class="px-4 py-2.5 text-sm">{% if row.owner %}{{ row.owner }}{% else %}<span class="edify-text-muted">Unassigned</span>{% endif %}</td>
-              {% endif %}
-              <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.schools|intcomma }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <ul class="hidden divide-y edify-border">
-        {% for row in group.clusters|slice:":50" %}
-        <li class="p-4 space-y-1">
-          {% if can_open_cluster %}<a href="/clusters/{{ row.cluster.id }}" class="font-semibold text-sm hover:underline edify-primary-text">{{ row.cluster.name }}</a>{% else %}<span class="font-semibold text-sm">{{ row.cluster.name }}</span>{% endif %}
-          <p class="edify-text-caption edify-text-muted">
-            {{ row.district|default:"—" }}
-            {% if not is_team_lens and row.owner %} · {{ row.owner }}{% endif %}
-            · {{ row.schools|intcomma }} school{{ row.schools|pluralize }}
-          </p>
-        </li>
-        {% endfor %}
-      </ul>
+      {% include "partials/oversight/_cluster_table.html" with clusters=group.clusters|slice:":50" %}
 
       {% if group.count > 50 %}
       <p class="px-4 py-3 edify-text-caption edify-text-muted border-t edify-border">

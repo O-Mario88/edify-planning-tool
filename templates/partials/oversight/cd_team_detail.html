@@ -307,7 +307,7 @@ and level 3 (4 distinct tables per staff member:
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose (Meeting Topic)</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
-              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Budget</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]">Participants</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
@@ -342,8 +342,8 @@ and level 3 (4 distinct tables per staff member:
                 <span class="text-slate-400">—</span>
                 {% endif %}
               </td>
-              <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums text-slate-700 dark:text-slate-300">
-                UGX {{ item.budget|intcomma }}
+              <td class="px-4 py-2.5 whitespace-nowrap text-center tabular-nums font-semibold text-slate-800 dark:text-slate-200" data-label="Participants">
+                {{ item.participants|default:"—" }}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
                 UGX {{ item.planned_cost|intcomma }}

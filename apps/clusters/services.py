@@ -1751,15 +1751,34 @@ class ClusterDashboardService:
             else:
                 sub_county_display = "District-level cluster"
 
+            least_str = "—"
+            if weakest and isinstance(weakest, list) and len(weakest) > 0:
+                first_w = weakest[0]
+                if isinstance(first_w, dict) and first_w.get("label"):
+                    least_str = f"{first_w.get('label')} ({first_w.get('avg', '')})"
+
+            last_act_dt = None
+            if last_meeting_at and last_training_at:
+                last_act_dt = max(last_meeting_at, last_training_at)
+            elif last_meeting_at:
+                last_act_dt = last_meeting_at
+            elif last_training_at:
+                last_act_dt = last_training_at
+            last_act_str = last_act_dt.strftime("%b %d, %Y") if last_act_dt else "—"
+
             cards.append(
                 {
                     "id": c.id,
+                    "cluster_id": c.id,
                     "name": c.name,
                     "district": c.district.name if c.district else "Unknown",
                     "sub_county": sub_county_display,
                     "schools_count": schools_count,
                     "staff_count": staff_count,
                     "avg_ssa": avg_ssa,
+                    "ssa_score_avg": f"{avg_ssa}" if avg_ssa is not None else "—",
+                    "least_performing_intervention": least_str,
+                    "last_activity_date": last_act_str,
                     "last_meeting_date": last_meeting_date,
                     "last_training_date": last_training_date,
                     "weakest_interventions": weakest,

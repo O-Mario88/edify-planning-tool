@@ -22,19 +22,21 @@ Open Planning
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
 {% if cluster_meetings %}
-<table class="edify-data-table mp-table edify-record-table">
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
-<th>Cluster Name</th>
-<th>District</th>
-<th>Planned Date</th>
-<th>Executor</th>
-<th>Purpose (Meeting Topic)</th>
-<th>SSA Intervention</th>
-<th class="text-right">Budget</th>
-<th class="text-right">Cost</th>
-<th>Status</th>
-<th class="text-right">Actions</th>
+<th class="min-w-[180px]">Cluster Name</th>
+<th class="min-w-[120px]">District</th>
+<th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[120px]">Executor</th>
+<th class="min-w-[180px]">Purpose (Meeting Topic)</th>
+<th class="min-w-[140px]">SSA Intervention</th>
+<th class="text-center min-w-[110px]">Participants</th>
+<th class="text-right min-w-[100px]">Cost</th>
+<th class="min-w-[120px]">Budget status</th>
+<th class="min-w-[120px]">Verification</th>
+<th class="min-w-[110px]">Status</th>
+<th class="text-right min-w-[90px]">Actions</th>
 </tr>
 </thead>
 <tbody>
@@ -54,9 +56,17 @@ Open Planning
 <span class="text-slate-400">—</span>
 {% endif %}
 </td>
-<td class="text-right font-medium tabular-nums whitespace-nowrap text-slate-700" data-label="Budget">UGX {{ row.budget_total|default:0|intcomma }}</td>
+<td class="text-center font-semibold tabular-nums text-slate-800 dark:text-slate-200" data-label="Participants">{{ row.expected_participants|default:"—" }}</td>
 <td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">UGX {{ row.budget_total|default:0|intcomma }}</td>
-<td>{% include "partials/my_plan/row_badges.html" %}</td>
+<td data-label="Budget status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>
+</td>
+<td data-label="Verification" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.verification_color|default:'purple' }}">{{ row.verification_status|default:'—' }}</span>
+</td>
+<td data-label="Status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label|default:'—' }}</span>
+</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
 </tr>

@@ -91,133 +91,83 @@
     </div>
   </div>
 
-  {# ── Hierarchy Tabs & Tables ────────────────────────────────────────── #}
-  {% if is_programme_lead %}
-    {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
-    {% if cceo_tabs %}
-    <div x-data="{ activeCceo: '{{ cceo_tabs.0.id }}' }" class="space-y-4">
-      <div class="border-b edify-border bg-white dark:bg-slate-900 rounded-lg p-2 shadow-xs">
-        <div class="flex items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            CCEOs in Your Team ({{ cceo_tabs|length }})
-          </span>
-          <span class="edify-text-caption edify-text-muted">Select an officer to view clusters under their responsibility</span>
-        </div>
-        <nav class="flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist">
-          {% for cceo in cceo_tabs %}
-          <button type="button"
-                  role="tab"
-                  :aria-selected="activeCceo === '{{ cceo.id }}'"
-                  @click="activeCceo = '{{ cceo.id }}'"
-                  :class="activeCceo === '{{ cceo.id }}' ? 'bg-primary text-white font-bold shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'"
-                  class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-            <span>{{ cceo.name }}</span>
-            <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} clusters</span>
-          </button>
-          {% endfor %}
-        </nav>
-      </div>
-
-      {% for cceo in cceo_tabs %}
-      <div x-show="activeCceo === '{{ cceo.id }}'" x-cloak class="space-y-3">
-        <div class="card p-0 overflow-hidden shadow-xs border edify-border">
-          <div class="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex items-center justify-between">
-            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <span>{{ cceo.name }}'s Clusters</span>
-              <span class="pill pill-info text-xs font-semibold">{{ cceo.count }} clusters</span>
-              <span class="text-xs text-slate-500 font-normal">({{ cceo.schools }} member schools)</span>
-            </h3>
+  {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
+  {% if leads %}
+  <div x-data="{ activeLead: '{{ selected_program_lead|default:leads.0.id }}' }" class="space-y-5">
+    {# Level 1: Supervising PL Tabs #}
+    <div class="border-b edify-border bg-white dark:bg-slate-900 rounded-t-xl px-2 pt-2 shadow-xs">
+      <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
+        {% for lead in leads %}
+        <button type="button"
+                role="tab"
+                :aria-selected="activeLead === '{{ lead.id }}'"
+                @click="activeLead = '{{ lead.id }}'"
+                :class="activeLead === '{{ lead.id }}' ? 'border-primary text-primary font-bold bg-slate-50/80 dark:bg-slate-800/80 shadow-xs' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50/50'"
+                class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
+          <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+            {{ lead.name|slice:":2"|upper }}
           </div>
-          {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters %}
-        </div>
-      </div>
-      {% endfor %}
+          <span>{{ lead.name }}</span>
+          <span class="pill pill-neutral text-xs font-semibold">{{ lead.count }} clusters</span>
+        </button>
+        {% endfor %}
+      </nav>
     </div>
-    {% else %}
-    <div class="card p-12 text-center text-slate-500">
-      <p class="font-medium text-sm">No clusters found under your supervised team members.</p>
-    </div>
-    {% endif %}
 
+    {# Level 2: CCEO Tabs under each PL #}
+    {% for lead in leads %}
+    <div x-show="activeLead === '{{ lead.id }}'" x-cloak class="space-y-4">
+      {% if lead.cceo_tabs %}
+      <div x-data="{ activeOfficer: '{{ lead.cceo_tabs.0.id }}' }" class="space-y-4">
+        <div class="border-b edify-border bg-slate-50/70 dark:bg-slate-800/50 rounded-lg p-2 shadow-xs">
+          <div class="flex items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              CCEOs under {{ lead.name }} ({{ lead.cceo_tabs|length }})
+            </span>
+            <span class="edify-text-caption edify-text-muted">Select an officer to view clusters in their portfolio</span>
+          </div>
+          <nav class="flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist">
+            {% for cceo in lead.cceo_tabs %}
+            <button type="button"
+                    role="tab"
+                    :aria-selected="activeOfficer === '{{ cceo.id }}'"
+                    @click="activeOfficer = '{{ cceo.id }}'"
+                    :class="activeOfficer === '{{ cceo.id }}' ? 'bg-primary text-white font-bold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border edify-border hover:bg-slate-100'"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
+              <span>{{ cceo.name }}</span>
+              <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
+            </button>
+            {% endfor %}
+          </nav>
+        </div>
+
+        {% for cceo in lead.cceo_tabs %}
+        <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak class="space-y-3">
+          <div class="card p-0 overflow-hidden shadow-xs border edify-border">
+            <div class="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex items-center justify-between">
+              <h4 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span>{{ cceo.name }}'s Clusters</span>
+                <span class="pill pill-info text-xs font-semibold">{{ cceo.count }} clusters</span>
+                <span class="text-xs text-slate-500 font-normal">({{ cceo.schools }} member schools)</span>
+              </h4>
+            </div>
+            {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card p-8 text-center text-slate-400 text-xs">
+        No clusters assigned under this Program Lead.
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
   {% else %}
-    {# ── Country / Regional View: Level 1 Supervising PL -> Level 2 CCEO Tabs #}
-    {% if leads %}
-    <div x-data="{ activeLead: '{{ selected_program_lead|default:leads.0.id }}' }" class="space-y-5">
-      {# Level 1: Supervising PL Tabs #}
-      <div class="border-b edify-border bg-white dark:bg-slate-900 rounded-t-xl px-2 pt-2 shadow-xs">
-        <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
-          {% for lead in leads %}
-          <button type="button"
-                  role="tab"
-                  :aria-selected="activeLead === '{{ lead.id }}'"
-                  @click="activeLead = '{{ lead.id }}'"
-                  :class="activeLead === '{{ lead.id }}' ? 'border-primary text-primary font-bold bg-slate-50/80 dark:bg-slate-800/80 shadow-xs' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50/50'"
-                  class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
-            <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
-              {{ lead.name|slice:":2"|upper }}
-            </div>
-            <span>{{ lead.name }}</span>
-            <span class="pill pill-neutral text-xs font-semibold">{{ lead.count }} clusters</span>
-          </button>
-          {% endfor %}
-        </nav>
-      </div>
-
-      {# Level 2: CCEO Tabs under each PL #}
-      {% for lead in leads %}
-      <div x-show="activeLead === '{{ lead.id }}'" x-cloak class="space-y-4">
-        {% if lead.cceo_tabs %}
-        <div x-data="{ activeOfficer: '{{ lead.cceo_tabs.0.id }}' }" class="space-y-4">
-          <div class="border-b edify-border bg-slate-50/70 dark:bg-slate-800/50 rounded-lg p-2 shadow-xs">
-            <div class="flex items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                CCEOs under {{ lead.name }} ({{ lead.cceo_tabs|length }})
-              </span>
-              <span class="edify-text-caption edify-text-muted">Select an officer to view clusters in their portfolio</span>
-            </div>
-            <nav class="flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist">
-              {% for cceo in lead.cceo_tabs %}
-              <button type="button"
-                      role="tab"
-                      :aria-selected="activeOfficer === '{{ cceo.id }}'"
-                      @click="activeOfficer = '{{ cceo.id }}'"
-                      :class="activeOfficer === '{{ cceo.id }}' ? 'bg-primary text-white font-bold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border edify-border hover:bg-slate-100'"
-                      class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-                <span>{{ cceo.name }}</span>
-                <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
-              </button>
-              {% endfor %}
-            </nav>
-          </div>
-
-          {% for cceo in lead.cceo_tabs %}
-          <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak class="space-y-3">
-            <div class="card p-0 overflow-hidden shadow-xs border edify-border">
-              <div class="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex items-center justify-between">
-                <h4 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>{{ cceo.name }}'s Clusters</span>
-                  <span class="pill pill-info text-xs font-semibold">{{ cceo.count }} clusters</span>
-                  <span class="text-xs text-slate-500 font-normal">({{ cceo.schools }} member schools)</span>
-                </h4>
-              </div>
-              {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters %}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="card p-8 text-center text-slate-400 text-xs">
-          No clusters assigned under this Program Lead.
-        </div>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="card p-12 text-center text-slate-500">
-      <p class="font-medium text-sm">No clusters found in the selected period.</p>
-    </div>
-    {% endif %}
+  <div class="card p-12 text-center text-slate-500">
+    <p class="font-medium text-sm">No clusters found in the selected period.</p>
+  </div>
   {% endif %}
 
 </div>

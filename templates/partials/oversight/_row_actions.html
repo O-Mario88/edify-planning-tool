@@ -4,7 +4,17 @@ Role-aware Actions control for planning and oversight tables.
 - For owners (CCEO or owning PL): Actions dropdown with View, Complete, Reschedule, Cancel.
 {% endcomment %}
 <td class="px-3 py-2.5 text-right whitespace-nowrap" data-record-action>
-  {% if item.is_owner or is_owner or is_my_plan %}
+  {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' or item.activity_status == 'accountant_confirmed' or item.activity_status == 'closed' %}
+  <button type="button"
+          class="inline-flex items-center gap-1 font-semibold text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+          hx-get="{% if item.activity_id %}/team-planning-oversight/detail?activity_id={{ item.activity_id }}{% else %}/team-planning-oversight/detail?assignment_id={{ item.partner_assignment_id }}{% endif %}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          title="View Completed Activity">
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+    Complete
+  </button>
+  {% elif item.is_owner or is_owner or is_my_plan %}
   <div class="row-menu relative inline-block text-left" x-data="rowMenu"
        @keydown.escape.window="close()" @click.outside="close()"
        @scroll.window.capture.passive="reposition()" @resize.window="reposition()">

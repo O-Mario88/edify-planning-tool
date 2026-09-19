@@ -1085,7 +1085,6 @@ def get_frontend_context(principal, query: dict) -> dict:
     for a in activities:
         status_label, status_class = get_activity_status_label_and_class(a, today)
         next_act = compute_next_action(a, today)
-
         # Budget status and badges
         badges = []
         # .first() issues a fresh LIMIT 1 query even when the relation is
@@ -1093,37 +1092,76 @@ def get_frontend_context(principal, query: dict) -> dict:
         # here (and on the nested relations below) meant three extra queries
         # per row, which is most of the O(n) growth the scaling gate caught.
         first_line = next(iter(a.schedule_cost_lines.all()), None)
+        budget_status = "No Budget"
+        budget_status_color = "slate"
 
         if first_line:
             wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
-            if wfr_line:
+            if wfr_line and getattr(wfr_line, "weekly_fund_request", None):
                 wfr = wfr_line.weekly_fund_request
                 if wfr.status == "pending_responsible_confirmation":
-                    # "In Weekly Request" rather than "Included in Weekly
-                    # Request": the row carries three chips on one line, and
-                    # the longer wording alone pushed the table past its
-                    # column and into a horizontal scroller.
                     badges.append(("In Weekly Request", "amber"))
+                    budget_status = "In Weekly Request"
+                    budget_status_color = "blue"
                 elif wfr.status == "submitted_to_pl":
                     badges.append(("Awaiting PL Approval", "amber"))
+                    budget_status = "Awaiting PL Approval"
+                    budget_status_color = "amber"
                 elif wfr.status == "submitted_to_cd":
                     badges.append(("Awaiting CD Approval", "amber"))
+                    budget_status = "Awaiting CD Approval"
+                    budget_status_color = "amber"
                 elif wfr.status in (
                     "returned_by_pl",
                     "returned_by_cd",
                     "returned_by_accountant",
                 ):
                     badges.append(("Request Returned", "red"))
+                    budget_status = "Request Returned"
+                    budget_status_color = "red"
                 elif wfr.status == "confirmed_for_advance":
                     badges.append(("Approved — Ready for Disbursement", "green"))
+                    budget_status = "Approved"
+                    budget_status_color = "green"
                 elif wfr.status == "disbursed":
                     badges.append(("Disbursed", "green"))
+                    budget_status = "Disbursed"
+                    budget_status_color = "green"
                 else:
                     badges.append(("Included in Request", "blue"))
+                    budget_status = "Included in Request"
+                    budget_status_color = "blue"
             else:
                 badges.append(("Budget Created", "blue"))
+                budget_status = "Budget Created"
+                budget_status_color = "blue"
         else:
             badges.append(("No Budget", "slate"))
+            budget_status = "No Budget"
+            budget_status_color = "slate"
+
+        # Verification status: "IA pending for PL and PL pending for CCEO"
+        is_pl_viewer = (
+            getattr(scope, "active_role", "") in ("Program Lead", "Country Director", "Impact Assessment", "Regional Programme Lead", "Admin")
+            or getattr(principal, "active_role", "") in ("Program Lead", "Country Director", "Impact Assessment", "Regional Programme Lead", "Admin")
+        )
+        if a.status in ("ia_verified", "accountant_confirmed", "closed") or a.ia_verification_status == "confirmed":
+            verification_status = "Verified"
+            verification_color = "green"
+        elif a.status in ("returned_by_pl", "returned_by_ia") or a.ia_verification_status == "returned":
+            verification_status = "Returned"
+            verification_color = "red"
+        elif is_pl_viewer:
+            verification_status = "IA pending"
+            verification_color = "purple"
+        else:
+            verification_status = "PL pending"
+            verification_color = "purple"
+
+        is_completed_act = (
+            a.status in ("completed", "ia_verified", "accountant_confirmed", "closed")
+            or a.status in COMPLETED_WORK_STATUSES
+        )
 
         # A finished stage says so in the same words every time — "<stage>
         # complete" — so a row can be read down its badges without translating
@@ -1178,12 +1216,12 @@ def get_frontend_context(principal, query: dict) -> dict:
         if is_core:
             slot = core_slot_by_activity.get(a.id)
             if slot:
-                core_slot_kind, sequence = slot
+                core_slot_kind, num = slot
                 if core_slot_kind == "visit":
-                    visit_number = f"V{sequence}"
+                    visit_number = f"V{num}"
                 elif core_slot_kind == "training":
-                    training_number = f"T{sequence}"
-                core_progress = core_progress_by_activity.get(a.id, "")
+                    training_number = f"T{num}"
+            core_progress = core_progress_by_activity.get(a.id, "")
 
         # Partner details
         partner_name = ""
@@ -1212,6 +1250,13 @@ def get_frontend_context(principal, query: dict) -> dict:
             else:
                 returned_by = "Project Leader"
 
+
+        cluster_district_name = ""
+        if a.cluster and getattr(a.cluster, "district", None):
+            cluster_district_name = getattr(a.cluster.district, "name", "") or ""
+        elif a.school and getattr(a.school, "district", None):
+            cluster_district_name = getattr(a.school.district, "name", "") or ""
+
         # Staff planning displays the minimum estimate; payment ledgers retain
         # country operational costs and are never rewritten for presentation.
         budget_total = minimum_amounts.get(a.id)
@@ -1223,6 +1268,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             "activity_type_label": a.get_activity_type_display(),
             "status": a.status,
             "planned_date": a.planned_date,
+            "quarter": a.quarter,
             # School details. A non-school programme activity (conference,
             # camp, exhibition) legitimately has NO school and NO cluster, so
             # every school/cluster attribute here must tolerate both being
@@ -1276,7 +1322,7 @@ def get_frontend_context(principal, query: dict) -> dict:
                 else (f"/schools/{a.school.id}" if a.school else "")
             ),
             "cluster_id": a.cluster.id if a.cluster else "",
-            "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
+            "cluster_district": cluster_district_name or "—",
             "cluster_school_count": School.objects.filter(
                 cluster_id=a.cluster.id
             ).count()
@@ -1326,6 +1372,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             "evidence_status": a.evidence_status,
             "ia_verification_status": a.ia_verification_status,
             "payment_status": a.payment_status,
+            "budget_status": budget_status,
+            "budget_status_color": budget_status_color,
+            "verification_status": verification_status,
+            "verification_color": verification_color,
+            "is_completed": is_completed_act,
             # Next Action & Badges
             "next_action": next_act,
             "badges": badges,

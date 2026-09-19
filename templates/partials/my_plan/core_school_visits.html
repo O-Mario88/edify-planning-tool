@@ -47,7 +47,9 @@ Open Core Schools
 <th class="min-w-[180px]">Purpose of Visit</th>
 <th class="min-w-[140px]">SSA Intervention</th>
 <th class="text-right min-w-[100px]">Cost</th>
-<th class="min-w-[120px]">Status</th>
+<th class="min-w-[120px]">Budget status</th>
+<th class="min-w-[120px]">Verification</th>
+<th class="min-w-[110px]">Status</th>
 <th class="text-right min-w-[90px]">Actions</th>
 </tr>
 </thead>
@@ -79,7 +81,15 @@ Open Core Schools
 {% endif %}
 </td>
 <td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">UGX {{ row.budget_total|default:0|intcomma }}</td>
-<td>{% include "partials/my_plan/row_badges.html" %}</td>
+<td data-label="Budget status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>
+</td>
+<td data-label="Verification" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.verification_color|default:'purple' }}">{{ row.verification_status|default:'—' }}</span>
+</td>
+<td data-label="Status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label|default:'—' }}</span>
+</td>
 {% include "partials/my_plan/activity_row.html" %}
 </tr>
 {% endfor %}

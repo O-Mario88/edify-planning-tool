@@ -114,6 +114,51 @@ def grouped_clusters(principal) -> dict:
         .annotate(n=Count("id"))
     }
 
+    # 7-column metrics for cluster tables
+    cluster_ids = [c.id for c in clusters]
+    from apps.ssa.models import SsaRecord, SsaScore
+    from django.db.models import Avg, Max
+    from apps.activities.models import Activity
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.core.enums import SsaIntervention
+
+    ssa_avgs = {
+        row["school__cluster_id"]: row["avg_score"]
+        for row in SsaRecord.objects.filter(school__cluster_id__in=cluster_ids, deleted_at__isnull=True)
+        .values("school__cluster_id")
+        .annotate(avg_score=Avg("average_score"))
+    }
+
+    cluster_intervention_scores: dict[str, list] = {}
+    for row in (
+        SsaScore.objects.filter(ssa_record__school__cluster_id__in=cluster_ids, ssa_record__deleted_at__isnull=True)
+        .values("ssa_record__school__cluster_id", "intervention")
+        .annotate(avg=Avg("score"))
+    ):
+        cid = row["ssa_record__school__cluster_id"]
+        cluster_intervention_scores.setdefault(cid, []).append((row["intervention"], row["avg"]))
+
+    least_interventions: dict[str, str] = {}
+    for cid, scores in cluster_intervention_scores.items():
+        scores.sort(key=lambda x: x[1])
+        int_code, min_score = scores[0]
+        try:
+            int_label = SsaIntervention(int_code).label
+        except Exception:
+            int_label = int_code.replace("_", " ").title()
+        least_interventions[cid] = f"{int_label} ({round(min_score, 1)})"
+
+    last_activities = {
+        row["cluster_id"]: row["last_date"].strftime("%b %d, %Y") if row["last_date"] else "—"
+        for row in Activity.objects.filter(
+            cluster_id__in=cluster_ids,
+            deleted_at__isnull=True,
+            activity_type__in=CLUSTER_MEETING_TYPES + TRAINING_TYPES,
+        )
+        .values("cluster_id")
+        .annotate(last_date=Max("planned_date"))
+    }
+
     groups: dict[str, dict] = {}
     for cluster in clusters:
         owner = directory.get((cluster.responsible_staff_id or "").strip())
@@ -132,12 +177,23 @@ def grouped_clusters(principal) -> dict:
                 "schools": 0,
             },
         )
+        c_avg = ssa_avgs.get(cluster.id)
+        avg_str = f"{round(c_avg, 1)}" if c_avg is not None else "—"
         group["clusters"].append(
             {
+                "id": cluster.id,
+                "cluster_id": cluster.id,
                 "cluster": cluster,
+                "name": cluster.name,
                 "owner": _label(owner) if owner else "",
-                "district": getattr(cluster.district, "name", ""),
+                "district": getattr(cluster.district, "name", "") or "—",
+                "cluster_leader_name": cluster.cluster_leader_name or "—",
+                "cluster_leader_phone": cluster.cluster_leader_phone or "—",
+                "ssa_score_avg": avg_str,
+                "least_performing_intervention": least_interventions.get(cluster.id, "—"),
+                "last_activity_date": last_activities.get(cluster.id, "—"),
                 "schools": counts.get(cluster.id, 0),
+                "schools_count": counts.get(cluster.id, 0),
             }
         )
         group["schools"] += counts.get(cluster.id, 0)
@@ -188,7 +244,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     clusters = list(
-        (cluster_queryset(scope) or Cluster.objects.none())
+        Cluster.objects.filter(deleted_at__isnull=True, status="active")
         .select_related("district")
         .order_by("name")
     )
@@ -297,95 +353,85 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         })
 
     # 6. Build hierarchy tabs
-    if is_programme_lead:
-        # PL view: Level 1 tabs are CCEOs under this PL
-        cceo_groups: dict[str, dict] = {}
-        for row in formatted_clusters:
-            oid = row["owner_id"] or "__unassigned__"
-            cceo_groups.setdefault(
-                oid,
-                {
-                    "id": oid,
-                    "name": row["owner_name"],
-                    "clusters": [],
-                    "count": 0,
-                    "schools": 0,
-                },
-            )
-            cceo_groups[oid]["clusters"].append(row)
-            cceo_groups[oid]["count"] += 1
-            cceo_groups[oid]["schools"] += row["schools_count"]
-
-        cceo_tabs = sorted(
-            cceo_groups.values(),
-            key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
-        )
-        leads_data = []
-    else:
-        # Country view (IA, CD, RPL): Level 1 tabs are Supervising PLs, Level 2 are CCEOs
-        sys_pls = system_program_leads()
-        pl_lookup: dict[str, dict] = {}
-        leads_data = []
-        for pl in sys_pls:
-            pl_dict = {
-                "id": pl["id"],
-                "name": pl["name"],
-                "cceos": {},
-                "count": 0,
-                "schools": 0,
-            }
-            leads_data.append(pl_dict)
-            for pid in pl["ids"]:
-                pl_lookup[pid] = pl_dict
-
-        unassigned_pl: dict = {
-            "id": "__unassigned__",
-            "name": "Unassigned",
+    # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
+    sys_pls = system_program_leads()
+    pl_lookup: dict[str, dict] = {}
+    leads_data = []
+    for pl in sys_pls:
+        pl_dict = {
+            "id": pl["id"],
+            "name": pl["name"],
             "cceos": {},
             "count": 0,
             "schools": 0,
         }
+        leads_data.append(pl_dict)
+        for pid in pl["ids"]:
+            pl_lookup[pid] = pl_dict
 
-        for row in formatted_clusters:
-            target_pl = pl_lookup.get(row["lead_id"]) if row["lead_id"] else None
-            if not target_pl and row["lead_user_id"]:
-                target_pl = pl_lookup.get(row["lead_user_id"])
-            if not target_pl:
-                target_pl = unassigned_pl
+    unassigned_pl: dict = {
+        "id": "__unassigned__",
+        "name": "Unassigned",
+        "cceos": {},
+        "count": 0,
+        "schools": 0,
+    }
 
-            target_pl["count"] += 1
-            target_pl["schools"] += row["schools_count"]
+    for row in formatted_clusters:
+        target_pl = pl_lookup.get(row["lead_id"]) if row["lead_id"] else None
+        if not target_pl and row["lead_user_id"]:
+            target_pl = pl_lookup.get(row["lead_user_id"])
+        if not target_pl:
+            target_pl = unassigned_pl
 
-            oid = row["owner_id"] or "__unassigned__"
-            cceo_entry = target_pl["cceos"].setdefault(
-                oid,
-                {
-                    "id": oid,
-                    "name": row["owner_name"],
-                    "clusters": [],
-                    "count": 0,
-                    "schools": 0,
-                },
-            )
-            cceo_entry["clusters"].append(row)
-            cceo_entry["count"] += 1
-            cceo_entry["schools"] += row["schools_count"]
+        target_pl["count"] += 1
+        target_pl["schools"] += row["schools_count"]
 
-        # Convert cceos dict to sorted list for each PL
-        for pl_entry in leads_data:
-            pl_entry["cceo_tabs"] = sorted(
-                pl_entry["cceos"].values(),
-                key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
-            )
+        oid = row["owner_id"] or "__unassigned__"
+        cceo_entry = target_pl["cceos"].setdefault(
+            oid,
+            {
+                "id": oid,
+                "name": row["owner_name"],
+                "clusters": [],
+                "count": 0,
+                "schools": 0,
+            },
+        )
+        cceo_entry["clusters"].append(row)
+        cceo_entry["count"] += 1
+        cceo_entry["schools"] += row["schools_count"]
 
-        if unassigned_pl["count"] > 0:
-            unassigned_pl["cceo_tabs"] = sorted(
-                unassigned_pl["cceos"].values(),
-                key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
-            )
-            leads_data.append(unassigned_pl)
+    # Convert cceos dict to sorted list for each PL
+    for pl_entry in leads_data:
+        pl_entry["cceo_tabs"] = sorted(
+            pl_entry["cceos"].values(),
+            key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
+        )
 
-        cceo_tabs = []
+    if unassigned_pl["count"] > 0:
+        unassigned_pl["cceo_tabs"] = sorted(
+            unassigned_pl["cceos"].values(),
+            key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
+        )
+        leads_data.append(unassigned_pl)
+
+    # Determine default selected PL tab (preselect viewing PL if applicable)
+    from apps.core.scoping import owner_ids
+    user_staff_ids = set(owner_ids(principal))
+    selected_program_lead = None
+    for pl_entry in leads_data:
+        if pl_entry["id"] in user_staff_ids:
+            selected_program_lead = pl_entry["id"]
+            break
+        for pl in sys_pls:
+            if pl["id"] == pl_entry["id"] and any(pid in user_staff_ids for pid in pl["ids"]):
+                selected_program_lead = pl_entry["id"]
+                break
+        if selected_program_lead:
+            break
+
+    cceo_tabs = []
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import cluster_performance
@@ -414,6 +460,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     return {
         "is_programme_lead": is_programme_lead,
+        "selected_program_lead": selected_program_lead or (leads_data[0]["id"] if leads_data else ""),
         "leads": leads_data,
         "cceo_tabs": cceo_tabs,
         "total_clusters": len(clusters),

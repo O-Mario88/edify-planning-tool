@@ -29,7 +29,9 @@ Open Work Plan
 <th class="min-w-[240px]">School / Venue Name</th>
 <th class="min-w-[130px]">Activity</th>
 <th class="min-w-[110px]">Date</th>
-<th class="min-w-[120px]">Status</th>
+<th class="min-w-[120px]">Budget status</th>
+<th class="min-w-[120px]">Verification</th>
+<th class="min-w-[110px]">Status</th>
 <th class="min-w-[80px]"></th>
 </tr>
 </thead>
@@ -48,7 +50,15 @@ Open Work Plan
 </td>
 <td class="font-semibold text-slate-600" data-label="Activity">{{ row.activity_type_label|default:row.purpose|default:"—" }}</td>
 <td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td>{% include "partials/my_plan/row_badges.html" %}</td>
+<td data-label="Budget status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>
+</td>
+<td data-label="Verification" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.verification_color|default:'purple' }}">{{ row.verification_status|default:'—' }}</span>
+</td>
+<td data-label="Status" class="whitespace-nowrap">
+  <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label|default:'—' }}</span>
+</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
 </tr>

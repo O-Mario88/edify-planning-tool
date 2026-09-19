@@ -421,7 +421,7 @@ def _activities_in_scope(
         Activity.objects.filter(
             deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
         )
-        .select_related("school", "school__district", "school__region", "cluster", "training_course")
+        .select_related("school", "school__district", "school__region", "cluster", "cluster__district", "cluster__district__region", "training_course")
         .only(
             "id",
             "activity_type",
@@ -465,6 +465,10 @@ def _activities_in_scope(
             "school__region_id",
             "school__region__name",
             "cluster__name",
+            "cluster__district_id",
+            "cluster__district__name",
+            "cluster__district__region_id",
+            "cluster__district__region__name",
             "training_course__display_name",
         )
     )
@@ -591,7 +595,7 @@ def _unscheduled_assignments_in_scope(
             )
         )
         .select_related(
-            "school", "school__district", "school__region", "cluster", "partner"
+            "school", "school__district", "school__region", "cluster", "cluster__district", "cluster__district__region", "partner"
         )
         .only(
             "id",
@@ -617,6 +621,10 @@ def _unscheduled_assignments_in_scope(
             "school__region_id",
             "school__region__name",
             "cluster__name",
+            "cluster__district_id",
+            "cluster__district__name",
+            "cluster__district__region_id",
+            "cluster__district__region__name",
             "partner__name",
         )
     )
@@ -816,6 +824,13 @@ def _activity_item(
         or "—"
     )
 
+    geo = _geography_of(activity.school if activity.school_id else None)
+    if not geo.get("district_name") and activity.cluster and getattr(activity.cluster, "district", None):
+        geo["district_id"] = activity.cluster.district_id
+        geo["district_name"] = getattr(activity.cluster.district, "name", "") or ""
+        if getattr(activity.cluster.district, "region", None):
+            geo["region_name"] = getattr(activity.cluster.district.region, "name", "") or ""
+
     item = PlanningOversightItem(
         stage=STAGE_PARTNER_SCHEDULED if is_partner else STAGE_STAFF_SCHEDULED,
         activity_id=activity.id,
@@ -823,7 +838,7 @@ def _activity_item(
         school_code=getattr(activity.school, "school_id", "") or activity.school_id or "—",
         school_name=getattr(activity.school, "name", "") or "",
         school_type=getattr(activity.school, "school_type", "") or "",
-        **_geography_of(activity.school if activity.school_id else None),
+        **geo,
         cluster_id=activity.cluster_id,
         cluster_name=getattr(activity.cluster, "name", "") or "",
         project_id=activity.project_id,
@@ -893,6 +908,13 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
     owner_id = assignment.monitoring_staff_id or assignment.assigning_staff_id
     supervising_pl_id, supervising_pl_name = directory.supervisor_of(owner_id)
 
+    geo_assign = _geography_of(assignment.school if assignment.school_id else None)
+    if not geo_assign.get("district_name") and assignment.cluster and getattr(assignment.cluster, "district", None):
+        geo_assign["district_id"] = assignment.cluster.district_id
+        geo_assign["district_name"] = getattr(assignment.cluster.district, "name", "") or ""
+        if getattr(assignment.cluster.district, "region", None):
+            geo_assign["region_name"] = getattr(assignment.cluster.district.region, "name", "") or ""
+
     return PlanningOversightItem(
         stage=STAGE_PARTNER_AWAITING_SCHEDULE,
         partner_assignment_id=assignment.id,
@@ -900,7 +922,7 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         school_code=getattr(assignment.school, "school_id", "") or assignment.school_id or "—",
         school_name=getattr(assignment.school, "name", "") or "",
         school_type=getattr(assignment.school, "school_type", "") or "",
-        **_geography_of(assignment.school if assignment.school_id else None),
+        **geo_assign,
         cluster_id=assignment.cluster_id,
         cluster_name=getattr(assignment.cluster, "name", "") or "",
         project_id=assignment.project_id,
