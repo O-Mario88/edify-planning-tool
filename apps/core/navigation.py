@@ -209,6 +209,8 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
+    "cluster_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
+    "core_schools_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a
@@ -804,6 +806,8 @@ ICONS.update(
         "team_planning_oversight": ICONS["planning"],
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
+        "cluster_oversight": ICONS["clusters"],
+        "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
         "my_actions": ICONS["todos"],
         "actions_sent": ICONS["escalations"],
@@ -1196,6 +1200,22 @@ IA_SECTIONS = [
         "page_key": "country_planning_oversight",
         "cluster": "data_quality",
         "description": "Every team's planned and delivered work, country-wide and read-only.",
+    },
+    {
+        "key": "cluster_oversight",
+        "label": "Cluster Oversight",
+        "url": "/cluster-oversight/",
+        "page_key": "cluster_oversight",
+        "cluster": "data_quality",
+        "description": "Country cluster performance, SSA scores and activity recency.",
+    },
+    {
+        "key": "core_schools_oversight",
+        "label": "Core Schools Oversight",
+        "url": "/core-schools-oversight/",
+        "page_key": "core_schools_oversight",
+        "cluster": "data_quality",
+        "description": "Country core school packages, matrix progress and status.",
     },
     # The data quality and verification work every judgement above rests on.
     {
@@ -1662,6 +1682,18 @@ SIDEBAR_ITEMS = [
                 # (IA review, 2026-09-13).
                 "visible_to": {CD, RVP, RPL, ACCOUNTANT, ADMIN},
                 "extra_active_paths": ("/team-targets",),
+            },
+            {
+                "label": "Cluster Oversight",
+                "url": "/cluster-oversight/",
+                "page_key": "cluster_oversight",
+                "visible_to": {CD, RVP, RPL, ADMIN},
+            },
+            {
+                "label": "Core Schools Oversight",
+                "url": "/core-schools-oversight/",
+                "page_key": "core_schools_oversight",
+                "visible_to": {CD, RVP, RPL, ADMIN},
             },
             {
                 # The CD has no SCHOOLS & FIELD group, but they plan plenty of
@@ -2684,6 +2716,18 @@ SIDEBAR_ITEMS = [
                 "extra_active_paths": ("/team-planning-oversight/",),
             },
             {
+                "label": "Cluster Oversight",
+                "url": "/cluster-oversight/",
+                "page_key": "cluster_oversight",
+                "visible_to": {IA},
+            },
+            {
+                "label": "Core Schools Oversight",
+                "url": "/core-schools-oversight/",
+                "page_key": "core_schools_oversight",
+                "visible_to": {IA},
+            },
+            {
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
                 "page_key": "ia_verification_queue",
@@ -2844,6 +2888,18 @@ SIDEBAR_ITEMS = [
                 "label": "Programme Rollout",
                 "url": "/programme-rollout",
                 "page_key": "programme_rollout",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Cluster Oversight",
+                "url": "/cluster-oversight/",
+                "page_key": "cluster_oversight",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Core Schools Oversight",
+                "url": "/core-schools-oversight/",
+                "page_key": "core_schools_oversight",
                 "visible_to": {PL},
             },
         ],

@@ -556,6 +556,16 @@ urlpatterns = [
         oversight_views.country_planning_export_view,
         name="country_planning_oversight_export",
     ),
+    path(
+        "cluster-oversight/",
+        oversight_views.cluster_oversight_view,
+        name="cluster_oversight",
+    ),
+    path(
+        "core-schools-oversight/",
+        oversight_views.core_schools_oversight_view,
+        name="core_schools_oversight",
+    ),
     # Partner oversight — the same read-only posture, organised by partner
     # rather than by staff member.
     path(

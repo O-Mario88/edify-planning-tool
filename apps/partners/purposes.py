@@ -56,6 +56,7 @@ _LABELS = {
     # Historical rows retain a readable label even though Content Gathering
     # is no longer assignable from either staff or partner support drawers.
     "story_gathering": "Content Gathering",
+    "in_school_training_delivery_visit": "In-school Training Delivery Visit",
 }
 
 

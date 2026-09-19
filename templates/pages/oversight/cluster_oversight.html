@@ -1,0 +1,32 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Cluster Oversight · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260919clusters1">{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">{% if is_programme_lead %}Programme Lead{% else %}Leadership{% endif %}</p>
+      <h1 class="edify-page-title edify-page-header__title">Cluster Oversight</h1>
+      <p class="edify-page-header__description">
+        {% if is_programme_lead %}
+        Oversight of your team's clusters, cluster leaders, school SSA averages, and activity recency grouped by CCEO.
+        {% else %}
+        Country cluster oversight and performance analytics grouped by Supervising Program Lead and CCEO.
+        {% endif %}
+      </p>
+    </div>
+  </header>
+
+  {# ── Period & FY Filter Bar ─────────────────────────────────────────── #}
+  {% include "partials/oversight/period_filter_bar.html" with filter_label="Cluster oversight period" target_url="/cluster-oversight/" target_id="#cluster-workspace" %}
+
+  <div id="cluster-workspace">
+    {% include "partials/oversight/cluster_oversight_workspace.html" %}
+  </div>
+
+</div>
+{% endblock %}

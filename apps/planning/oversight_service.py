@@ -38,6 +38,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.partners.purposes import visit_purpose_label
 
 # Work that is live: planned, scheduled, in flight or finished. Cancelled,
 # rejected, deferred and never-planned rows are not part of a plan under
@@ -96,7 +97,9 @@ class PlanningOversightItem:
 
     # Context
     school_id: str | None = None
+    school_code: str = ""
     school_name: str = ""
+    school_type: str = ""
     district_id: str | None = None
     district_name: str = ""
     region_name: str = ""
@@ -107,6 +110,15 @@ class PlanningOversightItem:
     activity_type: str = ""
     target_intervention: str = ""
     operational_rationale: str = ""
+    purpose_of_visit: str = ""
+
+    # Training & Cluster specifics
+    training_name: str = ""
+    participants: int = 0
+    delivery_type: str = ""
+    cluster_planned_from: str = ""
+    budget: int = 0
+    is_in_school_training: bool = False
 
     # Ownership and attribution — four different people, never collapsed.
     planned_by_id: str | None = None
@@ -409,7 +421,7 @@ def _activities_in_scope(
         Activity.objects.filter(
             deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
         )
-        .select_related("school", "school__district", "school__region", "cluster")
+        .select_related("school", "school__district", "school__region", "cluster", "training_course")
         .only(
             "id",
             "activity_type",
@@ -437,15 +449,23 @@ def _activities_in_scope(
             "purpose_intervention",
             "support_rationale",
             "activity_purpose_text",
+            "purpose_type",
+            "activity_name_snapshot",
+            "paired_school_visit_id",
+            "participants_per_school",
+            "expected_participants",
             "cost_missing",
             "reschedule_count",
             "venue",
+            "school__school_id",
             "school__name",
+            "school__school_type",
             "school__district_id",
             "school__district__name",
             "school__region_id",
             "school__region__name",
             "cluster__name",
+            "training_course__display_name",
         )
     )
     if fy:
@@ -755,11 +775,52 @@ def _activity_item(
     )
     supervising_pl_id, supervising_pl_name = directory.supervisor_of(owner_id)
 
+    is_in_school = bool(
+        activity.paired_school_visit_id
+        or activity.activity_type == "in_school_training"
+        or getattr(activity, "delivery_type", "") == "in-school"
+    )
+    raw_cost = int(costs.get(activity.id, 0))
+    planned_cost = 0 if is_in_school else raw_cost
+    budget = raw_cost
+    cluster_planned_from = "School Visit" if is_in_school else (getattr(activity.cluster, "name", "") or "—")
+    delivery_type_str = "in-school" if is_in_school else "group"
+    participants_count = int(activity.participants_per_school or activity.expected_participants or 0)
+    is_training = (
+        activity.activity_type in TRAINING_TYPES
+        or "training" in str(activity.activity_type or "").lower()
+        or is_in_school
+        or bool(getattr(activity, "training_course_id", None))
+    )
+    if is_training:
+        training_name_str = (
+            getattr(activity.training_course, "display_name", "")
+            or getattr(activity.training_course, "source_name", "")
+            or getattr(activity, "activity_name_snapshot", "")
+            or activity.activity_type.replace("_", " ").title()
+        )
+    else:
+        training_name_str = "—"
+    purpose_label = (
+        visit_purpose_label(activity.purpose_type, fallback="")
+        if activity.purpose_type
+        else ""
+    )
+    visit_purpose = (
+        activity.activity_purpose_text
+        or purpose_label
+        or activity.support_rationale
+        or activity.purpose_intervention
+        or "—"
+    )
+
     item = PlanningOversightItem(
         stage=STAGE_PARTNER_SCHEDULED if is_partner else STAGE_STAFF_SCHEDULED,
         activity_id=activity.id,
         school_id=activity.school_id,
+        school_code=getattr(activity.school, "school_id", "") or activity.school_id or "—",
         school_name=getattr(activity.school, "name", "") or "",
+        school_type=getattr(activity.school, "school_type", "") or "",
         **_geography_of(activity.school if activity.school_id else None),
         cluster_id=activity.cluster_id,
         cluster_name=getattr(activity.cluster, "name", "") or "",
@@ -772,6 +833,13 @@ def _activity_item(
         operational_rationale=(
             activity.support_rationale or activity.activity_purpose_text or ""
         ),
+        purpose_of_visit=visit_purpose,
+        training_name=training_name_str,
+        participants=participants_count,
+        delivery_type=delivery_type_str,
+        cluster_planned_from=cluster_planned_from,
+        budget=budget,
+        is_in_school_training=is_in_school,
         planned_by_id=activity.responsible_staff_id or activity.monitored_by_staff_id,
         planned_by_name=directory.name(
             activity.responsible_staff_id or activity.monitored_by_staff_id
@@ -803,7 +871,7 @@ def _activity_item(
         submitted_to_ia_at=(
             activity.submitted_to_ia_at.date() if activity.submitted_to_ia_at else None
         ),
-        planned_cost=int(costs.get(activity.id, 0)),
+        planned_cost=planned_cost,
         cost_missing=bool(activity.cost_missing),
         reschedule_count=int(activity.reschedule_count or 0),
     )
@@ -827,7 +895,9 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         stage=STAGE_PARTNER_AWAITING_SCHEDULE,
         partner_assignment_id=assignment.id,
         school_id=assignment.school_id,
+        school_code=getattr(assignment.school, "school_id", "") or assignment.school_id or "—",
         school_name=getattr(assignment.school, "name", "") or "",
+        school_type=getattr(assignment.school, "school_type", "") or "",
         **_geography_of(assignment.school if assignment.school_id else None),
         cluster_id=assignment.cluster_id,
         cluster_name=getattr(assignment.cluster, "name", "") or "",
@@ -836,6 +906,13 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         target_intervention=assignment.focus_intervention or "",
         operational_rationale=(
             assignment.purpose_of_visit or assignment.purpose or assignment.notes or ""
+        ),
+        purpose_of_visit=(
+            (visit_purpose_label(assignment.purpose_of_visit, fallback="") if assignment.purpose_of_visit else "")
+            or assignment.purpose_of_visit
+            or assignment.purpose
+            or assignment.notes
+            or "—"
         ),
         planned_by_id=assignment.assigning_staff_id,
         planned_by_name=directory.name(assignment.assigning_staff_id),

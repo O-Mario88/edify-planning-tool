@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity frontend_filters %}
 {% load table_pagination %}
 {% comment %}
 Core package VISITS, on their own card (owner, 2026-09-17: "core planned
@@ -39,29 +39,40 @@ Open Core Schools
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
+<th>School ID</th>
 <th>School Name</th>
-<th>Package</th>
-<th>District</th>
+<th>Activity</th>
 <th>Planned Date</th>
-<th>Focus Intervention</th>
-<th>Assigned Partner</th>
+<th>Executor</th>
+<th>Purpose of Visit</th>
+<th>SSA Intervention</th>
+<th class="text-right">Cost</th>
 <th>Status</th>
-<th></th>
+<th class="text-right">Actions</th>
 </tr>
 </thead>
 <tbody>
 {% for row in core_school_visits_pager.rows %}
 <tr>
+<td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% school_identity row.school_name row.school_id %}</a></td>
-<td class="font-bold text-slate-700" data-label="Package">{{ row.visit_number|default:"—" }}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
-<td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline hover:text-blue-600">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
-<td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="font-semibold text-slate-700">
+  {{ row.activity_type_label|default:"Core Visit" }}
+  {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.visit_number }} ({{ row.core_progress }})</span>{% endif %}
+</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
+<td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
+<td class="text-slate-600 text-xs" data-label="Purpose">{{ row.purpose|default:"—" }}</td>
 <td data-label="Intervention">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
+{% if row.focus_intervention and row.focus_intervention != "—" %}
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border">
 {{ row.focus_intervention }}
 </span>
+{% else %}
+<span class="text-slate-400">—</span>
+{% endif %}
 </td>
-<td class="font-bold text-slate-700" data-label="Partner">{{ row.owner }}</td>
+<td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">UGX {{ row.budget_total|default:0|intcomma }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 {% include "partials/my_plan/activity_row.html" %}
 </tr>

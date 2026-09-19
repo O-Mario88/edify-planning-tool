@@ -1435,21 +1435,52 @@ def country_planning_team_view(request, staff_id: str):
         VISIT_TYPES,
     )
 
+    # Determine caller staff ID and user ID for ownership checks
+    viewer_user_id = str(request.user.id)
+    viewer_staff_profile = getattr(request.user, "staff_profile", None)
+    viewer_staff_id = str(viewer_staff_profile.id) if viewer_staff_profile else ""
+
     for group in owner_groups:
-        school_visits = []
+        client_school_visits = []
+        core_school_visits = []
         cluster_meetings = []
-        cluster_trainings = []
+        planned_trainings = []
+
+        is_group_owner = (
+            str(group.get("id")) in (viewer_user_id, viewer_staff_id)
+            or str(group.get("name", "")).casefold() == getattr(request.user, "name", "").casefold()
+        )
+
         for item in group.get("items", []):
+            item_owner_id = str(item.operational_owner_id or "")
+            item_exec_id = str(item.executor_id or "")
+            item.is_owner = (
+                is_group_owner
+                or item_owner_id in (viewer_user_id, viewer_staff_id)
+                or item_exec_id in (viewer_user_id, viewer_staff_id)
+            )
+
             atype = str(item.activity_type or "").lower()
-            if atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
+            if (
+                item.is_in_school_training
+                or atype in TRAINING_TYPES
+                or "training" in atype
+                or bool(item.training_name and item.training_name != "—")
+            ):
+                planned_trainings.append(item)
+            elif atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
                 cluster_meetings.append(item)
-            elif atype in TRAINING_TYPES or "training" in atype:
-                cluster_trainings.append(item)
             else:
-                school_visits.append(item)
-        group["school_visits"] = school_visits
+                stype = str(item.school_type or "").lower()
+                if "core" in stype or atype.startswith("core_"):
+                    core_school_visits.append(item)
+                else:
+                    client_school_visits.append(item)
+
+        group["client_school_visits"] = client_school_visits
+        group["core_school_visits"] = core_school_visits
         group["cluster_meetings"] = cluster_meetings
-        group["cluster_trainings"] = cluster_trainings
+        group["planned_trainings"] = planned_trainings
 
     return render(
         request,
@@ -2035,3 +2066,56 @@ def partner_allowance_grant_action(request):
     response = HttpResponse("<script>window.location.reload();</script>")
     response["HX-Trigger"] = "close-drawer"
     return response
+
+
+# ── Cluster Oversight & Core Schools Oversight ─────────────────────────────
+@require_page_permission("cluster_oversight")
+def cluster_oversight_view(request):
+    """Cluster oversight page — executive performance metrics, SSA scores and activity recency."""
+    period = _period_filters(request)
+    fy = period.get("fy") or get_operational_fy()
+    from apps.clusters.oversight_service import cluster_oversight_table_data
+
+    data = cluster_oversight_table_data(request.user, fy=fy)
+    context = {
+        **period,
+        **data,
+        "active_lens": "cluster_oversight",
+    }
+    if request.headers.get("HX-Request") == "true" and request.GET.get("workspace_only") == "true":
+        return render(
+            request,
+            "partials/oversight/cluster_oversight_workspace.html",
+            context,
+        )
+    return render(
+        request,
+        "pages/oversight/cluster_oversight.html",
+        context,
+    )
+
+
+@require_page_permission("core_schools_oversight")
+def core_schools_oversight_view(request):
+    """Core schools oversight page — packages progress, visits/trainings status."""
+    period = _period_filters(request)
+    fy = period.get("fy") or get_operational_fy()
+    from apps.core_schools.oversight_service import core_schools_oversight_data
+
+    data = core_schools_oversight_data(request.user, fy=fy)
+    context = {
+        **period,
+        **data,
+        "active_lens": "core_schools_oversight",
+    }
+    if request.headers.get("HX-Request") == "true" and request.GET.get("workspace_only") == "true":
+        return render(
+            request,
+            "partials/oversight/core_schools_oversight_workspace.html",
+            context,
+        )
+    return render(
+        request,
+        "pages/oversight/core_schools_oversight.html",
+        context,
+    )

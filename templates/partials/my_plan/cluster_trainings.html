@@ -1,3 +1,4 @@
+{% load frontend_filters %}
 <!-- Trainings Card: in-school trainings (a school) and cluster trainings (a cluster) -->
 <div class="card overflow-hidden">
 
@@ -24,25 +25,67 @@ Open Planning
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
+<th>School ID</th>
 <th>School / Cluster</th>
-<th>Focus Intervention</th>
-<th>Date</th>
-<th class="text-center">Expected Participants</th>
+<th>Cluster Planned From</th>
+<th>Executor</th>
+<th>Training Name</th>
+<th>Planned Date</th>
+<th>SSA Intervention</th>
+<th class="text-center">Participants</th>
+<th>Delivery Type</th>
+<th class="text-right">Cost</th>
 <th>Status</th>
-<th></th>
+<th class="text-right">Actions</th>
 </tr>
 </thead>
 <tbody>
 {% for row in cluster_trainings %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.place_url %}<a href="{{ row.place_url }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span></td>
+<td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>
+  {% if row.place_url %}
+  <a href="{{ row.place_url }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% if row.school_name %}{{ row.school_name }}{% elif row.cluster_name %}{{ row.cluster_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  {% elif row.school_id %}
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% if row.school_name %}{{ row.school_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  {% else %}
+  <span class="text-slate-800">{{ row.school_name|default:row.cluster_name|default:"—" }}</span>
+  {% endif %}
+</td>
+<td class="text-slate-700" data-label="Cluster Planned From">
+  {% if row.delivery_type == "in-school" or "in_school" in row.activity_type %}
+  <span class="pill pill-neutral text-xs font-semibold">School Visit</span>
+  {% elif row.cluster_id %}
+  <a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-medium text-slate-800">{{ row.cluster_name|default:"—" }}</a>
+  {% else %}
+  <span class="text-slate-700">{{ row.cluster_name|default:"—" }}</span>
+  {% endif %}
+</td>
+<td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
+<td class="font-medium text-slate-800" data-label="Training Name">{{ row.activity_type_label|default:"Training" }}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
 <td data-label="Intervention">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
+{% if row.focus_intervention and row.focus_intervention != "—" %}
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border">
 {{ row.focus_intervention }}
 </span>
+{% else %}
+<span class="text-slate-400">—</span>
+{% endif %}
 </td>
-<td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td class="text-center font-semibold text-slate-700" data-label="Participants">{{ row.expected_participants|default:"—" }}</td>
+<td class="text-center font-semibold tabular-nums text-slate-800" data-label="Participants">{{ row.expected_participants|default:"—" }}</td>
+<td data-label="Delivery Type">
+  <span class="pill {% if row.delivery_type == 'in-school' or 'in_school' in row.activity_type %}pill-neutral{% else %}pill-info{% endif %} text-xs font-semibold">
+    {% if row.delivery_type == 'in-school' or 'in_school' in row.activity_type %}in-school{% else %}group{% endif %}
+  </span>
+</td>
+<td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">
+  {% if row.delivery_type == "in-school" or "in_school" in row.activity_type %}
+  UGX 0
+  {% else %}
+  UGX {{ row.budget_total|default:0|intcomma }}
+  {% endif %}
+</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}

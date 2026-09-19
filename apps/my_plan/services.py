@@ -17,6 +17,7 @@ from apps.partners.models import Partner
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
+from apps.partners.purposes import visit_purpose_label
 
 # A visit request that the school owner has not yet approved is not on the
 # requester's plan: it takes effect there only once approved (owner,
@@ -1309,7 +1310,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             "return_reason": return_reason,
             "returned_by": returned_by,
             # General details
-            "purpose": a.activity_purpose_text or a.get_activity_type_display(),
+            "purpose": (
+                a.activity_purpose_text
+                or (visit_purpose_label(a.purpose_type, fallback="") if a.purpose_type else "")
+                or a.get_activity_type_display()
+            ),
             "focus_intervention": a.get_focus_intervention_display()
             if a.focus_intervention
             else "General",
@@ -1446,7 +1451,11 @@ def get_frontend_context(principal, query: dict) -> dict:
                     if a.cluster
                     else (a.activity_name_snapshot or a.venue or "Activity")
                 ),
-                "purpose": a.activity_purpose_text or a.get_activity_type_display(),
+                "purpose": (
+                    a.activity_purpose_text
+                    or (visit_purpose_label(a.purpose_type, fallback="") if a.purpose_type else "")
+                    or a.get_activity_type_display()
+                ),
                 "district": a.school.district.name
                 if a.school
                 else (
