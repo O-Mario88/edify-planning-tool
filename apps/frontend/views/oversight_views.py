@@ -634,6 +634,78 @@ def _resolve_user_scope(user):
     return resolve_user_scope(user)
 
 
+def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
+    """Partition items in each owner group into the 4 canonical streams:
+    - client_school_visits
+    - core_school_visits
+    - cluster_meetings
+    - planned_trainings
+    and determine ownership flags.
+    """
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        TRAINING_TYPES,
+    )
+
+    if (
+        isinstance(owner_groups_or_items, list)
+        and owner_groups_or_items
+        and not isinstance(owner_groups_or_items[0], dict)
+    ):
+        owner_groups = oversight.group_by_owner(owner_groups_or_items)
+    else:
+        owner_groups = owner_groups_or_items or []
+
+    viewer_user_id = str(request_user.id)
+    viewer_staff_profile = getattr(request_user, "staff_profile", None)
+    viewer_staff_id = str(viewer_staff_profile.id) if viewer_staff_profile else ""
+    viewer_name = getattr(request_user, "name", "").casefold()
+
+    for group in owner_groups:
+        client_school_visits = []
+        core_school_visits = []
+        cluster_meetings = []
+        planned_trainings = []
+
+        is_group_owner = (
+            str(group.get("id")) in (viewer_user_id, viewer_staff_id)
+            or str(group.get("name", "")).casefold() == viewer_name
+        )
+
+        for item in group.get("items", []):
+            item_owner_id = str(item.operational_owner_id or "")
+            item_exec_id = str(item.executor_id or "")
+            item.is_owner = (
+                is_group_owner
+                or item_owner_id in (viewer_user_id, viewer_staff_id)
+                or item_exec_id in (viewer_user_id, viewer_staff_id)
+            )
+
+            atype = str(item.activity_type or "").lower()
+            if (
+                item.is_in_school_training
+                or atype in TRAINING_TYPES
+                or "training" in atype
+                or bool(item.training_name and item.training_name != "—")
+            ):
+                planned_trainings.append(item)
+            elif atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
+                cluster_meetings.append(item)
+            else:
+                stype = str(item.school_type or "").lower()
+                if "core" in stype or atype.startswith("core_"):
+                    core_school_visits.append(item)
+                else:
+                    client_school_visits.append(item)
+
+        group["client_school_visits"] = client_school_visits
+        group["core_school_visits"] = core_school_visits
+        group["cluster_meetings"] = cluster_meetings
+        group["planned_trainings"] = planned_trainings
+
+    return owner_groups
+
+
 @require_any_page_permission("team_planning_oversight", "team_targets")
 def team_planning_oversight_view(request):
     """One Team Oversight workspace for planning and target performance."""
@@ -826,6 +898,8 @@ def team_planning_oversight_view(request):
     visible = oversight.in_family(visible, activity_family)
 
     summary = oversight.summarize(visible)
+    owner_groups = oversight.group_by_owner(visible)
+    _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
         **period,
         "country_lens": country_lens,
@@ -844,7 +918,7 @@ def team_planning_oversight_view(request):
         "region_unassigned": scope.is_region
         and not _resolve_user_scope(request.user).region_assigned,
         "visible_summary": summary,
-        "groups": oversight.group_by_owner(visible),
+        "groups": owner_groups,
         "activity_tabs": activity_tabs,
         "activity_family": activity_family,
         "advanced": advanced,
@@ -1428,59 +1502,7 @@ def country_planning_team_view(request, staff_id: str):
             )
 
     owner_groups = oversight.group_by_owner(items)
-
-    from apps.core.activity_types import (
-        CLUSTER_MEETING_TYPES,
-        TRAINING_TYPES,
-        VISIT_TYPES,
-    )
-
-    # Determine caller staff ID and user ID for ownership checks
-    viewer_user_id = str(request.user.id)
-    viewer_staff_profile = getattr(request.user, "staff_profile", None)
-    viewer_staff_id = str(viewer_staff_profile.id) if viewer_staff_profile else ""
-
-    for group in owner_groups:
-        client_school_visits = []
-        core_school_visits = []
-        cluster_meetings = []
-        planned_trainings = []
-
-        is_group_owner = (
-            str(group.get("id")) in (viewer_user_id, viewer_staff_id)
-            or str(group.get("name", "")).casefold() == getattr(request.user, "name", "").casefold()
-        )
-
-        for item in group.get("items", []):
-            item_owner_id = str(item.operational_owner_id or "")
-            item_exec_id = str(item.executor_id or "")
-            item.is_owner = (
-                is_group_owner
-                or item_owner_id in (viewer_user_id, viewer_staff_id)
-                or item_exec_id in (viewer_user_id, viewer_staff_id)
-            )
-
-            atype = str(item.activity_type or "").lower()
-            if (
-                item.is_in_school_training
-                or atype in TRAINING_TYPES
-                or "training" in atype
-                or bool(item.training_name and item.training_name != "—")
-            ):
-                planned_trainings.append(item)
-            elif atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
-                cluster_meetings.append(item)
-            else:
-                stype = str(item.school_type or "").lower()
-                if "core" in stype or atype.startswith("core_"):
-                    core_school_visits.append(item)
-                else:
-                    client_school_visits.append(item)
-
-        group["client_school_visits"] = client_school_visits
-        group["core_school_visits"] = core_school_visits
-        group["cluster_meetings"] = cluster_meetings
-        group["planned_trainings"] = planned_trainings
+    _partition_owner_groups_by_stream(owner_groups, request.user)
 
     return render(
         request,

@@ -45,11 +45,11 @@ Open Planning
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.place_url %}
-  <a href="{{ row.place_url }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name %}{{ row.school_name }}{% elif row.cluster_name %}{{ row.cluster_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  <a href="{{ row.place_url }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% elif row.cluster_name %}{{ row.cluster_name }}{% else %}{{ row.school_id }}{% endif %}</a>
   {% elif row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name %}{{ row.school_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.school_id }}{% endif %}</a>
   {% else %}
-  <span class="text-slate-800 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:row.cluster_name|default:"—" }}</span>
+  <span class="text-slate-800 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name|default:"—" }}{% endif %}</span>
   {% endif %}
 </td>
 <td class="text-slate-700" data-label="Cluster Planned From">

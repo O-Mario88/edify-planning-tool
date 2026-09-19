@@ -1238,7 +1238,7 @@ def get_frontend_context(principal, query: dict) -> dict:
                     a.planning_source == "manual_work_plan"
                     or a.activity_type in PROGRAMME_EVENT_TYPES
                 )
-                else "Unknown School"
+                else (a.cluster.name if a.cluster else "Unknown School")
             ),
             "school_district": (
                 a.school.district.name
@@ -1427,83 +1427,119 @@ def get_frontend_context(principal, query: dict) -> dict:
             upcoming_list.append(activity_data)
 
     # ── Cluster invited-school expansion ────────────────────────────────────
-    # A cluster training or meeting is planned once on the cluster, with the
-    # schools it will reach named by the "invited schools" checkboxes during
-    # scheduling. As-is, those schools show up nowhere in the training table
-    # because every activity row carries the cluster, not a school. Here we
-    # read ClusterActivityAttendance for the cluster activities that were just
-    # collected and append one synthetic row per invited/attended school so the
-    # training and meeting tables accurately reflect which schools have work
-    # planned.
+    # A cluster training is planned on a cluster, reaching the schools invited
+    # or confirmed in that cluster. If a cluster training row is left without a school,
+    # it displays with blank School ID and "Unknown School" in the trainings table.
+    # We expand each cluster training into its confirmed / invited member schools
+    # so every school with training planned is listed with its School ID and Name.
+    from collections import defaultdict
     from apps.activities.models import ClusterActivityAttendance
     from apps.schools.models import School as _School
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
 
-    _cluster_activity_ids = [
-        row["id"]
-        for row in (cluster_trainings_list + cluster_meetings_list)
-        if row.get("id")
+    _cluster_act_rows = [
+        row
+        for row in cluster_trainings_list
+        if row.get("cluster_id") and not row.get("school_id")
     ]
-    if _cluster_activity_ids:
-        _attendance_rows = list(
+    if _cluster_act_rows:
+        _cluster_act_ids = [r["id"] for r in _cluster_act_rows if r.get("id")]
+        _cluster_ids = list(
+            {r["cluster_id"] for r in _cluster_act_rows if r.get("cluster_id")}
+        )
+
+        # 1. Fetch explicitly invited/attended schools from ClusterActivityAttendance
+        _att_records = list(
             ClusterActivityAttendance.objects.filter(
-                activity_id__in=_cluster_activity_ids
+                activity_id__in=_cluster_act_ids
             )
             .filter(Q(invited=True) | Q(attended=True))
             .values_list("activity_id", "school_id")
         )
-        if _attendance_rows:
-            _att_school_ids = {sid for _, sid in _attendance_rows}
-            _att_schools = {
-                s.id: s
-                for s in _School.objects.filter(id__in=_att_school_ids).select_related(
-                    "district", "sub_county"
+        _att_by_act = defaultdict(list)
+        _att_school_ids = set()
+        for _act_id, _sid in _att_records:
+            if _sid not in _att_by_act[_act_id]:
+                _att_by_act[_act_id].append(_sid)
+            _att_school_ids.add(_sid)
+
+        # 2. Fetch member schools for the clusters involved
+        _member_schools = list(
+            _School.objects.filter(
+                cluster_id__in=_cluster_ids,
+                deleted_at__isnull=True,
+            ).select_related("district", "sub_county")
+        )
+        _schools_by_cluster = defaultdict(list)
+        _schools_by_cluster_confirmed = defaultdict(list)
+        for _s in _member_schools:
+            _schools_by_cluster[_s.cluster_id].append(_s)
+            if _s.cluster_status == "clustered" and (
+                not _s.operational_status or _s.operational_status in OPERATING_STATUSES
+            ):
+                _schools_by_cluster_confirmed[_s.cluster_id].append(_s)
+
+        # 3. Lookup for schools (include any attendance schools from other clusters)
+        _school_lookup = {_s.id: _s for _s in _member_schools}
+        _missing_ids = _att_school_ids - set(_school_lookup.keys())
+        if _missing_ids:
+            for _s in _School.objects.filter(id__in=_missing_ids).select_related(
+                "district", "sub_county"
+            ):
+                _school_lookup[_s.id] = _s
+
+        # Reconstruct cluster_trainings_list
+        _new_cluster_trainings_list = []
+        for row in cluster_trainings_list:
+            if not (row.get("cluster_id") and not row.get("school_id")):
+                # Already a school-specific row
+                _new_cluster_trainings_list.append(row)
+                continue
+
+            _act_id = row.get("id")
+            _target_schools = []
+            if _act_id in _att_by_act and _att_by_act[_act_id]:
+                _target_schools = [
+                    _school_lookup[_sid]
+                    for _sid in _att_by_act[_act_id]
+                    if _sid in _school_lookup
+                ]
+            if not _target_schools and row.get("cluster_id"):
+                _cid = row["cluster_id"]
+                _target_schools = (
+                    _schools_by_cluster_confirmed.get(_cid)
+                    or _schools_by_cluster.get(_cid)
+                    or []
                 )
-            }
-            # Build a quick lookup: activity_id -> base row dict from the list
-            _cluster_row_by_id = {
-                row["id"]: row
-                for row in (cluster_trainings_list + cluster_meetings_list)
-            }
-            # Track which (activity_id, school_id) pairs we already added to
-            # avoid duplicates if a school appears in both invited and attended.
-            _seen = set()
-            for _act_id, _school_id in _attendance_rows:
-                if (_act_id, _school_id) in _seen:
-                    continue
-                _seen.add((_act_id, _school_id))
-                _base = _cluster_row_by_id.get(_act_id)
-                _school = _att_schools.get(_school_id)
-                if not _base or not _school:
-                    continue
-                # Build a school-scoped copy of the cluster row so the
-                # training table can show school name, district, and ID.
-                _school_row = dict(_base)
-                _school_row["school_id"] = _school.school_id or str(_school.id)
-                _school_row["school_name"] = _school.name
-                _school_row["school_district"] = (
-                    _school.district.name if _school.district_id else "Unknown"
+
+            if _target_schools:
+                for _school in _target_schools:
+                    _school_row = dict(row)
+                    _school_row["school_id"] = _school.school_id or str(_school.id)
+                    _school_row["school_name"] = _school.name
+                    _school_row["school_district"] = (
+                        _school.district.name if _school.district_id else "Unknown"
+                    )
+                    _school_row["school_sub_county"] = (
+                        _school.sub_county.name if _school.sub_county_id else ""
+                    )
+                    _school_row["school_cluster_name"] = row.get("cluster_name") or ""
+                    _school_row["place_url"] = f"/schools/{_school.school_id or _school.id}"
+                    _school_row["is_cluster_invited"] = True
+                    _new_cluster_trainings_list.append(_school_row)
+            else:
+                _fallback_row = dict(row)
+                _fallback_row["school_name"] = (
+                    row.get("cluster_name") or "Cluster Training"
                 )
-                _school_row["school_sub_county"] = (
-                    _school.sub_county.name
-                    if _school.sub_county_id
+                _fallback_row["place_url"] = (
+                    f"/clusters/{row.get('cluster_id')}"
+                    if row.get("cluster_id")
                     else ""
                 )
-                _school_row["is_cluster_invited"] = True
-                # Append to the appropriate list based on the original activity
-                if _base["activity_type"] in [
-                    "cluster_training",
-                    "core_training",
-                    "training",
-                    "in_school_training",
-                    "school_improvement_training",
-                    "cluster_training_ssa_collection",
-                ]:
-                    cluster_trainings_list.append(_school_row)
-                elif _base["activity_type"] in [
-                    "cluster_meeting",
-                    "cluster_meeting_ssa_review",
-                ]:
-                    cluster_meetings_list.append(_school_row)
+                _new_cluster_trainings_list.append(_fallback_row)
+
+        cluster_trainings_list = _new_cluster_trainings_list
 
     # 9. Right Rail: Planning Insights
 

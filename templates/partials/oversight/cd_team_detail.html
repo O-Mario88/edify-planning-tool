@@ -112,7 +112,7 @@ and level 3 (4 distinct tables per staff member:
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
-              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
@@ -129,11 +129,11 @@ and level 3 (4 distinct tables per staff member:
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {{ item.school_code|default:item.school_id|default:"—" }}
               </td>
-              <td class="px-4 py-2.5 font-semibold">
+              <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
-                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% school_identity item.school_name item.school_id %}</a>
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.school_name|default:"—" }}</span>
+                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
@@ -207,7 +207,7 @@ and level 3 (4 distinct tables per staff member:
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
-              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
@@ -224,11 +224,11 @@ and level 3 (4 distinct tables per staff member:
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {{ item.school_code|default:item.school_id|default:"—" }}
               </td>
-              <td class="px-4 py-2.5 font-semibold">
+              <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
-                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% school_identity item.school_name item.school_id %}</a>
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.school_name|default:"—" }}</span>
+                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
@@ -301,7 +301,7 @@ and level 3 (4 distinct tables per staff member:
         <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
-              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Cluster Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Cluster Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
@@ -316,11 +316,11 @@ and level 3 (4 distinct tables per staff member:
           <tbody class="divide-y edify-border text-sm">
             {% for item in group.cluster_meetings %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="px-4 py-2.5 font-semibold">
+              <td class="px-4 py-2.5 font-semibold min-w-[200px]">
                 {% if item.cluster_id %}
-                <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white">{{ item.cluster_name|default:item.context_label }}</a>
+                <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.cluster_name|default:item.context_label }}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.cluster_name|default:item.context_label }}</span>
+                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.cluster_name|default:item.context_label }}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400">
@@ -389,7 +389,7 @@ and level 3 (4 distinct tables per staff member:
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
-              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Cluster Planned From</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[170px]">Training Name</th>
@@ -408,11 +408,11 @@ and level 3 (4 distinct tables per staff member:
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {{ item.school_code|default:item.school_id|default:"—" }}
               </td>
-              <td class="px-4 py-2.5 font-semibold">
+              <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
-                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% school_identity item.school_name item.school_id %}</a>
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.school_name|default:"—" }}</span>
+                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
