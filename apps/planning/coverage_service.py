@@ -278,14 +278,45 @@ def _invited_school_rows(items, *, requested_ids) -> list[dict]:
         .filter(Q(invited=True) | Q(attended=True))
         .values_list("activity_id", "school_id")
     )
-    if not attendance:
-        return []
+    sessions_with_att = {act_id for act_id, _ in attendance}
+    sessions_without_att = [
+        item
+        for act_id, item in sessions.items()
+        if act_id not in sessions_with_att and item.cluster_id
+    ]
     schools = {
         school.id: school
         for school in School.objects.filter(
             id__in={school_id for _, school_id in attendance}
         ).select_related("district", "region")
     }
+    if sessions_without_att:
+        from collections import defaultdict
+        from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+        cids = list({item.cluster_id for item in sessions_without_att})
+        fallback_schools = list(
+            School.objects.filter(
+                cluster_id__in=cids,
+                cluster_status="clustered",
+                deleted_at__isnull=True,
+            )
+            .filter(
+                Q(operational_status__isnull=True)
+                | Q(operational_status__in=OPERATING_STATUSES)
+            )
+            .select_related("district", "region")
+        )
+        fb_by_cluster = defaultdict(list)
+        for s in fallback_schools:
+            fb_by_cluster[s.cluster_id].append(s)
+            schools[s.id] = s
+        for s_item in sessions_without_att:
+            for s in fb_by_cluster.get(s_item.cluster_id, []):
+                attendance.append((s_item.activity_id, s.id))
+
+    if not attendance:
+        return []
     owners = _owner_names(schools.values())
     rows = []
     for activity_id, school_id in attendance:

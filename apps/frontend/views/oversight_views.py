@@ -641,7 +641,17 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     - cluster_meetings
     - planned_trainings
     and determine ownership flags.
+
+    Cluster trainings are expanded into their confirmed/invited member schools
+    so the Schools with Planned Training table displays real School IDs and Names
+    rather than blanks or "Unknown School".
     """
+    import copy
+    from collections import defaultdict
+    from django.db.models import Q
+    from apps.activities.models import ClusterActivityAttendance
+    from apps.schools.models import School
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
     from apps.core.activity_types import (
         CLUSTER_MEETING_TYPES,
         TRAINING_TYPES,
@@ -660,6 +670,8 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     viewer_staff_profile = getattr(request_user, "staff_profile", None)
     viewer_staff_id = str(viewer_staff_profile.id) if viewer_staff_profile else ""
     viewer_name = getattr(request_user, "name", "").casefold()
+
+    all_cluster_training_items = []
 
     for group in owner_groups:
         client_school_visits = []
@@ -689,6 +701,11 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 or bool(item.training_name and item.training_name != "—")
             ):
                 planned_trainings.append(item)
+                if item.cluster_id and (
+                    not item.school_id
+                    or item.school_name in ("Unknown School", "Unknown", "")
+                ):
+                    all_cluster_training_items.append(item)
             elif atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
                 cluster_meetings.append(item)
             else:
@@ -702,6 +719,110 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
         group["core_school_visits"] = core_school_visits
         group["cluster_meetings"] = cluster_meetings
         group["planned_trainings"] = planned_trainings
+
+    # ── Expand cluster trainings to confirmed / invited member schools ──
+    if all_cluster_training_items:
+        act_ids = [
+            item.activity_id for item in all_cluster_training_items if item.activity_id
+        ]
+        cluster_ids = list(
+            {
+                item.cluster_id
+                for item in all_cluster_training_items
+                if item.cluster_id
+            }
+        )
+
+        att_records = list(
+            ClusterActivityAttendance.objects.filter(activity_id__in=act_ids)
+            .filter(Q(invited=True) | Q(attended=True))
+            .values_list("activity_id", "school_id")
+        )
+        att_by_act = defaultdict(list)
+        att_school_ids = set()
+        for act_id, sid in att_records:
+            if sid not in att_by_act[act_id]:
+                att_by_act[act_id].append(sid)
+            att_school_ids.add(sid)
+
+        member_schools = list(
+            School.objects.filter(
+                cluster_id__in=cluster_ids, deleted_at__isnull=True
+            ).select_related("district", "region", "sub_county")
+        )
+        schools_by_cluster = defaultdict(list)
+        schools_by_cluster_confirmed = defaultdict(list)
+        for s in member_schools:
+            schools_by_cluster[s.cluster_id].append(s)
+            if s.cluster_status == "clustered" and (
+                not s.operational_status or s.operational_status in OPERATING_STATUSES
+            ):
+                schools_by_cluster_confirmed[s.cluster_id].append(s)
+
+        school_lookup = {s.id: s for s in member_schools}
+        missing_ids = att_school_ids - set(school_lookup.keys())
+        if missing_ids:
+            for s in School.objects.filter(id__in=missing_ids).select_related(
+                "district", "region", "sub_county"
+            ):
+                school_lookup[s.id] = s
+
+        for group in owner_groups:
+            new_planned_trainings = []
+            for item in group["planned_trainings"]:
+                if not (
+                    item.cluster_id
+                    and (
+                        not item.school_id
+                        or item.school_name in ("Unknown School", "Unknown", "")
+                    )
+                ):
+                    new_planned_trainings.append(item)
+                    continue
+
+                act_id = item.activity_id
+                target_schools = []
+                if act_id in att_by_act and att_by_act[act_id]:
+                    target_schools = [
+                        school_lookup[sid]
+                        for sid in att_by_act[act_id]
+                        if sid in school_lookup
+                    ]
+                if not target_schools and item.cluster_id:
+                    cid = item.cluster_id
+                    target_schools = (
+                        schools_by_cluster_confirmed.get(cid)
+                        or schools_by_cluster.get(cid)
+                        or []
+                    )
+
+                if target_schools:
+                    for s in target_schools:
+                        s_item = copy.copy(item)
+                        s_item.school_id = s.id
+                        s_item.school_code = s.school_id or str(s.id)
+                        s_item.school_name = s.name
+                        s_item.school_type = getattr(s, "school_type", "") or ""
+                        s_item.district_id = s.district_id
+                        s_item.district_name = (
+                            s.district.name if s.district_id else ""
+                        )
+                        s_item.region_name = (
+                            s.region.name if getattr(s, "region_id", None) else ""
+                        )
+                        s_item.cluster_planned_from = (
+                            item.cluster_name
+                            or getattr(item, "cluster_planned_from", "")
+                            or "Cluster Training"
+                        )
+                        s_item.is_cluster_invited = True
+                        new_planned_trainings.append(s_item)
+                else:
+                    fb_item = copy.copy(item)
+                    fb_item.school_name = item.cluster_name or "Cluster Training"
+                    new_planned_trainings.append(fb_item)
+
+            group["planned_trainings"] = new_planned_trainings
 
     return owner_groups
 

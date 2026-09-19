@@ -406,13 +406,13 @@ and level 3 (4 distinct tables per staff member:
             {% for item in group.planned_trainings %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
-                {{ item.school_code|default:item.school_id|default:"—" }}
+                {% if item.school_code and item.school_code != '—' %}{{ item.school_code }}{% elif item.school_id %}{{ item.school_id }}{% else %}—{% endif %}
               </td>
               <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
-                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</a>
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}{{ item.school_code|default:item.school_id }}{% endif %}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ item.school_name|default:"—" }}</span>
+                <span class="text-slate-800 dark:text-slate-200 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}—{% endif %}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
@@ -422,6 +422,9 @@ and level 3 (4 distinct tables per staff member:
                 <a href="/clusters/{{ item.cluster_id }}" class="hover:underline font-medium text-slate-800 dark:text-slate-200">{{ item.cluster_planned_from }}</a>
                 {% else %}
                 <span class="text-slate-700 dark:text-slate-300">{{ item.cluster_planned_from }}</span>
+                {% endif %}
+                {% if item.is_cluster_invited %}
+                <span class="pill pill-info text-[10px] py-0 px-1.5 font-bold ml-1">Invited</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
