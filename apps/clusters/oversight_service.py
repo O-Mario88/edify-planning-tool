@@ -65,6 +65,9 @@ def _supervisor_of(profile):
     """
     if profile is None:
         return None
+    role = getattr(getattr(profile, "user", None), "active_role", "")
+    if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return profile
     for link in profile.supervisor_links.all():
         supervisor = link.supervisor
         role = getattr(getattr(supervisor, "user", None), "active_role", "")

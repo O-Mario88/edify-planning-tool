@@ -3846,7 +3846,7 @@ main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
      row (a mark beside a name beside an id) keeps its row; its text parts
      are the ones that shorten. */
   :is(main, .drawer-body) table.edify-table--truncate :is(thead, tbody, tfoot) :is(th, td).edify-cell-truncate:not(.edify-cell-stack)
-    > :is(a, button, span, div, p, small, strong, time):not(.edify-cell-row):not(.flex):not(.inline-flex):not(.edify-cell-inline-row):not(.pill):not(.rounded-pill):not(.rounded-full):not(.edify-cell-pill):not([class*="badge"]):not([class*="chip"]) {
+    > :is(a, button, span, div, p, small, strong, time):not(.edify-cell-row):not(.flex):not(.inline-flex):not(.edify-cell-inline-row):not(.pill):not(.rounded-pill):not(.rounded-full):not(.edify-cell-pill):not([class*="badge"]):not([class*="chip"]):not(.school-record-action):not(.edify-table-action):not(.edify-action-button):not([class*="action"]):not(button) {
     display: inline-block !important;
     max-inline-size: 100% !important;
     vertical-align: middle;
@@ -4176,36 +4176,100 @@ main textarea,
 /* Compact record actions: shared by semantic tables and school/cluster lists.
    Keep the sizing local so drawer footers and page actions retain their scale. */
 :root :is(main, .drawer-body, [role="dialog"])
-  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
   :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) {
-  --edify-action-button-block-size: 1.5rem;
-  --edify-action-button-icon-size: .75rem;
-  --edify-action-button-padding-inline: .5rem;
+  --edify-action-button-block-size: 1.75rem;
+  --edify-action-button-icon-size: .875rem;
+  --edify-action-button-padding-inline: .625rem;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   box-sizing: border-box !important;
-  height: 1.5rem !important;
-  block-size: 1.5rem !important;
-  min-height: 1.5rem !important;
-  min-block-size: 1.5rem !important;
-  max-block-size: 1.5rem !important;
-  min-inline-size: 1.5rem !important;
-  padding: 0 .5rem !important;
-  gap: .25rem !important;
-  font-size: var(--edify-text-micro-size) !important;
+  height: 1.75rem !important;
+  block-size: 1.75rem !important;
+  min-height: 1.75rem !important;
+  min-block-size: 1.75rem !important;
+  max-block-size: 1.75rem !important;
+  min-inline-size: max-content !important;
+  padding: 0 .625rem !important;
+  border-radius: 6px !important;
+  gap: .375rem !important;
+  font-size: var(--edify-text-micro-size, 12px) !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  transition: background-color var(--edify-transition-fast, 0.15s), border-color var(--edify-transition-fast, 0.15s), color var(--edify-transition-fast, 0.15s), box-shadow var(--edify-transition-fast, 0.15s) !important;
 }
 :root :is(main, .drawer-body, [role="dialog"])
-  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
   :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) svg {
-  width: .75rem !important;
-  height: .75rem !important;
-  inline-size: .75rem !important;
-  block-size: .75rem !important;
+  width: .875rem !important;
+  height: .875rem !important;
+  inline-size: .875rem !important;
+  block-size: .875rem !important;
   flex-shrink: 0;
+}
+
+/* Action button variants */
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--schedule, .btn-primary) {
+  background-color: #0284c7 !important;
+  border: 1px solid #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(2, 132, 199, 0.15) !important;
+}
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--schedule, .btn-primary):hover:not(:disabled) {
+  background-color: #0369a1 !important;
+  border-color: #0369a1 !important;
+  color: #ffffff !important;
+}
+
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--danger) {
+  background-color: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #dc2626 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--danger):hover:not(:disabled) {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--assign) {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action--assign):hover:not(:disabled) {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table, table.edify-record-table, table.edify-data-table)
+  :is(.school-record-action, .edify-table-action):disabled {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  opacity: 0.65 !important;
 }
 
 /* Light-mode table hierarchy: blue title band, blue column ink on the
@@ -4218,9 +4282,16 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, p, span):not(button *):not(a *) {
   color: #fff !important;
 }
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td),
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td) :is(span, a, button) {
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td),
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td) :is(span, a, button) {
   color: #285b96 !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table) thead :is(th, td) {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
   .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar

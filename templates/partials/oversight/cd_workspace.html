@@ -32,63 +32,89 @@ summary and the detail are the same numbers by construction.
 
   {% if groups %}
   {% paginate groups "leads_page" as leads_page %}
-  <div class="card p-0 overflow-hidden">
+  <div class="card p-0 overflow-hidden shadow-xs border edify-border">
     <div class="overflow-x-auto">
       <table class="w-full text-left" data-mobile-table="scroll">
         <caption class="sr-only">Country plan grouped by Program Lead</caption>
         <thead>
-          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
-            <th scope="col" class="px-4 py-2.5 font-semibold">Program Lead</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Planned</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Staff</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Partner scheduled</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Awaiting partner</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Planned budget</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">At risk</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold">Execution</th>
-            <th scope="col" class="px-4 py-2.5 font-semibold"><span class="sr-only">Leadership action</span></th>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle bg-slate-50/75 dark:bg-slate-900/60 border-b edify-border">
+            <th scope="col" class="px-4 py-3 font-semibold min-w-[240px]">Program Lead</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right">Planned</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right">Staff</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right">Partner scheduled</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right">Awaiting partner</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right">Planned budget</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-center">At risk</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-center">Execution</th>
+            <th scope="col" class="px-4 py-3 font-semibold text-right"><span class="sr-only">Leadership action</span></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y edify-border">
           {% for group in leads_page.rows %}
-          <tr class="border-t edify-border">
+          <tr class="cd-lead-row transition-colors" :class="open === {{ forloop.counter }} ? 'is-expanded' : ''">
             <td class="px-4 py-3">
               <button type="button"
-                      class="text-sm font-semibold hover:underline edify-primary-text"
+                      class="cd-lead-toggle w-full flex items-center gap-3 text-left"
                       hx-get="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
                       hx-target="#team-detail-{{ forloop.counter }}"
                       hx-swap="innerHTML"
                       @click="open = (open === {{ forloop.counter }} ? null : {{ forloop.counter }})"
                       :aria-expanded="open === {{ forloop.counter }} ? 'true' : 'false'"
                       aria-controls="team-detail-{{ forloop.counter }}">
-                {{ group.name }}
+                <svg class="cd-lead-chevron w-4 h-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                </svg>
+                <div class="cd-lead-avatar flex-shrink-0">
+                  {{ group.name|slice:":2"|upper }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="cd-lead-name font-bold text-sm text-slate-900 dark:text-white truncate">
+                    {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline hover:text-blue-600" @click.stop>{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
+                  </div>
+                  <div class="edify-text-caption edify-text-muted">{{ group.summary.total_planned }} planned activit{{ group.summary.total_planned|pluralize:"y,ies" }}</div>
+                </div>
               </button>
             </td>
-            <td class="px-4 py-3 text-sm tabular-nums">{{ group.summary.total_planned }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums">{{ group.summary.staff_scheduled }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums">{{ group.summary.partner_scheduled }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums">{{ group.summary.partner_awaiting_schedule }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums whitespace-nowrap">UGX {{ group.summary.planned_budget|intcomma }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums">{{ group.summary.at_risk }}</td>
-            <td class="px-4 py-3 text-sm tabular-nums">
-              {% if group.summary.execution_progress is None %}—{% else %}{{ group.summary.execution_progress }}%{% endif %}
+            <td class="px-4 py-3 text-sm text-right tabular-nums font-semibold text-slate-900 dark:text-white">{{ group.summary.total_planned }}</td>
+            <td class="px-4 py-3 text-sm text-right tabular-nums">{{ group.summary.staff_scheduled }}</td>
+            <td class="px-4 py-3 text-sm text-right tabular-nums">{{ group.summary.partner_scheduled }}</td>
+            <td class="px-4 py-3 text-sm text-right tabular-nums">
+              {% if group.summary.partner_awaiting_schedule %}
+              <span class="pill pill-warn font-semibold">{{ group.summary.partner_awaiting_schedule }}</span>
+              {% else %}
+              <span class="edify-text-muted">0</span>
+              {% endif %}
             </td>
-            <td class="px-4 py-3 whitespace-nowrap">
+            <td class="px-4 py-3 text-sm text-right tabular-nums whitespace-nowrap font-bold text-slate-900 dark:text-white">UGX {{ group.summary.planned_budget|intcomma }}</td>
+            <td class="px-4 py-3 text-sm text-center tabular-nums">
+              {% if group.summary.at_risk %}
+              <span class="pill pill-danger font-semibold">{{ group.summary.at_risk }} at risk</span>
+              {% else %}
+              <span class="pill pill-neutral">0</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-sm text-center tabular-nums">
+              {% if group.summary.execution_progress is None %}
+              <span class="edify-text-muted">—</span>
+              {% elif group.summary.execution_progress >= 75 %}
+              <span class="pill pill-success font-semibold">{{ group.summary.execution_progress }}%</span>
+              {% elif group.summary.execution_progress >= 40 %}
+              <span class="pill pill-info font-semibold">{{ group.summary.execution_progress }}%</span>
+              {% else %}
+              <span class="pill pill-warn font-semibold">{{ group.summary.execution_progress }}%</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-right">
               {% comment %}
               A leadership ask, not a field control. It creates a TeamAction for
               the Program Lead and changes nothing about the work itself; the PL
               then acts through supervision and delegates where necessary.
               {% endcomment %}
-              {% comment %}
-              `may_delegate` gates the control as well as the endpoint. The RVP
-              reads this page for Cluster Oversight and cannot send from it, and
-              a Send button that answers "not you" is worse than no button.
-              {% endcomment %}
               {% if may_delegate and group.id and group.summary.at_risk %}
               <form hx-post="/country-planning-oversight/send"
                     hx-target="#cd-send-result-{{ forloop.counter }}"
                     hx-swap="innerHTML"
-                    class="flex items-center gap-1.5">
+                    class="flex items-center justify-end gap-1.5">
                 {% csrf_token %}
                 <input type="hidden" name="program_lead" value="{{ group.id }}">
                 <input type="hidden" name="fy" value="{{ fy }}">
@@ -106,9 +132,19 @@ summary and the detail are the same numbers by construction.
               {% endif %}
             </td>
           </tr>
-          <tr x-show="open === {{ forloop.counter }}" x-cloak>
-            <td colspan="9" class="px-4 pb-4">
-              <div id="team-detail-{{ forloop.counter }}" class="edify-text-caption edify-text-muted">Opening…</div>
+          <tr x-show="open === {{ forloop.counter }}" x-cloak class="cd-expanded-team-row">
+            <td colspan="9" class="p-0">
+              <div class="cd-team-expansion-cell p-4 sm:p-6">
+                <div id="team-detail-{{ forloop.counter }}" class="min-h-[140px]">
+                  <div class="flex items-center justify-center gap-3 py-10 text-slate-500">
+                    <svg class="animate-spin w-5 h-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Opening {{ group.name }}'s team plan…</span>
+                  </div>
+                </div>
+              </div>
             </td>
           </tr>
           {% endfor %}

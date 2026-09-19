@@ -333,3 +333,107 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   color: var(--edify-accent-text);
 }
 .cluster-super::before { content: "★ "; }
+
+/* ─── COUNTRY PLANNING WORKSPACE ───────────────────────────────────────────
+   Executive country planning table grouped by Program Leads and officers. */
+.cd-lead-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.cd-lead-row:hover {
+  background-color: var(--edify-surface-subtle, #f8fafc);
+}
+.cd-lead-row.is-expanded {
+  background-color: color-mix(in srgb, var(--color-edify-primary, #1e40af) 6%, transparent);
+}
+.cd-lead-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+  border-radius: var(--edify-radius-md, 0.375rem);
+  color: var(--edify-text);
+  transition: all 0.15s ease;
+}
+.cd-lead-toggle:hover .cd-lead-name {
+  color: var(--color-edify-primary, #1e40af);
+}
+.cd-lead-avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 2.125rem;
+  block-size: 2.125rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-edify-primary, #1e40af) 12%, transparent);
+  color: var(--color-edify-primary, #1e40af);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.cd-lead-chevron {
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--edify-text-muted, #64748b);
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+.cd-lead-row.is-expanded .cd-lead-chevron {
+  transform: rotate(90deg);
+  color: var(--color-edify-primary, #1e40af);
+}
+
+.cd-team-expansion-cell {
+  background: var(--edify-surface-muted, #f8fafc);
+  border-top: 1px solid var(--edify-border, #e2e8f0);
+  border-bottom: 2px solid var(--edify-border, #e2e8f0);
+}
+
+.cd-officer-card {
+  border: 1px solid var(--edify-border, #e2e8f0);
+  border-radius: var(--edify-radius-lg, 0.5rem);
+  background: var(--edify-surface-raised, #ffffff);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  margin-bottom: 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cd-officer-card:hover {
+  border-color: color-mix(in srgb, var(--color-edify-primary, #1e40af) 35%, var(--edify-border, #e2e8f0));
+}
+.cd-officer-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: var(--edify-surface-raised, #ffffff);
+  list-style: none;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.15s ease;
+}
+.cd-officer-summary::-webkit-details-marker { display: none; }
+.cd-officer-summary::after { content: none !important; }
+.cd-officer-summary:hover {
+  background: var(--edify-surface-subtle, #f8fafc);
+}
+.cd-officer-card[open] > .cd-officer-summary {
+  border-bottom-color: var(--edify-border, #e2e8f0);
+  background: color-mix(in srgb, var(--color-edify-primary, #1e40af) 3%, var(--edify-surface-raised, #ffffff));
+}
+
+.cd-officer-chevron {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex-shrink: 0;
+  color: var(--edify-text-muted, #64748b);
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+.cd-officer-card[open] > .cd-officer-summary .cd-officer-chevron {
+  transform: rotate(90deg);
+  color: var(--color-edify-primary, #1e40af);
+}

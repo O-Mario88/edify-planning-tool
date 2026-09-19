@@ -9,7 +9,7 @@ from apps.core.htmx_errors import error_message
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.utils.html import escape
 from django.contrib import messages
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.permissions import (
@@ -397,7 +397,19 @@ def _supervision_panel(request, member, profile) -> dict | None:
 @require_page_permission("staff")
 def staff_profile_view(request, user_id):
     """Full staff 360° profile — activities, visits, evidence, SSA coverage."""
-    member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
+    from django.http import Http404
+
+    member = User.objects.filter(id=user_id, deleted_at__isnull=True).first()
+    if not member:
+        sp = (
+            StaffProfile.objects.filter(id=user_id, deleted_at__isnull=True)
+            .select_related("user")
+            .first()
+        )
+        if sp and sp.user:
+            member = sp.user
+    if not member:
+        raise Http404("Employee profile not found.")
     # "Never trust the URL" — the same rule the team-targets drawer already
     # applies. Holding the page permission is not authority over an arbitrary
     # employee's 360 profile. A Programme Lead covering an absent lead also

@@ -134,11 +134,11 @@ class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-capt
 </div>
 <div>
 <p class="edify-profile-field__label">District</p>
-<p class="edify-profile-field__value mt-0.5">{{ school.district.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.district %}<a href="/districts/{{ school.district.id }}" class="hover:underline font-medium text-slate-800">{{ school.district.name }}</a>{% else %}Not specified{% endif %}</p>
 </div>
 <div>
 <p class="edify-profile-field__label">Sub-county</p>
-<p class="edify-profile-field__value mt-0.5">{{ school.sub_county.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.sub_county %}<a href="/schools?sub_county={{ school.sub_county.id }}" class="hover:underline font-medium text-slate-800">{{ school.sub_county.name }}</a>{% else %}Not specified{% endif %}</p>
 </div>
 <div>
 <p class="edify-profile-field__label">Parish</p>
@@ -164,7 +164,7 @@ Not specified
 </div>
 <div>
 <p class="edify-profile-field__label">Assigned Staff</p>
-<p class="edify-profile-field__value mt-0.5">{{ school.assigned_staff }}</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.account_owner_id %}<a href="/staff/{{ school.account_owner_id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% elif school.account_owner %}<a href="/staff/{{ school.account_owner.id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% else %}{{ school.assigned_staff }}{% endif %}</p>
 </div>
 <div data-school-visit-status>
 <p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
@@ -186,7 +186,7 @@ Not specified
 <ul class="mt-3 space-y-2 text-[12px]">
 {% for m in cluster_history %}
 <li>
-<strong class="text-slate-800">{{ m.cluster.name }}</strong>{% if m.is_cross_district %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}
+<a href="/clusters/{{ m.cluster.id }}" class="font-bold text-slate-800 hover:underline">{{ m.cluster.name }}</a>{% if m.is_cross_district %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}
 <span class="block edify-text-caption text-slate-500">{{ m.started_at|date:"j M Y" }} – {% if m.ended_at %}{{ m.ended_at|date:"j M Y" }}{% else %}present{% endif %}{% if m.start_reason %} · {{ m.start_reason }}{% endif %}{% if m.end_reason %} · Ended: {{ m.end_reason }}{% endif %}</span>
 </li>
 {% endfor %}

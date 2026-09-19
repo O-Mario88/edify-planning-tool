@@ -1242,10 +1242,13 @@ def partner_schedule_assignment_action(request, assignment_id):
             },
             request.user,
         )
-        # Scheduled work lives on My Plan (§6) — land the partner there.
-        response = HttpResponse('<script>window.location.href="/my-plan";</script>')
-        response["HX-Trigger"] = "close-drawer"
-        return response
+        from apps.frontend.views.planning_views import _saved_without_leaving
+
+        return _saved_without_leaving(
+            "Activity scheduled successfully.",
+            plan_url="/my-plan",
+            plan_link_label="Open My Plan",
+        )
     except Exception as exc:
         from apps.core.htmx_errors import error_fragment
 

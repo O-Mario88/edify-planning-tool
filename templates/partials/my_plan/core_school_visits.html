@@ -52,9 +52,9 @@ Open Core Schools
 <tbody>
 {% for row in core_school_visits_pager.rows %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% school_identity row.school_name row.school_id %}</td>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% school_identity row.school_name row.school_id %}</a></td>
 <td class="font-bold text-slate-700" data-label="Package">{{ row.visit_number|default:"—" }}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
-<td class="font-semibold text-slate-500" data-label="District">{{ row.school_district }}</td>
+<td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline hover:text-blue-600">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
 <td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td data-label="Intervention">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">

@@ -391,14 +391,11 @@ def special_projects_bulk_schedule_view(request):
                     "expectedOutcome": "Complete the planned project support and record evidence.",
                 }
                 schedule_school_visit(payload, request.user)
-        messages.success(
-            request, f"Scheduled {len(assignments)} project school activities."
+        return _saved_without_leaving(
+            f"Scheduled {len(assignments)} project school activities.",
+            plan_url="/projects/my-plan",
+            plan_link_label="Open My Plan",
         )
-        response = HttpResponse(
-            '<script>window.location.href="/projects/my-plan";</script>'
-        )
-        response["HX-Trigger"] = "close-drawer"
-        return response
     except Exception as exc:
         return error_fragment(
             exc, action="Could not schedule the selection", status=400
@@ -518,14 +515,11 @@ def special_projects_bulk_partner_view(request):
                     notes=f"Project: {assignment.project.name}",
                 )
                 created += 1
-        messages.success(
-            request, f"Assigned {created} project school activities to {partner.name}."
+        return _saved_without_leaving(
+            f"Assigned {created} project school activities to {partner.name}.",
+            plan_url="/projects/my-plan",
+            plan_link_label="Open My Plan",
         )
-        response = HttpResponse(
-            '<script>window.location.href="/projects/my-plan";</script>'
-        )
-        response["HX-Trigger"] = "close-drawer"
-        return response
     except Exception as exc:
         return error_fragment(exc, action="Could not assign the selection", status=400)
 

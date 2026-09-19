@@ -85,7 +85,11 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
         # Lands on the month it sits in.
         body = response.content.decode()
         self.assertIn("/my-plan?", body)
-        url = body.split('window.location.href = "')[1].split('"')[0]
+        import re
+
+        m = re.search(r'href="([^"]*/my-plan\?[^"]*)"', body)
+        self.assertIsNotNone(m, "Expected toast link to My Plan")
+        url = m.group(1)
         query = parse_qs(urlsplit(url.replace("&amp;", "&")).query)
         self.assertEqual(query["month"], [_month_query(day)["month"]])
         self.assertEqual(query["period"], ["month"])

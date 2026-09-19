@@ -134,8 +134,9 @@
             // A KPI panel is not a table's title (2026-09-13): it carries its
             // own h2, so it was painted as the blue title bar of the next table
             // in the same container, and its labels turned white on white.
-            && !child.matches('.edify-page-header, form, [data-context-metrics], .context-metrics')
-            && !child.querySelector('h1, table, form, input, select, textarea, section, article')
+            // Nor is an interactive disclosure summary (.cd-officer-summary) or an interactive card header.
+            && !child.matches('.edify-page-header, form, [data-context-metrics], .context-metrics, summary, .cd-officer-summary, details > :first-child, [data-no-titlebar], [data-card-header], .edify-card-header, [class*="border-b"]')
+            && !child.querySelector('h1, table, form, input, select, textarea, section, article, button, [class*="badge"], [class*="pill"]')
             && child.querySelectorAll('h2, h3, h4').length <= 1
             && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));
         });
@@ -658,8 +659,9 @@
      shortens beyond that (consistency.css gives it the ellipsis). */
   var FIXED_BOXES = 'img, svg, input, select, textarea, progress, .rounded-pill, .rounded-full, ' +
     '.edify-cell-mark, .edify-cell-pill, .rounded-control, .row-menu__trigger, ' +
+    '.school-record-action, .edify-table-action, .edify-action-button, button, ' +
     ':is(a, button)[class*="rounded"], :is(a, button)[class*="border"], :is(a, button)[class*="bg-"], ' +
-    '[class*="badge"], [class*="pill"], [class*="chip"], [class*="btn"]';
+    ':is(a, button)[class*="action"], [class*="badge"], [class*="pill"], [class*="chip"], [class*="btn"]';
   var PILL_BOX = '.rounded-pill, .rounded-full, .edify-cell-pill, [class*="badge"], [class*="pill"], [class*="chip"]';
   var PILL_MAX = 10 * 16;
   function contentWidth(element, boxesOnly) {
@@ -783,6 +785,7 @@
   }
 
   function rigidCell(cell) {
+    if (cell.querySelector('button, .school-record-action, .edify-table-action, .edify-action-button, [class*="action"]')) return true;
     var text = visibleText(cell);
     if (figureLike(text)) return true;
     var boxed = '';
@@ -1035,12 +1038,14 @@
            over two headings) has no column to read: every heading in it may
            shorten, and every text cell in it truncates like any other. */
         Array.from(row.children).forEach(function (cell) {
+          if (cell.querySelector('button, .school-record-action, .edify-table-action, .edify-action-button, [class*="action"]')) return;
           if (heading ? anyShrunk : !rigidCell(cell)) cell.classList.add('edify-cell-truncate');
         });
         return;
       }
       Array.from(row.children).forEach(function (cell, index) {
         if (cell.hasAttribute('colspan')) return;
+        if (cell.querySelector('button, .school-record-action, .edify-table-action, .edify-action-button, [class*="action"]')) return;
         if (heading ? plan.shrunk[index] : !plan.rigid[index]) cell.classList.add('edify-cell-truncate');
       });
     });

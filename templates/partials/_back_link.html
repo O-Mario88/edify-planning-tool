@@ -25,12 +25,13 @@ between two sibling detail pages is not mistaken for the list.
        const from = document.referrer;
        if (from && from.startsWith(window.location.origin)) {
          const url = new URL(from);
-         if (url.pathname.replace(/\/$/, '') === $el.dataset.parent.replace(/\/$/, '')) {
+         if (url.pathname !== window.location.pathname) {
            $el.href = url.pathname + url.search;
          }
        }
      } catch (e) { /* keep the plain parent link */ }
-   })()">
+   })()"
+   @click="if (window.history.length > 1 && document.referrer && document.referrer.startsWith(window.location.origin)) { window.history.back(); $event.preventDefault(); }">
   <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-  Back to {{ back_label }}
+  Back{% if back_label %} to {{ back_label }}{% endif %}
 </a>

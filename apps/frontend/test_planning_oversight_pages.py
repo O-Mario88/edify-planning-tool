@@ -52,6 +52,9 @@ class OversightPageFixture(TestCase):
         cls.cd_user, cls.cd = cls._staff(
             "cd@t.test", "Director", EdifyRole.COUNTRY_DIRECTOR
         )
+        cls.ia_user, cls.ia = cls._staff(
+            "ia@t.test", "Impact Analyst", EdifyRole.IMPACT_ASSESSMENT
+        )
         StaffSupervisorAssignment.objects.create(
             supervisee=cls.james, supervisor=cls.pl
         )
@@ -135,6 +138,11 @@ class RouteAccessTest(OversightPageFixture):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Country Planning Oversight")
 
+    def test_the_country_page_opens_for_impact_assessment(self):
+        response = self.as_user(self.ia_user).get(CD_URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Country Planning Oversight")
+
     def test_a_cceo_cannot_open_either_oversight_page(self):
         client = self.as_user(self.james_user)
         for url in (PL_URL, CD_URL):
@@ -214,6 +222,26 @@ class ScopeTest(OversightPageFixture):
 
         self.assertIn("Team Lead", body)
         self.assertIn("Other Lead", body)
+
+    def test_the_country_page_renders_lead_rows_and_team_expansion_for_ia(self):
+        """IA monitors the activity of Program Leads and CCEOs across the country plan."""
+        # IA accesses the country planning oversight page
+        response = self.as_user(self.ia_user).get(CD_URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cd-lead-toggle")
+        self.assertContains(response, "Team Lead")
+        self.assertContains(response, "Other Lead")
+
+        # IA expands Team Lead's activities
+        team_resp = self.as_user(self.ia_user).get(
+            f"/country-planning-oversight/team/{self.pl.id}"
+        )
+        self.assertEqual(team_resp.status_code, 200)
+        self.assertContains(team_resp, "cd-officer-card")
+        self.assertContains(team_resp, "cd-officer-summary")
+        self.assertContains(team_resp, "James")
+        self.assertContains(team_resp, "Alpha Primary")
+        self.assertContains(team_resp, "Expand all officers")
 
     def test_the_team_expansion_cannot_be_pointed_at_another_team(self):
         """The id in the URL is not trusted; the rows are rebuilt for the caller.

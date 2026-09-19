@@ -1113,11 +1113,20 @@ def cluster_detail(cluster_id: str, principal) -> dict:
         "id": cluster.id,
         "name": cluster.name,
         "status": cluster.status,
-        "district": {"name": cluster.district.name} if cluster.district else None,
-        "subCounty": {"name": cluster.sub_county.name} if cluster.sub_county else None,
+        "district": (
+            {"name": cluster.district.name, "id": cluster.district.id}
+            if cluster.district
+            else None
+        ),
+        "subCounty": (
+            {"name": cluster.sub_county.name, "id": cluster.sub_county.id}
+            if cluster.sub_county
+            else None
+        ),
         "schoolCount": school_count,
         "studentImpact": student_impact,
         "assignedStaff": assigned_staff,
+        "assignedStaffId": cluster.responsible_staff_id,
         "averageSsa": avg_ssa,
         "lastMeeting": last_meeting_str,
         "lastTraining": last_training_str,

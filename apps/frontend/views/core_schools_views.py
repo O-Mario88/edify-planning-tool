@@ -469,33 +469,32 @@ def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
 
 
 def _core_scheduled_response(request, created, scheduled_date, message):
-    """Confirm the save and open the plan the activity actually landed on.
+    """Confirm the save and keep the planner on Core Schools without leaving.
 
-    A bare "/my-plan" opens the current week, so work dated in any other week
-    looked as though it had not saved (owner, 2026-09-15). Same rule as the
-    Planning drawer: the week that holds it on the scheduler's own My Plan, or
-    the Calendar month when the responsible person is somebody else.
+    Owner, 2026-09-19: scheduling should NOT navigate straight to My Plan.
+    The work lands on My Plan and the planner can manually navigate to My Plan
+    when they are done rather than being interrupted after every activity.
     """
     from apps.frontend.views.planning_views import (
         _calendar_url_for_scheduled_date,
         _my_plan_url_for_scheduled_date,
+        _saved_without_leaving,
         _scheduled_into_own_plan,
     )
 
     lands_here, owner_name = _scheduled_into_own_plan(created, request.user)
     if lands_here:
-        messages.success(request, message)
         url = _my_plan_url_for_scheduled_date(scheduled_date)
+        link_label = "Open My Plan"
     else:
-        messages.success(
-            request,
+        message = (
             f"{message} It is on {owner_name}'s My Plan, because they are the "
-            "responsible staff member — you will find it on the Calendar.",
+            "responsible staff member — you will find it on the Calendar."
         )
         url = _calendar_url_for_scheduled_date(scheduled_date)
-    response = HttpResponse(f'<script>window.location.href = "{url}";</script>')
-    response["HX-Trigger"] = "close-drawer"
-    return response
+        link_label = "Open in Calendar"
+    return _saved_without_leaving(message, plan_url=url, plan_link_label=link_label)
+
 
 
 @require_page_permission("core_schools")

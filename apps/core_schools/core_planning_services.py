@@ -872,12 +872,15 @@ class CorePackageProgressService:
                     "school_id": s.school_id,
                     "name": s.name,
                     "geo_label": f"{s.district.name} / {s.region.name}",
-                    "district_name": s.district.name,
+                    "district_name": s.district.name if s.district else "—",
+                    "district_id": s.district_id,
                     "sub_county_name": s.sub_county.name if s.sub_county else "—",
+                    "sub_county_id": s.sub_county_id,
                     "shipping_address": s.shipping_address or "—",
                     "school_type": s.get_school_type_display(),
                     "phone": s.primary_contact_phone or s.school_phone or "—",
                     "school_contact": s.primary_contact_name or "—",
+                    "account_owner_id": s.account_owner_id,
                     "staff_name": staff_names_by_owner_id.get(s.account_owner_id)
                     or s.account_owner_name_raw
                     or "Unassigned",

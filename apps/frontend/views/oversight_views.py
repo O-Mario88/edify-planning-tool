@@ -1359,12 +1359,25 @@ def country_planning_team_view(request, staff_id: str):
         request.user, program_lead_id=staff_id, **_service_period(period)
     )
 
+    program_lead_name = next(
+        (i.supervising_pl_name for i in items if i.supervising_pl_name), ""
+    )
+    if not program_lead_name:
+        from apps.accounts.models import StaffProfile
+
+        pl = StaffProfile.objects.filter(id=staff_id).select_related("user").first()
+        if pl and pl.user:
+            program_lead_name = (
+                getattr(pl.user, "name", "") or pl.title or "Program Lead"
+            )
+
     return render(
         request,
         "partials/oversight/cd_team_detail.html",
         {
             **period,
             "staff_id": staff_id,
+            "program_lead_name": program_lead_name,
             "summary": oversight.summarize(items),
             "owner_groups": oversight.group_by_owner(items),
         },

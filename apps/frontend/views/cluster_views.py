@@ -560,13 +560,21 @@ def cluster_schedule_activity_view(request):
                 )
                 plan_url = _calendar_url_for_scheduled_date(scheduled_date_str)
             if request.headers.get("HX-Request") == "true":
-                # The week the meeting sits in, not the Clusters page: a future
-                # meeting was invisible on the current week of My Plan and read
-                # as never having been saved (2026-09-15).
-                response = HttpResponse(
-                    f'<script>window.location.href = "{escape(plan_url)}";</script>'
+                from apps.frontend.views.planning_views import _saved_without_leaving
+
+                msg = (
+                    f"{noun} scheduled successfully."
+                    if lands_here
+                    else f"{noun} scheduled. It is on {owner_name}'s My Plan; you will find it on the Calendar."
                 )
-                response["HX-Trigger"] = "close-drawer, refresh-clusters"
+                response = _saved_without_leaving(
+                    msg,
+                    plan_url=plan_url,
+                    plan_link_label="Open in My Plan" if lands_here else "Open in Calendar",
+                )
+                response["HX-Trigger"] = json.dumps(
+                    {"close-drawer": True, "refresh-clusters": True}
+                )
                 return response
             return redirect(plan_url)
         except Exception as e:
