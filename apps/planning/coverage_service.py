@@ -233,6 +233,7 @@ def _row_of(
         # the same question, answered one rung short of where the money
         # actually goes.
         "budget_status": _budget_status(item, requested_ids=requested_ids),
+        "pl_status": IA_STATUS_LABELS.get(item.ia_status or "", "Pending"),
         "ia_status": IA_STATUS_LABELS.get(item.ia_status or "", "Pending"),
         "payment_status": item.finance_status,
         "activity_status": item.activity_status or item.assignment_status,

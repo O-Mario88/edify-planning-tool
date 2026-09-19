@@ -1512,6 +1512,18 @@ def get_frontend_context(principal, query: dict) -> dict:
                     or []
                 )
 
+            act_obj = next((a for a in activities if a.id == _act_id), None)
+            pps = None
+            if act_obj:
+                pps = getattr(act_obj, "participants_per_school", None) or getattr(act_obj, "teachers_per_school", None)
+            if not pps:
+                total_p = row.get("expected_participants")
+                if total_p and _target_schools:
+                    pps = max(1, total_p // len(_target_schools))
+                else:
+                    pps = 2
+            per_school_meal_cost = pps * 5000
+
             if _target_schools:
                 for _school in _target_schools:
                     _school_row = dict(row)
@@ -1526,6 +1538,8 @@ def get_frontend_context(principal, query: dict) -> dict:
                     _school_row["school_cluster_name"] = row.get("cluster_name") or ""
                     _school_row["place_url"] = f"/schools/{_school.school_id or _school.id}"
                     _school_row["is_cluster_invited"] = True
+                    _school_row["expected_participants"] = pps
+                    _school_row["budget_total"] = per_school_meal_cost
                     _new_cluster_trainings_list.append(_school_row)
             else:
                 _fallback_row = dict(row)
@@ -1537,6 +1551,8 @@ def get_frontend_context(principal, query: dict) -> dict:
                     if row.get("cluster_id")
                     else ""
                 )
+                _fallback_row["expected_participants"] = pps
+                _fallback_row["budget_total"] = per_school_meal_cost
                 _new_cluster_trainings_list.append(_fallback_row)
 
         cluster_trainings_list = _new_cluster_trainings_list

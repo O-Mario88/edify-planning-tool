@@ -223,7 +223,7 @@ class MyPlanPeriodFilterTest(TestCase):
         html = self.page()
         card = html[html.index("School Visits Planned") :]
         card = card[: card.index("Trainings Planned")]
-        self.assertIn("<th>Focus Intervention</th>", card)
+        self.assertIn(">Focus Intervention</th>", card)
         self.assertIn('data-label="Intervention"', card)
 
     def test_the_cards_say_which_period_they_are_showing(self):

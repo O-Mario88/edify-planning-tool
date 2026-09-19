@@ -36,7 +36,7 @@ Open Core Schools
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate core_school_trainings "core_trainings_page" 10 as core_school_trainings_pager %}
 {% if core_school_trainings %}
-<table class="edify-data-table mp-table edify-record-table">
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
 <th class="min-w-[240px]">School Name</th>
@@ -55,9 +55,9 @@ Open Core Schools
 <tr>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
   {% else %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</span>
+  <span>{{ row.school_name|default:"—" }}</span>
   {% endif %}
   <span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span>
 </td>

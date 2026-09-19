@@ -22,7 +22,7 @@ Open Work Plan
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
 {% if programme_activities %}
-<table class="edify-data-table mp-table edify-record-table">
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
 <th class="min-w-[90px]">Venue ID</th>
@@ -39,9 +39,9 @@ Open Work Plan
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
   {% elif row.venue_name %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.venue_name }}</span>
+  <span>{{ row.venue_name }}</span>
   {% else %}
   <span class="text-slate-400">—</span>
   {% endif %}

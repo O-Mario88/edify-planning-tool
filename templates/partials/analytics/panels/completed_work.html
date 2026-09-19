@@ -15,7 +15,7 @@ above (owner, 2026-09-05: one Analytics page, tabs swap only the panel).
 <th class="px-6 py-4 text-left">Owner</th>
 <th class="px-6 py-4 text-left">Activity Type</th>
 <th class="px-6 py-4 text-center">Planned Date</th>
-<th class="px-6 py-4 text-center">IA Status</th>
+<th class="px-6 py-4 text-center">PL Status</th>
 <th class="px-6 py-4 text-center">NetSuite ID</th>
 <th class="px-6 py-4 text-right">Actions</th>
 </tr>
@@ -46,8 +46,8 @@ above (owner, 2026-09-05: one Analytics page, tabs swap only the panel).
 <td class="px-6 py-4 text-center text-slate-500 font-medium" data-label="Planned Date">
 {{ act.planned_date|date:"M d, Y" }}
 </td>
-<!-- IA Status -->
-<td class="px-6 py-4 text-center" data-label="IA Status">
+<!-- PL Status -->
+<td class="px-6 py-4 text-center" data-label="PL Status">
 {% if act.closure_checklist.ia_verified %}
 <span class="text-emerald-600 font-bold">Verified</span>
 {% else %}

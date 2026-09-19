@@ -19,8 +19,8 @@ Returned — Needs Correction
 </div>
 
 <!-- Table Section -->
-<div class="edify-record-table-wrap">
-<table class="edify-record-table edify-data-table mp-table">
+<div class="overflow-x-auto edify-record-table-wrap">
+<table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -36,11 +36,11 @@ Returned — Needs Correction
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
   {% else %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</span>
+  <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-rose-700" data-label="Returned By">{{ row.returned_by }}</td>
@@ -49,10 +49,8 @@ Returned — Needs Correction
 <button
 hx-get="{{ row.next_action.url }}"
 hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-rose-600 !text-white text-[12px] font-semibold hover:bg-rose-700 shadow-sm transition-all"
->
-{{ row.next_action.text }}
+class="btn btn-warn h-8 edify-text-caption font-semibold shadow-xs">
+Fix Now
 </button>
 </td>
 </tr>
@@ -64,14 +62,14 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-rose
 </div>
 {% endif %}
 
-<!-- 2. Waiting on Approval (amber) -->
+<!-- 2. Waiting on Approval -->
 {% if waiting_on_approval %}
-<div class="card overflow-hidden border-amber-200" data-card="waiting-on-approval">
+<div class="card overflow-hidden" data-card="waiting-approval">
 
 <!-- Card Header -->
-<div class="px-5 py-4 border-b border-amber-200 bg-amber-50/60 flex items-center justify-between">
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="text-[18px]">⏳</span>
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
 <h2 class="text-[15px] font-semibold text-amber-800 tracking-tight">
 Waiting on Approval
 </h2>
@@ -82,8 +80,8 @@ Waiting on Approval
 </div>
 
 <!-- Table Section -->
-<div class="edify-record-table-wrap">
-<table class="edify-record-table edify-data-table mp-table">
+<div class="overflow-x-auto edify-record-table-wrap">
+<table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -98,11 +96,11 @@ Waiting on Approval
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
   {% else %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</span>
+  <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
@@ -135,8 +133,8 @@ Partner Planned — Monitoring
 </div>
 
 <!-- Table Section -->
-<div class="edify-record-table-wrap">
-<table class="edify-record-table edify-data-table mp-table">
+<div class="overflow-x-auto edify-record-table-wrap">
+<table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
 <th>Partner</th>
@@ -146,7 +144,7 @@ Partner Planned — Monitoring
 <th>Focus</th>
 <th>Evidence</th>
 <th class="text-center">SF ID</th>
-<th>IA Status</th>
+<th>PL Status</th>
 <th>Payment</th>
 <th class="text-right"></th>
 </tr>
@@ -158,11 +156,11 @@ Partner Planned — Monitoring
 <td class="font-semibold text-slate-800 text-[13px]" data-label="School / Cluster">
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
   {% else %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</span>
+  <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
@@ -171,7 +169,7 @@ Partner Planned — Monitoring
 <td class="text-center font-bold {% if row.salesforce_activity_id %}text-emerald-600{% else %}text-slate-400{% endif %}" data-label="SF ID">
 {% if row.salesforce_activity_id %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}—{% endif %}
 </td>
-<td class="text-slate-600 font-semibold" data-label="IA Status">{{ row.ia_verification_status|default:"—" }}</td>
+<td class="text-slate-600 font-semibold" data-label="PL Status">{{ row.ia_verification_status|default:"—" }}</td>
 <td class="text-slate-600 font-semibold" data-label="Payment">{{ row.payment_status|default:"—" }}</td>
 <td class="text-right" data-record-action>
 <a href="/my-plan/{{ row.id }}" class="btn btn-ghost h-8 edify-text-caption shadow-sm">View</a>
@@ -203,8 +201,8 @@ Finance / Accountability Pending
 </div>
 
 <!-- Table Section -->
-<div class="edify-record-table-wrap">
-<table class="edify-record-table edify-data-table mp-table">
+<div class="overflow-x-auto edify-record-table-wrap">
+<table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -219,11 +217,11 @@ Finance / Accountability Pending
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
   {% else %}
-  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name }}</span>
+  <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td data-label="Payment Status">

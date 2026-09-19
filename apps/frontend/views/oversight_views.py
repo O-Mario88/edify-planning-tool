@@ -767,6 +767,18 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             ):
                 school_lookup[s.id] = s
 
+        from apps.activities.models import Activity
+        from apps.budget.models import CostSetting
+        act_obj_lookup = {
+            a.id: a
+            for a in Activity.objects.filter(id__in=act_ids)
+        }
+        active_meal_cs = CostSetting.objects.filter(
+            key="cluster_meetings_trainings_meals",
+            catalogue__is_active=True,
+        ).first()
+        meal_unit_rate = int(active_meal_cs.unit_cost) if (active_meal_cs and active_meal_cs.unit_cost) else 5000
+
         for group in owner_groups:
             new_planned_trainings = []
             for item in group["planned_trainings"]:
@@ -796,6 +808,18 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         or []
                     )
 
+                act_obj = act_obj_lookup.get(act_id)
+                pps = None
+                if act_obj:
+                    pps = act_obj.participants_per_school or act_obj.teachers_per_school
+                if not pps:
+                    total_p = getattr(item, "participants", None) or (act_obj.expected_participants if act_obj else None)
+                    if total_p and target_schools:
+                        pps = max(1, total_p // len(target_schools))
+                    else:
+                        pps = 2
+                per_school_meal_cost = pps * meal_unit_rate
+
                 if target_schools:
                     for s in target_schools:
                         s_item = copy.copy(item)
@@ -816,10 +840,16 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                             or "Cluster Training"
                         )
                         s_item.is_cluster_invited = True
+                        s_item.participants = pps
+                        s_item.planned_cost = per_school_meal_cost
+                        s_item.budget = per_school_meal_cost
                         new_planned_trainings.append(s_item)
                 else:
                     fb_item = copy.copy(item)
                     fb_item.school_name = item.cluster_name or "Cluster Training"
+                    fb_item.participants = pps
+                    fb_item.planned_cost = per_school_meal_cost
+                    fb_item.budget = per_school_meal_cost
                     new_planned_trainings.append(fb_item)
 
             group["planned_trainings"] = new_planned_trainings
@@ -914,14 +944,18 @@ def team_planning_oversight_view(request):
     # keeps the expensive one out of the way: these are independent lenses, and
     # the inactive one must not delay the active one.
     if active_view in ("portfolio", "clusters"):
-        builder = (
-            _portfolio_context
-            if active_view == "portfolio"
-            else _cluster_performance_context
-        )
+        if active_view == "portfolio":
+            context_data = _portfolio_context(request, period, base_url=TEAM_OVERSIGHT_PATH)
+            template = "partials/oversight/portfolio_workspace.html"
+        else:
+            from apps.clusters.oversight_service import cluster_oversight_table_data
+            fy = period.get("fy") or get_operational_fy()
+            context_data = cluster_oversight_table_data(request.user, fy=fy)
+            template = "partials/oversight/cluster_oversight_workspace.html"
+
         context = {
             **period,
-            **builder(request, period, base_url=TEAM_OVERSIGHT_PATH),
+            **context_data,
             "active_oversight_view": active_view,
             "lens_tabs": lens_tabs,
             "lens_base_url": TEAM_OVERSIGHT_PATH,
@@ -931,12 +965,8 @@ def team_planning_oversight_view(request):
             "can_view_school_coverage": can_view_coverage,
             "can_view_portfolio": can_view_portfolio,
             "fy_options": fy_options(),
+            "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
         }
-        template = (
-            "partials/oversight/portfolio_workspace.html"
-            if active_view == "portfolio"
-            else "partials/oversight/cluster_performance_workspace.html"
-        )
         if request.headers.get("HX-Request") == "true":
             return render(request, template, context)
         return render(request, "pages/oversight/team_planning.html", context)
@@ -1140,14 +1170,18 @@ def country_planning_oversight_view(request):
     )
 
     if active_view in ("portfolio", "clusters"):
-        builder = (
-            _portfolio_context
-            if active_view == "portfolio"
-            else _cluster_performance_context
-        )
+        if active_view == "portfolio":
+            context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+            template = "partials/oversight/portfolio_workspace.html"
+        else:
+            from apps.clusters.oversight_service import cluster_oversight_table_data
+            fy = period.get("fy") or get_operational_fy()
+            context_data = cluster_oversight_table_data(request.user, fy=fy)
+            template = "partials/oversight/cluster_oversight_workspace.html"
+
         context = {
             **period,
-            **builder(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
+            **context_data,
             "active_oversight_view": active_view,
             "lens_tabs": lens_tabs,
             "lens_base_url": COUNTRY_OVERSIGHT_PATH,
@@ -1155,12 +1189,8 @@ def country_planning_oversight_view(request):
             # reaches it reads the country.
             "portfolio_is_country": True,
             "fy_options": fy_options(),
+            "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
         }
-        template = (
-            "partials/oversight/portfolio_workspace.html"
-            if active_view == "portfolio"
-            else "partials/oversight/cluster_performance_workspace.html"
-        )
         if request.headers.get("HX-Request") == "true":
             return render(request, template, context)
         return render(request, "pages/oversight/country_planning.html", context)

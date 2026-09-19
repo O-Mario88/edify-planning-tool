@@ -2,6 +2,27 @@
 
 <div class="cluster-oversight-content space-y-6">
 
+  {% if fy_options %}
+  <form class="edify-filter-bar oversight-portfolio-filters flex items-center gap-3"
+        aria-label="Cluster filters"
+        hx-get="{{ lens_base_url|default:'/team-planning-oversight/' }}"
+        hx-target="#oversight-workspace"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        hx-push-url="true">
+    <input type="hidden" name="view" value="clusters">
+
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+      <select name="fy" aria-label="Financial year">
+        {% for option in fy_options %}
+        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  {% endif %}
+
   {# ── Cluster Performance Executive Overview ────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     <div class="card p-4 bg-white dark:bg-slate-900 border edify-border shadow-xs">
@@ -121,7 +142,7 @@
   {% else %}
     {# ── Country / Regional View: Level 1 Supervising PL -> Level 2 CCEO Tabs #}
     {% if leads %}
-    <div x-data="{ activeLead: '{{ leads.0.id }}' }" class="space-y-5">
+    <div x-data="{ activeLead: '{{ selected_program_lead|default:leads.0.id }}' }" class="space-y-5">
       {# Level 1: Supervising PL Tabs #}
       <div class="border-b edify-border bg-white dark:bg-slate-900 rounded-t-xl px-2 pt-2 shadow-xs">
         <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
