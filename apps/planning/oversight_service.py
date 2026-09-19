@@ -1099,9 +1099,86 @@ def group_by_owner(items) -> list[dict]:
     )
 
 
-def group_by_program_lead(items) -> list[dict]:
-    """Items folded per supervising Program Lead — the CD page's default lens."""
-    return _group(items, key=lambda i: (i.supervising_pl_id, i.supervising_pl_name))
+def system_program_leads() -> list[dict]:
+    """All staff with the Program Lead role, from the role system.
+
+    This is the source of truth for PL tabs on the Country Oversight page.
+    PLs are defined by their role, not inferred from activity supervisor links.
+    A PL with zero activities still appears; the IA never does.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.core.rbac import EdifyRole
+
+    profiles = (
+        StaffProfile.objects.filter(
+            user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
+    return [
+        {
+            "id": p.id,
+            "user_id": p.user_id,
+            "name": getattr(p.user, "name", "") or getattr(p.user, "email", ""),
+            "ids": _both_id_spaces({p.id}),
+        }
+        for p in profiles
+    ]
+
+
+def group_by_program_lead(items, *, program_leads=None) -> list[dict]:
+    """Items folded per Program Lead — from the system's role assignments.
+
+    When *program_leads* is supplied (the top-down list from
+    ``system_program_leads``), every PL gets a group whether or not they have
+    items in the current period, and items are attributed by the PL id stamped
+    on the item by the supervisor link.  Items whose owner has no PL supervisor
+    fall to an "Unassigned" group at the end.
+
+    Without *program_leads* the old bottom-up grouping is used (backward
+    compatible for call-sites that have not been updated).
+    """
+    if program_leads is None:
+        # Fallback: bottom-up grouping from item data.
+        return _group(
+            items, key=lambda i: (i.supervising_pl_id, i.supervising_pl_name)
+        )
+
+    # Build PL-id → group mapping from the system PLs.
+    pl_lookup: dict[str, dict] = {}
+    groups: list[dict] = []
+    for pl in program_leads:
+        group: dict = {"id": pl["id"], "name": pl["name"], "items": []}
+        groups.append(group)
+        for pid in pl["ids"]:
+            pl_lookup[pid] = group
+
+    unassigned: dict = {"id": None, "name": "Unassigned", "items": []}
+
+    for item in items:
+        target = (
+            pl_lookup.get(item.supervising_pl_id)
+            if item.supervising_pl_id
+            else None
+        )
+        if target is not None:
+            target["items"].append(item)
+        else:
+            unassigned["items"].append(item)
+
+    # Summarise each group (including empty ones — the template shows "0 planned").
+    for group in groups:
+        group["summary"] = summarize(group["items"])
+
+    if unassigned["items"]:
+        unassigned["summary"] = summarize(unassigned["items"])
+        groups.append(unassigned)
+
+    for index, group in enumerate(groups, start=1):
+        group["page_param"] = f"g{index}_page"
+
+    return groups
 
 
 def _group(items, *, key) -> list[dict]:

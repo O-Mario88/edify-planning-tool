@@ -553,24 +553,73 @@ def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list
     return tabs, active["key"], active["items"]
 
 
-def _program_lead_tabs(items, selected: str | None) -> tuple[list[dict], str, list]:
-    buckets: dict[tuple[str, str], list] = {}
-    for item in items:
-        key = item.supervising_pl_id or "unassigned"
-        label = item.supervising_pl_name or "Unassigned"
-        buckets.setdefault((key, label), []).append(item)
-    tabs = [
-        {
-            "key": key,
-            "label": label,
-            "count": len(group_items),
-            "items": group_items,
-        }
-        for (key, label), group_items in sorted(
-            buckets.items(),
-            key=lambda entry: (entry[0][1] == "Unassigned", entry[0][1]),
-        )
-    ]
+def _program_lead_tabs(
+    items, selected: str | None, *, program_leads=None
+) -> tuple[list[dict], str, list]:
+    """PL tabs for the country / region lens.
+
+    When *program_leads* is supplied (from ``system_program_leads``), every
+    real PL gets a tab whether or not they have items in the period — and
+    non-PL roles (IA, Accountant) never appear.  Items are bucketed by the
+    ``supervising_pl_id`` the service already stamped.
+    """
+    if program_leads is not None:
+        # Top-down: one tab per system PL.
+        pl_lookup: dict[str, dict] = {}
+        tabs: list[dict] = []
+        for pl in program_leads:
+            tab: dict = {
+                "key": pl["id"],
+                "label": pl["name"],
+                "count": 0,
+                "items": [],
+            }
+            tabs.append(tab)
+            for pid in pl["ids"]:
+                pl_lookup[pid] = tab
+
+        unassigned_items: list = []
+        for item in items:
+            target = (
+                pl_lookup.get(item.supervising_pl_id)
+                if item.supervising_pl_id
+                else None
+            )
+            if target is not None:
+                target["items"].append(item)
+                target["count"] += 1
+            else:
+                unassigned_items.append(item)
+
+        if unassigned_items:
+            tabs.append(
+                {
+                    "key": "unassigned",
+                    "label": "Unassigned",
+                    "count": len(unassigned_items),
+                    "items": unassigned_items,
+                }
+            )
+    else:
+        # Fallback: bottom-up grouping from item data.
+        buckets: dict[tuple[str, str], list] = {}
+        for item in items:
+            key = item.supervising_pl_id or "unassigned"
+            label = item.supervising_pl_name or "Unassigned"
+            buckets.setdefault((key, label), []).append(item)
+        tabs = [
+            {
+                "key": key,
+                "label": label,
+                "count": len(group_items),
+                "items": group_items,
+            }
+            for (key, label), group_items in sorted(
+                buckets.items(),
+                key=lambda entry: (entry[0][1] == "Unassigned", entry[0][1]),
+            )
+        ]
+
     if not tabs:
         return [], "", []
     active = next((entry for entry in tabs if entry["key"] == selected), tabs[0])
@@ -760,7 +809,10 @@ def team_planning_oversight_view(request):
         else (request.GET.get("owner") or WHOLE_TEAM_TAB).strip()
     )
     if country_lens:
-        tabs, selected, visible = _program_lead_tabs(items, selected)
+        sys_pls = oversight.system_program_leads()
+        tabs, selected, visible = _program_lead_tabs(
+            items, selected, program_leads=sys_pls
+        )
     else:
         tabs, selected, visible = _team_owner_tabs(scope, items, selected)
 
@@ -926,14 +978,15 @@ def country_planning_oversight_view(request):
         **_service_period(period),
     )
 
+    sys_pls = oversight.system_program_leads()
     summary = oversight.summarize(items)
     context = {
         **period,
         "program_lead": program_lead_id,
         "summary": summary,
         "kpis": _kpi_items(summary, country=True),
-        "groups": oversight.group_by_program_lead(items),
-        "program_leads": _program_leads(items),
+        "groups": oversight.group_by_program_lead(items, program_leads=sys_pls),
+        "program_leads": _system_program_leads_for_filter(sys_pls),
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
@@ -1075,13 +1128,13 @@ def _filter_options(items) -> dict:
     }
 
 
-def _program_leads(items) -> list[dict]:
-    """The Program Leads present in this plan, for the filter."""
-    seen: dict[str, str] = {}
-    for item in items:
-        if item.supervising_pl_id and item.supervising_pl_id not in seen:
-            seen[item.supervising_pl_id] = item.supervising_pl_name
-    return [{"id": k, "name": v} for k, v in sorted(seen.items(), key=lambda kv: kv[1])]
+def _system_program_leads_for_filter(sys_pls: list[dict]) -> list[dict]:
+    """The system Program Leads, formatted for the filter dropdown.
+
+    Driven by role, not by item data, so a PL with zero items in the period
+    still appears in the filter and the IA never does.
+    """
+    return [{"id": pl["id"], "name": pl["name"]} for pl in sys_pls]
 
 
 def _export_response(items, filename: str):
@@ -1120,8 +1173,11 @@ def team_planning_export_view(request):
     )
     scope = oversight.resolve_oversight_scope(request.user)
     if scope.is_country:
+        sys_pls = oversight.system_program_leads()
         _, _, visible = _program_lead_tabs(
-            items, (request.GET.get("program_lead") or "").strip()
+            items,
+            (request.GET.get("program_lead") or "").strip(),
+            program_leads=sys_pls,
         )
     else:
         # The export follows the tab the page shows, Whole team by default.
@@ -1429,8 +1485,9 @@ def partner_oversight_view(request):
     all_items = partner_oversight.build_items(request.user, **_service_period(period))
     country_lens = _partner_scope(request.user)["is_country"]
     if country_lens:
+        sys_pls = oversight.system_program_leads()
         program_lead_tabs, requested_pl, team_items = _program_lead_tabs(
-            all_items, requested_pl
+            all_items, requested_pl, program_leads=sys_pls
         )
     else:
         program_lead_tabs, team_items = [], all_items
