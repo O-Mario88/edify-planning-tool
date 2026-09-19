@@ -487,27 +487,36 @@ def _staff_directory(assignments) -> dict:
     if not ids:
         return {"names": {}, "supervisor": {}, "canonical": {}}
 
+    from apps.core.rbac import EdifyRole
+
     names, canonical = {}, {}
     profiles = StaffProfile.objects.filter(
         Q(id__in=ids) | Q(user_id__in=ids)
     ).select_related("user")
+    supervisor = {}
     for p in profiles:
         label = getattr(p.user, "name", "") or getattr(p.user, "email", "")
+        role = getattr(p.user, "active_role", "") or ""
         for key in (p.id, p.user_id):
             if key:
                 names[key] = label
                 canonical[key] = p.id
+        if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+            supervisor[p.id] = (p.id, label)
+            if p.user_id:
+                supervisor[p.user_id] = (p.id, label)
 
-    supervisor = {}
     links = StaffSupervisorAssignment.objects.filter(
-        supervisee_id__in={p.id for p in profiles}
+        supervisee_id__in={p.id for p in profiles},
+        supervisor__user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
     ).select_related("supervisor__user")
     for link in links:
         user = getattr(link.supervisor, "user", None)
-        supervisor[link.supervisee_id] = (
-            link.supervisor_id,
-            getattr(user, "name", "") or getattr(user, "email", "") or "",
-        )
+        if link.supervisee_id not in supervisor:
+            supervisor[link.supervisee_id] = (
+                link.supervisor_id,
+                getattr(user, "name", "") or getattr(user, "email", "") or "",
+            )
     return {"names": names, "supervisor": supervisor, "canonical": canonical}
 
 

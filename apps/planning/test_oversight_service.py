@@ -181,6 +181,42 @@ class ProgramLeadScopeTest(OversightFixture):
         self.assertEqual(item.supervising_pl_id, self.pl.id)
         self.assertEqual(item.supervising_pl_name, "Team Lead")
 
+    def test_program_lead_is_their_own_supervising_pl(self):
+        self._activity(owner=self.pl, school=self.school_a)
+
+        item = svc.build_items(self.cd_user, fy=self.fy)[0]
+
+        self.assertEqual(item.supervising_pl_id, self.pl.id)
+        self.assertEqual(item.supervising_pl_name, "Team Lead")
+
+    def test_ia_supervisor_link_is_not_treated_as_supervising_pl(self):
+        ia_user, ia_profile = self._staff(
+            "ia@edify.test", "IA Reviewer", EdifyRole.IMPACT_ASSESSMENT
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.james, supervisor=ia_profile
+        )
+        self._activity(owner=self.james, school=self.school_a)
+
+        item = svc.build_items(self.cd_user, fy=self.fy)[0]
+
+        # Must still resolve to PL (Team Lead), not IA
+        self.assertEqual(item.supervising_pl_id, self.pl.id)
+        self.assertEqual(item.supervising_pl_name, "Team Lead")
+
+    def test_system_program_leads_excludes_non_pl_roles(self):
+        self._staff("ia2@edify.test", "IA Staff", EdifyRole.IMPACT_ASSESSMENT)
+        self._staff("acct@edify.test", "Accountant Staff", EdifyRole.PROGRAM_ACCOUNTANT)
+
+        pls = svc.system_program_leads()
+        names = [p["name"] for p in pls]
+        self.assertIn("Team Lead", names)
+        self.assertIn("Other Lead", names)
+        self.assertNotIn("IA Staff", names)
+        self.assertNotIn("Accountant Staff", names)
+        self.assertNotIn("Director", names)
+
+
 
 class PartnerAssignmentTest(OversightFixture):
     def test_an_unscheduled_assignment_reads_as_awaiting_the_partner(self):

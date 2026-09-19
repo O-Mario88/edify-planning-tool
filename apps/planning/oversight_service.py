@@ -680,6 +680,7 @@ class _StaffDirectory:
             return
 
         from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+        from apps.core.rbac import EdifyRole
 
         profiles = StaffProfile.objects.filter(
             Q(id__in=ids) | Q(user_id__in=ids)
@@ -696,7 +697,8 @@ class _StaffDirectory:
                     self._staff_for[key] = p.id
 
         links = StaffSupervisorAssignment.objects.filter(
-            supervisee_id__in=staff_ids
+            supervisee_id__in=staff_ids,
+            supervisor__user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         ).select_related("supervisor__user")
         for link in links:
             supervisor_user = getattr(link.supervisor, "user", None)
@@ -721,6 +723,13 @@ class _StaffDirectory:
         if not staff_id:
             return None, ""
         canonical = self._staff_for.get(staff_id, staff_id)
+        from apps.core.rbac import EdifyRole
+
+        if (
+            self._roles.get(canonical) == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+            or self._roles.get(staff_id) == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        ):
+            return canonical, self._names.get(canonical, "")
         supervisor_id = self._supervisor_of.get(canonical)
         return supervisor_id, self._names.get(
             supervisor_id, ""
