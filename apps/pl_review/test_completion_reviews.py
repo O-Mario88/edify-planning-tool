@@ -175,7 +175,8 @@ class OneReviewRuleTest(ReviewFixture):
 
         self.assertEqual(response.status_code, 302)
         by_user.refresh_from_db()
-        self.assertEqual(by_user.status, "awaiting_ia_verification")
+        self.assertEqual(by_user.status, "ia_verified")
+        self.assertEqual(by_user.ia_verification_status, "confirmed")
 
 
 class QueueRowsNameTheWorkTest(ReviewFixture):

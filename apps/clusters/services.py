@@ -1617,20 +1617,15 @@ class ClusterDashboardService:
             ).distinct()
 
         # Get all planning info
+    @classmethod
+    def build_cluster_cards(cls, clusters, user, fy=None) -> list[dict]:
+        from apps.activities.models import Activity
+        from apps.core.fy import get_operational_fy
+
+        fy = fy or get_operational_fy()
         planning_list = cluster_planning(user)
         planning_map = {p["id"]: p for p in planning_list}
 
-        # Everything each card needs, read in a fixed number of queries for the
-        # whole page. This loop used to query per cluster AND per school inside
-        # each cluster (a latest-SSA lookup for every school), so one load cost
-        # roughly ten queries per cluster plus one per school in it — unbounded
-        # in the size of the estate. The scale gate never caught it because it
-        # grows schools, not clusters, and most fixture schools are unclustered.
-        clusters = list(
-            filtered_qs.select_related("district", "sub_county").prefetch_related(
-                "covered_sub_counties__sub_county"
-            )
-        )
         cluster_ids = [c.id for c in clusters]
         cluster_schools_qs = School.objects.filter(
             cluster_id__in=cluster_ids, deleted_at__isnull=True
@@ -1646,10 +1641,6 @@ class ClusterDashboardService:
             if row["account_owner_id"]:
                 staff_by_cluster.setdefault(cid, set()).add(row["account_owner_id"])
 
-        # The SSA rollups are aggregated by the database, not in Python. Loading
-        # every clustered school's latest record with its eight scores just to
-        # average them meant ~120,000 model instances per request at full
-        # estate size — the single biggest cost on this page.
         latest_ssa_ids = (
             SsaRecord.objects.filter(
                 school__in=cluster_schools_qs,
@@ -1678,10 +1669,6 @@ class ClusterDashboardService:
                 row["intervention"]
             ] = {"avg": row["avg"], "below": row["below"]}
 
-        # Two grouped reads replace three activity queries per cluster. Max()
-        # skips rows with no planned_date, where the previous
-        # `order_by("-planned_date").first()` could select one (Postgres sorts
-        # NULLs first descending) and report a real meeting as "Never".
         cluster_acts = Activity.objects.filter(
             cluster_id__in=cluster_ids,
             deleted_at__isnull=True,
@@ -1786,6 +1773,58 @@ class ClusterDashboardService:
                     "cluster_leader_phone": c.cluster_leader_phone or "Not Entered",
                 }
             )
+        return cards
+
+    @classmethod
+    def get_dashboard_data(cls, request, user) -> dict:
+        from apps.activities.models import Activity
+
+        scope = resolve_user_scope(user)
+
+        base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
+        scoped = cluster_queryset(scope, base=base_qs, direct_only=True)
+        base_qs = scoped if scoped is not None else base_qs.none()
+
+        # 2. Filters from request
+        q = request.GET.get("q", "").strip()
+        requested_fy = request.GET.get("fy", "").strip()
+        fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
+        district_id = request.GET.get("district", "").strip()
+        sub_county_id = request.GET.get("sub_county", "").strip()
+        staff_id = request.GET.get("staff", "").strip()
+        ssa_status = request.GET.get("ssa_status", "").strip()
+        cluster_risk = request.GET.get("cluster_risk", "").strip()
+        activity_status = request.GET.get("activity_status", "").strip()
+
+        # Apply filters to queryset
+        filtered_qs = base_qs
+        if q:
+            filtered_qs = filtered_qs.filter(
+                Q(name__icontains=q) | Q(district__name__icontains=q)
+            )
+        if district_id:
+            filtered_qs = filtered_qs.filter(district_id=district_id)
+        if sub_county_id:
+            filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
+        if staff_id:
+            staff_cluster_ids = (
+                School.objects.filter(
+                    account_owner_id=staff_id, deleted_at__isnull=True
+                )
+                .exclude(cluster_id__isnull=True)
+                .exclude(cluster_id="")
+                .values("cluster_id")
+            )
+            filtered_qs = filtered_qs.filter(
+                Q(responsible_staff_id=staff_id) | Q(id__in=staff_cluster_ids)
+            ).distinct()
+
+        clusters = list(
+            filtered_qs.select_related("district", "sub_county").prefetch_related(
+                "covered_sub_counties__sub_county"
+            )
+        )
+        cards = cls.build_cluster_cards(clusters, user, fy=fy)
 
         # Apply calculated filters in Python
         if ssa_status:

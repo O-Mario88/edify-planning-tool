@@ -439,6 +439,7 @@ class StaffProfile(SoftDeleteModel):
         choices=StaffOnboardingState.choices,
         default=StaffOnboardingState.PENDING,
     )
+    google_drive_folder_url = models.URLField(max_length=512, null=True, blank=True)
 
     class Meta:
         db_table = "staff_profile"

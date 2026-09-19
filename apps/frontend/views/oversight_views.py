@@ -1371,6 +1371,30 @@ def country_planning_team_view(request, staff_id: str):
                 getattr(pl.user, "name", "") or pl.title or "Program Lead"
             )
 
+    owner_groups = oversight.group_by_owner(items)
+
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+
+    for group in owner_groups:
+        school_visits = []
+        cluster_meetings = []
+        cluster_trainings = []
+        for item in group.get("items", []):
+            atype = str(item.activity_type or "").lower()
+            if atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
+                cluster_meetings.append(item)
+            elif atype in TRAINING_TYPES or "training" in atype:
+                cluster_trainings.append(item)
+            else:
+                school_visits.append(item)
+        group["school_visits"] = school_visits
+        group["cluster_meetings"] = cluster_meetings
+        group["cluster_trainings"] = cluster_trainings
+
     return render(
         request,
         "partials/oversight/cd_team_detail.html",
@@ -1379,7 +1403,7 @@ def country_planning_team_view(request, staff_id: str):
             "staff_id": staff_id,
             "program_lead_name": program_lead_name,
             "summary": oversight.summarize(items),
-            "owner_groups": oversight.group_by_owner(items),
+            "owner_groups": owner_groups,
         },
     )
 

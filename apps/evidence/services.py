@@ -245,13 +245,19 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         original_name=original_name, mime_type=mime_type, head=head, size=size
     )
 
-    # The two governed forms are PDFs by rule (owner, 2026-08-19): a visit
-    # form or attendance form arriving as a photo cannot be filled, checked
-    # or archived as the document it claims to be.
-    if kind in ("visit_form", "attendance_form") and ext.lower() != ".pdf":
+    # Governed forms: Visit Form or Training Attendance.
+    # Accepts PDF documents as well as photos (JPG, PNG, WebP) taken on mobile
+    # or camera, which are automatically converted to standard A4 PDF renditions.
+    if kind in ("visit_form", "attendance_form") and ext.lower() not in (
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    ):
         kind_label = "Visit Form" if kind == "visit_form" else "Training Attendance"
         raise BadRequest(
-            f"The {kind_label} must be uploaded as a PDF file — photos and "
+            f"The {kind_label} must be uploaded as a PDF or photo (JPG, PNG) — "
             "other formats are not accepted for governed forms."
         )
 
@@ -330,6 +336,10 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     except Exception:
         best_effort_delete(EVIDENCE_NAMESPACE, stored_name)
         raise
+
+    if is_image:
+        _try_image_to_pdf(record)
+
     return _serialize(record)
 
 
@@ -381,6 +391,26 @@ def file_for(record_id: str, principal, *, download: bool = False):
         raise NotFoundError("File not found in private storage.")
     record.view_count += 1
     record.save(update_fields=["view_count"])
+
+    # If viewed inline and an A4 PDF rendition exists, stream the PDF rendition
+    # so that <embed type="application/pdf"> and browser viewing renders the
+    # standardized paper A4 document. The original file remains untouched for downloads.
+    if (
+        not download
+        and record.pdf_rendition_storage_key
+        and file_exists(EVIDENCE_NAMESPACE, record.pdf_rendition_storage_key)
+    ):
+        pdf_name = os.path.splitext(record.original_name or record.uri)[0] + ".pdf"
+        response = FileResponse(
+            open_file(EVIDENCE_NAMESPACE, record.pdf_rendition_storage_key),
+            content_type="application/pdf",
+        )
+        response["Content-Disposition"] = content_disposition_header(False, pdf_name)
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Content-Security-Policy"] = "default-src 'none'"
+        response["X-Frame-Options"] = "DENY"
+        return response
+
     response = FileResponse(
         open_file(EVIDENCE_NAMESPACE, record.uri),
         content_type=record.mime_type or "application/octet-stream",
@@ -522,11 +552,16 @@ _try_docx_to_pdf = _try_office_to_pdf
 
 
 def _try_image_to_pdf(record: EvidenceRecord) -> bool:
-    """JPEG/PNG/WebP → single-page PDF via Pillow (best-effort). The image
-    keeps rendering natively in thumbnails; this provides the standardized
-    PDF view the evidence viewer offers for every document type."""
+    """JPEG/PNG/WebP → single-page PDF on paper A4 size via Pillow (best-effort).
+    Standard ISO A4 is 210 x 297 mm (595.2 x 841.92 points at 72 pt/in).
+    At 150 DPI:
+      Portrait: 1240 x 1754 px
+      Landscape: 1754 x 1240 px
+    Scales the photo preserving aspect ratio with clean margins and centers it
+    on a crisp white A4 page, automatically handling EXIF camera rotation.
+    """
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
 
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
         with (
@@ -534,8 +569,35 @@ def _try_image_to_pdf(record: EvidenceRecord) -> bool:
             tempfile.TemporaryDirectory(prefix="edify-evidence-preview-") as tmp_dir,
         ):
             dest = os.path.join(tmp_dir, "preview.pdf")
-            with Image.open(src) as img:
-                img.convert("RGB").save(dest, "PDF")
+            with Image.open(src) as raw_img:
+                img = ImageOps.exif_transpose(raw_img)
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+
+                target_dpi = 150.0
+                is_landscape = img.width > img.height
+                if is_landscape:
+                    a4_w, a4_h = 1754, 1240
+                else:
+                    a4_w, a4_h = 1240, 1754
+
+                margin = 40
+                avail_w = max(100, a4_w - (2 * margin))
+                avail_h = max(100, a4_h - (2 * margin))
+
+                scale = min(avail_w / img.width, avail_h / img.height)
+                new_w = max(1, int(img.width * scale))
+                new_h = max(1, int(img.height * scale))
+
+                resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+                canvas = Image.new("RGB", (a4_w, a4_h), color=(255, 255, 255))
+                offset_x = (a4_w - new_w) // 2
+                offset_y = (a4_h - new_h) // 2
+                canvas.paste(resized, (offset_x, offset_y))
+
+                canvas.save(dest, "PDF", resolution=target_dpi)
+
             save_local_file(EVIDENCE_NAMESPACE, pdf_name, dest)
         _save_rendition(record, pdf_name)
         return True

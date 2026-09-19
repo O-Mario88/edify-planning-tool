@@ -1698,6 +1698,18 @@ def evidence_upload_drawer_view(request, activity_id):
     # work at Confirm Salesforce Entry (§12).
     context["is_partner_viewer"] = bool(resolve_partner_ids(request.user))
 
+    # Look up Google Drive folder URL (from staff member or supervising Program Lead)
+    google_drive_url = None
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if staff_profile:
+        if staff_profile.google_drive_folder_url:
+            google_drive_url = staff_profile.google_drive_folder_url
+        else:
+            supervisor_link = staff_profile.supervisor_links.select_related("supervisor").first()
+            if supervisor_link and supervisor_link.supervisor.google_drive_folder_url:
+                google_drive_url = supervisor_link.supervisor.google_drive_folder_url
+    context["google_drive_folder_url"] = google_drive_url
+
     return render(request, "partials/my_plan/evidence_drawer.html", context)
 
 

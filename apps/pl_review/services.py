@@ -376,35 +376,68 @@ def _close_review_notice(activity) -> None:
 
 
 def confirm(activity_id: str, principal) -> dict:
-    """PL confirms a CCEO completion -> routes to IA verification."""
+    """PL approves and verifies a CCEO completion and evidence directly.
+
+    Per organization workflow, the supervising PL manages and verifies their
+    team members' activities and evidence directly (earning milestone progress
+    credit and syncing to Salesforce), rather than routing staff work to IA.
+    IA verifies evidence for partner completed activities to process partner payments.
+    """
+    from django.db import transaction
     from apps.activities.services import _serialize
+    from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
+    from apps.evidence.models import EvidenceRecord
+    from apps.hr.milestone_progress import record_activity_progress
+    from apps.integrations.services import enqueue_activity_salesforce_sync
 
     a = _get_reviewable(activity_id, principal)
-    a.status = "awaiting_ia_verification"
     reviewed_at = timezone.now()
+
+    a.status = ActivityStatus.IA_VERIFIED
+    a.ia_verification_status = VerificationStatus.CONFIRMED
     a.pl_reviewed_at = reviewed_at
-    a.submitted_to_ia_at = reviewed_at
     a.pl_reviewed_by = principal.user_id
-    a.save(
-        update_fields=[
-            "status",
-            "pl_reviewed_at",
-            "pl_reviewed_by",
-            "submitted_to_ia_at",
-            "updated_at",
-        ]
+    a.ia_confirmed_at = reviewed_at
+    a.ia_confirmed_by = principal.user_id
+    a.evidence_status = "accepted"
+
+    with transaction.atomic():
+        a.save(
+            update_fields=[
+                "status",
+                "ia_verification_status",
+                "pl_reviewed_at",
+                "pl_reviewed_by",
+                "ia_confirmed_at",
+                "ia_confirmed_by",
+                "evidence_status",
+                "updated_at",
+            ]
+        )
+        EvidenceRecord.objects.filter(activity=a, quarantined=False).update(
+            status=EvidenceStatus.ACCEPTED,
+            reviewed_by=principal.user_id,
+            reviewed_at=reviewed_at,
+        )
+
+        _audit("pl_review_confirm", a, principal)
+        _close_review_notice(a)
+
+        confirmed = a
+        transaction.on_commit(lambda: record_activity_progress(confirmed))
+        enqueue_activity_salesforce_sync(confirmed.id)
+
+    # Notify CCEO
+    owner = _owning_staff_id(a)
+    _notify_after_review(
+        a,
+        "activity_verified_by_pl",
+        "Your completion was approved and verified",
+        "Your Program Lead approved and verified your activity completion and evidence.",
+        [owner],
+        priority="normal",
     )
-    _audit("pl_review_confirm", a, principal)
-    _close_review_notice(a)
-    # Impact Assessment in the officer's country is told once the confirmation
-    # commits (never every IA holder in the deployment; the Country Director
-    # for IA officers' own work) — IA review, 2026-09-13.
-    from django.db import transaction
 
-    from apps.activities.services import _notify_ia_submitted
-
-    confirmed = a
-    transaction.on_commit(lambda: _notify_ia_submitted(confirmed))
     return _serialize(a)
 
 

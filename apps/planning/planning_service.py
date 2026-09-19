@@ -366,76 +366,14 @@ class PlanningDashboardService:
                 ]
             )
 
-            for c in clusters_slice:
-                member_schools = School.objects.filter(
-                    cluster_id=c.id, deleted_at__isnull=True
-                )
-                member_records = (
-                    SsaRecord.objects.filter(
-                        school__in=member_schools,
-                        verification_status="confirmed",
-                        deleted_at__isnull=True,
-                    )
-                    .prefetch_related("scores")
-                    .order_by("school_id", "-date_of_ssa")
-                )
+            from apps.clusters.services import ClusterDashboardService
 
-                latest_recs = {}
-                for r in member_records:
-                    if r.school_id not in latest_recs:
-                        latest_recs[r.school_id] = r
-
-                tot_score = sum(
-                    r.average_score for r in latest_recs.values() if r.average_score
-                )
-                rec_cnt = sum(1 for r in latest_recs.values() if r.average_score)
-                avg_ssa = round(tot_score / rec_cnt * 10) if rec_cnt > 0 else 0
-
-                # Find weakest interventions
-                interv_sums = {}
-                interv_counts = {}
-                for r in latest_recs.values():
-                    for score in r.scores.all():
-                        interv_sums[score.intervention] = (
-                            interv_sums.get(score.intervention, 0) + score.score
-                        )
-                        interv_counts[score.intervention] = (
-                            interv_counts.get(score.intervention, 0) + 1
-                        )
-
-                interv_averages = []
-                for code, label in SsaIntervention.choices:
-                    if code in interv_sums:
-                        avg_val = interv_sums[code] / interv_counts[code]
-                        interv_averages.append((code, label, avg_val))
-
-                interv_averages.sort(key=lambda x: x[2])
-                weakest_intervs = [item[1] for item in interv_averages[:4]]
-
-                rec_details = ClusterRecommendationService.get_cluster_recommendation(
-                    cluster=c,
-                    avg_ssa=avg_ssa,
-                    weakest_interventions=weakest_intervs,
-                    school_count=member_schools.count(),
-                    assessed_count=rec_cnt,
-                )
-
-                paginated_clusters.append(
-                    {
-                        "id": c.id,
-                        "name": c.name,
-                        "district": c.district.name if c.district else "Unknown",
-                        "avg_ssa": avg_ssa,
-                        "weakest_interventions": weakest_intervs,
-                        "school_count": member_schools.count(),
-                        "readiness": "Ready"
-                        if member_schools.count() > 0
-                        else "No Schools",
-                        "recommendedAction": rec_details["recommendedAction"],
-                        "reason": rec_details["reason"],
-                        "availableActions": rec_details["availableActions"],
-                    }
-                )
+            paginated_clusters = ClusterDashboardService.build_cluster_cards(
+                clusters_slice, principal, fy=fy
+            )
+            for c in paginated_clusters:
+                c["school_count"] = c.get("schools_count", 0)
+                c["readiness"] = "Ready" if c.get("schools_count", 0) > 0 else "No Schools"
         else:
             total_schools_count = table_schools_qs.count()
             start_idx = (page - 1) * per_page

@@ -123,6 +123,37 @@ class RenditionTest(_EvidenceTestBase):
         # The original is untouched — same path, same bytes.
         self.assertEqual(open(original_path, "rb").read(), original_bytes)
 
+    def test_governed_forms_accept_photo_and_generate_a4_pdf(self):
+        result = self._upload(
+            "visit_form.jpg", _tiny_jpeg_bytes(), "image/jpeg", kind="visit_form"
+        )
+        record = EvidenceRecord.objects.get(id=result["id"])
+        self.assertEqual(record.kind, "visit_form")
+        self.assertEqual(record.file_extension, ".jpg")
+        # Automatically generates the PDF rendition on upload
+        self.assertTrue(record.pdf_rendition_storage_key)
+        rendition_path = services.evidence_path(record.pdf_rendition_storage_key)
+        self.assertTrue(os.path.exists(rendition_path))
+        pdf_bytes = open(rendition_path, "rb").read()
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+        # Verify standard A4 MediaBox
+        self.assertIn(b"/MediaBox [ 0 0 595.2 841.92 ]", pdf_bytes)
+
+    def test_inline_file_serves_a4_pdf_rendition_while_download_serves_original(self):
+        result = self._upload("photo.jpg", _tiny_jpeg_bytes(), "image/jpeg")
+        record = EvidenceRecord.objects.get(id=result["id"])
+
+        # Inline view serves the generated A4 PDF rendition for embedding
+        inline_resp = services.file_for(record.id, self.cceo, download=False)
+        self.assertEqual(inline_resp.status_code, 200)
+        self.assertEqual(inline_resp["Content-Type"], "application/pdf")
+
+        # Download serves the original high-resolution photo untouched
+        download_resp = services.file_for(record.id, self.cceo, download=True)
+        self.assertEqual(download_resp.status_code, 200)
+        self.assertEqual(download_resp["Content-Type"], "image/jpeg")
+        self.assertIn("attachment", download_resp["Content-Disposition"])
+
     def test_office_conversion_tool_missing_fails_gracefully(self):
         from unittest.mock import patch
 
