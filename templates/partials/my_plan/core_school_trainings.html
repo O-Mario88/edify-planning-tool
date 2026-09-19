@@ -39,21 +39,28 @@ Open Core Schools
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
-<th>School Name</th>
-<th>Package</th>
-<th>District</th>
-<th>Planned Date</th>
-<th>Focus Intervention</th>
-<th class="text-center">Expected Participants</th>
-<th>Assigned Partner</th>
-<th>Status</th>
-<th></th>
+<th class="min-w-[240px]">School Name</th>
+<th class="min-w-[110px]">Package</th>
+<th class="min-w-[120px]">District</th>
+<th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[140px]">Focus Intervention</th>
+<th class="text-center min-w-[120px]">Expected Participants</th>
+<th class="min-w-[130px]">Assigned Partner</th>
+<th class="min-w-[120px]">Status</th>
+<th class="min-w-[80px]"></th>
 </tr>
 </thead>
 <tbody>
 {% for row in core_school_trainings_pager.rows %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% school_identity row.school_name row.school_id %}</a><span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span></td>
+<td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
+  {% if row.school_id %}
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</a>
+  {% else %}
+  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</span>
+  {% endif %}
+  <span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span>
+</td>
 <td class="font-bold text-slate-700" data-label="Package">{{ row.training_number|default:"—" }}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
 <td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline hover:text-blue-600">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
 <td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>

@@ -25,18 +25,28 @@ Open Work Plan
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
-<th>Activity</th>
-<th>Purpose</th>
-<th>Date</th>
-<th>Status</th>
-<th></th>
+<th class="min-w-[90px]">Venue ID</th>
+<th class="min-w-[240px]">School / Venue Name</th>
+<th class="min-w-[130px]">Activity</th>
+<th class="min-w-[110px]">Date</th>
+<th class="min-w-[120px]">Status</th>
+<th class="min-w-[80px]"></th>
 </tr>
 </thead>
 <tbody>
 {% for row in programme_activities %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% school_identity row.school_name row.school_id %}</a></td>
-<td class="font-semibold text-slate-600" data-label="Purpose">{{ row.purpose }}</td>
+<td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
+<td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
+  {% if row.school_id %}
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</a>
+  {% elif row.venue_name %}
+  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.venue_name }}</span>
+  {% else %}
+  <span class="text-slate-400">—</span>
+  {% endif %}
+</td>
+<td class="font-semibold text-slate-600" data-label="Activity">{{ row.activity_type_label|default:row.purpose|default:"—" }}</td>
 <td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->

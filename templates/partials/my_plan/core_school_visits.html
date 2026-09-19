@@ -39,23 +39,29 @@ Open Core Schools
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
-<th>School ID</th>
-<th>School Name</th>
-<th>Activity</th>
-<th>Planned Date</th>
-<th>Executor</th>
-<th>Purpose of Visit</th>
-<th>SSA Intervention</th>
-<th class="text-right">Cost</th>
-<th>Status</th>
-<th class="text-right">Actions</th>
+<th class="min-w-[90px]">School ID</th>
+<th class="min-w-[240px]">School Name</th>
+<th class="min-w-[130px]">Activity</th>
+<th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[120px]">Executor</th>
+<th class="min-w-[180px]">Purpose of Visit</th>
+<th class="min-w-[140px]">SSA Intervention</th>
+<th class="text-right min-w-[100px]">Cost</th>
+<th class="min-w-[120px]">Status</th>
+<th class="text-right min-w-[90px]">Actions</th>
 </tr>
 </thead>
 <tbody>
 {% for row in core_school_visits_pager.rows %}
 <tr>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% school_identity row.school_name row.school_id %}</a></td>
+<td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
+  {% if row.school_id %}
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</a>
+  {% else %}
+  <span class="whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:"—" }}</span>
+  {% endif %}
+</td>
 <td class="font-semibold text-slate-700">
   {{ row.activity_type_label|default:"Core Visit" }}
   {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.visit_number }} ({{ row.core_progress }})</span>{% endif %}

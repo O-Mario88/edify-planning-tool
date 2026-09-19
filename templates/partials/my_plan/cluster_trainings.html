@@ -25,31 +25,31 @@ Open Planning
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
-<th>School ID</th>
-<th>School / Cluster</th>
-<th>Cluster Planned From</th>
-<th>Executor</th>
-<th>Training Name</th>
-<th>Planned Date</th>
-<th>SSA Intervention</th>
-<th class="text-center">Participants</th>
-<th>Delivery Type</th>
-<th class="text-right">Cost</th>
-<th>Status</th>
-<th class="text-right">Actions</th>
+<th class="min-w-[90px]">School ID</th>
+<th class="min-w-[240px]">School / Cluster</th>
+<th class="min-w-[160px]">Cluster Planned From</th>
+<th class="min-w-[120px]">Executor</th>
+<th class="min-w-[150px]">Training Name</th>
+<th class="min-w-[110px]">Planned Date</th>
+<th class="min-w-[140px]">SSA Intervention</th>
+<th class="text-center min-w-[110px]">Participants</th>
+<th class="min-w-[110px]">Delivery Type</th>
+<th class="text-right min-w-[100px]">Cost</th>
+<th class="min-w-[120px]">Status</th>
+<th class="text-right min-w-[90px]">Actions</th>
 </tr>
 </thead>
 <tbody>
 {% for row in cluster_trainings %}
 <tr>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title>
+<td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.place_url %}
-  <a href="{{ row.place_url }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% if row.school_name %}{{ row.school_name }}{% elif row.cluster_name %}{{ row.cluster_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  <a href="{{ row.place_url }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name %}{{ row.school_name }}{% elif row.cluster_name %}{{ row.cluster_name }}{% else %}{{ row.school_id }}{% endif %}</a>
   {% elif row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{% if row.school_name %}{{ row.school_name }}{% else %}{{ row.school_id }}{% endif %}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{% if row.school_name %}{{ row.school_name }}{% else %}{{ row.school_id }}{% endif %}</a>
   {% else %}
-  <span class="text-slate-800">{{ row.school_name|default:row.cluster_name|default:"—" }}</span>
+  <span class="text-slate-800 whitespace-normal break-words leading-snug" style="white-space: normal !important; text-overflow: unset !important; overflow: visible !important; display: inline-block !important;">{{ row.school_name|default:row.cluster_name|default:"—" }}</span>
   {% endif %}
 </td>
 <td class="text-slate-700" data-label="Cluster Planned From">
