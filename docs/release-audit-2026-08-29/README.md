@@ -5,6 +5,7 @@
 | | |
 | --- | --- |
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
+| Base moved mid-audit | `main` advanced four times while this audit was open — `e2a0b64c` (PR #80, which removed the scheduling governance behind CONFLICT-004), `f79918f8` (PR #81), then `f5999e00` (PR #82). The audit's fixes were carried onto `main` by those routes, so what this branch still adds is CONFLICT-004 alone. **Every figure below is true of the commit it names and no later one** — that is the cost of auditing a branch that keeps moving. |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
 | Final local suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
@@ -150,6 +151,7 @@ SEC-A4 was proven against the guard rather than inferred:
 
 | ID | Finding | Why not |
 | --- | --- | --- |
+| CONFLICT-004 | **The release candidate moved during the audit, and the scheduling governance the mandate requires was deliberately removed.** `main` commit `23e3bfba` (2026-08-31, owner-authored) states it plainly: scheduling visits, trainings and cluster meetings "no longer requires recommendation override reasons, applicable SSAs, calendar-policy dates (Sundays/holidays/blackouts/leave), catalogue eligibility/delivery approvals, frequency caps, or client/partner annual entitlements." Structural validation — targets, dates, duplicates, cost rates — remains. Verified rather than inferred: `apps/activities/services.py` now imports only the identity helpers from `apps.core.calendar_policy`, not `SchedulingPolicyService`; and the follow-up commit rewrote the contract tests to assert the opposite, `test_a_project_required_activity_still_refuses_without_one` ("Relaxing the default must not remove the real rule") becoming `test_catalogue_project_flag_does_not_block_scheduling`. | This is a product decision, clearly made and clearly described, so it is registered rather than reverted. But it is a decision **against** requirements this mandate states: §20.2 requires scheduling to govern Sundays, Saturdays, public holidays, leave, organisation events, blackouts, conflicts and five-activity warnings, and says "the same scheduling-policy service must govern creation and rescheduling"; Journey 9 requires leave to produce a calendar block. Those gates cannot now pass as written. Either the mandate's scheduling section is superseded, or this change is, and only the product owner can say which. |
 | CONFLICT-003 | RVP also holds `milestones.define`. Mandate §18.1 says "RVP and Admin remain read-only for business values"; `apps/hr/priority_cascade.py` has the RVP authoring strategy. Two sources genuinely disagree. | §3 requires a conflict be registered and decided by the product owner, not resolved silently inside an audit fix. The Admin half had three sources agreeing and was fixed. |
 | OBS-1 | `Permission.STRATEGIC_PRIORITIES_EDIT` is granted to four roles and checked nowhere — it appears only in `rbac.py`. The real gate is `milestones.define`. | Gates nothing today. Latent: adding one decorator would hand RVP and Admin an authority nobody re-reviewed. Removing it deletes the scaffold for an approved extension (§4). Needs a decision, not a patch. |
 | OBS-3 | The mandate requires dashboard cards to equal their drill-down totals (§28). Target percentages are pinned hard — `test_target_formula_unification.py` reconciles the CD and PL surfaces with 1,000-case property tests — but `/analytics/drilldown` is covered for *rendering* correctness, not for numeric agreement with the card that links to it. | A general card↔drill-down reconciliation harness is a piece of work, not a patch: it needs a card-to-query mapping that does not exist yet. Recorded rather than half-built. |
@@ -289,6 +291,7 @@ which the mandate says must never be read as Green.
 | Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
 | Backup / restore / rollback | **Not Tested** | no production access |
 | Performance and scale at 50k | **Not Tested** | not runnable here |
+| Planning and scheduling | **Red** | not a defect but a scope collision: the calendar, entitlement, frequency-cap and catalogue-eligibility blocks §20.2 requires were removed from the scheduling path on `main` during this audit (CONFLICT-004) |
 | All remaining domains | **Not Tested** | not reached in this pass |
 
 ---
@@ -300,7 +303,8 @@ which the mandate says must never be read as Green.
    writing — manual Salesforce reconciliation stated plainly in the release notes,
    offline field operation deferred with "field staff need connectivity" said out
    loud — and they become disclosed limitations rather than blockers.
-3. The rest is ops, and one item is now closed: CI built and scanned the image on the
+3. **CONFLICT-004 has to be answered first.** The scheduling governance §20.2 requires was deliberately removed from `main` while this audit was open. Until someone says whether the mandate's scheduling section still stands, the Planning and scheduling gates cannot be assessed — they would be measuring the release against a rule the product has just discarded.
+4. The rest is ops, and one item is now closed: CI built and scanned the image on the
    audit head and it carries no fixable CRITICAL or HIGH, so **CVE-2026-14456 is no
    longer an open blocker**. What remains is to restore from a production backup
    once, rehearse the rollback, run the production smoke, and name an incident owner.
