@@ -1845,4 +1845,32 @@
   });
 
   window.EdifyMicroUX = Object.freeze({ enhance: enhance, announce: announce });
+
+  /* ── HTMX → Alpine event bridge ───────────────────────────────────────────
+   * HTMX fires HX-Trigger events as native CustomEvents on the element that
+   * issued the request (bubbling up to document, but NOT to window). Alpine's
+   * `@event.window` modifier listens via window.addEventListener and never
+   * sees DOM events that stop at document. This bridge re-dispatches the
+   * close-drawer and planning-saved triggers from any HTMX response onto
+   * window so every Alpine component with `@close-drawer.window` fires
+   * correctly — including the base drawer that wraps every scheduling form.
+   */
+  document.addEventListener('htmx:afterRequest', function (event) {
+    var xhr = event.detail && event.detail.xhr;
+    if (!xhr) return;
+    var raw = xhr.getResponseHeader('HX-Trigger');
+    if (!raw) return;
+    var triggers;
+    try { triggers = JSON.parse(raw); } catch (_) {
+      /* plain string trigger, e.g. HX-Trigger: close-drawer */
+      triggers = {};
+      raw.split(',').forEach(function (t) { triggers[t.trim()] = true; });
+    }
+    if (triggers['close-drawer']) {
+      window.dispatchEvent(new CustomEvent('close-drawer'));
+    }
+    if (triggers['planning-saved']) {
+      window.dispatchEvent(new CustomEvent('planning-saved'));
+    }
+  });
 })();

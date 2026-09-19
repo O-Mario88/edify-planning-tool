@@ -1426,7 +1426,87 @@ def get_frontend_context(principal, query: dict) -> dict:
         else:
             upcoming_list.append(activity_data)
 
+    # ── Cluster invited-school expansion ────────────────────────────────────
+    # A cluster training or meeting is planned once on the cluster, with the
+    # schools it will reach named by the "invited schools" checkboxes during
+    # scheduling. As-is, those schools show up nowhere in the training table
+    # because every activity row carries the cluster, not a school. Here we
+    # read ClusterActivityAttendance for the cluster activities that were just
+    # collected and append one synthetic row per invited/attended school so the
+    # training and meeting tables accurately reflect which schools have work
+    # planned.
+    from apps.activities.models import ClusterActivityAttendance
+    from apps.schools.models import School as _School
+
+    _cluster_activity_ids = [
+        row["id"]
+        for row in (cluster_trainings_list + cluster_meetings_list)
+        if row.get("id")
+    ]
+    if _cluster_activity_ids:
+        _attendance_rows = list(
+            ClusterActivityAttendance.objects.filter(
+                activity_id__in=_cluster_activity_ids
+            )
+            .filter(Q(invited=True) | Q(attended=True))
+            .values_list("activity_id", "school_id")
+        )
+        if _attendance_rows:
+            _att_school_ids = {sid for _, sid in _attendance_rows}
+            _att_schools = {
+                s.id: s
+                for s in _School.objects.filter(id__in=_att_school_ids).select_related(
+                    "district", "sub_county"
+                )
+            }
+            # Build a quick lookup: activity_id -> base row dict from the list
+            _cluster_row_by_id = {
+                row["id"]: row
+                for row in (cluster_trainings_list + cluster_meetings_list)
+            }
+            # Track which (activity_id, school_id) pairs we already added to
+            # avoid duplicates if a school appears in both invited and attended.
+            _seen = set()
+            for _act_id, _school_id in _attendance_rows:
+                if (_act_id, _school_id) in _seen:
+                    continue
+                _seen.add((_act_id, _school_id))
+                _base = _cluster_row_by_id.get(_act_id)
+                _school = _att_schools.get(_school_id)
+                if not _base or not _school:
+                    continue
+                # Build a school-scoped copy of the cluster row so the
+                # training table can show school name, district, and ID.
+                _school_row = dict(_base)
+                _school_row["school_id"] = _school.school_id or str(_school.id)
+                _school_row["school_name"] = _school.name
+                _school_row["school_district"] = (
+                    _school.district.name if _school.district_id else "Unknown"
+                )
+                _school_row["school_sub_county"] = (
+                    _school.sub_county.name
+                    if _school.sub_county_id
+                    else ""
+                )
+                _school_row["is_cluster_invited"] = True
+                # Append to the appropriate list based on the original activity
+                if _base["activity_type"] in [
+                    "cluster_training",
+                    "core_training",
+                    "training",
+                    "in_school_training",
+                    "school_improvement_training",
+                    "cluster_training_ssa_collection",
+                ]:
+                    cluster_trainings_list.append(_school_row)
+                elif _base["activity_type"] in [
+                    "cluster_meeting",
+                    "cluster_meeting_ssa_review",
+                ]:
+                    cluster_meetings_list.append(_school_row)
+
     # 9. Right Rail: Planning Insights
+
     today_activities = (
         qs.filter(planned_date=today)
         .select_related("school", "school__district", "cluster")

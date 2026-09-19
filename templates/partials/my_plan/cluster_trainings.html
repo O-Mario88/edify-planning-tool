@@ -53,7 +53,12 @@ Open Planning
   {% endif %}
 </td>
 <td class="text-slate-700" data-label="Cluster Planned From">
-  {% if row.delivery_type == "in-school" or "in_school" in row.activity_type %}
+  {% if row.is_cluster_invited %}
+  <span class="inline-flex items-center gap-1">
+    {% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-medium text-slate-800">{{ row.cluster_name|default:"—" }}</a>{% else %}<span class="text-slate-700">{{ row.cluster_name|default:"—" }}</span>{% endif %}
+    <span class="pill pill-info text-[10px] py-0 px-1.5 font-bold ml-1">Invited</span>
+  </span>
+  {% elif row.delivery_type == "in-school" or "in_school" in row.activity_type %}
   <span class="pill pill-neutral text-xs font-semibold">School Visit</span>
   {% elif row.cluster_id %}
   <a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-medium text-slate-800">{{ row.cluster_name|default:"—" }}</a>
