@@ -1730,13 +1730,11 @@ class ClusterDashboardService:
 
     @classmethod
     def get_dashboard_data(cls, request, user) -> dict:
-        from apps.activities.models import Activity
-
         scope = resolve_user_scope(user)
 
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        is_supervisor = scope.active_role in ("PL", "ProgramLead", "Program Lead") or bool(scope.supervised_staff_ids)
-        scoped = cluster_queryset(scope, base=base_qs, direct_only=not is_supervisor)
+        # The working list contains owned clusters; team portfolios live in oversight.
+        scoped = cluster_queryset(scope, base=base_qs, direct_only=True)
         base_qs = scoped if scoped is not None else base_qs.none()
 
         # 2. Filters from request

@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260916oversight1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260920clustermeta1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260920oversight2">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920planning1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920oversight2">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260916rowmenu1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
@@ -217,10 +217,10 @@ controller exists by the time a drawer's x-init runs.
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->
-<script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
+<script defer src="{% static 'js/svg-typography.js' %}?v=20260920svgunits1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260916rowmenu1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260920oversight2"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own

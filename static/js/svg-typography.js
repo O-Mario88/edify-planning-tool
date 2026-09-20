@@ -21,13 +21,19 @@
   let _cachedPixels = null;
   function typographyPixels() {
     if (_cachedPixels) return _cachedPixels;
-    const style = getComputedStyle(document.documentElement);
-    _cachedPixels = {
-      micro: parseFloat(style.getPropertyValue('--edify-text-micro-size')) || fallbacks.micro,
-      label: parseFloat(style.getPropertyValue('--edify-text-label-size')) || fallbacks.label,
-      body: parseFloat(style.getPropertyValue('--edify-text-body-size')) || fallbacks.body,
-      title: parseFloat(style.getPropertyValue('--edify-text-title-size')) || fallbacks.title,
-    };
+    // Tokens are CSS lengths (currently rem), not pixel numbers. Let the
+    // browser resolve their units and var()/calc() expressions before
+    // converting the result into viewBox units.
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
+    probe.setAttribute('aria-hidden', 'true');
+    document.documentElement.appendChild(probe);
+    _cachedPixels = {};
+    Object.entries(tokenNames).forEach(([tier, name]) => {
+      probe.style.fontSize = `var(${name}, ${fallbacks[tier]}px)`;
+      _cachedPixels[tier] = parseFloat(getComputedStyle(probe).fontSize) || fallbacks[tier];
+    });
+    probe.remove();
     return _cachedPixels;
   }
 

@@ -1,0 +1,4 @@
+{% load frontend_filters %}
+{% if score != None and score != "—" and score != "" %}
+<span class="font-semibold tabular-nums" style="color: {{ score|ssa_score_colour }}" title="{{ score|ssa_score_band_label }}">{{ score|floatformat:1 }}/10</span>
+{% else %}<span class="edify-text-muted">—</span>{% endif %}

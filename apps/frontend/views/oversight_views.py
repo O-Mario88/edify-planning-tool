@@ -2373,12 +2373,11 @@ def cluster_oversight_view(request):
     context = {
         **period,
         **data,
+        "fy_options": fy_options(),
+        "standalone_portfolio": True,
         "active_lens": "cluster_oversight",
     }
-    if (
-        request.headers.get("HX-Request") == "true"
-        and request.GET.get("workspace_only") == "true"
-    ):
+    if request.headers.get("HX-Request") == "true":
         return render(
             request,
             "partials/oversight/cluster_oversight_workspace.html",
@@ -2402,12 +2401,11 @@ def core_schools_oversight_view(request):
     context = {
         **period,
         **data,
+        "fy_options": fy_options(),
+        "standalone_portfolio": True,
         "active_lens": "core_schools_oversight",
     }
-    if (
-        request.headers.get("HX-Request") == "true"
-        and request.GET.get("workspace_only") == "true"
-    ):
+    if request.headers.get("HX-Request") == "true":
         return render(
             request,
             "partials/oversight/core_schools_oversight_workspace.html",

@@ -58,6 +58,7 @@
   ].join(', ');
   var tabSelector = [
     '[role="tab"]',
+    '[data-edify-rail-role="tab"]',
     '.edify-tab-btn',
     '[data-edify-tab]',
     '.messages-inbox-tab',
@@ -1351,14 +1352,16 @@
   document.addEventListener('click', function (event) {
     var match = eventTab(event);
     if (!match) return;
-    if (match.tab.matches('[role="tab"]')) {
-      match.tablist.querySelectorAll('[role="tab"]').forEach(function (tab) {
+    if (match.tab.matches('[role="tab"], [data-edify-rail-role="tab"]')) {
+      match.tablist.querySelectorAll('[role="tab"], [data-edify-rail-role="tab"]').forEach(function (tab) {
         var active = tab === match.tab;
         tab.setAttribute('aria-selected', active ? 'true' : 'false');
         tab.tabIndex = active ? 0 : -1;
       });
     }
     revealTab(match.tab, true);
+    // Nested officer rails become measurable after Alpine reveals their panel.
+    afterPaint(function () { fitRails(document); });
   });
 
   document.addEventListener('focusin', function (event) {

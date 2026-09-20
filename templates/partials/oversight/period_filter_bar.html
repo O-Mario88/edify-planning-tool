@@ -10,6 +10,7 @@
   {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
   {% if partner %}<input type="hidden" name="partner" value="{{ partner }}">{% endif %}
 
+  {% if annual_only %}<input type="hidden" name="period" value="fy">{% else %}
   <label class="edify-page-header-control">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">View</span>
     <select name="period" x-model="period" aria-label="Time period">
@@ -19,6 +20,7 @@
       <option value="fy">Financial year</option>
     </select>
   </label>
+  {% endif %}
 
   <label class="edify-page-header-control">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
@@ -29,6 +31,7 @@
     </select>
   </label>
 
+  {% if not annual_only %}
   <label class="edify-page-header-control" x-show="period === 'week'">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Week</span>
     <input type="week" name="week" value="{{ week }}" aria-label="Week">
@@ -61,4 +64,5 @@
       <option value="Q4" {% if selected_quarter == "Q4" %}selected{% endif %}>Q4 · Jul–Sep</option>
     </select>
   </label>
+  {% endif %}
 </form>

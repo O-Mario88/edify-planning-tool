@@ -4272,6 +4272,16 @@ main textarea,
   opacity: 0.65 !important;
 }
 
+/* Title bands must follow the active theme even on legacy utility headers. */
+:root.dark :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar {
+  background: var(--edify-table-header) !important;
+  color: var(--edify-text) !important;
+  border-color: var(--edify-table-header-divider) !important;
+}
+:root.dark :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar :is(h2, h3, h4, h5, p) {
+  color: var(--edify-text) !important;
+}
+
 /* Light-mode table hierarchy: blue title band, blue column ink on the
    existing column surface. Other themes retain their own header treatment. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
@@ -4279,7 +4289,7 @@ main textarea,
   color: #fff !important;
   padding: .5rem .75rem !important;
 }
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, p, span):not(button *):not(a *) {
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
   color: #fff !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td),
@@ -4287,7 +4297,7 @@ main textarea,
   color: #285b96 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table) thead :is(th, td) {
-  color: #304c5e !important;
+  color: #285b96 !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: 0.05em !important;

@@ -11,6 +11,12 @@ test('desktop labels survive laptop heights and district drilldown', async({page
   for (const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]]) {
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length)).toBeGreaterThan(15);
+    // An opaque label can still disappear when a rem token is parsed as px.
+    // Measure the actual screen font size, including SVG placement scaling.
+    await expect.poll(()=>page.locator('#sr-cam .sr-dl').first().evaluate(node=>{
+      const matrix=node.getScreenCTM();
+      return parseFloat(getComputedStyle(node).fontSize)*Math.hypot(matrix.a,matrix.b);
+    })).toBeGreaterThanOrEqual(7);
     // Square (owner, 2026-09-17: "The map should be square much as it will fill the desktop page.
     // i dont mind the dead space on the sides"). It was a 30cm x 42cm portrait sheet, which wasted a
     // band the width of the card above and below a square drawing: the SVG viewBox is 0 0 620 620.

@@ -467,3 +467,34 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
   transform: rotate(90deg);
   color: var(--color-edify-primary, #1e40af);
 }
+
+/* Portfolio selectors share the platform surface and tab contract. */
+[data-oversight-workspace] .oversight-team-selector {
+  min-inline-size: 0;
+  padding: .75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-card, .75rem);
+  background: var(--edify-surface);
+  box-shadow: var(--oversight-elevation);
+}
+[data-oversight-workspace] .edify-table-titlebar {
+  gap: .5rem 1rem;
+}
+[data-oversight-workspace] .edify-table-titlebar > * {
+  min-inline-size: 0;
+}
+[data-oversight-workspace] .edify-table-titlebar :is(h3, h4, h5) {
+  overflow-wrap: anywhere;
+}
+
+/* Group controls remain readable while the wide detail table scrolls. */
+[data-oversight-workspace] section[aria-labelledby^="heading-trainings-"] {
+  container-type: inline-size;
+}
+main [data-oversight-workspace] .edify-training-group-toggle {
+  position: sticky;
+  inset-inline-start: 0;
+  inline-size: 100cqi;
+  max-inline-size: 100%;
+  white-space: normal;
+}

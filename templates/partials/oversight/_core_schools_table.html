@@ -58,13 +58,7 @@
           </div>
         </td>
         <td class="px-4 py-2.5 text-center tabular-nums">
-          {% if row.ssa_avg != "—" %}
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {% if row.ssa_avg|floatformat:1 >= '3.0' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300{% elif row.ssa_avg|floatformat:1 >= '2.0' %}bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300{% else %}bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300{% endif %}">
-            {{ row.ssa_avg }}
-          </span>
-          {% else %}
-          <span class="text-slate-400">—</span>
-          {% endif %}
+          {% include "components/ssa_score.html" with score=row.ssa_avg only %}
         </td>
         <td class="px-4 py-2.5">
           <span class="pill {% if row.is_package_complete %}pill-success{% elif row.status == 'Active' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">

@@ -69,6 +69,50 @@ class OversightViewsAccessTest(TestCase):
             school_type=SchoolType.CORE,
         )
 
+    def test_pl_working_clusters_exclude_supervised_portfolio(self):
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl.staff_profile,
+            supervisee=self.cceo.staff_profile,
+        )
+        for owner_id in (self.pl.id, self.pl.staff_profile.id):
+            Cluster.objects.create(
+                name=f"Owned cluster {owner_id}",
+                responsible_staff_id=str(owner_id),
+                region=self.region,
+                district=self.district,
+            )
+        Cluster.objects.create(
+            name="Other team private cluster",
+            responsible_staff_id=str(self.rpl.id),
+            region=self.region,
+            district=self.district,
+        )
+        self.client.force_login(self.pl)
+        response = self.client.get("/clusters")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["page_obj"]), 2)
+        self.assertContains(response, "Owned cluster")
+        self.assertNotContains(response, "Alpha Cluster")
+        oversight = self.client.get(reverse("frontend:cluster_oversight"))
+        self.assertContains(oversight, "Alpha Cluster")
+        self.assertNotContains(oversight, "Other team private cluster")
+
+    def test_annual_filters_render_options_and_swap_only_workspace(self):
+        self.client.force_login(self.cd)
+        for name in ("cluster_oversight", "core_schools_oversight"):
+            url = reverse(f"frontend:{name}")
+            response = self.client.get(url)
+            self.assertContains(response, 'name="fy"', count=1)
+            self.assertNotContains(response, 'name="week"')
+            self.assertTrue(response.context["fy_options"])
+            partial = self.client.get(
+                url, {"fy": response.context["fy"]}, HTTP_HX_REQUEST="true"
+            )
+            self.assertEqual(partial.status_code, 200)
+            self.assertNotContains(partial, "<!DOCTYPE", html=False)
+            self.assertNotContains(partial, 'name="fy"')
+            self.assertContains(partial, "context-metrics")
+
     def test_cluster_oversight_accessible_by_permitted_roles(self):
         url = reverse("frontend:cluster_oversight")
         for user in [self.cd, self.ia, self.pl, self.rpl]:

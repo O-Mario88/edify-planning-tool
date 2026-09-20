@@ -244,9 +244,10 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     clusters = list(
-        Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        .select_related("district")
-        .order_by("name")
+        cluster_queryset(
+            scope,
+            base=Cluster.objects.filter(deleted_at__isnull=True, status="active"),
+        ).select_related("district").order_by("name")
     )
     if not clusters:
         return {
@@ -355,6 +356,14 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     # 6. Build hierarchy tabs
     # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
     sys_pls = system_program_leads()
+    if not scope.country_scope:
+        visible_lead_ids = {
+            str(identifier)
+            for row in formatted_clusters
+            for identifier in (row["lead_id"], row["lead_user_id"])
+            if identifier
+        }
+        sys_pls = [pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))]
     pl_lookup: dict[str, dict] = {}
     leads_data = []
     for pl in sys_pls:

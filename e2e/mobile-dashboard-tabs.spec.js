@@ -9,5 +9,9 @@ test('Program Lead dashboard tabs fit the mobile viewport', async ({ page }) => 
   await expect(rail).toBeVisible();
   await expect.poll(async () => rail.evaluate(el => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
   await expect(rail.locator('[role="tab"][aria-selected="true"]')).toBeVisible();
+  const tabs = rail.locator(':scope > [role="tab"]');
+  for (const tab of await tabs.all()) {
+    await expect.poll(() => tab.evaluate(el => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
+  }
   await expect(rail.locator('.edify-rail-more:not([hidden])')).toBeVisible();
 });
