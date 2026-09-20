@@ -318,6 +318,25 @@ DB_CONN_MAX_AGE_REQUESTED = _as_int(os.environ.get("DB_CONN_MAX_AGE"), 0)
 # a direct connection and retain the per-connection options below.
 DB_USE_PGBOUNCER = _truthy(os.environ.get("DB_USE_PGBOUNCER"), fallback=False)
 
+# App Platform keeps the managed database credentials in its DATABASE_URL
+# binding. Route only opted-in runtime components through the pool without
+# copying that secret into another environment variable. Migration jobs keep
+# the original direct connection by leaving these overrides unset.
+if DB_USE_PGBOUNCER:
+    _pool_name = os.environ.get("DB_POOL_NAME", "").strip()
+    _pool_port = os.environ.get("DB_POOL_PORT", "").strip()
+    if bool(_pool_name) != bool(_pool_port):
+        raise RuntimeError("DB_POOL_NAME and DB_POOL_PORT must be configured together")
+    if _pool_name:
+        if not _pool_port.isdigit() or not 1 <= int(_pool_port) <= 65535:
+            raise RuntimeError("DB_POOL_PORT must be a valid TCP port")
+        DATABASES["default"]["NAME"] = _pool_name
+        DATABASES["default"]["PORT"] = int(_pool_port)
+    # A subsequent transaction can use a different server connection.
+    # Named cursors and session-bound prepared statements cannot survive that.
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+    DATABASES["default"].setdefault("OPTIONS", {})["prepare_threshold"] = None
+
 DATABASES["default"]["CONN_MAX_AGE"] = (
     DB_CONN_MAX_AGE_REQUESTED if DB_USE_PGBOUNCER else 0
 )

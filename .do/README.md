@@ -63,6 +63,32 @@ web-container startup when changing instance counts.
 
 ## Current operational decisions
 
+### Web connection pooling (2026-09-20)
+
+The production database has 22 usable server connections. The `edify_web`
+transaction pool targets `defaultdb`, retains the connecting user's privileges,
+and is capped at 10 server connections. This uses the existing managed cluster.
+
+Enable it on **the web component only** with `DB_USE_PGBOUNCER=true`,
+`DB_POOL_NAME=edify_web`, and `DB_POOL_PORT=25061`. The existing managed
+`DATABASE_URL` binding retains its host, credentials and TLS configuration;
+only the database/pool name and port are overridden. Set
+`WEB_MAX_CONCURRENT_REQUESTS=6` explicitly so enabling pooling does not also
+double application concurrency. Keep `DB_CONN_MAX_AGE=0` for ASGI.
+
+The runtime role's defaults in `defaultdb` must retain `statement_timeout=30s`,
+`lock_timeout=10s`, and `idle_in_transaction_session_timeout=60s`, because
+PgBouncer rejects libpq startup options. Readiness checks verify these are set.
+Pooled connections disable server-side cursors and automatic prepared
+statements. Scheduler and migration jobs retain direct connections.
+
+Rollback: set `DB_USE_PGBOUNCER=false` on the web component and redeploy.
+The original database binding remains untouched, so the pool overrides are
+ignored and requests use the direct connection again. Keep the request bound.
+
+Redis is still not provisioned under the existing budget. Pooling does not
+resolve the separate per-process cache limitation.
+
 - **No paid log destination or managed cache is attached.** The single web
   process uses the production LocMemCache fallback; database-backed sessions,
   account lockout, and scheduler locks remain durable.

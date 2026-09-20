@@ -119,6 +119,8 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
                 "DJANGO_SETTINGS_MODULE": "config.settings.base",
                 "DATABASE_URL": "postgresql://runtime:secret@db.example:25061/edify?sslmode=require",
                 "DB_USE_PGBOUNCER": "true",
+                "DB_POOL_NAME": "edify_web",
+                "DB_POOL_PORT": "25061",
             }
         )
         result = subprocess.run(
@@ -128,7 +130,9 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
                 "import json; from django.conf import settings; "
                 "d=settings.DATABASES['default']; "
                 "print(json.dumps({'options': d['OPTIONS'], "
-                "'conn_max_age': d['CONN_MAX_AGE']}))",
+                "'conn_max_age': d['CONN_MAX_AGE'], "
+                "'name': d['NAME'], 'port': d['PORT'], "
+                "'disable_cursors': d.get('DISABLE_SERVER_SIDE_CURSORS')}))",
             ],
             cwd=ROOT,
             env=env,
@@ -142,6 +146,10 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
         self.assertNotIn("options", database["options"])
         self.assertEqual(database["options"]["connect_timeout"], 5)
         self.assertEqual(database["conn_max_age"], 0)
+        self.assertTrue(database["disable_cursors"])
+        self.assertIsNone(database["options"]["prepare_threshold"])
+        self.assertEqual(database["name"], "edify_web")
+        self.assertEqual(database["port"], 25061)
 
     def test_pooled_runtime_fails_closed_if_startup_options_would_be_lost(self):
         env = os.environ.copy()
