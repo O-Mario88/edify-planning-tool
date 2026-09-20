@@ -3602,7 +3602,7 @@ def help_view(request):
             "What makes a route 'Risky' or 'Not Feasible'?",
             "Route Intelligence scores each visit day 0–100 from sub-county grouping, coordinates (when they "
             "exist), the 8-hour working day, the CD daily target and district rules. Spread-out schools or an "
-            "overloaded day lower the score; mixing primary and secondary districts blocks the day entirely.",
+            "overloaded day lower the score; a day with any secondary-district activity uses the secondary daily staff cost.",
         ),
         (
             "Why is my completed activity not counted as verified?",

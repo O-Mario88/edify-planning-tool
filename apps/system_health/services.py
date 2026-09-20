@@ -1047,6 +1047,11 @@ def _workflow_issues() -> dict:
         daily_visit_batch__isnull=True,
     ).count()
 
+    from apps.accounts.models import StaffProfile
+    _home_districts = {}
+    for _profile_id, _user_id, _home_id in StaffProfile.objects.values_list("id", "user_id", "primary_district_id"):
+        _home_districts[str(_profile_id)] = _home_id
+        _home_districts[str(_user_id)] = _home_id
     mixed_district_batches = 0
     unapproved_secondary_batches = 0
     batch_count_mismatch = 0
@@ -1072,11 +1077,14 @@ def _workflow_issues() -> dict:
         _live_types = set()
         for _a in _member_activities:
             if _a.school_id and _a.school.district_id:
-                _live_district_ids.add(_a.school.district_id)
-                if _a.school.district.district_type:
-                    _live_types.add(_a.school.district.district_type)
+                _home = _home_districts.get(str(_batch.responsible_user))
+                _type = ("primary" if str(_home) == str(_a.school.district_id) else "secondary") if _home else _a.school.district.district_type
+                if _type == "secondary":
+                    _live_district_ids.add(_a.school.district_id)
+                if _type:
+                    _live_types.add(_type)
         _live_count = len(_member_activities)
-        if len(_live_types) > 1:
+        if "secondary" in _live_types and _batch.district_type != "secondary":
             mixed_district_batches += 1
         if _batch.district_type == "secondary" and len(_live_district_ids) > 1:
             _match = (
@@ -1372,7 +1380,7 @@ def _workflow_issues() -> dict:
         )
     if mixed_district_batches:
         blockers.append(
-            f"{mixed_district_batches} Daily Visit Batch(es) mix primary and secondary district schools."
+            f"{mixed_district_batches} Daily Visit Batch(es) include secondary-district schools but use primary daily rates."
         )
     if unapproved_secondary_batches:
         blockers.append(

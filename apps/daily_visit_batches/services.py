@@ -5,7 +5,7 @@ through `schedule_visits`, which is what makes "every school visit
 creates/updates a DailyVisitBatch" true system-wide, not just for bulk
 scheduling.
 
-Validation order: unclassified district -> mixing primary/secondary -> locked
+Validation order: unclassified district -> locked
 batch -> unapproved secondary grouping -> CD daily-target cap (hard) ->
 CD daily-target floor (soft, needs a reason) -> create/attach -> recalculate.
 """
@@ -68,10 +68,11 @@ def batch_needs_repricing(batch) -> bool:
     )
     if members.count() != batch.school_count:
         return True
-    if any(
-        (district_type_for_staff(batch.responsible_user, member_district(member)) or "primary") != batch.district_type
+    expected_type = "secondary" if any(
+        district_type_for_staff(batch.responsible_user, member_district(member)) == "secondary"
         for member in members.select_related("school__district", "cluster__district", "event_district")
-    ):
+    ) else "primary"
+    if expected_type != batch.district_type:
         return True
     snapshots = list(
         ActivityCostSnapshot.objects.filter(activity__in=members, is_current=True)
@@ -174,12 +175,7 @@ def schedule_visits(
             )
         new_types[s.school_id] = dt
 
-    if len(set(new_types.values())) > 1:
-        raise BadRequest(
-            "You cannot mix primary district and secondary district visits on the "
-            "same day. Create a separate visit day."
-        )
-    incoming_district_type = next(iter(new_types.values()))
+    incoming_district_type = "secondary" if "secondary" in new_types.values() else "primary"
 
     with transaction.atomic():
         batch = (
@@ -187,12 +183,6 @@ def schedule_visits(
             .filter(responsible_user=responsible_user_id, visit_date=scheduled_date)
             .first()
         )
-
-        if batch and batch.district_type != incoming_district_type:
-            raise BadRequest(
-                "You cannot mix primary district and secondary district visits on the "
-                "same day. Create a separate visit day."
-            )
 
         if batch and _is_locked(responsible_user_id, scheduled_date):
             raise BadRequest(
@@ -226,16 +216,10 @@ def schedule_visits(
                 f"A visit is already scheduled for {dupe_names} on this date."
             )
 
-        existing_district_ids = {
-            a.school.district_id
-            for a in existing_activities
-            if a.school_id and a.school.district_id
-        }
-        new_district_ids = {s.district_id for s in schools if s.district_id}
-        all_district_ids = existing_district_ids | new_district_ids
-
-        if incoming_district_type == "secondary":
-            _assert_common_approved_group(all_district_ids)
+        districts = [member_district(a) for a in existing_activities] + [school.district for school in schools if school.district_id]
+        all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+        incoming_district_type = "secondary" if all_district_ids else "primary"
+        _assert_common_approved_group(all_district_ids)
 
         catalogue = active_catalogue(activity_common_fields.get("fy"))
         target = catalogue.required_school_visits_per_day if catalogue else 5
@@ -365,11 +349,6 @@ def attach_activity_to_batch(
         )
         .first()
     )
-    if batch and batch.district_type != district_type:
-        raise BadRequest(
-            "You cannot mix primary and secondary district activities on the same day. "
-            "Choose another date so daily staff costs are only charged once."
-        )
     if _is_locked(responsible_user_id, activity.planned_date):
         raise BadRequest(
             "This week's request has already been sent for approval. "
@@ -385,14 +364,10 @@ def attach_activity_to_batch(
         if batch
         else []
     )
-    all_district_ids = {
-        d.id for d in (member_district(a) for a in existing_activities) if d is not None
-    }
-    if district is not None:
-        all_district_ids.add(district.id)
-    if district_type == "secondary" and len(all_district_ids) > 1:
-        if _resolve_group(all_district_ids) is None:
-            _assert_common_approved_group(all_district_ids)
+    districts = [member_district(a) for a in existing_activities] + [district]
+    all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+    district_type = "secondary" if all_district_ids else "primary"
+    _assert_common_approved_group(all_district_ids)
 
     catalogue = _catalogue_for_batch_date(activity.planned_date)
     from apps.budget.costing_service import _rate_card
@@ -479,11 +454,6 @@ def reschedule_within_batch(
             .filter(responsible_user=responsible_user_id, visit_date=new_date)
             .first()
         )
-        if batch and batch.district_type != incoming_type:
-            raise BadRequest(
-                "You cannot mix primary district and secondary district visits on the "
-                "same day. Create a separate visit day."
-            )
         if batch and _is_locked(responsible_user_id, new_date):
             raise BadRequest(
                 "This date's visits have already left draft status. Choose another date."
@@ -498,14 +468,10 @@ def reschedule_within_batch(
             if batch
             else []
         )
-        existing_district_ids = {
-            a.school.district_id
-            for a in existing_activities
-            if a.school_id and a.school.district_id
-        }
-        all_district_ids = existing_district_ids | {school.district_id}
-        if incoming_type == "secondary":
-            _assert_common_approved_group(all_district_ids)
+        districts = [member_district(a) for a in existing_activities] + [school.district]
+        all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+        incoming_type = "secondary" if all_district_ids else "primary"
+        _assert_common_approved_group(all_district_ids)
 
         catalogue = _catalogue_for_batch_date(new_date)
         target = catalogue.required_school_visits_per_day if catalogue else 5
@@ -570,10 +536,8 @@ def _recalculate_and_write_lines(
         district_type_for_staff(responsible_user_id, member_district(member)) or "primary"
         for member in activities
     }
-    if len(district_types) > 1:
-        raise BadRequest("This day mixes primary and secondary districts under the staff member's configuration. Separate the activities onto different days.")
     if district_types:
-        batch.district_type = district_types.pop()
+        batch.district_type = "secondary" if "secondary" in district_types else "primary"
     pool = compute_daily_pool(rates, batch.district_type)
 
     # Each member's own recipe, computed ONCE here because the day's pool

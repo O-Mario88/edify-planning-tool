@@ -222,17 +222,11 @@ class RouteIntelligenceTestCase(TestCase):
         self.assertIn(p["status"], ("risky", "not_feasible"))
         self.assertTrue(any("spread across" in w for w in p["warnings"]))
 
-    # ── 5. Primary + secondary mix is Blocked ────────────────────────────────
-    def test_mixed_primary_secondary_is_blocked(self):
+    # Mixed days use the secondary daily cost and are not blocked by mixing.
+    def test_mixed_primary_secondary_is_allowed(self):
         p = self._preview([self.g1, self.sa])
-        self.assertEqual(p["status"], "blocked")
-        self.assertTrue(p["blocked"])
-        self.assertTrue(
-            any(
-                "mixed" in w.lower() or "primary district" in w.lower()
-                for w in p["warnings"]
-            )
-        )
+        self.assertFalse(p["blocked"])
+        self.assertFalse(any("mixed" in w.lower() for w in p["warnings"]))
 
     # ── 6. Secondary route group exception ───────────────────────────────────
     def test_secondary_group_exception(self):

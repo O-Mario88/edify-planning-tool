@@ -21,6 +21,7 @@ from __future__ import annotations
 
 
 from django.db import transaction
+from apps.daily_visit_batches.districts import district_type_for_staff
 
 from apps.routes.location import (
     SchoolCoordinateService,
@@ -74,7 +75,7 @@ class RouteValidationService:
             {
                 s.district.name
                 for s in schools
-                if s.district_id and not s.district.district_type
+                if s.district_id and not district_type_for_staff(responsible_user, s.district)
             }
         )
         if unclassified:
@@ -85,21 +86,9 @@ class RouteValidationService:
                     "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
                 }
             )
-        types = {
-            s.district.district_type
-            for s in schools
-            if s.district_id and s.district.district_type
-        }
-        if len(types) > 1:
-            issues.append(
-                {
-                    "code": "mixed_district_types",
-                    "severity": "blocking",
-                    "message": "Primary district schools mixed with secondary district schools on the same day.",
-                }
-            )
-        district_ids = {s.district_id for s in schools if s.district_id}
-        if types == {"secondary"} and len(district_ids) > 1:
+        district_ids = {s.district_id for s in schools if s.district_id
+                        and district_type_for_staff(responsible_user, s.district) == "secondary"}
+        if len(district_ids) > 1:
             from apps.daily_visit_batches.services import _resolve_group
 
             if _resolve_group(district_ids) is None:
@@ -468,9 +457,9 @@ class DailyVisitRouteBatchService:
 
         district = next((s.district for s in schools if s.district_id), None)
         dtypes = {
-            s.district.district_type
+            district_type_for_staff(responsible_user, s.district)
             for s in schools
-            if s.district_id and s.district.district_type
+            if s.district_id
         }
 
         with transaction.atomic():
@@ -478,7 +467,7 @@ class DailyVisitRouteBatchService:
                 responsible_user=responsible_user,
                 visit_date=visit_date,
                 defaults={
-                    "district_type": next(iter(dtypes)) if len(dtypes) == 1 else None,
+                    "district_type": "secondary" if "secondary" in dtypes else "primary",
                     "district": district,
                     "secondary_district_group": cost_batch.secondary_district_group
                     if cost_batch
@@ -589,16 +578,16 @@ class PlanningRoutePreviewService:
         # catalogue/district data can't price the day yet).
         cost_per_school = None
         dtypes = {
-            s.district.district_type
+            district_type_for_staff(responsible_user, s.district)
             for s in schools
-            if s.district_id and s.district.district_type
+            if s.district_id
         }
-        if catalogue and len(dtypes) == 1:
+        if catalogue and dtypes:
             try:
                 from apps.budget.costing_service import _rate_card
 
                 rates, _ = _rate_card(catalogue)
-                pool = compute_daily_pool(rates, next(iter(dtypes)))
+                pool = compute_daily_pool(rates, "secondary" if "secondary" in dtypes else "primary")
                 # Split with the same exact-allocation math the Daily Visit
                 # Batch pricing engine uses (sum of shares == pool; remainder
                 # shillings go to the first schools) instead of floor division,

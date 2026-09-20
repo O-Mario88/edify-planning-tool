@@ -20,6 +20,7 @@ from apps.geography.models import (
 )
 from apps.schools.models import School
 
+from .models import DailyVisitBatch
 from .exceptions import ReasonRequiredError
 from .services import remove_school, schedule_visits
 
@@ -255,17 +256,20 @@ class DailyVisitBatchTestCase(TestCase):
         for a in activities:
             self.assertGreater(a.est_cost_cents, 0)
 
-    # ── 3. Mixing primary + secondary rejected ───────────────────────────────
-    def test_mixing_primary_and_secondary_rejected(self):
-        with self.assertRaises(BadRequest):
-            self._schedule(["BATCH-P-1", "BATCH-SEC-A"], date(2026, 8, 5))
+    # A secondary visit determines the shared rate for the whole day.
+    def test_mixing_primary_and_secondary_uses_secondary_total(self):
+        result = self._schedule(["BATCH-P-1", "BATCH-SEC-A"], date(2026, 8, 5), reason="two schools")
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.district_type, "secondary")
+        self.assertEqual(batch.daily_pool_amount, sum(v for _, v in SECONDARY_RATES))
+        self.assertEqual(sum(a.est_cost_cents for a in batch.activities.all()), batch.daily_pool_amount)
 
-    def test_mixing_against_existing_batch_rejected(self):
-        self._schedule(
-            ["BATCH-P-1"], date(2026, 8, 6), reason="under target on purpose"
-        )
-        with self.assertRaises(BadRequest):
-            self._schedule(["BATCH-SEC-A"], date(2026, 8, 6))
+    def test_secondary_visit_reprices_existing_primary_member(self):
+        self._schedule(["BATCH-P-1"], date(2026, 8, 6), reason="under target on purpose")
+        result = self._schedule(["BATCH-SEC-A"], date(2026, 8, 6))
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.district_type, "secondary")
+        self.assertEqual(sum(a.est_cost_cents for a in batch.activities.all()), batch.daily_pool_amount)
 
     # ── 4. Unapproved secondary combo rejected, then approved ───────────────
     def test_unapproved_secondary_group_rejected_then_approved(self):
@@ -1081,3 +1085,19 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
         batch.refresh_from_db()
         self.assertEqual(batch.district_type, "secondary")
         self.assertEqual(list(batch.activities.values_list("est_cost_cents", flat=True)), [122500] * 4)
+
+    def test_mixed_configured_day_shares_secondary_total_and_repairs_once(self):
+        from apps.daily_visit_batches.services import batch_needs_repricing, _recalculate_and_write_lines
+        from django.db import transaction
+        visits = self._four_visits()
+        secondary = visits[-1].school
+        secondary.district = self.secondary_district_a
+        secondary.save(update_fields=["district"])
+        batch = visits[0].daily_visit_batch
+        self.assertTrue(batch_needs_repricing(batch))
+        with transaction.atomic():
+            _recalculate_and_write_lines(batch, None, batch.responsible_user)
+        batch.refresh_from_db()
+        self.assertEqual(batch.district_type, "secondary")
+        self.assertEqual(list(batch.activities.values_list("est_cost_cents", flat=True)), [122500] * 4)
+        self.assertFalse(batch_needs_repricing(batch))
