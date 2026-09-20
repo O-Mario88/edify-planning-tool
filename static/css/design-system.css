@@ -271,14 +271,14 @@
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
   --edify-table-canvas: var(--edify-surface);
-  --edify-table-header: #edf1f3;
+  --edify-table-header: #dce6ec;
   --edify-table-row-alt: transparent;
   --edify-table-row-hover: #edf4f8;
   --edify-table-row-selected: #e2eef6;
   --edify-table-divider: #d2dbe0;
   --edify-table-header-divider: #c4cfd5;
   /* Neutral canvas keeps operational data and white KPI strips distinct. */
-  --edify-bg: #e8eef5;
+  --edify-bg: #dbe4eb;
   /* Sticky table cells need an opaque background while adjacent data scrolls. */
   --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
   --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
@@ -307,8 +307,8 @@
      layer so a new card cannot accidentally reintroduce a heavy outline. */
   --edify-card-surface: var(--edify-surface-raised);
   --edify-card-border: var(--edify-border);
-  --edify-card-shadow: none;
-  --edify-card-shadow-hover: none;
+  --edify-card-shadow: 0 5px 20px -12px rgba(23, 48, 66, .23), 0 1px 3px rgba(23, 48, 66, .07);
+  --edify-card-shadow-hover: 0 12px 30px -15px rgba(23, 48, 66, .27);
   --edify-card-backdrop-filter: none;
   /* Buttons are deliberately flat in light mode. The reference treatment is
      a confident Edify blue or a quiet blue outline — gradients introduced

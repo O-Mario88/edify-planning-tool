@@ -21,7 +21,7 @@ from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
 from apps.clusters.models import Cluster
 from apps.geography.models import District, Region
 from apps.core.rbac import EdifyRole
-from apps.activities.models import Activity
+from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.core.enums import SchoolType
 from apps.schools.models import School
 
@@ -239,3 +239,52 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "View")
         self.assertNotContains(resp, ">Reschedule<")
         self.assertNotContains(resp, ">Cancel<")
+
+    def test_cluster_participants_sum_invited_school_composition(self):
+        from apps.frontend.views.oversight_views import _partition_owner_groups_by_stream
+        from apps.planning import oversight_service
+
+        second_school = School.objects.create(
+            name="Beta Academy",
+            school_id="SCH-002",
+            region=self.region,
+            district=self.district,
+            cluster_id=str(self.cluster.id),
+        )
+        meeting = Activity.objects.create(
+            activity_type="cluster_meeting",
+            cluster=self.cluster,
+            fy="2026",
+            planned_date=date(2026, 9, 22),
+            status="scheduled",
+            responsible_staff_id=str(self.cceo.id),
+            participants_per_school=2,
+        )
+        training = Activity.objects.create(
+            activity_type="cluster_training",
+            cluster=self.cluster,
+            fy="2026",
+            planned_date=date(2026, 9, 23),
+            status="scheduled",
+            responsible_staff_id=str(self.cceo.id),
+            participants_per_school=2,
+        )
+        for activity in (meeting, training):
+            ClusterActivityAttendance.objects.create(
+                activity=activity, school=self.school, invited=True,
+                teachers=2, leaders=1,
+            )
+            ClusterActivityAttendance.objects.create(
+                activity=activity, school=second_school, invited=True,
+                teachers=1, other=1,
+            )
+
+        items = oversight_service.build_items(self.cd, fy="2026")
+        groups = oversight_service.group_by_owner(items)
+        _partition_owner_groups_by_stream(groups, self.cd)
+        officer = next(group for group in groups if group["id"] == str(self.cceo.id))
+
+        self.assertEqual(officer["cluster_meetings"][0].participants, 5)
+        self.assertEqual(
+            officer["planned_trainings_grouped"][0]["participants_total"], 5
+        )

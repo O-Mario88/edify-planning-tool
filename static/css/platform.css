@@ -3177,22 +3177,12 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row:not(.is-expanded) .school-record-row__metadata,
 .school-record-row:not(.is-expanded) .school-record-row__details { display: none; }
 
-/* The cluster card carries the same metadata list but a different root class,
-   so the collapse rule above never reached it: every one of its fourteen
-   fields rendered in the COLLAPSED summary, which is what put a wall of text
-   above a card whose whole point was to be a name and two actions until you
-   open it.
-
-   Opened, the pairs read as prose: "Location: Mukono, Goma · Phone: 2567…",
-   each label immediately followed by its own value, pairs flowing along the
-   line and breaking onto the next only when the line is full. A label stacked
-   above its value was tried and rejected — it doubles the height of every
-   field and reads as a form, not a record. This is the desktop shape held on
-   a phone, which is the point: one list, one behaviour. */
+/* Cluster metadata stays visible at every viewport width. School records
+   retain their disclosure behavior. On small screens, each label/value pair
+   wraps within the card while expansion reveals the cluster's school list
+   and detailed SSA breakdown. */
 @media (max-width: 63.999rem) {
-  .cluster-card:not(.is-expanded) .cluster-card__metadata { display: none; }
-
-  .cluster-card.is-expanded .cluster-card__metadata,
+  .cluster-card .cluster-card__metadata,
   .school-record-row.is-expanded .school-record-row__metadata {
     display: flex;
     flex-wrap: wrap;
@@ -3205,7 +3195,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   /* Each label+value is one unit. `inline-flex` keeps them on the same line
      and `flex: 0 1 auto` lets a long pair shrink rather than push the row
      wider than the card. */
-  .cluster-card.is-expanded .cluster-card__metadata > div,
+  .cluster-card .cluster-card__metadata > div,
   .school-record-row.is-expanded .school-record-row__metadata > div {
     display: inline-flex;
     align-items: baseline;
@@ -3215,7 +3205,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 
   /* The label never breaks away from the value it introduces. */
-  .cluster-card.is-expanded .cluster-card__metadata dt,
+  .cluster-card .cluster-card__metadata dt,
   .school-record-row.is-expanded .school-record-row__metadata dt {
     flex: 0 0 auto;
     white-space: nowrap;
@@ -3227,12 +3217,12 @@ main [data-mobile-family="directory"] .school-filter-clear {
     letter-spacing: normal;
   }
 
-  .cluster-card.is-expanded .cluster-card__metadata dd,
+  .cluster-card .cluster-card__metadata dd,
   .school-record-row.is-expanded .school-record-row__metadata dd {
     font-weight: var(--edify-text-title-weight);
   }
 
-  .cluster-card.is-expanded .cluster-card__metadata dd,
+  .cluster-card .cluster-card__metadata dd,
   .school-record-row.is-expanded .school-record-row__metadata dd {
     /* `break-word`, deliberately between the two extremes. `anywhere` breaks
        eagerly and is what split the cluster leader's phone number across

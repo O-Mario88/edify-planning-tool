@@ -4287,7 +4287,7 @@ main textarea,
   color: #285b96 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table) thead :is(th, td) {
-  color: #64748b !important;
+  color: #304c5e !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: 0.05em !important;

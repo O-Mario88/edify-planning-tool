@@ -17,12 +17,15 @@ access, since a country portfolio is not a Programme Lead's to read.
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import date
 
 from django.test import SimpleTestCase, TestCase
 
 from apps.accounts.models import StaffProfile, User
+from apps.activities.models import Activity
 from apps.clusters.models import Cluster
 from apps.geography.models import District, Region, SubCounty
+from apps.schools.models import School
 from apps.frontend.views.oversight_views import (
     COUNTRY_OVERSIGHT_PATH,
     TEAM_OVERSIGHT_PATH,
@@ -124,6 +127,35 @@ class LensAccessTest(TestCase):
         StaffProfile.objects.create(user=user, country="Uganda")
         self.client.force_login(user)
         return user
+
+    def test_district_filter_keeps_other_districts_available(self):
+        director = self._sign_in("lens-district-cd@edify.org", "CountryDirector")
+        region = Region.objects.create(name="District Choice Region")
+        first = District.objects.create(name="District Choice One", region=region)
+        second = District.objects.create(name="District Choice Two", region=region)
+        for number, district in enumerate((first, second), 1):
+            school = School.objects.create(
+                school_id=f"CHOICE-{number}",
+                name=f"Choice School {number}",
+                region=region,
+                district=district,
+            )
+            Activity.objects.create(
+                activity_type="school_visit",
+                school=school,
+                fy="2026",
+                planned_date=date(2026, 9, 21),
+                status="scheduled",
+                responsible_staff_id=str(director.id),
+            )
+
+        response = self.client.get(
+            f"/country-planning-oversight/?fy=2026&district_id={first.id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'<option value="{first.id}" selected>')
+        self.assertContains(response, f'<option value="{second.id}"')
 
     def test_impact_assessment_reads_the_country_portfolio(self):
         self._sign_in("lens-ia@edify.org", "ImpactAssessment")

@@ -87,6 +87,36 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   font-variant-numeric: tabular-nums;
 }
 
+/* The training header is a disclosure control, not another school row. */
+main [data-oversight-workspace] table.edify-record-table tbody tr.edify-training-group-row > td {
+  padding: 0 !important;
+  background: var(--edify-table-header) !important;
+  border-block: 1px solid var(--edify-table-header-divider) !important;
+}
+main [data-oversight-workspace] .edify-training-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: .6rem 1rem;
+  color: var(--edify-text);
+  text-align: start;
+  font-size: .8rem;
+  font-weight: 700;
+}
+main [data-oversight-workspace] .edify-training-group-toggle:hover {
+  background: var(--edify-table-row-hover);
+}
+.edify-training-group-title { display: inline-flex; align-items: center; gap: .55rem; }
+.edify-training-chevron { display: inline-block; transition: transform .16s ease; }
+.edify-training-group-toggle[aria-expanded="true"] .edify-training-chevron { transform: rotate(180deg); }
+.edify-training-group-meta { color: var(--edify-text-muted); font-size: .72rem; font-weight: 600; white-space: normal; }
+@media (max-width: 47.99rem) {
+  main [data-oversight-workspace] .edify-training-group-toggle { flex-wrap: wrap; }
+}
+
 [data-oversight-workspace] .oversight-selection-heading {
   display: flex;
   align-items: center;

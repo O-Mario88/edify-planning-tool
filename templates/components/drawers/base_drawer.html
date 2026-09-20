@@ -67,8 +67,7 @@ $refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body
 })
 "
 @close-drawer.window="
-active = false;
-finishClose();
+if (active) { active = false; finishClose(); }
 "
 @keydown.escape.window="
 confirmDiscard ? (confirmDiscard = false) : requestClose()

@@ -35,8 +35,7 @@ and level 3 (4 distinct tables per staff member:
               role="tab"
               :aria-selected="activeOfficer === '{{ group.id }}'"
               @click="activeOfficer = '{{ group.id }}'"
-              :class="activeOfficer === '{{ group.id }}' ? 'bg-white dark:bg-slate-900 text-primary font-bold shadow-xs border-primary' : 'bg-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 border-transparent'"
-              class="px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
+              class="team-officer-tab px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
         <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
           {{ group.name|slice:":2"|upper }}
         </div>
@@ -406,22 +405,24 @@ and level 3 (4 distinct tables per staff member:
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y edify-border text-sm">
+          <tbody class="divide-y edify-border text-sm" x-data="{ openGroup: null }">
             {% if group.planned_trainings_grouped %}
               {% for sec in group.planned_trainings_grouped %}
-              <tr class="bg-slate-100/80 dark:bg-slate-800/80 border-y edify-border">
-                <td colspan="12" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="inline-block w-2 h-2 rounded-full {% if sec.is_in_school %}bg-slate-400{% else %}bg-purple-500{% endif %}"></span>
-                      <span>{{ sec.group_name }}</span>
-                    </div>
-                    <span class="pill pill-neutral text-[11px] font-semibold lowercase tracking-normal">{{ sec.count }} school{{ sec.count|pluralize }}</span>
-                  </div>
+              <tr class="edify-training-group-row">
+                <td colspan="12">
+                  <button type="button" class="edify-training-group-toggle"
+                          @click="openGroup = openGroup === {{ forloop.counter }} ? null : {{ forloop.counter }}"
+                          :aria-expanded="openGroup === {{ forloop.counter }}"
+                          aria-controls="training-group-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                    <span class="edify-training-group-title"><span class="edify-training-chevron" aria-hidden="true">⌄</span>{{ sec.group_name }}</span>
+                    <span class="edify-training-group-meta">{{ sec.count }} school{{ sec.count|pluralize }}{% if not sec.is_in_school %} · {{ sec.participants_total }} participants invited{% endif %}</span>
+                  </button>
                 </td>
               </tr>
               {% for item in sec.items %}
-              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <tr x-show="openGroup === {{ forloop.parentloop.counter }}" x-cloak
+                  {% if forloop.first %}id="training-group-{{ forloop.parentloop.parentloop.counter }}-{{ forloop.parentloop.counter }}"{% endif %}
+                  class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                 <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                   {% if item.school_code and item.school_code != '—' %}{{ item.school_code }}{% elif item.school_id %}{{ item.school_id }}{% else %}—{% endif %}
                 </td>

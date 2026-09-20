@@ -88,6 +88,7 @@ stay that cluster's. `pick=1` keeps the chooser on screen across the swap.
 id="cluster-planner-form"
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
+hx-on::after-request="if (event.detail.elt === this &amp;&amp; event.detail.successful) { window.dispatchEvent(new CustomEvent('close-drawer')); }"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 x-data="{
   executorType: 'staff',

@@ -61,7 +61,7 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await page.goto('/clusters');
     await page.waitForLoadState('networkidle');
 
-    const groupTrainingBtn = page.getByRole('button', { name: /Schedule Group Training/i });
+    const groupTrainingBtn = page.getByRole('button', { name: 'Schedule Group Training', exact: true });
     await expect(groupTrainingBtn).toBeVisible();
     await groupTrainingBtn.click();
 
@@ -86,7 +86,7 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await page.goto('/clusters');
     await page.waitForLoadState('networkidle');
 
-    const meetingBtn = page.getByRole('button', { name: /Schedule Cluster Meeting/i });
+    const meetingBtn = page.getByRole('button', { name: 'Schedule Cluster Meeting', exact: true });
     await expect(meetingBtn).toBeVisible();
     await meetingBtn.click();
 

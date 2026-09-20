@@ -1241,7 +1241,6 @@
       return !rail.closest('.edify-rail-more') && rail.getBoundingClientRect().width > 0;
     });
     rails.forEach(restoreRail);
-    if (!desktopShell.matches) return;
     var plans = rails.map(planRail);
     plans.forEach(function (plan) { if (plan) applyRailPlan(plan); });
   }

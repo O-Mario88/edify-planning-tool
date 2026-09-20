@@ -648,7 +648,6 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     """
     import copy
     from collections import defaultdict
-    from django.db.models import Q
     from apps.activities.models import ClusterActivityAttendance
     from apps.schools.models import School
     from apps.schools.lifecycle_models import OPERATING_STATUSES
@@ -720,29 +719,105 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
         group["cluster_meetings"] = cluster_meetings
         group["planned_trainings"] = planned_trainings
 
+    # Cluster activities show the people invited by member schools, not the
+    # per-school figure stored on the activity. Invitation rows may override
+    # the activity's default composition for an individual school.
+    meeting_items = [
+        item
+        for group in owner_groups
+        for item in group["cluster_meetings"]
+        if item.activity_id
+    ]
+    if meeting_items:
+        from django.db.models import Count
+        from apps.activities.models import Activity
+
+        meeting_ids = [item.activity_id for item in meeting_items]
+        activities_by_id = {
+            activity.id: activity
+            for activity in Activity.objects.filter(id__in=meeting_ids)
+        }
+        member_counts = dict(
+            School.objects.filter(
+                cluster_id__in={
+                    item.cluster_id for item in meeting_items if item.cluster_id
+                },
+                deleted_at__isnull=True,
+            )
+            .values("cluster_id")
+            .annotate(total=Count("id"))
+            .values_list("cluster_id", "total")
+        )
+        meeting_invites = defaultdict(list)
+        for invite in ClusterActivityAttendance.objects.filter(
+            activity_id__in=meeting_ids, invited=True
+        ):
+            meeting_invites[invite.activity_id].append(invite)
+        for item in meeting_items:
+            activity = activities_by_id.get(item.activity_id)
+            per_school = (
+                (activity.participants_per_school or activity.teachers_per_school or 0)
+                if activity
+                else 0
+            )
+            invites = meeting_invites.get(item.activity_id, [])
+            if invites:
+                if (
+                    all(
+                        all(
+                            value is None
+                            for value in (invite.teachers, invite.leaders, invite.other)
+                        )
+                        for invite in invites
+                    )
+                    and not per_school
+                ):
+                    item.participants = (
+                        (activity.expected_participants or 0) if activity else 0
+                    )
+                else:
+                    item.participants = sum(
+                        (invite.teachers or 0)
+                        + (invite.leaders or 0)
+                        + (invite.other or 0)
+                        if any(
+                            value is not None
+                            for value in (invite.teachers, invite.leaders, invite.other)
+                        )
+                        else per_school
+                        for invite in invites
+                    )
+            elif item.cluster_id:
+                item.participants = (
+                    (activity.expected_participants or 0)
+                    if activity and activity.expected_participants
+                    else per_school * member_counts.get(item.cluster_id, 0)
+                )
+
     # ── Expand cluster trainings to confirmed / invited member schools ──
     if all_cluster_training_items:
         act_ids = [
             item.activity_id for item in all_cluster_training_items if item.activity_id
         ]
         cluster_ids = list(
-            {
-                item.cluster_id
-                for item in all_cluster_training_items
-                if item.cluster_id
-            }
+            {item.cluster_id for item in all_cluster_training_items if item.cluster_id}
         )
 
         att_records = list(
-            ClusterActivityAttendance.objects.filter(activity_id__in=act_ids)
-            .filter(Q(invited=True) | Q(attended=True))
-            .values_list("activity_id", "school_id")
+            ClusterActivityAttendance.objects.filter(
+                activity_id__in=act_ids, invited=True
+            ).values_list("activity_id", "school_id", "teachers", "leaders", "other")
         )
         att_by_act = defaultdict(list)
+        invited_composition = {}
         att_school_ids = set()
-        for act_id, sid in att_records:
+        for act_id, sid, teachers, leaders, other in att_records:
             if sid not in att_by_act[act_id]:
                 att_by_act[act_id].append(sid)
+            if any(value is not None for value in (teachers, leaders, other)):
+                invited_composition[(act_id, sid)] = (
+                    (teachers or 0) + (leaders or 0) + (other or 0)
+                )
             att_school_ids.add(sid)
 
         member_schools = list(
@@ -769,15 +844,17 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
 
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
-        act_obj_lookup = {
-            a.id: a
-            for a in Activity.objects.filter(id__in=act_ids)
-        }
+
+        act_obj_lookup = {a.id: a for a in Activity.objects.filter(id__in=act_ids)}
         active_meal_cs = CostSetting.objects.filter(
             key="cluster_meetings_trainings_meals",
             catalogue__is_active=True,
         ).first()
-        meal_unit_rate = int(active_meal_cs.unit_cost) if (active_meal_cs and active_meal_cs.unit_cost) else 5000
+        meal_unit_rate = (
+            int(active_meal_cs.unit_cost)
+            if (active_meal_cs and active_meal_cs.unit_cost)
+            else 5000
+        )
 
         for group in owner_groups:
             new_planned_trainings = []
@@ -813,7 +890,9 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 if act_obj:
                     pps = act_obj.participants_per_school or act_obj.teachers_per_school
                 if not pps:
-                    total_p = getattr(item, "participants", None) or (act_obj.expected_participants if act_obj else None)
+                    total_p = getattr(item, "participants", None) or (
+                        act_obj.expected_participants if act_obj else None
+                    )
                     if total_p and target_schools:
                         pps = max(1, total_p // len(target_schools))
                     else:
@@ -828,9 +907,7 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         s_item.school_name = s.name
                         s_item.school_type = getattr(s, "school_type", "") or ""
                         s_item.district_id = s.district_id
-                        s_item.district_name = (
-                            s.district.name if s.district_id else ""
-                        )
+                        s_item.district_name = s.district.name if s.district_id else ""
                         s_item.region_name = (
                             s.region.name if getattr(s, "region_id", None) else ""
                         )
@@ -840,9 +917,11 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                             or "Cluster Training"
                         )
                         s_item.is_cluster_invited = True
-                        s_item.participants = pps
-                        s_item.planned_cost = per_school_meal_cost
-                        s_item.budget = per_school_meal_cost
+                        s_item.participants = invited_composition.get(
+                            (act_id, s.id), pps
+                        )
+                        s_item.planned_cost = s_item.participants * meal_unit_rate
+                        s_item.budget = s_item.planned_cost
                         new_planned_trainings.append(s_item)
                 else:
                     fb_item = copy.copy(item)
@@ -875,10 +954,18 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 category = f"Cluster: {cname}"
                 is_is = False
             if category not in grouped_dict:
-                grouped_dict[category] = {"group_name": category, "is_in_school": is_is, "items": []}
+                grouped_dict[category] = {
+                    "group_name": category,
+                    "is_in_school": is_is,
+                    "items": [],
+                }
             grouped_dict[category]["items"].append(item)
         group["planned_trainings_grouped"] = [
-            dict(data, count=len(data["items"]))
+            dict(
+                data,
+                count=len(data["items"]),
+                participants_total=sum(item.participants for item in data["items"]),
+            )
             for data in grouped_dict.values()
         ]
 
@@ -973,10 +1060,13 @@ def team_planning_oversight_view(request):
     # the inactive one must not delay the active one.
     if active_view in ("portfolio", "clusters"):
         if active_view == "portfolio":
-            context_data = _portfolio_context(request, period, base_url=TEAM_OVERSIGHT_PATH)
+            context_data = _portfolio_context(
+                request, period, base_url=TEAM_OVERSIGHT_PATH
+            )
             template = "partials/oversight/portfolio_workspace.html"
         else:
             from apps.clusters.oversight_service import cluster_oversight_table_data
+
             fy = period.get("fy") or get_operational_fy()
             context_data = cluster_oversight_table_data(request.user, fy=fy)
             template = "partials/oversight/cluster_oversight_workspace.html"
@@ -1001,9 +1091,8 @@ def team_planning_oversight_view(request):
 
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
-    items = oversight.build_items(
-        request.user, filters=advanced, **_service_period(period)
-    )
+    available_items = oversight.build_items(request.user, **_service_period(period))
+    items = oversight.apply_filters(available_items, advanced)
     if active_view == "coverage":
         # The school lens: which schools have planned work in the period, which
         # have a cluster training or meeting, and which have neither (owner,
@@ -1101,7 +1190,7 @@ def team_planning_oversight_view(request):
         "activity_tabs": activity_tabs,
         "activity_family": activity_family,
         "advanced": advanced,
-        "filter_options": _filter_options(items),
+        "filter_options": _filter_options(available_items),
         "fy_options": fy_options(),
         # IA and the Accountant read this page for Cluster Oversight below.
         # The send controls are theirs to see refused, so they are not drawn:
@@ -1199,10 +1288,13 @@ def country_planning_oversight_view(request):
 
     if active_view in ("portfolio", "clusters"):
         if active_view == "portfolio":
-            context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+            context_data = _portfolio_context(
+                request, period, base_url=COUNTRY_OVERSIGHT_PATH
+            )
             template = "partials/oversight/portfolio_workspace.html"
         else:
             from apps.clusters.oversight_service import cluster_oversight_table_data
+
             fy = period.get("fy") or get_operational_fy()
             context_data = cluster_oversight_table_data(request.user, fy=fy)
             template = "partials/oversight/cluster_oversight_workspace.html"
@@ -1224,12 +1316,12 @@ def country_planning_oversight_view(request):
         return render(request, "pages/oversight/country_planning.html", context)
 
     advanced = oversight.read_filters(request)
-    items = oversight.build_items(
+    available_items = oversight.build_items(
         request.user,
         program_lead_id=program_lead_id,
-        filters=advanced,
         **_service_period(period),
     )
+    items = oversight.apply_filters(available_items, advanced)
 
     sys_pls = oversight.system_program_leads()
     summary = oversight.summarize(items)
@@ -1241,7 +1333,7 @@ def country_planning_oversight_view(request):
         "groups": oversight.group_by_program_lead(items, program_leads=sys_pls),
         "program_leads": _system_program_leads_for_filter(sys_pls),
         "advanced": advanced,
-        "filter_options": _filter_options(items),
+        "filter_options": _filter_options(available_items),
         "fy_options": fy_options(),
         "active_oversight_view": "planning",
         "lens_tabs": lens_tabs,
@@ -1351,10 +1443,10 @@ def _school_for(item):
 
 
 def _filter_options(items) -> dict:
-    """The values actually present in this view, so no filter returns nothing.
+    """The values in the scoped period before advanced filters narrow it.
 
-    Offering the full vocabulary would let a supervisor pick an activity type
-    their team never plans and conclude the page is broken.
+    This keeps other districts selectable while avoiding values that never
+    occur in the team's work for the period.
     """
     return {
         "activity_types": sorted({i.activity_type for i in items if i.activity_type}),
@@ -2283,7 +2375,10 @@ def cluster_oversight_view(request):
         **data,
         "active_lens": "cluster_oversight",
     }
-    if request.headers.get("HX-Request") == "true" and request.GET.get("workspace_only") == "true":
+    if (
+        request.headers.get("HX-Request") == "true"
+        and request.GET.get("workspace_only") == "true"
+    ):
         return render(
             request,
             "partials/oversight/cluster_oversight_workspace.html",
@@ -2309,7 +2404,10 @@ def core_schools_oversight_view(request):
         **data,
         "active_lens": "core_schools_oversight",
     }
-    if request.headers.get("HX-Request") == "true" and request.GET.get("workspace_only") == "true":
+    if (
+        request.headers.get("HX-Request") == "true"
+        and request.GET.get("workspace_only") == "true"
+    ):
         return render(
             request,
             "partials/oversight/core_schools_oversight_workspace.html",
