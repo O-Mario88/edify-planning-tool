@@ -260,7 +260,7 @@
   /* Text hierarchy remains readable on cards and the blue page canvas. */
   --edify-text: #17232b;
   --edify-text-muted: #233844;
-  /* Small labels must remain readable on the #80aad3 canvas as well as cards. */
+  /* Small labels must remain readable on the page canvas as well as cards. */
   --edify-text-subtle: #263d4b;
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
@@ -272,7 +272,7 @@
   --edify-table-divider: #d2dbe0;
   --edify-table-header-divider: #c4cfd5;
   /* Requested blue canvas separates the light workspace from its cards. */
-  --edify-bg: #80aad3;
+  --edify-bg: #dbe4eb;
   /* Sticky table cells need an opaque background while adjacent data scrolls. */
   --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
   --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
