@@ -11,7 +11,7 @@ Each team row is folded from the same items the expansion renders, so the
 summary and the detail are the same numbers by construction.
 {% endcomment %}
 
-<section class="space-y-4" x-data="{ open: null }">
+<section class="space-y-4" x-data="{ open: null }" data-mobile-table="scroll">
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
 

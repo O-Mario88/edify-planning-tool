@@ -29,7 +29,7 @@ from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import has_permission
 from apps.core.rbac import Permission
 from apps.fund_requests.pl_approval_service import (
@@ -969,7 +969,7 @@ def get_country_monthly_budget(principal, filters=None):
         "fy": fy,
         "month": month_num,
         "month_label": MONTHS[month_num] if 1 <= month_num <= 12 else str(month_num),
-        "fy_options": [fy, str(int(fy) - 1)],
+        "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
         "budget": budget,
         "budget_id": budget.id,
         "status": budget.status,

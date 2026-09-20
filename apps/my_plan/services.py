@@ -795,14 +795,23 @@ def get_frontend_context(principal, query: dict) -> dict:
     else:  # period == "fy"
         period_label = f"FY{fy}"
         qs_period = qs
+    # My Plan shows strictly upcoming plans for weekly, monthly, quarterly, and Annual (FY) feeds.
+    # Past-due uncompleted plans appear exclusively in "What needs you now" on the Dashboard.
+    upcoming_filter = (
+        Q(planned_date__gte=today)
+        | Q(planned_date__isnull=True, scheduled_date__date__gte=today)
+        | Q(planned_date__isnull=True, scheduled_date__isnull=True)
+    )
+    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+        qs_period = qs_period.filter(upcoming_filter | Q(status__in=COMPLETED_WORK_STATUSES))
 
-    # 7. Compute KPI values
+    # 7. Compute KPI values for upcoming plans
     current_week_start, current_week_end = get_week_date_range(
         today.year, today.month, min(5, (today.day - 1) // 7 + 1)
     )
     planned_this_week = qs.filter(
         _scheduled_in_range(current_week_start, current_week_end)
-    ).count()
+    ).filter(upcoming_filter).count()
     planned_this_month = qs.filter(
         _scheduled_in_range(
             date(today.year, today.month, 1),
@@ -810,9 +819,9 @@ def get_frontend_context(principal, query: dict) -> dict:
                 today.year, today.month, calendar.monthrange(today.year, today.month)[1]
             ),
         )
-    ).count()
-    planned_this_quarter = qs.filter(quarter=get_quarter_for_date(today)).count()
-    planned_this_fy = qs.count()
+    ).filter(upcoming_filter).count()
+    planned_this_quarter = qs.filter(quarter=get_quarter_for_date(today)).filter(upcoming_filter).count()
+    planned_this_fy = qs.filter(upcoming_filter).count()
 
     visits_scheduled = qs_period.filter(
         activity_type__in=[

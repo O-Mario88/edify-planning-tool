@@ -1417,9 +1417,14 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
   gap: 0.75rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .kpi-strip__item {
@@ -1428,7 +1433,8 @@ select:not([multiple]):not(.select-native) {
   overflow: hidden;
   padding: var(--edify-kpi-padding);
   min-height: 7.15rem;
-  min-width: 0;
+  min-width: 140px !important;
+  flex: 1 0 auto !important;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2915,9 +2921,9 @@ select:not([multiple]):not(.select-native) {
      natural width, so an unbounded district list of 139 names would dominate
      the row. The cap trims only the closed control — the open dropdown still
      shows every option in full. */
-  min-width: 7rem;
-  max-width: 14rem;
-  flex: 1 1 auto;
+  min-width: 5rem;
+  max-width: 12rem;
+  flex: 0 0 auto;
 }
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
@@ -5222,13 +5228,13 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
   --kpi-negative: #ff9da5;
 }
 .theme-blue .context-metrics {
-  --kpi-surface: #07549a;
-  --kpi-text: #fff;
-  --kpi-muted: #d4e7fa;
-  --kpi-divider: #4e89bb;
-  --kpi-positive: #85f4ce;
-  --kpi-warning: #ffdc83;
-  --kpi-negative: #ffc0c6;
+  --kpi-surface: #0a2540;
+  --kpi-text: #ffffff;
+  --kpi-muted: #94a3b8;
+  --kpi-divider: rgba(255, 255, 255, 0.12);
+  --kpi-positive: #34d399;
+  --kpi-warning: #fbbf24;
+  --kpi-negative: #f87171;
 }
 .context-metrics__header { margin-bottom: 10px; }
 .context-metrics__title {
@@ -5246,26 +5252,40 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
   line-height: 1.4;
 }
 .context-metrics__sentence {
-  display: flex;
-  align-items: stretch;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
   min-inline-size: 0;
-  overflow-x: auto;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-inline: contain;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   scrollbar-width: thin;
-  scrollbar-color: var(--kpi-divider) var(--kpi-surface);
+  scrollbar-color: var(--kpi-divider) transparent;
   border: 1px solid var(--kpi-divider);
   border-radius: 10px;
   background: var(--kpi-surface);
   color: var(--kpi-text);
   box-shadow: 0 3px 12px rgb(15 23 42 / 6%);
 }
-.context-metrics[data-kpi-ready] .context-metrics__sentence { scrollbar-width: none; }
-.context-metrics[data-kpi-ready] .context-metrics__sentence::-webkit-scrollbar { display: none; }
+.context-metrics__sentence::-webkit-scrollbar {
+  height: 5px;
+}
+.context-metrics__sentence::-webkit-scrollbar-thumb {
+  background: var(--kpi-divider);
+  border-radius: 4px;
+}
+.context-metrics[data-kpi-ready] .context-metrics__sentence { scrollbar-width: thin; }
 .context-metrics__fact {
   position: relative;
   display: flex;
-  flex: 1 0 calc(100% / var(--kpi-visible));
+  flex: 1 0 auto !important;
+  flex-shrink: 0 !important;
+  min-width: 130px !important;
   min-inline-size: 0;
   scroll-snap-align: start;
 }
@@ -5339,14 +5359,24 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
 .context-metrics__navigation-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--kpi-muted); font-size: var(--edify-text-micro-size); }
 .context-metrics__next { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 2px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
 .context-metrics__next:focus-visible { outline: 2px solid var(--edify-accent); outline-offset: 2px; border-radius: 3px; }
-@container performance (max-width: 1199px) {
-  .context-metrics__sentence { --kpi-visible: 4; }
+/* Universal Rule: No card or KPI nested inside another card */
+:is(.card, .edify-card) :is(.card, .edify-card) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
 }
-@container performance (max-width: 599px) {
-  .context-metrics__sentence { --kpi-visible: 2; }
-  .context-metrics__text, .context-metrics__link { padding: 10px 14px; }
-  .context-metrics__value { font-size: 22px; }
+:is(.card, .edify-card) > .context-metrics,
+:is(.card, .edify-card) .context-metrics {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
+:is(.card, .edify-card) .context-metrics .context-metrics__sentence {
+  background: var(--kpi-surface) !important;
+  border: 1px solid var(--kpi-divider) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .context-metrics__sentence { scroll-behavior: auto; }
 }

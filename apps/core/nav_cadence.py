@@ -24,25 +24,24 @@ DAILY, WEEKLY, MONTHLY, CYCLE, REFERENCE = range(len(TIERS))
 DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # Every day: home, the day's queue and the person's own plan.
     "dashboard": (DAILY, 0),
-    "todos": (DAILY, 10),
-    "my_plan": (DAILY, 20),
-    "calendar": (DAILY, 30),
-    "my_actions": (DAILY, 60),
+    "planning": (DAILY, 2),
+    "my_plan": (DAILY, 4),
+    "schools": (DAILY, 6),
+    "clusters": (DAILY, 8),
+    "cluster_oversight": (DAILY, 10),
+    "team_planning_oversight": (DAILY, 12),
+    "calendar": (DAILY, 14),
+    "core_schools": (DAILY, 16),
+    "core_schools_oversight": (DAILY, 18),
+    "country_planning_oversight": (DAILY, 20),
+    "todos": (DAILY, 28),
+    "my_actions": (DAILY, 30),
     # Each week: requests, approvals, team and portfolio work.
     "weekly_fund_request": (WEEKLY, 10),
     "fund_approvals": (WEEKLY, 15),
     "leave_approvals": (WEEKLY, 20),
-    "planning": (WEEKLY, 25),
-    "schools": (WEEKLY, 30),
-    "team_planning_oversight": (WEEKLY, 35),
-    # The country lens on the same work, read by the roles that watch a
-    # country rather than run a team; it is opened on the same rhythm as
-    # the team one, so it sits beside it.
-    "country_planning_oversight": (WEEKLY, 36),
     "my_team": (WEEKLY, 40),
     "team_coaching": (WEEKLY, 45),
-    "clusters": (WEEKLY, 50),
-    "core_schools": (WEEKLY, 55),
     "partners": (WEEKLY, 60),
     "projects": (WEEKLY, 65),
     "coverage": (WEEKLY, 70),
@@ -153,24 +152,19 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
 #: Keyed by the navigation role slug (apps.core.navigation.get_user_role_slug).
 ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
     "CCEO": {
-        "planning": (DAILY, 25),
-        "schools": (DAILY, 35),
         "daily_debrief": (DAILY, 50),
-        "clusters": (WEEKLY, 30),
     },
     "PL": {
         "pl_review_queue": (DAILY, 22),
-        "team_planning_oversight": (DAILY, 25),
         "fund_approvals": (WEEKLY, 5),
         "my_team": (WEEKLY, 8),
         "leave_approvals": (WEEKLY, 12),
         "daily_debrief": (WEEKLY, 30),
     },
     "IA": {
-        "ia_verification_queue": (DAILY, 12),
-        "ssa": (DAILY, 15),
-        "ia_partner_evidence": (DAILY, 18),
-        "planning": (WEEKLY, 60),
+        "ia_verification_queue": (DAILY, 22),
+        "ssa": (DAILY, 24),
+        "ia_partner_evidence": (DAILY, 26),
     },
     "CD": {
         "team_planning_oversight": (DAILY, 12),
@@ -228,8 +222,10 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
     # among fifty WEEKLY links and Upload Center 34th, and the owner could not
     # find either on the live site (2026-09-15).
     "ADMIN": {
-        "users": (DAILY, 11),
-        "uploads": (DAILY, 12),
+        "todos": (DAILY, 1),
+        "users": (DAILY, 2),
+        "uploads": (DAILY, 3),
+        "planning": (DAILY, 4),
         "admin_support_queue": (DAILY, 13),
         "admin_incidents": (DAILY, 15),
         "system_health": (DAILY, 18),

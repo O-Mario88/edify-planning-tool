@@ -1,20 +1,45 @@
-<!-- Filters Form for My Plan -->
-<form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan" x-data
-hx-get="/my-plan"
-hx-target="#my-plan-workspace"
-hx-swap="innerHTML"
-hx-push-url="true"
-{% comment %}`change` is listed here, on the form, because that is the only
-place it works. `hx-get` is not one of htmx's inherited attributes, so the
-`hx-trigger="change"` each select used to carry named an event on an element
-with no request to make and did nothing: picking a fiscal year, quarter or
-month changed the select and left the page exactly as it was, and the filters
-only ever applied on a submit the toolbar has no button for. A change event
-bubbles from every control in this form — the advanced drawer's included — up
-to the form, where the request lives (owner, 2026-09-17).{% endcomment %}
-hx-trigger="change, submit"
-class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm"
->
+<div class="flex flex-wrap items-end justify-between gap-3">
+  <!-- Time horizon segmented tab rail: This Week, This Month, This Quarter, This FY -->
+  <nav data-edify-tablist aria-label="My plan horizon" class="shrink-0">
+    <a href="{% querystring period='week' month=None quarter=None %}"
+       hx-get="{% querystring period='week' month=None quarter=None %}"
+       hx-target="#my-plan-workspace"
+       hx-push-url="true"
+       data-edify-tab
+       class="edify-tab"
+       {% if period == 'week' %}aria-current="page"{% endif %}>This Week</a>
+    <a href="{% querystring period='month' %}"
+       hx-get="{% querystring period='month' %}"
+       hx-target="#my-plan-workspace"
+       hx-push-url="true"
+       data-edify-tab
+       class="edify-tab"
+       {% if period == 'month' %}aria-current="page"{% endif %}>This Month</a>
+    <a href="{% querystring period='quarter' month=None %}"
+       hx-get="{% querystring period='quarter' month=None %}"
+       hx-target="#my-plan-workspace"
+       hx-push-url="true"
+       data-edify-tab
+       class="edify-tab"
+       {% if period == 'quarter' %}aria-current="page"{% endif %}>This Quarter</a>
+    <a href="{% querystring period='fy' month=None quarter=None %}"
+       hx-get="{% querystring period='fy' month=None quarter=None %}"
+       hx-target="#my-plan-workspace"
+       hx-push-url="true"
+       data-edify-tab
+       class="edify-tab"
+       {% if period == 'fy' or not period %}aria-current="page"{% endif %}>This FY</a>
+  </nav>
+
+  <!-- Filters Form for My Plan -->
+  <form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan" x-data
+  hx-get="/my-plan"
+  hx-target="#my-plan-workspace"
+  hx-swap="innerHTML"
+  hx-push-url="true"
+  hx-trigger="change, submit"
+  class="max-lg:hidden flex flex-wrap items-end gap-2.5 edify-surface p-2.5 sm:p-3 border border-slate-200 rounded-surface shadow-sm"
+  >
 {% comment %}Only a period the caller actually asked for travels with the form.
 An explicit ?period= (the CSV export, a deep link) must survive a filter change;
 a period the server derived from the month select must not, or the page would be
@@ -65,13 +90,9 @@ month; picking a month goes straight there.{% endcomment %}
 </select>
 </div>
 
-<button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog"
+<button type="button" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50 self-end transition-all" aria-haspopup="dialog"
         @click="$refs.advancedFilters.showModal()">
-{% comment %}`advanced_filters_active` is the server's own answer for what is
-inside this drawer, and nothing else — the badge would otherwise light up for a
-quarter or month chosen out here in the toolbar. The button used to compare each
-selected value against "all" itself, and an unset filter is None rather than
-"all", so a page with nothing filtered announced "Applied".{% endcomment %}
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
 More filters{% if advanced_filters_active %} · Applied{% endif %}
 </button>
 
@@ -146,3 +167,4 @@ than Alpine-derived: the filter state is authoritative in the URL.
 </a>
 {% endif %}
 </form>
+</div>

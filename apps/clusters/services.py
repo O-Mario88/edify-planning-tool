@@ -1551,72 +1551,6 @@ def cluster_planning(principal) -> list[dict]:
 
 
 class ClusterDashboardService:
-    @staticmethod
-    def get_dashboard_data(request, user) -> dict:
-        from apps.activities.models import Activity
-
-        scope = resolve_user_scope(user)
-
-        # 1. Base scoped query.
-        #
-        # The Clusters page is an operational directory, so it shows the
-        # clusters this person is responsible for — `cluster_queryset` is the
-        # canonical set, shared with every picker and with the membership
-        # service that decides what a save will accept.
-        #
-        # It used to scope geographically, which is the rule §4 replaced: four
-        # CCEOs sharing Mukono each saw all fifteen of its clusters, and the
-        # page therefore disagreed with the drawers next to it about whose
-        # clusters they were. Unowned clusters stay visible from their district
-        # — that carve-out lives inside cluster_queryset — so nothing becomes
-        # unreachable while ownership is still being captured.
-        # `direct_only`: this page carries the plan, schedule and edit
-        # controls, so it lists the clusters this person may act on. A
-        # supervisor's CCEO clusters are read-only and belong on Team
-        # Oversight — showing them here made supervision look like ownership
-        # on the surface where the work is actually started.
-        base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        scoped = cluster_queryset(scope, base=base_qs, direct_only=True)
-        base_qs = scoped if scoped is not None else base_qs.none()
-
-        # 2. Filters from request
-        q = request.GET.get("q", "").strip()
-        # The operational year unless a year the platform offers is chosen; a
-        # hard-coded "2026" kept the page on last year's figures once the year
-        # turned (Programme Lead alignment, 2026-09-13).
-        requested_fy = request.GET.get("fy", "").strip()
-        fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
-        district_id = request.GET.get("district", "").strip()
-        sub_county_id = request.GET.get("sub_county", "").strip()
-        staff_id = request.GET.get("staff", "").strip()
-        ssa_status = request.GET.get("ssa_status", "").strip()
-        cluster_risk = request.GET.get("cluster_risk", "").strip()
-        activity_status = request.GET.get("activity_status", "").strip()
-
-        # Apply filters to queryset
-        filtered_qs = base_qs
-        if q:
-            filtered_qs = filtered_qs.filter(
-                Q(name__icontains=q) | Q(district__name__icontains=q)
-            )
-        if district_id:
-            filtered_qs = filtered_qs.filter(district_id=district_id)
-        if sub_county_id:
-            filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
-        if staff_id:
-            staff_cluster_ids = (
-                School.objects.filter(
-                    account_owner_id=staff_id, deleted_at__isnull=True
-                )
-                .exclude(cluster_id__isnull=True)
-                .exclude(cluster_id="")
-                .values("cluster_id")
-            )
-            filtered_qs = filtered_qs.filter(
-                Q(responsible_staff_id=staff_id) | Q(id__in=staff_cluster_ids)
-            ).distinct()
-
-        # Get all planning info
     @classmethod
     def build_cluster_cards(cls, clusters, user, fy=None) -> list[dict]:
         from apps.activities.models import Activity
@@ -1801,7 +1735,8 @@ class ClusterDashboardService:
         scope = resolve_user_scope(user)
 
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        scoped = cluster_queryset(scope, base=base_qs, direct_only=True)
+        is_supervisor = scope.active_role in ("PL", "ProgramLead", "Program Lead") or bool(scope.supervised_staff_ids)
+        scoped = cluster_queryset(scope, base=base_qs, direct_only=not is_supervisor)
         base_qs = scoped if scoped is not None else base_qs.none()
 
         # 2. Filters from request

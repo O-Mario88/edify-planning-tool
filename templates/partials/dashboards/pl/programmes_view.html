@@ -33,21 +33,6 @@ Programme Rollout holds the full picture behind each card.
         {% include "partials/dashboards/pl/ssa_intelligence.html" %}
       </section>
 
-      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
-        <header class="rpl-card__header">
-          <div class="rpl-card__heading">
-            <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
-            <span class="rpl-card__subtitle">Completed work by month and delivery family, with the share of the year's plan done · field execution, not IA-verified</span>
-          </div>
-        </header>
-        {% if delivery_by_month.has_work %}
-        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed team activities by month and delivery family for FY {{ fy }}"></div>
-        {{ delivery_by_month|json_script:"pl-execution-payload" }}
-        {% else %}
-        {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." compact="true" %}
-        {% endif %}
-      </section>
-
     </div>
     <div class="rpl-columns__side">
 
@@ -94,6 +79,21 @@ Programme Rollout holds the full picture behind each card.
           </div>
           {% endfor %}
         </div>
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
+            <span class="rpl-card__subtitle">Completed work by month and delivery family, with the share of the year's plan done · field execution, not IA-verified</span>
+          </div>
+        </header>
+        {% if delivery_by_month.has_work %}
+        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed team activities by month and delivery family for FY {{ fy }}"></div>
+        {{ delivery_by_month|json_script:"pl-execution-payload" }}
+        {% else %}
+        {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." compact="true" %}
+        {% endif %}
       </section>
 
     </div>
@@ -150,10 +150,14 @@ Programme Rollout holds the full picture behind each card.
   }
 
   var chart = window.EdifyChartSystem.renderDetached(el, build());
+  var _themeTimer = null;
   window.addEventListener('edify-theme-change', function () {
-    if (chart) { chart.destroy(); }
-    el.replaceChildren();
-    chart = window.EdifyChartSystem.renderDetached(el, build());
+    if (_themeTimer) clearTimeout(_themeTimer);
+    _themeTimer = setTimeout(function () {
+      if (chart) { chart.destroy(); }
+      el.replaceChildren();
+      chart = window.EdifyChartSystem.renderDetached(el, build());
+    }, 50);
   });
 })();
 </script>

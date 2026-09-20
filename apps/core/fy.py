@@ -107,9 +107,10 @@ def get_cumulative_target_percentage(period: CumulativePeriod) -> int:
 
 
 def fy_options(now: date | datetime | None = None) -> list[str]:
-    """FY dropdown options from FY 2025 upward through the current FY (+1 ahead)."""
+    """FY dropdown options from FY 2025 upward through the current FY (+1 ahead, at least through 2027)."""
     current = int(get_operational_fy(now))
-    return [str(y) for y in range(2025, current + 2)]
+    max_fy = max(current + 1, 2027)
+    return [str(y) for y in range(2025, max_fy + 1)]
 
 
 def _as_utc(at: date | datetime | None) -> datetime:

@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.activities.models import ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
 from .models import FundRequest, FundRequestItem, FundRequestPeriod, FundRequestStatus
@@ -463,7 +463,7 @@ def get_monthly_request(principal, filters=None) -> dict:
             "fy": fy,
             "month": month,
             "month_label": MONTHS[month],
-            "fy_options": [fy, str(int(fy) - 1)],
+            "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
             "is_country_request": True,
             "role": role,
             "request_id": c_budget_ctx.get("budget_id", ""),
@@ -550,7 +550,7 @@ def get_monthly_request(principal, filters=None) -> dict:
         "fy": fy,
         "month": month,
         "month_label": MONTHS[month],
-        "fy_options": [fy, str(int(fy) - 1)],
+        "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
         # NOT "request". That key is Django's HTTP request, put in every
         # template context by the request context processor, and shadowing it
         # with a FundRequest broke anything that reached for the real one:

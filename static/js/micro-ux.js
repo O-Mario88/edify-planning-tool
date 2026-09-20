@@ -193,30 +193,29 @@
        first costs one resolution for the whole pass. */
     var reads = new Map();
     cells.forEach(function (cell) {
+      if (cell.classList.contains('edify-cell')) return;
       /* A child the page hides at this width (a phone-only label) is not a
          line of the row; marking it would show it again. Only a child that
          carries a hiding or responsive display class can be hidden. */
       var hidden = Array.from(cell.children).map(function (child) {
         if (child.hidden || child.hasAttribute('x-cloak') || child.classList.contains('edify-record-field-label')) return true;
         var classes = child.className && typeof child.className === 'string' ? child.className : '';
-        if (!/(^|\s)(hidden|max-\w+:hidden|\w+:hidden|\w+:block|\w+:flex|\w+:inline\S*)(\s|$)/.test(classes)) return false;
-        return window.getComputedStyle(child).display === 'none';
+        if (classes.includes('hidden') || classes.includes(':hidden')) return true;
+        return false;
       });
       /* Chips a page stylesheet draws as inline-flex (a score, a status, a
          badge) take the 18px pill line. Colour dots carry no text. */
       var inlineFlexChips = [];
-      cell.querySelectorAll('span, strong, b, em, small, a, div').forEach(function (chip) {
+      cell.querySelectorAll('.inline-flex, .pill, [class*="badge"], [class*="chip"]').forEach(function (chip) {
         if (chip.textContent.trim() === '') return;
         if (chip.matches('div') && chip.querySelector('div, p, table, form, ul, a, button')) return;
-        if (window.getComputedStyle(chip).display === 'inline-flex') inlineFlexChips.push(chip);
+        inlineFlexChips.push(chip);
       });
       /* A plain inline link in a cell is text, not a 24px control. */
-      var inlineAnchors = Array.from(cell.querySelectorAll('a')).filter(function (anchor) {
-        return window.getComputedStyle(anchor).display === 'inline';
-      });
+      var inlineAnchors = Array.from(cell.querySelectorAll('a:not(.btn):not([class*="button"]):not([class*="action"])'));
       reads.set(cell, {
         hidden: hidden,
-        flex: window.getComputedStyle(cell).display === 'flex',
+        flex: cell.classList.contains('flex') || cell.classList.contains('inline-flex'),
         inlineFlexChips: inlineFlexChips,
         inlineAnchors: inlineAnchors
       });
@@ -224,6 +223,7 @@
     /* WRITE PHASE. */
     cells.forEach(function (cell) {
       var read = reads.get(cell);
+      if (!read) return;
       /* Every cell carries the marker the row rhythm hangs its rules on, so a
          page stylesheet with a class selector cannot out-rank the rhythm. */
       cell.classList.add('edify-cell');
@@ -590,6 +590,9 @@
   function scrollAncestor(table) {
     var node = table.parentElement;
     while (node && node !== document.body) {
+      if (node.classList && (node.classList.contains('edify-table-scroll-region') || node.classList.contains('edify-record-table-wrap') || node.classList.contains('overflow-x-auto') || node.classList.contains('overflow-auto'))) {
+        return node;
+      }
       var overflow = window.getComputedStyle(node).overflowX;
       if (overflow === 'auto' || overflow === 'scroll') return node;
       node = node.parentElement;
@@ -612,7 +615,10 @@
     var list = [];
     tables.forEach(function (table) {
       if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
-      if (table.dataset.tableFit === 'scroll') { unfitTable(table); return; }
+      if (table.dataset.tableFit === 'scroll' || table.dataset.mobileTable === 'scroll' || table.classList.contains('edify-record-table') || table.closest('.edify-record-table-wrap')) {
+        unfitTable(table);
+        return;
+      }
       if (table.closest('table') !== table) return;
       var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
       if (!region) return;
@@ -1823,7 +1829,7 @@
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['style', 'class', 'hidden', 'open']
+      attributeFilter: ['open']
     });
   });
 

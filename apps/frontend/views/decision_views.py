@@ -26,7 +26,7 @@ from django.contrib import messages
 
 from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import has_permission, require_page_permission
 from apps.core.rbac import Permission
 
@@ -123,7 +123,7 @@ def decision_intelligence_view(request):
         "partials/analytics/panels/decision_intelligence.html",
         {
             "fy": fy,
-            "fy_options": [fy, str(int(fy) - 1)],
+            "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
             "leadership_insights": leadership_insights,
             "budget_insights": budget_insights,
             "leadership_snapshot": leadership_snapshot,
@@ -234,7 +234,7 @@ def core_school_health_view(request):
         "partials/analytics/panels/core_school_health.html",
         {
             "d": core_school_health(request.user, {"fy": fy}),
-            "fy_options": [fy, str(int(fy) - 1)],
+            "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
         },
         section_key="core_school_health",
         panel_title="Core Verification",

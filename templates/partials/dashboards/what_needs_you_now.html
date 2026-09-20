@@ -1,0 +1,586 @@
+{% load frontend_filters %}
+{% comment %}
+"What needs you now" — Past due plans requiring completion, rescheduling, or cancellation.
+Appears exclusively on the Dashboard page.
+For CCEO: surfaces their own past due activities with Complete / Reschedule / Cancel actions.
+For Program Lead: surfaces both own past due plans and line-managed team plans, with a "Send to <Team Member>" reminder dispatch button.
+{% endcomment %}
+
+<section class="space-y-4" data-section="what-needs-you-now"
+         x-data="{
+           activeScope: 'all',
+           activeCategory: 'all',
+           matchesScope(isOwn) {
+             if (this.activeScope === 'all') return true;
+             if (this.activeScope === 'own') return isOwn;
+             if (this.activeScope === 'team') return !isOwn;
+             return true;
+           }
+         }">
+
+  <!-- Section Header -->
+  <div class="flex flex-wrap items-center justify-between gap-3 px-1">
+    <div class="flex items-center gap-2.5">
+      <div class="h-9 w-9 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold shadow-2xs border border-rose-100 dark:border-rose-900/50">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-[16px] font-bold tracking-tight text-slate-800 dark:text-slate-100">What needs you now</h2>
+          <span class="px-2 py-0.5 rounded-pill text-[12px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 tabular-nums">
+            {{ past_due_total_count }} past due
+          </span>
+        </div>
+        <p class="text-[12px] text-slate-500 dark:text-slate-400">Past due plans requiring completion, rescheduling or cancellation</p>
+      </div>
+    </div>
+
+    <!-- Filter Pills: Scope & Category -->
+    <div class="flex flex-wrap items-center gap-2">
+      {% if is_pl and past_due_total_count %}
+      <!-- PL Scope Segmented Control: All | My Plans | Team Plans -->
+      <div class="inline-flex items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <button type="button"
+                @click="activeScope = 'all'"
+                :class="activeScope === 'all' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          All ({{ past_due_total_count }})
+        </button>
+        <button type="button"
+                @click="activeScope = 'own'"
+                :class="activeScope === 'own' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          My Plans ({{ pl_own_past_due_count }})
+        </button>
+        <button type="button"
+                @click="activeScope = 'team'"
+                :class="activeScope === 'team' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          Team Plans ({{ pl_team_past_due_count }})
+        </button>
+      </div>
+      {% endif %}
+
+      <!-- Category Filter Pills -->
+      {% if past_due_total_count %}
+      <div class="inline-flex items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <button type="button"
+                @click="activeCategory = 'all'"
+                :class="activeCategory === 'all' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          All Categories
+        </button>
+        <button type="button"
+                @click="activeCategory = 'visits'"
+                :class="activeCategory === 'visits' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          School Visits ({{ past_due_visits_count }})
+        </button>
+        <button type="button"
+                @click="activeCategory = 'trainings'"
+                :class="activeCategory === 'trainings' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          Trainings ({{ past_due_trainings_count }})
+        </button>
+        <button type="button"
+                @click="activeCategory = 'meetings'"
+                :class="activeCategory === 'meetings' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
+                class="px-2.5 py-1 rounded-[5px] transition-colors cursor-pointer">
+          Cluster Meetings ({{ past_due_meetings_count }})
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if past_due_total_count == 0 %}
+  <!-- Empty State -->
+  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center shadow-xs">
+    <div class="mx-auto w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">No past due plans</h3>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All scheduled school visits, trainings, and cluster meetings are currently on track.</p>
+  </div>
+  {% else %}
+
+  <!-- 1. School Visits Table -->
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'visits'" x-cloak>
+    <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-600 dark:text-slate-300">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg>
+          </span>
+          <h3 class="text-[14px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">School Visits (Past Due)</h3>
+          <span class="px-2 py-0.5 rounded-pill text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tabular-nums">
+            {{ past_due_visits_count }}
+          </span>
+        </div>
+        <span class="text-[11px] font-semibold text-slate-400">Ordered by date</span>
+      </div>
+
+      <div class="overflow-x-auto edify-record-table-wrap">
+        <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table">
+          <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
+              <th scope="col" class="px-3 py-2.5">School Name</th>
+              <th scope="col" class="px-3 py-2.5">Activity</th>
+              <th scope="col" class="px-3 py-2.5">Planned Date</th>
+              <th scope="col" class="px-3 py-2.5">Executor</th>
+              <th scope="col" class="px-3 py-2.5">Purpose of Visit</th>
+              <th scope="col" class="px-3 py-2.5">Focus Intervention</th>
+              <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Status</th>
+              <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            {% for row in past_due_school_visits %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
+              <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
+                {% if row.school_id %}
+                <a href="/schools/{{ row.school_id }}" class="hover:underline hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
+                {% else %}
+                <span>{{ row.school_name|default:"—" }}</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}
+                </span>
+              </td>
+              <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="inline-flex items-center gap-1.5">
+                  {{ row.owner }}
+                  {% if row.is_own %}
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">You</span>
+                  {% endif %}
+                </span>
+              </td>
+              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"—" }}</td>
+              <td class="px-3 py-2.5">
+                {% if row.focus_intervention and row.focus_intervention != "—" %}
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {{ row.focus_intervention }}
+                </span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                UGX {{ row.budget_total|default:0|intcomma }}
+              </td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-bold {{ row.status_class }}">
+                  {{ row.status_label }}
+                </span>
+              </td>
+              <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">
+                {% if row.is_own %}
+                <!-- Own Activity: Complete, Reschedule, Cancel Action Dropdown -->
+                <div class="row-menu" x-data="rowMenu"
+                     @keydown.escape.window="close()" @click.outside="close()"
+                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                  <button type="button" class="row-menu__trigger" x-ref="trigger"
+                          @click="toggle()"
+                          :aria-expanded="open ? 'true' : 'false'"
+                          aria-haspopup="true"
+                          aria-label="Actions for {{ row.school_name }}">
+                    Actions
+                    <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="row-menu__list" x-ref="list" x-show="open"
+                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                    <button type="button"
+                            hx-get="{{ row.complete_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Complete Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.reschedule_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Reschedule Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.cancel_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item row-menu__item--danger" role="menuitem">
+                      Cancel Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.details_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      View Details
+                    </button>
+                  </div>
+                </div>
+                {% else %}
+                <!-- Team Member Activity on PL Dashboard: "Send to <Name>" Reminder Button -->
+                {% if row.reminder_sent %}
+                <button type="button" disabled
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                        title="Reminder already sent to {{ row.owner }}">
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  Sent to {{ row.owner_first_name }} ✓
+                </button>
+                {% else %}
+                <button type="button"
+                        hx-post="/dashboard/notify-past-due/{{ row.id }}/"
+                        hx-swap="outerHTML"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
+                        title="Notify {{ row.owner }} to complete, reschedule, or cancel this activity">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Send to {{ row.owner_first_name }}
+                </button>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due school visits.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Trainings Table -->
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'trainings'" x-cloak>
+    <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-600 dark:text-slate-300">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.2-3.4v5.2A2 2 0 0117 12.6 9.7 9.7 0 0112 14a9.7 9.7 0 01-5-1.4 2 2 0 01-1.2-1.8V9.6L12 14z"/></svg>
+          </span>
+          <h3 class="text-[14px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">Trainings (Past Due)</h3>
+          <span class="px-2 py-0.5 rounded-pill text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tabular-nums">
+            {{ past_due_trainings_count }}
+          </span>
+        </div>
+        <span class="text-[11px] font-semibold text-slate-400">Ordered by date</span>
+      </div>
+
+      <div class="overflow-x-auto edify-record-table-wrap">
+        <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table">
+          <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
+              <th scope="col" class="px-3 py-2.5">School / Cluster</th>
+              <th scope="col" class="px-3 py-2.5">Cluster Planned From</th>
+              <th scope="col" class="px-3 py-2.5">Executor</th>
+              <th scope="col" class="px-3 py-2.5">Training Name</th>
+              <th scope="col" class="px-3 py-2.5">Planned Date</th>
+              <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
+              <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
+              <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Status</th>
+              <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            {% for row in past_due_cluster_trainings %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
+              <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
+                {% if row.place_url %}
+                <a href="{{ row.place_url }}" class="hover:underline hover:text-blue-600">{{ row.school_name|default:row.cluster_name }}</a>
+                {% else %}
+                <span>{{ row.school_name|default:row.cluster_name }}</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_name|default:"—" }}</td>
+              <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="inline-flex items-center gap-1.5">
+                  {{ row.owner }}
+                  {% if row.is_own %}
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">You</span>
+                  {% endif %}
+                </span>
+              </td>
+              <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">{{ row.activity_type_label }}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}
+                </span>
+              </td>
+              <td class="px-3 py-2.5">
+                {% if row.focus_intervention and row.focus_intervention != "—" %}
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {{ row.focus_intervention }}
+                </span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+              <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                UGX {{ row.budget_total|default:0|intcomma }}
+              </td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-bold {{ row.status_class }}">
+                  {{ row.status_label }}
+                </span>
+              </td>
+              <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">
+                {% if row.is_own %}
+                <!-- Own Activity Actions -->
+                <div class="row-menu" x-data="rowMenu"
+                     @keydown.escape.window="close()" @click.outside="close()"
+                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                  <button type="button" class="row-menu__trigger" x-ref="trigger"
+                          @click="toggle()"
+                          :aria-expanded="open ? 'true' : 'false'"
+                          aria-haspopup="true"
+                          aria-label="Actions for {{ row.activity_type_label }}">
+                    Actions
+                    <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="row-menu__list" x-ref="list" x-show="open"
+                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                    <button type="button"
+                            hx-get="{{ row.complete_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Complete Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.reschedule_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Reschedule Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.cancel_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item row-menu__item--danger" role="menuitem">
+                      Cancel Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.details_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      View Details
+                    </button>
+                  </div>
+                </div>
+                {% else %}
+                <!-- Team Member Activity on PL Dashboard: "Send to <Name>" -->
+                {% if row.reminder_sent %}
+                <button type="button" disabled
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                        title="Reminder already sent to {{ row.owner }}">
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  Sent to {{ row.owner_first_name }} ✓
+                </button>
+                {% else %}
+                <button type="button"
+                        hx-post="/dashboard/notify-past-due/{{ row.id }}/"
+                        hx-swap="outerHTML"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
+                        title="Notify {{ row.owner }} to complete, reschedule, or cancel this activity">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Send to {{ row.owner_first_name }}
+                </button>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due trainings.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Cluster Meetings Table -->
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'meetings'" x-cloak>
+    <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-600 dark:text-slate-300">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg>
+          </span>
+          <h3 class="text-[14px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">Cluster Meetings (Past Due)</h3>
+          <span class="px-2 py-0.5 rounded-pill text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 tabular-nums">
+            {{ past_due_meetings_count }}
+          </span>
+        </div>
+        <span class="text-[11px] font-semibold text-slate-400">Ordered by date</span>
+      </div>
+
+      <div class="overflow-x-auto edify-record-table-wrap">
+        <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table">
+          <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
+              <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
+              <th scope="col" class="px-3 py-2.5">District</th>
+              <th scope="col" class="px-3 py-2.5">Planned Date</th>
+              <th scope="col" class="px-3 py-2.5">Executor</th>
+              <th scope="col" class="px-3 py-2.5">Purpose (Meeting Topic)</th>
+              <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
+              <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
+              <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Status</th>
+              <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            {% for row in past_due_cluster_meetings %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
+                {% if row.cluster_id %}
+                <a href="/clusters/{{ row.cluster_id }}" class="hover:underline hover:text-blue-600">{{ row.cluster_name }}</a>
+                {% else %}
+                <span>{{ row.cluster_name }}</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_district|default:"—" }}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}
+                </span>
+              </td>
+              <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                <span class="inline-flex items-center gap-1.5">
+                  {{ row.owner }}
+                  {% if row.is_own %}
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">You</span>
+                  {% endif %}
+                </span>
+              </td>
+              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title="{{ row.purpose }}">{{ row.purpose|default:"Cluster Meeting" }}</td>
+              <td class="px-3 py-2.5">
+                {% if row.focus_intervention and row.focus_intervention != "—" %}
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  {{ row.focus_intervention }}
+                </span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-2.5 text-center font-medium tabular-nums text-slate-700 dark:text-slate-300">{{ row.expected_participants }}</td>
+              <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                UGX {{ row.budget_total|default:0|intcomma }}
+              </td>
+              <td class="px-3 py-2.5 whitespace-nowrap">
+                <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-bold {{ row.status_class }}">
+                  {{ row.status_label }}
+                </span>
+              </td>
+              <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">
+                {% if row.is_own %}
+                <!-- Own Activity Actions -->
+                <div class="row-menu" x-data="rowMenu"
+                     @keydown.escape.window="close()" @click.outside="close()"
+                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                  <button type="button" class="row-menu__trigger" x-ref="trigger"
+                          @click="toggle()"
+                          :aria-expanded="open ? 'true' : 'false'"
+                          aria-haspopup="true"
+                          aria-label="Actions for {{ row.cluster_name }}">
+                    Actions
+                    <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="row-menu__list" x-ref="list" x-show="open"
+                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                    <button type="button"
+                            hx-get="{{ row.complete_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Complete Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.reschedule_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      Reschedule Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.cancel_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item row-menu__item--danger" role="menuitem">
+                      Cancel Activity
+                    </button>
+                    <button type="button"
+                            hx-get="{{ row.details_url }}"
+                            hx-target="#drawer-container"
+                            hx-swap="innerHTML"
+                            @click="close()"
+                            class="row-menu__item" role="menuitem">
+                      View Details
+                    </button>
+                  </div>
+                </div>
+                {% else %}
+                <!-- Team Member Activity on PL Dashboard: "Send to <Name>" -->
+                {% if row.reminder_sent %}
+                <button type="button" disabled
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                        title="Reminder already sent to {{ row.owner }}">
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  Sent to {{ row.owner_first_name }} ✓
+                </button>
+                {% else %}
+                <button type="button"
+                        hx-post="/dashboard/notify-past-due/{{ row.id }}/"
+                        hx-swap="outerHTML"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
+                        title="Notify {{ row.owner }} to complete, reschedule, or cancel this activity">
+                  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Send to {{ row.owner_first_name }}
+                </button>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due cluster meetings.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</section>

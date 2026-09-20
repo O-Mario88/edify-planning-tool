@@ -252,34 +252,49 @@ main :is(
   .edify-section-nav__inner
 ) {
   gap: 0 !important;
-  /* Selected segments meet the rail border on every edge. An inset track left
-     a visible white seam under fixed-height legacy tabs and made the active
-     fill look unfinished. */
   padding: 0 !important;
-  /* ONE rail height, everywhere (2026-09-05).
-   *
-   * The rail's container was already one design — same surface, border,
-   * radius and zero gap on every family — but its HEIGHT was `auto`, so the
-   * tallest segment decided it and each family landed somewhere different: a
-   * sweep of the eight tab surfaces measured 32px on Core Schools and My
-   * Plan, 34px on Messages, 36px on Analytics, Team Targets and Special
-   * Projects. Nothing chose those numbers; they fell out of which padding or
-   * density override happened to win inside each rail.
-   *
-   * 32px is the platform's control height — the action button, the table row
-   * and the row-action trigger all close there — so the rail closes there
-   * too. The segments keep `align-self: stretch` below and fill it exactly,
-   * which is what keeps the active fill flush with the rail border. */
   min-block-size: 2rem !important;
-  /* The rail closes at 32px on one row and GROWS when its segments wrap
-     (platform.css wraps every rail at desktop widths since 2026-09-06, so
-     fourteen Analytics sections take two rows at 1440px). A fixed 2rem
-     here clipped the second row out of sight. Each row is a 30px segment
-     inside the rail's 1px borders, so one row still measures 32px. */
   block-size: auto !important;
   height: auto !important;
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface) !important;
+  border: none !important;
+}
+
+:is(.theme-blue, [data-theme="blue"]) main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) {
+  background: #071e3d !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+  --edify-segment-rule: rgba(255, 255, 255, 0.18) !important;
+}
+
+:is(.theme-dark, [data-theme="dark"]) main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) {
+  background: var(--edify-surface, #0f172a) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  --edify-segment-rule: rgba(255, 255, 255, 0.15) !important;
 }
 
 main :is(
@@ -534,10 +549,12 @@ main :is(
   .edify-section-nav__cluster.is-active,
   .edify-section-nav__link.is-active
 ) {
-  background: var(--edify-invert-fill) !important;
-  color: var(--edify-invert-fill-ink) !important;
-  border-color: var(--edify-invert-fill) !important;
-  box-shadow: none !important;
+  background: #1976d2 !important;
+  color: #ffffff !important;
+  border-color: #1976d2 !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Dynamic counts and labels are content inside one segment, never badges or
@@ -1029,8 +1046,9 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs,
   .tt-segmented, .oversight-entity-tabs, .edify-section-nav__clusters,
   .edify-section-nav__inner):nth-child(n) {
-  padding: 3px !important;
+  padding: 0 !important;
   gap: 0 !important;
+  border: none !important;
 }
 main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs,

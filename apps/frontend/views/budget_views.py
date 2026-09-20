@@ -28,6 +28,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.geography.models import District
 from apps.accounts.models import StaffProfile
 from apps.core.fy import (
+    fy_options,
     get_fy_date_range,
     get_operational_fy,
     get_quarter_date_range,
@@ -1509,9 +1510,7 @@ def _build_fund_requests_context(request):
         "receipt_pending_plans": receipt_pending_plans,
         # Selected states
         "selected_fy": fy,
-        "fy_options": sorted(
-            {fy, get_operational_fy(), str(int(fy) - 1)}, reverse=True
-        ),
+        "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
         "selected_quarter": quarter,
         "selected_month": month_name,
         "selected_week": selected_week_start.isoformat(),

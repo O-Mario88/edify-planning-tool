@@ -286,12 +286,17 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('impactChart', (payloadId, chartType) => ({
     chart: null,
     themeListener: null,
+    _themeTimer: null,
     init() {
-      this.themeListener = () => this.renderChart();
+      this.themeListener = () => {
+        if (this._themeTimer) clearTimeout(this._themeTimer);
+        this._themeTimer = setTimeout(() => this.renderChart(), 50);
+      };
       window.addEventListener('edify-theme-change', this.themeListener);
       this.$nextTick(() => this.renderChart());
     },
     destroy() {
+      if (this._themeTimer) clearTimeout(this._themeTimer);
       if (this.themeListener) {
         window.removeEventListener('edify-theme-change', this.themeListener);
       }

@@ -41,6 +41,7 @@ Open Core Schools
 <tr>
 <th class="min-w-[90px]">School ID</th>
 <th class="min-w-[240px]">School Name</th>
+<th class="min-w-[130px]">District</th>
 <th class="min-w-[130px]">Activity</th>
 <th class="min-w-[110px]">Planned Date</th>
 <th class="min-w-[120px]">Executor</th>
@@ -64,6 +65,7 @@ Open Core Schools
   <span>{{ row.school_name|default:"—" }}</span>
   {% endif %}
 </td>
+<td class="text-slate-700 font-medium" data-label="District">{{ row.school_district|default:"—" }}</td>
 <td class="font-semibold text-slate-700">
   {{ row.activity_type_label|default:"Core Visit" }}
   {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.visit_number }} ({{ row.core_progress }})</span>{% endif %}

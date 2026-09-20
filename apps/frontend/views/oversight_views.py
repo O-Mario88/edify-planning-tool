@@ -854,6 +854,34 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
 
             group["planned_trainings"] = new_planned_trainings
 
+    for group in owner_groups:
+        grouped_dict = {}
+        for item in group.get("planned_trainings", []):
+            is_in_school = (
+                getattr(item, "cluster_planned_from", "") == "School Visit"
+                or getattr(item, "is_in_school_training", False)
+                or getattr(item, "delivery_type", "") == "in-school"
+                or not getattr(item, "cluster_id", None)
+            )
+            if is_in_school:
+                category = "In-School Training"
+                is_is = True
+            else:
+                cname = (
+                    getattr(item, "cluster_planned_from", "")
+                    or getattr(item, "cluster_name", "")
+                    or "Cluster Training"
+                )
+                category = f"Cluster: {cname}"
+                is_is = False
+            if category not in grouped_dict:
+                grouped_dict[category] = {"group_name": category, "is_in_school": is_is, "items": []}
+            grouped_dict[category]["items"].append(item)
+        group["planned_trainings_grouped"] = [
+            dict(data, count=len(data["items"]))
+            for data in grouped_dict.values()
+        ]
+
     return owner_groups
 
 

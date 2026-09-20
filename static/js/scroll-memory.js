@@ -76,10 +76,15 @@
      desktop one. `querySelector` returns the mobile one, which never scrolls
      and never has a position worth keeping — so this takes the one that is
      actually on screen. */
+  var _cachedSidebar = null;
   function sidebar() {
+    if (_cachedSidebar && _cachedSidebar.isConnected) return _cachedSidebar;
     var containers = document.querySelectorAll(".app-sidebar__nav-container");
     for (var i = 0; i < containers.length; i++) {
-      if (containers[i].clientHeight > 0) return containers[i];
+      if (containers[i].offsetParent !== null) {
+        _cachedSidebar = containers[i];
+        return containers[i];
+      }
     }
     return null;
   }
@@ -123,19 +128,21 @@
 
   function save() {
     var main = workspace();
-    if (main) write(pageKey(), main.scrollTop || window.scrollY || 0);
+    if (main) {
+      var top = main.scrollTop || window.scrollY || 0;
+      if (top > 0) write(pageKey(), top);
+    }
     var nav = sidebar();
-    if (nav) write(SIDEBAR_KEY, nav.scrollTop);
+    if (nav && nav.scrollTop > 0) write(SIDEBAR_KEY, nav.scrollTop);
   }
 
-  var pending = false;
+  var saveTimer = null;
   function saveSoon() {
-    if (pending) return;
-    pending = true;
-    window.requestAnimationFrame(function () {
-      pending = false;
+    if (saveTimer) return;
+    saveTimer = setTimeout(function () {
+      saveTimer = null;
       save();
-    });
+    }, 250);
   }
 
   /* Restoring is a conversation with a page that is still arriving: rows land,
@@ -144,7 +151,7 @@
      as soon as the reader takes over. */
   function restore(element, top) {
     if (!element || !top) return;
-    var deadline = Date.now() + SETTLE_MS;
+    var attempts = 0;
     var surrendered = false;
 
     function giveUp() {
@@ -156,15 +163,14 @@
 
     (function apply() {
       if (surrendered) return;
+      attempts++;
       var reachable = element.scrollHeight - element.clientHeight;
       if (reachable > 0) {
         var target = Math.min(top, reachable);
         if (Math.abs(element.scrollTop - target) > 1) element.scrollTop = target;
-        /* Everything the page was going to add has arrived: the position is
-           reachable and holding, so stop touching it. */
         if (element.scrollTop === target && reachable >= top) return;
       }
-      if (Date.now() < deadline) window.requestAnimationFrame(apply);
+      if (attempts < 8) window.requestAnimationFrame(apply);
     })();
   }
 

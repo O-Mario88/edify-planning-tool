@@ -4,7 +4,7 @@ posts layout=table), so the replacement is a <tr>; the cleared-count refresh
 rides inside the cell there, where htmx still finds it as an out-of-band swap.{% endcomment %}
 {% if table %}
 <tr id="{{ slug }}" class="today-row" role="status" data-today-item-done>
-  <td colspan="5" class="px-3 py-2 bg-emerald-50/60">
+  <td colspan="5" class="ps-5 pe-5 py-2.5 bg-emerald-50/60">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="text-[12px] font-semibold text-emerald-800"><svg class="inline h-3.5 w-3.5 align-[-2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> {{ title }} — {{ message }}</p>
       {% if undo_todo %}

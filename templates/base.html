@@ -108,7 +108,6 @@ other page was relying on them.
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260916oversight1">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260916rowmenu1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
-<link rel="stylesheet" href="{% static 'css/components/record-views.css' %}?v=20260914records3">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -175,7 +174,6 @@ csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260914pending3"></script>
-<script defer src="{% static 'js/record-views.js' %}?v=20260914records3"></script>
 {% comment %}
 Workspace switches are real document navigations, not in-page tabs. Ask the
 browser to fetch likely sibling views after user intent so the next document

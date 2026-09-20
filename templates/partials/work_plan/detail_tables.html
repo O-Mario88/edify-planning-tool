@@ -1,9 +1,9 @@
 {% load frontend_filters table_pagination %}
 {% for section in detail_tables %}
-<section class="work-plan-detail-group" aria-labelledby="work-plan-{{ section.key }}-title">
-  <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-    <h3 id="work-plan-{{ section.key }}-title" class="text-[13px] font-semibold">{{ section.title }}</h3>
-    <span class="edify-text-caption edify-text-muted">{{ section.rows|length }} activities</span>
+<section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden" aria-labelledby="work-plan-{{ section.key }}-title">
+  <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
+    <h3 id="work-plan-{{ section.key }}-title" class="text-[13px] font-bold text-slate-800 dark:text-slate-200">{{ section.title }}</h3>
+    <span class="edify-text-caption font-semibold text-slate-500">{{ section.rows|length }} activit{{ section.rows|length|pluralize:"y,ies" }}</span>
   </div>
   {% paginate section.rows section.page_param as section_pager %}
   <div class="overflow-x-auto">
@@ -65,6 +65,6 @@
     </table>
   </div>
   {% include "components/table_pager.html" with pager=section_pager param=section.page_param %}
-  {% if section.key == 'cluster' %}<p class="px-4 py-2 edify-text-caption edify-text-muted">Participant columns show planned invitations, not attendance. Missing historical counts are marked “Not recorded”.</p>{% endif %}
+  {% if section.key == 'cluster' %}<p class="px-5 py-2.5 border-t border-slate-100 dark:border-slate-800/60 edify-text-caption text-slate-500">Participant columns show planned invitations, not attendance. Missing historical counts are marked “Not recorded”.</p>{% endif %}
 </section>
 {% endfor %}

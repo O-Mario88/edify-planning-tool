@@ -25,7 +25,7 @@ at its content width instead of shortening it like prose.
   hidden, until a decision is refused): the table enhancer injects a hidden
   column label as the first child, and a title span straight after it
   would inherit the "·" separator meant for a caption.{% endcomment %}
-  <th scope="row" class="px-3 py-2 align-top" data-record-title>
+  <th scope="row" class="ps-5 pe-3 py-2.5 align-top" data-record-title>
     <output class="mr-1.5 edify-text-caption font-semibold text-rose-700 empty:hidden" role="alert" data-today-error>{{ error|default:"" }}</output>
     <span class="block text-[12px] font-semibold text-slate-800">{{ todo.title }}{% if todo.today.amount %} <span class="tabular-nums font-medium text-slate-600">· UGX {{ todo.today.amount|intcomma }}</span>{% endif %}</span>
     {% if todo.linked or todo.description %}<span class="block edify-text-caption edify-text-subtle mt-0.5">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</span>{% endif %}
@@ -35,15 +35,15 @@ at its content width instead of shortening it like prose.
     </ul>
     {% endif %}
   </th>
-  <td class="px-3 py-2 align-top" data-label="Kind">{{ todo.category|default:"—" }}</td>
-  <td class="px-3 py-2 align-top" data-label="Status">
+  <td class="px-3 py-2.5 align-top" data-label="Kind">{{ todo.category|default:"—" }}</td>
+  <td class="px-3 py-2.5 align-top" data-label="Status">
     <span class="inline-flex flex-wrap items-center gap-1">
       {% if todo.priority == "critical" %}<span class="edify-badge" data-tone="danger">Critical</span>{% endif %}
       {% if todo.status_label %}<span class="edify-badge" data-tone="{{ todo.status_tone|default:'neutral' }}">{{ todo.status_label }}</span>{% else %}—{% endif %}
     </span>
   </td>
-  <td class="px-3 py-2 align-top tabular-nums" data-label="Due">{% if todo.due_label and todo.due_label != "—" %}<span class="edify-badge tabular-nums" data-tone="{{ todo.due_tone|default:'neutral' }}">{{ todo.due_label }}</span>{% else %}—{% endif %}</td>
-  <td class="px-3 py-2 align-top text-right" data-record-action>
+  <td class="px-3 py-2.5 align-top tabular-nums" data-label="Due">{% if todo.due_label and todo.due_label != "—" %}<span class="edify-badge tabular-nums" data-tone="{{ todo.due_tone|default:'neutral' }}">{{ todo.due_label }}</span>{% else %}—{% endif %}</td>
+  <td class="ps-3 pe-5 py-2.5 align-top text-right" data-record-action>
     <div class="inline-flex items-center justify-end gap-1.5" data-today-actions>
       {% for op in todo.today.operations %}
         {% if op.drawer_url %}

@@ -41,8 +41,15 @@ window.__edifyDrawerBackground?.release();
 finishClose() {
 this.restoreBackground();
 const target = this.previousFocus;
+const rootEl = this.$el;
 setTimeout(() => {
-$el.remove();
+if (rootEl && rootEl.parentNode) {
+rootEl.remove();
+}
+const container = document.getElementById('drawer-container');
+if (container) {
+container.innerHTML = '';
+}
 if (target?.isConnected) target.focus();
 }, 300);
 }

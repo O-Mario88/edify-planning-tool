@@ -8,6 +8,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 
 from apps.activities.models import Activity
 from apps.command_center.planning_progress import (
@@ -320,8 +322,11 @@ def _program_lead_dashboard(request, avatar_initials: str):
     )
     attention = data.get("leadership_attention") or []
     first = attention[0] if attention else None
+    from apps.my_plan.past_due_service import get_past_due_dashboard_context
+    past_due_data = get_past_due_dashboard_context(user)
     context = {
         **data,
+        **past_due_data,
         "role": user.active_role,
         "user_name": user.name,
         "avatar_initials": avatar_initials,
@@ -1101,7 +1106,10 @@ def dashboard_view(request):
         # Upcoming This Week, Pending Approvals, the To-Do queue and the
         # unread-notification badge the context processor already supplies)
         # went with it; each one was queries the template threw away.
+        from apps.my_plan.past_due_service import get_past_due_dashboard_context
+        past_due_data = get_past_due_dashboard_context(user)
         context = {
+            **past_due_data,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
@@ -1828,3 +1836,70 @@ def planning_progress_fragment_view(request):
             "progress_description": metrics["progress_description"],
         },
     )
+
+
+@login_required
+@require_POST
+def notify_past_due_activity(request, activity_id: str):
+    """Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity."""
+    from django.http import HttpResponse
+    from django.shortcuts import get_object_or_404
+    from django.utils.html import escape
+    from apps.activities.models import Activity
+    from apps.accounts.models import StaffProfile, User
+    from apps.notifications.services import WorkflowNotificationService
+
+    activity = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    recipient_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+
+    # Resolve recipient name and user
+    recipient_name = "Team Member"
+    recipient_first_name = "Team Member"
+    if recipient_id:
+        sp = StaffProfile.objects.filter(id=recipient_id).select_related("user").first()
+        if sp and sp.user and sp.user.name:
+            recipient_name = sp.user.name
+            recipient_first_name = sp.user.name.split()[0]
+        else:
+            u = User.objects.filter(id=recipient_id).first()
+            if u and u.name:
+                recipient_name = u.name
+                recipient_first_name = u.name.split()[0]
+
+    school_or_cluster = (
+        activity.school.name
+        if activity.school_id and activity.school
+        else (activity.cluster.name if activity.cluster_id and activity.cluster else "your assigned area")
+    )
+    act_type = activity.get_activity_type_display()
+    date_str = (
+        activity.planned_date.strftime("%b %-d, %Y")
+        if activity.planned_date
+        else (activity.scheduled_date.strftime("%b %-d, %Y") if activity.scheduled_date else "the scheduled date")
+    )
+
+    title = f"Action Required: Overdue {act_type}"
+    body = f"Your activity for {school_or_cluster} scheduled on {date_str} is past due. Please complete, reschedule, or cancel this activity."
+
+    if recipient_id:
+        WorkflowNotificationService.trigger(
+            event_type="pl_activity_overdue_reminder",
+            category="action_required",
+            priority="high",
+            title=title,
+            body=body,
+            context_type="activity",
+            context_id=activity.id,
+            recipients=[recipient_id],
+        )
+
+    btn_html = (
+        f'<button type="button" disabled '
+        f'class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default" '
+        f'title="Reminder sent to {escape(recipient_name)}">'
+        f'<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
+        f'Sent to {escape(recipient_first_name)} ✓'
+        f'</button>'
+    )
+    return HttpResponse(btn_html)
+

@@ -4411,19 +4411,21 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
    horizontal scroller. */
 .mp-table :is(td, th) {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-inline-size: 6.75rem;
+  padding: 0.65rem 0.85rem !important;
 }
 
-/* The name is the row's identity — it gets the most room before truncating,
-   and the middle columns give up theirs so it can. */
-.mp-table :is(td, th):first-child { max-inline-size: 9.5rem; }
+.mp-table :is(td, th):first-child,
+.edify-record-table-wrap table :is(td, th):first-child {
+  padding-inline-start: 1.25rem !important;
+}
 
-/* Status and actions opt out of the cell truncation the other columns use: a
-   clipped status reads as a different status. */
+.mp-table :is(td, th):last-child,
+.edify-record-table-wrap table :is(td, th):last-child {
+  padding-inline-end: 1.25rem !important;
+}
+
 .mp-table td:has(.mp-badges),
-.mp-table td:has(.row-menu) { max-inline-size: none; overflow: visible; }
+.mp-table td:has(.row-menu) { overflow: visible; }
 .mp-table .mp-cell-wrap { white-space: normal; }
 
 .row-menu__note {
@@ -4713,6 +4715,14 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .work-plan-table tbody tr:hover {
   background: color-mix(in srgb, var(--edify-accent) 4%, transparent);
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--edify-accent) 60%, transparent);
+}
+
+.work-plan-table :is(td, th):first-child {
+  padding-inline-start: 1.25rem !important;
+}
+
+.work-plan-table :is(td, th):last-child {
+  padding-inline-end: 1.25rem !important;
 }
 
 /* "More filters": the panel hangs off the filter toolbar's own inline end, so
@@ -5410,21 +5420,27 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   text-decoration: underline;
 }
 
-/* The coaching table. */
+/* The coaching and priorities tables. */
 .rpl-table-scroll {
   max-inline-size: 100%;
-  margin-inline: -1.25rem;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
 }
 
 .rpl-table {
   inline-size: 100%;
-  min-inline-size: 52rem;
   border-collapse: collapse;
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
   font-variant-numeric: tabular-nums;
+}
+
+.rpl-columns__main .rpl-table {
+  min-inline-size: 42rem;
+}
+
+.rpl-columns__side .rpl-table {
+  min-inline-size: 100%;
 }
 
 .rpl-table :is(th, td) {

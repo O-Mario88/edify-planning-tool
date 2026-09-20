@@ -267,6 +267,11 @@ urlpatterns = [
         dashboard_views.pl_send_urgent_action_view,
         name="pl_send_urgent_action",
     ),
+    path(
+        "dashboard/notify-past-due/<str:activity_id>/",
+        dashboard_views.notify_past_due_activity,
+        name="dashboard_notify_past_due",
+    ),
     # School actions: the sender's monitoring board and the recipient's queue.
     path(
         "actions/sent",

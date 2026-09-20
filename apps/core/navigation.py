@@ -1666,98 +1666,84 @@ SIDEBAR_ITEMS = [
                 },
             },
             {
-                # Planning, targets, clusters and flagged schools are lenses
-                # inside one Team Oversight workspace. The navigation audience
-                # is the union of the two underlying page permissions; the
-                # view shows only the lenses each role is authorized to read.
-                "label": "Team Oversight",
-                "url": "/team-planning-oversight/",
-                "page_key": "team_planning_oversight",
-                # Not the Regional HR Director's: programme planning and target
-                # pacing for a team HR does not supervise rendered empty for
-                # them (HR audit, 2026-09-12).
-                # The Programme Lead's copy sits in PROGRAMME IMPLEMENTATION.
-                # Not Impact Assessment's: it supervises no team, and its
-                # Target Performance lens rendered an empty roster for them
-                # (IA review, 2026-09-13).
-                "visible_to": {CD, RVP, RPL, ACCOUNTANT, ADMIN},
-                "extra_active_paths": ("/team-targets",),
+                "label": "Planning",
+                "url": "/planning",
+                "page_key": "planning",
+                "visible_to": {CCEO, PL, IA, CD, ACCOUNTANT, PROJECT_COORDINATOR},
+                "role_urls": {PROJECT_COORDINATOR: "/projects/planning"},
+            },
+            {
+                "label": "My Plan",
+                "url": "/my-plan",
+                "page_key": "my_plan",
+                "visible_to": {CCEO, PL, PARTNER, PROJECT_COORDINATOR},
+                "role_urls": {
+                    PROJECT_COORDINATOR: "/projects/my-plan",
+                },
+            },
+            {
+                "label": "School Directory",
+                "url": "/schools",
+                "page_key": "schools",
+                "visible_to": {CCEO, PL, IA, CD, RPL, RVP, HR, ACCOUNTANT, ADMIN, PROJECT_COORDINATOR},
+            },
+            {
+                "label": "Clusters",
+                "url": "/clusters",
+                "page_key": "clusters",
+                "visible_to": {CCEO, PL, CD},
             },
             {
                 "label": "Cluster Oversight",
                 "url": "/cluster-oversight/",
                 "page_key": "cluster_oversight",
-                "visible_to": {CD, RVP, RPL, ADMIN},
+                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
             },
             {
-                "label": "Core Schools Oversight",
+                "label": "Planning Oversight",
+                "url": "/team-planning-oversight/",
+                "page_key": "team_planning_oversight",
+                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
+                "extra_active_paths": ("/team-targets",),
+            },
+            {
+                "label": "Calendar",
+                "url": "/calendar",
+                "page_key": "calendar",
+            },
+            {
+                "label": "Core Schools",
+                "url": "/core-schools",
+                "page_key": "core_schools",
+                "visible_to": {CCEO, PL},
+            },
+            {
+                "label": "Core School Oversight",
                 "url": "/core-schools-oversight/",
                 "page_key": "core_schools_oversight",
-                "visible_to": {CD, RVP, RPL, ADMIN},
+                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
             },
             {
-                # The CD has no SCHOOLS & FIELD group, but they plan plenty of
-                # non-school work (district trips, boot camps, partner
-                # meetings) — Planning surfaces here for them; field roles
-                # keep their entry in SCHOOLS & FIELD (owner, 2026-08-19).
-                # IA and the Accountant reach it here too: it is where they
-                # schedule a visit the school's owner then approves
-                # (owner, 2026-09-02).
-                "label": "Planning",
-                "url": "/planning",
-                "page_key": "planning",
-                "visible_to": {CD, IA, ACCOUNTANT},
+                "label": "Country Oversight",
+                "url": "/country-planning-oversight/",
+                "page_key": "country_planning_oversight",
+                "visible_to": {IA, CD, RPL, RVP, ADMIN},
             },
             {
-                # Same reasoning as Planning above. The CD holds `clusters`
-                # with country scope, so /clusters already lists every
-                # cluster for them in the same card directory a CCEO or PL
-                # opens from SCHOOLS & FIELD — but with no entry here the only
-                # cluster list they were ever offered was the grouped
-                # oversight table on Team Oversight, which is a different
-                # layout answering a different question (who holds what).
-                "label": "Clusters",
-                "url": "/clusters",
-                "page_key": "clusters",
-                "visible_to": {CD},
-            },
-            {
-                # The CD has no SCHOOLS & FIELD group; the archive of closed
-                # schools reaches them here (owner, 2026-09-15).
                 "label": "Closed Schools",
                 "url": "/schools/closed",
                 "page_key": "closed_schools",
                 "visible_to": {CD},
             },
             {
-                # The canonical Uganda Master table in its four source
-                # columns; PL/CCEO read their OWN allocated figure here
-                # (owner, 2026-08-20).
-                #
-                # For the roles that RUN the master — IA distributes, the CD
-                # confirms and publishes, Admin supports — Priorities IS the
-                # distribution workspace, so the one nav entry goes straight
-                # there (owner, 2026-08-24: "they are the same thing"). The
-                # read-only table stays the destination for everyone who only
-                # consumes their own figure.
                 "label": "Priorities",
                 "url": "/priorities",
                 "page_key": "priorities_master",
-                # The Programme Lead's copy opens the tabbed workspace from
-                # STRATEGIC DIRECTION; Impact Assessment's from FRAMEWORK &
-                # STRATEGY.
                 "visible_to": PAGE_PERMISSIONS["priorities_master"] - {PL, IA},
                 "role_urls": {
                     CD: "/target-distribution",
                     ADMIN: "/target-distribution",
-                    # The Regional Programme Lead follows up on the Leads'
-                    # priorities: the read-only register at /priorities/master,
-                    # never the distribution workspace that sets them and
-                    # never the personal agreement /priorities delegates to.
                     RPL: "/priorities/master",
-                    # HR reads the register to see which published priorities
-                    # reached nobody; /priorities would render their own
-                    # agreement, which MY PERFORMANCE already links.
                     HR: "/priorities/master",
                 },
             },
@@ -1765,29 +1751,7 @@ SIDEBAR_ITEMS = [
                 "label": "Extra Work",
                 "url": "/extra-work",
                 "page_key": "extra_work",
-                # A Programme Lead reaches it as a Team Assignments section.
                 "visible_to": PAGE_PERMISSIONS["extra_work"] - {PL},
-            },
-            {
-                "label": "My Plan",
-                "url": "/my-plan",
-                "page_key": "my_plan",
-                # Project Coordinators plan only project work — route them to
-                # the project-scoped My Plan. Partners use the default URL:
-                # their plan RENDERS at /my-plan (the partner layout), and the
-                # old /partner/my-plan redirect hop meant the sidebar item
-                # never matched the current path, so it never highlighted.
-                "role_urls": {
-                    PROJECT_COORDINATOR: "/projects/my-plan",
-                },
-            },
-            # Calendar is the operational projection of the same activity
-            # ledger My Plan executes. It remains in MY WORK because every
-            # role receives it; Work Plan now sits with the budgets it drives.
-            {
-                "label": "Calendar",
-                "url": "/calendar",
-                "page_key": "calendar",
             },
             {
                 "label": "My Professional Development",
@@ -1877,13 +1841,11 @@ SIDEBAR_ITEMS = [
                 "label": "Upload Center",
                 "url": "/uploads",
                 "page_key": "uploads",
-                # Admin reaches it from PLATFORM OPERATIONS instead, so it is
-                # not advertised twice in one sidebar. The Regional HR
-                # Director publishes policies from Policies & Documents.
-                # Impact Assessment's copy sits in BASELINE & FIELD DATA.
                 "visible_to": {
                     CD,
                     RVP,
+                    IA,
+                    HR,
                 },
             },
             {
@@ -1962,17 +1924,6 @@ SIDEBAR_ITEMS = [
         "visible_to": FIELD_NAV_ROLES,
         "items": [
             {
-                "label": "Planning",
-                "url": "/planning",
-                "page_key": "planning",
-                "role_urls": {PROJECT_COORDINATOR: "/projects/planning"},
-            },
-            {
-                "label": "Schools",
-                "url": "/schools",
-                "page_key": "schools",
-            },
-            {
                 # Its own entry, not a filter on the directory. The rule is
                 # that closed schools do not appear there, and a hidden filter
                 # default is a promise that breaks the first time somebody
@@ -1983,16 +1934,6 @@ SIDEBAR_ITEMS = [
                 # CCEO, Programme Lead, IA and CD (owner, 2026-09-15; it was
                 # left out of the Programme Lead's sidebar on 2026-09-13).
                 "visible_to": PAGE_PERMISSIONS["closed_schools"],
-            },
-            {
-                "label": "Core Schools",
-                "url": "/core-schools",
-                "page_key": "core_schools",
-            },
-            {
-                "label": "Clusters",
-                "url": "/clusters",
-                "page_key": "clusters",
             },
             {
                 # One Partners entry, not a directory beside an oversight page
@@ -2552,43 +2493,6 @@ SIDEBAR_ITEMS = [
         "visible_to": {IA},
         "items": [
             {
-                "label": "School Evidence",
-                "url": "/ia/school-evidence/",
-                "page_key": "ia_school_evidence",
-                "visible_to": {IA},
-            },
-            {
-                "label": "SSA Upload Center",
-                "url": "/ssa/upload/",
-                "page_key": "ia_upload_center",
-                "visible_to": {IA},
-            },
-            {
-                # The school file itself. IA is the only non-Admin role that
-                # holds `school_upload` — it creates the authoritative school
-                # records the SSA files are then matched against — and the page
-                # was registered in no navigation at all: not the sidebar, not
-                # the workspace strip. The permission existed and the door did
-                # not (owner, 2026-09-18: IA "is not accessing any uploaded
-                # school or SSA").
-                "label": "Upload Schools",
-                "url": "/schools/upload",
-                "page_key": "school_upload",
-                "visible_to": {IA},
-                "icon_key": "ia_upload_center",
-            },
-            {
-                # What both uploads did: school and SSA batches, their row
-                # counts and their errors, in one list. Reaching it meant
-                # typing the URL, which is how an upload that half-landed
-                # stayed invisible to the person who ran it.
-                "label": "Upload History",
-                "url": "/admin-panel/school-upload-history",
-                "page_key": "upload_history",
-                "visible_to": {IA},
-                "icon_key": "uploads",
-            },
-            {
                 # Where an uploaded school that matched no staff profile waits
                 # for an owner. Until one is attached the row is in nobody's
                 # portfolio, and if its district did not match either it is in
@@ -2603,16 +2507,6 @@ SIDEBAR_ITEMS = [
                 "icon_key": "users",
             },
             {
-                # IA creates and validates authoritative school records, but is
-                # not a field-delivery role, so the directory sits with the data
-                # it collects rather than in SCHOOLS & FIELD.
-                "label": "School Directory",
-                "url": "/schools",
-                "page_key": "school_directory",
-                "visible_to": {IA},
-                "icon_key": "schools",
-            },
-            {
                 # The archive beside the directory IA keeps (owner, 2026-09-15:
                 # Closed Schools for the CCEO, Programme Lead, IA and CD).
                 "label": "Closed Schools",
@@ -2625,13 +2519,6 @@ SIDEBAR_ITEMS = [
                 "label": "Field Debrief",
                 "url": "/debriefs",
                 "page_key": "daily_debrief",
-                "visible_to": {IA},
-            },
-            {
-                # Training manuals and presentations are IA's to publish.
-                "label": "Upload Center",
-                "url": "/uploads",
-                "page_key": "uploads",
                 "visible_to": {IA},
             },
         ],
@@ -2699,35 +2586,7 @@ SIDEBAR_ITEMS = [
                 # (IA_SECTIONS), where it is one of several sections sharing
                 # the Data Quality group's single durable destination, so it
                 # was reachable only from the strip's overflow menu and only
-                # once you were already on an IA page. A role that cannot
-                # find a page does not have it (owner, 2026-09-18: "make sure
-                # IA has the Oversight menu on the sidebar").
-                #
-                # The COUNTRY lens rather than the team one: IA supervises no
-                # team, and Team Oversight would offer it a Target Performance
-                # tab over an empty roster — the reason that door was taken
-                # away on 2026-09-13. `extra_active_paths` keeps this item lit
-                # when IA arrives at the team lens from a link, so the one
-                # oversight door never looks unselected on an oversight page.
-                "label": "Country Oversight",
-                "url": "/country-planning-oversight/",
-                "page_key": "country_planning_oversight",
-                "visible_to": {IA},
-                "extra_active_paths": ("/team-planning-oversight/",),
-            },
-            {
-                "label": "Cluster Oversight",
-                "url": "/cluster-oversight/",
-                "page_key": "cluster_oversight",
-                "visible_to": {IA},
-            },
-            {
-                "label": "Core Schools Oversight",
-                "url": "/core-schools-oversight/",
-                "page_key": "core_schools_oversight",
-                "visible_to": {IA},
-            },
-            {
+
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
                 "page_key": "ia_verification_queue",
@@ -2872,13 +2731,6 @@ SIDEBAR_ITEMS = [
         "visible_to": {PL},
         "items": [
             {
-                "label": "Team Oversight",
-                "url": "/team-planning-oversight/",
-                "page_key": "team_planning_oversight",
-                "visible_to": {PL},
-                "extra_active_paths": ("/team-targets",),
-            },
-            {
                 "label": "Completion Reviews",
                 "url": "/pl/review-queue",
                 "page_key": "pl_review_queue",
@@ -2888,18 +2740,6 @@ SIDEBAR_ITEMS = [
                 "label": "Programme Rollout",
                 "url": "/programme-rollout",
                 "page_key": "programme_rollout",
-                "visible_to": {PL},
-            },
-            {
-                "label": "Cluster Oversight",
-                "url": "/cluster-oversight/",
-                "page_key": "cluster_oversight",
-                "visible_to": {PL},
-            },
-            {
-                "label": "Core Schools Oversight",
-                "url": "/core-schools-oversight/",
-                "page_key": "core_schools_oversight",
                 "visible_to": {PL},
             },
         ],

@@ -54,7 +54,7 @@ class FieldNavigationRoleTest(SimpleTestCase):
             with self.subTest(role=role):
                 labels = {label for label, _url in self._links(role)}
                 self.assertIn("Planning", labels)
-                self.assertIn("Schools", labels)
+                self.assertTrue("Schools" in labels or "School Directory" in labels)
 
     def test_country_director_reaches_the_cluster_directory(self):
         """The CD holds `clusters` with country scope, so /clusters lists every
@@ -93,9 +93,10 @@ class FieldNavigationRoleTest(SimpleTestCase):
         platform operations pages and the field workspace. Navigation is not
         authorization: see test_admin_platform_boundary."""
         labels = {label for label, _url in self._links(ADMIN)}
-        for label in ("Team Plans", "Admin My Plan", "Planning", "Schools"):
+        for label in ("Team Plans", "Admin My Plan", "Planning"):
             with self.subTest(label=label):
                 self.assertIn(label, labels)
+        self.assertTrue("Schools" in labels or "School Directory" in labels)
 
     def test_admin_finds_users_and_upload_center_at_the_top(self):
         """Admin's own administration opens the sidebar: the visit-frequency

@@ -16,6 +16,7 @@ Responsible CCEO column is excluded (moved to tabs).
       <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Cluster Name</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[90px]"># Schools</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Cluster Leader's Name</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[150px]">Cluster Leader's Phone</th>
         <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[150px]"># School SSA Scores Avg</th>
@@ -44,18 +45,12 @@ Responsible CCEO column is excluded (moved to tabs).
               </a>
             {% endif %}
           {% endif %}
-          <span class="block text-[11px] font-normal text-slate-500">
-            {% if row.schools_count %}
-              {{ row.schools_count }} member school{{ row.schools_count|pluralize }}
-            {% elif row.schools %}
-              {{ row.schools }} member school{{ row.schools|pluralize }}
-            {% else %}
-              0 member schools
-            {% endif %}
-          </span>
         </td>
         <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">
           {% if row.district %}{{ row.district }}{% else %}—{% endif %}
+        </td>
+        <td class="px-4 py-2.5 text-center font-semibold tabular-nums text-slate-900 dark:text-white">
+          {% if row.schools_count %}{{ row.schools_count }}{% elif row.schools %}{{ row.schools }}{% else %}0{% endif %}
         </td>
         <td class="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
           {% if row.cluster_leader_name %}{{ row.cluster_leader_name }}{% else %}—{% endif %}
@@ -99,7 +94,7 @@ Responsible CCEO column is excluded (moved to tabs).
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7" class="p-8 text-center text-slate-400 text-xs">
+        <td colspan="8" class="p-8 text-center text-slate-400 text-xs">
           No clusters found in this view.
         </td>
       </tr>

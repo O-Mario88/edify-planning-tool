@@ -102,7 +102,7 @@ Submit completed plan to RVP
   designs. Selection, fill, dividers and corners now come from
   static/css/components/interactions.css.
 {% endcomment %}
-<nav aria-label="Work plan view" data-edify-tablist class="self-start shrink-0">
+<nav aria-label="Work plan view" data-edify-tablist class="shrink-0">
 {% for tab in view_tabs %}
 <a href="{{ tab.url }}" data-edify-tab
    {% if tab.active %}aria-current="page"{% endif %}>
@@ -113,6 +113,7 @@ Submit completed plan to RVP
 
 <form method="get" action="/work-plan" data-component="filter-toolbar" class="relative flex flex-wrap items-end gap-2.5">
 <input type="hidden" name="view" value="{{ view }}">
+<input type="hidden" name="fy_prev" value="{{ fy_prev }}">
 {% if scope_tabs %}<input type="hidden" name="scope" value="{{ plan_scope }}">{% endif %}
 {% if flag %}<input type="hidden" name="flag" value="{{ flag }}">{% endif %}
 
@@ -123,7 +124,7 @@ Submit completed plan to RVP
 </label>
 
 {% if view == "month" or view == "quarter" %}
-<label class="flex flex-col min-w-[150px] edify-text-caption font-bold text-slate-500">{% if view == "month" %}Month{% else %}Quarter{% endif %}
+<label class="flex flex-col min-w-[180px] edify-text-caption font-bold text-slate-500">{% if view == "month" %}Month{% else %}Quarter{% endif %}
 <select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
 {% if view == "month" %}
 {% for m in month_options %}<option value="{{ m.val }}" {% if period == m.val %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
@@ -141,7 +142,7 @@ Submit completed plan to RVP
 </select>
 </label>
 
-<button type="submit" class="btn btn-primary h-8">Apply</button>
+<button type="submit" class="btn btn-primary h-9 px-4 text-[12px] font-semibold">Apply</button>
 {% if filters_active %}
 <a href="{{ clear_filters_url }}" data-component="clear-filters" class="inline-flex items-center gap-1 h-9 px-2 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -236,9 +237,9 @@ Showing: {{ flag_label }}
 
 {% if rows_visible %}
 <!-- Activity table -->
-<section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="work-plan-table-shell scroll-mt-24">
-<div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-<h2 id="work-plan-detail-title" class="text-[13px] font-extrabold text-slate-800">Detailed Activity Plan — {{ period_label }}</h2>
+<section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="space-y-4 scroll-mt-24">
+<div class="flex flex-wrap items-center justify-between gap-2 px-1">
+<h2 id="work-plan-detail-title" class="text-[15px] font-bold text-slate-800 dark:text-slate-100">Detailed Activity Plan — {{ period_label }}</h2>
 <a href="#work-plan-summary" class="btn btn-secondary h-8">Back to Summary</a>
 </div>
 {% include "partials/work_plan/detail_tables.html" %}

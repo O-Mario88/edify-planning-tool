@@ -57,37 +57,24 @@ IA_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/ia/dashboard/"),
-            ("To-Do", "/todos"),
+            ("Planning", "/planning"),
+            ("School Directory", "/schools"),
+            ("Cluster Oversight", "/cluster-oversight/"),
+            ("Planning Oversight", "/team-planning-oversight/"),
+            ("Calendar", "/calendar"),
+            ("Core School Oversight", "/core-schools-oversight/"),
+            ("Country Oversight", "/country-planning-oversight/"),
             ("Verification Queue", "/ia/verification/"),
             ("SSA Verification", "/ssa/verification/"),
             ("Partner Evidence", "/ia/partner-evidence/"),
-            ("My Plan", "/my-plan"),
-            ("Calendar", "/calendar"),
+            ("To-Do", "/todos"),
         ],
     ),
     (
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
-            # Every team's planned and delivered work, country-wide and read
-            # only (owner, 2026-09-17). The workspace strip carried it behind
-            # the Data Quality group's overflow menu, and only on a page IA
-            # was already standing on, so it reached the sidebar too on
-            # 2026-09-18.
-            ("Country Oversight", "/country-planning-oversight/"),
-            ("Planning", "/planning"),
             ("Field Debrief", "/debriefs"),
-            ("School Evidence", "/ia/school-evidence/"),
-            ("SSA Upload Center", "/ssa/upload/"),
-            # IA is the only non-Admin role that holds `school_upload` and
-            # `upload_history`, and neither page was registered in any
-            # navigation until 2026-09-18 — the permission existed, the door
-            # did not.
-            ("Upload Schools", "/schools/upload"),
-            ("Upload History", "/admin-panel/school-upload-history"),
-            # The rows those uploads could not attach to a staff profile. Its
-            # own page key since 2026-09-18 so IA can reach it without holding
-            # `users`, which also gates the user directory.
             ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
@@ -118,10 +105,7 @@ IA_SIDEBAR = [
         "REFERENCE",
         [
             ("Leave & Personal Time Off", "/personal-time-off/"),
-            ("School Directory", "/schools"),
             ("Closed Schools", "/schools/closed"),
-            # Reassigning a district portfolio is Impact Assessment work
-            # (owner, 2026-09-15) and rare: a reference door, not a daily one.
             ("Ownership Transfers", "/ownership-transfers/"),
         ],
     ),
@@ -184,7 +168,11 @@ class IaSidebarTest(SimpleTestCase):
         """
         doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
         self.assertEqual(doors.get("/country-planning-oversight/"), "Country Oversight")
-        for path in ("/country-planning-oversight/", "/team-planning-oversight/"):
+        self.assertEqual(doors.get("/team-planning-oversight/"), "Planning Oversight")
+        for path, expected in (
+            ("/country-planning-oversight/", "Country Oversight"),
+            ("/team-planning-oversight/", "Planning Oversight"),
+        ):
             with self.subTest(path=path):
                 lit = [
                     i["label"]
@@ -192,7 +180,7 @@ class IaSidebarTest(SimpleTestCase):
                     for i in g["items"]
                     if i["active"]
                 ]
-                self.assertEqual(lit, ["Country Oversight"])
+                self.assertEqual(lit, [expected])
 
     def test_the_unattached_rows_its_uploads_leave_are_reachable(self):
         """Owner, 2026-09-18: a school "attached to the staff" is one they can
@@ -219,27 +207,16 @@ class IaSidebarTest(SimpleTestCase):
                 self.assertIn(role, PAGE_PERMISSIONS["staff_setup_queue"])
 
     def test_the_upload_pages_it_owns_have_doors(self):
-        """Owner, 2026-09-18: IA "is not accessing any uploaded school or SSA".
-
-        IA uploads the school file the SSA files are matched against, and reads
-        the batch history of both. It held `school_upload` and `upload_history`
-        and had no way to open either: the two pages appeared in no sidebar
-        group and in no workspace strip, so the only route to them was a typed
-        URL. The school directory's own entry must not swallow the upload
-        page's highlight — /schools prefixes /schools/upload.
-        """
+        """All uploads are centralized in Upload Center (/uploads)."""
         doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
-        self.assertEqual(doors.get("/schools/upload"), "Upload Schools")
-        self.assertEqual(
-            doors.get("/admin-panel/school-upload-history"), "Upload History"
-        )
+        self.assertEqual(doors.get("/uploads"), "Upload Center")
         lit = [
             i["label"]
-            for g in _groups(IA, "/schools/upload")
+            for g in _groups(IA, "/uploads")
             for i in g["items"]
             if i["active"]
         ]
-        self.assertEqual(lit, ["Upload Schools"])
+        self.assertEqual(lit, ["Upload Center"])
 
     def test_every_page_is_offered_once(self):
         keys = [i["page_key"] for g in _groups(IA) for i in g["items"]]
@@ -270,7 +247,7 @@ class IaSidebarTest(SimpleTestCase):
             "Verification Analytics",
             "Sample Checks",
             "Programme Learning",
-            "Team Oversight",
+            "Planning Oversight",
             "Quality Flags",
             "Analytics",
         ):
@@ -279,8 +256,6 @@ class IaSidebarTest(SimpleTestCase):
         # IA's own collection and framework doors stay with IA.
         for label in (
             "Measurement Framework",
-            "School Evidence",
-            "SSA Upload Center",
             "Most Significant Change",
         ):
             with self.subTest(ia_only=label):

@@ -330,27 +330,39 @@ class PlanningDashboardService:
         has_catalogue = active_catalogue() is not None
 
         if active_tab == "clusters":
-            scoped_cluster_ids = list(
-                schools_qs.exclude(Q(cluster_id__isnull=True) | Q(cluster_id=""))
-                .values_list("cluster_id", flat=True)
-                .distinct()
-            )
+            from apps.core.scoping import cluster_queryset
 
-            scheduled_cluster_ids = (
-                Activity.objects.filter(
-                    deleted_at__isnull=True,
-                    fy=fy,
-                    activity_type__in=["cluster_meeting", "cluster_training"],
-                    cluster_id__isnull=False,
+            is_supervisor = scope.active_role in (
+                "PL",
+                "ProgramLead",
+                "Program Lead",
+            ) or bool(scope.supervised_staff_ids)
+            cluster_qs = cluster_queryset(scope, direct_only=not is_supervisor)
+            if cluster_qs is not None:
+                scoped_cluster_ids = list(cluster_qs.values_list("id", flat=True))
+            else:
+                scoped_cluster_ids = list(
+                    schools_qs.exclude(Q(cluster_id__isnull=True) | Q(cluster_id=""))
+                    .values_list("cluster_id", flat=True)
+                    .distinct()
                 )
-                .exclude(status="cancelled")
-                .values_list("cluster_id", flat=True)
-                .distinct()
-            )
 
             ready_clusters_qs = Cluster.objects.filter(
                 id__in=scoped_cluster_ids, deleted_at__isnull=True
-            ).exclude(id__in=scheduled_cluster_ids)
+            )
+            if readiness == "not_scheduled":
+                scheduled_cluster_ids = (
+                    Activity.objects.filter(
+                        deleted_at__isnull=True,
+                        fy=fy,
+                        activity_type__in=["cluster_meeting", "cluster_training"],
+                        cluster_id__isnull=False,
+                    )
+                    .exclude(status="cancelled")
+                    .values_list("cluster_id", flat=True)
+                    .distinct()
+                )
+                ready_clusters_qs = ready_clusters_qs.exclude(id__in=scheduled_cluster_ids)
 
             if search_q:
                 ready_clusters_qs = ready_clusters_qs.filter(name__icontains=search_q)

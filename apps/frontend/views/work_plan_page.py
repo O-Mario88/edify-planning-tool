@@ -310,17 +310,20 @@ def build_work_plan_context(user, params) -> dict:
     if view not in ("month", "quarter", "fy"):
         view = "month"
 
+    fy_prev = params.get("fy_prev")
+    fy_changed = bool(fy_prev and fy != fy_prev)
+
     current_quarter = get_quarter_for_date(today)
     if view == "month":
         try:
             period = int(params.get("period") or 0)
         except (TypeError, ValueError):
             period = 0
-        if period not in range(1, 13):
+        if fy_changed or period not in range(1, 13):
             period = today.month if fy == operational_fy else 10
     elif view == "quarter":
         period = params.get("period") or ""
-        if period not in QUARTER_MONTHS:
+        if fy_changed or period not in QUARTER_MONTHS:
             period = current_quarter if fy == operational_fy else "Q1"
     else:
         period = ""
@@ -879,6 +882,7 @@ def build_work_plan_context(user, params) -> dict:
         "scope_tabs": scope_tabs,
         "scope_label": scope_label,
         "fy": fy,
+        "fy_prev": fy,
         "fy_options": options,
         "view": view,
         "period": period,

@@ -1,8 +1,10 @@
 <div class="space-y-4">
 {% if clusters %}
-<div class="card p-0 overflow-hidden shadow-xs border edify-border">
-  {% include "partials/oversight/_cluster_table.html" with clusters=clusters %}
-</div>
+  <div class="space-y-4" data-clusters-list>
+    {% for cluster in clusters %}
+      {% include "partials/clusters/cluster_card.html" with cluster=cluster can_plan_clusters=can_plan_clusters %}
+    {% endfor %}
+  </div>
 {% else %}
 <div class="edify-surface rounded-surface border border-slate-100 p-12 text-center text-slate-400 font-semibold shadow-sm">
 <div class="max-w-sm mx-auto space-y-3">

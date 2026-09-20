@@ -18,25 +18,17 @@
   });
   const fallbacks = Object.freeze({micro: 12, label: 14, body: 15, title: 16});
 
-  function tokenPixels(token, fallback) {
-    const probe = document.createElement('span');
-    probe.setAttribute('aria-hidden', 'true');
-    probe.style.cssText =
-      'position:fixed;visibility:hidden;pointer-events:none;' +
-      `font-size:var(${token},${fallback}px)`;
-    document.body.appendChild(probe);
-    const pixels = parseFloat(getComputedStyle(probe).fontSize);
-    probe.remove();
-    return Number.isFinite(pixels) ? pixels : fallback;
-  }
-
+  let _cachedPixels = null;
   function typographyPixels() {
-    return Object.fromEntries(
-      Object.entries(tokenNames).map(([tier, token]) => [
-        tier,
-        tokenPixels(token, fallbacks[tier]),
-      ]),
-    );
+    if (_cachedPixels) return _cachedPixels;
+    const style = getComputedStyle(document.documentElement);
+    _cachedPixels = {
+      micro: parseFloat(style.getPropertyValue('--edify-text-micro-size')) || fallbacks.micro,
+      label: parseFloat(style.getPropertyValue('--edify-text-label-size')) || fallbacks.label,
+      body: parseFloat(style.getPropertyValue('--edify-text-body-size')) || fallbacks.body,
+      title: parseFloat(style.getPropertyValue('--edify-text-title-size')) || fallbacks.title,
+    };
+    return _cachedPixels;
   }
 
   function outerScale(svg) {
@@ -51,6 +43,9 @@
   function sync(svg, pixels) {
     const scale = outerScale(svg);
     if (!scale) return;
+    const scaleStr = scale.toFixed(4);
+    if (svg.dataset.edifySvgScale === scaleStr) return;
+    svg.dataset.edifySvgScale = scaleStr;
     Object.entries(pixels).forEach(([tier, size]) => {
       svg.style.setProperty(`--edify-svg-text-${tier}`, `${size / scale}px`);
     });

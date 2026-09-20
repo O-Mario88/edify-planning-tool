@@ -6,7 +6,7 @@
 {% block shell_content %}
 <div
 x-data="{}"
-class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
+class="px-4 sm:px-6 py-4 space-y-2.5 max-w-[1500px] mx-auto"
 data-mobile-family="directory"
  >
 <!-- Breadcrumb -->
@@ -17,7 +17,7 @@ data-mobile-family="directory"
 </nav>
 
 <!-- Page Header Row -->
-<div class="edify-page-header">
+<div class="edify-page-header !mb-0 !py-3">
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Schools & Field</p>
 <h1 class="edify-page-title edify-page-header__title">Clusters</h1>
@@ -92,10 +92,9 @@ Export
 {% endif %}
 
 <!-- Filters Row -->
-<details class="mobile-family-filter" open>
-<summary><span>Cluster filters</span><small>Narrow the operational roster</small><span aria-hidden="true">⌄</span></summary>
+<div class="w-full">
 {% include "partials/clusters/filters.html" %}
-</details>
+</div>
 
 <!-- 8 KPI Cards Grid -->
 <div id="clusters-kpi-row" class="w-full">

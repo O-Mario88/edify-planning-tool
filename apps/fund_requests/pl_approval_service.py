@@ -21,7 +21,7 @@ from apps.core.metrics import render_precomputed_metric_item
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.scoping import resolve_user_scope
 from apps.core.activity_types import (
     TRAINING_TYPES,
@@ -663,7 +663,7 @@ def get_pl_fund_approvals(principal, filters=None):
         "fy": fy,
         "month": month,
         "month_label": MONTHS[month] if 1 <= month <= 12 else str(month),
-        "fy_options": [fy, str(int(fy) - 1)],
+        "fy_options": sorted(set(fy_options()) | {fy}, reverse=True),
         "week": week_start.isoformat(),
         "week_label": _week_label(week_start),
         "weeks": weeks,

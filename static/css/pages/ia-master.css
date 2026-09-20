@@ -491,14 +491,13 @@ main #priority-workspace-view[data-pointer-focus]:focus-visible { outline: none 
   .ia-filter-panel { position: fixed; z-index: 30; inset: auto .75rem 5.4rem; width: auto; }
   .ia-master-filters { grid-template-columns: 1fr; }
   .ia-master-filters__actions { grid-column: auto; }
-  .ia-tabs { padding-inline: .75rem; }
-  .ia-master-table-wrap { max-height: none; overflow: visible; }
-  .ia-master-table { min-width: 0; }
-  .ia-master-table thead { display: none; }
-  .ia-master-table tbody { display: grid; gap: .7rem; padding: .75rem; background: var(--edify-surface-muted); }
-  .ia-master-table tr { display: block; overflow: hidden; border: 1px solid var(--ia-line); border-radius: .85rem; background: var(--edify-table-canvas, var(--ia-surface)); box-shadow: var(--edify-card-shadow); content-visibility: auto; contain-intrinsic-block-size: auto 20rem; }
-  .ia-master-table td { position: static !important; display: grid; grid-template-columns: 6.8rem minmax(0, 1fr); gap: .55rem; width: auto; padding: .52rem .7rem; border-bottom: 1px solid var(--edify-table-divider, var(--ia-line)); box-shadow: none !important; white-space: normal; }
-  .ia-master-table td::before { color: var(--edify-text-subtle); content: attr(data-label); font-size: var(--edify-text-micro-size); font-weight: 600; }
+  .ia-master-table-wrap { max-height: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ia-master-table { min-width: 54rem; display: table !important; }
+  .ia-master-table thead { display: table-header-group !important; }
+  .ia-master-table tbody { display: table-row-group !important; background: transparent; padding: 0; }
+  .ia-master-table tr { display: table-row !important; border: none; box-shadow: none; }
+  .ia-master-table td { display: table-cell !important; padding: .52rem .7rem; border-bottom: 1px solid var(--edify-table-divider, var(--ia-line)); white-space: nowrap; }
+  .ia-master-table td::before { content: none !important; }
   .ia-master-table td:last-child { border-bottom: 0; }
   .ia-master-table__number,
   .ia-mobile-secondary { display: none !important; }
