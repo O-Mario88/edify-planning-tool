@@ -110,12 +110,13 @@
   }
 
   function queue(form, path) {
+    var drawer = form.closest('[data-edify-drawer], .edify-drawer-root, .edify-popup-dialog');
     return save(entryFor(form, path)).then(function () {
       notify('Saved offline — will send when you are back online.');
       announce('Saved offline. It will send when you are back online.');
       // The drawer's own close asks "discard changes?" -- nothing is being
       // discarded, so bypass it.
-      window.dispatchEvent(new CustomEvent('close-drawer'));
+      window.EdifyDrawerSubmit?.closeSaved(drawer);
       requestSync();
       return refresh();
     }).catch(function () {

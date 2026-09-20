@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load frontend_filters table_pagination %}
 {% comment %}
 The country plan, grouped first by Program Lead.
@@ -14,6 +15,7 @@ summary and the detail are the same numbers by construction.
 <section class="space-y-4" x-data="{ open: null }" data-mobile-table="scroll">
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
+  {% summary_chart summary "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress" %}
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <details class="oversight-filters">
@@ -42,7 +44,7 @@ summary and the detail are the same numbers by construction.
                 @click="activeLead = '{{ group.id }}'; if ($refs.panel_{{ forloop.counter }} && !$refs.panel_{{ forloop.counter }}.dataset.loaded) { htmx.trigger($refs.panel_{{ forloop.counter }}, 'load-team'); $refs.panel_{{ forloop.counter }}.dataset.loaded = 'true'; }"
                 :class="activeLead === '{{ group.id }}' ? 'border-primary text-primary font-bold bg-slate-50/80 dark:bg-slate-800/80 shadow-xs' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50/50'"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
-          <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+          <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
             {{ group.name|slice:":2"|upper }}
           </div>
           <span>{{ group.name }}</span>

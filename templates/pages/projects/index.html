@@ -156,7 +156,7 @@
   <!-- =========== IMPACT & INTERVENTION =========== -->
   <div class="card p-5 space-y-4">
     <div>
-      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Impact by Intervention</h2>
+      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Delivery by Intervention</h2>
       <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified delivered activities, split by delivery channel</p>
     </div>
     <div class="flex items-center gap-4 edify-text-caption font-bold">
@@ -168,12 +168,12 @@
       <div>
         <div class="flex items-center justify-between mb-1">
           <span class="text-[12px] font-semibold text-slate-600 truncate">{{ b.label }}</span>
-          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ b.total }}</span>
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">Staff {{ b.staff }} · Partner {{ b.partner }}</span>
         </div>
-        <div class="h-2 rounded-pill overflow-hidden flex" style="background:var(--edify-chart-bar-track)" title="Staff {{ b.staff }} · Partner {{ b.partner }}">
+        <div class="edify-paired-bars" title="Staff {{ b.staff }} · Partner {{ b.partner }}">
           {% if impact_max > 0 %}
-          <div class="h-full" style="width: {% widthratio b.staff impact_max 100 %}%; background:var(--edify-chart-series-primary)"></div>
-          <div class="h-full" style="width: {% widthratio b.partner impact_max 100 %}%; background:var(--edify-chart-series-secondary)"></div>
+          <div class="edify-paired-bars__bar" style="width: {% widthratio b.staff impact_max 100 %}%; background:var(--edify-chart-series-primary)"></div>
+          <div class="edify-paired-bars__bar" style="width: {% widthratio b.partner impact_max 100 %}%; background:var(--edify-chart-series-secondary)"></div>
           {% endif %}
         </div>
       </div>

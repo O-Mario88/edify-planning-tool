@@ -26,7 +26,7 @@ Export payment files for confirmed advances and verified Partner work. Staff rei
 <button
 id="batch-tab-advances" type="button" role="tab" aria-controls="batch-panel-advances" :aria-selected="activeTab === 'advances'" :tabindex="activeTab === 'advances' ? 0 : -1"
 @click="setTab('advances')"
-:class="activeTab === 'advances' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'advances' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Advances ({{ advances|length }})
@@ -34,7 +34,7 @@ Advances ({{ advances|length }})
 <button
 id="batch-tab-partners" type="button" role="tab" aria-controls="batch-panel-partners" :aria-selected="activeTab === 'partners'" :tabindex="activeTab === 'partners' ? 0 : -1"
 @click="setTab('partners')"
-:class="activeTab === 'partners' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'partners' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Partner Payments ({{ partners|length }})

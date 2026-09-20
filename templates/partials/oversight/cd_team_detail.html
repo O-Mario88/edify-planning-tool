@@ -36,7 +36,7 @@ and level 3 (4 distinct tables per staff member:
               :aria-selected="activeOfficer === '{{ group.id }}'"
               @click="activeOfficer = '{{ group.id }}'"
               class="team-officer-tab px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-        <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+        <div class="w-5 h-5 rounded-full edify-avatar-neutral text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
           {{ group.name|slice:":2"|upper }}
         </div>
         <span>{{ group.name }}</span>
@@ -59,7 +59,7 @@ and level 3 (4 distinct tables per staff member:
     {# ── Officer Header Summary ───────────────────────────────────────── #}
     <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border edify-border">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 flex items-center justify-center font-bold text-xs">
+        <div class="w-8 h-8 rounded-full edify-avatar-neutral text-slate-800 dark:text-slate-100 flex items-center justify-center font-bold text-xs">
           {{ group.name|slice:":2"|upper }}
         </div>
         <div>
@@ -92,7 +92,7 @@ and level 3 (4 distinct tables per staff member:
     <section class="card p-0 overflow-hidden shadow-xs border edify-border" aria-labelledby="heading-client-visits-{{ forloop.counter }}">
       <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
         <div class="flex flex-wrap items-center gap-2">
-          <div class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs">
+          <div class="w-6 h-6 rounded edify-avatar-neutral flex items-center justify-center font-bold text-xs">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>

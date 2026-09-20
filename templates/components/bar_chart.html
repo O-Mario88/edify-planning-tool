@@ -1,0 +1,9 @@
+<section class="card p-4 edify-data-chart" x-data="{
+ chart: null,
+ init() { this.$nextTick(() => { const payload = JSON.parse(this.$el.querySelector('script[type=\'application/json\']').textContent); this.chart = window.EdifyChartSystem.renderDetached(this.$refs.plot, window.EdifyChartSystem.formBase(payload)); }); },
+ destroy() { if (this.chart) this.chart.destroy(); }
+}">
+  <h3 class="edify-section-heading">{{ title }}</h3>
+  {{ chart_payload|json_script }}
+  <div x-ref="plot"></div>
+</section>

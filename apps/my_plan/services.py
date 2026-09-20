@@ -8,7 +8,7 @@ from apps.core.activity_types import (
 )
 import calendar
 from datetime import date, timedelta
-from django.db.models import Q
+from django.db.models import Count, Q
 from apps.activities.models import Activity
 from apps.activities.services import is_partner_ssa_support_activity
 from apps.geography.models import District
@@ -809,22 +809,24 @@ def get_frontend_context(principal, query: dict) -> dict:
     current_week_start, current_week_end = get_week_date_range(
         today.year, today.month, min(5, (today.day - 1) // 7 + 1)
     )
-    planned_this_week = qs.filter(
-        _scheduled_in_range(current_week_start, current_week_end)
-    ).filter(upcoming_filter).count()
-    planned_this_month = qs.filter(
-        _scheduled_in_range(
+    period_totals = qs.filter(upcoming_filter).aggregate(
+        week=Count("pk", filter=_scheduled_in_range(current_week_start, current_week_end)),
+        month=Count("pk", filter=_scheduled_in_range(
             date(today.year, today.month, 1),
-            date(
-                today.year, today.month, calendar.monthrange(today.year, today.month)[1]
-            ),
-        )
-    ).filter(upcoming_filter).count()
-    planned_this_quarter = qs.filter(quarter=get_quarter_for_date(today)).filter(upcoming_filter).count()
-    planned_this_fy = qs.filter(upcoming_filter).count()
+            date(today.year, today.month, calendar.monthrange(today.year, today.month)[1]),
+        )),
+        quarter=Count("pk", filter=Q(quarter=get_quarter_for_date(today))),
+        fy=Count("pk"),
+    )
+    planned_this_week = period_totals["week"]
+    planned_this_month = period_totals["month"]
+    planned_this_quarter = period_totals["quarter"]
+    planned_this_fy = period_totals["fy"]
 
-    visits_scheduled = qs_period.filter(
-        activity_type__in=[
+    # One scoped scan answers all five period metrics instead of five
+    # separate database round trips for every person opening My Plan.
+    activity_totals = qs_period.aggregate(
+        visits=Count("pk", filter=Q(activity_type__in=[
             "school_visit",
             "follow_up_visit",
             "coaching_visit",
@@ -840,26 +842,24 @@ def get_frontend_context(principal, query: dict) -> dict:
             "school_visit_ssa_collection",
             "partner_ssa_collection",
             "core_assessment_visit",
-        ]
-    ).count()
-    trainings_scheduled = qs_period.filter(
-        activity_type__in=[
+        ])),
+        trainings=Count("pk", filter=Q(activity_type__in=[
             "cluster_training",
             "core_training",
             "training",
             "in_school_training",
             "school_improvement_training",
             "cluster_training_ssa_collection",
-        ]
-    ).count()
-    meetings_scheduled = qs_period.filter(
-        activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"]
-    ).count()
-
-    total_period_count = qs_period.count()
-    completed_period_count = qs_period.filter(
-        status__in=COMPLETED_WORK_STATUSES
-    ).count()
+        ])),
+        meetings=Count("pk", filter=Q(activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"])),
+        total=Count("pk"),
+        completed=Count("pk", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
+    )
+    visits_scheduled = activity_totals["visits"]
+    trainings_scheduled = activity_totals["trainings"]
+    meetings_scheduled = activity_totals["meetings"]
+    total_period_count = activity_totals["total"]
+    completed_period_count = activity_totals["completed"]
     # An empty period is "nothing was planned", not "0% of it is done". The
     # previous expression returned 0 for both, so a person with no plan and a
     # person who had delivered none of their plan saw the same tile.

@@ -12,8 +12,7 @@ connection slots are gone, every page on the platform fails at once, not just
 the slow ones (docs: DEPLOY.md §3a-ter).
 
 This middleware holds each process to ``WEB_MAX_CONCURRENT_REQUESTS``
-requests past it at a time. A request beyond that waits for a slot, in
-arrival order, for up to ``WEB_QUEUE_TIMEOUT_SECONDS``; a wait that long is
+requests past it at a time. A bounded number of requests beyond that wait for a slot, for up to ``WEB_QUEUE_TIMEOUT_SECONDS``; a wait that long is
 answered with a 503 and ``Retry-After`` rather than a database error, and the
 page retries itself. Waiting holds no connection: Django opens one lazily, on
 the first query, which only happens once the request is past this point.
@@ -56,7 +55,8 @@ class DatabaseConcurrencyGuardMiddleware:
         limit = int(getattr(settings, "WEB_MAX_CONCURRENT_REQUESTS", 0) or 0)
         self.limit = limit
         self.semaphore = threading.BoundedSemaphore(limit) if limit > 0 else None
-        self.timeout = float(getattr(settings, "WEB_QUEUE_TIMEOUT_SECONDS", 20) or 20)
+        self.timeout = max(0, float(getattr(settings, "WEB_QUEUE_TIMEOUT_SECONDS", 20)))
+        self.queue_limit = max(1, int(getattr(settings, "WEB_MAX_QUEUED_REQUESTS", 24)))
         self.exempt = tuple(
             getattr(
                 settings, "WEB_CONCURRENCY_EXEMPT_PREFIXES", DEFAULT_EXEMPT_PREFIXES
@@ -70,6 +70,8 @@ class DatabaseConcurrencyGuardMiddleware:
             return self.get_response(request)
         started = time.monotonic()
         with self._lock:
+            if self._waiting >= self.queue_limit:
+                return busy_response(request, retry_after=5)
             self._waiting += 1
         try:
             acquired = self.semaphore.acquire(timeout=self.timeout)
@@ -126,14 +128,15 @@ def busy_response(request, *, retry_after: int) -> HttpResponse:
     else:
         response = HttpResponse(
             '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-            f'<meta http-equiv="refresh" content="{retry_after}">'
-            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            + (f'<meta http-equiv="refresh" content="{retry_after}">' if request.method in {"GET", "HEAD"} else "")
+            + '<meta name="viewport" content="width=device-width, initial-scale=1">'
             "<title>Busy · Edify</title></head>"
             '<body style="font-family:system-ui,sans-serif;padding:2rem;color:#1e293b">'
             '<h1 style="font-size:1.25rem">The platform is busy</h1>'
-            "<p>Many people are working at once. This page will try again in a "
-            "few seconds.</p></body></html>",
+            "<p>Many people are working at once. Please try again in a few seconds. "
+            "If you were saving a form, go back to review it before submitting again.</p></body></html>",
             status=503,
         )
+    response["Cache-Control"] = "no-store"
     response["Retry-After"] = str(retry_after)
     return response

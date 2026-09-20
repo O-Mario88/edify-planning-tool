@@ -111,7 +111,7 @@
       <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
         <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
         <p class="mt-1 edify-text-caption font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
-        <p class="mt-2 text-[18px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total|ugx }}</p>
+        <p class="mt-2 text-[18px] font-bold tabular-nums text-[var(--edify-accent-text)]">{{ member.total|ugx }}</p>
       </div>
       {% endfor %}
     </div>

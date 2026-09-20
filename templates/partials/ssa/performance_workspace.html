@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load frontend_filters %}
 <div id="ssa-performance-workspace" class="sp-workspace" aria-live="polite">
   <form class="edify-filter-bar sp-filter-panel"
@@ -93,22 +94,11 @@
       </div>
     </section>
 
-    <section class="sp-card sp-heat-panel" aria-labelledby="sp-heat-title">
-      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Portfolio risk</span><h2 id="sp-heat-title">District performance heat panel</h2></div></header>
-      <div class="sp-district-tiles">
-        {% for district in dashboard.districts %}
-        <article data-tone="{{ district.band.tone }}"><span>{{ district.name }}</span><strong{% if district.average != None %} style="color: {{ district.band.color }}"{% endif %}>{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong><small>{{ district.band.label }} · {{ district.completion_rate }}% complete</small></article>
-        {% empty %}<p class="sp-empty">No district results for this selection.</p>{% endfor %}
-      </div>
-      {% comment %}Five colours, from apps.core.enums.ssa_score_band through the
-      same filter the scores use — so the legend cannot drift from what the
-      numbers above it are painted with (owner, 2026-09-18).{% endcomment %}
-      <div class="sp-legend" aria-label="SSA score bands"><span style="color: {{ 4|ssa_score_colour }}">Critical · below 5</span><span style="color: {{ 5|ssa_score_colour }}">Warning · 5 to 5.9</span><span style="color: {{ 6|ssa_score_colour }}">Improving · 6 to 7.9</span><span style="color: {{ 8|ssa_score_colour }}">Strong · 8 to 9.9</span><span style="color: {{ 10|ssa_score_colour }}">Perfect · 10</span></div>
-    </section>
+    {% score_chart dashboard.districts "name" "average" "District SSA score comparison" %}
 
     <section class="sp-card sp-matrix-card" aria-labelledby="sp-matrix-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Priority gaps</span><h2 id="sp-matrix-title">Intervention gaps by district</h2></div></header>
-      <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable intervention gaps heatmap">
+      <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable intervention score table">
         <table class="sp-matrix">
           <caption>Average confirmed intervention scores by district</caption>
           <thead><tr><th scope="col">District</th>{% for intervention in dashboard.interventions %}<th scope="col">{{ intervention.label }}</th>{% endfor %}</tr></thead>

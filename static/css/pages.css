@@ -1042,7 +1042,7 @@
 }
 .sp-reset { color: var(--edify-text-muted); border: 1px solid transparent; }
 .sp-reset:hover { background: var(--edify-surface-hover); color: var(--edify-text); }
-.sp-export { color: var(--edify-on-accent); background: var(--edify-chart-amber); border: 1px solid color-mix(in srgb, var(--edify-chart-amber) 78%, #000); }
+.sp-export { color: var(--brand-primary-on-solid); background: var(--brand-primary); border: 1px solid var(--brand-primary); }
 .sp-export:hover { filter: brightness(.96); }
 .sp-reset svg, .sp-export svg { width: 16px; height: 16px; stroke-width: 1.9; }
 
@@ -1123,7 +1123,7 @@
 .sp-district-tiles article strong { display: block; margin-top: 7px; color: var(--edify-text); font-size: 1.35rem; line-height: 1; font-variant-numeric: tabular-nums; }
 .sp-district-tiles article small { display: block; margin-top: 8px; color: var(--sp-tone-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
 .sp-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 14px 14px; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 700; }
-.sp-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.sp-legend span { display: inline-flex; align-items: center; gap: 5px; color: var(--edify-text-muted) !important; }
 .sp-legend span::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--sp-tone); }
 
 .sp-matrix-card { grid-column: 1 / span 2; }
@@ -2791,15 +2791,15 @@
   border: 1px solid var(--edify-success-border);
   border-radius: 0.45rem;
   background: var(--edify-success-light);
-  color: var(--edify-success);
+  color: var(--edify-success-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
 }
 
-.pto-heatmap__weeks > span.is-onleave { color: var(--edify-info); background: var(--edify-info-light); border-color: var(--edify-info-border); }
+.pto-heatmap__weeks > span.is-onleave { color: var(--edify-info-text); background: var(--edify-info-light); border-color: var(--edify-info-border); }
 .pto-heatmap__weeks > span.is-blocked { color: var(--edify-text-muted); background: var(--edify-surface-muted); border-color: var(--edify-border); }
-.pto-heatmap__weeks > span.is-conferenceweek { color: var(--edify-purple); background: var(--edify-purple-light); border-color: var(--edify-purple-border); }
-.pto-heatmap__weeks > span.is-partial { color: var(--edify-warning); background: var(--edify-warning-light); border-color: var(--edify-warning-border); }
+.pto-heatmap__weeks > span.is-conferenceweek { color: var(--edify-purple-text); background: var(--edify-purple-light); border-color: var(--edify-purple-border); }
+.pto-heatmap__weeks > span.is-partial { color: var(--edify-warning-text); background: var(--edify-warning-light); border-color: var(--edify-warning-border); }
 
 .pto-heatmap__weeks svg {
   width: 0.8rem;

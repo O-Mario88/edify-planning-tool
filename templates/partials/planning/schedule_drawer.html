@@ -15,7 +15,6 @@
 <form
 hx-post="{% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
 hx-target="#form-errors"
-hx-on::after-request="if (event.detail.elt === this &amp;&amp; event.detail.successful) { isDirty = false; window.dispatchEvent(new CustomEvent('close-drawer')); }"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 x-data="{
 delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',

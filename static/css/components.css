@@ -195,7 +195,7 @@
   .text-orange-500, .text-orange-600, .text-orange-700, .text-orange-800) {
   color: var(--edify-warning) !important;
 }
-.dark .text-rose-600, .dark .text-rose-700 { color: var(--edify-danger) !important; }
+.dark .text-rose-600, .dark .text-rose-700 { color: var(--edify-danger-text) !important; }
 .dark .text-blue-600, .dark .text-blue-700 { color: var(--edify-info) !important; }
 .dark .text-indigo-600, .dark .text-indigo-700 { color: var(--edify-info) !important; }
 .dark .text-violet-600, .dark .text-violet-700 { color: var(--edify-purple) !important; }
@@ -4278,10 +4278,10 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 }
 
 /* The plan and advance ledger share the reference's six-column format. */
-.budget-ledger { --edify-accent: #145b9a; --edify-on-accent: #fff; color: var(--edify-text, #1e293b); }
+.budget-ledger { color: var(--edify-text, #1e293b); }
 .budget-ledger-summary { display: flex; justify-content: flex-end; padding: 0 6px 16px; }
 .budget-ledger-total { border: 1px solid #d9e3e9; border-radius: 4px; padding: 8px 12px; text-align: right; white-space: nowrap; }
-.budget-ledger-total span { display: block; font-size: var(--edify-text-micro-size); color: #145b9a; font-weight: 600; }
+.budget-ledger-total span { display: block; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); font-weight: 600; }
 .budget-ledger-total strong { display: block; font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .budget-ledger-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: var(--edify-text-body-size); line-height: 1.5; }
 .budget-ledger-table th, .budget-ledger-table td { padding: 5px 9px; border: 0; font-variant-numeric: tabular-nums; }
@@ -4291,7 +4291,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 .budget-ledger-table tr > :nth-child(n+4), .budget-ledger-table .budget-ledger-subtotal td, .budget-ledger-table tfoot td { text-align: right; white-space: nowrap; }
 .budget-ledger-table .budget-ledger-band > * { background: #145b9a; color: #fff; }
 .budget-ledger-band span { font-size: var(--edify-text-micro-size); font-weight: 400; margin-left: 4px; }
-.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa; color: #1e293b; font-weight: 700; }
+.budget-ledger-table .budget-ledger-subtotal > * { background: var(--edify-surface-muted); color: var(--edify-text); font-weight: 700; }
 .budget-ledger-table tfoot td { font-weight: 700; text-align: right !important; }
 .budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal):hover { background: var(--edify-surface-hover, #f4f8fb); }
 
@@ -4302,7 +4302,7 @@ main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: nor
 main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
 /* A band that lives in <thead> must outrank the platform's neutral heading contract (main table thead th). */
 main .budget-ledger table.budget-ledger-table thead .budget-ledger-band > th { background-color: #145b9a !important; color: #fff !important; font-weight: 600 !important; border-block-end: 0 !important; }
-main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa !important; color: #1e293b !important; font-weight: 700 !important; }
+main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: var(--edify-surface-muted) !important; color: var(--edify-text) !important; font-weight: 700 !important; }
 main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }
 /* The grand total reads as the loudest row of the ledger. */
 main .budget-ledger table.budget-ledger-table tfoot .budget-ledger-band > * { font-weight: 700 !important; }
@@ -5208,7 +5208,7 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
 .context-metrics {
   --kpi-surface: #fff;
   --kpi-text: #172536;
-  --kpi-muted: #52647a;
+  --kpi-muted: var(--edify-text-muted);
   --kpi-divider: #dce3ec;
   --kpi-positive: #087b61;
   --kpi-warning: #946200;
@@ -5429,3 +5429,36 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   caret-color: var(--edify-text);
 }
+
+/* Shared statistical chart layout: September 2026 bar standard. */
+main :has(> .edify-standard-charts) { height: auto !important; min-width: 0; max-width: 100%; }
+.edify-standard-charts { width: 100%; min-width: 0; color: var(--edify-text); }
+.edify-chart-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.edify-chart-panel-title { font-size: 13px; font-weight: 600; margin: 1rem 0 .25rem; }
+.edify-chart-data { margin: .25rem 0 1rem; font-size: 12px; overflow-x: auto; }
+.edify-chart-data summary { cursor: pointer; padding: .5rem; color: var(--edify-text-muted); }
+.edify-chart-data table { width: 100%; border-collapse: collapse; }
+.edify-chart-data th, .edify-chart-data td { padding: .5rem; text-align: start; border-bottom: 1px solid var(--edify-border); }
+.edify-stat-bars { min-width: 100px; width: 100%; color: var(--edify-text); }
+.edify-stat-bars__headline { font-weight: 600; font-size: 14px; margin: 0 0 .75rem; }
+.edify-stat-bars__row { display: grid; grid-template-columns: 1fr auto; gap: .4rem .75rem; font-size: 12px; margin: .75rem 0; }
+.edify-stat-bars__track { grid-column: 1 / -1; height: 18px; border-bottom: 1px solid var(--edify-border); }
+.edify-stat-bars__track > span { display: block; height: 100%; background: var(--edify-series-1); }
+.edify-column-chart { display: flex; gap: 1.25rem; overflow-x: auto; padding: 1rem .5rem; align-items: stretch; min-width: 0; }
+.edify-column-chart__item { min-width: 60px; flex: 1; display: flex; flex-direction: column; gap: .5rem; align-items: center; color: var(--edify-text-muted); font-size: 12px; text-align: center; }
+.edify-column-chart__track { height: 160px; width: 100%; display: flex; align-items: end; justify-content: center; border-bottom: 1px solid var(--edify-border); }
+.edify-column-chart__track > span { display: block; width: 70%; max-width: 50px; background: var(--edify-series-1); }
+.spa-trend-bar i, .spa-efficiency-bar i, .spa-score-bars span:first-child i { background: var(--edify-series-1) !important; border-radius: 0 !important; }
+.spa-score-bars span:nth-child(2) i { background: var(--edify-series-2) !important; border-radius: 0 !important; }
+.edify-mini-columns { height: 30px; min-width: 70px; display: flex; gap: 3px; align-items: end; border-bottom: 1px solid var(--edify-border); }
+.edify-mini-columns > span[style] { flex: 1; background: var(--edify-series-1); }
+.edify-paired-bars { display: flex; flex-direction: column; gap: 5px; border-left: 1px solid var(--edify-border); }
+.edify-paired-bars__bar { height: 16px; }
+.rpl-mix__fill, .hrd-bars__fill { background: var(--edify-series-1) !important; border-radius: 0 !important; }
+.rpl-mix__track, .hrd-bars__track { border-radius: 0 !important; }
+.edify-chart-page-select { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: 12px; color: var(--edify-text-muted); }
+.edify-chart-page-select select { width: auto; max-width: 100%; padding: .4rem .6rem; background: var(--edify-surface); color: var(--edify-text); border: 1px solid var(--edify-border); border-radius: 6px; }
+.admin-progress, .admin-progress > span { border-radius: 0 !important; }
+.admin-progress > span { background: var(--edify-series-1) !important; }
+.edify-column-chart__track > span { position: relative; }
+.edify-column-chart__track > span > strong { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 500; }

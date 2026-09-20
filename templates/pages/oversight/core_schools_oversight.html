@@ -1,6 +1,8 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+
 {% block title %}Core Schools Oversight · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260920oversight2">{% endblock %}
 

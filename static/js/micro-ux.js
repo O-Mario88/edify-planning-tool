@@ -135,9 +135,10 @@
             // A KPI panel is not a table's title (2026-09-13): it carries its
             // own h2, so it was painted as the blue title bar of the next table
             // in the same container, and its labels turned white on white.
-            // Nor is an interactive disclosure summary (.cd-officer-summary) or an interactive card header.
-            && !child.matches('.edify-page-header, form, [data-context-metrics], .context-metrics, summary, .cd-officer-summary, details > :first-child, [data-no-titlebar], [data-card-header], .edify-card-header, [class*="border-b"]')
-            && !child.querySelector('h1, table, form, input, select, textarea, section, article, button, [class*="badge"], [class*="pill"]')
+            // Whole cards, empty states and headers containing navigation are
+            // independent surfaces, never the title band of a later table.
+            && !child.matches('section, article, aside, .card, [role="tabpanel"], .edify-page-header, form, [data-context-metrics], .context-metrics, summary, .cd-officer-summary, details > :first-child, [data-no-titlebar], [data-card-header], .edify-card-header, [class*="border-b"]')
+            && !child.querySelector('h1, table, form, input, select, textarea, section, article, nav, [role="tablist"], [data-edify-tablist], button, [role="button"], .edify-empty-state, [class*="badge"], [class*="pill"]')
             && child.querySelectorAll('h2, h3, h4').length <= 1
             && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));
         });
@@ -1789,6 +1790,9 @@
 
   function scheduleMutationScan(mutations) {
     mutations.forEach(function (mutation) {
+      // Chart/map engines own these subtrees; rescanning every marker and SVG
+      // point wastes layout work and cannot enhance application controls.
+      if (mutation.target.nodeType === Node.ELEMENT_NODE && mutation.target.closest('.apexcharts-canvas, .leaflet-pane')) return;
       if (mutation.type === 'childList') {
         mutation.addedNodes.forEach(function (node) {
           if (node.nodeType === Node.ELEMENT_NODE) pendingEnhanceRoots.add(node);
@@ -1798,7 +1802,7 @@
         pendingDialogRoots.add(mutation.target);
       }
     });
-    if (mutationScanQueued) return;
+    if (mutationScanQueued || (!pendingEnhanceRoots.size && !pendingDialogRoots.size)) return;
     mutationScanQueued = true;
     requestAnimationFrame(function () {
       mutationScanQueued = false;
@@ -1854,15 +1858,8 @@
 
   window.EdifyMicroUX = Object.freeze({ enhance: enhance, announce: announce });
 
-  /* ── HTMX → Alpine event bridge ───────────────────────────────────────────
-   * HTMX fires HX-Trigger events as native CustomEvents on the element that
-   * issued the request (bubbling up to document, but NOT to window). Alpine's
-   * `@event.window` modifier listens via window.addEventListener and never
-   * sees DOM events that stop at document. This bridge re-dispatches the
-   * close-drawer and planning-saved triggers from any HTMX response onto
-   * window so every Alpine component with `@close-drawer.window` fires
-   * correctly — including the base drawer that wraps every scheduling form.
-   */
+  /* Preserve planning refresh events even when their request element was
+   * detached by a swap. Drawer completion is owned by drawer-submit.js. */
   document.addEventListener('htmx:afterRequest', function (event) {
     var xhr = event.detail && event.detail.xhr;
     if (!xhr) return;
@@ -1873,9 +1870,6 @@
       /* plain string trigger, e.g. HX-Trigger: close-drawer */
       triggers = {};
       raw.split(',').forEach(function (t) { triggers[t.trim()] = true; });
-    }
-    if (triggers['close-drawer']) {
-      window.dispatchEvent(new CustomEvent('close-drawer'));
     }
     if (triggers['planning-saved']) {
       window.dispatchEvent(new CustomEvent('planning-saved'));

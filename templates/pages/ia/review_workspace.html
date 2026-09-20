@@ -68,7 +68,7 @@ Review {% firstof act.get_activity_type_display act.activity_type %}{% if act.sc
 </a>
 <div>
 <div class="hidden sm:flex items-center gap-2">
-<span class="edify-text-caption font-semibold bg-[var(--edify-chart-blue)]/10 text-[var(--edify-chart-blue)] px-1.5 py-0.5 rounded-pill">FY{{ act.fy }}</span>
+<span class="edify-text-caption font-semibold bg-[var(--edify-chart-blue)]/10 edify-primary-text px-1.5 py-0.5 rounded-pill">FY{{ act.fy }}</span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">Review Workspace</h2>
 </div>
 <h2 class="sm:hidden text-[14px] font-semibold text-slate-800 tracking-tight">Review {{ act.get_activity_type_display }}</h2>
@@ -221,11 +221,11 @@ Click to Expand Image
 <div class="aspect-video bg-slate-50 rounded-surface overflow-hidden border border-slate-200">
 <embed src="/api/evidence/{{ ev.id }}/file" type="application/pdf" class="w-full h-full" />
 </div>
-<a href="/api/evidence/{{ ev.id }}/file" target="_blank" class="edify-text-caption font-bold text-[var(--edify-chart-blue)] hover:underline">Open Full PDF</a>
+<a href="/api/evidence/{{ ev.id }}/file" target="_blank" class="edify-text-caption font-bold edify-primary-text hover:underline">Open Full PDF</a>
 {% else %}
 <div class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-surface flex flex-col items-center justify-center gap-2">
 <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-<a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-bold text-[var(--edify-chart-blue)] hover:underline">Download Document (PDF/Doc)</a>
+<a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-bold edify-primary-text hover:underline">Download Document (PDF/Doc)</a>
 </div>
 {% endif %}
 <div class="edify-text-caption text-slate-500 font-semibold leading-relaxed">
@@ -348,7 +348,7 @@ Absent
 
 <!-- Checkbox item: Evidence -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Evidence records exist</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
@@ -357,7 +357,7 @@ Absent
 
 <!-- Checkbox item: Attendance -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Attendance valid</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
@@ -366,7 +366,7 @@ Absent
 
 <!-- Checkbox item: SSA -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">SSA Score uploaded</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Required for Core Schools</span>
@@ -375,7 +375,7 @@ Absent
 
 <!-- Checkbox item: Correct School -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct School associated</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">School lookup matches execution</span>
@@ -384,7 +384,7 @@ Absent
 
 <!-- Checkbox item: Correct Cluster -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct Cluster linked</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Operational cluster is correct</span>
@@ -393,7 +393,7 @@ Absent
 
 <!-- Checkbox item: Correct Intervention -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct focus intervention</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Intervention type is valid</span>
@@ -402,7 +402,7 @@ Absent
 
 <!-- Checkbox item: SF ID -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Salesforce Activity ID linked</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">SVE- or TS- format matching</span>
@@ -411,7 +411,7 @@ Absent
 
 <!-- Checkbox item: Duplicates -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Duplicate checks passed</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">No overlap flags found</span>
@@ -420,7 +420,7 @@ Absent
 
 <!-- Checkbox item: Analytics Ready -->
 <label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded-control edify-primary-text focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Quality is Analytics ready</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Certified for official analytics</span>

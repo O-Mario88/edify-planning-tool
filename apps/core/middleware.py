@@ -9,6 +9,7 @@ generic error envelope without leaking internals (mirrors `AllExceptionsFilter`)
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from typing import Any, Callable
 
@@ -240,6 +241,7 @@ class FiscalYearRolloverMiddleware:
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
         self.checked_fy = None
+        self._rollover_lock = threading.Lock()
         self.retry_after = 0.0
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
@@ -253,15 +255,21 @@ class FiscalYearRolloverMiddleware:
 
         fy = get_operational_fy()
         now = time.monotonic()
-        if self.checked_fy != fy and now >= self.retry_after:
+        if (self.checked_fy != fy and now >= self.retry_after
+                and self._rollover_lock.acquire(blocking=False)):
             try:
-                from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+                # Recheck after acquiring: a preceding request may have completed
+                # between the optimistic check and acquiring this process's lock.
+                if self.checked_fy != fy and time.monotonic() >= self.retry_after:
+                    from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
 
-                ensure_current_fiscal_year(initiated_by="web-self-heal")
-                self.checked_fy = fy
+                    ensure_current_fiscal_year(initiated_by="web-self-heal")
+                    self.checked_fy = fy
             except Exception:  # noqa: BLE001 — never take the website down
-                self.retry_after = now + self.RETRY_SECONDS
+                self.retry_after = time.monotonic() + self.RETRY_SECONDS
                 logger.exception("Fiscal-year rollover self-heal failed for FY%s", fy)
+            finally:
+                self._rollover_lock.release()
 
         return self.get_response(request)
 

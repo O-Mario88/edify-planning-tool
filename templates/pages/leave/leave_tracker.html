@@ -155,9 +155,9 @@
         <div class="w-2/3 flex gap-1 justify-end">
           {% for wk in row.weeks %}
           <div
-            class="w-8 h-6 rounded-surface flex items-center justify-center edify-text-caption font-bold text-white shadow-sm transition hover:scale-105"
+            class="w-8 h-6 rounded-surface flex items-center justify-center edify-text-caption font-bold shadow-sm transition hover:scale-105"
             title="Wk starting {{ wk.start }}: {{ wk.status }}"
-            style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-chart-red){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
+            style="color: var(--edify-text); background-color: {% if wk.status == 'Available' %}var(--edify-success-light){% elif wk.status == 'On Leave' %}var(--edify-info-light){% elif wk.status == 'Blocked' %}var(--edify-danger-light){% elif wk.status == 'Conference Week' %}var(--edify-purple-light){% else %}var(--edify-warning-light){% endif %};"
           >
             {% if wk.status == 'Blocked' %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4M6 11h12a1 1 0 011 1v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a1 1 0 011-1z"/></svg>{% else %}{{ wk.act_count }}{% endif %}
           </div>

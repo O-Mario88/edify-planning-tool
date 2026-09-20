@@ -80,7 +80,7 @@
                   <table class="admin-table">
                     <caption class="sr-only">Cluster performance by average SSA score</caption>
                     <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
-                    <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{{ cluster.name }}{% endif %}{% endwith %}{% else %}{{ cluster.name }}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+                    <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{{ cluster.name }}{% endif %}{% endwith %}{% else %}{{ cluster.name }}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><span class="edify-text-muted">History unavailable</span></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
                   </table>
                 </div>
               </section>
@@ -137,10 +137,10 @@
                        {% include "components/registered_card_attrs.html" with card=cards.partner_support %} aria-labelledby="admin-partners-title">
                   <header class="admin-panel__header"><h2 id="admin-partners-title">Partner Support Overview</h2><a href="/partners">View All</a></header>
                   <div class="admin-mini-grid">
-                    <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-                    <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-                    <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-                    <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+                    <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small></article>
+                    <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small></article>
+                    <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small></article>
+                    <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small></article>
                   </div>
                 </section>
 

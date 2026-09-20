@@ -27,7 +27,7 @@ aria-labelledby="schedule-core-training-title"
 <!-- Backdrop Blur -->
 <div
 class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
 ></div>
 
 <!-- Drawer Body -->
@@ -50,7 +50,7 @@ x-transition:leave-end="opacity-0 scale-95"
 </div>
 <button
 type="button"
-@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
 class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 aria-label="Close schedule Core Training dialog"
 >
@@ -327,7 +327,7 @@ class="flex-1 h-8 rounded-control btn-premium-primary text-white font-bold text-
 </button>
 <button
 type="button"
-@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
 class="px-5 h-9 rounded-surface bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
 >
 Cancel

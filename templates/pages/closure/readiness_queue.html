@@ -38,7 +38,7 @@ Blocked Closures
 <button
 id="closure-tab-ready" type="button" role="tab" aria-controls="closure-panel-ready" :aria-selected="activeTab === 'ready'" :tabindex="activeTab === 'ready' ? 0 : -1"
 @click="setTab('ready')"
-:class="activeTab === 'ready' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'ready' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Ready to Close ({{ ready|length }})
@@ -46,7 +46,7 @@ Ready to Close ({{ ready|length }})
 <button
 id="closure-tab-finance" type="button" role="tab" aria-controls="closure-panel-finance" :aria-selected="activeTab === 'finance'" :tabindex="activeTab === 'finance' ? 0 : -1"
 @click="setTab('finance')"
-:class="activeTab === 'finance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'finance' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Finance Pending ({{ finance_pending|length }})
@@ -54,7 +54,7 @@ Finance Pending ({{ finance_pending|length }})
 <button
 id="closure-tab-accountability" type="button" role="tab" aria-controls="closure-panel-accountability" :aria-selected="activeTab === 'accountability'" :tabindex="activeTab === 'accountability' ? 0 : -1"
 @click="setTab('accountability')"
-:class="activeTab === 'accountability' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'accountability' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Accountability Pending ({{ accountability_pending|length }})
@@ -62,7 +62,7 @@ Accountability Pending ({{ accountability_pending|length }})
 <button
 id="closure-tab-analytics" type="button" role="tab" aria-controls="closure-panel-analytics" :aria-selected="activeTab === 'analytics'" :tabindex="activeTab === 'analytics' ? 0 : -1"
 @click="setTab('analytics')"
-:class="activeTab === 'analytics' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'analytics' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Analytics Pending ({{ analytics_pending|length }})
@@ -70,7 +70,7 @@ Analytics Pending ({{ analytics_pending|length }})
 <button
 id="closure-tab-blocked" type="button" role="tab" aria-controls="closure-panel-blocked" :aria-selected="activeTab === 'blocked'" :tabindex="activeTab === 'blocked' ? 0 : -1"
 @click="setTab('blocked')"
-:class="activeTab === 'blocked' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'blocked' ? 'border-[var(--edify-chart-blue)] edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Blocked ({{ blocked|length }})

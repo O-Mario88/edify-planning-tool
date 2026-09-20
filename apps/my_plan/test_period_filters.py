@@ -79,6 +79,16 @@ class MyPlanPeriodFilterTest(TestCase):
     def context(self, **query):
         return get_frontend_context(self.user, {"fy": FY, **query})
 
+    def test_kpi_counts_preserve_period_and_activity_type(self):
+        annual = self.context()["kpis"]
+        self.assertEqual(annual["visits_scheduled"], len(VISIT_DATES))
+        self.assertEqual(annual["trainings_scheduled"], 0)
+        self.assertEqual(annual["meetings_scheduled"], 0)
+        self.assertEqual(annual["completion_readiness"], 0)
+        january = self.context(month="1")["kpis"]
+        self.assertEqual(january["visits_scheduled"], 1)
+        self.assertEqual(january["planned_this_fy"], annual["planned_this_fy"])
+
     def visit_dates(self, ctx):
         return [row["planned_date"] for row in ctx["school_visits"]]
 

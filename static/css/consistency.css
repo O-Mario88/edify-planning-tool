@@ -4126,7 +4126,7 @@ main textarea,
    (owner, 2026-09-16). Its own treatment is in components.css. */
 :root :is(main, .drawer-body, [role="dialog"])
   table.edify-plain-table.edify-plain-table.edify-plain-table
-  :is(thead, tbody, tfoot, tr, th, td):not(.edify-group-head, .edify-group-head > th) {
+  :is(thead, tbody, tfoot, tr, th, td):not(.edify-group-head, .edify-group-head > th, .budget-ledger-band, .budget-ledger-band > th, .budget-ledger-band > td, .budget-ledger-subtotal, .budget-ledger-subtotal > th, .budget-ledger-subtotal > td) {
   border: 0 !important;
   box-shadow: none !important;
   background-color: var(--edify-surface-raised) !important;
@@ -4554,4 +4554,32 @@ main #sp-plan-filters { display: flow-root !important; }
 .theme-blue :is(.context-metrics__sentence, .edify-metric-panel) {
   background: var(--edify-brand-panel) !important;
   border-color: var(--edify-brand-panel-border) !important;
+}
+
+/* Ledger bands are body/footer rows, so the ordinary cell-surface rule must
+   preserve both halves of their inverse color pair. */
+:root main table.edify-plain-table.budget-ledger-table .budget-ledger-band > :is(th, td),
+:root main table.edify-plain-table.budget-ledger-table .budget-ledger-band .edify-table-plain-content {
+  background: #285b96 !important;
+  color: #fff !important;
+}
+:root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal > :is(th, td),
+:root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal .edify-table-plain-content {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+}
+
+
+main .edify-avatar-neutral {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+}
+
+/* Header links need their own light surface inside an inverse title band. */
+:root.light main .edify-table-titlebar a.rpl-row-link {
+  background: var(--edify-surface) !important;
+  color: var(--brand-primary-text) !important;
+}
+:root main .edify-page-header .sp-eyebrow {
+  color: var(--edify-text-muted) !important;
 }

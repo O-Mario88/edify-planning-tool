@@ -165,7 +165,6 @@ MIDDLEWARE = [
     # writes the body, which is what GZipMiddleware requires. Skips streams;
     # see StreamSafeGZipMiddleware for why that matters here.
     "apps.core.middleware.StreamSafeGZipMiddleware",
-    "apps.core.school_identity_middleware.SchoolIdentityMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
     # including error pages — the ones most likely to be reached with a
     # crafted URL.
@@ -175,6 +174,9 @@ MIDDLEWARE = [
     # request waiting here for a slot holds no connection. Off unless
     # WEB_MAX_CONCURRENT_REQUESTS is set; production sets it (prod.py).
     "apps.core.concurrency.DatabaseConcurrencyGuardMiddleware",
+    # Resolves school display IDs after rendering; its query must remain
+    # inside the admission slot, including on the response path.
+    "apps.core.school_identity_middleware.SchoolIdentityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # Directly after SessionMiddleware so its response phase runs directly
     # before it: the session is touched, and SessionMiddleware then saves the
@@ -327,6 +329,7 @@ DB_CONN_MAX_AGE_IGNORED = bool(DB_CONN_MAX_AGE_REQUESTED and not DB_USE_PGBOUNCE
 # (apps.core.concurrency). Zero turns the guard off, which is right for
 # development and tests; production sets a bound in prod.py.
 WEB_MAX_CONCURRENT_REQUESTS = _as_int(os.environ.get("WEB_MAX_CONCURRENT_REQUESTS"), 0)
+WEB_MAX_QUEUED_REQUESTS = _as_int(os.environ.get("WEB_MAX_QUEUED_REQUESTS"), 24)
 WEB_QUEUE_TIMEOUT_SECONDS = _as_int(os.environ.get("WEB_QUEUE_TIMEOUT_SECONDS"), 20)
 
 # ── Database timeouts ────────────────────────────────────────────────────────

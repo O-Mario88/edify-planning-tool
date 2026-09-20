@@ -547,6 +547,10 @@ def get_analytics(
                 "impact_score": _impact_score(
                     ssa["delta"], delivery_rate, ssa["measurable_schools"]
                 ),
+                "cost_per_improved_value": (
+                    round(budget / len(ssa["improved_schools"]))
+                    if ssa["improved_schools"] else None
+                ),
                 "budget_value": budget,
                 "budget": _fmt_ugx(budget),
                 "cost_per_improved": _fmt_ugx(
@@ -558,6 +562,15 @@ def get_analytics(
                 "tone": CLASS_TONE[classification],
                 "recommendation": PROJECT_RECOMMENDATION[classification],
             }
+        )
+
+    max_cost_per_improved = max(
+        (row["cost_per_improved_value"] or 0 for row in project_payloads), default=0
+    )
+    for row in project_payloads:
+        row["cost_per_improved_pct"] = (
+            round((row["cost_per_improved_value"] or 0) / max_cost_per_improved * 100, 2)
+            if max_cost_per_improved else 0
         )
 
     if selected_status:
@@ -1012,9 +1025,9 @@ def get_analytics(
     max_improved = max((item["improved"] for item in trend), default=0) or 1
     for item in trend:
         item["bar_pct"] = (
-            max(8, round(item["improved"] / max_improved * 100))
+            round(item["improved"] / max_improved * 100, 2)
             if item["improved"]
-            else 3
+            else 0
         )
 
     best_projects = sorted(

@@ -670,7 +670,7 @@
   font-size: var(--edify-text-micro-size); font-weight: 600; padding: 2px 8px; border-radius: 4px;
 }
 .drawer-body .text-emerald-600, .drawer-body .text-emerald-700 { color: var(--edify-success) !important; }
-.drawer-body .text-rose-600, .drawer-body .text-rose-700 { color: var(--edify-danger) !important; }
+.drawer-body .text-rose-600, .drawer-body .text-rose-700 { color: var(--edify-danger-text) !important; }
 .drawer-body .text-amber-600, .drawer-body .text-amber-700 { color: var(--edify-warning) !important; }
 .drawer-body .text-blue-600, .drawer-body .text-blue-700 { color: var(--edify-accent-text) !important; }
 .drawer-body .bg-emerald-50 { background: var(--edify-success-light) !important; }

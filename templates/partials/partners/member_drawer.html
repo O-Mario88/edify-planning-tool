@@ -13,9 +13,11 @@ somebody who already appears on the record is one confirmation, not a retype.
 <form method="post"
       action="/partners/{{ partner.id }}/members"
       hx-post="/partners/{{ partner.id }}/members"
+      hx-target="#partner-member-errors"
       hx-disabled-elt="find button[type=submit]"
       class="space-y-4 text-[12px] font-semibold text-slate-600">
   {% csrf_token %}
+  <div id="partner-member-errors" aria-live="polite"></div>
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     <div class="sm:col-span-2">
       <label for="member-name" class="block text-[12px] font-semibold text-slate-700 mb-1">Name <span class="text-rose-500">*</span></label>

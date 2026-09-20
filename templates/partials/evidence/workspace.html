@@ -1,6 +1,5 @@
 <section id="evidence-workspace" class="space-y-4" aria-live="polite" aria-busy="false">
-  <div class="overflow-x-auto" role="tablist" aria-label="Evidence workflow states">
-    <div class="flex items-center gap-1 min-w-max">
+  <div class="edify-tab-container" role="tablist" aria-label="Evidence workflow states">
       {% for tab in tabs %}
       <a href="?tab={{ tab.key }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
          role="tab"
@@ -16,7 +15,6 @@
         <span class="rounded-pill px-2 py-0.5 bg-slate-100 text-slate-600 tabular-nums">{{ tab.count }}</span>
       </a>
       {% endfor %}
-    </div>
   </div>
 
   <form id="evidence-filters" method="get" aria-label="Filter evidence"

@@ -216,7 +216,7 @@
           {{ dashboard.funding.funded_schools }} funded schools · {{ dashboard.funding.funded_improved }} improved · correlation {{ dashboard.funding.correlation.verdict }}{% if dashboard.funding.correlation.rho is not None %} (ρ {{ dashboard.funding.correlation.rho }}, p {{ dashboard.funding.correlation.p }}, n {{ dashboard.funding.correlation.n }}){% endif %}
         </p>
       </div>
-      <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Scatter chart comparing accepted school spend with mean score improvement"></div>
+      <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Bar chart of score improvement for each accepted-spend observation"></div>
       <p class="analytics-chart-status" x-ref="status" aria-live="polite"></p>
     </div>
   </section>
@@ -329,7 +329,7 @@
       </div>
       {% if dashboard.geography.matrix %}
       <div class="w-full overflow-x-auto">
-        <div class="min-w-[560px]" x-ref="chart" role="img" aria-label="Heatmap of median score improvement by district and intervention"></div>
+        <div class="min-w-0" x-ref="chart" role="img" aria-label="Bar charts of median score improvement by district and intervention"></div>
       </div>
       <p class="analytics-chart-status" x-ref="status" aria-live="polite"></p>
       {% else %}

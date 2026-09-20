@@ -58,8 +58,8 @@
   --brand-primary-soft: #e4f2fb;
   --brand-primary-border: #8ac6ea;
   --brand-primary-focus: rgba(14, 93, 163, 0.28);
-  --brand-primary-text: #0a4d86;
-  --brand-primary-text-hover: var(--brand-primary);
+  --brand-primary-text: #073962;
+  --brand-primary-text-hover: #052b4b;
   /* Same pairing rule as --edify-on-accent: the ink belongs to the theme,
      not to the token. .edify-primary-solid fills with --brand-primary, which
      is #e9eef8 in dark mode, so a hard-coded white label disappeared into
@@ -102,7 +102,7 @@
      found them by rendering rather than by reading. components.css had
      already started the fix at one site (`var(--edify-accent-text,
      var(--edify-accent))`) and it was never carried across. */
-  --edify-accent-text: var(--edify-brand-primary);
+  --edify-accent-text: var(--brand-primary-text);
   /* The ink a primary button carries, per theme rather than always white.
      Dark mode's primary fill is #e9eef8 and its hover is #ffffff, because on
      a dark page a LIGHT button is the prominent one. White ink on those
@@ -257,17 +257,11 @@
   --edify-kpi-panel-border: color-mix(in srgb, var(--edify-border) 78%, transparent);
   --edify-kpi-divider: color-mix(in srgb, var(--edify-border) 34%, transparent);
   --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.55);
-  /* Four-step text hierarchy, all verified against the surfaces above:
-     primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
+  /* Text hierarchy remains readable on cards and the blue page canvas. */
   --edify-text: #17232b;
-  --edify-text-muted: #3f515c;
-  /* Stepped one notch deeper when the canvas became #e3f2fa. The tinted
-     background is marginally lighter than the grey it replaced, and #5f707a
-     landed at 4.49:1 against it — under AA by a hundredth, which is still
-     under. This clears every light surface it can sit on: canvas 4.84, card
-     5.29, elevated white 5.53, muted chip 4.57. Same reasoning as the success
-     and warning text tokens above. */
-  --edify-text-subtle: #5a6b75;
+  --edify-text-muted: #233844;
+  /* Small labels must remain readable on the #80aad3 canvas as well as cards. */
+  --edify-text-subtle: #263d4b;
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
   --edify-table-canvas: var(--edify-surface);
@@ -277,8 +271,8 @@
   --edify-table-row-selected: #e2eef6;
   --edify-table-divider: #d2dbe0;
   --edify-table-header-divider: #c4cfd5;
-  /* Neutral canvas keeps operational data and white KPI strips distinct. */
-  --edify-bg: #dbe4eb;
+  /* Requested blue canvas separates the light workspace from its cards. */
+  --edify-bg: #80aad3;
   /* Sticky table cells need an opaque background while adjacent data scrolls. */
   --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
   --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
@@ -295,8 +289,7 @@
   --page-header-padding-y: 0px;
   --page-header-gap: 0.5rem;
   --edify-section-bg: #f2f5f6;
-  /* Flat neutral canvas: the tinted gradient competed with card surfaces and
-     made the same card read differently depending on where it sat. */
+  /* A flat canvas keeps card contrast consistent throughout the page. */
   --edify-canvas-treatment: none;
   --edify-surface-treatment: none;
   --edify-glass-blur: 0px;
@@ -565,7 +558,7 @@
   --brand-primary-soft: #e4f2fb;
   --brand-primary-border: #8ac6ea;
   --brand-primary-focus: rgba(14, 93, 163, 0.28);
-  --brand-primary-text: #0a4d86;
+  --brand-primary-text: #073962;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -615,7 +608,7 @@
   --edify-danger-on-solid: #2a0f14;
   --edify-danger-light: rgba(255, 135, 150, 0.12);
   --edify-danger-border: rgba(255, 135, 150, 0.28);
-  --edify-danger-text: var(--edify-danger);
+  --edify-danger-text: #ff9dab;
   --edify-info: var(--edify-sky-400);
   --edify-info-light: rgba(123, 189, 232, 0.13);
   --edify-info-border: rgba(123, 189, 232, 0.30);

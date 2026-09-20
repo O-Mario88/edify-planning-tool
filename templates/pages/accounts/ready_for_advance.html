@@ -94,7 +94,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 {{ act.planned_date|date:"M d, Y" }}
 </td>
 <!-- Approved Amount -->
-<td class="px-6 py-4 text-center text-[var(--edify-chart-blue)] font-semibold max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Approved Amount">
+<td class="px-6 py-4 text-center edify-primary-text font-semibold max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Approved Amount">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Approved Amount</span>
 {% if act.est_cost_cents %}{{ act.est_cost_cents|ugx }}{% else %}&mdash;{% endif %}
 </td>

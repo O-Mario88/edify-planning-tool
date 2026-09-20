@@ -42,8 +42,8 @@
           </div>
           {% if not s.insufficient %}
           <div class="mt-1 flex items-center gap-2">
-            <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden" role="img" aria-label="{{ s.name }}: {{ s.score }} out of 10">
-              <div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio s.score 10 100 %}%;"></div>
+            <div class="flex-1 bg-slate-100 h-1.5 rounded-none overflow-hidden" role="img" aria-label="{{ s.name }}: {{ s.score }} out of 10">
+              <div class="bg-[var(--edify-primary)] h-full rounded-none" style="width: {% widthratio s.score 10 100 %}%;"></div>
             </div>
             {% if s.vs_avg is not None %}
             <span class="edify-text-caption font-bold tabular-nums shrink-0 {% if s.vs_avg > 0 %}edify-success-text{% elif s.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
@@ -99,8 +99,8 @@
           </div>
           {% if not p.insufficient %}
           <div class="mt-1 flex items-center gap-2">
-            <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden" role="img" aria-label="{{ p.name }}: {{ p.score }} out of 10">
-              <div class="h-full rounded-pill" style="width: {% widthratio p.score 10 100 %}%; background: var(--edify-purple)"></div>
+            <div class="flex-1 bg-slate-100 h-1.5 rounded-none overflow-hidden" role="img" aria-label="{{ p.name }}: {{ p.score }} out of 10">
+              <div class="h-full rounded-none" style="width: {% widthratio p.score 10 100 %}%; background: var(--edify-series-1)"></div>
             </div>
             {% if p.vs_avg is not None %}
             <span class="edify-text-caption font-bold tabular-nums shrink-0 {% if p.vs_avg > 0 %}edify-success-text{% elif p.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
@@ -148,8 +148,8 @@
           {% if r.insufficient %}
           <span class="edify-text-caption font-semibold edify-text-muted">No verified assessments yet</span>
           {% else %}
-          <div class="flex-1 bg-slate-100 h-2 rounded-pill overflow-hidden relative" role="img" aria-label="{{ r.name }}: {{ r.score }} out of 10">
-            <div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio r.score 10 100 %}%;"></div>
+          <div class="flex-1 bg-slate-100 h-2 rounded-none overflow-hidden relative" role="img" aria-label="{{ r.name }}: {{ r.score }} out of 10">
+            <div class="bg-[var(--edify-primary)] h-full rounded-none" style="width: {% widthratio r.score 10 100 %}%;"></div>
             {% if perf_insights.org_average %}
             <span class="absolute top-[-2px] bottom-[-2px] w-px bg-slate-400" style="left: {% widthratio perf_insights.org_average 10 100 %}%;" title="Organization average {{ perf_insights.org_average }}/10"></span>
             {% endif %}
@@ -191,19 +191,19 @@
 
     {% if perf_insights.intervention_comparison %}
     <div class="flex items-center gap-4 edify-text-caption font-semibold edify-text-muted mb-2">
-      <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-[var(--edify-primary)]"></span> Staff</span>
-      <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill" style="background: var(--edify-purple)"></span> Partner</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-none bg-[var(--edify-primary)]"></span> Staff</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-none" style="background: var(--edify-series-2)"></span> Partner</span>
     </div>
     <div class="space-y-2.5 flex-1">
       {% for row in perf_insights.intervention_comparison %}
       <div class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2">
         <span class="text-[12px] font-semibold edify-text truncate" title="{{ row.label }}">{{ row.label }}</span>
         <div class="flex items-center gap-1.5">
-          <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden"><div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio row.staff_pct 10 100 %}%;"></div></div>
+          <div class="flex-1 bg-slate-100 h-1.5 rounded-none overflow-hidden"><div class="bg-[var(--edify-primary)] h-full rounded-none" style="width: {% widthratio row.staff_pct 10 100 %}%;"></div></div>
           <span class="w-7 text-right edify-text-caption font-bold tabular-nums edify-text">{{ row.staff_pct|floatformat:1 }}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden"><div class="h-full rounded-pill" style="width: {% widthratio row.partner_pct 10 100 %}%; background: var(--edify-purple)"></div></div>
+          <div class="flex-1 bg-slate-100 h-1.5 rounded-none overflow-hidden"><div class="h-full rounded-none" style="width: {% widthratio row.partner_pct 10 100 %}%; background: var(--edify-series-2)"></div></div>
           <span class="w-7 text-right edify-text-caption font-bold tabular-nums edify-text">{{ row.partner_pct|floatformat:1 }}</span>
         </div>
         <span class="w-12 text-right edify-text-caption font-bold tabular-nums {% if row.gap > 0 %}edify-success-text{% elif row.gap < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
@@ -239,28 +239,11 @@
     {% if perf_insights.overall_trend_path %}
     <div class="flex flex-col lg:flex-row gap-4">
       <div class="flex-1 min-w-0">
-        <div class="h-[220px] bg-slate-50/50 rounded-surface px-3 py-2 relative">
-          <svg class="h-full w-full overflow-visible" viewBox="0 0 100 50" preserveAspectRatio="none" role="img"
-               aria-label="Average verified core score from {{ perf_insights.overall_trend.0.label }} ({{ perf_insights.overall_trend.0.avg }}) to {{ perf_insights.trend_summary.latest_label }} ({{ perf_insights.trend_summary.latest_avg }})">
-            <defs><linearGradient id="core-trend-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="var(--edify-primary)" stop-opacity="0.22"/>
-              <stop offset="100%" stop-color="var(--edify-primary)" stop-opacity="0"/>
-            </linearGradient></defs>
-            <line x1="0" y1="0" x2="100" y2="0" stroke="var(--edify-border)" stroke-width="0.3"/>
-            <line x1="0" y1="25" x2="100" y2="25" stroke="var(--edify-border)" stroke-width="0.3"/>
-            <line x1="0" y1="50" x2="100" y2="50" stroke="var(--edify-border)" stroke-width="0.3"/>
-            <path d="{{ perf_insights.overall_trend_path }} L 100 50 L 0 50 Z" fill="url(#core-trend-fill)"/>
-            <path d="{{ perf_insights.overall_trend_path }}" fill="none" stroke="var(--edify-primary)" stroke-width="1.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-          </svg>
-          <span class="absolute left-2 top-1 edify-text-caption font-semibold edify-text-muted">10</span>
-          <span class="absolute left-2 bottom-1 edify-text-caption font-semibold edify-text-muted">0</span>
-        </div>
-        <div class="flex justify-between mt-1.5 px-1">
-          {% for t in perf_insights.overall_trend %}
-          {% if forloop.first or forloop.last or perf_insights.overall_trend|length <= 6 %}
-          <span class="edify-text-caption font-semibold edify-text-muted">{{ t.label }}</span>
-          {% endif %}
-          {% endfor %}
+        <div class="edify-column-chart" aria-label="Verified assessment scores by period, out of 10">
+          {% for t in perf_insights.overall_trend %}<div class="edify-column-chart__item">
+            <div class="edify-column-chart__track"><span style="height:{% widthratio t.avg 10 100 %}%"><strong>{{ t.avg }}/10</strong></span></div>
+            <span>{{ t.label }}</span>
+          </div>{% endfor %}
         </div>
       </div>
       {% if perf_insights.trend_summary %}

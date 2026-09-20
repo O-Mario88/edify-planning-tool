@@ -1100,6 +1100,10 @@ def partner_member_action(request, partner_id):
             member = add_member(partner_id, request.POST.dict(), request.user)
             messages.success(request, f"{member.name} added to the roster.")
     except (BadRequest, Forbidden, NotFoundError) as exc:
+        if request.headers.get("HX-Request") == "true":
+            from apps.core.htmx_errors import error_fragment
+
+            return error_fragment(exc, status=400)
         messages.error(request, str(getattr(exc, "detail", exc)))
     if request.headers.get("HX-Request") == "true":
         response = HttpResponse(status=204)

@@ -542,12 +542,12 @@ a.calendar-event:focus-visible {
 }
 
 .calendar-event--leave {
-  color: var(--edify-warning);
+  color: var(--edify-warning-text);
   background: var(--edify-warning-light);
 }
 
 .calendar-event--holiday {
-  color: var(--edify-danger);
+  color: var(--edify-danger-text);
   background: var(--edify-danger-light);
 }
 

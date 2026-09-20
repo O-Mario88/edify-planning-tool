@@ -456,8 +456,8 @@ would read as free work rather than unpriced work.
 <span class="truncate">{{ sc.label }}</span>
 <span class="font-semibold tabular-nums">{{ sc.score }}</span>
 </div>
-<div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
-<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ sc.score|multiply:10 }}%"></div>
+<div class="h-4 w-full bg-slate-100 rounded-none mt-1 overflow-hidden">
+<div class="h-full bg-[var(--edify-series-1)] rounded-none" style="width: {{ sc.score|multiply:10 }}%"></div>
 </div>
 </div>
 {% endfor %}
@@ -479,8 +479,8 @@ would read as free work rather than unpriced work.
 <span class="font-bold text-slate-800">{% if item.avg_score is not None %}{{ item.avg_score|floatformat:1 }} / 10.0{% else %}Not measured{% endif %}</span>
 </div>
 {% if item.avg_score is not None %}
-<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
-<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg_score|multiply:10 }}%"></div>
+<div class="h-4 w-full bg-slate-100 rounded-none overflow-hidden">
+<div class="h-full bg-[var(--edify-series-1)] rounded-none" style="width: {{ item.avg_score|multiply:10 }}%"></div>
 </div>
 {% endif %}
 </div>

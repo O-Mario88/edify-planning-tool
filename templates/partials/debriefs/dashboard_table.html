@@ -1,32 +1,33 @@
 {% load table_pagination %}
-<div class="flex items-center gap-1 border-b overflow-x-auto edify-border">
+<input type="hidden" name="tab" value="{{ tab }}" data-debrief-active-tab>
+<nav class="edify-tab-container" role="tablist" aria-label="Team and partner debrief views" hx-include="#debrief-filters">
   {% if can_review_team %}
   {% comment %}The supervising Programme Lead's review queue: team debriefs submitted or updated and not yet reviewed (2026-09-13).{% endcomment %}
-  <button type="button" hx-get="/debriefs?partial=table&tab=awaiting_review" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" data-debrief-tab="awaiting_review"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'awaiting_review' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Awaiting my review ({{ awaiting_review_count }})</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=awaiting_review" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="awaiting_review" id="debrief-tab-awaiting_review"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'awaiting_review' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'awaiting_review' %}0{% else %}-1{% endif %}" class="edify-tab-btn">Awaiting my review ({{ awaiting_review_count }})</button>
   {% endif %}
-  <button type="button" hx-get="/debriefs?partial=table&tab=all" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'all' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">All Debriefs</button>
-  <button type="button" hx-get="/debriefs?partial=table&tab=mine" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'mine' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">My Debriefs</button>
-  <button type="button" hx-get="/debriefs?partial=table&tab=team" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'team' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Team Debriefs</button>
-  <button type="button" hx-get="/debriefs?partial=table&tab=partner" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'partner' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Partner Debriefs</button>
-  <button type="button" hx-get="/debriefs?partial=table&tab=escalated" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'escalated' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Escalated</button>
-  <button type="button" hx-get="/debriefs?partial=table&tab=peer_solutions" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
-    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
-    style="{% if tab == 'peer_solutions' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Peer Solutions</button>
-</div>
+  <button type="button" hx-get="/debriefs?partial=table&tab=all" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="all" id="debrief-tab-all"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'all' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'all' %}0{% else %}-1{% endif %}" class="edify-tab-btn">All Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=mine" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="mine" id="debrief-tab-mine"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'mine' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'mine' %}0{% else %}-1{% endif %}" class="edify-tab-btn">My Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=team" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="team" id="debrief-tab-team"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'team' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'team' %}0{% else %}-1{% endif %}" class="edify-tab-btn">Team Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=partner" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="partner" id="debrief-tab-partner"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'partner' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'partner' %}0{% else %}-1{% endif %}" class="edify-tab-btn">Partner Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=escalated" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="escalated" id="debrief-tab-escalated"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'escalated' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'escalated' %}0{% else %}-1{% endif %}" class="edify-tab-btn">Escalated</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=peer_solutions" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" role="tab" data-debrief-tab="peer_solutions" id="debrief-tab-peer_solutions"
+    aria-controls="debrief-results" aria-selected="{% if tab == 'peer_solutions' %}true{% else %}false{% endif %}"
+    tabindex="{% if tab == 'peer_solutions' %}0{% else %}-1{% endif %}" class="edify-tab-btn">Peer Solutions</button>
+</nav>
 
-<div class="overflow-x-auto mt-3">
+<div id="debrief-results" role="tabpanel" aria-labelledby="debrief-tab-{{ tab }}" class="overflow-x-auto mt-3">
   {% paginate table_rows "table_rows_page" as table_rows_pager %}
 <table class="edify-record-table w-full min-w-[920px] text-left edify-text-caption font-semibold">
     <thead>
@@ -84,11 +85,11 @@
   <div class="flex items-center gap-2">
     <button type="button" {% if table_page <= 1 %}disabled{% endif %}
       hx-get="/debriefs?partial=table&tab={{ tab }}&page={{ table_page|add:'-1' }}"
-      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" hx-include="#debrief-filters"
       class="h-8 px-3 rounded-control border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed edify-border edify-text">Previous</button>
     <button type="button" {% if table_page >= table_pages %}disabled{% endif %}
       hx-get="/debriefs?partial=table&tab={{ tab }}&page={{ table_page|add:'1' }}"
-      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" hx-include="#debrief-filters"
       class="h-8 px-3 rounded-surface border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
       style="border-color:var(--edify-border); color:var(--edify-text);">Next</button>
   </div>

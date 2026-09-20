@@ -69,14 +69,8 @@ edify-primary-soft edify-primary-text edify-primary-border-alpha-60
 
 <!-- Trend Mini-Sparkline (built from real row.trend history) -->
 <td class="px-4 py-3 text-right" data-label="Trend">
-<div class="inline-block h-[20px] w-[60px]">
-{% if row.trend_path %}
-<svg class="h-full w-full" viewBox="0 0 60 20">
-<path d="{{ row.trend_path }}" fill="none" stroke="var(--edify-chart-green)" stroke-width="2" stroke-linecap="round"/>
-</svg>
-{% else %}
-<span class="edify-text-caption text-slate-300 font-semibold">Not enough data</span>
-{% endif %}
+<div class="edify-mini-columns" aria-label="Intervention assessment history, scores out of 10">
+{% for value in row.trend %}<span style="height:{% widthratio value 10 100 %}%" title="{{ value }} / 10"></span>{% empty %}<span class="edify-text-caption">Not enough data</span>{% endfor %}
 </div>
 </td>
 </tr>

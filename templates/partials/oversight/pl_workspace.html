@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load frontend_filters table_pagination school_identity %}
 {% comment %}
 The Program Lead's workspace. Every number here is folded from the rows below
@@ -12,6 +13,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
 
   {# ── Headline numbers, folded from the full item list ─────────────────── #}
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Team planning context" %}
+  {% summary_chart summary "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress" %}
 
   {# ── Narrowing and taking the view away with you ──────────────────────── #}
   <div class="flex flex-wrap items-center justify-between gap-2">

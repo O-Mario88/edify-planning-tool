@@ -45,92 +45,6 @@ and only this page and its own partials use it.
 
 <script>
   (() => {
-    const ns = 'http://www.w3.org/2000/svg';
-
-    /* Draw the planning-progress line.
-     *
-     * Two things this has to get right, both of which the first version did
-     * not, because the chart only ever had one period and never re-rendered:
-     *
-     * 1. A bucket with nothing planned is an empty slot, not a missing point.
-     *    Dropping empties with .filter(Boolean) shifted every later point one
-     *    place left, so the line silently stopped matching the labels beneath
-     *    it. Points are positioned by their bucket index, and a gap breaks the
-     *    line into segments rather than being drawn through.
-     * 2. The period tabs swap this figure via htmx, so the drawing has to run
-     *    again afterwards or the new chart renders blank.
-     */
-    const draw = (chart) => {
-      if (chart.dataset.drawn === '1') return;
-      const raw = (chart.dataset.values || '').split(',');
-      const values = raw.map((value) => (value === '' ? null : Number(value)));
-      const measured = values.filter((value) => value !== null);
-      if (!measured.length) return;
-
-      const left = 42;
-      const right = 620;
-      const top = 20;
-      const bottom = 136;
-      const step = values.length > 1 ? (right - left) / (values.length - 1) : 0;
-      const coordinate = (value, index) => [
-        left + (step * index),
-        bottom - ((Math.max(0, Math.min(100, value)) / 100) * (bottom - top)),
-      ];
-
-      const series = chart.querySelector('[data-admin-progress-series]');
-      const area = chart.querySelector('[data-admin-progress-area]');
-      const pointGroup = chart.querySelector('[data-admin-progress-points]');
-      series.textContent = '';
-      pointGroup.textContent = '';
-
-      /* Contiguous runs of measured buckets — one polyline each, so the line
-       * never spans a period nobody planned anything in. */
-      let run = [];
-      const flush = () => {
-        if (run.length > 1) {
-          const line = document.createElementNS(ns, 'polyline');
-          line.setAttribute('class', 'admin-line-chart__series');
-          line.setAttribute('points', run.map((point) => point.join(',')).join(' '));
-          series.appendChild(line);
-        }
-        run = [];
-      };
-
-      values.forEach((value, index) => {
-        if (value === null) { flush(); return; }
-        run.push(coordinate(value, index));
-      });
-      const lastRun = run.slice();
-      flush();
-
-      /* The filled area follows the longest leading run; with gaps present it
-       * is decoration, so it simply spans whatever the final run covers. */
-      const areaRun = lastRun.length > 1 ? lastRun : null;
-      if (areaRun) {
-        area.setAttribute(
-          'd',
-          `M ${areaRun[0][0]} ${bottom} L ${areaRun.map((point) => point.join(' ')).join(' L ')} L ${areaRun[areaRun.length - 1][0]} ${bottom} Z`
-        );
-      } else {
-        area.removeAttribute('d');
-      }
-
-      values.forEach((value, index) => {
-        if (value === null) return;
-        const [cx, cy] = coordinate(value, index);
-        const circle = document.createElementNS(ns, 'circle');
-        circle.setAttribute('cx', cx);
-        circle.setAttribute('cy', cy);
-        circle.setAttribute('r', '3.5');
-        pointGroup.appendChild(circle);
-      });
-
-      chart.dataset.drawn = '1';
-    };
-
-    const drawAll = (root) =>
-      (root || document).querySelectorAll('[data-admin-progress-chart]').forEach(draw);
-
     const syncPeriodTabs = () => {
       const selected = new URLSearchParams(window.location.search).get('progress_period') || 'week';
       document.querySelectorAll('[data-admin-progress-period]').forEach((tab) => {
@@ -141,10 +55,8 @@ and only this page and its own partials use it.
       });
     };
 
-    drawAll();
     syncPeriodTabs();
     document.body.addEventListener('htmx:afterSettle', (event) => {
-      drawAll(event.target);
       syncPeriodTabs();
     });
     window.addEventListener('popstate', syncPeriodTabs);

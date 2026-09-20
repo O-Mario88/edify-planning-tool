@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260920planning1">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260920bars2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260920planning1">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260916oversight1">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260920bars2">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260920bars2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260914header2">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260914hierarchy1">
-<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260916rowmenu1">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260920bars2">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,20 +98,21 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260916oversight1">
+<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260920bars2">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
 {% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260920oversight2">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920toolbar4">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920bars2">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260916rowmenu1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260920toolbar4">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260920bars2">
+<link rel="stylesheet" href="{% static 'css/form-refinement.css' %}?v=20260920forms2">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -159,7 +160,8 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260905charts1"></script>
+    <script src="{% static 'js/chart-standard.js' %}?v=20260920trend2"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260920bars2"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -168,7 +170,7 @@ other page was relying on them.
 {% comment %}Field outbox: a CCEO's start/complete/evidence actions survive a
 dead signal -- stored on the phone, replayed when it reconnects. Loaded after
 csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
-<script defer src="{% static 'js/field-outbox.js' %}?v=20260913outboxready1"></script>
+<script defer src="{% static 'js/field-outbox.js' %}?v=20260920perf2"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
@@ -212,6 +214,7 @@ close, leaving it unclickable until a reload. Loaded before Alpine so the
 controller exists by the time a drawer's x-init runs.
 {% endcomment %}
 <script defer src="{% static 'js/drawer-background.js' %}?v=20260906float1"></script>
+<script defer src="{% static 'js/drawer-submit.js' %}?v=20260920perf2"></script>
 <script defer src="{% static 'js/form-refusal.js' %}?v=20260911refusal1"></script>
 <script src="{% static 'js/history-controls.js' %}?v=20260912history1" defer></script>
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
@@ -220,7 +223,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260920svgunits1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260920oversight2"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260920perf2"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own
@@ -707,6 +710,11 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
        destroy(); the render itself completes asynchronously, as it always did. */
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
+      if (!options._edifyStandard) {
+        return window.EdifyBarStandard.render(el, options, function (slot, normalized) {
+          return window.EdifyChartSystem.renderDetached(slot, normalized);
+        });
+      }
       /* Below the fold, a chart waits until it is about to scroll into view,
          and charts that become visible together are drawn one per idle
          slice: a dashboard with six charts rendered them all in one

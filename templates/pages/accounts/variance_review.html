@@ -68,7 +68,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 {% if item.variance > 0 %}
 <span class="text-rose-600 font-semibold">{{ item.variance|ugx }}</span>
 {% else %}
-<span class="text-[var(--edify-chart-blue)] font-semibold">{{ item.variance|ugx }}</span>
+<span class="edify-primary-text font-semibold">{{ item.variance|ugx }}</span>
 {% endif %}
 </td>
 <!-- Reason -->

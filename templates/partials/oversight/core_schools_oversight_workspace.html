@@ -69,7 +69,7 @@
                   :aria-selected="activeLead === '{{ lead.id }}'"
                   @click="activeLead = '{{ lead.id }}'"
                   class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
-            <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+            <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
               {{ lead.name|slice:":2"|upper }}
             </div>
             <span>{{ lead.name }}</span>

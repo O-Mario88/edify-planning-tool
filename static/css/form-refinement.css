@@ -1,0 +1,56 @@
+/* Shared outlined forms: quiet surfaces, clear boundaries and visible states. */
+:root { --form-outline: #858e98; --form-placeholder: #707b87; }
+html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #798796; --form-placeholder: #a4afbd; }
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+  min-height: 44px !important;
+  max-width: 100%;
+  border: 1px solid var(--form-outline) !important;
+  border-radius: 9px !important;
+  background-color: var(--edify-surface) !important;
+  color: var(--edify-text) !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  line-height: 1.5;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+:is(body, #drawer-container) :is(input, textarea)::placeholder { color: var(--form-placeholder) !important; opacity: 1; }
+:is(body, #drawer-container) :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--edify-accent) !important;
+  outline-offset: 2px;
+  border-color: var(--edify-accent) !important;
+}
+:is(body, #drawer-container) :is(input, select, textarea)[aria-invalid="true"] { border-color: #dc2626 !important; }
+:is(body, #drawer-container) :is(input, select, textarea):disabled { opacity: .6; cursor: not-allowed; }
+:is(body, #drawer-container) textarea { padding: .75rem; min-height: 96px !important; }
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="time"], input[type="datetime-local"]) { padding-block: .65rem; }
+:is(body, #drawer-container) :is(.drawer-body, .edify-popup-dialog__surface) label {
+  color: var(--edify-text);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+body .drawer-header {
+  min-height: 4.75rem;
+  padding: 1.25rem 3.5rem 1.25rem 1.5rem;
+}
+:is(body, #drawer-container) :is(.drawer-header__identity, .drawer-header__title-row) { justify-content: flex-start; }
+body .drawer-header__copy { text-align: left; }
+body .drawer-header__subtitle { margin-left: 0 !important; }
+body .drawer-body { background: var(--edify-surface); }
+body .drawer-footer { background: var(--edify-surface) !important; border-top: 1px solid var(--edify-border); box-shadow: none; }
+@media (max-width: 640px) {
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) { font-size: 16px !important; }
+  body .drawer-header { padding-left: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { :is(body, #drawer-container) :is(input, select, textarea) { transition: none; } }
+/* CSS pixels, not physical screen pixels, determine density. Preserve browser
+   zoom and OS accessibility scaling; wide monitors must not inflate controls. */
+body { font-size-adjust: none; }
+@media (min-width: 1024px) {
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select) {
+    min-height: 38px !important;
+    padding-block: .45rem;
+  }
+  body .drawer-header__title-row h3 { font-size: 1.125rem !important; }
+  body .drawer-body { padding: 1.5rem; }
+}

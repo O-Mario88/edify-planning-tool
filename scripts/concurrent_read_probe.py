@@ -122,6 +122,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8765")
     parser.add_argument("--email", default="domario@edify.org")
+    parser.add_argument("--additional-email", action="append", default=[],
+                        help="Additional existing test account; repeat to model separate user caches")
     parser.add_argument(
         "--password-env",
         default="EDIFY_PROBE_PASSWORD",
@@ -138,11 +140,11 @@ def main() -> int:
         parser.error("duration, concurrency and at least one path are required")
 
     password = os.environ.get(args.password_env)
-    cookie = (
-        remote_login_cookie(args.base_url, args.email, password)
-        if password
-        else database_cookie(args.email)
-    )
+    emails = list(dict.fromkeys([args.email, *args.additional_email]))
+    cookies = [
+        remote_login_cookie(args.base_url, email, password) if password else database_cookie(email)
+        for email in emails
+    ]
     next_path = 0
     path_lock = threading.Lock()
     latencies: dict[str, list[float]] = defaultdict(list)
@@ -166,24 +168,25 @@ def main() -> int:
     # have been populated once. Cold-cache latency is a separate deployment
     # concern and must not make every sample in a short pressure window look
     # like a capacity failure.
-    for path in args.paths:
-        request = urllib.request.Request(
-            f"{args.base_url.rstrip('/')}{path}",
-            headers={"Cookie": cookie, **BROWSER_HEADERS},
-        )
-        try:
-            with opener.open(request, timeout=max(args.timeout, 30)) as response:
-                response.read()
-                if response.status != 200:
-                    raise SystemExit(
-                        f"Warm-up failed for {path}: HTTP {response.status}"
-                    )
-        except urllib.error.HTTPError as exc:
-            raise SystemExit(f"Warm-up failed for {path}: HTTP {exc.code}") from exc
-    print(f"warmup={len(args.paths)} paths complete")
+    for cookie in cookies:
+        for path in args.paths:
+            request = urllib.request.Request(
+                f"{args.base_url.rstrip('/')}{path}",
+                headers={"Cookie": cookie, **BROWSER_HEADERS},
+            )
+            try:
+                with opener.open(request, timeout=max(args.timeout, 30)) as response:
+                    response.read()
+                    if response.status != 200:
+                        raise SystemExit(
+                            f"Warm-up failed for {path}: HTTP {response.status}"
+                        )
+            except urllib.error.HTTPError as exc:
+                raise SystemExit(f"Warm-up failed for {path}: HTTP {exc.code}") from exc
+    print(f"warmup={len(args.paths)} paths per account; accounts={len(cookies)}")
     deadline = time.monotonic() + args.duration
 
-    def worker() -> None:
+    def worker(cookie: str) -> None:
         nonlocal next_path, transferred_bytes
         connection = connection_type(
             parsed_base.hostname,
@@ -234,7 +237,7 @@ def main() -> int:
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=args.concurrency
     ) as executor:
-        futures = [executor.submit(worker) for _ in range(args.concurrency)]
+        futures = [executor.submit(worker, cookies[i % len(cookies)]) for i in range(args.concurrency)]
         for future in futures:
             future.result()
     elapsed = time.monotonic() - started

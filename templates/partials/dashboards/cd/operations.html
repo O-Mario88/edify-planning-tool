@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load school_identity %}
 
 {% load kpi_metrics %}
@@ -358,10 +359,11 @@ Program Leads table, verification, risk, field intelligence and actions.
       <section data-cd-ssa-heatmap-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
         <div>
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Cluster SSA Heatmap
+            <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Cluster SSA Comparison
           </h2>
           <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Average score by intervention · 0–10 scale{% if ssa_matrix.latest_fy %} · verified FY {{ ssa_matrix.latest_fy }}{% endif %}</p>
         </div>
+        {% score_chart ssa_matrix.rows "label" "overall" "Overall SSA score by cluster" %}
         <div class="overflow-x-auto -mx-1 flex-1">
           <table class="w-full edify-text-caption border-separate border-spacing-y-1 min-w-[520px]">
             <thead>

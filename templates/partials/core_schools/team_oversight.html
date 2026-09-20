@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load school_identity %}
 {% comment %}
 Team Core Oversight — read-only by construction.
@@ -18,6 +19,8 @@ that ask is re-derived server-side before it is written.
 
   <div class="core-oversight-card__body">
     {% if oversight_rows %}
+      {% comparison_chart oversight_rows "name" "scheduled_visit_count" "visits_target" "Visits scheduled against target — schools on this page" "Scheduled" "Target" %}
+      {% comparison_chart oversight_rows "name" "scheduled_training_count" "trainings_target" "Trainings scheduled against target — schools on this page" "Scheduled" "Target" %}
       <div class="core-oversight-scroll">
         {% comment %}
         `data-edify-padding="flush"` keeps the table's outer columns aligned

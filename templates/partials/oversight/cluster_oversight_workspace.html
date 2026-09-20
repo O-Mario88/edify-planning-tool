@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load kpi_metrics frontend_filters %}
 
 <div class="cluster-oversight-content space-y-6">
@@ -30,6 +31,7 @@
     {% kpi_metric %}{% kpi_label %}Schools Reached{% endkpi_label %}{{ perf_totals.unique_schools_reached|default_if_none:0 }}{% kpi_helper %}Participating schools{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Cluster Budget{% endkpi_label %}UGX {{ perf_totals.total_spend|default:0|intcomma }}{% kpi_helper %}Planned activity budget{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
+  {% summary_chart perf_totals "active_clusters,dormant_clusters" "Active clusters,Dormant clusters" "Cluster activity coverage" %}
 
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
   {% if is_programme_lead %}
@@ -63,7 +65,7 @@
                 :aria-selected="activeLead === '{{ lead.id }}'"
                 @click="activeLead = '{{ lead.id }}'"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
-          <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+          <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
             {{ lead.name|slice:":2"|upper }}
           </div>
           <span>{{ lead.name }}</span>

@@ -55,7 +55,7 @@ document.addEventListener('alpine:init', () => {
       var schemeMeta = document.querySelector('meta[name="color-scheme"]');
       var themeMeta = document.querySelector('meta[name="theme-color"]');
       if (schemeMeta) schemeMeta.content = mode === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
-      if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#000000');
+      if (themeMeta) themeMeta.content = getComputedStyle(html).getPropertyValue('--edify-bg').trim();
 
       if (persist) {
         try { localStorage.setItem('edify_theme', mode); } catch (error) { /* Storage can be blocked. */ }
@@ -386,17 +386,9 @@ document.addEventListener('alpine:init', () => {
       const data = this.payload();
       if (chartType === 'geography' && !(data.geo_heatmap || []).length) return;
       if (this.chart) this.chart.destroy();
-      this.chart = new window.ApexCharts(this.$refs.chart, this.options(data));
-      this.chart.render()
-        .then(() => {
-          /* Success is silent. The status is the failure surface and it is
-             visible now, so a 'loaded' note would sit under every healthy
-             chart as a dashed box of chatter (owner, 2026-09-05). */
-          if (this.$refs.status) this.$refs.status.textContent = '';
-        })
-        .catch(() => {
-          if (this.$refs.status) this.$refs.status.textContent = 'Chart unavailable; the numeric analysis remains available below.';
-        });
+      this.chart = window.EdifyChartSystem.renderDetached(this.$refs.chart, this.options(data));
+      if (this.$refs.status) this.$refs.status.textContent = '';
+
     },
   }));
 

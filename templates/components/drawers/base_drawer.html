@@ -47,10 +47,8 @@ if (rootEl && rootEl.parentNode) {
 rootEl.remove();
 }
 const container = document.getElementById('drawer-container');
-if (container) {
-container.innerHTML = '';
-}
-if (target?.isConnected) target.focus();
+window.__edifyDrawerBackground?.sync();
+if ((!container || !container.children.length) && target?.isConnected) target.focus();
 }, 300);
 }
 }"

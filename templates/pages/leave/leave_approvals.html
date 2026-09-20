@@ -21,6 +21,7 @@
     <form id="leave-approvals-filters" method="GET" class="edify-filter-bar" aria-label="Leave approval filters">
       {% comment %}Search is provided by the persistent top bar.{% endcomment %}
 
+      <label class="edify-filter-field">
       <span class="edify-filter-label">Type</span>
       <select aria-label="Type"
         name="type"
@@ -34,7 +35,9 @@
         <option value="paternity_leave" {% if selected_type == 'paternity_leave' %}selected{% endif %}>Paternity Leave</option>
         <option value="bereavement_leave" {% if selected_type == 'bereavement_leave' %}selected{% endif %}>Bereavement Leave</option>
       </select>
+      </label>
 
+      <label class="edify-filter-field">
       <span class="edify-filter-label">Status</span>
       <select aria-label="Status"
         name="status"
@@ -47,6 +50,7 @@
         <option value="returned" {% if selected_status == 'returned' %}selected{% endif %}>Returned</option>
         <option value="hr_review" {% if selected_status == 'hr_review' %}selected{% endif %}>HR Escalated</option>
       </select>
+      </label>
 
       {% if search_q or selected_type or selected_status %}
       <a href="{% url 'frontend:leave_approvals' %}" class="text-xs font-bold edify-primary-text edify-primary-text-hover">Clear</a>
@@ -79,7 +83,7 @@
   are drawn by the platform as one panel with the cards flattened, so the queue's
   own padding sat inside the panel's and the detail placeholder kept a nested
   border (owner, 2026-09-14).{% endcomment %}
-  <section class="card p-0 overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch" aria-label="Leave approval queue">
+  <section class="card p-0 overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch" aria-label="Leave approval queue" data-no-titlebar>
 
     <!-- Left Column: Queue (3/12 cols) -->
     <div class="lg:col-span-3 flex flex-col min-w-0 border-b lg:border-b-0 lg:border-r edify-border">
