@@ -3093,7 +3093,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     # dashboard should highlight on /my-performance/* too.
                     is_active = current_path == url
                 else:
-                    is_active = current_path.startswith(url)
+                    is_active = _path_matches(url, current_path)
 
                 # An item whose view redirects elsewhere still owns the page it
                 # sends you to. "Partners" points at /partners and bounces
@@ -3102,7 +3102,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 # partner work looking unselected on the partner page.
                 if not is_active:
                     is_active = any(
-                        current_path.startswith(extra)
+                        _path_matches(extra, current_path)
                         for extra in item.get("extra_active_paths", ())
                     )
 

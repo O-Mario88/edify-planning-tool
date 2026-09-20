@@ -95,7 +95,16 @@ class OversightViewsAccessTest(TestCase):
         self.assertNotContains(response, "Alpha Cluster")
         oversight = self.client.get(reverse("frontend:cluster_oversight"))
         self.assertContains(oversight, "Alpha Cluster")
+        self.assertContains(oversight, "My Clusters")
+        self.assertEqual(oversight.context["cceo_tabs"][0]["count"], 2)
+        self.assertNotContains(oversight, 'aria-label="Supervising Program Leads"')
         self.assertNotContains(oversight, "Other team private cluster")
+
+    def test_core_oversight_has_only_one_active_sidebar_entry(self):
+        from apps.core.navigation import build_sidebar_for_user
+        sections = build_sidebar_for_user(self.pl, "/core-schools-oversight/")
+        active = [item["url"] for section in sections for item in section["items"] if item["active"]]
+        self.assertEqual(active, ["/core-schools-oversight/"])
 
     def test_annual_filters_render_options_and_swap_only_workspace(self):
         self.client.force_login(self.cd)

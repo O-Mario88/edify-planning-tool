@@ -806,8 +806,12 @@ def _costing_input(activity: Activity, data: dict) -> dict:
     # degraded a secondary-district activity to primary rates. Resolve it
     # from the activity's own school here so every path prices identically.
     district_type = data.get("districtType")
-    if not district_type and activity.school_id and activity.school.district_id:
-        district_type = activity.school.district.district_type
+    if activity.school_id and activity.school.district_id:
+        from apps.daily_visit_batches.districts import district_type_for_staff
+
+        district_type = district_type_for_staff(
+            activity.responsible_staff_id, activity.school.district
+        )
     # Field events derive the travel profile from the owner's PRIMARY (home)
     # district vs the event's destination district — the MOU per-diem rule.
     # An explicit districtType in the form is a recorded override and wins.
@@ -1902,6 +1906,11 @@ def create(
     # For partner-delivered activities, also record the scheduling staff member
     # as the monitor so the activity surfaces on THEIR My Plan (the partner
     # branch of My Plan filters by monitored_by_staff_id).
+    if not is_partner and school is not None and school.district_id:
+        from apps.daily_visit_batches.districts import district_type_for_staff
+
+        data = {**data, "districtType": district_type_for_staff(responsible_staff_id, school.district)}
+
     monitored_by_staff_id = principal_owner_id if is_partner else None
 
     # A paused or closed Special Project must stop absorbing new commitments —

@@ -428,7 +428,7 @@ class ProgramLeadDashboardService:
         return cached_role_dashboard(
             "pl",
             user,
-            (fy, view, urgent_page, include_fixed, stamp),
+            (fy, view, urgent_page, include_fixed, stamp, "today-attention-v1"),
             lambda: ProgramLeadDashboardService._get_dashboard_uncached(
                 user,
                 fy=fy,
@@ -464,6 +464,7 @@ class ProgramLeadDashboardService:
             }
             if include_fixed:
                 data["kpi_strip_items"] = ProgramLeadDashboardService.kpis(ctx)
+            if include_fixed or view == "today":
                 data["leadership_attention"] = (
                     ProgramLeadDashboardService.leadership_attention(ctx)
                 )

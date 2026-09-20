@@ -17,6 +17,7 @@
 
   {% comment %}The same lens strip Team Oversight draws, so a reader who works
   across both pages reads one format rather than two (owner, 2026-09-16).{% endcomment %}
+  <div class="edify-view-toolbar">
   {% include "partials/oversight/_lens_tabs.html" %}
 
   {% comment %}The portfolio and cluster lenses are fiscal-year lenses and carry
@@ -25,6 +26,7 @@
   {% if active_oversight_view == "planning" %}
   {% include "partials/oversight/period_filter_bar.html" with filter_label="Country oversight period" target_url="/country-planning-oversight/" target_id="#country-workspace" %}
   {% endif %}
+  </div>
 
   {% comment %}Both ids are present because the workspaces disagree about which
   one they target: the country plan's own controls swap #country-workspace, and

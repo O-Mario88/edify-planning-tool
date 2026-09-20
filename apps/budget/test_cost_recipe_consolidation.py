@@ -234,7 +234,7 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
         )
         self.assertEqual(
             cost.amount,
-            self._session(1, RATES["cluster_meetings_trainings"], 20 * CLUSTER_MEALS)
+            self._session(1, RATES["cluster_meetings_trainings"])
             + MATERIALS,
         )
         by_key = {line.key: line for line in cost.lines}
@@ -288,15 +288,15 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
                 self.assertEqual(
                     cost.amount,
                     self._session(
-                        1, RATES["cluster_meetings_trainings"], 20 * CLUSTER_MEALS
+                        1, RATES["cluster_meetings_trainings"]
                     ),
                 )
 
     def test_a_cluster_session_feeds_its_participants_per_head(self):
-        """Owner, 2026-09-15: a cluster meeting or training carries the
+        """A cluster meeting carries the
         cluster meals rate x the planned headcount x the days, so the total
         moves with the per-school figures and the schools invited."""
-        for activity_type in ("cluster_meeting", "cluster_training"):
+        for activity_type in ("cluster_meeting",):
             for participants in (6, 30):
                 with self.subTest(activity_type=activity_type, n=participants):
                     cost = _cost(
@@ -561,12 +561,16 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
         self.assertIn("cluster_meetings_trainings", _keys(training))
         self.assertNotIn("cluster_meeting", _keys(training))
 
+    def test_cluster_training_never_uses_meeting_participant_meals(self):
+        for kind in ("cluster_training", "cluster_training_ssa_collection"):
+            cost = _cost(activityType=kind, districtType="primary", expectedParticipants=30)
+            self.assertNotIn("cluster_meetings_trainings_meals", _keys(cost))
+            self.assertIn("lunch_per_day", _keys(cost))
+            self.assertIn("group_training_facilitation_fee", _keys(cost))
+
     def test_a_cluster_session_buys_one_meal_not_two(self):
-        """Owner, 2026-09-17: "Cluster training is fetching 2 costs for meals,
-        5000 and 12000 — make sure it fetches only 1 meals". The 5,000 was the
-        participants' meal per head; the 12,000 was the staff visit day's own
-        lunch. The day keeps its transport and loses the second meal."""
-        for activity_type in ("cluster_meeting", "cluster_training"):
+        """Meeting participant meals replace the staff lunch on that activity."""
+        for activity_type in ("cluster_meeting",):
             with self.subTest(activity_type=activity_type):
                 cost = _cost(
                     activityType=activity_type,

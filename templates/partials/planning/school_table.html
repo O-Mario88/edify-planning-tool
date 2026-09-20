@@ -145,5 +145,6 @@
 {% comment %} The view toggle + calendar follow the active tab exactly like
 the tab strip does — without this OOB swap they only existed on full page
 loads (2026-08-20 tab audit). {% endcomment %}
+{% include "partials/planning/view_controls.html" with planning_view_oob=True %}
 {% include "partials/planning/view_toggle_and_calendar.html" with planning_view_oob=True %}
 {% endif %}

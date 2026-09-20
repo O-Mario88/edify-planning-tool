@@ -5,37 +5,6 @@
   responsibility, each opening the view that explains it.{% endcomment %}
   {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Team pulse" %}
 
-  {% comment %}
-  Leadership Attention: at most four things that need the lead now, drawn from
-  every responsibility. The heading always renders; a quiet day says so rather
-  than filling the band with green "all clear" cards.
-  {% endcomment %}
-  <section aria-labelledby="pl-attention-title" data-pl-attention>
-    <h2 id="pl-attention-title" class="rpl-section-title">Leadership Attention</h2>
-    {% if leadership_attention %}
-    <div class="rpl-attention-grid" data-count="{{ leadership_attention|length }}">
-      {% for a in leadership_attention %}
-      <article class="rpl-attention" data-tone="{{ a.tone }}">
-        <span class="pl-attention__responsibility">{{ a.responsibility }}</span>
-        <h3 class="rpl-attention__title">{{ a.title }}</h3>
-        <span class="rpl-attention__body">{{ a.body }}</span>
-        <a href="{{ a.url }}" class="rpl-attention__link">{{ a.action }} <span aria-hidden="true">&rarr;</span></a>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    {% include "components/empty_state.html" with message="Nothing needs your attention right now." hint="Escalations, Country Director flags, Regional Lead feedback, officers at risk, leave conflicts and late partner work appear here as they arise." compact="true" %}
-    {% endif %}
-  </section>
-
-  {% comment %}
-  What needs you now: past due plans for lead's own work and team oversight
-  {% endcomment %}
-  {% include "partials/dashboards/what_needs_you_now.html" %}
-
-  {% comment %}
-  The views under the fixed part: Map (default) · Priorities · Team · Coaching ·
-  Programmes · Collaboration. A tab swaps only the view container.
-  {% endcomment %}
+  {# Today is the landing view; each tab swaps its own content. #}
   {% include "partials/dashboards/_view_tabs.html" %}
 </div>

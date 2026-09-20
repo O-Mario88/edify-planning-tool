@@ -259,7 +259,7 @@ class PLDashboardTest(TestCase):
         self.assertIn("cceo_performance", swap)
         self.assertNotIn("ssa_matrix", swap)
 
-    def test_operations_bookmark_and_cookie_land_on_team_and_are_rewritten(self):
+    def test_operations_bookmark_opens_team_but_saved_cookie_opens_today(self):
         self.client.force_login(self.pl_a)
         response = self.client.get("/dashboard", {"fy": FY, "view": "operations"})
         self.assertEqual(response.status_code, 200)
@@ -270,8 +270,8 @@ class PLDashboardTest(TestCase):
 
         self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "operations"
         response = self.client.get("/dashboard", {"fy": FY})
-        self.assertIn('data-pl-view="team"', response.content.decode())
-        self.assertEqual(response.cookies[f"{VIEW_COOKIE_PREFIX}pl"].value, "team")
+        self.assertIn('data-pl-today', response.content.decode())
+        self.assertEqual(response.context["dashboard_view"], "today")
 
     def test_a_tab_click_builds_the_view_without_the_fixed_part(self):
         self.client.force_login(self.pl_a)

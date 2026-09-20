@@ -448,6 +448,7 @@ class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus
 
 <div>
 <label for="new-user-primary-district" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary District Assignment</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share daily transport and lunch.</p>
 <select aria-label="Primary district"
 id="new-user-primary-district"
 name="primary_district"
@@ -498,7 +499,8 @@ class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-p
 {% endif %}
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional District Assignments</label>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Secondary District Assignments</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
 <div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">

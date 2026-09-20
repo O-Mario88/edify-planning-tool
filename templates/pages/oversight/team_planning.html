@@ -21,18 +21,20 @@
       <span>Updated {{ last_refreshed|date:"H:i" }}</span>
     </div>
     {% endif %}
+  </header>
+
+  {% comment %}The shared lens strip — the same one Country Planning Oversight
+  draws, built once in `_lens_tabs` (owner, 2026-09-16). A reader with a single
+  lens gets no strip: the view returns an empty list for them.{% endcomment %}
+  <div class="edify-view-toolbar">
+  {% include "partials/oversight/_lens_tabs.html" %}
     {% comment %}The portfolio and cluster lenses are fiscal-year lenses and
     carry their own FY control, so the period bar would offer them a week they
     do not read.{% endcomment %}
     {% if active_oversight_view == "planning" or active_oversight_view == "coverage" %}
     {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
     {% endif %}
-  </header>
-
-  {% comment %}The shared lens strip — the same one Country Planning Oversight
-  draws, built once in `_lens_tabs` (owner, 2026-09-16). A reader with a single
-  lens gets no strip: the view returns an empty list for them.{% endcomment %}
-  {% include "partials/oversight/_lens_tabs.html" %}
+  </div>
 
   {% if active_oversight_view == "targets" %}
   <section class="tt-page team-oversight-targets"

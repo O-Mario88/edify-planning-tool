@@ -25,12 +25,15 @@ def resolve_dashboard_view(
     role_key: str,
     default: str,
     allowed: tuple[str, ...] = ("map", "operations"),
+    use_saved_view: bool = True,
 ) -> tuple[str, bool]:
     """Return ``(view, explicit)``: the view to render, and whether the request
     named it (so the response should remember it)."""
     asked = (request.GET.get("view") or "").strip().lower()
     if asked in allowed:
         return asked, True
+    if not use_saved_view:
+        return default, False
     remembered = (
         (request.COOKIES.get(f"{VIEW_COOKIE_PREFIX}{role_key}") or "").strip().lower()
     )

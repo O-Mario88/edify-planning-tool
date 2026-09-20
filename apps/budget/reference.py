@@ -47,7 +47,7 @@ GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
     # too, per head per day. Seeded at the TOT meals default; the migration
     # that adds it copies the retired per-head snack rate where a catalogue
     # still carries one, so a rate the CD had set is not reset.
-    ("cluster_meetings_trainings_meals", "Cluster Meetings/ Trainings - Meals", 5000),
+    ("cluster_meetings_trainings_meals", "Cluster Meeting - Participant Meals", 5000),
     ("student_conference", "Student Conference", 0),
     ("proprietor_conference", "Proprietor Conference", 0),
     ("printing_training_materials", "Printing training materials", 0),

@@ -249,7 +249,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             base=Cluster.objects.filter(deleted_at__isnull=True, status="active"),
         ).select_related("district").order_by("name")
     )
-    if not clusters:
+    if not clusters and not is_programme_lead:
         return {
             "is_programme_lead": is_programme_lead,
             "leads": [],
@@ -441,6 +441,14 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             break
 
     cceo_tabs = []
+    if is_programme_lead:
+        own_rows = [row for row in formatted_clusters if str(row["owner_id"]) in user_staff_ids or str(row["owner_user_id"]) in user_staff_ids]
+        cceo_tabs = [{
+            "id": "my-clusters", "name": "My Clusters", "clusters": own_rows,
+            "count": len(own_rows), "schools": sum(row["schools_count"] for row in own_rows),
+        }]
+        for lead in leads_data:
+            cceo_tabs.extend(tab for tab in lead["cceo_tabs"] if str(tab["id"]) not in user_staff_ids)
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import cluster_performance

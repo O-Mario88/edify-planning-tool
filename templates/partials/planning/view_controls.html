@@ -1,0 +1,16 @@
+<div id="planning-view-controls" {% if planning_view_oob %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if active_tab != 'scheduled' %}
+  {% comment %} Leaving the Scheduled tab while in Calendar view must not
+  leave the list hidden — the toggle is gone, so the view resets with it.
+  {% endcomment %}
+  <span x-init="activeView = 'list'" hidden></span>
+  {% endif %}
+  {% if active_tab == 'scheduled' %}
+  <div class="edify-view-switch" role="group" aria-label="Scheduled work view">
+
+      <button type="button" data-planning-view="list" @click="activeView = 'list'" :aria-pressed="activeView === 'list'" >List View</button>
+      <button type="button" data-planning-view="calendar" @click="activeView = 'calendar'" :aria-pressed="activeView === 'calendar'" >Calendar View</button>
+  </div>
+  {% endif %}
+</div>
+

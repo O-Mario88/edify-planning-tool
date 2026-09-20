@@ -32,7 +32,27 @@
   {% endkpi_strip %}
 
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
-  {% if leads %}
+  {% if is_programme_lead %}
+  <div x-data="{ activeOfficer: 'my-clusters' }" class="space-y-4">
+    <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="My clusters and CCEOs under me">
+      {% for officer in cceo_tabs %}
+      <button type="button" role="tab" :aria-selected="activeOfficer === '{{ officer.id }}'"
+              @click="activeOfficer = '{{ officer.id }}'" class="px-3 py-2 whitespace-nowrap">
+        {{ officer.name }} <span class="pill pill-neutral">{{ officer.count }}</span>
+      </button>
+      {% endfor %}
+    </nav>
+    {% for officer in cceo_tabs %}
+    <section x-show="activeOfficer === '{{ officer.id }}'" x-cloak class="card p-0 overflow-hidden">
+      <header class="edify-table-titlebar flex flex-wrap items-center gap-2 px-4 py-3">
+        <h3>{{ officer.name }}{% if officer.id != 'my-clusters' %}'s Clusters{% endif %}</h3>
+        <span>{{ officer.count }} clusters · {{ officer.schools }} member schools</span>
+      </header>
+      {% include "partials/oversight/_cluster_table.html" with clusters=officer.clusters %}
+    </section>
+    {% endfor %}
+  </div>
+  {% elif leads %}
   <div x-data="{ activeLead: '{{ selected_program_lead|default:leads.0.id }}' }" class="space-y-5">
     {# Level 1: Supervising PL Tabs #}
     <div class="oversight-team-selector">

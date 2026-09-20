@@ -105,13 +105,13 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920oversight2">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920toolbar4">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260916rowmenu1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260916oversight1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260920toolbar4">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.

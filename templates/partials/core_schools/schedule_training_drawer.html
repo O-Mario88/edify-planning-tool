@@ -16,6 +16,7 @@ selectTraining(event) {
   this.recommendationReason = option ? option.dataset.reason || '' : '';
 }
 }"
+@close-drawer.window="open = false; setTimeout(() => $el.remove(), 300)"
 x-show="open"
 class="edify-popup-dialog fixed inset-0 z-50"
 id="schedule-training-drawer-root"

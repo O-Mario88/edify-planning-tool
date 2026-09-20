@@ -149,6 +149,7 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
 <div>
 <label class="edify-profile-field__label block mb-1.5">Primary District Assignment</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share daily transport and lunch.</p>
 <select aria-label="Primary district"
 name="primary_district"
 class="edify-profile-field__value w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
@@ -161,7 +162,8 @@ class="edify-profile-field__value w-full h-9 px-2.5 rounded-control border borde
 </div>
 
 <div>
-<label class="edify-profile-field__label block mb-1.5">Additional District Assignments</label>
+<label class="edify-profile-field__label block mb-1.5">Secondary District Assignments</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
 <div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">

@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from apps.core.exceptions import BadRequest
 
-# Activity types eligible for Daily Visit Batch grouping. Deliberately equal to
-# apps.activities.services.SCHOOL_VISIT_TYPES minus "core_visit" (which has its
-# own separate flat-rate costing lane tied to Core Schools/Salesforce tracking
-# and must not be pooled here).
+# Staff school visits share one daily travel pool, including core visits.
 DAILY_BATCH_ELIGIBLE_TYPES = {
     "school_visit",
+    "core_visit",
+    "baseline_ssa_visit",
     "follow_up_visit",
     "coaching_visit",
     "in_school_support",
@@ -39,6 +38,8 @@ DAILY_BATCH_ELIGIBLE_TYPES = {
 # away-days by definition.
 DAY_POOL_EXTRA_TYPES = {
     "training",
+    "core_training",
+    "programme_event",
     "in_school_training",
     "school_improvement_training",
     "cluster_training",

@@ -174,7 +174,7 @@ _KEY_LABEL = {
     "cluster_meetings_trainings": "Cluster Meetings/ Trainings",
     "tot_trainings": "TOT trainings",
     "tot_trainings_meals": "TOT trainings - Meals",
-    "cluster_meetings_trainings_meals": "Cluster Meetings/ Trainings - Meals",
+    "cluster_meetings_trainings_meals": "Cluster Meeting - Participant Meals",
     "student_conference": "Student Conference",
     "proprietor_conference": "Proprietor Conference",
     "printing_training_materials": "Printing training materials",
@@ -517,28 +517,23 @@ def _planning_day_context(
     except (ValueError, TypeError):
         raise BadRequest("Choose a valid planned date.") from None
     input.update(plannedDate=day, fy=get_operational_fy(day))
+    from apps.daily_visit_batches.districts import district_type_for_staff
+
+    destination = None
     if input.get("schoolId"):
         from apps.schools.models import School
 
-        district_type = (
-            School.objects.filter(
-                Q(id=input["schoolId"]) | Q(school_id=input["schoolId"])
-            )
-            .values_list("district__district_type", flat=True)
-            .first()
-        )
-        if district_type:
-            input["districtType"] = district_type
+        school = School.objects.select_related("district").filter(
+            Q(id=input["schoolId"]) | Q(school_id=input["schoolId"])
+        ).first()
+        destination = school.district if school else None
     elif input.get("clusterId"):
         from apps.clusters.models import Cluster
 
-        district_type = (
-            Cluster.objects.filter(pk=input["clusterId"])
-            .values_list("district__district_type", flat=True)
-            .first()
-        )
-        if district_type:
-            input["districtType"] = district_type
+        cluster = Cluster.objects.select_related("district").filter(pk=input["clusterId"]).first()
+        destination = cluster.district if cluster else None
+    if destination:
+        input["districtType"] = district_type_for_staff(responsible_user_id, destination) or "primary"
     from apps.budget.costing import _days_of
 
     if (
@@ -700,6 +695,7 @@ def _serialize_line(line: CostLine) -> dict:
         result["dailyAllocation"] = {
             "count": line.allocation_count,
             "index": line.allocation_index,
+            "policy": "staff-day-v2",
         }
     return result
 

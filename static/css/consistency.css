@@ -1081,7 +1081,7 @@ main :is(
   [data-component="filter-toolbar"]
 ) > .edify-filter-field {
   display: flex;
-  flex: 1 0 7.5rem !important;
+  flex: 0 1 13rem !important;
   min-inline-size: 7.5rem !important;
   max-inline-size: 100% !important;
   flex-direction: column;
@@ -1134,8 +1134,8 @@ main :is(
   #cluster-filters,
   [data-component="filter-toolbar"]
 ) > .edify-filter-field.platform-filter-compact {
-  flex: 0 1 20rem !important;
-  max-inline-size: min(20rem, 100%) !important;
+  flex: 0 1 13rem !important;
+  max-inline-size: min(13rem, 100%) !important;
 }
 
 /* Search fields routinely carry longer labels and query text than compact

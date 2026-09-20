@@ -277,14 +277,14 @@ def _pl_map_context(user, fy, filters) -> dict:
 def _program_lead_dashboard(request, avatar_initials: str):
     """The Program Lead dashboard.
 
-    A fixed part — the team pulse tiles and Leadership Attention — above one
+    A fixed team pulse strip above one
     view at a time: Today (the default — Today and Dashboard are one page,
     owner 2026-09-14), Map, Priorities, Team,
     Coaching, Programmes or Collaboration, one per responsibility in the role
     description (owner, 2026-09-13). The service builds only the fixed part and
     the chosen view; a tab click builds the view alone. "operations", the old
-    second view, still resolves — from a remembered cookie or a bookmark — to
-    Team, and the cookie is rewritten under the new name.
+    second view, still resolves from an explicit bookmark to Team. Returning
+    without a view always opens Today, regardless of an older saved tab.
     """
     from apps.analytics.pl_dashboard_service import (
         DEFAULT_VIEW,
@@ -308,9 +308,10 @@ def _program_lead_dashboard(request, avatar_initials: str):
         role_key="pl",
         default=DEFAULT_VIEW,
         allowed=(*VIEWS, *VIEW_ALIASES),
+        use_saved_view=False,
     )
     view = normalise_view(asked)
-    # A remembered "operations" is rewritten as "team" on the next response.
+    # Explicit legacy bookmarks retain their Team destination.
     remember = explicit or asked != view
     tab_swap = request.headers.get("HX-Target") == "pl-dashboard-view-shell"
     data = ProgramLeadDashboardService.get_dashboard(

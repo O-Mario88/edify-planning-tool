@@ -1075,9 +1075,41 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
 }
 
-@media (min-width: 48rem) {
- main :is([role="tablist"], .edify-tab-container, [data-edify-tablist], .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .edify-section-nav__clusters, .edify-section-nav__inner):nth-child(n) {
+/* Short rails fit their contents at every viewport width. */
+ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist], .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .oversight-entity-tabs, .edify-section-nav__clusters, .edify-section-nav__inner):nth-child(n) {
    inline-size: fit-content !important;
    max-inline-size: 100%;
  }
+
+/* Compact workspace navigation and related controls share a row, wrapping
+   whole groups on narrow screens without stretching short tab rails. */
+.edify-view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-inline-size: 0;
 }
+.edify-view-toolbar > * { min-inline-size: 0; max-inline-size: 100%; }
+.edify-view-switch {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  overflow: hidden;
+  background: var(--edify-surface);
+}
+.edify-view-switch > button {
+  min-block-size: 2.5rem;
+  padding: .5rem .75rem;
+  color: var(--edify-text);
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.edify-view-switch > button + button { border-inline-start: 1px solid var(--edify-border); }
+.edify-view-switch > button[aria-pressed="true"] { background: var(--edify-primary); color: #fff; }
+.edify-view-switch > button:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: -3px; }
+
+.edify-view-toolbar > .edify-filter-bar { inline-size: auto; }

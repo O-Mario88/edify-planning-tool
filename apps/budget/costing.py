@@ -59,8 +59,8 @@ TOT_MEALS_RATE_KEY = "tot_trainings_meals"
 # 2026-09-17). A rate card that predates the split answers this key from the
 # shared row — see RATE_ALIASES in apps.budget.reference.
 CLUSTER_MEETING_RATE_KEY = "cluster_meeting"
-# Owner, 2026-09-15: cluster meetings and trainings feed their participants,
-# per head per day, at their own rate.
+# Meeting participant meals are exclusive to meetings. The legacy rate key
+# is retained for compatibility with rate cards and saved budget lines.
 CLUSTER_MEALS_RATE_KEY = "cluster_meetings_trainings_meals"
 MEALS_RATE_KEYS = (TOT_MEALS_RATE_KEY, CLUSTER_MEALS_RATE_KEY)
 # School work that is SSA work: it carries the SSA Support rate.
@@ -358,7 +358,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
         add_group_session(
-            _days_of(a), "cluster_meetings_trainings", meals_key=CLUSTER_MEALS_RATE_KEY
+            _days_of(a), "cluster_meetings_trainings"
         )
 
     elif is_partner:

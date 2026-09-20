@@ -63,8 +63,8 @@ class DashboardViewSourceTest(TestCase):
         self.assertLess(cd.index("Country pulse"), cd.index("Leadership Attention"))
         self.assertLess(cd.index("Leadership Attention"), cd.index(RAIL_INCLUDE))
         pl = _read("templates/partials/dashboards/pl/body.html")
-        self.assertLess(pl.index("Team pulse"), pl.index("Leadership Attention"))
-        self.assertLess(pl.index("Leadership Attention"), pl.index(RAIL_INCLUDE))
+        self.assertLess(pl.index("Team pulse"), pl.index(RAIL_INCLUDE))
+        self.assertNotIn("data-pl-attention", pl)
         rvp = _read("templates/pages/dashboards/rvp.html")
         self.assertLess(rvp.index("Regional pulse"), rvp.index("Leadership Attention"))
         self.assertLess(rvp.index("Leadership Attention"), rvp.index(RAIL_INCLUDE))
@@ -162,6 +162,24 @@ class DashboardViewSourceTest(TestCase):
 
 class DashboardViewRenderTest(TestCase):
     """What each role gets on their home dashboard."""
+
+    def test_pl_today_owns_attention_and_ignores_saved_tabs(self):
+        self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "map"
+        response = self._get(self.pl, "/dashboard")
+        self.assertEqual(response.context["dashboard_view"], "today")
+        self.assertContains(response, "data-pl-attention")
+        self.assertContains(response, 'data-section="what-needs-you-now"')
+        other = self._get(self.pl, "/dashboard?view=team")
+        self.assertNotContains(other, "data-pl-attention")
+        self.assertNotContains(other, 'data-section="what-needs-you-now"')
+        self.client.force_login(self.pl)
+        today = self.client.get(
+            "/dashboard?view=today", HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="pl-dashboard-view-shell",
+        )
+        self.assertContains(today, "data-pl-attention")
+        self.assertContains(today, 'data-section="what-needs-you-now"')
+        self.assertIn("leadership_attention", today.context)
 
     def setUp(self):
         self.cd = _user("cd.view@edify.test", "CountryDirector")

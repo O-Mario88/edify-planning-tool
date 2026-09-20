@@ -20,6 +20,7 @@ from django.db.models import Count, Q
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 
+from .districts import district_type_for_staff
 from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
 from .pricing import KEY_LABELS, allocate_pool, compute_daily_pool
@@ -67,11 +68,17 @@ def batch_needs_repricing(batch) -> bool:
     )
     if members.count() != batch.school_count:
         return True
+    if any(
+        (district_type_for_staff(batch.responsible_user, member_district(member)) or "primary") != batch.district_type
+        for member in members.select_related("school__district", "cluster__district", "event_district")
+    ):
+        return True
     snapshots = list(
         ActivityCostSnapshot.objects.filter(activity__in=members, is_current=True)
     )
     return len(snapshots) != batch.school_count or any(
-        not line.get("dailyAllocation")
+        line.get("dailyAllocation", {}).get("policy") != "staff-day-v2"
+        or line.get("dailyAllocation", {}).get("count") != batch.school_count
         for snapshot in snapshots
         for line in snapshot.operational_breakdown
         if line.get("key") in KEY_LABELS
@@ -158,7 +165,7 @@ def schedule_visits(
 
     new_types: dict[str, str] = {}
     for s in schools:
-        dt = s.district.district_type if s.district_id else None
+        dt = district_type_for_staff(responsible_user_id, s.district) if s.district_id else None
         if not dt:
             dname = s.district.name if s.district_id else "Unknown"
             raise BadRequest(
@@ -317,7 +324,8 @@ def batch_poolable(activity) -> bool:
     from .pricing import DAILY_BATCH_ELIGIBLE_TYPES, DAY_POOL_EXTRA_TYPES
 
     if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES:
-        return bool(activity.school_id)
+        # A paired Salesforce visit is evidence for the training, not another trip.
+        return bool(activity.school_id) and not hasattr(activity, "paired_in_school_training")
     if activity.activity_type not in DAY_POOL_EXTRA_TYPES:
         return False
     end = getattr(activity, "end_date", None)
@@ -345,19 +353,7 @@ def attach_activity_to_batch(
     Must be called inside the caller's transaction.
     """
     district = member_district(activity)
-    if district is None:
-        # Home work (a cluster session or field event in the owner's own
-        # station) prices on the primary profile.
-        district_type = "primary"
-    else:
-        # The standalone recipe already uses primary rates when no secondary
-        # classification exists. Keep that pricing profile, but still share
-        # its daily amount instead of charging it again for each activity.
-        district_type = district.district_type or "primary"
-    if activity.activity_type == "field_event":
-        from apps.activities.services import _field_event_district_type
-
-        district_type = _field_event_district_type(activity)
+    district_type = district_type_for_staff(responsible_user_id, district) or "primary"
     if district_type not in ("primary", "secondary"):
         return False
 
@@ -467,16 +463,16 @@ def reschedule_within_batch(
         raise BadRequest(
             "This activity has no school/district on file — cannot batch-price it."
         )
-    incoming_type = school.district.district_type
+    from apps.activities.services import _funding_owner_id
+
+    responsible_user_id = _funding_owner_id(activity, principal)
+    incoming_type = district_type_for_staff(responsible_user_id, school.district)
     if not incoming_type:
         raise BadRequest(
             f"District '{school.district.name}' has not been classified as primary/secondary "
             f"— ask the CD/Admin to classify it first."
         )
 
-    from apps.activities.services import _funding_owner_id
-
-    responsible_user_id = _funding_owner_id(activity, principal)
     with transaction.atomic():
         batch = (
             DailyVisitBatch.objects.select_for_update()
@@ -563,7 +559,6 @@ def _recalculate_and_write_lines(
 
     catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
     rates, _settings_by_key = _rate_card(catalogue)
-    pool = compute_daily_pool(rates, batch.district_type)
 
     activities = list(
         batch.activities.filter(deleted_at__isnull=True)
@@ -571,6 +566,15 @@ def _recalculate_and_write_lines(
         .order_by("id")
     )
     n = len(activities)
+    district_types = {
+        district_type_for_staff(responsible_user_id, member_district(member)) or "primary"
+        for member in activities
+    }
+    if len(district_types) > 1:
+        raise BadRequest("This day mixes primary and secondary districts under the staff member's configuration. Separate the activities onto different days.")
+    if district_types:
+        batch.district_type = district_types.pop()
+    pool = compute_daily_pool(rates, batch.district_type)
 
     # Each member's own recipe, computed ONCE here because the day's pool
     # depends on it and the loop below needs it again.

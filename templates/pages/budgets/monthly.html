@@ -33,6 +33,12 @@
     {% endif %}
   </div>
 
+  <div class="edify-view-toolbar">
+  <nav data-edify-tablist aria-label="Budget period">
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Monthly Budget</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarterly Budget</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual Budget</a>
+  </nav>
   <form method="get" action="/budget" class="flex flex-wrap items-end gap-3">
     <input type="hidden" name="period" value="{{ selected_period }}">
     <input type="hidden" name="budget_scope" value="{{ budget_scope }}">
@@ -43,11 +49,7 @@
     {% if request.user|can_open:"/fund-requests/weekly" %}<a href="/fund-requests/weekly" class="edify-action-button secondary">Weekly Advance Request</a>{% endif %}
   </form>
 
-  <nav data-edify-tablist aria-label="Budget period">
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Monthly Budget</a>
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarterly Budget</a>
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual Budget</a>
-  </nav>
+  </div>
   <p class="text-xs text-slate-500">Calculated from the costed activities in weekly plans. Month, quarter and annual budgets roll up those planned costs.</p>
 
   {% if country_workflow.prior_month_pending %}
