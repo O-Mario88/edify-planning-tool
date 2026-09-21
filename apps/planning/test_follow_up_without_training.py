@@ -2,9 +2,14 @@
 
 Uganda plans follow-up visits for schools with no training recorded. The rule
 is governed per fiscal year (FiscalYearPlanningPolicy), not bypassed in a view,
-and lifting it removes nothing else: the school must still be operating and in
-the planner's portfolio, the client visit allowance still holds, and the
-calendar and catalogue still apply.
+and lifting it removes nothing else: the school must still be operating, and
+the calendar and catalogue still apply.
+
+The portfolio and the client visit allowance were on that list until
+2026-09-21, when the owner lifted both for the school visit. They are now
+counted rather than enforced, so the two tests that named them say what
+happens instead — see apps.core.scoping.SCHOOL_VISIT_ROLES and
+apps.planning.visit_gate.
 """
 
 from __future__ import annotations
@@ -64,11 +69,12 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
         with self.assertRaises(BadRequest):
             self.follow_up(sourceActivityId="does-not-exist")
 
-    def test_follow_ups_past_the_client_allowance_are_still_prevented(self):
-        """The cap went from one to two on 2026-09-17; the gate still closes.
+    def test_follow_ups_past_the_client_allowance_are_scheduled_and_counted(self):
+        """The allowance stopped being a ceiling on 2026-09-21.
 
-        Counted from CLIENT_VISIT_CAP rather than a literal, because what this
-        pins is that the allowance is enforced here, not its size.
+        It is still counted, and the count is still what the pages show, so
+        this walks past CLIENT_VISIT_CAP and checks the visits are there
+        rather than that the next one was refused.
         """
         import datetime
 
@@ -88,15 +94,23 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
             day += datetime.timedelta(days=1)
         while day.weekday() == 6:
             day += datetime.timedelta(days=1)
-        with self.assertRaisesMessage(BadRequest, "visits a year"):
-            self.follow_up(scheduledDate=_at(day).isoformat())
+        self.follow_up(scheduledDate=_at(day).isoformat())  # no BadRequest
 
-    def test_an_out_of_portfolio_school_is_still_refused(self):
+        from apps.planning.visit_gate import visit_gate
+
+        self.assertEqual(
+            visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1
+        )
+
+    def test_an_out_of_portfolio_school_is_scheduled_all_the_same(self):
+        """The portfolio stopped gating the visit on 2026-09-21: a CCEO
+        schedules one at a school they no longer hold, and it is theirs."""
         from apps.accounts.models import StaffSchoolAssignment
 
         StaffSchoolAssignment.objects.filter(school_id=self.school.id).delete()
-        with self.assertRaises((Forbidden, BadRequest)):
-            self.follow_up()
+        activity = Activity.objects.get(id=self.follow_up()["id"])
+        self.assertEqual(activity.status, "scheduled")
+        self.assertIn(activity.responsible_staff_id, {self.staff.id, self.user.id})
 
     def test_a_closed_school_still_takes_no_work(self):
         from apps.schools.models import School

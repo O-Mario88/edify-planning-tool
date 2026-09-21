@@ -227,7 +227,13 @@ class CoreSchoolsPlanningTest(TestCase):
         return c
 
     def _schedule_visit(
-        self, client=None, school=None, seq="1", when="2026-04-21", partner_id=None
+        self,
+        client=None,
+        school=None,
+        seq="1",
+        when="2026-04-21",
+        partner_id=None,
+        responsible_staff_id=None,
     ):
         payload = {
             "school_id": (school or self.school).school_id,
@@ -236,7 +242,13 @@ class CoreSchoolsPlanningTest(TestCase):
             "focus_intervention": "teaching_environment",
             "visit_purpose": "Core package recovery visit",
             "expected_outcome": "Slot fulfilled",
-            "responsible_staff_id": self.cceo_sp.id,
+            # "" asks the view to resolve it, which is what the drawer does
+            # when nobody is picked; None keeps the historic default.
+            "responsible_staff_id": (
+                self.cceo_sp.id
+                if responsible_staff_id is None
+                else responsible_staff_id
+            ),
             "catalogue_item_id": self.core_visit_item.id,
             "recommendation_reason": (
                 "Current unresolved Teacher's Environment SSA need."
@@ -851,8 +863,12 @@ class CoreSchoolsPlanningTest(TestCase):
 
     # ── 23: HTMX scope ───────────────────────────────────────────────────────
     def test_core_htmx_endpoints_enforce_scope(self):
+        # A visit at somebody else's school is open since 2026-09-21, but
+        # naming THEIR staff member as responsible is delegation and still
+        # follows the supervision chain: this payload hands the visit to
+        # `cceo_sp`, who does not report to the other CCEO.
         resp = self._schedule_visit(client=self._client(self.other_cceo))
-        self.assertIn(resp.status_code, (403, 404))  # not their school
+        self.assertIn(resp.status_code, (403, 404))
         # The Accountant opens the drawer since 2026-09-02 — only to ASK: at a
         # school somebody owns it is the visit-request form the owner must
         # approve (apps.planning.visit_requests), never a plan of their own.
@@ -866,6 +882,13 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/core-schools/schedule-training?school_id={self.school.school_id}"
         )
         self.assertEqual(training.status_code, 403)
+
+    def test_a_core_visit_of_their_own_at_another_cceos_school_is_admitted(self):
+        """The lift itself: the same post, taken by the person making it."""
+        resp = self._schedule_visit(
+            client=self._client(self.other_cceo), responsible_staff_id=""
+        )
+        self.assertEqual(resp.status_code, 200, resp.content[:300])
 
     # ── 24: real completion path advances the slot + package counters ───────
     def _complete_core_activity(self, act, sf_id, extra=None):

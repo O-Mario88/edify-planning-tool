@@ -160,7 +160,8 @@ class OwnerGroupingPageTest(OwnerGroupingFixture):
         self.assertNotIn(f'<option value="{self.pl.id}"', html)
 
     def test_ia_can_open_the_schedule_drawer_on_any_school(self):
-        """IA plans any school: the visit becomes the owner's request."""
+        """IA plans any school, and since 2026-09-21 schedules it outright
+        rather than leaving the owner a request to decide."""
         self.client.force_login(self.ia_user)
         html = self.client.get("/planning").content.decode()
         for school in (self.zebra, self.apple, self.mango):
@@ -171,4 +172,6 @@ class OwnerGroupingPageTest(OwnerGroupingFixture):
             f"/planning/schedule-modal?school_id={self.mango.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("who approves this visit", response.content.decode())
+        drawer = response.content.decode()
+        self.assertNotIn("who approves this visit", drawer)
+        self.assertNotIn('name="visit_justification"', drawer)

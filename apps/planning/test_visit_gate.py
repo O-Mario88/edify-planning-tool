@@ -495,10 +495,13 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         self._spend_client_visits(school)
         assignment = self._assign(school, expected_activity_type="school_visit")
         when = (date.today() + timedelta(days=10)).isoformat()
-        activity = _partner_schedule_from_assignment(
+        created = _partner_schedule_from_assignment(
             assignment.id,
             {"scheduledDate": when, "deliveryContactName": "VG Visitor"},
             self.partner_user,
         )
-        self.assertIsNotNone(activity)
-        self.assertEqual(visit_gate(school).partner_visits, 1)
+        self.assertEqual(created["deliveryType"], "partner")
+        # Counted on the partner's side, in the fiscal year the visit falls
+        # in — which need not be the one the spent allowance sits in, since
+        # ten days out can cross the year boundary.
+        self.assertEqual(visit_gate(school, created["fy"]).partner_visits, 1)
