@@ -75,7 +75,8 @@ class RouteValidationService:
             {
                 s.district.name
                 for s in schools
-                if s.district_id and not district_type_for_staff(responsible_user, s.district)
+                if s.district_id
+                and not district_type_for_staff(responsible_user, s.district)
             }
         )
         if unclassified:
@@ -86,8 +87,12 @@ class RouteValidationService:
                     "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
                 }
             )
-        district_ids = {s.district_id for s in schools if s.district_id
-                        and district_type_for_staff(responsible_user, s.district) == "secondary"}
+        district_ids = {
+            s.district_id
+            for s in schools
+            if s.district_id
+            and district_type_for_staff(responsible_user, s.district) == "secondary"
+        }
         if len(district_ids) > 1:
             from apps.daily_visit_batches.services import _resolve_group
 
@@ -467,7 +472,9 @@ class DailyVisitRouteBatchService:
                 responsible_user=responsible_user,
                 visit_date=visit_date,
                 defaults={
-                    "district_type": "secondary" if "secondary" in dtypes else "primary",
+                    "district_type": "secondary"
+                    if "secondary" in dtypes
+                    else "primary",
                     "district": district,
                     "secondary_district_group": cost_batch.secondary_district_group
                     if cost_batch
@@ -587,7 +594,9 @@ class PlanningRoutePreviewService:
                 from apps.budget.costing_service import _rate_card
 
                 rates, _ = _rate_card(catalogue)
-                pool = compute_daily_pool(rates, "secondary" if "secondary" in dtypes else "primary")
+                pool = compute_daily_pool(
+                    rates, "secondary" if "secondary" in dtypes else "primary"
+                )
                 # Split with the same exact-allocation math the Daily Visit
                 # Batch pricing engine uses (sum of shares == pool; remainder
                 # shillings go to the first schools) instead of floor division,

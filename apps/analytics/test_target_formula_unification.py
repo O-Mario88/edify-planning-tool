@@ -495,8 +495,7 @@ class TargetFormulaEndToEndTest(TestCase):
         self.assertEqual(
             achieved,
             0,
-            "achievement was pooled for someone who has no measurable "
-            "priority at all",
+            "achievement was pooled for someone who has no measurable priority at all",
         )
 
     def test_one_persons_work_never_lands_in_anothers_denominator(self):

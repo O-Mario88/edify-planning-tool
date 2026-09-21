@@ -595,8 +595,7 @@ def pl_approve_accountability(advance_id: str, principal) -> dict:
             raise NotFoundError("Advance request not found.")
         if adv.status not in _PL_PENDING_STATUSES:
             raise BadRequest(
-                "Nothing to approve — this accountability is not awaiting PL "
-                "approval."
+                "Nothing to approve — this accountability is not awaiting PL approval."
             )
         _require_accountability_approver(adv, principal)
         adv.accountability_pl_approved_at = timezone.now()
@@ -660,8 +659,7 @@ def pl_return_accountability(advance_id: str, data: dict, principal) -> dict:
             raise NotFoundError("Advance request not found.")
         if adv.status not in _PL_PENDING_STATUSES:
             raise BadRequest(
-                "Nothing to return — this accountability is not awaiting PL "
-                "approval."
+                "Nothing to return — this accountability is not awaiting PL approval."
             )
         _require_accountability_approver(adv, principal)
         adv.last_note = reason[:512]

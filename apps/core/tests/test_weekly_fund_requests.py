@@ -231,10 +231,11 @@ class WeeklyFundRequestsTest(APITestCase):
             cm_lines.get(cost_setting_key="group_training_venue_cost").amount, 200000
         )
 
-        # 3. Schedule a Group Training (15 participants: meals 15 x 8000,
-        # venue=200000, facilitation=150000, no materials stated, and the
-        # staff day's transport alone at 50,000 — this day feeds the room, so
-        # it buys no staff lunch (2026-09-17)). Total = 520,000
+        # 3. Schedule a Group Training (15 participants): venue=200000,
+        # facilitation=150000, no materials stated, and the staff day at
+        # transport 50,000 + lunch 12,000. Participant meals are a cluster
+        # MEETING cost since 2026-09-20 (staff-day-v2), so a training feeds
+        # its staff member and no one per head. Total = 412,000
         # ACCOUNTING_FINANCIAL_MANAGEMENT is the cluster_training item for
         # financial_health, the second-weakest verified intervention →
         # also a primary cluster recommendation.
@@ -251,7 +252,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         gt_lines = ActivityScheduleCostLine.objects.filter(activity_id=gt["id"])
-        self.assertEqual(sum(l.amount for l in gt_lines), 520000)
+        self.assertEqual(sum(l.amount for l in gt_lines), 412000)
         self.assertEqual(
             Activity.objects.get(id=gt["id"]).expected_participants,
             15,
@@ -260,15 +261,15 @@ class WeeklyFundRequestsTest(APITestCase):
             {line.cost_setting_key for line in gt_lines},
             {
                 "cluster_meetings_trainings",
-                "cluster_meetings_trainings_meals",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
+                "lunch_per_day",
                 "primary_transport_per_day",
             },
         )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
-        # 62,000 visit + 330,000 meeting + 520,000 training = 912,000 UGX, less
+        # 62,000 visit + 330,000 meeting + 412,000 training = 804,000 UGX, less
         # the visit's 50,000 vendor-direct transport. The visit's day keeps its
         # lunch: nothing on it feeds the staff member.
         wfr_data = self._post(
@@ -280,7 +281,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 862000)  # transport is vendor-direct
+        self.assertEqual(wfr_data["totalAmount"], 754000)  # transport is vendor-direct
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail

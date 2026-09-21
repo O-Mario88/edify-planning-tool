@@ -210,8 +210,7 @@ def decline(activity_id: str, principal, reason: str) -> Activity:
         a,
         EVENT_DECLINED,
         "Your visit was declined",
-        f"{_person(principal)} declined your visit to {_where(a)}{_on(a)}: "
-        f"{reason}",
+        f"{_person(principal)} declined your visit to {_where(a)}{_on(a)}: {reason}",
         [a.responsible_staff_id],
         priority="high",
     )

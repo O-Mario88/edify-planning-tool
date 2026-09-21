@@ -324,6 +324,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
     attention = data.get("leadership_attention") or []
     first = attention[0] if attention else None
     from apps.my_plan.past_due_service import get_past_due_dashboard_context
+
     past_due_data = get_past_due_dashboard_context(user)
     context = {
         **data,
@@ -1108,6 +1109,7 @@ def dashboard_view(request):
         # unread-notification badge the context processor already supplies)
         # went with it; each one was queries the template threw away.
         from apps.my_plan.past_due_service import get_past_due_dashboard_context
+
         past_due_data = get_past_due_dashboard_context(user)
         context = {
             **past_due_data,
@@ -1840,6 +1842,7 @@ def planning_progress_fragment_view(request):
 
 
 @login_required
+@require_page_permission("dashboard")
 @require_POST
 def notify_past_due_activity(request, activity_id: str):
     """Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity."""
@@ -1870,13 +1873,21 @@ def notify_past_due_activity(request, activity_id: str):
     school_or_cluster = (
         activity.school.name
         if activity.school_id and activity.school
-        else (activity.cluster.name if activity.cluster_id and activity.cluster else "your assigned area")
+        else (
+            activity.cluster.name
+            if activity.cluster_id and activity.cluster
+            else "your assigned area"
+        )
     )
     act_type = activity.get_activity_type_display()
     date_str = (
         activity.planned_date.strftime("%b %-d, %Y")
         if activity.planned_date
-        else (activity.scheduled_date.strftime("%b %-d, %Y") if activity.scheduled_date else "the scheduled date")
+        else (
+            activity.scheduled_date.strftime("%b %-d, %Y")
+            if activity.scheduled_date
+            else "the scheduled date"
+        )
     )
 
     title = f"Action Required: Overdue {act_type}"
@@ -1899,8 +1910,7 @@ def notify_past_due_activity(request, activity_id: str):
         f'class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default" '
         f'title="Reminder sent to {escape(recipient_name)}">'
         f'<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
-        f'Sent to {escape(recipient_first_name)} ✓'
-        f'</button>'
+        f"Sent to {escape(recipient_first_name)} ✓"
+        f"</button>"
     )
     return HttpResponse(btn_html)
-

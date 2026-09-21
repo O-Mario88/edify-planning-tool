@@ -75,7 +75,7 @@ for e in events:
             st = a.get("stackTrace") or []
             if st:
                 detail += " <- " + ",".join(
-                    f"{f.get('functionName') or '?'}@{f.get('url','').split('/')[-1].split('?')[0][:18]}:{f.get('lineNumber')}"
+                    f"{f.get('functionName') or '?'}@{f.get('url', '').split('/')[-1].split('?')[0][:18]}:{f.get('lineNumber')}"
                     for f in st[:2]
                 )
             top.append(
@@ -104,7 +104,7 @@ for e in events:
     st = a.get("stackTrace") or []
     origin = (
         ",".join(
-            f"{f.get('functionName') or '?'}@{f.get('url','').split('/')[-1].split('?')[0][:20]}:{f.get('lineNumber')}"
+            f"{f.get('functionName') or '?'}@{f.get('url', '').split('/')[-1].split('?')[0][:20]}:{f.get('lineNumber')}"
             for f in st[:2]
         )
         or "(no stack)"
@@ -122,5 +122,5 @@ print("stylesheets (rules):", css)
 t0 = min(e["ts"] for e in events if e.get("ph") == "X") if events else 0
 for dur, name, ts, detail, ec, dirty in sorted(top, key=lambda t: t[2]):
     print(
-        f"  +{(ts - t0)/1000:6.0f}ms  {dur:6.1f}ms  {name:18s} {detail}  {('elements='+str(ec)) if ec else ''} {('dirty='+str(dirty)) if dirty else ''}"
+        f"  +{(ts - t0) / 1000:6.0f}ms  {dur:6.1f}ms  {name:18s} {detail}  {('elements=' + str(ec)) if ec else ''} {('dirty=' + str(dirty)) if dirty else ''}"
     )

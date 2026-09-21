@@ -204,9 +204,12 @@ class PriorityQueueRenderTests(TestCase):
         )
         client = Client()
         client.force_login(self.cceo)
-        body = client.get("/my-plan").content.decode()
+        # The queue lives on the dashboard alone since 2026-09-20; My Plan
+        # carries the horizons and nothing that needs deciding now.
+        body = client.get("/dashboard").content.decode()
         self.assertIn("What needs you now", body)
         self.assertNotIn("{{", body)
+        self.assertNotIn("What needs you now", client.get("/my-plan").content.decode())
 
     def test_context_exposes_the_buckets_and_a_count(self):
         from apps.my_plan.services import get_frontend_context

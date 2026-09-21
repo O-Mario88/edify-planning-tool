@@ -1139,11 +1139,11 @@ class DocumentPageTests(DocumentTestBase):
         )
         self.assertGreaterEqual(body.count("btn btn-primary"), 1 + (2 * len(actions)))
         self.assertIn(
-            "upload-card-actions mt-auto flex flex-wrap items-center " "justify-center",
+            "upload-card-actions mt-auto flex flex-wrap items-center justify-center",
             body,
         )
         self.assertIn(
-            "upload-card-actions mt-4 flex flex-wrap items-center " "justify-center",
+            "upload-card-actions mt-4 flex flex-wrap items-center justify-center",
             body,
         )
         self.assertNotIn("bg-[var(--color-edify-primary)]", body)

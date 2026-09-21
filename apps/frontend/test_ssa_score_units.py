@@ -64,11 +64,13 @@ class SsaScorePresentationContractTest(SimpleTestCase):
         self.assertIn("r.bar_pct", self._template(score_templates[4]))
 
     def test_cd_heatmap_and_priority_school_table_are_separate_cards(self):
-        source = self._template("partials/dashboards/cd/body.html")
+        # The two cards live in the operations view since 2026-09-19, and the
+        # heatmap reads as a comparison of clusters by intervention.
+        source = self._template("partials/dashboards/cd/operations.html")
         start = source.index("data-cd-school-ssa-cards")
         section = source[start : source.index("Country Field Intelligence", start)]
 
-        self.assertIn("Cluster SSA Heatmap", section)
+        self.assertIn("Cluster SSA Comparison", section)
         self.assertIn("Priority Schools Needing Urgent Attention", section)
         self.assertEqual(
             section.count("<section"),

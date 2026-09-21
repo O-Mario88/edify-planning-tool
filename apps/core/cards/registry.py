@@ -323,7 +323,7 @@ CARD_REGISTRY: tuple[CardSpec, ...] = (
         filter_behaviour=FilterBehaviour.FIXED_CONTEXT,
         empty_message="No quick actions are available for this role.",
         no_drilldown_reason=(
-            "The card is itself a set of links; a drill-down would duplicate " "them."
+            "The card is itself a set of links; a drill-down would duplicate them."
         ),
         notes=(
             "'Add School Visit' was removed: it pointed at /planning, the same "

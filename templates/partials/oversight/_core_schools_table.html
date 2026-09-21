@@ -1,10 +1,6 @@
-{% load chart_tags %}
-{% if schools %}
-{% comparison_chart schools "name" "visits_completed" "visits_target" "Completed visits against target" "Completed" "Target" %}
-{% comparison_chart schools "name" "trainings_completed" "trainings_target" "Completed trainings against target" "Completed" "Target" %}
-{% endif %}
-{% load frontend_filters school_identity %}
+{% load frontend_filters school_identity table_pagination %}
 <div class="overflow-x-auto">
+  {% paginate schools page_param|default:"schools_page" as school_pager %}
   <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
     <thead>
       <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -21,13 +17,13 @@
       </tr>
     </thead>
     <tbody class="divide-y edify-border text-sm">
-      {% for row in schools %}
+      {% for row in school_pager.rows %}
       <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
         <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
           {{ row.school_id }}
         </td>
         <td class="px-4 py-2.5 font-semibold">
-          <a href="/schools/{{ row.id }}" class="hover:underline text-primary hover:text-blue-600 dark:hover:text-blue-400">
+          <a href="/schools/{{ row.id }}" class="hover:underline text-primary edify-primary-text-hover dark:edify-primary-text-hover">
             {{ row.name }}
           </a>
         </td>
@@ -54,7 +50,7 @@
         <td class="px-4 py-2.5">
           <div class="flex items-center gap-2">
             <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div class="{% if row.is_package_complete %}bg-emerald-500{% elif row.progress_pct > 50 %}bg-blue-500{% else %}bg-amber-500{% endif %} h-2 rounded-full transition-all"
+              <div class="{% if row.is_package_complete %}bg-emerald-500{% elif row.progress_pct > 50 %}edify-primary-solid{% else %}bg-amber-500{% endif %} h-2 rounded-full transition-all"
                    style="width: {{ row.progress_pct }}%"></div>
             </div>
             <span class="text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
@@ -86,4 +82,5 @@
       {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=school_pager param=page_param|default:"schools_page" pagination_label="Core schools" %}
 </div>

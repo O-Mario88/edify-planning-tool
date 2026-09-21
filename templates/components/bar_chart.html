@@ -1,9 +1,19 @@
-<section class="card p-4 edify-data-chart" x-data="{
+{% comment %}
+One statistical chart card. The payload is the view's own scoped rows, drawn by
+the shared bar standard (static/js/chart-standard.js) so every chart on the
+platform shares one geometry: a 220px plot, bars no thicker than 22px, one
+hairline grid, values in muted ink, and a data table under the plot.
+{% endcomment %}
+<section class="card edify-data-chart" x-data="{
  chart: null,
  init() { this.$nextTick(() => { const payload = JSON.parse(this.$el.querySelector('script[type=\'application/json\']').textContent); this.chart = window.EdifyChartSystem.renderDetached(this.$refs.plot, window.EdifyChartSystem.formBase(payload)); }); },
  destroy() { if (this.chart) this.chart.destroy(); }
-}">
-  <h3 class="edify-section-heading">{{ title }}</h3>
+}" aria-label="{{ title }}">
+  {# data-no-titlebar: the folded data table below must not promote this header into a table title band (micro-ux.js). #}
+  <header class="edify-data-chart__header" data-no-titlebar>
+    <h3 class="edify-data-chart__title">{{ title }}</h3>
+    {% if subtitle %}<p class="edify-data-chart__subtitle">{{ subtitle }}</p>{% endif %}
+  </header>
   {{ chart_payload|json_script }}
-  <div x-ref="plot"></div>
+  <div class="edify-data-chart__plot" x-ref="plot"></div>
 </section>

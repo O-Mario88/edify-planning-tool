@@ -99,15 +99,19 @@ class DirectoryEmptyStateTest(TestCase):
 
 class PlanningClusterDisclosureTest(SimpleTestCase):
     """F-04: the cluster card opens from one named control that says whether
-    it is open and which panel it controls."""
+    it is open and which panel it controls. Since 2026-09-19 the planning
+    clusters tab draws the canonical cluster card shared with /clusters: the
+    name is a link to the profile, and one toggle button carries the
+    disclosure state and names the details panel."""
 
-    def test_the_cluster_name_is_the_disclosure_control(self):
+    def test_the_cluster_card_has_one_named_disclosure_control(self):
         html = render_to_string(
             "partials/planning/school_table.html",
             {
                 "active_tab": "clusters",
                 "clusters": [
                     {
+                        "id": "cl-1",
                         "name": "Mukono North",
                         "district": "Mukono",
                         "school_count": 4,
@@ -117,10 +121,11 @@ class PlanningClusterDisclosureTest(SimpleTestCase):
                 ],
             },
         )
-        self.assertIn('aria-controls="planning-cluster-panel-1"', html)
-        self.assertIn('aria-expanded="false"', html)
-        self.assertIn('id="planning-cluster-panel-1"', html)
-        self.assertRegex(html, r'<button\s+type="button"[^>]*>Mukono North</button>')
+        self.assertIn('aria-controls="cluster-details-cl-1"', html)
+        self.assertIn(':aria-expanded="cardExpanded.toString()"', html)
+        self.assertIn('id="cluster-details-cl-1"', html)
+        self.assertEqual(html.count('aria-controls="cluster-details-cl-1"'), 1)
+        self.assertRegex(html, r'<a href="/clusters/cl-1"[^>]*>Mukono North</a>')
         self.assertNotIn(
-            "focus:outline-none", html.split('id="planning-cluster-panel-1"')[0]
+            "focus:outline-none", html.split('id="cluster-details-cl-1"')[0]
         )

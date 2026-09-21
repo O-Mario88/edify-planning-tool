@@ -479,8 +479,8 @@ class ProgramLeadDashboardService:
                 "programmes": lambda: ProgramLeadDashboardService.programmes_view(
                     ctx, urgent_page=urgent_page
                 ),
-                "collaboration": lambda: (
-                    ProgramLeadDashboardService.collaboration_view(ctx)
+                "collaboration": lambda: ProgramLeadDashboardService.collaboration_view(
+                    ctx
                 ),
             }
             data.update(builders[view]())
@@ -1622,23 +1622,29 @@ class ProgramLeadDashboardService:
 
     @staticmethod
     def delivery_by_month(ctx: DashboardContext) -> dict:
-        """Team Execution Progress: completed work in each FY month, split by
-        delivery family, with the cumulative share of the year's plan done.
+        """Team Execution Progress: completed work in each FY month, one series
+        per person — the lead's own work first, then each supervised officer
+        in roster order — with the cumulative share of the year's plan done.
         Field execution, not IA-verified — the ledger-weighted figure is the
-        priority progress tile. One grouped read."""
-        from django.db.models.functions import TruncMonth
+        priority progress tile. One grouped read.
 
-        from apps.analytics.rpl_dashboard_service import (
-            DELIVERY_FAMILIES,
-            OTHER_FAMILY,
-            _family_of,
-        )
+        A person is a series whether or not they completed anything, so the
+        chart reads as the team and a quiet month shows as a quiet month
+        rather than as a missing officer. Work on a portfolio school that
+        belongs to nobody on the roster folds into "Others (at portfolio
+        schools)" — it is counted in the share of plan done and must not
+        vanish from the columns."""
+        from django.db.models.functions import TruncMonth
 
         bounds = [get_month_date_range(ctx.fy, m) for m in range(1, 13)]
         index = {(b[0].year, b[0].month): i for i, b in enumerate(bounds)}
-        families = [(key, label) for key, label, _h, _m in DELIVERY_FAMILIES]
-        families.append((OTHER_FAMILY[0], OTHER_FAMILY[1]))
-        series = {key: [0] * 12 for key, _ in families}
+        lead_key = "__lead__"
+        lead_label = f"{getattr(ctx.user, 'name', '') or 'My work'} (you)"
+        people = [(lead_key, lead_label)] + [
+            (c["staff_id"], c["name"]) for c in ctx.team
+        ]
+        series = {key: [0] * 12 for key, _ in people}
+        others = [0] * 12
         for row in (
             ctx.acts.filter(
                 status__in=COMPLETED_STATUSES,
@@ -1646,32 +1652,39 @@ class ProgramLeadDashboardService:
                 planned_date__lt=bounds[11][1].date(),
             )
             .annotate(m=TruncMonth("planned_date"))
-            .values("m", "activity_type")
+            .values("m", "responsible_staff_id", "monitored_by_staff_id")
             .annotate(n=Count("id"))
             .order_by()
         ):
             month = row["m"]
             slot = index.get((month.year, month.month)) if month else None
-            if slot is not None:
-                series[_family_of(row["activity_type"])][slot] += row["n"]
+            if slot is None:
+                continue
+            responsible = row["responsible_staff_id"]
+            monitored = row["monitored_by_staff_id"]
+            owner = ctx.owner(responsible, monitored)
+            if owner is None and (responsible or monitored) in ctx.own_ids:
+                owner = lead_key
+            (series[owner] if owner in series else others)[slot] += row["n"]
         planned_total = sum(r["planned"] for r in ctx.type_counts)
         cumulative = []
         running = 0
         for slot in range(12):
-            running += sum(values[slot] for values in series.values())
+            running += sum(values[slot] for values in series.values()) + others[slot]
             cumulative.append(
                 min(round(running * 100 / planned_total), 100) if planned_total else 0
+            )
+        payload_series = [{"name": label, "data": series[key]} for key, label in people]
+        if any(others):
+            payload_series.append(
+                {"name": "Others (at portfolio schools)", "data": others}
             )
         return {
             "title": "Team Execution Progress",
             "labels": [b[0].strftime("%b") for b in bounds],
-            "series": [
-                {"name": label, "data": series[key]}
-                for key, label in families
-                if any(series[key])
-            ],
+            "series": payload_series,
             "cumulative_pct": cumulative,
-            "has_work": any(any(v) for v in series.values()),
+            "has_work": any(any(v) for v in series.values()) or any(others),
         }
 
     @staticmethod

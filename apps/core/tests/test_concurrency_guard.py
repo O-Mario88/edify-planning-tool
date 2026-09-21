@@ -132,42 +132,59 @@ class ConcurrencyGuardTest(SimpleTestCase):
         prod = (Path(settings.BASE_DIR) / "config/settings/prod.py").read_text()
         self.assertIn('"WEB_MAX_CONCURRENT_REQUESTS"', prod)
 
-    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=1, WEB_MAX_QUEUED_REQUESTS=1, WEB_QUEUE_TIMEOUT_SECONDS=5)
+    @override_settings(
+        WEB_MAX_CONCURRENT_REQUESTS=1,
+        WEB_MAX_QUEUED_REQUESTS=1,
+        WEB_QUEUE_TIMEOUT_SECONDS=5,
+    )
     def test_full_queue_refuses_promptly_and_recovers(self):
         import time
+
         view, entered, release = self._holding_view()
         guard = DatabaseConcurrencyGuardMiddleware(view)
         first, _ = self._hold_one_slot(guard, entered)
         second_result = {}
-        second = threading.Thread(target=lambda: second_result.setdefault('response', guard(self.factory.get('/planning'))))
+        second = threading.Thread(
+            target=lambda: second_result.setdefault(
+                "response", guard(self.factory.get("/planning"))
+            )
+        )
         second.start()
         try:
             deadline = time.monotonic() + 2
             while guard._waiting != 1 and time.monotonic() < deadline:
-                time.sleep(.01)
+                time.sleep(0.01)
             self.assertEqual(guard._waiting, 1)
             started = time.monotonic()
-            response = guard(self.factory.get('/planning'))
+            response = guard(self.factory.get("/planning"))
             self.assertEqual(response.status_code, 503)
-            self.assertLess(time.monotonic() - started, .5)
-            self.assertEqual(response['Cache-Control'], 'no-store')
+            self.assertLess(time.monotonic() - started, 0.5)
+            self.assertEqual(response["Cache-Control"], "no-store")
         finally:
             release.set()
             first.join(5)
             second.join(5)
-        self.assertEqual(second_result['response'].status_code, 200)
+        self.assertEqual(second_result["response"].status_code, 200)
         self.assertEqual(guard._waiting, 0)
-        self.assertEqual(guard(self.factory.get('/planning')).status_code, 200)
+        self.assertEqual(guard(self.factory.get("/planning")).status_code, 200)
 
     def test_busy_write_is_not_automatically_resubmitted(self):
         from apps.core.concurrency import busy_response
-        response = busy_response(self.factory.post('/planning'), retry_after=5)
+
+        response = busy_response(self.factory.post("/planning"), retry_after=5)
         self.assertNotIn(b'http-equiv="refresh"', response.content)
-        self.assertIn(b'http-equiv="refresh"', busy_response(self.factory.get('/planning'), retry_after=5).content)
+        self.assertIn(
+            b'http-equiv="refresh"',
+            busy_response(self.factory.get("/planning"), retry_after=5).content,
+        )
 
     def test_school_id_response_queries_remain_inside_database_guard(self):
         middleware = settings.MIDDLEWARE
         self.assertLess(
-            middleware.index("apps.core.concurrency.DatabaseConcurrencyGuardMiddleware"),
-            middleware.index("apps.core.school_identity_middleware.SchoolIdentityMiddleware"),
+            middleware.index(
+                "apps.core.concurrency.DatabaseConcurrencyGuardMiddleware"
+            ),
+            middleware.index(
+                "apps.core.school_identity_middleware.SchoolIdentityMiddleware"
+            ),
         )

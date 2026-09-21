@@ -36,11 +36,11 @@ Returned — Needs Correction
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name }}</a>
   {% else %}
   <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-rose-700" data-label="Returned By">{{ row.returned_by }}</td>
@@ -96,11 +96,11 @@ Waiting on Approval
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name }}</a>
   {% else %}
   <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
@@ -156,11 +156,11 @@ Partner Planned — Monitoring
 <td class="font-semibold text-slate-800 text-[13px]" data-label="School / Cluster">
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name }}</a>
   {% else %}
   <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
@@ -217,11 +217,11 @@ Finance / Accountability Pending
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name }}</a>
   {% else %}
   <span>{{ row.school_name }}</span>
   {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
+{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
 <td data-label="Payment Status">

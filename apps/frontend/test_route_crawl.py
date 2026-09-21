@@ -224,7 +224,7 @@ class KpiVisualAuditParserTests(SimpleTestCase):
 
     def test_an_empty_summary_is_still_a_fault(self):
         issues = self._issues(
-            '<section class="context-metrics" data-context-metrics>' "</section>"
+            '<section class="context-metrics" data-context-metrics></section>'
         )
         self.assertIn("context summary rendered no metrics at all", issues)
 

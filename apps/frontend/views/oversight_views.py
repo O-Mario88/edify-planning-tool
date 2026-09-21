@@ -501,6 +501,32 @@ def _cluster_kpis(totals) -> list[dict]:
     ]
 
 
+def _team_progress_rows(tabs, activity_family: str, *, own_label: str) -> list[dict]:
+    """One row per person for the progress chart, folded the way the tiles are.
+
+    The lead's own work sits first under their name, then each supervised
+    officer in tab order; the whole-team tab is the sum of them and is not
+    drawn again. Each row is folded from that person's items in the selected
+    activity family, so the chart, the tab counts and the tables below cannot
+    disagree. On the country lens the tabs are Programme Leads, and each Lead
+    is a row in the same way.
+    """
+    rows = []
+    for entry in tabs:
+        if entry["key"] == WHOLE_TEAM_TAB:
+            continue
+        label = own_label if entry["key"] == "mine" else entry["label"]
+        rows.append(
+            {
+                "name": label,
+                **oversight.summarize(
+                    oversight.in_family(entry["items"], activity_family)
+                ),
+            }
+        )
+    return rows
+
+
 def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list]:
     """Whole team, My Work, then one tab per supervised officer.
 
@@ -1173,6 +1199,11 @@ def team_planning_oversight_view(request):
         "country_lens": country_lens,
         "is_team_lens": not country_lens,
         "tabs": tabs,
+        "team_progress": _team_progress_rows(
+            tabs,
+            activity_family,
+            own_label=f"{getattr(request.user, 'name', '') or 'My work'} (you)",
+        ),
         "owner": "" if country_lens else selected,
         "program_lead": selected if country_lens else "",
         "summary": summary,
@@ -1325,12 +1356,18 @@ def country_planning_oversight_view(request):
 
     sys_pls = oversight.system_program_leads()
     summary = oversight.summarize(items)
+    groups = oversight.group_by_program_lead(items, program_leads=sys_pls)
     context = {
         **period,
         "program_lead": program_lead_id,
         "summary": summary,
         "kpis": _kpi_items(summary, country=True),
-        "groups": oversight.group_by_program_lead(items, program_leads=sys_pls),
+        "groups": groups,
+        # The progress chart reads the same per-Lead folds the team rows
+        # draw, one series per Programme Lead.
+        "team_progress": [
+            {"name": group["name"], **group["summary"]} for group in groups
+        ],
         "program_leads": _system_program_leads_for_filter(sys_pls),
         "advanced": advanced,
         "filter_options": _filter_options(available_items),

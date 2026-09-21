@@ -8,15 +8,31 @@ Provides database-driven core schools oversight data:
 
 from __future__ import annotations
 
-from apps.accounts.models import StaffProfile
 from apps.clusters.oversight_service import _label, _staff_directory, _supervisor_of
 from apps.core.rbac import EdifyRole
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope, team_oversight_schools
+from apps.core.scoping import owner_ids, resolve_user_scope
 from apps.core_schools.models import CorePlan
 from apps.planning.oversight_service import system_program_leads
 from apps.schools.models import School
 from django.db.models import Avg, Q
+
+
+#: The package counts a group of schools folds to, for the chart that reads
+#: one officer (or one Lead) as a series. Completed and target are summed over
+#: the group's schools, so the officer bars and the school rows agree.
+_PACKAGE_TOTAL_KEYS = (
+    "visits_completed",
+    "visits_target",
+    "trainings_completed",
+    "trainings_target",
+)
+_EMPTY_PACKAGE_TOTALS = {key: 0 for key in _PACKAGE_TOTAL_KEYS}
+
+
+def _add_package_totals(group: dict, row: dict) -> None:
+    for key in _PACKAGE_TOTAL_KEYS:
+        group[key] += int(row.get(key) or 0)
 
 
 def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
@@ -26,27 +42,34 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     # 1. Query scoped core schools
-    base = School.objects.filter(deleted_at__isnull=True, school_type="core").select_related(
-        "district", "region"
-    )
+    base = School.objects.filter(
+        deleted_at__isnull=True, school_type="core"
+    ).select_related("district", "region")
 
+    own_ids: set[str] = set()
     if is_programme_lead:
-        # Supervisees' core schools
+        # The lead's own core schools and their supervisees': a lead reads
+        # themselves first, then the team, on this page as on every other.
+        own_ids = set(owner_ids(principal))
         sup_ids = set(scope.supervised_staff_ids or [])
-        if not sup_ids:
+        people = own_ids | sup_ids
+        if not people:
             core_qs = School.objects.none()
         else:
             from apps.clusters.models import Cluster
+
             cluster_ids = set(
-                Cluster.objects.filter(responsible_staff_id__in=sup_ids).values_list("id", flat=True)
+                Cluster.objects.filter(responsible_staff_id__in=people).values_list(
+                    "id", flat=True
+                )
             )
             core_qs = base.filter(
-                Q(account_owner_id__in=sup_ids)
-                | Q(cluster_id__in=cluster_ids)
+                Q(account_owner_id__in=people) | Q(cluster_id__in=cluster_ids)
             )
     else:
         # Country or Regional scope
         from apps.core.scoping import school_country_q
+
         if scope.country:
             core_qs = base.filter(school_country_q(scope))
         else:
@@ -76,6 +99,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     # 2b. Cluster lookup
     cluster_ids = {s.cluster_id for s in schools if s.cluster_id}
     from apps.clusters.models import Cluster
+
     cluster_map = {c.id: c.name for c in Cluster.objects.filter(id__in=cluster_ids)}
 
     # 3. Core plans lookup for this FY
@@ -127,53 +151,76 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             ssa_avg = plan.baseline_average
         ssa_str = f"{round(ssa_avg, 1)}" if ssa_avg is not None else "—"
 
-        formatted_schools.append({
-            "id": s.id,
-            "school_id": s.school_id or s.id,
-            "name": s.name,
-            "district": getattr(s.district, "name", "") or "—",
-            "cluster_name": cluster_map.get(s.cluster_id, "—"),
-            "cluster_id": s.cluster_id,
-            "owner_id": getattr(owner, "id", None),
-            "owner_user_id": getattr(owner, "user_id", None),
-            "owner_name": _label(owner) if owner else (s.account_owner_name_raw or "Unassigned"),
-            "lead_id": getattr(lead, "id", None),
-            "lead_user_id": getattr(lead, "user_id", None),
-            "lead_name": _label(lead) if lead else "Unassigned",
-            "visits_completed": v_done,
-            "visits_target": v_target,
-            "trainings_completed": t_done,
-            "trainings_target": t_target,
-            "total_done": total_done,
-            "total_target": total_target,
-            "progress_pct": int(round((total_done / total_target) * 100)) if total_target > 0 else 0,
-            "is_package_complete": is_package_complete,
-            "status": plan.status if plan else "Not Initialized",
-            "ssa_avg": ssa_str,
-        })
+        formatted_schools.append(
+            {
+                "id": s.id,
+                "school_id": s.school_id or s.id,
+                "name": s.name,
+                "district": getattr(s.district, "name", "") or "—",
+                "cluster_name": cluster_map.get(s.cluster_id, "—"),
+                "cluster_id": s.cluster_id,
+                "owner_id": getattr(owner, "id", None),
+                "owner_user_id": getattr(owner, "user_id", None),
+                "owner_name": _label(owner)
+                if owner
+                else (s.account_owner_name_raw or "Unassigned"),
+                "lead_id": getattr(lead, "id", None),
+                "lead_user_id": getattr(lead, "user_id", None),
+                "lead_name": _label(lead) if lead else "Unassigned",
+                "visits_completed": v_done,
+                "visits_target": v_target,
+                "trainings_completed": t_done,
+                "trainings_target": t_target,
+                "total_done": total_done,
+                "total_target": total_target,
+                "progress_pct": int(round((total_done / total_target) * 100))
+                if total_target > 0
+                else 0,
+                "is_package_complete": is_package_complete,
+                "status": plan.status if plan else "Not Initialized",
+                "ssa_avg": ssa_str,
+            }
+        )
 
     # 6. Build hierarchy tabs
     if is_programme_lead:
-        # Level 1 tabs: CCEOs
-        cceo_groups: dict[str, dict] = {}
-        for row in formatted_schools:
-            oid = str(row["owner_id"] or row["owner_name"] or "__unassigned__")
-            cceo_groups.setdefault(
-                oid,
-                {
-                    "id": oid,
-                    "name": row["owner_name"],
-                    "schools": [],
-                    "count": 0,
-                    "completed": 0,
-                },
-            )
-            cceo_groups[oid]["schools"].append(row)
-            cceo_groups[oid]["count"] += 1
-            if row["is_package_complete"]:
-                cceo_groups[oid]["completed"] += 1
+        # Level 1 tabs: the lead's own core schools first, then each officer
+        # on the roster — holding core schools or not, so an officer with
+        # none is a zero row rather than a missing one and nobody's colour
+        # shifts when a colleague has nothing to show.
+        from apps.hr.team_roster import team_members
 
-        cceo_tabs = sorted(
+        def _group(oid: str, name: str, *, mine: bool = False) -> dict:
+            return {
+                "id": oid,
+                "name": name,
+                "tab_label": "My Core Schools" if mine else name,
+                "heading": "My Core Schools" if mine else f"{name}'s Core Schools",
+                "schools": [],
+                "count": 0,
+                "completed": 0,
+                **_EMPTY_PACKAGE_TOTALS,
+            }
+
+        own_label = f"{getattr(principal, 'name', '') or 'My work'} (you)"
+        mine = _group("my-core-schools", own_label, mine=True)
+        cceo_groups: dict[str, dict] = {
+            str(member.id): _group(str(member.id), _label(member))
+            for member in team_members(principal)
+        }
+        for row in formatted_schools:
+            if str(row["owner_id"]) in own_ids or str(row["owner_user_id"]) in own_ids:
+                group = mine
+            else:
+                oid = str(row["owner_id"] or row["owner_name"] or "__unassigned__")
+                group = cceo_groups.setdefault(oid, _group(oid, row["owner_name"]))
+            group["schools"].append(row)
+            group["count"] += 1
+            _add_package_totals(group, row)
+            if row["is_package_complete"]:
+                group["completed"] += 1
+
+        cceo_tabs = [mine] + sorted(
             cceo_groups.values(),
             key=lambda g: (g["name"] == "Unassigned", g["name"].casefold()),
         )
@@ -190,6 +237,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 "cceos": {},
                 "count": 0,
                 "completed": 0,
+                **_EMPTY_PACKAGE_TOTALS,
             }
             leads_data.append(pl_dict)
             for pid in pl["ids"]:
@@ -201,6 +249,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             "cceos": {},
             "count": 0,
             "completed": 0,
+            **_EMPTY_PACKAGE_TOTALS,
         }
 
         for row in formatted_schools:
@@ -211,6 +260,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 target_pl = unassigned_pl
 
             target_pl["count"] += 1
+            _add_package_totals(target_pl, row)
             if row["is_package_complete"]:
                 target_pl["completed"] += 1
 
@@ -223,10 +273,12 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                     "schools": [],
                     "count": 0,
                     "completed": 0,
+                    **_EMPTY_PACKAGE_TOTALS,
                 },
             )
             cceo_entry["schools"].append(row)
             cceo_entry["count"] += 1
+            _add_package_totals(cceo_entry, row)
             if row["is_package_complete"]:
                 cceo_entry["completed"] += 1
 

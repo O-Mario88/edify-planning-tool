@@ -2,16 +2,12 @@ const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 const {mapInView}=require('./helpers/map');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
-// The map is a SQUARE sheet that FITS THE WINDOW. Two owner instructions meet
-// here: "make it fit exactly so that the users don't have to scroll"
-// (2026-09-16) and "The map should be square much as it will fill the desktop
-// page. i dont mind the dead space on the sides" (2026-09-17). The second is
-// why the ratio is 1:1 rather than the old 30:42 print sheet; the first is why
-// the sheet is never taller than the room left under the page and card
-// headers. The two agree: a square that spends its height leaves its spare
-// room at the sides, which is the dead space the owner named.
-// 1cm is 96/2.54 CSS pixels.
-const CM=96/2.54, SHEET_W=30*CM, RATIO=1;
+// The map is a full-width sheet that FITS THE WINDOW. "Make it fit exactly so
+// that the users don't have to scroll" (owner, 2026-09-16) still holds; since
+// 2026-09-20 the sheet is the width of its card at up to 600px tall rather
+// than the square of 2026-09-17, and its height gives way to the room left
+// under the page and card headers on a laptop.
+const SHEET_H=600;
 test('the map fits the window on landscape laptop and desktop windows',async({page})=>{
  test.setTimeout(120000);
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
@@ -26,10 +22,9 @@ test('the map fits the window on landscape laptop and desktop windows',async({pa
   expect(map.bottom,label).toBeLessThanOrEqual(height);
   const canvas=await page.locator('.sr-map-canvas').boundingBox();
   const r=await svg.boundingBox();
-  // Square, so the country is never stretched.
-  expect(Math.abs(r.height-r.width*RATIO),label).toBeLessThanOrEqual(2);
-  // Never wider than the sheet's cap, nor than the card holding it.
-  expect(r.width,label).toBeLessThanOrEqual(Math.min(SHEET_W,canvas.width)+2);
+  // Never taller than the sheet, nor wider than the card holding it.
+  expect(r.height,label).toBeLessThanOrEqual(SHEET_H+2);
+  expect(r.width,label).toBeLessThanOrEqual(canvas.width+2);
   // It still uses the height it is given rather than collapsing to a stamp.
   expect(r.height,label).toBeGreaterThan(280);
   expect(r.x,label).toBeGreaterThanOrEqual(0);expect(r.x+r.width,label).toBeLessThanOrEqual(width);

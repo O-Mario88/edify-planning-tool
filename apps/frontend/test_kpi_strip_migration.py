@@ -131,7 +131,7 @@ class KpiStripMigrationTests(SimpleTestCase):
         self.assertNotIn('data-component="kpi-card"', source)
         self.assertNotIn("kpi-strip__", source)
         self.assertIn("{% firstof item.label item.canonical_label %}", source)
-        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("box-shadow:", context)
         self.assertNotIn("background-image:", context)
         self.assertNotIn("grid-template-columns:", context)

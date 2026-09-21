@@ -380,7 +380,7 @@ class CentralizedCostingTest(APITestCase):
             line for line in prev["lines"] if line["key"].endswith("trainings_meals")
         )
         self.assertEqual((meals["qty"], meals["amount"]), (12, 72000))
-        self.assertEqual(meals["label"], "Cluster Meetings/ Trainings - Meals")
+        self.assertEqual(meals["label"], "Cluster Meeting - Participant Meals")
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertEqual(
             labels,

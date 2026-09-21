@@ -723,7 +723,7 @@ def disburse(request_id: str, data: dict, principal) -> dict:
             floors = {adv_id: int(value) for adv_id, value in exact}
             remainder = disbursed_amount - sum(floors.values())
             by_fraction = sorted(
-                exact, key=lambda item: (item[1] - int(item[1])), reverse=True
+                exact, key=lambda item: item[1] - int(item[1]), reverse=True
             )
             for adv_id, _value in by_fraction[: max(0, remainder)]:
                 floors[adv_id] += 1

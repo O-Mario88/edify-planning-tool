@@ -18,15 +18,27 @@ for(const [role,user,routes] of roles)test('populated landscape pages: '+role,as
   }
   for(const [width,height] of (['/team-targets','/hr-today','/leave/approvals/','/analytics'].includes(url) ? [[390,844],[768,1024],[1280,720],[1920,1080]] : [[1280,720],[1920,1080]])){
    await page.setViewportSize({width,height});
+   // The rails refit 150ms after a resize (micro-ux.js), so let them settle before reading them.
+   if(url==='/team-targets')await page.waitForTimeout(400);
    await page.waitForFunction(()=>[...document.querySelectorAll('.apexcharts-canvas')].every(e=>e.getBoundingClientRect().width<=e.parentElement.getBoundingClientRect().width+2),null,{timeout:2000}).catch(()=>{});
    for(const theme of ['light','dark','theme-blue']){
    await page.evaluate(t=>{const root=document.documentElement;root.classList.remove('light','dark','theme-dark','theme-blue');root.classList.add(t==='light'?'light':'dark');if(t!=='light')root.classList.add(t==='dark'?'theme-dark':'theme-blue');root.dataset.theme=t==='theme-blue'?'blue':t},theme);
    const data=await page.evaluate(()=>({url:location.pathname,width:innerWidth,height:innerHeight,pageWidth:document.documentElement.scrollWidth,workspaceOverflow:document.querySelector('main').scrollWidth-document.querySelector('main').clientWidth,title:document.querySelector('h1')?.textContent?.trim(),tables:document.querySelectorAll('table').length,firstTableTop:Math.round(document.querySelector('main table')?.getBoundingClientRect().top||0),emptyQueueHeights:[...document.querySelectorAll('.hr-today-queue--empty')].map(e=>Math.round(e.getBoundingClientRect().height)),leaveQueueHeight:Math.round(document.querySelector('.leave-approval-queue')?.getBoundingClientRect().height||0)}));
    data.theme=theme;results.push(data);expect(data.pageWidth,url).toBeLessThanOrEqual(width+2);expect(data.workspaceOverflow,url).toBeLessThanOrEqual(2);
    if(url==='/team-targets'){
-    const filter=page.getByRole('button',{name:'High risk',exact:true});
+    // By text, not role: once the rail folds the filter into its More menu
+    // (micro-ux.js, at a phone width) the button is a menuitem.
+    const filter=page.locator('main button').filter({hasText:/^High risk$/});
+    // Open the menu the way a reader would and measure the filter where
+    // it sits, which is still inside the window.
+    // (`has` resolves inside the menu, so the inner locator carries no `main`.)
+    const more=page.locator('main .edify-rail-more',{has:page.locator('button').filter({hasText:/^High risk$/})});
+    const folded=await more.count()>0;
+    if(folded)await more.locator('summary').click();
     await filter.click();await expect(filter).toHaveAttribute('aria-pressed','true');
-    const r=await filter.boundingBox();expect(r.x+r.width).toBeLessThanOrEqual(width);
+    if(folded)await more.locator('summary').click();
+    const r=await filter.boundingBox();expect(r,url+' '+width+' active filter has a box').toBeTruthy();expect(r.x+r.width).toBeLessThanOrEqual(width);
+    if(folded)await page.keyboard.press('Escape');
    }
    if(url==='/hr-today')for(const card of await page.locator('.hr-today-queue--empty').all())expect((await card.boundingBox()).height).toBeLessThan(85);
    if(width===1280 && theme==='light')await page.screenshot({path:path.join('test-results/rectangle-live',user+'-'+url.replaceAll('/','_')+'.png')});

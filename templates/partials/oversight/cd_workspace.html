@@ -15,7 +15,7 @@ summary and the detail are the same numbers by construction.
 <section class="space-y-4" x-data="{ open: null }" data-mobile-table="scroll">
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
-  {% summary_chart summary "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress" %}
+  {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by Programme Lead" "Each Lead's team · "|add:period_label %}
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <details class="oversight-filters">
@@ -35,12 +35,13 @@ summary and the detail are the same numbers by construction.
   {% if groups %}
   <div x-data="{ activeLead: '{{ groups.0.id|default:"" }}' }" class="space-y-4">
     {# ── Primary Tabs: Program Leads ────────────────────────────────────── #}
-    <div class="border-b edify-border bg-white dark:bg-slate-900 rounded-t-xl px-2 pt-2 shadow-xs">
+    <div class="border-b edify-border edify-surface-raised rounded-t-xl px-2 pt-2 shadow-xs">
       <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Program Leads">
         {% for group in groups %}
         <button type="button"
                 role="tab"
                 :aria-selected="activeLead === '{{ group.id }}'"
+                aria-controls="lead-panel-{{ forloop.counter }}"
                 @click="activeLead = '{{ group.id }}'; if ($refs.panel_{{ forloop.counter }} && !$refs.panel_{{ forloop.counter }}.dataset.loaded) { htmx.trigger($refs.panel_{{ forloop.counter }}, 'load-team'); $refs.panel_{{ forloop.counter }}.dataset.loaded = 'true'; }"
                 :class="activeLead === '{{ group.id }}' ? 'border-primary text-primary font-bold bg-slate-50/80 dark:bg-slate-800/80 shadow-xs' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50/50'"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
@@ -62,18 +63,19 @@ summary and the detail are the same numbers by construction.
     <div x-show="activeLead === '{{ group.id }}'"
          x-cloak
          id="lead-panel-{{ forloop.counter }}"
+         role="tabpanel"
          class="space-y-4">
 
       {# ── Program Lead Executive KPI Bar & Action ──────────────────────── #}
-      <div class="card p-4 bg-white dark:bg-slate-900 border edify-border shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div class="card p-4 edify-surface-raised border edify-border shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4 sm:gap-6">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+            <div class="w-10 h-10 rounded-full edify-primary-solid text-white flex items-center justify-center font-bold text-sm">
               {{ group.name|slice:":2"|upper }}
             </div>
             <div>
               <h3 class="font-bold text-base text-slate-900 dark:text-white">
-                {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline hover:text-blue-600">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
+                {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline edify-primary-text-hover">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
               </h3>
               <p class="edify-text-caption edify-text-muted">Program Lead Oversight Portfolio</p>
             </div>
@@ -83,23 +85,23 @@ summary and the detail are the same numbers by construction.
 
           <div class="flex flex-wrap items-center gap-3 text-xs">
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">Planned</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">Planned</span>
               <span class="font-bold text-sm text-slate-900 dark:text-white tabular-nums">{{ group.summary.total_planned }}</span>
             </div>
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">Staff</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">Staff</span>
               <span class="font-bold text-sm text-slate-900 dark:text-white tabular-nums">{{ group.summary.staff_scheduled }}</span>
             </div>
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">Partner</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">Partner</span>
               <span class="font-bold text-sm text-slate-900 dark:text-white tabular-nums">{{ group.summary.partner_scheduled }}</span>
             </div>
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">Budget</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">Budget</span>
               <span class="font-bold text-sm text-slate-900 dark:text-white tabular-nums">UGX {{ group.summary.planned_budget|intcomma }}</span>
             </div>
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">At Risk</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">At Risk</span>
               {% if group.summary.at_risk %}
               <span class="pill pill-danger font-bold">{{ group.summary.at_risk }} at risk</span>
               {% else %}
@@ -107,7 +109,7 @@ summary and the detail are the same numbers by construction.
               {% endif %}
             </div>
             <div class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border edify-border">
-              <span class="edify-text-muted block text-[11px] font-medium uppercase">Execution</span>
+              <span class="edify-text-muted block text-xs font-medium uppercase">Execution</span>
               {% if group.summary.execution_progress is None %}
               <span class="edify-text-muted">—</span>
               {% elif group.summary.execution_progress >= 75 %}

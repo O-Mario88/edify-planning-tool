@@ -122,8 +122,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8765")
     parser.add_argument("--email", default="domario@edify.org")
-    parser.add_argument("--additional-email", action="append", default=[],
-                        help="Additional existing test account; repeat to model separate user caches")
+    parser.add_argument(
+        "--additional-email",
+        action="append",
+        default=[],
+        help="Additional existing test account; repeat to model separate user caches",
+    )
     parser.add_argument(
         "--password-env",
         default="EDIFY_PROBE_PASSWORD",
@@ -142,7 +146,9 @@ def main() -> int:
     password = os.environ.get(args.password_env)
     emails = list(dict.fromkeys([args.email, *args.additional_email]))
     cookies = [
-        remote_login_cookie(args.base_url, email, password) if password else database_cookie(email)
+        remote_login_cookie(args.base_url, email, password)
+        if password
+        else database_cookie(email)
         for email in emails
     ]
     next_path = 0
@@ -237,7 +243,10 @@ def main() -> int:
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=args.concurrency
     ) as executor:
-        futures = [executor.submit(worker, cookies[i % len(cookies)]) for i in range(args.concurrency)]
+        futures = [
+            executor.submit(worker, cookies[i % len(cookies)])
+            for i in range(args.concurrency)
+        ]
         for future in futures:
             future.result()
     elapsed = time.monotonic() - started

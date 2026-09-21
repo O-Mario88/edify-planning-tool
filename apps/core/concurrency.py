@@ -128,7 +128,11 @@ def busy_response(request, *, retry_after: int) -> HttpResponse:
     else:
         response = HttpResponse(
             '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-            + (f'<meta http-equiv="refresh" content="{retry_after}">' if request.method in {"GET", "HEAD"} else "")
+            + (
+                f'<meta http-equiv="refresh" content="{retry_after}">'
+                if request.method in {"GET", "HEAD"}
+                else ""
+            )
             + '<meta name="viewport" content="width=device-width, initial-scale=1">'
             "<title>Busy · Edify</title></head>"
             '<body style="font-family:system-ui,sans-serif;padding:2rem;color:#1e293b">'

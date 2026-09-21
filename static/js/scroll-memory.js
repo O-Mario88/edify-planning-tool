@@ -81,7 +81,7 @@
     if (_cachedSidebar && _cachedSidebar.isConnected) return _cachedSidebar;
     var containers = document.querySelectorAll(".app-sidebar__nav-container");
     for (var i = 0; i < containers.length; i++) {
-      if (containers[i].offsetParent !== null) {
+      if (containers[i].clientHeight > 0 && containers[i].offsetParent !== null) {
         _cachedSidebar = containers[i];
         return containers[i];
       }

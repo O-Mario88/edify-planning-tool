@@ -570,7 +570,9 @@ def cluster_schedule_activity_view(request):
                 response = _saved_without_leaving(
                     msg,
                     plan_url=plan_url,
-                    plan_link_label="Open in My Plan" if lands_here else "Open in Calendar",
+                    plan_link_label="Open in My Plan"
+                    if lands_here
+                    else "Open in Calendar",
                 )
                 response["HX-Trigger"] = json.dumps(
                     {"close-drawer": True, "refresh-clusters": True}

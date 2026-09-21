@@ -230,7 +230,7 @@ def seed_db(admin2: pd.DataFrame, combined: pd.DataFrame) -> dict:
 def validate(df: pd.DataFrame) -> None:
     districts = df["District"].nunique()
     sub_counties = df["Sub_County"].nunique()
-    print(f"\n{'─'*50}")
+    print(f"\n{'─' * 50}")
     print(f"  Distinct Regions    : {df['Region'].nunique()}")
     print(f"  Distinct Districts  : {districts}")
     print(f"  Distinct Sub-Counties: {sub_counties}")
@@ -239,7 +239,7 @@ def validate(df: pd.DataFrame) -> None:
         print(f"  ⚠ WARNING: Only {districts} districts found (expected ≥ 100)")
     if sub_counties < 500:
         print(f"  ⚠ WARNING: Only {sub_counties} sub-counties found (expected ≥ 500)")
-    print(f"{'─'*50}\n")
+    print(f"{'─' * 50}\n")
 
 
 def main():

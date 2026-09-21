@@ -85,8 +85,7 @@ class PartnerSlotConstraintTest(PartnerSlotFixture):
             lambda: self.assign(
                 support_type="core_visit", visit_number="", training_number=""
             ),
-            why="NULL and empty string both mean 'this part of the slot is "
-            "not used'",
+            why="NULL and empty string both mean 'this part of the slot is not used'",
         )
 
     def test_a_training_slot_collides_on_its_own_number(self):

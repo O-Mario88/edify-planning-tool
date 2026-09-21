@@ -152,14 +152,13 @@ class ProfessionalDevelopmentJourneyTest(TestCase):
         self.assertIn(
             "exceeds your remaining PD fund",
             str(caught.exception),
-            "the refusal does not say what is wrong, so the person cannot act " "on it",
+            "the refusal does not say what is wrong, so the person cannot act on it",
         )
         over.refresh_from_db()
         self.assertEqual(
             over.status,
             PDStatus.DRAFT,
-            "the over-budget request was left in a submitted state despite "
-            "the refusal",
+            "the over-budget request was left in a submitted state despite the refusal",
         )
 
     def test_a_second_request_within_what_is_left_still_goes_through(self):

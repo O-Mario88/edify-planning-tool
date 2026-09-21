@@ -523,17 +523,25 @@ def _planning_day_context(
     if input.get("schoolId"):
         from apps.schools.models import School
 
-        school = School.objects.select_related("district").filter(
-            Q(id=input["schoolId"]) | Q(school_id=input["schoolId"])
-        ).first()
+        school = (
+            School.objects.select_related("district")
+            .filter(Q(id=input["schoolId"]) | Q(school_id=input["schoolId"]))
+            .first()
+        )
         destination = school.district if school else None
     elif input.get("clusterId"):
         from apps.clusters.models import Cluster
 
-        cluster = Cluster.objects.select_related("district").filter(pk=input["clusterId"]).first()
+        cluster = (
+            Cluster.objects.select_related("district")
+            .filter(pk=input["clusterId"])
+            .first()
+        )
         destination = cluster.district if cluster else None
     if destination:
-        input["districtType"] = district_type_for_staff(responsible_user_id, destination) or "primary"
+        input["districtType"] = (
+            district_type_for_staff(responsible_user_id, destination) or "primary"
+        )
     from apps.budget.costing import _days_of
 
     if (

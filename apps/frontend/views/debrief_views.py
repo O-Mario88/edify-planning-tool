@@ -441,8 +441,8 @@ def field_debrief_activity_options_view(request):
 
     options = "".join(
         f'<option value="{escape(a.id)}">{escape(a.get_activity_type_display())} — '
-        f'{escape(a.school.name) if a.school else "No school"} '
-        f'({a.scheduled_date.strftime("%d %b") if a.scheduled_date else "unscheduled"})</option>'
+        f"{escape(a.school.name) if a.school else 'No school'} "
+        f"({a.scheduled_date.strftime('%d %b') if a.scheduled_date else 'unscheduled'})</option>"
         for a in qs
     )
     return HttpResponse(

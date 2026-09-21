@@ -1909,7 +1909,12 @@ def create(
     if not is_partner and school is not None and school.district_id:
         from apps.daily_visit_batches.districts import district_type_for_staff
 
-        data = {**data, "districtType": district_type_for_staff(responsible_staff_id, school.district)}
+        data = {
+            **data,
+            "districtType": district_type_for_staff(
+                responsible_staff_id, school.district
+            ),
+        }
 
     monitored_by_staff_id = principal_owner_id if is_partner else None
 

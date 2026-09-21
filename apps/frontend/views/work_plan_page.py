@@ -222,8 +222,7 @@ def _date_label(start, end) -> str:
                 f"{end.day} {end.strftime('%B %Y')}"
             )
         return (
-            f"{start.day} {start.strftime('%B %Y')} – "
-            f"{end.day} {end.strftime('%B %Y')}"
+            f"{start.day} {start.strftime('%B %Y')} – {end.day} {end.strftime('%B %Y')}"
         )
     return f"{start.day} {start.strftime('%B %Y')}"
 

@@ -269,7 +269,7 @@ def weighted_split(total: Decimal, weights: list[int | float]) -> list[Decimal]:
     # Distribute leftover cents to the largest fractional parts, first-come on
     # ties so the result is deterministic.
     order = sorted(
-        range(len(shares)), key=lambda i: (shares[i] - floors[i]), reverse=True
+        range(len(shares)), key=lambda i: shares[i] - floors[i], reverse=True
     )
     for i in order[:remainder]:
         floors[i] += 1
@@ -1150,7 +1150,7 @@ def _assert_may_approve_spread(allocation: MilestoneAllocation, principal) -> No
     if allocation.allocated_to_type == "team":
         if role not in DISTRIBUTION_APPROVER_ROLES:
             raise BadRequest(
-                "The Program Lead quarterly spread is approved by Impact " "Assessment."
+                "The Program Lead quarterly spread is approved by Impact Assessment."
             )
         return
     if allocation.allocated_to_type == "employee":
@@ -1170,7 +1170,7 @@ def _assert_may_approve_spread(allocation: MilestoneAllocation, principal) -> No
             ).exists():
                 return
         raise BadRequest(
-            "A CCEO quarterly spread is approved by their supervising " "Program Lead."
+            "A CCEO quarterly spread is approved by their supervising Program Lead."
         )
 
 

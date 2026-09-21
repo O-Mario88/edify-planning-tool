@@ -190,15 +190,19 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self._as(self.pl)
         queue = self._get("/api/pl/review-queue", 200)
         self.assertTrue(any(row["id"] == activity_id for row in queue))
+        # The supervising Program Lead's confirmation approves the completion
+        # and verifies its evidence in one act (pl_review.services.confirm,
+        # 2026-09-19); Impact Assessment certifies partner-delivered work only.
         pl_confirmed = self._post(
             f"/api/pl/review-queue/{activity_id}/confirm", {}, 200
         )
-        self.assertEqual(pl_confirmed["status"], "awaiting_ia_verification")
+        self.assertEqual(pl_confirmed["status"], "ia_verified")
+        self.assertEqual(pl_confirmed["iaVerificationStatus"], "confirmed")
 
+        # The IA door refuses staff work that is already verified, so the
+        # verification cannot be stamped twice by two different hands.
         self._as(self.ia)
-        ia_verified = self._post(f"/api/activities/{activity_id}/ia-confirm", {}, 200)
-        self.assertEqual(ia_verified["status"], "ia_verified")
-        self.assertEqual(ia_verified["iaVerificationStatus"], "confirmed")
+        self._post(f"/api/activities/{activity_id}/ia-confirm", {}, 400)
 
         self._as(self.cceo)
         budget = self._get("/api/budget/from-schedule?fy=2026", 200)

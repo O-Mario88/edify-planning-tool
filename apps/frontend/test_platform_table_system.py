@@ -47,9 +47,7 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         # `display: none` Alpine writes to hide a conditional row — an empty
         # state, a "show more" row or a detail row reappeared on phones.
         guard = (
-            ':not([style*="display: none"])'
-            ':not([style*="display:none"])'
-            ":not([x-cloak])"
+            ':not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])'
         )
         self.assertIn(f"> :is(thead, tbody, tfoot) > tr{guard} {{", styles)
         self.assertIn("display: table-row !important", styles)
@@ -106,7 +104,7 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         styles = _read("static/css/pages.css")
         ssa_template = _read("templates/partials/dashboards/pl/ssa_intelligence.html")
         selector = (
-            ".pl-dashboard-stack :is(.pl-ssa-matrix-scroll, " ".pl-urgent-table-scroll)"
+            ".pl-dashboard-stack :is(.pl-ssa-matrix-scroll, .pl-urgent-table-scroll)"
         )
         rule = styles.split(selector, 1)[1].split("}", 1)[0]
 

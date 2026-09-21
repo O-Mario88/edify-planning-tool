@@ -383,7 +383,7 @@ class PDApprovalRoutingService:
             if over_allocation and not (req.exception_reason or "").strip():
                 raise BadRequest(
                     f"Requested amount exceeds your remaining PD fund "
-                    f"({req.currency} {remaining/100:,.0f} available) — provide a funding "
+                    f"({req.currency} {remaining / 100:,.0f} available) — provide a funding "
                     "exception reason to proceed."
                 )
             req.is_exception = over_allocation

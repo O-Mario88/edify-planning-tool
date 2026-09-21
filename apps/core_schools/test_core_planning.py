@@ -870,10 +870,12 @@ class CoreSchoolsPlanningTest(TestCase):
     # ── 24: real completion path advances the slot + package counters ───────
     def _complete_core_activity(self, act, sf_id, extra=None):
         """Drive an Activity through the REAL reachable completion path — the
-        same complete()/PL-review/IA-verify functions the My Plan drawer and
-        PL/IA queues call — rather than the DRF-only slot_action()."""
+        same complete()/PL-review functions the My Plan drawer and the PL
+        queue call — rather than the DRF-only slot_action(). Since
+        f0debc2 the Program Lead's confirmation verifies the work; Impact
+        Assessment certifies partner-delivered work only."""
         from apps.activities.services import complete as complete_activity
-        from apps.activities.services import ia_confirm, start_completion
+        from apps.activities.services import start_completion
         from apps.evidence.models import EvidenceRecord
         from apps.pl_review.services import confirm as pl_confirm
 
@@ -902,10 +904,8 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertEqual(act.status, "submitted_to_pl")  # CCEO -> PL review first
         pl_confirm(act.id, self.pl)
         act.refresh_from_db()
-        self.assertIsNotNone(act.submitted_to_ia_at)
-        ia_confirm(act.id, principal=self.ia)
-        act.refresh_from_db()
         self.assertEqual(act.status, "ia_verified")
+        self.assertEqual(act.ia_verification_status, "confirmed")
         return act
 
     def test_completing_core_visit_advances_slot_and_plan_counters(self):

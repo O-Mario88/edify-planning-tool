@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 from typing import Any
 
 from django.db.models import Q
@@ -90,12 +89,6 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
 
     own_ids = _user_owner_ids(user)
 
-    # Resolve users map for staff name display
-    users_map: dict[str, str] = {u.id: u.name for u in User.objects.all()}
-    for sp in StaffProfile.objects.select_related("user"):
-        if sp.user_id and sp.user and sp.user.name:
-            users_map[sp.id] = sp.user.name
-
     team_member_ids: list[str] = []
     team_members_by_id: dict[str, Any] = {}
     if is_pl:
@@ -108,7 +101,11 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             team_members_by_id[m.id] = {"id": m.id, "name": m_name, "profile": m}
             if m.user_id:
                 team_member_ids.append(m.user_id)
-                team_members_by_id[m.user_id] = {"id": m.id, "name": m_name, "profile": m}
+                team_members_by_id[m.user_id] = {
+                    "id": m.id,
+                    "name": m_name,
+                    "profile": m,
+                }
 
     # Query all active, past-due activities for this user (or team if PL)
     all_scoped_ids = list(set(own_ids + team_member_ids))
@@ -141,6 +138,30 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     if not activities:
         return _empty_past_due_context(is_pl)
 
+    # Names for the people on these rows only, in both id spaces, from one
+    # profile query; a bare User id without a profile costs a second query
+    # only when one appears. Reading every user and every profile on each
+    # dashboard open was two whole-table queries for a handful of names.
+    people = {a.responsible_staff_id for a in activities} | {
+        a.monitored_by_staff_id for a in activities
+    }
+    people.discard(None)
+    people.discard("")
+    users_map: dict[str, str] = {}
+    for sp in StaffProfile.objects.select_related("user").filter(
+        Q(id__in=people) | Q(user_id__in=people)
+    ):
+        name = sp.user.name if sp.user_id and sp.user else ""
+        if name:
+            users_map[sp.id] = name
+            if sp.user_id:
+                users_map[sp.user_id] = name
+    unresolved = [pid for pid in people if pid not in users_map]
+    if unresolved:
+        users_map.update(
+            User.objects.filter(id__in=unresolved).values_list("id", "name")
+        )
+
     # Query which activities already have an active reminder notification
     active_reminder_act_ids = set(
         Notification.objects.filter(
@@ -163,9 +184,8 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     team_count = 0
 
     for a in activities:
-        is_own = (
-            a.responsible_staff_id in own_ids
-            or (not a.responsible_staff_id and a.monitored_by_staff_id in own_ids)
+        is_own = a.responsible_staff_id in own_ids or (
+            not a.responsible_staff_id and a.monitored_by_staff_id in own_ids
         )
         if is_own:
             own_count += 1
@@ -177,7 +197,9 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
         )
         first_name = owner_name.split()[0] if owner_name else "Team Member"
 
-        planned_dt = a.planned_date or (a.scheduled_date.date() if a.scheduled_date else None)
+        planned_dt = a.planned_date or (
+            a.scheduled_date.date() if a.scheduled_date else None
+        )
         days_overdue = (today - planned_dt).days if planned_dt else 0
 
         cluster_district_name = ""
@@ -216,9 +238,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
             "school_id": a.school.school_id if a.school else "",
             "school_name": (
-                a.school.name
-                if a.school
-                else (a.cluster.name if a.cluster else "—")
+                a.school.name if a.school else (a.cluster.name if a.cluster else "—")
             ),
             "school_district": (
                 a.school.district.name
@@ -227,9 +247,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             ),
             "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_name": (
-                a.cluster.name
-                if a.cluster
-                else (a.school.name if a.school else "—")
+                a.cluster.name if a.cluster else (a.school.name if a.school else "—")
             ),
             "cluster_district": cluster_district_name or "—",
             "place_url": (
@@ -237,18 +255,17 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
                 if a.cluster
                 else (f"/schools/{a.school.id}" if a.school else "")
             ),
-            "purpose": (
-                a.activity_purpose_text
-                or a.get_activity_type_display()
-            ),
+            "purpose": (a.activity_purpose_text or a.get_activity_type_display()),
             "focus_intervention": (
-                a.get_focus_intervention_display()
-                if a.focus_intervention
-                else "—"
+                a.get_focus_intervention_display() if a.focus_intervention else "—"
             ),
             "budget_total": minimum_amounts.get(a.id, 0),
-            "budget_status": "Budget Planned" if a.schedule_cost_lines.exists() else "No Budget",
-            "budget_status_color": "blue" if a.schedule_cost_lines.exists() else "slate",
+            "budget_status": "Budget Planned"
+            if a.schedule_cost_lines.exists()
+            else "No Budget",
+            "budget_status_color": "blue"
+            if a.schedule_cost_lines.exists()
+            else "slate",
             "verification_status": "Pending",
             "verification_color": "purple",
             "expected_participants": a.expected_participants or "—",

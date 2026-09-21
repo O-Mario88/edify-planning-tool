@@ -358,7 +358,7 @@ class StaffPDService:
         kpis = [
             render_precomputed_metric_item(
                 "professional_development_services_annual_pd_allocation",
-                f"{bal['currency']} {bal['annual_allocation']/100:,.0f}",
+                f"{bal['currency']} {bal['annual_allocation'] / 100:,.0f}",
                 key="allocation",
                 icon="currency",
                 variant="primary",
@@ -366,27 +366,27 @@ class StaffPDService:
             ),
             render_precomputed_metric_item(
                 "professional_development_services_committed_amount",
-                f"{bal['currency']} {bal['committed']/100:,.0f}",
+                f"{bal['currency']} {bal['committed'] / 100:,.0f}",
                 key="committed",
                 icon="chart",
                 variant="default",
-                helper=f"{round(bal['committed']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+                helper=f"{round(bal['committed'] / bal['annual_allocation'] * 100) if bal['annual_allocation'] else 0}% of allocation",
             ),
             render_precomputed_metric_item(
                 "professional_development_services_funds_used_accounted",
-                f"{bal['currency']} {bal['accounted']/100:,.0f}",
+                f"{bal['currency']} {bal['accounted'] / 100:,.0f}",
                 key="used",
                 icon="accountability",
                 variant="default",
-                helper=f"{round(bal['accounted']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+                helper=f"{round(bal['accounted'] / bal['annual_allocation'] * 100) if bal['annual_allocation'] else 0}% of allocation",
             ),
             render_precomputed_metric_item(
                 "professional_development_services_remaining_fund",
-                f"{bal['currency']} {bal['remaining']/100:,.0f}",
+                f"{bal['currency']} {bal['remaining'] / 100:,.0f}",
                 key="remaining",
                 icon="shield",
                 variant="danger" if bal["remaining"] <= 0 else "success",
-                helper=f"{round(bal['remaining']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+                helper=f"{round(bal['remaining'] / bal['annual_allocation'] * 100) if bal['annual_allocation'] else 0}% of allocation",
             ),
             render_precomputed_metric_item(
                 "professional_development_services_active_courses",
@@ -764,7 +764,7 @@ class StaffPDService:
             "end_date": r.end_date,
             "status": r.get_status_display(),
             "status_key": r.status,
-            "funding_used": f"{r.currency} {r.requested_amount_cents/100:,.0f}"
+            "funding_used": f"{r.currency} {r.requested_amount_cents / 100:,.0f}"
             if r.requested_amount_cents
             else (
                 "Self-Funded" if r.funding_type == "self_funded" else f"{r.currency} 0"

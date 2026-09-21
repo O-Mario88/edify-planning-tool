@@ -331,8 +331,7 @@ class ProgrammeAdminBudgetClassificationTest(TestCase):
         from apps.frontend.views.budget_views import _build_fund_requests_context
 
         query = (
-            f"?fy={self.activity.fy}&month={self.when:%B}"
-            f"&week={_monday(0).isoformat()}"
+            f"?fy={self.activity.fy}&month={self.when:%B}&week={_monday(0).isoformat()}"
         )
         request = RequestFactory().get("/fund-requests/weekly" + query)
         request.user = self.user

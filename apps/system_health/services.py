@@ -1048,8 +1048,11 @@ def _workflow_issues() -> dict:
     ).count()
 
     from apps.accounts.models import StaffProfile
+
     _home_districts = {}
-    for _profile_id, _user_id, _home_id in StaffProfile.objects.values_list("id", "user_id", "primary_district_id"):
+    for _profile_id, _user_id, _home_id in StaffProfile.objects.values_list(
+        "id", "user_id", "primary_district_id"
+    ):
         _home_districts[str(_profile_id)] = _home_id
         _home_districts[str(_user_id)] = _home_id
     mixed_district_batches = 0
@@ -1078,7 +1081,15 @@ def _workflow_issues() -> dict:
         for _a in _member_activities:
             if _a.school_id and _a.school.district_id:
                 _home = _home_districts.get(str(_batch.responsible_user))
-                _type = ("primary" if str(_home) == str(_a.school.district_id) else "secondary") if _home else _a.school.district.district_type
+                _type = (
+                    (
+                        "primary"
+                        if str(_home) == str(_a.school.district_id)
+                        else "secondary"
+                    )
+                    if _home
+                    else _a.school.district.district_type
+                )
                 if _type == "secondary":
                     _live_district_ids.add(_a.school.district_id)
                 if _type:

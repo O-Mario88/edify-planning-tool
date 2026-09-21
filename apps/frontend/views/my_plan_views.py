@@ -1705,7 +1705,9 @@ def evidence_upload_drawer_view(request, activity_id):
         if staff_profile.google_drive_folder_url:
             google_drive_url = staff_profile.google_drive_folder_url
         else:
-            supervisor_link = staff_profile.supervisor_links.select_related("supervisor").first()
+            supervisor_link = staff_profile.supervisor_links.select_related(
+                "supervisor"
+            ).first()
             if supervisor_link and supervisor_link.supervisor.google_drive_folder_url:
                 google_drive_url = supervisor_link.supervisor.google_drive_folder_url
     context["google_drive_folder_url"] = google_drive_url

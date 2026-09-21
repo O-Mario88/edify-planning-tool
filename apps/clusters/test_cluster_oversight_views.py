@@ -100,10 +100,58 @@ class OversightViewsAccessTest(TestCase):
         self.assertNotContains(oversight, 'aria-label="Supervising Program Leads"')
         self.assertNotContains(oversight, "Other team private cluster")
 
+    def test_every_roster_officer_is_a_row_on_the_pl_charts_holding_work_or_not(self):
+        """A lead reads the whole team: an officer with no cluster and no core
+        school is a zero row on Cluster and Core School Oversight, never a
+        missing one, and the lead's own work comes first."""
+        idle = _create_user("idle.officer@oversight.test", EdifyRole.CCEO)
+        for officer in (self.cceo, idle):
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.pl.staff_profile, supervisee=officer.staff_profile
+            )
+        School.objects.create(
+            name="Lead's Own Core",
+            school_id="SCH-PL-1",
+            region=self.region,
+            district=self.district,
+            school_type=SchoolType.CORE,
+            account_owner_id=str(self.pl.staff_profile.id),
+        )
+        self.school.account_owner_id = str(self.cceo.staff_profile.id)
+        self.school.save(update_fields=["account_owner_id"])
+        self.client.force_login(self.pl)
+
+        clusters = self.client.get(reverse("frontend:cluster_oversight"))
+        names = [tab["name"] for tab in clusters.context["cceo_tabs"]]
+        self.assertEqual(names, ["My Clusters", "Cceo", "Idle Officer"])
+        activity = clusters.context["officer_activity"]
+        self.assertEqual(
+            [(row["name"], row["clusters"]) for row in activity],
+            [("Pl (you)", 0), ("Cceo", 1), ("Idle Officer", 0)],
+        )
+
+        core = self.client.get(reverse("frontend:core_schools_oversight"))
+        tabs = core.context["cceo_tabs"]
+        self.assertEqual(
+            [(tab["tab_label"], tab["count"]) for tab in tabs],
+            [("My Core Schools", 1), ("Cceo", 1), ("Idle Officer", 0)],
+        )
+        self.assertEqual(tabs[0]["name"], "Pl (you)")
+        self.assertEqual(tabs[0]["heading"], "My Core Schools")
+        self.assertEqual(tabs[1]["heading"], "Cceo's Core Schools")
+        self.assertEqual(tabs[2]["visits_target"], 0)
+        self.assertContains(core, "You and your team (3)")
+
     def test_core_oversight_has_only_one_active_sidebar_entry(self):
         from apps.core.navigation import build_sidebar_for_user
+
         sections = build_sidebar_for_user(self.pl, "/core-schools-oversight/")
-        active = [item["url"] for section in sections for item in section["items"] if item["active"]]
+        active = [
+            item["url"]
+            for section in sections
+            for item in section["items"]
+            if item["active"]
+        ]
         self.assertEqual(active, ["/core-schools-oversight/"])
 
     def test_annual_filters_render_options_and_swap_only_workspace(self):
@@ -173,7 +221,10 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Date of Last Activity")
 
         # Ensure "Responsible CCEO" is NOT a table header
-        self.assertNotContains(resp, "<th scope=\"col\" class=\"px-4 py-2.5 font-semibold min-w-[150px]\">Responsible CCEO</th>")
+        self.assertNotContains(
+            resp,
+            '<th scope="col" class="px-4 py-2.5 font-semibold min-w-[150px]">Responsible CCEO</th>',
+        )
         self.assertNotContains(resp, ">Responsible CCEO<")
 
         # Cluster performance overview metrics exist
@@ -202,7 +253,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Status")
         self.assertContains(resp, "Actions")
 
-    def test_country_planning_team_detail_renders_all_4_tables_and_role_aware_actions(self):
+    def test_country_planning_team_detail_renders_all_4_tables_and_role_aware_actions(
+        self,
+    ):
         # 1. Establish supervisory relationship PL -> CCEO
         StaffSupervisorAssignment.objects.create(
             supervisor=self.pl.staff_profile,
@@ -286,7 +339,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Cluster Planned From")
         self.assertContains(resp, "Delivery Type")
         self.assertContains(resp, "in-school")
-        self.assertContains(resp, "School Visit")  # For in-school training, cluster is "School Visit"
+        self.assertContains(
+            resp, "School Visit"
+        )  # For in-school training, cluster is "School Visit"
 
         # Verify role-aware action: CD sees View action button, NOT edit/reschedule/cancel dropdown
         self.assertContains(resp, "View")
@@ -294,7 +349,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertNotContains(resp, ">Cancel<")
 
     def test_cluster_participants_sum_invited_school_composition(self):
-        from apps.frontend.views.oversight_views import _partition_owner_groups_by_stream
+        from apps.frontend.views.oversight_views import (
+            _partition_owner_groups_by_stream,
+        )
         from apps.planning import oversight_service
 
         second_school = School.objects.create(
@@ -324,12 +381,18 @@ class OversightViewsAccessTest(TestCase):
         )
         for activity in (meeting, training):
             ClusterActivityAttendance.objects.create(
-                activity=activity, school=self.school, invited=True,
-                teachers=2, leaders=1,
+                activity=activity,
+                school=self.school,
+                invited=True,
+                teachers=2,
+                leaders=1,
             )
             ClusterActivityAttendance.objects.create(
-                activity=activity, school=second_school, invited=True,
-                teachers=1, other=1,
+                activity=activity,
+                school=second_school,
+                invited=True,
+                teachers=1,
+                other=1,
             )
 
         items = oversight_service.build_items(self.cd, fy="2026")

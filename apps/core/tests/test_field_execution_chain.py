@@ -237,7 +237,7 @@ class PlReviewAuthorizationTests(TestCase):
         self.assertEqual([r["id"] for r in rows], [self.act.id])
         services.confirm(self.act.id, self.pl)
         self.act.refresh_from_db()
-        self.assertEqual(self.act.status, "awaiting_ia_verification")
+        self.assertEqual(self.act.status, "ia_verified")
 
     def test_unrelated_pl_sees_nothing_and_is_refused(self):
         from apps.pl_review import services

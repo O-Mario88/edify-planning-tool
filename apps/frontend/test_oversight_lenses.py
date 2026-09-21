@@ -77,18 +77,31 @@ class LensStripTest(SimpleTestCase):
         place above the fold."""
         self.assertEqual(_lens_tabs(TEAM_OVERSIGHT_PATH, "planning", {"planning"}), [])
 
-    def test_both_new_lenses_carry_the_planned_budget_in_their_tables(self):
-        """Owner: "all plans reflecting on the budget". The headline tile is
-        one number; the column is where a reader finds which plan it came
-        from."""
+    def test_both_new_lenses_carry_the_planned_budget(self):
+        """Owner: "all plans reflecting on the budget". The portfolio carries
+        the budget on its rows; the cluster lens, redesigned on 2026-09-19
+        around seven operational columns, carries it as its headline tile."""
         portfolio = _read("templates/partials/oversight/portfolio_workspace.html")
         clusters = _read(
-            "templates/partials/oversight/cluster_performance_workspace.html"
+            "templates/partials/oversight/cluster_oversight_workspace.html"
         )
+        table = _read("templates/partials/oversight/_cluster_table.html")
 
-        for body in (portfolio, clusters):
-            self.assertIn("Planned budget", body)
-            self.assertIn("UGX {{", body)
+        self.assertIn("Planned budget", portfolio)
+        self.assertIn("UGX {{", portfolio)
+        self.assertIn("Cluster Budget", clusters)
+        self.assertIn("UGX {{", clusters)
+        for column in (
+            "Cluster Name",
+            "District",
+            "# Schools",
+            "Cluster Leader's Name",
+            "Cluster Leader's Phone",
+            "# School SSA Scores Avg",
+            "Least Performing Intervention",
+            "Date of Last Activity",
+        ):
+            self.assertIn(f">{column}</th>", table)
 
     def test_the_strip_is_one_shared_partial(self):
         """Two copies of it is how the two pages drifted apart the first time."""
@@ -209,7 +222,7 @@ class LensAccessTest(TestCase):
 
         for view, marker in (
             ("portfolio", "Country portfolio"),
-            ("clusters", "Cluster performance"),
+            ("clusters", "Cluster Performance"),
         ):
             with self.subTest(view=view):
                 response = self.client.get(f"/country-planning-oversight/?view={view}")
@@ -230,12 +243,12 @@ class LensAccessTest(TestCase):
         ).content.decode()
 
         self.assertIn("Portfolio Planned Budget", portfolio)
-        self.assertIn("Cluster Planned Budget", clusters)
-        # And on the rows, not only in the headline tile.
-        self.assertIn("Planned budget", clusters)
+        self.assertIn("Cluster Budget", clusters)
+        self.assertIn("UGX ", clusters)
 
-    def test_the_cluster_lens_states_its_own_ranking(self):
-        """A weighting nobody can read is a ranking nobody can argue with."""
+    def test_the_cluster_lens_draws_its_seven_operational_columns(self):
+        """The 2026-09-19 redesign replaced the activity-index ranking with
+        seven columns a reader can act on; every one of them must be drawn."""
         self._sign_in("lens-ia-rank@edify.org", "ImpactAssessment")
         self._a_cluster()
 
@@ -243,15 +256,23 @@ class LensAccessTest(TestCase):
             "/team-planning-oversight/?view=clusters"
         ).content.decode()
 
-        self.assertIn("Activity index = ", body)
-        self.assertIn("cluster sessions", body)
-        self.assertIn("busiest cluster", body)
+        for column in (
+            "Cluster Name",
+            "District",
+            "Cluster Leader's Name",
+            "Cluster Leader's Phone",
+            "# School SSA Scores Avg",
+            "Least Performing Intervention",
+            "Date of Last Activity",
+        ):
+            self.assertIn(f">{column}</th>", body)
 
     def test_the_cluster_lens_groups_by_staff_and_drops_the_lead_column(self):
         """Owner, 2026-09-18: group by staff name so a Lead can monitor the
-        individual, and drop the Programme Lead column — a Lead reading this
-        page sees their own clusters and their team's, so the Lead is a
-        heading rather than a column. District gets a column of its own."""
+        individual, and drop the Programme Lead column. The 2026-09-19
+        redesign keeps that shape: each officer is a tab holding their own
+        clusters, so neither the Lead nor the responsible CCEO is a column,
+        and District gets a column of its own."""
         self._sign_in("lens-ia-by-lead@edify.org", "ImpactAssessment")
         self._a_cluster()
 
@@ -259,11 +280,12 @@ class LensAccessTest(TestCase):
             "/team-planning-oversight/?view=clusters"
         ).content.decode()
 
-        self.assertIn("Clusters owned by", body)
+        self.assertIn('role="tablist"', body)
         self.assertIn(">District</th>", body)
         self.assertNotIn(">Programme Lead</th>", body)
+        self.assertNotIn(">Responsible CCEO</th>", body)
         # One line per row rather than a cell that wraps to three.
-        self.assertIn("cluster-performance-table whitespace-nowrap", body)
+        self.assertIn("edify-record-table w-full text-left whitespace-nowrap", body)
 
     def test_the_lenses_swap_in_place_for_htmx(self):
         """A filter change must replace the workspace, not the whole page."""

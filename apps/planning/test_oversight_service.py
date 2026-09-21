@@ -217,7 +217,6 @@ class ProgramLeadScopeTest(OversightFixture):
         self.assertNotIn("Director", names)
 
 
-
 class PartnerAssignmentTest(OversightFixture):
     def test_an_unscheduled_assignment_reads_as_awaiting_the_partner(self):
         self._assignment(school=self.school_a, managing_staff=self.james)

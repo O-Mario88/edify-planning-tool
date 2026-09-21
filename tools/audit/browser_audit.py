@@ -77,15 +77,19 @@ def main():
             failed = []
             page.on(
                 "console",
-                lambda m: console.append((m.type, m.text[:200]))
-                if m.type in ("error", "warning")
-                else None,
+                lambda m: (
+                    console.append((m.type, m.text[:200]))
+                    if m.type in ("error", "warning")
+                    else None
+                ),
             )
             page.on(
                 "response",
-                lambda r: failed.append((r.status, r.url.replace(BASE, "")[:120]))
-                if r.status >= 400
-                else None,
+                lambda r: (
+                    failed.append((r.status, r.url.replace(BASE, "")[:120]))
+                    if r.status >= 400
+                    else None
+                ),
             )
             for url in pages:
                 console.clear()

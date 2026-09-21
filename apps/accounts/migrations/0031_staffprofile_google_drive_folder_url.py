@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0030_assign_unsupervised_cceos'),
+        ("accounts", "0030_assign_unsupervised_cceos"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='staffprofile',
-            name='google_drive_folder_url',
+            model_name="staffprofile",
+            name="google_drive_folder_url",
             field=models.URLField(blank=True, max_length=512, null=True),
         ),
     ]

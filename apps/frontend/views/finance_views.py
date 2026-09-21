@@ -78,7 +78,7 @@ def _disbursement_voucher(ctx):
     writer.writerow(["Payment voucher", selected["name"]])
     writer.writerow(["Fund type", selected["kind_label"]])
     writer.writerow(["Reference", selected["subtitle"]])
-    writer.writerow(["Period", f'{ctx["month_label"]} {ctx["fy"]}'])
+    writer.writerow(["Period", f"{ctx['month_label']} {ctx['fy']}"])
     writer.writerow(["Status", selected["status"]])
     writer.writerow([])
     writer.writerow(["Approval chain", "State"])

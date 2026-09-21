@@ -201,8 +201,7 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
     "team_execution_risk": {
         "action": "Provide a recovery plan for the team's overdue work",
         "route": "/team-planning-oversight/",
-        "why": "Activities in this team are past their planned date and not "
-        "complete.",
+        "why": "Activities in this team are past their planned date and not complete.",
     },
 }
 
@@ -498,8 +497,7 @@ def send_action(
         # The partial unique index caught a race the pre-check could not: two
         # senders inside overlapping transactions. Same outcome, same message.
         raise ActionError(
-            "Someone else just sent this same issue. It is tracked under "
-            "Actions Sent."
+            "Someone else just sent this same issue. It is tracked under Actions Sent."
         ) from exc
 
     _announce(action, sender=sender, school=school, issue=issue, playbook=playbook)

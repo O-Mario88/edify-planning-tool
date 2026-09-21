@@ -3,6 +3,8 @@ const {snapshotServer}=require('./helpers/snapshot-server');
 const {signIn}=require('./helpers/auth');
 const fs=require('fs'),path=require('path');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
+// Record actions close at 1.75rem (28px) since the 2026-09-19 table button
+// refinement (consistency.css, compact record actions).
 test('compact record actions across platform pages',async({page},info)=>{
  test.setTimeout(360000);
  const root=path.resolve(__dirname,'..'),dir=path.join(root,'test-results/kpi-platform-crawl');
@@ -22,7 +24,7 @@ test('compact record actions across platform pages',async({page},info)=>{
      for(const e of document.querySelectorAll(':is(.school-record-row,.school-list-card,.cluster-card) .school-record-action, table .edify-table-action')){
       if(e.closest('[role="menu"], .row-menu, [popover]')||e.matches('[role="menuitem"]'))continue;
       const r=e.getBoundingClientRect();if(!r.width||!r.height)continue;
-      if(Math.abs(r.height-24)>1)errors.push(e.tagName+' '+e.className+' height='+r.height);
+      if(Math.abs(r.height-28)>1)errors.push(e.tagName+' '+e.className+' height='+r.height);
       if(e.scrollHeight>e.clientHeight+2)errors.push(e.className+' clipped content '+e.scrollHeight+'/'+e.clientHeight);
      }
      return [...new Set(errors)].slice(0,8);
@@ -46,8 +48,8 @@ test('school scheduling action still opens its drawer',async({page})=>{
    await page.setViewportSize({width,height:900});
    for(const theme of ['theme-light','theme-dark','theme-blue']){
     await page.evaluate(t=>{document.documentElement.classList.remove('theme-light','theme-dark','theme-blue');document.documentElement.classList.add(t);document.documentElement.classList.toggle('dark',t!=='theme-light')},theme);
-    await expect(actions.first()).toHaveCSS('height','24px');
-    const issues=await actions.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&(Math.abs(r.height-24)>1||e.scrollHeight>e.clientHeight+2)}).map(e=>e.className));
+    await expect(actions.first()).toHaveCSS('height','28px');
+    const issues=await actions.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&(Math.abs(r.height-28)>1||e.scrollHeight>e.clientHeight+2)}).map(e=>e.className));
     expect(issues,route+' '+width+' '+theme).toEqual([]);
    }
   }
@@ -55,7 +57,7 @@ test('school scheduling action still opens its drawer',async({page})=>{
  await page.goto('/core-schools');
  const action=page.locator('.school-record-action[hx-get*="schedule-activity"]').first();
  await expect(action).toBeVisible();
- await expect(action).toHaveCSS('height','24px');
+ await expect(action).toHaveCSS('height','28px');
  await action.focus();
  await expect(action).toBeFocused();
  await action.press('Enter');

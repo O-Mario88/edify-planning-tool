@@ -10,7 +10,11 @@
   A bucket with nothing planned has percentage=None. It is drawn as a gap and
   read as "nothing planned", never as 0% — those are different facts.
 {% endcomment %}
-<figure class="admin-line-figure" id="admin-planning-progress-body">
+<figure class="admin-line-figure" id="admin-planning-progress-body" aria-describedby="admin-progress-chart-desc">
+  {% comment %}The period sentence ("Completion rate across the six most
+  recent months.") rode the old SVG's <desc>; the column chart keeps it as
+  visible copy so a reader knows how far back the bars reach.{% endcomment %}
+  <p id="admin-progress-chart-desc" class="edify-chart-panel-title">{{ progress_description }}</p>
   <div class="edify-column-chart" aria-label="Planning progress by {{ progress_period }}">
     {% for point in weekly_progress %}<div class="edify-column-chart__item">
       <div class="edify-column-chart__track"><span style="height:{% if point.measured %}{{ point.percentage }}{% else %}0{% endif %}%"><strong>{% if point.measured %}{{ point.percentage }}%{% else %}—{% endif %}</strong></span></div>

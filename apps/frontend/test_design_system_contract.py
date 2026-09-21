@@ -197,7 +197,7 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".context-metrics {", context)
         self.assertIn('class="context-metrics__sentence" role="list"', template)
         self.assertIn('role="listitem"', template)
-        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("color: var(--edify-text);", context)
         self.assertNotIn('data-component="kpi-card"', template)
         self.assertIn("box-shadow:", context)

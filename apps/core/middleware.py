@@ -255,8 +255,11 @@ class FiscalYearRolloverMiddleware:
 
         fy = get_operational_fy()
         now = time.monotonic()
-        if (self.checked_fy != fy and now >= self.retry_after
-                and self._rollover_lock.acquire(blocking=False)):
+        if (
+            self.checked_fy != fy
+            and now >= self.retry_after
+            and self._rollover_lock.acquire(blocking=False)
+        ):
             try:
                 # Recheck after acquiring: a preceding request may have completed
                 # between the optimistic check and acquiring this process's lock.

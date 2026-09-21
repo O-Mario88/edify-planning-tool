@@ -82,7 +82,7 @@ def owner_order(queryset):
     directory = owner_directory(owner_ids)
     ranked = sorted(
         {oid: directory.get(oid) for oid in owner_ids}.items(),
-        key=lambda kv: (kv[1]["sort_key"] if kv[1] else ("￿", "￿")),
+        key=lambda kv: kv[1]["sort_key"] if kv[1] else ("￿", "￿"),
     )
     whens = [
         When(account_owner_id=oid, then=Value(rank))

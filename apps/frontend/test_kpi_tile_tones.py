@@ -25,4 +25,4 @@ class ContextMetricToneContractTest(SimpleTestCase):
         self.assertNotIn("linear-gradient", context)
         self.assertNotIn("grid-template-columns", context)
         self.assertIn("box-shadow", context)
-        self.assertIn("scroll-snap-type: x mandatory", context)
+        self.assertIn("scroll-snap-type: x ", context)

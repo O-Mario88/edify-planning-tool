@@ -177,13 +177,17 @@ class FieldDebriefDashboardService:
         )
         unsuccessful = count(
             rows,
-            lambda r: r.completion_status
-            in (CompletionStatus.UNSUCCESSFUL, CompletionStatus.CANCELLED),
+            lambda r: (
+                r.completion_status
+                in (CompletionStatus.UNSUCCESSFUL, CompletionStatus.CANCELLED)
+            ),
         )
         prev_unsuccessful = count(
             prev_rows,
-            lambda r: r.completion_status
-            in (CompletionStatus.UNSUCCESSFUL, CompletionStatus.CANCELLED),
+            lambda r: (
+                r.completion_status
+                in (CompletionStatus.UNSUCCESSFUL, CompletionStatus.CANCELLED)
+            ),
         )
         action_required = count(
             rows, lambda r: r.status == DebriefStatus.ACTION_REQUIRED

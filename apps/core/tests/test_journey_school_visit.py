@@ -1,7 +1,7 @@
 """Journey 3 — Standard staff school visit, walked once, end to end.
 
 Journey 3 of the mandate's twenty-two: Plan, Cost, Schedule, Fund request,
-Approval, Disbursement, Start, Evidence, PL review, IA verification,
+Approval, Disbursement, Start, Evidence, PL review (which verifies),
 Accountability, Closure. (This docstring said "Journey 1" and walked
 Journey 3; Journey 1 is Priority to verified performance, which starts from a
 published priority and ends at a reconciling drill-down. A census built from
@@ -19,7 +19,7 @@ verified visit that cannot close.
 So this test fakes nothing. It plans a real visit through the costed funnel,
 compiles and approves the real weekly advance, disburses it, confirms receipt,
 executes the visit, uploads evidence, reserves a Salesforce ID, walks PL
-review and IA verification through the live services, accounts for the money,
+review — which verifies it — through the live services, accounts for the money,
 and asserts the activity can actually reach `closed` — and that the verified
 work lands in the achievement ledger exactly once.
 
@@ -168,7 +168,6 @@ class SchoolVisitSpineJourneyTest(TestCase):
             ActivityClosureService,
             ClosureEligibilityService,
         )
-        from apps.activities.ia_services import ActivityCertificationService
         from apps.activities.services import complete, start_completion
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind
         from apps.evidence.models import EvidenceRecord
@@ -253,16 +252,17 @@ class SchoolVisitSpineJourneyTest(TestCase):
             "a completed visit did not enter the review chain",
         )
 
-        # ── 5. PL review, then IA verification through the LIVE service ───
-        if activity.status == "submitted_to_pl":
-            from apps.pl_review.services import confirm as pl_confirm
+        # ── 5. PL review, which is the verification, through the LIVE service
+        # The supervising Program Lead's confirmation approves the completion
+        # and verifies its evidence in one act (pl_review.services.confirm,
+        # 2026-09-19); Impact Assessment certifies partner-delivered work
+        # only. The ledger credit rides the confirm's on_commit, so it is
+        # captured here as the IA certification used to be.
+        from apps.pl_review.services import confirm as pl_confirm
 
-            pl_confirm(activity.id, self.pl)
-            activity.refresh_from_db()
-        self.assertEqual(activity.status, "awaiting_ia_verification")
-
+        self.assertEqual(activity.status, "submitted_to_pl")
         with self.captureOnCommitCallbacks(execute=True):
-            ActivityCertificationService.certify_activity(activity, {}, str(self.ia.id))
+            pl_confirm(activity.id, self.pl)
         activity.refresh_from_db()
         self.assertEqual(activity.status, "ia_verified")
         self.assertEqual(activity.ia_verification_status, "confirmed")
@@ -411,8 +411,7 @@ class SchoolVisitSpineJourneyTest(TestCase):
         self.assertEqual(
             wfr.status,
             "disbursed",
-            f"the money did not move through the endpoints; it sits at "
-            f"{wfr.status}",
+            f"the money did not move through the endpoints; it sits at {wfr.status}",
         )
 
         post(
@@ -490,33 +489,19 @@ class SchoolVisitSpineJourneyTest(TestCase):
             f"endpoint; it sits at {activity.status}",
         )
 
-        # ── 8. PL review ──────────────────────────────────────────────────
-        if activity.status == "submitted_to_pl":
-            post(f"/pl/review-queue/{activity.id}/confirm", who=self.pl)
-            activity.refresh_from_db()
-        self.assertEqual(activity.status, "awaiting_ia_verification")
-
-        # ── 9. IA verification, through the door SEC-03 left unguarded ────
+        # ── 8-9. PL review, which is the verification, through its door ───
+        # The Program Lead's confirm endpoint approves the completion and
+        # verifies its evidence in one act (pl_review.services.confirm,
+        # 2026-09-19); the IA verification door serves partner-delivered
+        # work only.
+        self.assertEqual(activity.status, "submitted_to_pl")
         with self.captureOnCommitCallbacks(execute=True):
-            post(
-                f"/ia/verification/{activity.id}/verify",
-                {
-                    "evidence_complete": "on",
-                    "ssa_uploaded": "on",
-                    "correct_school": "on",
-                    "correct_cluster": "on",
-                    "correct_intervention": "on",
-                    "sf_id_entered": "on",
-                    "duplicate_check_passed": "on",
-                    "analytics_ready": "on",
-                },
-                who=self.ia,
-            )
+            post(f"/pl/review-queue/{activity.id}/confirm", who=self.pl)
         activity.refresh_from_db()
         self.assertEqual(
             activity.status,
             "ia_verified",
-            f"IA verification through the endpoint left the activity at "
+            f"PL confirmation through the endpoint left the activity at "
             f"{activity.status}",
         )
         self.assertEqual(activity.ia_verification_status, "confirmed")
@@ -618,7 +603,6 @@ class SchoolVisitSpineJourneyTest(TestCase):
         Every existing targets test writes `status="ia_verified"` by hand, so
         nothing proved the real completion chain produces a credited row.
         """
-        from apps.activities.ia_services import ActivityCertificationService
         from apps.activities.services import complete, start_completion
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind
         from apps.evidence.models import EvidenceRecord
@@ -648,14 +632,13 @@ class SchoolVisitSpineJourneyTest(TestCase):
         )
         complete(activity.id, {"salesforceId": "SVE-100002"}, self.cceo)
         activity.refresh_from_db()
-        if activity.status == "submitted_to_pl":
-            from apps.pl_review.services import confirm as pl_confirm
+        self.assertEqual(activity.status, "submitted_to_pl")
+        from apps.pl_review.services import confirm as pl_confirm
 
-            pl_confirm(activity.id, self.pl)
-            activity.refresh_from_db()
-
+        # The PL's confirmation is the verification, and the credit rides its
+        # on_commit (pl_review.services.confirm, 2026-09-19).
         with self.captureOnCommitCallbacks(execute=True):
-            ActivityCertificationService.certify_activity(activity, {}, str(self.ia.id))
+            pl_confirm(activity.id, self.pl)
         activity.refresh_from_db()
         self.assertEqual(activity.status, "ia_verified")
 

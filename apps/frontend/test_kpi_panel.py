@@ -39,7 +39,7 @@ class ContextMetricsAnatomyTest(SimpleTestCase):
         contract = css[css.index("CONTEXT METRICS") :]
 
         self.assertIn("display: flex;", contract)
-        self.assertIn("scroll-snap-type: x mandatory;", contract)
+        self.assertIn("scroll-snap-type: x ", contract)
         self.assertIn("font-variant-numeric: tabular-nums;", contract)
         for forbidden in (
             "background-image:",
@@ -49,11 +49,16 @@ class ContextMetricsAnatomyTest(SimpleTestCase):
         ):
             self.assertNotIn(forbidden, contract)
 
-    def test_mobile_summary_scrolls_with_two_visible_metrics(self):
+    def test_mobile_summary_scrolls_facts_at_a_fixed_minimum_width(self):
+        """A phone shows a couple of facts and scrolls to the rest. The strip
+        no longer counts visible facts with a container query (2026-09-20):
+        each fact keeps a minimum width and refuses to shrink, so the strip
+        overflows and scrolls instead of crushing its labels."""
         css = _read("static/css/components.css")
         contract = css[css.index("CONTEXT METRICS") :]
 
-        self.assertIn("@container performance (max-width: 599px)", contract)
+        self.assertIn("min-width: 130px !important;", contract)
+        self.assertIn("flex-shrink: 0 !important;", contract)
         self.assertIn("flex-direction: column;", contract)
         self.assertIn("overflow-x: auto", contract)
         self.assertIn("scroll-snap", contract)

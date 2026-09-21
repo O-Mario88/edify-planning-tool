@@ -292,4 +292,6 @@ class TabsDoNotStretchTest(SimpleTestCase):
             "border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;",
             block,
         )
-        self.assertIn("padding: 3px !important;", block)
+        # The rail went flush on 2026-09-20 (no inner track); the chips still
+        # join square inside and round only at the rail's outer ends.
+        self.assertIn("padding: 0 !important;", block)

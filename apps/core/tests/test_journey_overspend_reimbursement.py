@@ -145,7 +145,6 @@ class OverspendReimbursementJourneyTest(TestCase):
         """A real funded visit, executed and IA-verified — the state an
         over-spend claim must start from, because reimbursement is gated on
         IA confirming the work actually happened."""
-        from apps.activities.ia_services import ActivityCertificationService
         from apps.activities.services import complete, start_completion
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind
         from apps.evidence.models import EvidenceRecord
@@ -186,14 +185,18 @@ class OverspendReimbursementJourneyTest(TestCase):
         )
         complete(activity.id, {"salesforceId": "SVE-700001"}, self.cceo)
         activity.refresh_from_db()
-        if activity.status == "submitted_to_pl":
-            from apps.pl_review.services import confirm as pl_confirm
+        self.assertEqual(activity.status, "submitted_to_pl")
+        # The supervising Program Lead's confirmation approves a CCEO's
+        # completion and verifies its evidence in one act
+        # (pl_review.services.confirm, 2026-09-19); Impact Assessment
+        # certifies partner-delivered work only. The verified state the
+        # ledger counts is reached here, by the PL.
+        from apps.pl_review.services import confirm as pl_confirm
 
-            pl_confirm(activity.id, self.pl)
-            activity.refresh_from_db()
         with self.captureOnCommitCallbacks(execute=True):
-            ActivityCertificationService.certify_activity(activity, {}, str(self.ia.id))
+            pl_confirm(activity.id, self.pl)
         activity.refresh_from_db()
+        self.assertEqual(activity.status, "ia_verified")
         self.assertEqual(activity.ia_verification_status, "confirmed")
 
         advances = list(
@@ -399,8 +402,7 @@ class OverspendReimbursementJourneyTest(TestCase):
         self.assertEqual(
             advance.disbursed_amount,
             original_disbursed,
-            "reimbursing through the endpoint overwrote the original disbursed "
-            "amount",
+            "reimbursing through the endpoint overwrote the original disbursed amount",
         )
         self.assertEqual(
             advance.disburse_reference,

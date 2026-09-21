@@ -269,7 +269,7 @@ class HRPDDashboardService:
         kpis = [
             render_precomputed_metric_item(
                 "professional_development_hr_dashboard_service_total_annual_pd_allocation",
-                f"{currency} {total_allocation/100:,.0f}",
+                f"{currency} {total_allocation / 100:,.0f}",
                 key="allocation",
                 icon="currency",
                 variant="primary",
@@ -277,19 +277,19 @@ class HRPDDashboardService:
             ),
             render_precomputed_metric_item(
                 "professional_development_hr_dashboard_service_funds_committed",
-                f"{currency} {committed/100:,.0f}",
+                f"{currency} {committed / 100:,.0f}",
                 key="committed",
                 icon="chart",
                 variant="default",
-                helper=f"{round(committed/total_allocation*100) if total_allocation else 0}% of allocation",
+                helper=f"{round(committed / total_allocation * 100) if total_allocation else 0}% of allocation",
             ),
             render_precomputed_metric_item(
                 "professional_development_hr_dashboard_service_funds_accounted_for",
-                f"{currency} {accounted/100:,.0f}",
+                f"{currency} {accounted / 100:,.0f}",
                 key="accounted",
                 icon="accountability",
                 variant="default",
-                helper=f"{round(accounted/total_allocation*100) if total_allocation else 0}% of allocation",
+                helper=f"{round(accounted / total_allocation * 100) if total_allocation else 0}% of allocation",
             ),
             render_precomputed_metric_item(
                 "professional_development_hr_dashboard_service_staff_enrolled",
@@ -372,9 +372,9 @@ class HRPDDashboardService:
                     "course_type": r.get_course_type_display(),
                     "start_date": r.start_date,
                     "end_date": r.end_date,
-                    "allocation": f"{r.currency} {r.requested_amount_cents/100:,.0f}",
-                    "fund_used": f"{r.currency} {(r.accounted_amount or 0)/100:,.0f}",
-                    "remaining": f"{r.currency} {max(0, r.requested_amount_cents - (r.accounted_amount or 0))/100:,.0f}",
+                    "allocation": f"{r.currency} {r.requested_amount_cents / 100:,.0f}",
+                    "fund_used": f"{r.currency} {(r.accounted_amount or 0) / 100:,.0f}",
+                    "remaining": f"{r.currency} {max(0, r.requested_amount_cents - (r.accounted_amount or 0)) / 100:,.0f}",
                     "status": r.get_status_display(),
                     "bucket": bucket,
                     "certificate_status": "Uploaded"
@@ -429,8 +429,8 @@ class HRPDDashboardService:
                     StaffPDService.committed_and_accounted_cents(row["staff_id"], fy)
                 )
             balance = allocation_cents - spent_cache[row["staff_id"]]
-            row["staff_allocation"] = f"{row_currency} {allocation_cents/100:,.0f}"
-            row["staff_balance"] = f"{row_currency} {balance/100:,.0f}"
+            row["staff_allocation"] = f"{row_currency} {allocation_cents / 100:,.0f}"
+            row["staff_balance"] = f"{row_currency} {balance / 100:,.0f}"
 
         # ── HR Action Center (5 groups) ──────────────────────────────────────
         action_center = []
@@ -781,7 +781,7 @@ class HRPDDashboardService:
                     "name": sp.user.name if sp.user else sp.id,
                     "role": ROLE_LABELS.get(role, role or "—"),
                     "country": sp.country or "—",
-                    "allocation": f"{cur} {cents/100:,.0f}",
+                    "allocation": f"{cur} {cents / 100:,.0f}",
                 }
             )
         return rows
@@ -815,9 +815,9 @@ class HRPDDashboardService:
                 {
                     "role": role,
                     "label": label,
-                    "per_staff": f"{currency} {per_staff/100:,.0f}",
+                    "per_staff": f"{currency} {per_staff / 100:,.0f}",
                     "staff_count": staff_count,
-                    "total_allocated": f"{currency} {row_total/100:,.0f}",
+                    "total_allocated": f"{currency} {row_total / 100:,.0f}",
                     "currency": currency,
                 }
             )
@@ -826,7 +826,7 @@ class HRPDDashboardService:
         return {
             "rows": rows,
             "total_staff": total_staff,
-            "total_allocated": f"{total_allocated/100:,.0f}",
+            "total_allocated": f"{total_allocated / 100:,.0f}",
         }
 
     @staticmethod

@@ -25,7 +25,7 @@ test('leave cards and budget bands retain readable surface pairs in every theme'
       })).toBe(true);
       if (theme === 'light') {
         await expect.poll(() => page.locator('.edify-shell').evaluate(el => getComputedStyle(el).backgroundColor))
-          .toBe('rgb(128, 170, 211)');
+          .toBe('rgb(219, 228, 235)');
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }

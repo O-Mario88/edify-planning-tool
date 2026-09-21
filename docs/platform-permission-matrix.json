@@ -7464,6 +7464,22 @@
    "view": "apps.frontend.views.cce_leadership_views.report_start"
   },
   {
+   "page_permission": "cluster_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/cluster-oversight/",
+   "route_name": "cluster_oversight",
+   "view": "apps.frontend.views.oversight_views.cluster_oversight_view"
+  },
+  {
    "page_permission": "clusters",
    "required_permissions": [],
    "role_exclusive": false,
@@ -7996,6 +8012,22 @@
    "route": "/core-schools",
    "route_name": "core_schools",
    "view": "apps.frontend.views.core_schools_views.core_schools_view"
+  },
+  {
+   "page_permission": "core_schools_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/core-schools-oversight/",
+   "route_name": "core_schools_oversight",
+   "view": "apps.frontend.views.oversight_views.core_schools_oversight_view"
   },
   {
    "page_permission": "planning",
@@ -8624,6 +8656,31 @@
    "route": "/dashboard/cd-return",
    "route_name": "cd_dashboard_return",
    "view": "apps.frontend.views.dashboard_views.cd_dashboard_return_view"
+  },
+  {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/dashboard/notify-past-due/<str:activity_id>/",
+   "route_name": "dashboard_notify_past_due",
+   "view": "apps.frontend.views.dashboard_views.notify_past_due_activity"
   },
   {
    "page_permission": "dashboard",
@@ -17831,27 +17888,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 404,
-  "Admin": 997,
-  "BusinessTransformationOfficer": 231,
-  "CCEO": 525,
-  "CountryDirector": 753,
-  "HumanResources": 329,
-  "ImpactAssessment": 617,
-  "MfiLoanOfficer": 127,
-  "MfiPartnerAdmin": 130,
-  "PartnerAdmin": 218,
-  "PartnerFieldOfficer": 218,
-  "Program Lead": 608,
-  "ProjectCoordinator": 444,
-  "RegionalProgramLead": 302,
-  "RegionalVicePresident": 364
+  "Accountant": 405,
+  "Admin": 1000,
+  "BusinessTransformationOfficer": 232,
+  "CCEO": 526,
+  "CountryDirector": 756,
+  "HumanResources": 330,
+  "ImpactAssessment": 620,
+  "MfiLoanOfficer": 128,
+  "MfiPartnerAdmin": 131,
+  "PartnerAdmin": 219,
+  "PartnerFieldOfficer": 219,
+  "Program Lead": 611,
+  "ProjectCoordinator": 445,
+  "RegionalProgramLead": 305,
+  "RegionalVicePresident": 367
  },
  "summary": {
-  "page_keys_declared": 175,
-  "page_keys_in_navigation": 192,
-  "routes_guarded": 1094,
-  "routes_total": 1287,
+  "page_keys_declared": 177,
+  "page_keys_in_navigation": 194,
+  "routes_guarded": 1097,
+  "routes_total": 1290,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

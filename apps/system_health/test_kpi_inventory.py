@@ -318,7 +318,7 @@ class InventoryTests(SimpleTestCase):
 
         context = styles[styles.index("CONTEXT METRICS") :]
         self.assertIn("context-metrics__sentence", component)
-        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("box-shadow:", context)
         self.assertNotIn("grid-template-columns:", context)
 

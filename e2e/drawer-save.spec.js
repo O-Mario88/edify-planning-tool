@@ -22,7 +22,7 @@ test('drawer saves close their source; validation, previews and newer drawers re
       const root=kind==='base'?fragment.body.firstElementChild:document.createElement('div');
       if(kind!=='base'){
         root.className='edify-popup-dialog';root.setAttribute('x-data','{open:true}');
-        root.setAttribute('x-show','open');root.setAttribute('@close-drawer.window','open=false;setTimeout(()=>$el.remove(),300)');
+        root.setAttribute('x-show','open');root.setAttribute('x-on:close-drawer.window','open=false;setTimeout(()=>$el.remove(),300)');
         root.innerHTML='<div class="card p-4" role="dialog" aria-label="Custom drawer"><div class="drawer-body"></div></div>';
       }
       root.dataset.testDrawer=kind;

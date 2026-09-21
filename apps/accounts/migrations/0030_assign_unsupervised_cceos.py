@@ -16,9 +16,7 @@ def assign_unsupervised_cceos(apps, schema_editor):
     cceos = StaffProfile.objects.filter(
         user__active_role="CCEO",
         deleted_at__isnull=True,
-    ).exclude(
-        supervisor_links__isnull=False
-    )
+    ).exclude(supervisor_links__isnull=False)
 
     for cceo in cceos:
         StaffSupervisorAssignment.objects.get_or_create(
@@ -32,7 +30,6 @@ def reverse_assignment(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0029_presence_activity"),
     ]

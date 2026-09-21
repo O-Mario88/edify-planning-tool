@@ -167,9 +167,7 @@ def _calendar_range_label(start: date, end: date) -> str:
     if start == end:
         return f"{start.day} {calendar.month_name[start.month]} {start.year}"
     if (start.year, start.month) == (end.year, end.month):
-        return (
-            f"{start.day}–{end.day} {calendar.month_name[start.month]}" f" {start.year}"
-        )
+        return f"{start.day}–{end.day} {calendar.month_name[start.month]} {start.year}"
     if start.year == end.year:
         return (
             f"{start.day} {calendar.month_name[start.month]} – "

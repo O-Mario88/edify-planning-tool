@@ -18,7 +18,7 @@ Role-aware Actions control for planning and oversight tables.
   <div class="row-menu relative inline-block text-left" x-data="rowMenu"
        @keydown.escape.window="close()" @click.outside="close()"
        @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
-    <button type="button" class="row-menu__trigger inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded border edify-border bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-xs cursor-pointer"
+    <button type="button" class="row-menu__trigger inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded border edify-border edify-surface-raised text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-xs cursor-pointer"
             x-ref="trigger"
             @click="toggle()"
             :aria-expanded="open ? 'true' : 'false'"
@@ -26,7 +26,7 @@ Role-aware Actions control for planning and oversight tables.
       Actions
       <svg class="row-menu__caret w-3.5 h-3.5 transition-transform duration-150" :class="open ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
     </button>
-    <div class="row-menu__list absolute right-0 mt-1 w-44 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black/5 z-50 py-1 text-xs text-left"
+    <div class="row-menu__list absolute right-0 mt-1 w-44 rounded-md shadow-lg edify-surface-raised ring-1 ring-black/5 z-50 py-1 text-xs text-left"
          x-ref="list" x-show="open"
          :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
       <button type="button"

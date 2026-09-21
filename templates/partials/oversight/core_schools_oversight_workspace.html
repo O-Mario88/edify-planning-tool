@@ -1,4 +1,4 @@
-{% load kpi_metrics frontend_filters school_identity %}
+{% load kpi_metrics frontend_filters school_identity chart_tags %}
 
 <div class="core-schools-oversight-content space-y-6">
 
@@ -13,11 +13,12 @@
   {% if is_programme_lead %}
     {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
     {% if cceo_tabs %}
-    <div x-data="{ activeCceo: '{{ cceo_tabs.0.id }}' }" class="space-y-4">
+    {% team_chart cceo_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
+    <div x-data="{ activeCceo: '{% firstof request.GET.cceo cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
       <div class="oversight-team-selector">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            CCEOs in Your Team ({{ cceo_tabs|length }})
+            You and your team ({{ cceo_tabs|length }})
           </span>
           <span class="edify-text-caption edify-text-muted">Select an officer to view their core school packages</span>
         </div>
@@ -26,26 +27,27 @@
           <button type="button"
                   role="tab"
                   :aria-selected="activeCceo === '{{ cceo.id }}'"
-                  @click="activeCceo = '{{ cceo.id }}'"
+                  aria-controls="core-officer-panel-{{ cceo.id }}"
+                  @click="pick('cceo', '{{ cceo.id }}')"
                   class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-            <span>{{ cceo.name }}</span>
-            <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} schools</span>
+            <span>{% firstof cceo.tab_label cceo.name %}</span>
+            <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} schools</span>
           </button>
           {% endfor %}
         </nav>
       </div>
 
       {% for cceo in cceo_tabs %}
-      <div x-show="activeCceo === '{{ cceo.id }}'" x-cloak class="space-y-3">
+      <div x-show="activeCceo === '{{ cceo.id }}'" x-cloak id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3">
         <div class="card p-0 overflow-hidden shadow-xs border edify-border">
           <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
-              <span>{{ cceo.name }}'s Core Schools</span>
+              <span>{% firstof cceo.heading cceo.name %}</span>
               <span class="pill pill-info text-xs font-semibold">{{ cceo.count }} schools</span>
               <span class="pill pill-success text-xs font-semibold">{{ cceo.completed }} completed packages</span>
             </h3>
           </div>
-          {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools %}
+          {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools page_param="cs-"|add:cceo.id %}
         </div>
       </div>
       {% endfor %}
@@ -59,7 +61,8 @@
   {% else %}
     {# ── Country / Regional View: Level 1 Supervising PL -> Level 2 CCEO Tabs #}
     {% if leads %}
-    <div x-data="{ activeLead: '{{ leads.0.id }}' }" class="space-y-5">
+    {% team_chart leads "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by Programme Lead" "Summed over each Lead's team, this financial year" %}
+    <div x-data="{ activeLead: '{% firstof request.GET.lead leads.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-5">
       {# Level 1: Supervising PL Tabs #}
       <div class="oversight-team-selector">
         <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
@@ -67,7 +70,8 @@
           <button type="button"
                   role="tab"
                   :aria-selected="activeLead === '{{ lead.id }}'"
-                  @click="activeLead = '{{ lead.id }}'"
+                  aria-controls="core-lead-panel-{{ lead.id }}"
+                  @click="pick('lead', '{{ lead.id }}')"
                   class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
             <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
               {{ lead.name|slice:":2"|upper }}
@@ -81,9 +85,9 @@
 
       {# Level 2: CCEO Tabs under each PL #}
       {% for lead in leads %}
-      <div x-show="activeLead === '{{ lead.id }}'" x-cloak class="space-y-4">
+      <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
         {% if lead.cceo_tabs %}
-        <div x-data="{ activeOfficer: '{{ lead.cceo_tabs.0.id }}' }" class="space-y-4">
+        <div x-data="{ activeOfficer: '{% firstof request.GET.officer lead.cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
           <div class="oversight-team-selector">
             <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -96,17 +100,18 @@
               <button type="button"
                       role="tab"
                       :aria-selected="activeOfficer === '{{ cceo.id }}'"
-                      @click="activeOfficer = '{{ cceo.id }}'"
+                      aria-controls="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}"
+                      @click="pick('officer', '{{ cceo.id }}')"
                       class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
                 <span>{{ cceo.name }}</span>
-                <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
+                <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
               </button>
               {% endfor %}
             </nav>
           </div>
 
           {% for cceo in lead.cceo_tabs %}
-          <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak class="space-y-3">
+          <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
             <div class="card p-0 overflow-hidden shadow-xs border edify-border">
               <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
                 <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
@@ -115,7 +120,7 @@
                   <span class="pill pill-success text-xs font-semibold">{{ cceo.completed }} completed packages</span>
                 </h4>
               </div>
-              {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools %}
+              {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools page_param="cs-"|add:lead.id|add:"-"|add:cceo.id %}
             </div>
           </div>
           {% endfor %}

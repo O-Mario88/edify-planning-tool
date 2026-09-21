@@ -181,16 +181,24 @@ class ActivityChainNotificationTests(TestCase):
         self.assertIn("Photos unclear", notif.body)
         self.assertNotEqual(notif.target_route, "/dashboard")
 
-    def test_pl_confirm_notifies_impact_assessment(self):
+    def test_pl_confirm_notifies_the_officer_and_not_impact_assessment(self):
         from apps.pl_review import services
 
         ia = _user("ia-sig@t.org", "Ivy", EdifyRole.IMPACT_ASSESSMENT.value)
-        # Impact Assessment is told in the submitter's country, once the
-        # confirmation commits.
         StaffProfile.objects.create(user=ia, title="IA", country="Uganda")
+        # The Program Lead's confirmation approves the completion and verifies
+        # its evidence in one act (pl_review.services.confirm, 2026-09-19), so
+        # the hand-off it signals is back to the officer whose work it was;
+        # Impact Assessment is no longer in the staff-work chain.
         with self.captureOnCommitCallbacks(execute=True):
             services.confirm(self.act.id, self.pl)
-        self.assertTrue(Notification.objects.filter(recipient_id=ia.id).exists())
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient_id=self.cceo.id,
+                title="Your completion was approved and verified",
+            ).exists()
+        )
+        self.assertFalse(Notification.objects.filter(recipient_id=ia.id).exists())
 
     def test_supervisor_resolution_spans_both_id_spaces(self):
         from apps.activities.services import _supervisor_user_ids

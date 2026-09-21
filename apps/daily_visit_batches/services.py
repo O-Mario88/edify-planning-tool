@@ -68,10 +68,17 @@ def batch_needs_repricing(batch) -> bool:
     )
     if members.count() != batch.school_count:
         return True
-    expected_type = "secondary" if any(
-        district_type_for_staff(batch.responsible_user, member_district(member)) == "secondary"
-        for member in members.select_related("school__district", "cluster__district", "event_district")
-    ) else "primary"
+    expected_type = (
+        "secondary"
+        if any(
+            district_type_for_staff(batch.responsible_user, member_district(member))
+            == "secondary"
+            for member in members.select_related(
+                "school__district", "cluster__district", "event_district"
+            )
+        )
+        else "primary"
+    )
     if expected_type != batch.district_type:
         return True
     snapshots = list(
@@ -166,7 +173,11 @@ def schedule_visits(
 
     new_types: dict[str, str] = {}
     for s in schools:
-        dt = district_type_for_staff(responsible_user_id, s.district) if s.district_id else None
+        dt = (
+            district_type_for_staff(responsible_user_id, s.district)
+            if s.district_id
+            else None
+        )
         if not dt:
             dname = s.district.name if s.district_id else "Unknown"
             raise BadRequest(
@@ -175,7 +186,9 @@ def schedule_visits(
             )
         new_types[s.school_id] = dt
 
-    incoming_district_type = "secondary" if "secondary" in new_types.values() else "primary"
+    incoming_district_type = (
+        "secondary" if "secondary" in new_types.values() else "primary"
+    )
 
     with transaction.atomic():
         batch = (
@@ -216,8 +229,14 @@ def schedule_visits(
                 f"A visit is already scheduled for {dupe_names} on this date."
             )
 
-        districts = [member_district(a) for a in existing_activities] + [school.district for school in schools if school.district_id]
-        all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+        districts = [member_district(a) for a in existing_activities] + [
+            school.district for school in schools if school.district_id
+        ]
+        all_district_ids = {
+            d.id
+            for d in districts
+            if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+        }
         incoming_district_type = "secondary" if all_district_ids else "primary"
         _assert_common_approved_group(all_district_ids)
 
@@ -309,7 +328,9 @@ def batch_poolable(activity) -> bool:
 
     if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES:
         # A paired Salesforce visit is evidence for the training, not another trip.
-        return bool(activity.school_id) and not hasattr(activity, "paired_in_school_training")
+        return bool(activity.school_id) and not hasattr(
+            activity, "paired_in_school_training"
+        )
     if activity.activity_type not in DAY_POOL_EXTRA_TYPES:
         return False
     end = getattr(activity, "end_date", None)
@@ -365,7 +386,11 @@ def attach_activity_to_batch(
         else []
     )
     districts = [member_district(a) for a in existing_activities] + [district]
-    all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+    all_district_ids = {
+        d.id
+        for d in districts
+        if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+    }
     district_type = "secondary" if all_district_ids else "primary"
     _assert_common_approved_group(all_district_ids)
 
@@ -468,8 +493,14 @@ def reschedule_within_batch(
             if batch
             else []
         )
-        districts = [member_district(a) for a in existing_activities] + [school.district]
-        all_district_ids = {d.id for d in districts if d and district_type_for_staff(responsible_user_id, d) == "secondary"}
+        districts = [member_district(a) for a in existing_activities] + [
+            school.district
+        ]
+        all_district_ids = {
+            d.id
+            for d in districts
+            if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+        }
         incoming_type = "secondary" if all_district_ids else "primary"
         _assert_common_approved_group(all_district_ids)
 
@@ -533,11 +564,14 @@ def _recalculate_and_write_lines(
     )
     n = len(activities)
     district_types = {
-        district_type_for_staff(responsible_user_id, member_district(member)) or "primary"
+        district_type_for_staff(responsible_user_id, member_district(member))
+        or "primary"
         for member in activities
     }
     if district_types:
-        batch.district_type = "secondary" if "secondary" in district_types else "primary"
+        batch.district_type = (
+            "secondary" if "secondary" in district_types else "primary"
+        )
     pool = compute_daily_pool(rates, batch.district_type)
 
     # Each member's own recipe, computed ONCE here because the day's pool

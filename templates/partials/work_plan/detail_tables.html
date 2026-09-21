@@ -1,6 +1,6 @@
 {% load frontend_filters table_pagination %}
 {% for section in detail_tables %}
-<section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden" aria-labelledby="work-plan-{{ section.key }}-title">
+<section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs overflow-hidden" aria-labelledby="work-plan-{{ section.key }}-title">
   <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
     <h3 id="work-plan-{{ section.key }}-title" class="text-[13px] font-bold text-slate-800 dark:text-slate-200">{{ section.title }}</h3>
     <span class="edify-text-caption font-semibold text-slate-500">{{ section.rows|length }} activit{{ section.rows|length|pluralize:"y,ies" }}</span>

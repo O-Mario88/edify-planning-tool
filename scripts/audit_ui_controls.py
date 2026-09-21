@@ -152,7 +152,7 @@ def main():
                 notes.append("No submitted name or direct model; check JS binding")
             rows.append(
                 {
-                    "control_id": f"CONTROL-{len(rows)+1:05d}",
+                    "control_id": f"CONTROL-{len(rows) + 1:05d}",
                     "template": str(path.relative_to(ROOT)),
                     "line": n["line"],
                     "kind": kind,

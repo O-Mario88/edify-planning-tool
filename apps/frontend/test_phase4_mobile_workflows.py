@@ -31,8 +31,13 @@ class PhaseFourMobileWorkflowContractTest(SimpleTestCase):
 
         self.assertNotIn("partials/planning/right_panel.html", planning)
         self.assertIn("kpi_strip_items", planning)
+        # What needs you now left My Plan for the dashboard on 2026-09-20;
+        # there the phone home block and the day's agenda come before the
+        # metrics strip.
+        self.assertNotIn("priority_queue.html", my_plan)
+        cceo = _read("templates/pages/dashboards/cceo.html")
         self.assertLess(
-            my_plan.index("priority_queue.html"), my_plan.index("kpi_cards.html")
+            cceo.index("mobile_role_home.html"), cceo.index("context_metrics.html")
         )
         self.assertLess(
             todos.index("todos-mobile-next-title"),

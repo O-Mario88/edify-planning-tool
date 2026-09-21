@@ -30,11 +30,11 @@ test('bar charts preserve units, palette, data and layout through range changes 
       expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
     }
   }
-  await page.evaluate(()=>{window.chartFixture.destroy();const card=document.getElementById('chart-test-card');window.chartFixture=window.EdifyChartSystem.renderDetached(card,{chart:{type:'bar'},labels:Array.from({length:12},(_,i)=>`Period ${i+1}`),series:[{name:'Visits',data:Array.from({length:12},(_,i)=>i)}]});});
+  await page.evaluate(()=>{window.chartFixture.destroy();const card=document.getElementById('chart-test-card');window.chartFixture=window.EdifyChartSystem.renderDetached(card,{chart:{type:'bar'},labels:Array.from({length:14},(_,i)=>`Period ${i+1}`),series:[{name:'Visits',data:Array.from({length:14},(_,i)=>i)}]});});
   await expect(card.getByRole('combobox',{name:'Chart range'})).toBeVisible();
   await card.getByRole('combobox').selectOption('1');
   await card.locator('summary').click();
-  await expect(card.getByRole('rowheader',{name:'Period 12',exact:true})).toBeVisible();
+  await expect(card.getByRole('rowheader',{name:'Period 14',exact:true})).toBeVisible();
   await expect(card.locator('[data-edify-chart-stage]')).toHaveCount(1);
   await page.evaluate(()=>window.chartFixture.destroy());
   await expect(card.locator('[data-standard-charts]')).toHaveCount(0);

@@ -44,17 +44,17 @@ route's, so one constant URL answers it for every row.
 
       <div class="school-record-row__identity">
         <h2 class="school-record-row__title">
-          <a href="/schools/{{ school.school_id }}" class="school-record-row__link hover:underline">{{ school.school_name }}</a>
+          {% if request.user|can_open:"/schools/0" %}<a href="{% url 'frontend:school_detail' school.school_id %}" class="school-record-row__link hover:underline">{{ school.school_name }}</a>{% else %}<span class="school-record-row__link">{{ school.school_name }}</span>{% endif %}
         </h2>
         <dl class="school-record-row__metadata">
-          <div><dt>District:</dt><dd>{% if school.district_id %}<a href="/districts/{{ school.district_id }}" class="hover:underline font-medium text-slate-700 hover:text-blue-600">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 hover:text-blue-600">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
+          <div><dt>District:</dt><dd>{% if school.district_id %}<a href="/districts/{{ school.district_id }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address }}</dd></div>
           <div><dt>School Type:</dt><dd>{{ school.school_type }}</dd></div>
-          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id and request.user|can_open:"/clusters/0" %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
           <div><dt>Enrollment:</dt><dd>{{ school.enrolment }}</dd></div>
           <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
           <div><dt>Primary Contact:</dt><dd>{{ school.school_contact }}</dd></div>
-          <div><dt>Staff Name:</dt><dd>{% if school.staff_id %}<a href="/staff/{{ school.staff_id }}" class="hover:underline font-medium text-slate-700 hover:text-blue-600">{{ school.staff_name }}</a>{% else %}{{ school.staff_name }}{% endif %}</dd></div>
+          <div><dt>Staff Name:</dt><dd>{% if school.staff_id %}<a href="/staff/{{ school.staff_id }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.staff_name }}</a>{% else %}{{ school.staff_name }}{% endif %}</dd></div>
           <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
           {% comment %}Derived from the canonical activities every time it is drawn (owner, 2026-09-15): no editable flag.{% endcomment %}
           <div data-visit-status><dt>Visit status:</dt><dd><span class="edify-badge" data-tone="{{ school.visit_plan_status_tone }}">{{ school.visit_plan_status_label }}</span>{% if school.next_visit_date %} <span class="edify-text-caption">{{ school.next_visit_date|date:"j M Y" }}</span>{% endif %}</dd></div>

@@ -15,15 +15,17 @@
  */
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
+const { ensureActionableRow } = require('./helpers/plans');
 
 test.describe('row actions menu', () => {
   test('opens as a stacked list of actions', async ({ page }) => {
     test.setTimeout(120_000);
     await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
 
-    // The fiscal-year lens is My Plan's default and holds every plan, so a
-    // seeded account has rows whatever today's date is.
-    await page.goto('/my-plan');
+    // My Plan lists upcoming work, and the seed's rows are all completed
+    // (a completed row offers its record, not the menu), so the helper books
+    // one visit ahead of today for this officer when none is there yet.
+    await ensureActionableRow(page);
     const trigger = page.locator('.row-menu__trigger').first();
     await expect(trigger).toBeVisible();
 

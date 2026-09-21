@@ -35,7 +35,7 @@ test('blue login and compact Planning and leave strips at every device size',asy
    for(const theme of ['theme-light','theme-dark','theme-blue']){
     await page.evaluate(t=>{document.documentElement.classList.remove('theme-light','theme-dark','theme-blue');document.documentElement.classList.add(t);document.documentElement.classList.toggle('dark',t!=='theme-light')},theme);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),route+' '+width+' '+theme).toBe(true);
-    if(theme==='theme-light')await expect(page.locator('body')).toHaveCSS('background-color','rgb(232, 238, 245)');
+    if(theme==='theme-light')await expect(page.locator('body')).toHaveCSS('background-color','rgb(219, 228, 235)');
     for(const strip of await page.locator('main .context-metrics__sentence').all()){
      const box=await strip.boundingBox();expect(box.width).toBeLessThanOrEqual(width);
      await expect(strip).toHaveCSS('background-color',theme==='theme-light'?'rgb(255, 255, 255)':theme==='theme-dark'?'rgb(18, 34, 52)':'rgba(0, 0, 0, 0)');

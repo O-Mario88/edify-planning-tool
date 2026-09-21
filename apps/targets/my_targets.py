@@ -99,8 +99,9 @@ class PriorityTargetArea:
 ANNUAL_FALLBACK = {
     "school_visits": lambda tp: tp.visits_target or 0,
     "cluster_meetings": lambda tp: tp.cluster_meetings_target or 0,
-    "cluster_trainings": lambda tp: (tp.trainings_target or 0)
-    + (tp.group_trainings_target or 0),
+    "cluster_trainings": lambda tp: (
+        (tp.trainings_target or 0) + (tp.group_trainings_target or 0)
+    ),
     "ssa_completed": lambda tp: tp.ssa_target or 0,
     "mscs": lambda tp: 0,  # MSCS has no annual field — monthly assignment only
 }
@@ -1233,7 +1234,7 @@ class MyTargetQueryService:
                     "sub": "Monthly",
                 },
                 *[{"label": q, "sub": Cal.quarter_label(fy, q)} for q in QUARTERS],
-                {"label": f"FY {int(fy)-1}/{str(fy)[-2:]}", "sub": "Full Year"},
+                {"label": f"FY {int(fy) - 1}/{str(fy)[-2:]}", "sub": "Full Year"},
             ],
             "trend": {
                 "labels": MONTH_LABELS,

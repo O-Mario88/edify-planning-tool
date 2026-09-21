@@ -17,6 +17,11 @@
  *    width of the word "Actions" and its 90px button painted 36px past the
  *    table, with no scroll to reach it.
  *
+ * My Plan's tables became record tables on 2026-09-19 and a record table
+ * scrolls instead of taking a plan (micro-ux.js, 2026-09-20), so the journey
+ * reads the Country Director's operations dashboard, whose Who's Online and
+ * Programme Lead tables still take a plan at 1440px with a control per row.
+ *
  * Asserted on the rendered geometry, not the plan: a heading that fits its
  * own box, and a control the reader can actually get to.
  */
@@ -25,14 +30,14 @@ const { signIn } = require('./helpers/auth');
 
 test('planned columns show their headings and keep their controls reachable', async ({ page }) => {
   test.setTimeout(120_000);
-  await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
+  await signIn(page, 'cd@edify.org', 'edify', { acceptRequiredAgreements: false });
   await page.setViewportSize({ width: 1440, height: 950 });
-  await page.goto('/my-plan');
-  await expect(page.locator('.row-menu__trigger').first()).toBeVisible();
+  await page.goto('/dashboard?view=operations');
+  await expect(page.locator('main table').first()).toBeVisible();
   await page.waitForTimeout(600);
 
   const planned = page.locator('main table.edify-table--truncate');
-  expect(await planned.count()).toBeGreaterThan(0);
+  expect(await planned.count(), 'the operations tables take a column plan at 1440px').toBeGreaterThan(0);
 
   const report = await planned.evaluateAll((tables) =>
     tables.map((table) => {
@@ -44,8 +49,8 @@ test('planned columns show their headings and keep their controls reachable', as
           .map((th) => th.textContent.trim()),
         unreachable: [...table.querySelectorAll('tbody tr')]
           .slice(0, 8)
-          .map((row) => row.querySelector('.row-menu__trigger'))
-          .filter((button) => button && button.getBoundingClientRect().right > room + 1).length,
+          .map((row) => row.querySelector('.row-menu__trigger') || row.querySelector('td:last-child :is(a, button)'))
+          .filter((control) => control && control.getBoundingClientRect().right > room + 1).length,
       };
     })
   );

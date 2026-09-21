@@ -102,7 +102,7 @@ class AnalyticsDrilldownOwnerColumnTest(TestCase):
         self.assertEqual(
             response.status_code,
             200,
-            f"/analytics/drilldown?metric={metric} returned " f"{response.status_code}",
+            f"/analytics/drilldown?metric={metric} returned {response.status_code}",
         )
         return response
 

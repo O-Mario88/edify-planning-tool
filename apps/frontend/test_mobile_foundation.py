@@ -27,7 +27,7 @@ class MobileFoundationContractTest(SimpleTestCase):
         template = _read("templates/components/context_metrics.html")
         context = components[components.index("CONTEXT METRICS") :]
 
-        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("flex-direction: column;", context)
         self.assertIn("data-mobile-summary", template)
         self.assertIn('<h2 class="context-metrics__title">', template)

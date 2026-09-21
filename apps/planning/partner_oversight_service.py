@@ -726,7 +726,7 @@ def build_items_for_school(school_id: str):
 
     partner_risk_service.annotate(items)
     items.sort(
-        key=lambda i: (i.scheduled_date or i.assignment_date or date.min), reverse=True
+        key=lambda i: i.scheduled_date or i.assignment_date or date.min, reverse=True
     )
     return items
 

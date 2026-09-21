@@ -167,11 +167,49 @@ These are additions or improvements, subject to verifying that the underlying da
 
 ## Implementation status
 
+### 21 September 2026 — people as series, right-sized cards
+
+The Programme Lead's charts now read the team as people. On Team Oversight
+(planning lens), Cluster Oversight, Core School Oversight and the Team Core
+Oversight card, every chart has one series per person — the lead's own work
+first, then each supervised officer — and the PL dashboard's Team Execution
+Progress shows completed work by month per person rather than per delivery
+family. The Country Director's counterparts read one series per Programme
+Lead. A person's series position is their colour: `--edify-series-1..8` are
+assigned in row order and never re-assigned across pages or panels, and the
+renderer reads the tokens live so dark and blue themes draw their own
+validated steps (light and dark palettes both pass the categorical checks:
+worst adjacent CVD ΔE 10.8 / 9.6, worst normal-vision pair 24.9 / 19.3).
+
+Every one of those charts lists the whole roster, not just the people with
+something to show: a Programme Lead reads themselves first and then every
+officer `apps.hr.team_roster.team_members` returns, zeros included, and a
+country or regional reader reads every system Programme Lead. A person's
+position in that list is their colour on every chart of the page, so an
+officer who holds nothing this period is a zero row rather than a missing
+one and nobody's colour shifts. The Team Core Oversight card folds every
+core school the reader watches, not the page on show. Team Oversight's
+country and regional lens carries the per-Lead planning progress chart the
+team lens carries per person.
+
+Shared geometry, in `static/js/chart-standard.js`: a 220px plot (plus a 28px
+legend row for comparisons), bars capped at 22px thick with a 2px surface gap,
+rectangular ends, one hairline grid, 11px muted value labels that stay silent
+when a bar has no room for them, a top-left legend, and pages sized by series
+count (12 categories for one or two series, 8 for up to four, 6 above that)
+so a bar never drops below a readable width. Cards carry a quiet 14px title
+and 12px subtitle and fold their data table under a "View chart data" link.
+Per-school charts were retired from the core-school tables in favour of the
+per-officer chart above them; the school rows remain the record.
+
+Earlier status follows.
+
+
 The shared rendering boundary now converts chart-library plots to the bar standard, separates rate/count axes, uses the four-color palette, and provides range selection and accessible data tables. Scalar donut/gauge payloads become horizontal category bars. Heatmap data becomes bar panels. Scatter data becomes per-observation bars, preserving duplicates and missing values without introducing new statistical aggregations; the spending/exposure bins proposed above remain a future analytical enhancement.
 
 Independent admin/core trends and shared ring gauges now use rectangular bars; decorative admin sparklines were removed. Project bars now label improved-school counts consistently and compare allocated budget per improved school (not actual expenditure). District SSA tiles became a score comparison chart. Detailed score matrices, calendars and maps remain available.
 
-Added scoped charts: team/country planning progress, core-school scheduled and completed visits/trainings against targets, cluster activity coverage, and cluster/district SSA comparisons. Other graph coverage recommendations above remain a prioritized backlog, not a claim of delivered functionality.
+On Team Oversight the per-person and per-Lead planning charts sit under the rows, so the first table row keeps the desktop fold budget the calm-workspace journey holds (2026-09-21). Added scoped charts: team/country planning progress, core-school scheduled and completed visits/trainings against targets, cluster activity coverage, and cluster/district SSA comparisons. Other graph coverage recommendations above remain a prioritized backlog, not a claim of delivered functionality.
 
 Validation includes normalization tests for missing/negative values, duplicate observations, unit separation and large comparisons; Django payload/escaping and compatibility tests; project analytics tests; and a browser regression for the palette, data tables, range changes, teardown and mobile overflow across light/dark/blue themes.
 

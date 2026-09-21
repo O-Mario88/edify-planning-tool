@@ -22,9 +22,13 @@ test('populated oversight and finance remain compact, readable and interactive',
     for(const header of await page.locator('main .edify-page-header:visible').all())await expect(header).toHaveCSS('box-shadow','none');
    }
    if(route.includes('team-planning')&&width===1048){
-    const top=await page.locator('tbody tr').first().evaluate(el=>el.getBoundingClientRect().top+document.querySelector('main').scrollTop);
-    // A desktop fold budget. Touch devices take 48px targets above the table, so it is for fine pointers.
-    if(!isMobile)expect(top).toBeLessThan(500);
+    const row=await page.locator('tbody tr').first().evaluate(el=>{const r=el.getBoundingClientRect();return {top:r.top+document.querySelector('main').scrollTop,bottom:r.bottom+document.querySelector('main').scrollTop,fold:innerHeight};});
+    // A desktop fold budget: the first row is wholly visible before anyone
+    // scrolls. Since 2026-09-20 the context strip, the officer tabs and the
+    // officer summary sit above the rows, so the budget is the fold itself
+    // rather than the 500px the bare table once fit under. Touch devices take
+    // 48px targets above the table, so it is for fine pointers.
+    if(!isMobile)expect(row.bottom,'first row above the fold at 1048x900').toBeLessThanOrEqual(row.fold);
     expect(['right','end']).toContain(await page.getByRole('columnheader',{name:'Cost',exact:true}).first().evaluate(e=>getComputedStyle(e).textAlign));
    }
    if(route.includes('team-planning')&&(width===390||width===1048)){
