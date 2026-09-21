@@ -85,11 +85,11 @@ Programme Rollout holds the full picture behind each card.
         <header class="rpl-card__header">
           <div class="rpl-card__heading">
             <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
-            <span class="rpl-card__subtitle">Completed work by month and delivery family, with the share of the year's plan done · field execution, not IA-verified</span>
+            <span class="rpl-card__subtitle">Completed work by month for you and each officer you supervise, with the share of the year's plan done · field execution, not IA-verified</span>
           </div>
         </header>
         {% if delivery_by_month.has_work %}
-        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed team activities by month and delivery family for FY {{ fy }}"></div>
+        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed activities by month for you and each team member, FY {{ fy }}"></div>
         {{ delivery_by_month|json_script:"pl-execution-payload" }}
         {% else %}
         {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." compact="true" %}
@@ -130,6 +130,9 @@ Programme Rollout holds the full picture behind each card.
     var isDark = document.documentElement.classList.contains('dark');
     var seriesCount = payload.series.length + 1;
     var cfg = window.EdifyChartSystem.mixedTrend(seriesCount);
+    /* People are columns, one hue each; the shared bar standard draws the
+       share-of-plan rate as its own panel rather than a second axis. */
+    cfg.chart.type = 'bar';
     cfg.series = payload.series.map(function (s) {
       return { name: s.name, type: 'column', data: s.data };
     });
@@ -144,7 +147,7 @@ Programme Rollout holds the full picture behind each card.
         ? window.EdifyChartSystem.countAxis('', { seriesName: first })
         : { seriesName: first, show: false };
     });
-    cfg.yaxis.push(window.EdifyChartSystem.rateAxis());
+    cfg.yaxis.push(window.EdifyChartSystem.rateAxis('Share of plan done (%)'));
     cfg.tooltip.theme = isDark ? 'dark' : 'light';
     return cfg;
   }

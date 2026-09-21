@@ -61,6 +61,33 @@ CORE_PAGE_SIZES = (10, 15, 20, 50)
 CORE_PAGE_SIZE_DEFAULT = 15
 
 
+def _core_rows_by_officer(oversight_rows) -> list[dict]:
+    """The team oversight rows folded per responsible CCEO, for the chart
+    that reads each officer as a series. Summed from the rows on the page,
+    so an officer's bars and their school rows agree by construction."""
+    groups: dict[str, dict] = {}
+    for row in oversight_rows:
+        key = str(row.get("account_owner_id") or row.get("responsible_cceo") or "")
+        group = groups.setdefault(
+            key,
+            {
+                "name": row.get("responsible_cceo") or "Unassigned",
+                "scheduled_visits": 0,
+                "visits_target": 0,
+                "scheduled_trainings": 0,
+                "trainings_target": 0,
+            },
+        )
+        group["scheduled_visits"] += int(row.get("scheduled_visit_count") or 0)
+        group["visits_target"] += int(row.get("visits_target") or 0)
+        group["scheduled_trainings"] += int(row.get("scheduled_training_count") or 0)
+        group["trainings_target"] += int(row.get("trainings_target") or 0)
+    return sorted(
+        groups.values(),
+        key=lambda g: (g["name"] == "Unassigned", g["name"].casefold()),
+    )
+
+
 def _core_page_size(request) -> int:
     raw = str(request.GET.get("per_page", "")).strip()
     if raw.isdigit() and int(raw) in CORE_PAGE_SIZES:
@@ -126,6 +153,7 @@ def core_schools_view(request):
         if lens == "oversight"
         else []
     )
+    oversight_by_officer = _core_rows_by_officer(oversight_rows)
     planning_queue = CorePlanningService.get_planning_queue(page_obj.object_list, fy)
     intervention_impact = CoreInterventionImpactService.get_intervention_impact(
         core_schools_qs, fy
@@ -323,6 +351,7 @@ def core_schools_view(request):
         "kpi_strip_items": kpi_strip_items,
         "matrix_rows": matrix_rows,
         "oversight_rows": oversight_rows,
+        "oversight_by_officer": oversight_by_officer,
         "lens": lens,
         "is_oversight_lens": lens == "oversight",
         "has_team_core": has_team_core,

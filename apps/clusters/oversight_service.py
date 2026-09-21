@@ -451,7 +451,13 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             cceo_tabs.extend(tab for tab in lead["cceo_tabs"] if str(tab["id"]) not in user_staff_ids)
 
     # 7. Cluster performance executive overview
-    from apps.planning.cluster_performance_service import cluster_performance
+    from apps.planning.cluster_performance_service import (
+        NO_LEAD_KEY,
+        NO_OWNER_KEY,
+        cluster_performance,
+    )
+    officer_activity: list[dict] = []
+    lead_activity: list[dict] = []
     try:
         perf = cluster_performance(principal, fy=str(fy or "2026"))
         raw_totals = perf.get("totals", {})
@@ -464,6 +470,46 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             "total_spend": raw_totals.get("budget", 0),
             "budget_allocated": raw_totals.get("budget", 0),
         }
+        # The same measured rows, folded per person for the chart that reads
+        # each officer (or each Lead) as a series. The tab a person owns and
+        # the bars they wear come from one list, so they cannot disagree.
+        # Bounded to the clusters this page lists, so the bars and the tabs
+        # count the same clusters.
+        listed = set(cluster_ids)
+        measured = [
+            entry["row"]
+            for entry in perf.get("rows", [])
+            if entry["row"].cluster_id in listed
+        ]
+        if is_programme_lead:
+            own_label = f"{getattr(principal, 'name', '') or 'My clusters'} (you)"
+            officer_activity = [
+                cluster_activity_by_person(
+                    own_label if tab["id"] == "my-clusters" else tab["name"],
+                    measured,
+                    lambda row, tab=tab: (
+                        str(row.owner_id) in user_staff_ids
+                        if tab["id"] == "my-clusters"
+                        else row.owner_id == NO_OWNER_KEY
+                        if tab["id"] == "__unassigned__"
+                        else str(row.owner_id) == str(tab["id"])
+                    ),
+                )
+                for tab in cceo_tabs
+            ]
+        else:
+            lead_activity = [
+                cluster_activity_by_person(
+                    lead["name"],
+                    measured,
+                    lambda row, lead=lead: (
+                        row.lead_id == NO_LEAD_KEY
+                        if lead["id"] == "__unassigned__"
+                        else str(row.lead_id) == str(lead["id"])
+                    ),
+                )
+                for lead in leads_data
+            ]
     except Exception:
         perf_totals = {
             "active_clusters": len(clusters),
@@ -480,8 +526,30 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         "selected_program_lead": selected_program_lead or (leads_data[0]["id"] if leads_data else ""),
         "leads": leads_data,
         "cceo_tabs": cceo_tabs,
+        "officer_activity": officer_activity,
+        "lead_activity": lead_activity,
         "total_clusters": len(clusters),
         "total_schools": len(schools),
         "perf_totals": perf_totals,
+    }
+
+
+def cluster_activity_by_person(name: str, rows, belongs) -> dict:
+    """One person's cluster activity, folded from the measured cluster rows.
+
+    ``rows`` are the ClusterRow records cluster_performance measured and
+    ``belongs`` says which of them this person carries. Active and dormant
+    use the same rule as the headline tiles (a cluster with nothing planned is
+    dormant), so a person's bars sum to the strip above them.
+    """
+    mine = [row for row in rows if belongs(row)]
+    dormant = sum(1 for row in mine if row.is_dormant)
+    return {
+        "name": name,
+        "clusters": len(mine),
+        "active_clusters": len(mine) - dormant,
+        "dormant_clusters": dormant,
+        "sessions_held": sum(row.sessions_done for row in mine),
+        "schools_reached": sum(row.schools_reached for row in mine),
     }
 

@@ -1,8 +1,3 @@
-{% load chart_tags %}
-{% if schools %}
-{% comparison_chart schools "name" "visits_completed" "visits_target" "Completed visits against target" "Completed" "Target" %}
-{% comparison_chart schools "name" "trainings_completed" "trainings_target" "Completed trainings against target" "Completed" "Target" %}
-{% endif %}
 {% load frontend_filters school_identity %}
 <div class="overflow-x-auto">
   <table class="edify-record-table w-full text-left" data-mobile-table="scroll">

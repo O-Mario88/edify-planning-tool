@@ -19,8 +19,7 @@ that ask is re-derived server-side before it is written.
 
   <div class="core-oversight-card__body">
     {% if oversight_rows %}
-      {% comparison_chart oversight_rows "name" "scheduled_visit_count" "visits_target" "Visits scheduled against target — schools on this page" "Scheduled" "Target" %}
-      {% comparison_chart oversight_rows "name" "scheduled_training_count" "trainings_target" "Trainings scheduled against target — schools on this page" "Scheduled" "Target" %}
+      {% team_chart oversight_by_officer "name" "scheduled_visits,visits_target,scheduled_trainings,trainings_target" "Visits scheduled,Visits target,Trainings scheduled,Trainings target" "Core package scheduling by officer" "Summed over the schools on this page · one colour per CCEO" %}
       <div class="core-oversight-scroll">
         {% comment %}
         `data-edify-padding="flush"` keeps the table's outer columns aligned

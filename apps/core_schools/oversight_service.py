@@ -19,6 +19,23 @@ from apps.schools.models import School
 from django.db.models import Avg, Q
 
 
+#: The package counts a group of schools folds to, for the chart that reads
+#: one officer (or one Lead) as a series. Completed and target are summed over
+#: the group's schools, so the officer bars and the school rows agree.
+_PACKAGE_TOTAL_KEYS = (
+    "visits_completed",
+    "visits_target",
+    "trainings_completed",
+    "trainings_target",
+)
+_EMPTY_PACKAGE_TOTALS = {key: 0 for key in _PACKAGE_TOTAL_KEYS}
+
+
+def _add_package_totals(group: dict, row: dict) -> None:
+    for key in _PACKAGE_TOTAL_KEYS:
+        group[key] += int(row.get(key) or 0)
+
+
 def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     """Returns database-driven core schools oversight dataset."""
     fy = str(fy or get_operational_fy())
@@ -166,10 +183,12 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                     "schools": [],
                     "count": 0,
                     "completed": 0,
+                    **_EMPTY_PACKAGE_TOTALS,
                 },
             )
             cceo_groups[oid]["schools"].append(row)
             cceo_groups[oid]["count"] += 1
+            _add_package_totals(cceo_groups[oid], row)
             if row["is_package_complete"]:
                 cceo_groups[oid]["completed"] += 1
 
@@ -190,6 +209,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 "cceos": {},
                 "count": 0,
                 "completed": 0,
+                **_EMPTY_PACKAGE_TOTALS,
             }
             leads_data.append(pl_dict)
             for pid in pl["ids"]:
@@ -201,6 +221,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             "cceos": {},
             "count": 0,
             "completed": 0,
+            **_EMPTY_PACKAGE_TOTALS,
         }
 
         for row in formatted_schools:
@@ -211,6 +232,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 target_pl = unassigned_pl
 
             target_pl["count"] += 1
+            _add_package_totals(target_pl, row)
             if row["is_package_complete"]:
                 target_pl["completed"] += 1
 
@@ -223,10 +245,12 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                     "schools": [],
                     "count": 0,
                     "completed": 0,
+                    **_EMPTY_PACKAGE_TOTALS,
                 },
             )
             cceo_entry["schools"].append(row)
             cceo_entry["count"] += 1
+            _add_package_totals(cceo_entry, row)
             if row["is_package_complete"]:
                 cceo_entry["completed"] += 1
 

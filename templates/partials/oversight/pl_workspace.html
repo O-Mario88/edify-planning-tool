@@ -13,7 +13,11 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
 
   {# ── Headline numbers, folded from the full item list ─────────────────── #}
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Team planning context" %}
-  {% summary_chart summary "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress" %}
+  {% comment %}One series per person — the lead first, then each supervised
+  officer — so the chart answers "who is where" rather than restating the
+  tiles. Folded from the same items as the tabs, in the selected activity
+  family, for the whole team whichever owner tab is open.{% endcomment %}
+  {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by person" "You and each officer you supervise · "|add:period_label %}
 
   {# ── Narrowing and taking the view away with you ──────────────────────── #}
   <div class="flex flex-wrap items-center justify-between gap-2">

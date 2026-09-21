@@ -15,7 +15,7 @@ summary and the detail are the same numbers by construction.
 <section class="space-y-4" x-data="{ open: null }" data-mobile-table="scroll">
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
-  {% summary_chart summary "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress" %}
+  {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by Programme Lead" "Each Lead's team · "|add:period_label %}
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <details class="oversight-filters">

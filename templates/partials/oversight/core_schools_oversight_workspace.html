@@ -1,4 +1,4 @@
-{% load kpi_metrics frontend_filters school_identity %}
+{% load kpi_metrics frontend_filters school_identity chart_tags %}
 
 <div class="core-schools-oversight-content space-y-6">
 
@@ -13,6 +13,7 @@
   {% if is_programme_lead %}
     {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
     {% if cceo_tabs %}
+    {% team_chart cceo_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by officer" "Summed over each officer's core schools, this financial year" %}
     <div x-data="{ activeCceo: '{{ cceo_tabs.0.id }}' }" class="space-y-4">
       <div class="oversight-team-selector">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
@@ -59,6 +60,7 @@
   {% else %}
     {# ── Country / Regional View: Level 1 Supervising PL -> Level 2 CCEO Tabs #}
     {% if leads %}
+    {% team_chart leads "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by Programme Lead" "Summed over each Lead's team, this financial year" %}
     <div x-data="{ activeLead: '{{ leads.0.id }}' }" class="space-y-5">
       {# Level 1: Supervising PL Tabs #}
       <div class="oversight-team-selector">
