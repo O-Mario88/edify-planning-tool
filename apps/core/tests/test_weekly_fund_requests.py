@@ -269,7 +269,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
-        # 62,000 visit + 330,000 meeting + 520,000 training = 912,000 UGX, less
+        # 62,000 visit + 330,000 meeting + 412,000 training = 804,000 UGX, less
         # the visit's 50,000 vendor-direct transport. The visit's day keeps its
         # lunch: nothing on it feeds the staff member.
         wfr_data = self._post(
@@ -281,7 +281,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 862000)  # transport is vendor-direct
+        self.assertEqual(wfr_data["totalAmount"], 754000)  # transport is vendor-direct
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail
