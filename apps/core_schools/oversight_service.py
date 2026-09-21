@@ -8,11 +8,10 @@ Provides database-driven core schools oversight data:
 
 from __future__ import annotations
 
-from apps.accounts.models import StaffProfile
 from apps.clusters.oversight_service import _label, _staff_directory, _supervisor_of
 from apps.core.rbac import EdifyRole
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope, team_oversight_schools
+from apps.core.scoping import resolve_user_scope
 from apps.core_schools.models import CorePlan
 from apps.planning.oversight_service import system_program_leads
 from apps.schools.models import School
