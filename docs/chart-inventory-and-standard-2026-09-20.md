@@ -181,6 +181,17 @@ renderer reads the tokens live so dark and blue themes draw their own
 validated steps (light and dark palettes both pass the categorical checks:
 worst adjacent CVD ΔE 10.8 / 9.6, worst normal-vision pair 24.9 / 19.3).
 
+Every one of those charts lists the whole roster, not just the people with
+something to show: a Programme Lead reads themselves first and then every
+officer `apps.hr.team_roster.team_members` returns, zeros included, and a
+country or regional reader reads every system Programme Lead. A person's
+position in that list is their colour on every chart of the page, so an
+officer who holds nothing this period is a zero row rather than a missing
+one and nobody's colour shifts. The Team Core Oversight card folds every
+core school the reader watches, not the page on show. Team Oversight's
+country and regional lens carries the per-Lead planning progress chart the
+team lens carries per person.
+
 Shared geometry, in `static/js/chart-standard.js`: a 220px plot (plus a 28px
 legend row for comparisons), bars capped at 22px thick with a 2px surface gap,
 rectangular ends, one hairline grid, 11px muted value labels that stay silent

@@ -484,10 +484,35 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
                 "schools": sum(row["schools_count"] for row in own_rows),
             }
         ]
-        for lead in leads_data:
-            cceo_tabs.extend(
-                tab for tab in lead["cceo_tabs"] if str(tab["id"]) not in user_staff_ids
+        officer_tabs = [
+            tab
+            for lead in leads_data
+            for tab in lead["cceo_tabs"]
+            if str(tab["id"]) not in user_staff_ids
+        ]
+        # Every officer on the roster is a tab and a series, holding clusters
+        # or not: an officer with none is a zero row, never a missing one, so
+        # the chart reads as the team and nobody's colour shifts when a
+        # colleague has nothing to show.
+        from apps.hr.team_roster import team_members
+
+        listed = {str(tab["id"]) for tab in officer_tabs}
+        for member in team_members(principal):
+            if str(member.id) in listed:
+                continue
+            officer_tabs.append(
+                {
+                    "id": member.id,
+                    "name": _label(member),
+                    "clusters": [],
+                    "count": 0,
+                    "schools": 0,
+                }
             )
+        officer_tabs.sort(
+            key=lambda tab: (tab["id"] == "__unassigned__", tab["name"].casefold())
+        )
+        cceo_tabs.extend(officer_tabs)
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import (

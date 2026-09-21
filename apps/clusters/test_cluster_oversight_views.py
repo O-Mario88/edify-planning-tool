@@ -100,6 +100,48 @@ class OversightViewsAccessTest(TestCase):
         self.assertNotContains(oversight, 'aria-label="Supervising Program Leads"')
         self.assertNotContains(oversight, "Other team private cluster")
 
+    def test_every_roster_officer_is_a_row_on_the_pl_charts_holding_work_or_not(self):
+        """A lead reads the whole team: an officer with no cluster and no core
+        school is a zero row on Cluster and Core School Oversight, never a
+        missing one, and the lead's own work comes first."""
+        idle = _create_user("idle.officer@oversight.test", EdifyRole.CCEO)
+        for officer in (self.cceo, idle):
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.pl.staff_profile, supervisee=officer.staff_profile
+            )
+        School.objects.create(
+            name="Lead's Own Core",
+            school_id="SCH-PL-1",
+            region=self.region,
+            district=self.district,
+            school_type=SchoolType.CORE,
+            account_owner_id=str(self.pl.staff_profile.id),
+        )
+        self.school.account_owner_id = str(self.cceo.staff_profile.id)
+        self.school.save(update_fields=["account_owner_id"])
+        self.client.force_login(self.pl)
+
+        clusters = self.client.get(reverse("frontend:cluster_oversight"))
+        names = [tab["name"] for tab in clusters.context["cceo_tabs"]]
+        self.assertEqual(names, ["My Clusters", "Cceo", "Idle Officer"])
+        activity = clusters.context["officer_activity"]
+        self.assertEqual(
+            [(row["name"], row["clusters"]) for row in activity],
+            [("Pl (you)", 0), ("Cceo", 1), ("Idle Officer", 0)],
+        )
+
+        core = self.client.get(reverse("frontend:core_schools_oversight"))
+        tabs = core.context["cceo_tabs"]
+        self.assertEqual(
+            [(tab["tab_label"], tab["count"]) for tab in tabs],
+            [("My Core Schools", 1), ("Cceo", 1), ("Idle Officer", 0)],
+        )
+        self.assertEqual(tabs[0]["name"], "Pl (you)")
+        self.assertEqual(tabs[0]["heading"], "My Core Schools")
+        self.assertEqual(tabs[1]["heading"], "Cceo's Core Schools")
+        self.assertEqual(tabs[2]["visits_target"], 0)
+        self.assertContains(core, "You and your team (3)")
+
     def test_core_oversight_has_only_one_active_sidebar_entry(self):
         from apps.core.navigation import build_sidebar_for_user
 

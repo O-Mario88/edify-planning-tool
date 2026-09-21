@@ -61,31 +61,118 @@ CORE_PAGE_SIZES = (10, 15, 20, 50)
 CORE_PAGE_SIZE_DEFAULT = 15
 
 
-def _core_rows_by_officer(oversight_rows) -> list[dict]:
-    """The team oversight rows folded per responsible CCEO, for the chart
-    that reads each officer as a series. Summed from the rows on the page,
-    so an officer's bars and their school rows agree by construction."""
-    groups: dict[str, dict] = {}
+_CORE_CHART_KEYS = (
+    ("scheduled_visits", "scheduled_visit_count"),
+    ("visits_target", "visits_target"),
+    ("scheduled_trainings", "scheduled_training_count"),
+    ("trainings_target", "trainings_target"),
+)
+
+
+def _core_totals(name: str, rows) -> dict:
+    """One person's package scheduling, summed over their school rows."""
+    totals = {"name": name, **{key: 0 for key, _ in _CORE_CHART_KEYS}}
+    for row in rows:
+        for key, source in _CORE_CHART_KEYS:
+            totals[key] += int(row.get(source) or 0)
+    return totals
+
+
+def _core_rows_by_person(oversight_rows, *, roster=(), person_of) -> list[dict]:
+    """The team oversight rows folded per person, for the chart that reads
+    each person as a series.
+
+    ``person_of(row)`` names the person a school row belongs to as an
+    ``(id, name)`` pair — its responsible CCEO for a Programme Lead, the
+    supervising Programme Lead for a country or regional reader — and
+    ``roster`` lists, in display order, everyone who must appear whether or
+    not they hold a core school, so a person with nothing to show is a zero
+    row rather than a missing one. Anyone the rows name who is not on the
+    roster follows in name order; schools nobody owns fold under Unassigned
+    at the end. Summed from the rows, so a person's bars and their school
+    rows agree by construction.
+    """
+    by_person: dict[str, list] = {}
+    names: dict[str, str] = {}
     for row in oversight_rows:
-        key = str(row.get("account_owner_id") or row.get("responsible_cceo") or "")
-        group = groups.setdefault(
-            key,
-            {
-                "name": row.get("responsible_cceo") or "Unassigned",
-                "scheduled_visits": 0,
-                "visits_target": 0,
-                "scheduled_trainings": 0,
-                "trainings_target": 0,
-            },
-        )
-        group["scheduled_visits"] += int(row.get("scheduled_visit_count") or 0)
-        group["visits_target"] += int(row.get("visits_target") or 0)
-        group["scheduled_trainings"] += int(row.get("scheduled_training_count") or 0)
-        group["trainings_target"] += int(row.get("trainings_target") or 0)
-    return sorted(
-        groups.values(),
-        key=lambda g: (g["name"] == "Unassigned", g["name"].casefold()),
+        key, name = person_of(row)
+        key = str(key or "")
+        by_person.setdefault(key, []).append(row)
+        names.setdefault(key, name or "Unassigned")
+    order = [(str(key), name) for key, name in roster]
+    listed = {key for key, _ in order}
+    extra = sorted(
+        ((key, names[key]) for key in by_person if key and key not in listed),
+        key=lambda pair: pair[1].casefold(),
     )
+    folded = [
+        _core_totals(name, by_person.get(key, ())) for key, name in order + extra
+    ]
+    if by_person.get(""):
+        folded.append(_core_totals("Unassigned", by_person[""]))
+    return folded
+
+
+def _core_oversight_chart(user, scope, fy, oversight_qs) -> dict:
+    """The Team Core Oversight chart: every core school the reader watches,
+    folded per person.
+
+    A Programme Lead reads their own core schools first, then each officer on
+    their roster; a country or regional reader reads one series per
+    Programme Lead. Folded over the whole oversight set rather than the page
+    on show, so the bars do not change when the table is paged.
+    """
+    from apps.clusters.oversight_service import (
+        _label,
+        _staff_directory,
+        _supervisor_of,
+    )
+    from apps.core.rbac import EdifyRole
+    from apps.hr.team_roster import team_members
+    from apps.planning.oversight_service import system_program_leads
+
+    rows = CoreTeamOversightService.build_rows(
+        CorePackageProgressService.get_matrix_data(oversight_qs, fy), fy
+    )
+    if scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        own_qs, _ = CoreSchoolsService.base_queryset(user, lens="direct")
+        own_rows = CoreTeamOversightService.build_rows(
+            CorePackageProgressService.get_matrix_data(own_qs, fy), fy
+        )
+        own_label = f"{getattr(user, 'name', '') or 'My work'} (you)"
+        roster = [(member.id, _label(member)) for member in team_members(user)]
+        return {
+            "rows": [_core_totals(own_label, own_rows)]
+            + _core_rows_by_person(
+                rows,
+                roster=roster,
+                person_of=lambda row: (
+                    row.get("account_owner_id"),
+                    row.get("responsible_cceo"),
+                ),
+            ),
+            "title": "Core package scheduling by person",
+            "subtitle": "You and each officer you supervise, summed over every "
+            "core school your team holds",
+        }
+    directory = _staff_directory(
+        {row.get("account_owner_id") for row in rows if row.get("account_owner_id")}
+    )
+
+    def lead_of(row):
+        lead = _supervisor_of(directory.get(row.get("account_owner_id")))
+        return (getattr(lead, "id", None), _label(lead) if lead else "Unassigned")
+
+    return {
+        "rows": _core_rows_by_person(
+            rows,
+            roster=[(pl["id"], pl["name"]) for pl in system_program_leads()],
+            person_of=lead_of,
+        ),
+        "title": "Core package scheduling by Programme Lead",
+        "subtitle": "Each Lead's team, summed over every core school in your "
+        "oversight",
+    }
 
 
 def _core_page_size(request) -> int:
@@ -153,7 +240,11 @@ def core_schools_view(request):
         if lens == "oversight"
         else []
     )
-    oversight_by_officer = _core_rows_by_officer(oversight_rows)
+    oversight_chart = (
+        _core_oversight_chart(request.user, scope, fy, core_schools_qs)
+        if lens == "oversight"
+        else None
+    )
     planning_queue = CorePlanningService.get_planning_queue(page_obj.object_list, fy)
     intervention_impact = CoreInterventionImpactService.get_intervention_impact(
         core_schools_qs, fy
@@ -351,7 +442,7 @@ def core_schools_view(request):
         "kpi_strip_items": kpi_strip_items,
         "matrix_rows": matrix_rows,
         "oversight_rows": oversight_rows,
-        "oversight_by_officer": oversight_by_officer,
+        "oversight_chart": oversight_chart,
         "lens": lens,
         "is_oversight_lens": lens == "oversight",
         "has_team_core": has_team_core,

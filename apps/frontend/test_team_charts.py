@@ -10,7 +10,7 @@ from datetime import date
 from django.test import SimpleTestCase
 
 from apps.clusters.oversight_service import cluster_activity_by_person
-from apps.frontend.views.core_schools_views import _core_rows_by_officer
+from apps.frontend.views.core_schools_views import _core_rows_by_person, _core_totals
 from apps.frontend.views.oversight_views import WHOLE_TEAM_TAB, _team_progress_rows
 from apps.planning.cluster_performance_service import ClusterRow
 from apps.planning.oversight_service import (
@@ -100,67 +100,84 @@ class TeamProgressRowsTest(SimpleTestCase):
         self.assertEqual(row["scheduled_total"], 0)
 
 
-class CoreRowsByOfficerTest(SimpleTestCase):
-    def test_school_rows_sum_per_responsible_officer_in_name_order(self):
+def _school(owner, name, visits=0, trainings=0):
+    return {
+        "account_owner_id": owner,
+        "responsible_cceo": name,
+        "scheduled_visit_count": visits,
+        "visits_target": 4,
+        "scheduled_training_count": trainings,
+        "trainings_target": 4,
+    }
+
+
+def _by_owner(row):
+    return (row["account_owner_id"], row["responsible_cceo"])
+
+
+class CoreRowsByPersonTest(SimpleTestCase):
+    def test_the_roster_comes_first_in_its_own_order_with_zero_rows_for_the_idle(self):
         rows = [
-            {
-                "account_owner_id": "b",
-                "responsible_cceo": "Ruth N.",
-                "scheduled_visit_count": 1,
-                "visits_target": 4,
-                "scheduled_training_count": 0,
-                "trainings_target": 4,
-            },
-            {
-                "account_owner_id": "a",
-                "responsible_cceo": "Deo M.",
-                "scheduled_visit_count": 2,
-                "visits_target": 4,
-                "scheduled_training_count": 3,
-                "trainings_target": 4,
-            },
-            {
-                "account_owner_id": "b",
-                "responsible_cceo": "Ruth N.",
-                "scheduled_visit_count": 4,
-                "visits_target": 4,
-                "scheduled_training_count": 1,
-                "trainings_target": 4,
-            },
+            _school("b", "Ruth N.", visits=1),
+            _school("a", "Deo M.", visits=2, trainings=3),
+            _school("b", "Ruth N.", visits=4, trainings=1),
         ]
 
-        folded = _core_rows_by_officer(rows)
+        folded = _core_rows_by_person(
+            rows,
+            roster=[("a", "Deo M."), ("c", "Mary A."), ("b", "Ruth N.")],
+            person_of=_by_owner,
+        )
 
-        self.assertEqual([r["name"] for r in folded], ["Deo M.", "Ruth N."])
-        self.assertEqual(folded[1]["scheduled_visits"], 5)
-        self.assertEqual(folded[1]["visits_target"], 8)
-        self.assertEqual(folded[1]["scheduled_trainings"], 1)
+        self.assertEqual([r["name"] for r in folded], ["Deo M.", "Mary A.", "Ruth N."])
+        self.assertEqual(folded[1], _core_totals("Mary A.", []))
+        self.assertEqual(folded[2]["scheduled_visits"], 5)
+        self.assertEqual(folded[2]["visits_target"], 8)
+        self.assertEqual(folded[2]["scheduled_trainings"], 1)
         self.assertEqual(folded[0]["trainings_target"], 4)
 
-    def test_a_school_with_no_owner_folds_under_unassigned_at_the_end(self):
+    def test_people_off_the_roster_follow_in_name_order_and_unowned_schools_fold_last(
+        self,
+    ):
         rows = [
-            {
-                "account_owner_id": None,
-                "responsible_cceo": "",
-                "scheduled_visit_count": 0,
-                "visits_target": 4,
-                "scheduled_training_count": 0,
-                "trainings_target": 4,
-            },
-            {
-                "account_owner_id": "a",
-                "responsible_cceo": "Deo M.",
-                "scheduled_visit_count": 1,
-                "visits_target": 4,
-                "scheduled_training_count": 0,
-                "trainings_target": 4,
-            },
+            _school(None, "", visits=0),
+            _school("z", "Zed K.", visits=1),
+            _school("a", "Deo M.", visits=1),
+            _school("m", "Mary A.", visits=1),
         ]
 
-        self.assertEqual(
-            [r["name"] for r in _core_rows_by_officer(rows)], ["Deo M.", "Unassigned"]
+        folded = _core_rows_by_person(
+            rows, roster=[("a", "Deo M.")], person_of=_by_owner
         )
-        self.assertEqual(_core_rows_by_officer([]), [])
+
+        self.assertEqual(
+            [r["name"] for r in folded], ["Deo M.", "Mary A.", "Zed K.", "Unassigned"]
+        )
+        self.assertEqual(folded[-1]["visits_target"], 4)
+        self.assertEqual(_core_rows_by_person([], roster=[], person_of=_by_owner), [])
+
+    def test_a_country_reader_folds_by_the_supervising_lead(self):
+        lead_of = {
+            "a": ("pl1", "Lead One"),
+            "b": ("pl2", "Lead Two"),
+            "c": ("pl1", "Lead One"),
+        }
+        rows = [
+            _school("a", "Deo M.", 1),
+            _school("b", "Ruth N.", 2),
+            _school("c", "Paul N.", 3),
+        ]
+
+        folded = _core_rows_by_person(
+            rows,
+            roster=[("pl1", "Lead One"), ("pl2", "Lead Two"), ("pl3", "Lead Three")],
+            person_of=lambda row: lead_of[row["account_owner_id"]],
+        )
+
+        self.assertEqual(
+            [(r["name"], r["scheduled_visits"]) for r in folded],
+            [("Lead One", 4), ("Lead Two", 2), ("Lead Three", 0)],
+        )
 
 
 def _cluster(cluster_id, owner, *, planned=1, done=0, reached=0):
