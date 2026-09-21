@@ -869,6 +869,18 @@ def _funding_owner_id(activity: Activity, principal=None) -> str | None:
 
 
 @transaction.atomic
+def reprice_activity(activity: Activity, principal=None) -> None:
+    """Re-price an existing Activity against the current CD Cost Catalogue.
+
+    The supported entry point for callers outside this module that have
+    CHANGED what an activity is -- a backfill retyping work, for instance --
+    and need its budget lines and fund-request drafts rebuilt to match. It is
+    the same single cost writer every scheduling path funnels through, and is
+    idempotent.
+    """
+    _apply_schedule_cost_snapshot(activity, {}, principal=principal)
+
+
 def _apply_schedule_cost_snapshot(
     activity: Activity, data: dict, principal=None
 ) -> None:
