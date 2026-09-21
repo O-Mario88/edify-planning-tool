@@ -98,9 +98,7 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
 
         from apps.planning.visit_gate import visit_gate
 
-        self.assertEqual(
-            visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1
-        )
+        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1)
 
     def test_an_out_of_portfolio_school_is_scheduled_all_the_same(self):
         """The portfolio stopped gating the visit on 2026-09-21: a CCEO

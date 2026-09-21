@@ -92,9 +92,7 @@ class ClientEntitlementHoldsTest(TestCase):
 
         self._spend_the_entitlement()
         self._schedule_another()  # no BadRequest since 2026-09-21
-        self.assertGreaterEqual(
-            visit_gate(self.school).total_visits, CLIENT_VISIT_CAP
-        )
+        self.assertGreaterEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP)
 
     def test_a_visit_still_in_hand_is_allowed(self):
         """One visit no longer spends the allowance (cap raised 2026-09-17)."""

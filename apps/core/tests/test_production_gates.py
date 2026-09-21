@@ -622,9 +622,7 @@ class EntitlementGateTest(TestCase):
         made.append(self._schedule_visit(5 + CLIENT_VISIT_CAP))  # no BadRequest
         for visit in made:
             self.assertEqual(Activity.objects.get(id=visit["id"]).status, "scheduled")
-        self.assertEqual(
-            visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1
-        )
+        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1)
 
     def test_additional_client_training_is_allowed(self):
         first = self._schedule_training(5)
