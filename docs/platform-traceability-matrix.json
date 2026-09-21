@@ -26,8 +26,7 @@
       "untracedBecause": "",
       "roles": [
         "Accountant",
-        "CountryDirector",
-        "ImpactAssessment"
+        "CountryDirector"
       ],
       "routes": [
         "GET /my-targets",
@@ -40,7 +39,6 @@
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
         "apps/accounts/presence_labels.py",
-        "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -78,6 +76,7 @@
         "apps/core/scoping.py",
         "apps/core/templatetags/kpi_metrics.py",
         "apps/core/templatetags/static_version.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/exceptions.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -143,10 +142,6 @@
         "activities.Activity",
         "activities.ActivityCompletionVerification",
         "activities.ActivitySalesforceReference",
-        "activities.IAVerification",
-        "activities.VerificationChecklist",
-        "activities.VerificationDecision",
-        "activities.VerificationHistory",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
         "budget.CostSetting",
@@ -176,7 +171,6 @@
       ],
       "permissions": [
         "fundRequest.approveEscalated",
-        "ia.verify",
         "payment.act"
       ],
       "pages": [
@@ -187,6 +181,7 @@
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
+        "activity_verified_by_pl",
         "weekly_fund_request_approved",
         "weekly_fund_request_disbursed",
         "weekly_fund_request_ready",
@@ -202,6 +197,7 @@
         "hr.strategic_priority_published",
         "hr.targets_synced_from_agreement",
         "notification.activity_submitted_for_review",
+        "notification.activity_verified_by_pl",
         "notification.weekly_fund_request_approved",
         "notification.weekly_fund_request_disbursed",
         "notification.weekly_fund_request_ready",
@@ -429,7 +425,6 @@
         "POST /fund-requests/weekly/{id}/confirm",
         "POST /fund-requests/weekly/{id}/confirm-receipt",
         "POST /fund-requests/weekly/{id}/disburse",
-        "POST /ia/verification/{id}/verify",
         "POST /my-plan/{id}/accountability",
         "POST /my-plan/{id}/complete",
         "POST /pl/review-queue/{id}/confirm",
@@ -440,7 +435,6 @@
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
         "apps/activities/closure_services.py",
-        "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -481,6 +475,7 @@
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
         "apps/core/templatetags/kpi_metrics.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
@@ -491,7 +486,6 @@
         "apps/frontend/views/closure_views.py",
         "apps/frontend/views/finance_views.py",
         "apps/frontend/views/hr_programme_views.py",
-        "apps/frontend/views/ia_views.py",
         "apps/frontend/views/my_plan_views.py",
         "apps/frontend/views/planning_views.py",
         "apps/fund_requests/advance_service.py",
@@ -546,10 +540,6 @@
         "activities.ClosureBlocker",
         "activities.ClosureChecklist",
         "activities.CompletedActivitySnapshot",
-        "activities.IAVerification",
-        "activities.VerificationChecklist",
-        "activities.VerificationDecision",
-        "activities.VerificationHistory",
         "audit.AuditLog",
         "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
@@ -575,14 +565,12 @@
       ],
       "permissions": [
         "fundRequest.approveEscalated",
-        "ia.verify",
         "payment.act",
         "planning.manualActivity.create"
       ],
       "pages": [
         "disbursements",
         "fund_requests",
-        "ia_review_workspace",
         "monthly_request",
         "my_plan",
         "pl_review_queue",
@@ -595,6 +583,7 @@
         "accountability_pl_approved",
         "activity_closed",
         "activity_submitted_for_review",
+        "activity_verified_by_pl",
         "advance_accountability_ready",
         "advance_accountability_submitted",
         "weekly_fund_request_approved",
@@ -612,10 +601,10 @@
         "advance_request.pl_approve_accountability",
         "advance_request.submit_accountability",
         "complete_activity",
-        "ia_verify_completion",
         "notification.accountability_pl_approved",
         "notification.activity_closed",
         "notification.activity_submitted_for_review",
+        "notification.activity_verified_by_pl",
         "notification.advance_accountability_ready",
         "notification.advance_accountability_submitted",
         "notification.weekly_fund_request_approved",
@@ -1087,7 +1076,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -1132,6 +1120,7 @@
         "apps/core/templatetags/kpi_metrics.py",
         "apps/core/templatetags/school_identity.py",
         "apps/core/templatetags/table_pagination.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
@@ -1190,10 +1179,6 @@
         "activities.Activity",
         "activities.ActivityCompletionVerification",
         "activities.ActivitySalesforceReference",
-        "activities.IAVerification",
-        "activities.VerificationChecklist",
-        "activities.VerificationDecision",
-        "activities.VerificationHistory",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
         "budget.CostSetting",
@@ -1221,7 +1206,6 @@
       ],
       "permissions": [
         "fundRequest.approveEscalated",
-        "ia.verify",
         "payment.act",
         "project.configurePriorities"
       ],
@@ -1231,6 +1215,7 @@
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
+        "activity_verified_by_pl",
         "weekly_fund_request_approved",
         "weekly_fund_request_disbursed",
         "weekly_fund_request_ready",
@@ -1241,6 +1226,7 @@
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "notification.activity_submitted_for_review",
+        "notification.activity_verified_by_pl",
         "notification.weekly_fund_request_approved",
         "notification.weekly_fund_request_disbursed",
         "notification.weekly_fund_request_ready",
@@ -1340,7 +1326,6 @@
         "BusinessTransformationOfficer",
         "CCEO",
         "CountryDirector",
-        "ImpactAssessment",
         "PartnerAdmin",
         "PartnerFieldOfficer",
         "Program Lead",
@@ -1359,7 +1344,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -1389,6 +1373,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
@@ -1413,6 +1398,8 @@
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
         "apps/projects/signals.py",
+        "apps/realtime/bus.py",
+        "apps/realtime/domain_events.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -1434,11 +1421,8 @@
         "activities.Activity",
         "activities.ActivityCompletionVerification",
         "activities.ActivitySalesforceReference",
-        "activities.IAVerification",
-        "activities.VerificationChecklist",
-        "activities.VerificationDecision",
-        "activities.VerificationHistory",
         "audit.AuditLog",
+        "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
@@ -1463,7 +1447,6 @@
       "permissions": [
         "budget.approve",
         "fundRequest.approveEscalated",
-        "ia.verify",
         "payment.act",
         "planning.view"
       ],
@@ -1474,6 +1457,7 @@
       "notifications": [
         "accountability_pl_approved",
         "activity_submitted_for_review",
+        "activity_verified_by_pl",
         "advance_accountability_ready",
         "advance_accountability_submitted",
         "weekly_fund_request_approved",
@@ -1492,6 +1476,7 @@
         "advance_request.submit_accountability",
         "notification.accountability_pl_approved",
         "notification.activity_submitted_for_review",
+        "notification.activity_verified_by_pl",
         "notification.advance_accountability_ready",
         "notification.advance_accountability_submitted",
         "notification.weekly_fund_request_approved",
@@ -1626,6 +1611,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
@@ -1931,8 +1917,7 @@
       "untracedBecause": "",
       "roles": [
         "Accountant",
-        "CountryDirector",
-        "ImpactAssessment"
+        "CountryDirector"
       ],
       "routes": [
         "GET /performance-conversation"
@@ -1941,7 +1926,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -1975,6 +1959,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
@@ -2034,10 +2019,6 @@
         "activities.Activity",
         "activities.ActivityCompletionVerification",
         "activities.ActivitySalesforceReference",
-        "activities.IAVerification",
-        "activities.VerificationChecklist",
-        "activities.VerificationDecision",
-        "activities.VerificationHistory",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
         "budget.CostSetting",
@@ -2069,7 +2050,6 @@
       ],
       "permissions": [
         "fundRequest.approveEscalated",
-        "ia.verify",
         "payment.act"
       ],
       "pages": [
@@ -2078,6 +2058,7 @@
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
+        "activity_verified_by_pl",
         "performance_window_opened",
         "weekly_fund_request_approved",
         "weekly_fund_request_disbursed",
@@ -2099,6 +2080,7 @@
         "hr.strategic_priority_published",
         "hr.targets_synced_from_agreement",
         "notification.activity_submitted_for_review",
+        "notification.activity_verified_by_pl",
         "notification.performance_window_opened",
         "notification.weekly_fund_request_approved",
         "notification.weekly_fund_request_disbursed",
@@ -2599,6 +2581,7 @@
         "apps/core/templatetags/static_version.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
+        "apps/frontend/templatetags/chart_tags.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/views/oversight_views.py",
         "apps/hr/accountability_cache.py",
@@ -3694,9 +3677,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "4d098015696a66b218dc180733c66dd029423b30a9795ba6e762d54b064abbe3",
-    "sources": "f8dd8ff8cda455d28c5d265df9a319de993c045bf2c09a73af2ed18fe51983be",
-    "sourceCount": 207,
+    "payload": "fdf5afe21d8ff1d0bbb1858f2d37811d409e58f75f30d0886eea29227e2bad04",
+    "sources": "4b291ac6df990f5d1edfd514c49ec4ae1522a2c82e6f040fe15ddf4f5ef3adfe",
+    "sourceCount": 208,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
