@@ -7,8 +7,8 @@ Achievement updated, Performance updated, Drill-down reconciles.
 
 It is the journey with the most distinct owners. A Regional Vice President
 writes strategy, a role rule decides how each role carries it, an employee and
-their manager agree the commitment, a CCEO delivers the work, Impact Assessment
-verifies it, and then three separate surfaces — My Targets, the performance
+their manager agree the commitment, a CCEO delivers the work, the supervising
+Program Lead verifies it, and then three separate surfaces — My Targets, the performance
 agreement, and the drill-down behind them — are each supposed to say the same
 thing about it. Every one of those hand-offs is a seam, and the seams are where
 this audit has found every defect it has found.
@@ -409,7 +409,6 @@ class PriorityToVerifiedPerformanceJourneyTest(TestCase):
 
     # ── Steps 5–8: the work, and its verification ────────────────────────
     def _delivered_and_verified(self):
-        from apps.activities.ia_services import ActivityCertificationService
         from apps.activities.services import complete, start_completion
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind
         from apps.evidence.models import EvidenceRecord
@@ -420,6 +419,7 @@ class PriorityToVerifiedPerformanceJourneyTest(TestCase):
             disburse,
             request_advance,
         )
+        from apps.pl_review.services import confirm as pl_confirm
         from apps.planning.services import schedule_school_visit
 
         item = resolve_item_for_workflow_kind("school_visit")
@@ -451,18 +451,27 @@ class PriorityToVerifiedPerformanceJourneyTest(TestCase):
         )
         complete(activity.id, {"salesforceId": "SVE-100001"}, self.cceo)
         activity.refresh_from_db()
-        if activity.status == "submitted_to_pl":
-            from apps.pl_review.services import confirm as pl_confirm
-
-            pl_confirm(activity.id, self.pl)
-            activity.refresh_from_db()
-        # The id string, exactly as ia_views passes `request.user.user_id`.
-        # The SEC-03 guard added in this audit resolves it back to a user and
-        # asks the permission matrix before anything is stamped.
-        ActivityCertificationService.certify_activity(
-            activity, {"decision": "verified"}, str(self.ia.id)
+        self.assertEqual(
+            activity.status,
+            "submitted_to_pl",
+            "a CCEO's completion goes to the supervising Program Lead first",
         )
+        # Step 7, as the platform now walks it: the supervising Program Lead's
+        # confirmation approves the completion AND verifies its evidence, in
+        # one act (pl_review.services.confirm, 2026-09-19). Staff work no
+        # longer detours through Impact Assessment; IA certifies
+        # partner-delivered work, for partner payment. So the verifier this
+        # journey names is the PL, and the state it must reach is the same
+        # `ia_verified` the achievement ledger counts.
+        pl_confirm(activity.id, self.pl)
         activity.refresh_from_db()
+        self.assertEqual(activity.status, "ia_verified")
+        self.assertEqual(activity.ia_verification_status, "confirmed")
+        self.assertEqual(
+            activity.ia_confirmed_by,
+            self.pl.user_id,
+            "the verification is stamped with the Program Lead who gave it",
+        )
         return activity
 
     def test_steps_5_to_8_the_visit_is_delivered_evidenced_and_verified(self):
