@@ -10359,7 +10359,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9680,
+      "bytes": 9467,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
