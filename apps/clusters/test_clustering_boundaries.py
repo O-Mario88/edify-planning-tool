@@ -324,17 +324,24 @@ class ExplicitAssignmentSurvivesTest(TestCase):
         self.assertEqual(school.cluster_id, self.cluster.id)
         self.assertEqual(school.cluster_status, "clustered")
 
-    def test_a_school_whose_sub_county_is_not_covered_is_still_unclustered(self):
-        """And it must still say no when the lookup CAN run and finds nothing —
-        that is a real negative answer, not an absent one."""
+    def test_a_district_change_keeps_a_membership_a_person_made(self):
+        """A school moving district keeps the cluster someone put it in.
+
+        This used to uncluster it: no cluster covered the new sub-county, and
+        the old one's catchment did not reach the new district either, so the
+        membership was dropped. Cross-district membership is ordinary now
+        (owner, 2026-09-21), so "no cluster covers the new ground" is no
+        longer a reason to undo a choice a person made — the same rule this
+        module already applied to a school with no sub-county at all.
+        """
         school = self._assigned_school("SURVIVE-4", sub_county=self.sub_county)
 
         school.district = self.other_district
         school.save()
 
         school.refresh_from_db()
-        self.assertIsNone(school.cluster_id)
-        self.assertEqual(school.cluster_status, "unclustered")
+        self.assertEqual(school.cluster_id, self.cluster.id)
+        self.assertEqual(school.cluster_status, "clustered")
 
 
 class DanglingClusterReferenceTest(TestCase):
@@ -521,7 +528,14 @@ class TheOnboardDrawerOffersOnlyItsDistrictsClustersTest(TestCase):
         self.assertNotIn("Here Cluster", body)
         self.assertNotIn("Far Cluster", body)
 
-    def test_submitting_another_districts_cluster_is_refused_by_the_form(self):
+    def test_submitting_another_districts_cluster_is_accepted(self):
+        """The district is no longer the rule (owner, 2026-09-21).
+
+        The dropdown lists this district's clusters because that is the useful
+        default, but a cluster elsewhere is a legitimate choice and the form
+        no longer refuses one. The portfolio rule still applies, in the
+        canonical membership service.
+        """
         self.client.force_login(self.user)
 
         response = self.client.post(
@@ -539,6 +553,7 @@ class TheOnboardDrawerOffersOnlyItsDistrictsClustersTest(TestCase):
             HTTP_HX_REQUEST="true",
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("serves the school", response.content.decode())
-        self.assertFalse(School.objects.filter(school_id="BOUNDARY-1").exists())
+        self.assertEqual(response.status_code, 200, response.content)
+        created = School.objects.get(school_id="BOUNDARY-1")
+        self.assertEqual(created.cluster_id, self.far_cluster.id)
+        self.assertEqual(created.district_id, self.here.id)

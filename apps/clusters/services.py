@@ -488,17 +488,25 @@ def set_school_cluster_membership(
     must never use it to decide membership. The school row is locked so two
     concurrent assignments cannot leave competing cluster records behind.
 
-    Where a school may join is the cluster's catchment (owner, 2026-09-15):
-    its own district, or a neighbouring district the Country Director or Admin
-    approved for that cluster (apps.clusters.catchment). The school's own
+    Where a school may join is decided by WHO IS RESPONSIBLE FOR IT, not by
+    where it sits (owner, 2026-09-21). A school joins any active cluster
+    belonging to the staff member responsible for the school, in any district.
+    District lines used to gate this — a cluster served its own district plus
+    whatever neighbouring ones the Country Director had approved — which meant
+    a CCEO could not group their own schools when the sensible cluster centre
+    lay across a border nobody had approved yet.
+
+    The catchment is still recorded, because "this membership crosses a
+    district, and by what relationship" remains worth knowing: it rides the
+    audit entry, the membership history and the drawer's labels. It no longer
+    refuses anything.
+
+    Country is still a boundary, and so is the portfolio: a cluster owned by
+    another staff member needs a transfer, not an assignment. The school's own
     geography is never touched here. Every change opens or closes a row in the
     membership history with the actor, role and reason.
     """
-    from apps.clusters.catchment import (
-        NOT_IN_CATCHMENT,
-        country_of_district,
-        serving_match,
-    )
+    from apps.clusters.catchment import country_of_district, serving_match
 
     if cluster and (cluster.deleted_at or cluster.status != ClusterRecordStatus.ACTIVE):
         raise BadRequest("A school can only be assigned to an active cluster.")
@@ -513,14 +521,11 @@ def set_school_cluster_membership(
             != country_of_district(school_district)
         ):
             raise BadRequest("A school can only join a cluster in its own country.")
+        # Descriptive, not a gate: None simply means this membership crosses
+        # a district line nobody has formally approved, which is now an
+        # ordinary thing for a portfolio to do. The audit entry and the
+        # membership history record it either way.
         match = serving_match(cluster, school.district_id)
-        if match is None:
-            raise BadRequest(
-                NOT_IN_CATCHMENT.format(
-                    cluster=cluster.name,
-                    district=getattr(school_district, "name", "the school's district"),
-                )
-            )
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)

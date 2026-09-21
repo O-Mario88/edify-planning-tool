@@ -712,7 +712,6 @@ def _workflow_issues() -> dict:
     # ── Workflow-consistency checks (clustering → planning → partner → project) ─
     from apps.clusters.models import (
         Cluster,
-        ClusterSubCounty,
         SchoolClusterAssignment,
     )
     from apps.partners.models import Partner, PartnerAssignment
@@ -802,28 +801,18 @@ def _workflow_issues() -> dict:
             "id", "responsible_staff_id", "district_id", "sub_county_id"
         )
     }
-    # A school in a neighbouring district its cluster is approved to serve is
-    # a governed membership, not a mismatch (owner, 2026-09-15).
-    from apps.clusters.catchment import active_on as _catchment_on
-    from apps.clusters.models import ClusterServiceDistrict
-
-    served_districts = set(
-        ClusterServiceDistrict.objects.filter(_catchment_on()).values_list(
-            "cluster_id", "district_id"
-        )
-    )
-    covered_sub_counties: dict[str, set] = {}
-    for _cid, _scid in ClusterSubCounty.objects.filter(
-        cluster__deleted_at__isnull=True
-    ).values_list("cluster_id", "sub_county_id"):
-        covered_sub_counties.setdefault(_cid, set()).add(_scid)
-
+    # Geography is no longer part of this check (owner, 2026-09-21). A school
+    # joins any active cluster belonging to its own owner, in any district, so
+    # a membership whose cluster sits elsewhere is a deliberate arrangement
+    # rather than drift. Counting it would have put a permanent red row on
+    # System Health for work the platform now invites — the same failure as a
+    # ratchet alarming for ever on correctly-completed work. The PORTFOLIO
+    # half survives, because that rule did not change.
     membership_owner_mismatch = 0
-    membership_geography_mismatch = 0
     for group in (
         live_schools.exclude(cluster_id__isnull=True)
         .exclude(cluster_id="")
-        .values("cluster_id", "account_owner_id", "district_id", "sub_county_id")
+        .values("cluster_id", "account_owner_id")
         .annotate(n=Count("id"))
     ):
         cluster = owned_clusters.get(group["cluster_id"])
@@ -834,15 +823,6 @@ def _workflow_issues() -> dict:
         cluster_owner = (cluster["responsible_staff_id"] or "").strip()
         if cluster_owner and cluster_owner not in _variants(group["account_owner_id"]):
             membership_owner_mismatch += group["n"]
-        if cluster["district_id"] and group["district_id"] != cluster["district_id"]:
-            if (cluster["id"], group["district_id"]) not in served_districts:
-                membership_geography_mismatch += group["n"]
-        elif group["sub_county_id"] and cluster["sub_county_id"]:
-            covers = group["sub_county_id"] in covered_sub_counties.get(
-                cluster["id"], set()
-            )
-            if group["sub_county_id"] != cluster["sub_county_id"] and not covers:
-                membership_geography_mismatch += group["n"]
 
     # Partner-assignment statuses. Pending = handed to partner but not yet
     # scheduled; active additionally includes partner_scheduled (mirrors
@@ -1333,10 +1313,6 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{membership_owner_mismatch} school(s) sit in a cluster owned by someone other than the school's owner."
         )
-    if membership_geography_mismatch:
-        blockers.append(
-            f"{membership_geography_mismatch} school(s) sit in a cluster that does not serve their district or sub-county."
-        )
     if partner_assigned_still_staff_planning:
         blockers.append(
             f"{partner_assigned_still_staff_planning} partner assignment(s) whose school still renders actionable in Staff Planning."
@@ -1720,7 +1696,6 @@ def _workflow_issues() -> dict:
         "clusteredSchoolsMissingAssignment": clustered_invalid_pointer,
         "clusterMembershipProjectionDrift": cluster_membership_projection_drift,
         "membershipOwnerMismatch": membership_owner_mismatch,
-        "membershipGeographyMismatch": membership_geography_mismatch,
         "partnerAssignedStillInStaffPlanning": partner_assigned_still_staff_planning,
         "partnerAssignmentsInvisibleToPartner": partner_assignments_invisible,
         "partnerScheduledMissingFromPartnerPlan": partner_scheduled_no_partner_plan,
