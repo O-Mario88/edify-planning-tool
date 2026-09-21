@@ -105,9 +105,7 @@ def _core_rows_by_person(oversight_rows, *, roster=(), person_of) -> list[dict]:
         ((key, names[key]) for key in by_person if key and key not in listed),
         key=lambda pair: pair[1].casefold(),
     )
-    folded = [
-        _core_totals(name, by_person.get(key, ())) for key, name in order + extra
-    ]
+    folded = [_core_totals(name, by_person.get(key, ())) for key, name in order + extra]
     if by_person.get(""):
         folded.append(_core_totals("Unassigned", by_person[""]))
     return folded
@@ -170,8 +168,7 @@ def _core_oversight_chart(user, scope, fy, oversight_qs) -> dict:
             person_of=lead_of,
         ),
         "title": "Core package scheduling by Programme Lead",
-        "subtitle": "Each Lead's team, summed over every core school in your "
-        "oversight",
+        "subtitle": "Each Lead's team, summed over every core school in your oversight",
     }
 
 
