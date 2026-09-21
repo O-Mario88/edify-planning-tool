@@ -524,8 +524,14 @@ CORE_TRAINING_REFUSED = (
 
 
 def _refuse_core_training_for_requesters(user):
-    """Core trainings are the owner's; these roles schedule visits only."""
-    if RolePermissionService.can_request_school_visit(user):
+    """Core trainings are the owner's; these roles schedule visits only.
+
+    Reads `schedules_visits_only` rather than `can_request_school_visit`: the
+    Country Director and Impact Assessment stopped filing requests on
+    2026-09-21 and schedule their visits outright, and the core package's
+    trainings did not move with them.
+    """
+    if RolePermissionService.schedules_visits_only(user):
         return HttpResponseForbidden(CORE_TRAINING_REFUSED)
     return None
 
@@ -624,7 +630,6 @@ def core_schedule_visit_drawer(request):
     import json
 
     from apps.partners.purposes import STAFF_VISIT_PURPOSES
-    from apps.planning.visit_requests import approval_owner_for
 
     school_id = request.GET.get("school_id")
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
@@ -653,12 +658,14 @@ def core_schedule_visit_drawer(request):
     # The package's first visit no longer has to be SSA Support, so every
     # purpose is offered from the start (owner, 2026-09-17).
     first_visit = False
-    # Trainings are the owner's; a request-only country role asks for visits.
-    is_requester = bool(approval_owner_for(school, request.user))
+    # Trainings are the owner's; the portfolio-less country roles do visits.
+    # The same question `_refuse_core_training_for_requesters` asks at POST,
+    # so the drawer never offers a purpose the action then refuses.
+    visits_only = RolePermissionService.schedules_visits_only(request.user)
     purposes = [
         (value, label)
         for value, label in STAFF_VISIT_PURPOSES
-        if not (is_requester and value == "in_school_training")
+        if not (visits_only and value == "in_school_training")
     ]
 
     from apps.frontend.views.planning_views import _school_training_follow_up_options
@@ -712,15 +719,26 @@ def core_schedule_visit_action(request):
     partner_id = request.POST.get("assigned_partner_id", "").strip() or None
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip()
-    # A request-only country role at somebody else's school: the requester
-    # goes, the owner decides (apps.planning.visit_requests). Resolved here,
-    # never from the form, so a posted responsible person cannot reassign it.
+    # Whose visit this is, resolved here and never from the form, so a posted
+    # responsible person cannot reassign the work. The Programme Accountant at
+    # somebody else's school asks and goes themselves
+    # (apps.planning.visit_requests); anyone scheduling at a school outside
+    # their own portfolio is likewise the one going, rather than filing a core
+    # visit onto the holder's My Plan and fund request.
     visit_request = _core_visit_request_context(school, request.user)
     visit_request_owner_id = visit_request["visit_request_owner_id"]
     visit_justification = request.POST.get("visit_justification", "").strip()
     if visit_request_owner_id:
         responsible_staff_id = _requester_identity(request.user)
         partner_id = None
+    elif not partner_id and not responsible_staff_id:
+        # This drawer offers a Responsible Staff Owner picker, so a named
+        # person is a deliberate handover and stands. Only when nobody was
+        # named does the visit fall to whoever is going — the scheduler at a
+        # school outside their portfolio, the school's owner inside it.
+        from apps.frontend.views.planning_views import visit_owner_for
+
+        responsible_staff_id, _name = visit_owner_for(school, request.user)
 
     try:
         scheduled_for = date.fromisoformat(scheduled_date)
@@ -1252,8 +1270,8 @@ def core_schedule_activity_drawer(request):
         "staff_visit_reason": gate.staff_reason,
         "staff_visit_count": gate.staff_visits,
         "staff_visits_cap": gate.staff_cap,
-        # Core trainings are the owner's programme; the request-only country
-        # roles schedule visits only (apps.planning.visit_requests).
+        # Core trainings are the owner's programme; the portfolio-less country
+        # roles schedule visits only (`schedules_visits_only`).
         "can_plan_core_training": RolePermissionService.can_schedule_activity(
             request.user
         ),

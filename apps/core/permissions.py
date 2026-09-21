@@ -445,16 +445,62 @@ class RolePermissionService:
         return RolePermissionService.can_view_record(user, school_or_cluster)
 
     @staticmethod
+    def can_schedule_school_visit(user, school=None) -> bool:
+        """May this person schedule a school visit?
+
+        Owner, 2026-09-21: the CCEO, the Country Director, the Programme Lead,
+        Impact Assessment and the Project Coordinator, at any school, with
+        nobody's approval. Held apart from `can_schedule_activity` because the
+        two questions differ: that one is "may this person plan the owner's
+        programme" — a cluster meeting, a group training, a core school's
+        trainings — and the lift did not touch it.
+        """
+        from apps.core.scoping import SCHOOL_VISIT_ROLES
+
+        return getattr(user, "active_role", None) in SCHOOL_VISIT_ROLES
+
+    @staticmethod
     def can_request_school_visit(user) -> bool:
         """May this person ask a school's owner for a visit?
 
-        The country roles with no portfolio of their own. They open the same
-        scheduling drawer as a planner and leave a request in it rather than
-        a plan — see apps.planning.visit_requests.
+        The Programme Accountant, who schedules no field work of their own.
+        They open the same scheduling drawer as a planner and leave a request
+        in it rather than a plan — see apps.planning.visit_requests.
         """
         from apps.core.scoping import VISIT_REQUEST_ROLES
 
         return getattr(user, "active_role", None) in VISIT_REQUEST_ROLES
+
+    @staticmethod
+    def can_open_schedule_drawer(user) -> bool:
+        """May this person open the scheduling drawer at all?
+
+        The union of the three ways in, so a Schedule button on a school row
+        is present exactly when the drawer behind it opens: planners plan
+        their programme, the visit roles visit any school, the Programme
+        Accountant asks. Which of those applies to the row being posted is
+        settled by the drawer and by `_assert_target_in_scope`.
+        """
+        return (
+            RolePermissionService.can_schedule_activity(user)
+            or RolePermissionService.can_schedule_school_visit(user)
+            or RolePermissionService.can_request_school_visit(user)
+        )
+
+    @staticmethod
+    def schedules_visits_only(user) -> bool:
+        """Are school visits the whole of this person's field programme?
+
+        True for the three country roles that hold no portfolio. It is what
+        refuses them a cluster session or a core school's training, and it is
+        deliberately not `can_request_school_visit`: since the approval detour
+        was lifted off the Country Director and Impact Assessment, that set no
+        longer names them, and reading it here would have handed both roles
+        the cluster programme as a side effect of the lift.
+        """
+        from apps.core.scoping import VISIT_ONLY_ROLES
+
+        return getattr(user, "active_role", None) in VISIT_ONLY_ROLES
 
     @staticmethod
     def can_assign_to_partner(user, school_or_cluster=None) -> bool:
@@ -963,11 +1009,18 @@ def get_operational_school_or_404(user, *args, **kwargs):
 
 
 def get_visit_target_school_or_404(user, *args, **kwargs):
-    """`get_operational_school_or_404`, plus the request path.
+    """`get_operational_school_or_404`, for the one drawer that visits schools.
 
-    The scheduling drawer is the one surface a request-only role opens at a
-    school it does not own — to ask, not to plan. Every other operational
-    drawer keeps the strict twin above.
+    A school visit is open to every role in `SCHOOL_VISIT_ROLES`, at any school
+    (owner, 2026-09-21), so for them this resolves the row and asks nothing
+    else. `can_view_record` is deliberately not consulted on that path: it
+    answers from the portfolio, and the portfolio is precisely the restriction
+    being lifted — a Programme Lead was refused a supervised CCEO's school
+    here, one layer before the service would have refused it again.
+
+    Everyone else keeps both halves of the old test: the record must be theirs
+    to see, and the school theirs to plan or (the Programme Accountant) to ask
+    about. Every other operational drawer keeps the strict twin above.
     """
     from django.shortcuts import get_object_or_404
     from django.core.exceptions import PermissionDenied
@@ -975,20 +1028,22 @@ def get_visit_target_school_or_404(user, *args, **kwargs):
         OVERSIGHT_ONLY_MESSAGE,
         may_plan_school,
         may_request_school_visit,
+        may_schedule_school_visit,
         resolve_user_scope,
     )
     from apps.schools.models import School
 
     school = get_object_or_404(School, *args, **kwargs)
-    if not RolePermissionService.can_view_record(user, school):
-        raise PermissionDenied(
-            "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
-        )
     scope = resolve_user_scope(user)
-    if not (
-        may_plan_school(scope, school.id) or may_request_school_visit(scope, school)
-    ):
-        raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    if not may_schedule_school_visit(scope, school):
+        if not RolePermissionService.can_view_record(user, school):
+            raise PermissionDenied(
+                "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
+            )
+        if not (
+            may_plan_school(scope, school.id) or may_request_school_visit(scope, school)
+        ):
+            raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
     _refuse_closed_school(school)
     return school
 

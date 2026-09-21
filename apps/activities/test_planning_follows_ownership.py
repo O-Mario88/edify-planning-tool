@@ -1,14 +1,28 @@
-"""Supervision is not ownership.
+"""Supervision is not ownership — and a school visit is not a portfolio.
 
-§10: planning authority follows the school's direct owner. A Programme Lead
-supervising a CCEO may see that CCEO's work and ask about it; they may not
-schedule it. The create-time guard read `school_ids`, which unions the
-supervised team's schools into the supervisor's own, so a PL could plan across
-every school of every CCEO reporting to them.
+§10: planning authority follows the school's direct owner. The create-time
+guard read `school_ids`, which unions the supervised team's schools into the
+supervisor's own, so a Programme Lead could plan across every school of every
+CCEO reporting to them.
 
-The read side is deliberately untouched: the PL still sees the work on Team
-Planning Oversight, because the response to a problem there is to ask the
-person who owns it rather than to reach past them.
+Owner, 2026-09-21: "some roles are not able to schedule client school visits
+while others can ... lift all the restrictions", for the CCEO, the Country
+Director, the Programme Lead, Impact Assessment and the Project Coordinator.
+Those five now schedule a VISIT at any school. So the line this file holds has
+moved, and it is worth saying exactly where it now is:
+
+* a school visit by one of those five — admitted anywhere, because a visit is
+  a day of someone's own time and the portfolio was never what made it sound;
+* the same five naming SOMEBODY ELSE as the responsible person — still the
+  old rule, because that is delegation: it puts the day, its cost lines and
+  its fund request on a person who did not ask for them, and a peer must not
+  be able to plant work in another portfolio uninvited;
+* the cluster programme — still the old rule, whoever holds the cluster;
+* every other role — still the old rule, at schools and clusters alike.
+
+The read side is untouched throughout: the PL sees the team's work on Team
+Planning Oversight, and `school_queryset(direct_only=True)` still lists a
+lead's own schools and not their team's.
 """
 
 from __future__ import annotations
@@ -83,17 +97,36 @@ class PlanningFollowsDirectOwnershipTest(TestCase):
     def test_a_programme_lead_may_plan_for_their_own_school(self):
         self._plan(self.pl, self.pl_school)  # does not raise
 
-    def test_a_programme_lead_may_not_plan_for_a_supervised_cceos_school(self):
-        """The rule. Reporting to somebody does not hand them your schools."""
-        with self.assertRaises(Forbidden):
-            self._plan(self.pl, self.cceo_school)
+    def test_a_programme_lead_may_visit_a_supervised_cceos_school(self):
+        """The lift. A visit is a day of the lead's own time, at a school they
+        already oversee, and they were refused it until 2026-09-21."""
+        self._plan(self.pl, self.cceo_school)  # does not raise
 
-    def test_a_cceo_may_not_plan_for_another_cceos_school(self):
+    def test_a_cceo_may_visit_another_cceos_school(self):
         other, other_profile = self._staff("other@own.test", EdifyRole.CCEO)
         theirs = self._school("OWN-OTHER", other_profile)
 
+        self._plan(self.cceo, theirs)  # does not raise
+
+    def test_the_cluster_programme_still_follows_the_cluster(self):
+        """The rule that did not move. Reporting to somebody does not hand
+        you their cluster sessions, and neither does the visit lift."""
+        from apps.activities.services import _assert_target_in_scope
+        from apps.clusters.models import Cluster
+
+        cluster = Cluster.objects.create(
+            name="Owned Cluster",
+            region=self.region,
+            district=self.district,
+            cluster_type="mixed",
+            status="active",
+            responsible_staff_id=self.cceo_profile.id,
+        )
+
         with self.assertRaises(Forbidden):
-            self._plan(self.cceo, theirs)
+            _assert_target_in_scope(
+                school=None, cluster_id=cluster.id, principal=self.pl
+            )
 
     def test_the_supervised_school_is_still_visible_to_the_lead(self):
         """Read is untouched: the PL sees the work, and asks rather than acts.
@@ -128,10 +161,10 @@ class AssigningWorkToTheOwnerIsNotReachingPastThemTest(
     def test_a_lead_may_assign_work_to_the_cceo_who_owns_the_school(self):
         self._plan(self.pl, self.cceo_school, owner=self.cceo_profile)
 
-    def test_a_lead_still_may_not_take_the_work_themselves(self):
-        """Naming nobody means naming yourself, and the PL owns no such school."""
-        with self.assertRaises(Forbidden):
-            self._plan(self.pl, self.cceo_school)
+    def test_a_lead_taking_the_work_themselves_is_a_visit_and_is_admitted(self):
+        """Naming nobody means naming yourself, which since 2026-09-21 is a
+        visit the lead makes rather than a claim on the CCEO's portfolio."""
+        self._plan(self.pl, self.cceo_school)  # does not raise
 
     def test_a_lead_may_not_assign_a_school_the_named_owner_does_not_own(self):
         """The supervisee is not a pass-through to schools nobody owns."""
@@ -281,27 +314,43 @@ class WriteAccessDoesNotSurviveATransferTest(PlanningFollowsDirectOwnershipTest)
         School.objects.filter(pk=school.pk).update(account_owner_id=to.id)
 
     def test_the_previous_owner_loses_write_access_immediately(self):
-        from apps.core.scoping import resolve_user_scope
+        """Read through ownership itself, not through the visit guard.
+
+        Until 2026-09-21 this was asserted by watching `_assert_target_in_scope`
+        start refusing the departing owner. A school visit is open to a CCEO
+        anywhere now, so that assertion would pass for a reason that has
+        nothing to do with transfers. `may_plan_school` is the predicate
+        ownership actually decides, and it is what every surface that still
+        turns on ownership — the cluster programme, the core package, the
+        school's own edit drawers — reads.
+        """
+        from apps.core.scoping import may_plan_school, resolve_user_scope
 
         # Resolve first, so a cache that outlived the transfer would be warm
         # and this test would be measuring the stale copy.
         self.assertIn(self.cceo_school.id, resolve_user_scope(self.cceo).own_school_ids)
-        self._plan(self.cceo, self.cceo_school)  # does not raise, yet
+        self.assertTrue(
+            may_plan_school(resolve_user_scope(self.cceo), self.cceo_school.id)
+        )
 
         other, other_profile = self._staff("successor@own.test", EdifyRole.CCEO)
         self._transfer(self.cceo_school, to=other_profile)
 
-        with self.assertRaises(Forbidden):
-            self._plan(self.cceo, self.cceo_school)
+        scope = resolve_user_scope(self.cceo)
+        self.assertNotIn(self.cceo_school.id, scope.own_school_ids)
+        self.assertFalse(may_plan_school(scope, self.cceo_school.id))
 
     def test_the_new_owner_gains_it_in_the_same_breath(self):
         """Half a transfer is worse than none: the school would belong to
         nobody and no one could plan for it."""
+        from apps.core.scoping import may_plan_school, resolve_user_scope
+
         other, other_profile = self._staff("successor2@own.test", EdifyRole.CCEO)
 
         self._transfer(self.cceo_school, to=other_profile)
 
         self._plan(other, self.cceo_school)  # does not raise
+        self.assertTrue(may_plan_school(resolve_user_scope(other), self.cceo_school.id))
 
     def test_scope_is_not_cached_beyond_the_request_that_resolved_it(self):
         """The structural reason the two tests above pass, stated directly."""

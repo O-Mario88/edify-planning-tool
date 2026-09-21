@@ -3010,8 +3010,7 @@ def project_schools_partial(request, project_id):
         "project_name": project.name,
         # The same permissions the drawers these buttons open enforce, so a
         # control is present exactly when it works.
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
-        or RolePermissionService.can_request_school_visit(request.user),
+        "can_schedule": RolePermissionService.can_open_schedule_drawer(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         "can_add_schools": bool(eligible),
     }

@@ -541,6 +541,8 @@ x-text="day"
   <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">{{ responsible_staff_name|default:"You" }}</div>
   {% if visit_request_owner_name %}
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">You are the one visiting. {{ visit_request_owner_name }} is asked to approve, not to go.</p>
+  {% elif visit_is_yours %}
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">This school is in someone else&rsquo;s portfolio, so the visit is yours: it lands on your plan and in your budget.</p>
   {% else %}
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Automatically assigned from this School&rsquo;s portfolio owner.</p>
   {% endif %}

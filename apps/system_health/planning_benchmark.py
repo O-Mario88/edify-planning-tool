@@ -72,10 +72,11 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
             "actually invited. The organiser also chooses which approved "
             "priority activity will be delivered and, for a follow-up, which "
             "completed attended session is being continued; the platform "
-            "derives totals and inherited intervention from those facts. A "
-            "country role asking to visit a school in another person's "
-            "portfolio is the one person who can say why they, rather than "
-            "the owner, must be there (apps.planning.visit_requests)."
+            "derives totals and inherited intervention from those facts. The "
+            "Programme Accountant asking to visit a school in another "
+            "person's portfolio is the one person who can say why they, "
+            "rather than the owner, must be there "
+            "(apps.planning.visit_requests)."
         ),
     ),
     Touchpoint(

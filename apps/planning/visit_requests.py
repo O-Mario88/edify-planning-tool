@@ -1,11 +1,28 @@
-"""Visits into somebody else's portfolio wait for that owner's yes.
+"""The Programme Accountant's visit waits for the school owner's yes.
 
-Planning follows direct ownership (§10): a school belongs to the CCEO or
-Programme Lead who owns it, and the country roles that hold no portfolio — the
-Country Director, Impact Assessment and the Accountant — do not plan into it.
-They still need to be at schools: a director's monitoring visit, an assessor's
-verification, an accountant's spot check. The rule for that is one step, not
-an exception to the rule:
+Owner, 2026-09-21:
+
+  "some roles are not able to schedule client school visits while others can
+  ... lift all the restrictions"
+
+— for the CCEO, the Country Director, the Programme Lead, Impact Assessment
+and the Project Coordinator. Those five now schedule a visit at any school
+outright (`apps.core.scoping.SCHOOL_VISIT_ROLES`); two of them, the Country
+Director and Impact Assessment, used to arrive here instead and got a request
+nobody had yet decided on, which is the "it returns an error and does not
+schedule" the lift was asked for.
+
+What is left of this module is the Programme Accountant, who was not named in
+the lift and schedules no field work of their own — and the requests already
+filed, which are still waiting on their owners and must stay decidable. The
+queue, `approve` and `decline` therefore keep working exactly as they did.
+
+Planning still follows direct ownership (§10) for everything that is not a
+school visit: a cluster meeting, a group training and a core school's
+trainings belong to the CCEO or Programme Lead who holds them, and the three
+portfolio-less country roles never plan one — see `schedules_visits_only`.
+
+The rule for an Accountant's visit is one step, not an exception to the rule:
 
 1. The requester schedules the visit exactly as anyone else would, and says
    *why they need to be at this school* on top of the ordinary purpose.
@@ -16,10 +33,9 @@ an exception to the rule:
    Plan and calendar and enters funding from that moment. Declined, it is
    rejected with the owner's reason, and the requester is told.
 
-Cluster meetings and trainings are the cluster owner's programme; these three
-roles never plan them, owned or not. A school that nobody owns has nobody to
-ask, so a visit there is simply scheduled — for all three roles alike
-(owner, 2026-09-02: "they can only schedule visits, and to any school").
+A school that nobody owns has nobody to ask, so a visit there is simply
+scheduled (owner, 2026-09-02: "they can only schedule visits, and to any
+school").
 
 State lives on the Activity — status plus the ``visit_justification`` /
 ``approval_owner_id`` / ``owner_decided_*`` columns — the same shape as the
@@ -35,7 +51,7 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.audit.services import log as audit_log
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
-from apps.core.scoping import VISIT_REQUEST_ROLES, owner_ids
+from apps.core.scoping import VISIT_ONLY_ROLES, VISIT_REQUEST_ROLES, owner_ids
 
 AWAITING = "awaiting_owner_approval"
 
@@ -77,9 +93,20 @@ CLUSTER_REFUSED = (
 )
 
 
+def schedules_visits_only(principal) -> bool:
+    """School visits are the whole of this person's field programme.
+
+    Read by `refuse_cluster` and by the Core Schools drawer. Not `is_requester`
+    since 2026-09-21: the Country Director and Impact Assessment no longer file
+    requests, and asking that question here would have opened the cluster and
+    core-training programme to them the moment the approval detour was lifted.
+    """
+    return getattr(principal, "active_role", None) in VISIT_ONLY_ROLES
+
+
 def refuse_cluster(cluster_id: str | None, principal) -> None:
-    """A request-only role never plans cluster work, whoever holds the cluster."""
-    if cluster_id and is_requester(principal):
+    """A portfolio-less country role never plans cluster work, whoever holds it."""
+    if cluster_id and schedules_visits_only(principal):
         raise Forbidden(CLUSTER_REFUSED)
 
 

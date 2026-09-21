@@ -237,22 +237,40 @@ class ClusterPlanningScopeTest(ProgramLeadDirectPortfolioBase):
 
 
 class SchoolPlanningScopeTest(ProgramLeadDirectPortfolioBase):
-    def test_planning_at_a_supervised_school_is_refused(self):
+    def test_a_visit_at_a_supervised_school_is_admitted(self):
+        """The lift (owner, 2026-09-21). A visit is a day of the lead's own
+        time; the school staying the CCEO's is `may_plan_school`'s answer,
+        and that is what the rest of this file goes on checking."""
         from apps.activities.services import _assert_target_in_scope
 
         _assert_target_in_scope(
             school=self.my_school, cluster_id=None, principal=self.pl
         )
-        with self.assertRaisesMessage(Forbidden, OVERSIGHT_ONLY_MESSAGE):
-            _assert_target_in_scope(
-                school=self.team_school, cluster_id=None, principal=self.pl
-            )
+        _assert_target_in_scope(
+            school=self.team_school, cluster_id=None, principal=self.pl
+        )
+        self.assertFalse(
+            may_plan_school(resolve_user_scope(self.pl), self.team_school.id)
+        )
 
-    def test_a_school_belonging_to_nobody_in_the_chain_is_a_plain_refusal(self):
+    def test_a_visit_at_a_school_belonging_to_nobody_in_the_chain_is_admitted(self):
+        """Any school means any school: a lead may visit one in another
+        lead's team as readily as one in their own."""
+        from apps.activities.services import _assert_target_in_scope
+
+        stranger = self._school(
+            "DP-STRANGER", self.outsider_profile, self.mine_district, self.mine_sub
+        )
+        _assert_target_in_scope(school=stranger, cluster_id=None, principal=self.pl)
+        self.assertFalse(may_plan_school(resolve_user_scope(self.pl), stranger.id))
+
+    def test_putting_the_work_on_somebody_outside_the_team_is_still_refused(self):
         """A different fact deserves a different sentence.
 
-        "Ask the responsible CCEO" is only true when there *is* one under this
-        supervisor. A school in another lead's team is simply out of scope.
+        Naming a responsible person is delegation, not a visit of one's own,
+        and it still follows the supervision chain: "ask the responsible
+        CCEO" is only true when there *is* one under this supervisor, and a
+        lead in another team is simply out of scope.
         """
         from apps.activities.services import _assert_target_in_scope
 
@@ -260,7 +278,12 @@ class SchoolPlanningScopeTest(ProgramLeadDirectPortfolioBase):
             "DP-STRANGER", self.outsider_profile, self.mine_district, self.mine_sub
         )
         with self.assertRaisesMessage(Forbidden, "outside your scope"):
-            _assert_target_in_scope(school=stranger, cluster_id=None, principal=self.pl)
+            _assert_target_in_scope(
+                school=stranger,
+                cluster_id=None,
+                principal=self.pl,
+                owner_id=self.outsider_profile.id,
+            )
 
 
 class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
@@ -300,13 +323,22 @@ class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
         self.assertIn("No Core Schools in your portfolio", body)
         self.assertIn("lens=oversight", body)
 
+    def test_the_core_visit_drawers_open_at_a_supervised_school(self):
+        """The two drawers that schedule a VISIT follow the visit rule; every
+        other core drawer below still follows ownership."""
+        for path in ("/core-schools/schedule-visit", "/core-schools/schedule-activity"):
+            with self.subTest(path=path):
+                response = self.client.get(
+                    f"{path}?school_id={self.team_core.school_id}",
+                    HTTP_HX_REQUEST="true",
+                )
+                self.assertEqual(response.status_code, 200)
+
     def test_core_drawers_refuse_a_supervised_school_by_direct_url(self):
         for path in (
-            "/core-schools/schedule-visit",
             "/core-schools/schedule-training",
             "/core-schools/assign-partner",
             "/core-schools/assessment",
-            "/core-schools/schedule-activity",
         ):
             with self.subTest(path=path):
                 response = self.client.get(
@@ -326,12 +358,14 @@ class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_htmx_scheduling_post_is_refused(self):
+    def test_htmx_training_post_is_refused(self):
+        """The core package's trainings are the owner's, and the POST says so
+        rather than leaving the drawer as the only guard."""
         response = self.client.post(
-            "/core-schools/schedule-visit/action",
+            "/core-schools/schedule-training/action",
             {
-                "school_id": self.team_school.school_id,
-                "visit_number": "1",
+                "school_id": self.team_core.school_id,
+                "training_number": "1",
                 "scheduled_date": "2026-08-20",
                 "catalogue_item_id": "anything",
             },
@@ -339,16 +373,19 @@ class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_planning_drawer_is_refused_for_school_and_cluster(self):
-        for query in (
-            f"school_id={self.team_school.school_id}",
-            f"cluster_id={self.team_cluster.id}&action=training",
-        ):
-            with self.subTest(query=query):
-                response = self.client.get(
-                    f"/planning/schedule-modal?{query}", HTTP_HX_REQUEST="true"
-                )
-                self.assertEqual(response.status_code, 403)
+    def test_planning_drawer_opens_for_a_supervised_school(self):
+        response = self.client.get(
+            f"/planning/schedule-modal?school_id={self.team_school.school_id}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_planning_drawer_is_still_refused_for_a_team_cluster(self):
+        response = self.client.get(
+            f"/planning/schedule-modal?cluster_id={self.team_cluster.id}&action=training",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 403)
 
     def test_partner_assignment_to_a_supervised_school_is_refused(self):
         response = self.client.get(
@@ -513,12 +550,12 @@ class ApiScopeTest(ProgramLeadDirectPortfolioBase):
         planned = {c["id"] for c in cluster_planning(self.pl)}
         self.assertNotIn(self.team_cluster.id, planned)
 
-    def test_the_activity_api_refuses_a_supervised_target(self):
+    def test_the_activity_api_refuses_a_supervised_cluster_target(self):
         from apps.activities.services import _assert_target_in_scope
 
         with self.assertRaisesMessage(Forbidden, OVERSIGHT_ONLY_MESSAGE):
             _assert_target_in_scope(
-                school=self.team_school, cluster_id=None, principal=self.pl
+                school=None, cluster_id=self.team_cluster.id, principal=self.pl
             )
 
 

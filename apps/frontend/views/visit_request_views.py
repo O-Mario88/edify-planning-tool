@@ -55,14 +55,19 @@ def _requester_names(activities) -> dict[str, str]:
 @require_page_permission("visit_requests")
 def visit_requests_page(request):
     user = request.user
-    is_requester = RolePermissionService.can_request_school_visit(user)
 
     pending = list(visit_requests.pending_for_owner(user))
     requester_names = _requester_names(pending)
     for a in pending:
         a.requester_name = requester_names.get(a.responsible_staff_id, "A staff member")
 
-    mine = list(visit_requests.requests_by(user)) if is_requester else []
+    # Read from the rows, not from the role. The Country Director and Impact
+    # Assessment stopped filing requests on 2026-09-21 and schedule outright,
+    # and asking the role here would have hidden the requests they had already
+    # filed — which are still waiting on their owners — from the only page
+    # that shows a requester what became of one.
+    mine = list(visit_requests.requests_by(user))
+    is_requester = bool(mine) or RolePermissionService.can_request_school_visit(user)
     owner_names = _owner_names(mine)
     for a in mine:
         a.owner_name = owner_names.get(a.approval_owner_id, "the school's owner")
