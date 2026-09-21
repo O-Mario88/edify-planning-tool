@@ -332,6 +332,20 @@ class CorePackageSchedulingService:
         return slot
 
     @classmethod
+    def reserve_existing_slot(
+        cls, plan: CorePlan, activity_type: str, sequence_number: int | None = None
+    ) -> CoreActivitySlot:
+        """A slot for work that ALREADY EXISTS, without applying the caps.
+
+        `assert_can_schedule` is the door for NEW work and enforces the
+        two-per-side split. A backfill is recording work that was already
+        planned -- refusing it would not prevent anything, it would only leave
+        the package under-counting what is really on the calendar. The caller
+        reports a package that ends up over its cap instead.
+        """
+        return cls._free_slot(plan, activity_type, sequence_number or 1)
+
+    @classmethod
     def assert_can_assign(
         cls, *, plan: CorePlan, activity_type: str, sequence_number: int
     ) -> CoreActivitySlot:

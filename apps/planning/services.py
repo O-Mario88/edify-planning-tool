@@ -630,8 +630,22 @@ def schedule_programme_activity(data: dict, principal) -> dict:
 
 
 def schedule_school_visit(data: dict, principal) -> dict:
-    """Schedule a school visit activity (delegates to activities.create)."""
+    """Schedule a school visit activity (delegates to activities.create).
+
+    A visit at a Core School is core package work wherever it was scheduled
+    from, so it is routed through the package first: the Planning page's Core
+    tab and the Cluster schools table open the same drawer as each other, and
+    that drawer used to create a plain ``school_visit`` with no slot -- work
+    that never reached the Core School Visit page and counted toward no
+    package. ``schedule_as_core_visit`` returns None for everything that is
+    not one, which is the ordinary path below, unchanged.
+    """
     from apps.activities.services import create as create_activity
+    from apps.core_schools.visit_routing import schedule_as_core_visit
+
+    core = schedule_as_core_visit(data, principal)
+    if core is not None:
+        return core
 
     act_type = data.get("activityType", "school_visit")
     return create_activity(

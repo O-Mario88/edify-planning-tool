@@ -1228,7 +1228,7 @@ def schedule_action_view(request):
     school_id = request.POST.get("school_id")
     cluster_id = request.POST.get("cluster_id")
     scheduled_date = (request.POST.get("scheduled_date") or "").strip()
-    focus_intervention = request.POST.get("focus_intervention")
+    focus_intervention = (request.POST.get("focus_intervention") or "").strip() or None
     purpose_type = request.POST.get("purpose_type", "focus_intervention")
     purpose_text = (
         request.POST.get("activity_goal")
@@ -1315,7 +1315,13 @@ def schedule_action_view(request):
                 catalogue_item_id,
                 planning_context=CLUSTER,
             )
-            focus_intervention = selected_training["ssaIntervention"] or None
+            # The course's SSA association is the RECOMMENDED target, used
+            # when the planner named none. It no longer overwrites a planner
+            # who did name one: the same course is legitimately delivered
+            # against different needs in different clusters.
+            focus_intervention = (
+                focus_intervention or selected_training["ssaIntervention"] or None
+            )
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if school_id and purpose_of_visit == "in_school_training":
@@ -1332,7 +1338,10 @@ def schedule_action_view(request):
             selected_training = validate_in_school_training_course_selection(
                 catalogue_item_id,
             )
-            focus_intervention = selected_training["ssaIntervention"] or None
+            # Recommended, not imposed — see the cluster branch above.
+            focus_intervention = (
+                focus_intervention or selected_training["ssaIntervention"] or None
+            )
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
@@ -1896,12 +1905,19 @@ def assign_partner_action_view(request):
                         catalogue_item_id,
                         planning_context=SCHOOL,
                     )
-                    focus_intervention = selected_training["ssaIntervention"] or None
-                    if not selected_training["partnerDeliveryAllowed"]:
-                        raise BadRequest(
-                            "The selected Activity / Training is not approved for "
-                            "Partner delivery."
-                        )
+                    # Recommended, not imposed — see schedule_activity.
+                    focus_intervention = (
+                        focus_intervention
+                        or selected_training["ssaIntervention"]
+                        or None
+                    )
+                    # Planning restrictions removed: partner_delivery_allowed
+                    # is a Catalogue default for who usually delivers a
+                    # course, and validate_context already stopped enforcing
+                    # the delivery-approval flags. Enforcing it here as well
+                    # left the assignment drawer refusing trainings the rest
+                    # of planning offers, so the flag now informs the picker
+                    # and the planner decides.
                     linked_priorities = ", ".join(selected_training["priorityTitles"])
                     recommendation_reason = (
                         f"Priority activity: {linked_priorities}"

@@ -869,6 +869,18 @@ def _funding_owner_id(activity: Activity, principal=None) -> str | None:
 
 
 @transaction.atomic
+def reprice_activity(activity: Activity, principal=None) -> None:
+    """Re-price an existing Activity against the current CD Cost Catalogue.
+
+    The supported entry point for callers outside this module that have
+    CHANGED what an activity is -- a backfill retyping work, for instance --
+    and need its budget lines and fund-request drafts rebuilt to match. It is
+    the same single cost writer every scheduling path funnels through, and is
+    idempotent.
+    """
+    _apply_schedule_cost_snapshot(activity, {}, principal=principal)
+
+
 def _apply_schedule_cost_snapshot(
     activity: Activity, data: dict, principal=None
 ) -> None:
@@ -2326,33 +2338,19 @@ def create(
             if is_partner
             else ("scheduled" if scheduled_date else "planned")
         )
-    # Owner, 2026-09-14: SSA scores inform every planned activity. A planner
-    # who, from a scheduling drawer, targets an intervention the verified SSA
-    # does not prioritise, or names none, says why; the plan is still theirs
-    # to make. Programmatic paths (a project's target, a follow-up, a proposed
-    # week) derive their target from the SSA or their own governed source and
-    # do not ask.
+    # SSA scores inform every planned activity; they do not gate it. A planner
+    # who targets an intervention the verified SSA does not rank first, or
+    # names none, may still say why, and the drawer still asks — the note is
+    # recorded and travels with the plan.
+    #
+    # Planning restrictions removed: a blank note no longer refuses the plan.
+    # Requiring written justification to depart from the recommendation made
+    # the recommendation a requirement in practice, which is the opposite of
+    # what it is for. The alignment verdict itself is unchanged: it is
+    # assessed and stamped on the Activity below (plan_alignment.stamp), so a
+    # plan that departs from the SSA is still visible as such everywhere it
+    # is reviewed.
     ssa_deviation_reason = str(data.get("ssaDeviationReason") or "").strip()[:2000]
-    if data.get("requireSsaReason") and not non_school and ssa_default_focus:
-        preliminary = plan_alignment.assess(
-            activity_type=activity_type,
-            focus=focus,
-            mapping_modes=mapping_modes,
-            school=school,
-            cluster_id=None if school is not None else cluster_id,
-            school_ids=data.get("invitedSchoolIds") or None,
-            school_need_=ssa_school_need,
-            cluster_need_=ssa_cluster_need,
-            collects_ssa=is_ssa_activity,
-        )
-        if (
-            preliminary.alignment in plan_alignment.NEEDS_REASON
-            and not ssa_deviation_reason
-        ):
-            raise BadRequest(
-                plan_alignment.reason_for(preliminary)
-                + " Say why this plan departs from the SSA."
-            )
     visit_justification = ""
     if approval_owner_id:
         from apps.planning.visit_requests import AWAITING, JUSTIFICATION_REQUIRED
