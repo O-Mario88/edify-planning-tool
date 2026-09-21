@@ -143,9 +143,9 @@ class CompletionDecisionTests(TestCase):
     def test_the_lead_confirms_from_the_row(self):
         response = self._act(self.pl, "confirm")
         self.assertContains(response, "data-today-item-done")
-        self.assertContains(response, "sent to Impact Assessment")
+        self.assertContains(response, "confirmed and verified")
         self.activity.refresh_from_db()
-        self.assertEqual(self.activity.status, "awaiting_ia_verification")
+        self.assertEqual(self.activity.status, "ia_verified")
         record = TodayActionRecord.objects.get(user_id=str(self.pl.id))
         self.assertEqual(
             (record.kind, record.operation), ("completion_review", "confirm")

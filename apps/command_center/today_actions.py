@@ -73,7 +73,7 @@ def _pl_completion(principal, record_id, op, reason, attested, fields) -> str:
 
     if op == "confirm":
         services.confirm(record_id, principal)
-        return "Completion confirmed and sent to Impact Assessment."
+        return "Completion confirmed and verified; the officer has been told."
     services.return_activity(record_id, {"reason": reason}, principal)
     return "Completion returned to the officer with your reason."
 
