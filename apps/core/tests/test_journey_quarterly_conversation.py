@@ -319,7 +319,6 @@ class QuarterlyConversationJourneyTest(TestCase):
         the calendar, and then find the weekly fund request for THAT week
         rather than the most recent row.
         """
-        from apps.activities.ia_services import ActivityCertificationService
         from apps.activities.services import complete, start_completion
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind
         from apps.evidence.models import EvidenceRecord
@@ -389,15 +388,17 @@ class QuarterlyConversationJourneyTest(TestCase):
         )
         complete(activity.id, {"salesforceId": f"SVE-{self._sf_seq}"}, self.cceo)
         activity.refresh_from_db()
-        if activity.status == "submitted_to_pl":
-            from apps.pl_review.services import confirm as pl_confirm
+        self.assertEqual(activity.status, "submitted_to_pl")
+        # The supervising Program Lead's confirmation approves a CCEO's
+        # completion and verifies its evidence in one act
+        # (pl_review.services.confirm, 2026-09-19); Impact Assessment
+        # certifies partner-delivered work only. The verified state the
+        # ledger counts is reached here, by the PL.
+        from apps.pl_review.services import confirm as pl_confirm
 
-            pl_confirm(activity.id, self.pl)
-            activity.refresh_from_db()
-        ActivityCertificationService.certify_activity(
-            activity, {"decision": "verified"}, str(self.ia.id)
-        )
+        pl_confirm(activity.id, self.pl)
         activity.refresh_from_db()
+        self.assertEqual(activity.status, "ia_verified")
         return activity
 
     # ── Step 1: HR unlocks ───────────────────────────────────────────────
