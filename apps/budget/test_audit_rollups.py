@@ -302,17 +302,21 @@ class MyPlanBudgetTotalTests(_BaseData):
     def test_planning_minimum_never_falls_back_to_operational_estimates(self):
         from apps.my_plan.services import get_frontend_context
 
+        # My Plan lists upcoming work only (2026-09-20), so the rows are
+        # planned ahead of today rather than on a fixed past date.
+        first = date.today() + timedelta(days=1)
+        second = date.today() + timedelta(days=2)
         with_lines = self._activity(
             responsible=self.cceo.id,
-            planned=date(2025, 10, 8),
-            sched=_aware(2025, 10, 8),
+            planned=first,
+            sched=_aware(first.year, first.month, first.day),
             est_cost=999_999,  # stale estimate that must NOT win
         )
         self._line(with_lines, amount=50_000, owner=self.cceo.id)
         no_lines = self._activity(
             responsible=self.cceo.id,
-            planned=date(2025, 10, 9),
-            sched=_aware(2025, 10, 9),
+            planned=second,
+            sched=_aware(second.year, second.month, second.day),
             est_cost=70_000,  # only source available → fallback
         )
 
@@ -323,7 +327,7 @@ class MyPlanBudgetTotalTests(_BaseData):
         from apps.budget.services import budget_workspace
 
         budget = budget_workspace(
-            self.cceo, {"fy": FY, "date": "2025-10-08", "period": "fy"}
+            self.cceo, {"fy": FY, "date": first.isoformat(), "period": "fy"}
         )
         self.assertEqual(budget["total"], 50_000)
 

@@ -1,5 +1,6 @@
-{% load frontend_filters school_identity %}
+{% load frontend_filters school_identity table_pagination %}
 <div class="overflow-x-auto">
+  {% paginate schools page_param|default:"schools_page" as school_pager %}
   <table class="edify-record-table w-full text-left" data-mobile-table="scroll">
     <thead>
       <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -16,7 +17,7 @@
       </tr>
     </thead>
     <tbody class="divide-y edify-border text-sm">
-      {% for row in schools %}
+      {% for row in school_pager.rows %}
       <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
         <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
           {{ row.school_id }}
@@ -81,4 +82,5 @@
       {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=school_pager param=page_param|default:"schools_page" pagination_label="Core schools" %}
 </div>

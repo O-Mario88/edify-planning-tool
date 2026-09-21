@@ -209,7 +209,7 @@ The shared rendering boundary now converts chart-library plots to the bar standa
 
 Independent admin/core trends and shared ring gauges now use rectangular bars; decorative admin sparklines were removed. Project bars now label improved-school counts consistently and compare allocated budget per improved school (not actual expenditure). District SSA tiles became a score comparison chart. Detailed score matrices, calendars and maps remain available.
 
-Added scoped charts: team/country planning progress, core-school scheduled and completed visits/trainings against targets, cluster activity coverage, and cluster/district SSA comparisons. Other graph coverage recommendations above remain a prioritized backlog, not a claim of delivered functionality.
+On Team Oversight the per-person and per-Lead planning charts sit under the rows, so the first table row keeps the desktop fold budget the calm-workspace journey holds (2026-09-21). Added scoped charts: team/country planning progress, core-school scheduled and completed visits/trainings against targets, cluster activity coverage, and cluster/district SSA comparisons. Other graph coverage recommendations above remain a prioritized backlog, not a claim of delivered functionality.
 
 Validation includes normalization tests for missing/negative values, duplicate observations, unit separation and large comparisons; Django payload/escaping and compatibility tests; project analytics tests; and a browser regression for the palette, data tables, range changes, teardown and mobile overflow across light/dark/blue themes.
 

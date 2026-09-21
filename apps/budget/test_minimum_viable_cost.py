@@ -51,14 +51,14 @@ class ThePlannerSeesANumberTest(TestCase):
                 "districtType": "primary",
                 "expectedParticipants": 20,
             },
-            # Facilitation + venue + the staff day, plus the twenty
-            # participants fed at the cluster meals default of 5,000 (owner,
-            # 2026-09-15). The cluster session's own rate defaults to 0, and
-            # no pages are stated, so there is no materials line. The staff
-            # day is the fed one: a session catering for twenty people does
-            # not also buy the staff member a 12,000 lunch (owner,
-            # 2026-09-17), so this is 242,000 less that second meal.
-            230_000,
+            # Facilitation 50,000 + venue 30,000 + the staff day (transport
+            # 50,000 and lunch 12,000). Participant meals are a cluster
+            # MEETING cost since 2026-09-20 (staff-day-v2): a training feeds
+            # the staff member and pays the facilitator and the venue, and
+            # the twenty participants carry no per-head meal. The session's
+            # own rate defaults to 0 and no pages are stated, so there is no
+            # materials line.
+            142_000,
         ),
     )
 

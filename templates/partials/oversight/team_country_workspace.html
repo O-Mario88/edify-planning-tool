@@ -7,10 +7,6 @@
   </div>
   {% endif %}
   {% include "components/context_metrics.html" with items=kpis variant="executive" title=lens_label|add:" overview" %}
-  {% comment %}One series per Programme Lead, folded from the same items as
-  the Lead tabs in the selected activity family and period, so a country or
-  regional reader sees every team side by side.{% endcomment %}
-  {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by Programme Lead" "Each Lead's team · "|add:period_label %}
 
   <div class="oversight-workspace-toolbar">
     {% if tabs %}
@@ -80,4 +76,10 @@
   {% else %}
     {% include "components/empty_state.html" with title="No Programme Lead work in this period" message="Choose another period when teams have planned work." %}
   {% endif %}
+  {# ── The Leads as people, under the rows they summarise ───────────── #}
+  {% comment %}One series per Programme Lead, folded from the same items as
+  the tabs, in the selected activity family, so a country, Impact Assessment or
+  regional reader sees every team side by side. It sits under the rows so the
+  first table row stays above the desktop fold (e2e/calm-workspace).{% endcomment %}
+  {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by Programme Lead" "Each Lead's team · "|add:period_label %}
 </section>

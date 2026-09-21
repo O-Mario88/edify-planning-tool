@@ -111,6 +111,10 @@ class OversightActivityLinkTest(SimpleTestCase):
                     "name": "Team Lead",
                     "summary": {},
                     "items": [self.ITEM],
+                    "client_school_visits": [self.ITEM],
+                    "core_school_visits": [],
+                    "cluster_meetings": [],
+                    "planned_trainings": [],
                     "page_param": "owner_1",
                 }
             ],

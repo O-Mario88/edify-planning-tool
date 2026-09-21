@@ -38,7 +38,7 @@ class ActivitySchedulingAtomicityTest(TestCase):
         # assume a pristine DB.
         self.region, _ = Region.objects.get_or_create(name="Central")
         self.district, _ = District.objects.get_or_create(
-            name="Kampala", region=self.region
+            name="Kampala", region=self.region, district_type="primary"
         )
         self.school, _ = School.objects.get_or_create(
             school_id="SCH-ATOMIC-1",

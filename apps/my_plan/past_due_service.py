@@ -89,12 +89,6 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
 
     own_ids = _user_owner_ids(user)
 
-    # Resolve users map for staff name display
-    users_map: dict[str, str] = {u.id: u.name for u in User.objects.all()}
-    for sp in StaffProfile.objects.select_related("user"):
-        if sp.user_id and sp.user and sp.user.name:
-            users_map[sp.id] = sp.user.name
-
     team_member_ids: list[str] = []
     team_members_by_id: dict[str, Any] = {}
     if is_pl:
@@ -143,6 +137,30 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     activities = list(qs)
     if not activities:
         return _empty_past_due_context(is_pl)
+
+    # Names for the people on these rows only, in both id spaces, from one
+    # profile query; a bare User id without a profile costs a second query
+    # only when one appears. Reading every user and every profile on each
+    # dashboard open was two whole-table queries for a handful of names.
+    people = {a.responsible_staff_id for a in activities} | {
+        a.monitored_by_staff_id for a in activities
+    }
+    people.discard(None)
+    people.discard("")
+    users_map: dict[str, str] = {}
+    for sp in StaffProfile.objects.select_related("user").filter(
+        Q(id__in=people) | Q(user_id__in=people)
+    ):
+        name = sp.user.name if sp.user_id and sp.user else ""
+        if name:
+            users_map[sp.id] = name
+            if sp.user_id:
+                users_map[sp.user_id] = name
+    unresolved = [pid for pid in people if pid not in users_map]
+    if unresolved:
+        users_map.update(
+            User.objects.filter(id__in=unresolved).values_list("id", "name")
+        )
 
     # Query which activities already have an active reminder notification
     active_reminder_act_ids = set(

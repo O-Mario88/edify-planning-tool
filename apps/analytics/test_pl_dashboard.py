@@ -355,9 +355,11 @@ class PLDashboardTest(TestCase):
         self.assertEqual(by_label["SSA Coverage"]["value"], "50%")
 
     def test_attention_heading_always_renders_with_an_empty_state(self):
+        # Leadership Attention is the Today view's opening section since
+        # 2026-09-20; it renders there with or without anything to show.
         self.client.force_login(self.pl_b)
         WeeklyFundRequest.objects.all().delete()
-        response = self.client.get("/dashboard", {"fy": FY, "view": "map"})
+        response = self.client.get("/dashboard", {"fy": FY, "view": "today"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Leadership Attention")
         self.assertEqual(response.context["leadership_attention"], [])

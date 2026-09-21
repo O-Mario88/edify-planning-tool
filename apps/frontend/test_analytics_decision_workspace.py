@@ -75,11 +75,12 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         # utility of its own, aspect-square included.
         self.assertIn('class="sr-map-viewport relative w-full"', map_template)
         self.assertNotIn("aspect-square", map_template)
-        self.assertIn(
-            "inline-size: min(100%, 30cm, calc(100svh - var(--sr-map-chrome)))",
-            layout,
-        )
-        self.assertIn("aspect-ratio: 1 / 1", layout)
+        # The sheet is full-width at a fixed height since 2026-09-20; the
+        # square bound (2026-09-17) gave way to a viewport the stylesheet
+        # still sizes and the script still never measures.
+        self.assertIn("inline-size: 100% !important;", layout)
+        self.assertIn("height: 600px !important;", layout)
+        self.assertIn("aspect-ratio: auto !important;", layout)
         self.assertNotIn("--map-viewport-height", layout)
         self.assertNotIn("sr-map-stage", map_template)
         self.assertNotIn("sr-subregion-zoomed", map_template)

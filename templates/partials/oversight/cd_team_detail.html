@@ -11,7 +11,7 @@ and level 3 (4 distinct tables per staff member:
 {% if owner_groups %}
 {% with can_open_activity_record=request.user|can_open:"/activities/0" %}
 <div class="cd-team-detail-wrapper space-y-5"
-     x-data="{ activeOfficer: '{{ owner_groups.0.id|default:"" }}' }">
+     x-data="{ activeOfficer: '{% firstof request.GET.officer owner_groups.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }">
 
   {# ── Secondary Tabs: CCEOs / Officers under this Program Lead ───────── #}
   <div class="oversight-team-selector">
@@ -35,7 +35,7 @@ and level 3 (4 distinct tables per staff member:
               role="tab"
               :aria-selected="activeOfficer === '{{ group.id }}'"
               aria-controls="officer-panel-{{ forloop.counter }}"
-              @click="activeOfficer = '{{ group.id }}'"
+              @click="pick('officer', '{{ group.id }}')"
               class="team-officer-tab px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
         <div class="w-5 h-5 rounded-full edify-avatar-neutral text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
           {{ group.name|slice:":2"|upper }}
@@ -109,6 +109,7 @@ and level 3 (4 distinct tables per staff member:
 
       {% if group.client_school_visits %}
       <div class="overflow-x-auto">
+        {% paginate group.client_school_visits group.page_param|add:"-cv" as cv_pager %}
         <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -125,7 +126,7 @@ and level 3 (4 distinct tables per staff member:
             </tr>
           </thead>
           <tbody class="divide-y edify-border text-sm">
-            {% for item in group.client_school_visits %}
+            {% for item in cv_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {% firstof item.school_code item.school_id "—" %}
@@ -138,7 +139,7 @@ and level 3 (4 distinct tables per staff member:
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
-                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
+                {% if item.activity_id and request.user|can_open:"/activities/0" and request.user.active_role != "Accountant" %}
                 <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
                 {% else %}
                 <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"School Visit" }}</span>
@@ -181,6 +182,7 @@ and level 3 (4 distinct tables per staff member:
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=cv_pager param=group.page_param|add:"-cv" pagination_label="Client school visits" %}
       </div>
       {% else %}
       <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
@@ -208,6 +210,7 @@ and level 3 (4 distinct tables per staff member:
 
       {% if group.core_school_visits %}
       <div class="overflow-x-auto">
+        {% paginate group.core_school_visits group.page_param|add:"-kv" as kv_pager %}
         <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -225,7 +228,7 @@ and level 3 (4 distinct tables per staff member:
             </tr>
           </thead>
           <tbody class="divide-y edify-border text-sm">
-            {% for item in group.core_school_visits %}
+            {% for item in kv_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {% firstof item.school_code item.school_id "—" %}
@@ -241,7 +244,7 @@ and level 3 (4 distinct tables per staff member:
                 {{ item.district_name|default:"—" }}
               </td>
               <td class="px-4 py-2.5">
-                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
+                {% if item.activity_id and request.user|can_open:"/activities/0" and request.user.active_role != "Accountant" %}
                 <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
                 {% else %}
                 <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"Core Visit" }}</span>
@@ -284,6 +287,7 @@ and level 3 (4 distinct tables per staff member:
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=kv_pager param=group.page_param|add:"-kv" pagination_label="Core school visits" %}
       </div>
       {% else %}
       <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
@@ -311,6 +315,7 @@ and level 3 (4 distinct tables per staff member:
 
       {% if group.cluster_meetings %}
       <div class="overflow-x-auto">
+        {% paginate group.cluster_meetings group.page_param|add:"-cm" as cm_pager %}
         <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -327,7 +332,7 @@ and level 3 (4 distinct tables per staff member:
             </tr>
           </thead>
           <tbody class="divide-y edify-border text-sm">
-            {% for item in group.cluster_meetings %}
+            {% for item in cm_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-semibold min-w-[200px]">
                 {% if item.cluster_id %}
@@ -375,6 +380,7 @@ and level 3 (4 distinct tables per staff member:
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=cm_pager param=group.page_param|add:"-cm" pagination_label="Cluster meetings" %}
       </div>
       {% else %}
       <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
@@ -402,6 +408,7 @@ and level 3 (4 distinct tables per staff member:
 
       {% if group.planned_trainings %}
       <div class="overflow-x-auto">
+        {% paginate group.planned_trainings group.page_param|add:"-pt" as pt_pager %}
         <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
@@ -420,7 +427,7 @@ and level 3 (4 distinct tables per staff member:
             </tr>
           </thead>
           <tbody class="divide-y edify-border text-sm">
-              {% for item in group.planned_trainings %}
+              {% for item in pt_pager.rows %}
               <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                 <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                   {% if item.school_code and item.school_code != '—' %}{{ item.school_code }}{% elif item.school_id %}{{ item.school_id }}{% else %}—{% endif %}
@@ -489,6 +496,7 @@ and level 3 (4 distinct tables per staff member:
               {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=pt_pager param=group.page_param|add:"-pt" pagination_label="Planned trainings" %}
       </div>
       {% else %}
       <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">

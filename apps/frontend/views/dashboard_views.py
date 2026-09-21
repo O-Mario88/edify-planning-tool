@@ -1842,6 +1842,7 @@ def planning_progress_fragment_view(request):
 
 
 @login_required
+@require_page_permission("dashboard")
 @require_POST
 def notify_past_due_activity(request, activity_id: str):
     """Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity."""

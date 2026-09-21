@@ -237,7 +237,7 @@
         slot.appendChild(empty);
       }
       const details = document.createElement('details'); details.className = 'edify-chart-data';
-      const summary = document.createElement('summary'); summary.textContent = 'View chart data'; details.appendChild(summary);
+      const toggle = document.createElement('summary'); toggle.textContent = 'View chart data'; details.appendChild(toggle);
       const table = document.createElement('table'); const head = document.createElement('thead'); const row = document.createElement('tr');
       ['Category', ...panel.series.map(s => s.name)].forEach(label => { const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; row.appendChild(th); });
       head.appendChild(row); table.appendChild(head);

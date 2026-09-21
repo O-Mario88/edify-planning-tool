@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 "What needs you now" — Past due plans requiring completion, rescheduling, or cancellation.
 Appears exclusively on the Dashboard page.
@@ -123,6 +123,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
       </div>
 
       <div class="overflow-x-auto edify-record-table-wrap">
+        {% paginate past_due_school_visits "wnyn_visits_page" as past_due_school_visits_pager %}
         <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
@@ -139,7 +140,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            {% for row in past_due_school_visits %}
+            {% for row in past_due_school_visits_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
@@ -260,6 +261,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=past_due_school_visits_pager param="wnyn_visits_page" pagination_label="Past-due school visits" %}
       </div>
     </div>
   </div>
@@ -281,6 +283,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
       </div>
 
       <div class="overflow-x-auto edify-record-table-wrap">
+        {% paginate past_due_cluster_trainings "wnyn_trainings_page" as past_due_cluster_trainings_pager %}
         <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
@@ -298,7 +301,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            {% for row in past_due_cluster_trainings %}
+            {% for row in past_due_cluster_trainings_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
@@ -420,6 +423,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=past_due_cluster_trainings_pager param="wnyn_trainings_page" pagination_label="Past-due cluster trainings" %}
       </div>
     </div>
   </div>
@@ -441,6 +445,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
       </div>
 
       <div class="overflow-x-auto edify-record-table-wrap">
+        {% paginate past_due_cluster_meetings "wnyn_meetings_page" as past_due_cluster_meetings_pager %}
         <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
@@ -457,7 +462,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            {% for row in past_due_cluster_meetings %}
+            {% for row in past_due_cluster_meetings_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
@@ -578,6 +583,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=past_due_cluster_meetings_pager param="wnyn_meetings_page" pagination_label="Past-due cluster meetings" %}
       </div>
     </div>
   </div>

@@ -39,12 +39,12 @@
 
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
   {% if is_programme_lead %}
-  <div x-data="{ activeOfficer: 'my-clusters' }" class="space-y-4">
+  <div x-data="{ activeOfficer: '{% firstof request.GET.officer "my-clusters" %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
     <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="My clusters and CCEOs under me">
       {% for officer in cceo_tabs %}
       <button type="button" role="tab" :aria-selected="activeOfficer === '{{ officer.id }}'"
               aria-controls="cluster-officer-panel-{{ officer.id }}"
-              @click="activeOfficer = '{{ officer.id }}'" class="px-3 py-2 whitespace-nowrap">
+              @click="pick('officer', '{{ officer.id }}')" class="px-3 py-2 whitespace-nowrap">
         {{ officer.name }} <span class="pill pill-neutral">{{ officer.count }}</span>
       </button>
       {% endfor %}
@@ -55,12 +55,12 @@
         <h3>{{ officer.name }}{% if officer.id != 'my-clusters' %}'s Clusters{% endif %}</h3>
         <span>{{ officer.count }} clusters · {{ officer.schools }} member schools</span>
       </header>
-      {% include "partials/oversight/_cluster_table.html" with clusters=officer.clusters %}
+      {% include "partials/oversight/_cluster_table.html" with clusters=officer.clusters page_param="cl-"|add:officer.id %}
     </section>
     {% endfor %}
   </div>
   {% elif leads %}
-  <div x-data="{ activeLead: '{% firstof selected_program_lead leads.0.id %}' }" class="space-y-5">
+  <div x-data="{ activeLead: '{% firstof request.GET.lead selected_program_lead leads.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-5">
     {# Level 1: Supervising PL Tabs #}
     <div class="oversight-team-selector">
       <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
@@ -69,7 +69,7 @@
                 role="tab"
                 :aria-selected="activeLead === '{{ lead.id }}'"
                 aria-controls="cluster-lead-panel-{{ lead.id }}"
-                @click="activeLead = '{{ lead.id }}'"
+                @click="pick('lead', '{{ lead.id }}')"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
           <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
             {{ lead.name|slice:":2"|upper }}
@@ -85,7 +85,7 @@
     {% for lead in leads %}
     <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
       {% if lead.cceo_tabs %}
-      <div x-data="{ activeOfficer: '{{ lead.cceo_tabs.0.id }}' }" class="space-y-4">
+      <div x-data="{ activeOfficer: '{% firstof request.GET.officer lead.cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
         <div class="oversight-team-selector">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -99,7 +99,7 @@
                     role="tab"
                     :aria-selected="activeOfficer === '{{ cceo.id }}'"
                     aria-controls="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}"
-                    @click="activeOfficer = '{{ cceo.id }}'"
+                    @click="pick('officer', '{{ cceo.id }}')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
               <span>{{ cceo.name }}</span>
               <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
@@ -118,7 +118,7 @@
                 <span class="text-xs text-slate-500 font-normal">({{ cceo.schools }} member schools)</span>
               </h4>
             </div>
-            {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters %}
+            {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters page_param="cl-"|add:cceo.id %}
           </div>
         </div>
         {% endfor %}

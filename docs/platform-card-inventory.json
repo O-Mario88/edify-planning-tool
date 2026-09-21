@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 698,
-  "templates": 266,
-  "distinct_titles": 665,
+  "titled_cards": 702,
+  "templates": 267,
+  "distinct_titles": 669,
   "with_card_key": 13,
-  "untitled_surfaces": 769,
-  "untitled_chrome": 171,
-  "untitled_nested": 251,
-  "untitled_headless": 347,
+  "untitled_surfaces": 775,
+  "untitled_chrome": 174,
+  "untitled_nested": 252,
+  "untitled_headless": 349,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -5460,6 +5460,62 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/dashboards/what_needs_you_now.html",
+   "line": 100,
+   "title": "No past due plans",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised p-6 text-center shadow-xs",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/dashboards/what_needs_you_now.html",
+   "line": 111,
+   "title": "School Visits (Past Due)",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/dashboards/what_needs_you_now.html",
+   "line": 271,
+   "title": "Trainings (Past Due)",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/dashboards/what_needs_you_now.html",
+   "line": 433,
+   "title": "Cluster Meetings (Past Due)",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
    "template": "templates/partials/debriefs/dashboard_body.html",
    "line": 66,
    "title": "Top Challenges Reported",
@@ -6563,7 +6619,7 @@
   },
   {
    "template": "templates/partials/oversight/cd_team_detail.html",
-   "line": 92,
+   "line": 94,
    "title": "1. Client School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6577,7 +6633,7 @@
   },
   {
    "template": "templates/partials/oversight/cd_team_detail.html",
-   "line": 187,
+   "line": 195,
    "title": "2. Core School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6591,7 +6647,7 @@
   },
   {
    "template": "templates/partials/oversight/cd_team_detail.html",
-   "line": 286,
+   "line": 300,
    "title": "3. Cluster Meetings",
    "heading_level": 5,
    "has_card_key": false,
@@ -6605,7 +6661,7 @@
   },
   {
    "template": "templates/partials/oversight/cd_team_detail.html",
-   "line": 373,
+   "line": 393,
    "title": "4. Schools with Planned Training",
    "heading_level": 5,
    "has_card_key": false,
@@ -6619,7 +6675,7 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 52,
+   "line": 53,
    "title": "'s Clusters",
    "heading_level": 3,
    "has_card_key": false,
@@ -6633,7 +6689,7 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 110,
+   "line": 113,
    "title": "'s Clusters clusters ( member schools)",
    "heading_level": 4,
    "has_card_key": false,
@@ -6651,7 +6707,7 @@
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 41,
+   "line": 42,
    "title": "schools completed packages",
    "heading_level": 3,
    "has_card_key": false,
@@ -6669,7 +6725,7 @@
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 112,
+   "line": 115,
    "title": "'s Core Schools schools completed packages",
    "heading_level": 4,
    "has_card_key": false,

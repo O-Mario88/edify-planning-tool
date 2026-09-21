@@ -639,7 +639,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1700,
+      "bytes": 1522,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts/activities/<str:activity_id>",
@@ -2974,25 +2974,12 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6753,
+      "bytes": 6654,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -3504,7 +3491,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13257,
+      "bytes": 13262,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3628,7 +3615,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11365,
+      "bytes": 11380,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3678,7 +3665,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11164,
+      "bytes": 11184,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4503,23 +4490,10 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9769,
+      "bytes": 9751,
       "deprecated_alternatives": [],
       "example_pages": [],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -5190,31 +5164,12 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 37381,
+      "bytes": 38170,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
-      "findings": [
-        {
-          "evidence": "A radius outside the approved geometry is present.",
-          "key": "non-canonical-radius",
-          "recommended_action": "Cards, KPI cards, charts and table wrappers use 12px (rounded-card); buttons, inputs, selects, tabs and nav controls use 8px (rounded-control); drawers, modals and overlays use 16px. Full rounding stays for badges, pills, avatars and progress bars.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 15,
       "kind": "application-partial",
@@ -7700,7 +7655,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 11239,
+      "bytes": 11279,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7767,19 +7722,12 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6755,
+      "bytes": 6761,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -7845,7 +7793,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5603,
+      "bytes": 5613,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7866,7 +7814,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5620,
+      "bytes": 5625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7891,19 +7839,12 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10178,
+      "bytes": 10162,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -8042,7 +7983,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3742,
+      "bytes": 3739,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8110,7 +8051,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4478,
+      "bytes": 4483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8288,7 +8229,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4928,
+      "bytes": 5201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -8314,7 +8255,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4490,
+      "bytes": 4752,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -8383,7 +8324,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5181,
+      "bytes": 5169,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8391,14 +8332,7 @@
         "/team-targets",
         "/team-targets/"
       ],
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 6,
       "kind": "application-partial",
@@ -8443,7 +8377,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 31726,
+      "bytes": 34491,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8451,14 +8385,7 @@
         "/team-targets",
         "/team-targets/"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -8478,25 +8405,12 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12324,
+      "bytes": 12391,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 3,
       "kind": "application-partial",
@@ -8518,7 +8432,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7696,
+      "bytes": 8869,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -8527,14 +8441,7 @@
         "/team-targets",
         "/team-targets/"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -8573,19 +8480,12 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8286,
+      "bytes": 9453,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
       ],
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -8785,7 +8685,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5499,
+      "bytes": 5702,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8843,7 +8743,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4335,
+      "bytes": 4544,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9271,7 +9171,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7770,
+      "bytes": 7785,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -10592,7 +10492,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10186,
+      "bytes": 10394,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -11597,21 +11497,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13852,
+      "bytes": 13846,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
         "/today/panel",
         "/today/unsnooze"
       ],
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 3,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -11749,20 +11642,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6575,
+      "bytes": 6569,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
         "/work-plan/"
       ],
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 0,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -16568,7 +16454,7 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.5,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
       "card_count": 0,
@@ -16580,16 +16466,8 @@
         "permission:my_plan"
       ],
       "filters": "none",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-04BC7FFD42",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -16610,7 +16488,7 @@
       "primary_action": "Upload",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate evidence upload drawer within the frontend workflow.",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
@@ -16670,7 +16548,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[11px]",
         "text-[12px]",
         "text-[13px]",
         "text-[14px]"
@@ -26222,7 +26099,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.1,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_view",
       "card_count": 0,
@@ -26235,16 +26112,8 @@
         "permission:cluster_oversight"
       ],
       "filters": "canvas-level shared filter bar",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-31AC7F7FE9",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -26267,7 +26136,7 @@
       "primary_action": "Cluster Oversight",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Cluster oversight page \u2014 executive performance metrics, SSA scores and activity recency.",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -26317,9 +26186,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[10px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -26420,7 +26287,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.0,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "card_count": 0,
@@ -26432,30 +26299,8 @@
         "permission:cluster_detail"
       ],
       "filters": "none",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-E34453E391",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "finding_id": "UI-FINDING-5898252BBE",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "finding_id": "UI-FINDING-12B8EE4CDD",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
@@ -26482,7 +26327,7 @@
       "primary_action": "Edit Details",
       "primary_user_decision": "What is the correct next action for this record?",
       "purpose": "District: &bull; Sub-county:",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.; Use the semantic card, elevated or muted surface token.; Move static presentation into a shared component class; keep inline custom properties only for live data.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -26532,7 +26377,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[11px]",
         "text-[12px]",
         "text-[15px]"
       ]
@@ -29443,7 +29287,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.1,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.core_schools_oversight_view",
       "card_count": 0,
@@ -29456,16 +29300,8 @@
         "permission:core_schools_oversight"
       ],
       "filters": "filter controls detected; parent/context review",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-B88A3FF19D",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
@@ -29486,7 +29322,7 @@
       "primary_action": "Core Schools Oversight",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Core schools oversight page \u2014 packages progress, visits/trainings status.",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -29536,9 +29372,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[10px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -32241,7 +32075,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 8.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "card_count": 0,
@@ -32254,23 +32088,8 @@
         "permission:country_planning_oversight"
       ],
       "filters": "filter controls detected; parent/context review",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-5EDB34F0BC",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        },
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "finding_id": "UI-FINDING-82AEC79ABB",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
@@ -32294,7 +32113,7 @@
       "primary_action": "Complete planning form",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "What the country has planned, how it is distributed, and who must act.",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.; Use the semantic card, elevated or muted surface token.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -32344,9 +32163,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[11px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -32519,7 +32336,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.1,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_team_view",
       "card_count": 0,
@@ -32531,16 +32348,8 @@
         "permission:country_planning_oversight"
       ],
       "filters": "none",
-      "findings": [
-        {
-          "evidence": "Text below the shared readable type scale is present.",
-          "finding_id": "UI-FINDING-80EFD6F428",
-          "key": "tiny-text",
-          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
@@ -32559,7 +32368,7 @@
       "primary_action": "Country Planning Oversight Team",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "One Program Lead's team, expanded \u2014 the CD page's level 2 and 3.",
-      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
@@ -32606,9 +32415,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[10px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -33447,6 +33254,99 @@
       "typography_exceptions": [
         "text-[12px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.notify_past_due_activity",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-F5B742C748",
+      "page_title": "Dashboard Notify Past Due",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Dashboard Notify Past Due",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/dashboard/notify-past-due/<str:activity_id>/",
+      "route_name": "dashboard_notify_past_due",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.admin_ops.services",
+        "apps.cce_leadership.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.notifications.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -96181,11 +96081,11 @@
     },
     {
       "callback": "apps.frontend.views.dashboard_views.notify_past_due_activity",
-      "kind": "platform-route",
+      "kind": "action",
       "methods": [
         "GET"
       ],
-      "page_permission": "",
+      "page_permission": "dashboard",
       "required_permissions": [],
       "route": "/dashboard/notify-past-due/<str:activity_id>/",
       "route_name": "dashboard_notify_past_due",
@@ -104258,32 +104158,32 @@
     "component_templates": 473,
     "full_pages": 258,
     "mobile_contract_pass": 529,
-    "nonvisual_actions": 263,
+    "nonvisual_actions": 264,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 531,
+      "interaction-fragment": 532,
       "operational-queue": 149,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
     "partials_and_drawers": 268,
-    "permission_gated": 802,
+    "permission_gated": 803,
     "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 817,
+    "routed_surfaces": 818,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
       "high": 0,
-      "low": 1,
-      "medium": 8
+      "low": 0,
+      "medium": 0
     },
     "tablet_contract_pass": 529,
-    "test_referenced": 710,
+    "test_referenced": 711,
     "theme_contract_pass": 529
   }
 }

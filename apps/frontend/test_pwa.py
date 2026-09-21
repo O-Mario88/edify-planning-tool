@@ -420,14 +420,17 @@ class FieldOutboxWiringTest(SimpleTestCase):
         self.assertIn("pending uploads", nav)
 
     def test_camera_capture_only_where_a_photo_is_accepted(self):
-        """Governed forms are PDF-only by rule (apps/evidence/services.py), so
-        their inputs must not open a camera; every other evidence input may."""
+        """The completion drawer's governed-form inputs are PDF-only by rule
+        (apps/evidence/services.py), so they must not open a camera. The
+        evidence drawer accepts a photo since 2026-09-19: a JPG, PNG or WebP
+        of a governed form is converted to an A4 PDF on upload, so its camera
+        input is the field officer's path."""
         expected_capture = {
             "templates/partials/my_plan/complete_drawer.html": 1,
             "templates/partials/my_plan/attendance_drawer.html": 1,
             "templates/partials/my_plan/ssa_upload_drawer.html": 1,
             "templates/partials/my_plan/accountability_drawer.html": 1,
-            "templates/partials/my_plan/evidence_drawer.html": 0,
+            "templates/partials/my_plan/evidence_drawer.html": 1,
         }
         for rel, count in expected_capture.items():
             with self.subTest(template=rel):

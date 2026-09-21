@@ -505,11 +505,12 @@ class MapIsAFixedSheetTest(SimpleTestCase):
     def test_the_stylesheet_sizes_the_sheet_and_the_script_no_longer_does(self):
         template = _regional_source()
         layout = _read("static/css/pages/analytics-dashboard.css")
-        self.assertIn(
-            "inline-size: min(100%, 30cm, calc(100svh - var(--sr-map-chrome)))",
-            layout,
-        )
-        self.assertIn("aspect-ratio: 1 / 1", layout)
+        # The sheet is full-width at a fixed height since 2026-09-20; the
+        # square bound (2026-09-17) gave way to a viewport the stylesheet
+        # still sizes and the script still never measures.
+        self.assertIn("inline-size: 100% !important;", layout)
+        self.assertIn("height: 600px !important;", layout)
+        self.assertIn("aspect-ratio: auto !important;", layout)
         self.assertNotIn("aspect-ratio: 30 / 42", layout)
         self.assertNotIn("--map-viewport-height", layout)
         # The window fit is gone from the script.
