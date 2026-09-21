@@ -4194,7 +4194,7 @@ main textarea,
   padding: 0 .625rem !important;
   border-radius: 6px !important;
   gap: .375rem !important;
-  font-size: var(--edify-text-micro-size, 12px) !important;
+  font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
@@ -4298,7 +4298,7 @@ main textarea,
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table) thead :is(th, td) {
   color: #285b96 !important;
-  font-size: 11px !important;
+  font-size: var(--edify-text-table-heading-size) !important;
   font-weight: 600 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;

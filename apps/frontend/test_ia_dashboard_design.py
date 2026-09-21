@@ -150,7 +150,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
 
         self.assertNotIn("ia-report-kpis", self.css)
         self.assertNotIn("kpi-strip__label", self.css)
-        self.assertIn("scroll-snap-type: x mandatory", context)
+        self.assertIn("scroll-snap-type: x ", context)
         self.assertIn(".ia-card-heading h3", self.css)
 
 

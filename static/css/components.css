@@ -5204,6 +5204,59 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
    already draws that edge. */
 table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
 
+/* Shared statistical chart layout: September 2026 bar standard.
+   One card, one quiet header, a 220px plot and a folded data table. The card
+   is sized by its content — no fixed height holds it open, so a chart with a
+   legend and one without sit at their own natural heights. */
+main :has(> .edify-standard-charts) { height: auto !important; min-width: 0; max-width: 100%; }
+.edify-data-chart { padding: .875rem 1rem 0.5rem; min-width: 0; }
+.edify-data-chart__header { display: flex; flex-direction: column; gap: .125rem; margin-bottom: .25rem; }
+main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-title-size); font-weight: 600; line-height: 1.35; color: var(--edify-text); background: none; padding: 0; border: 0; text-transform: none; letter-spacing: normal; }
+.edify-data-chart__subtitle { margin: 0; font-size: var(--edify-text-micro-size); line-height: 1.4; color: var(--edify-text-muted); }
+.edify-data-chart__plot { min-width: 0; }
+.edify-standard-charts { width: 100%; min-width: 0; color: var(--edify-text); }
+.edify-chart-family + .edify-chart-family { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--edify-chart-grid); }
+.edify-chart-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.edify-chart-scroll:focus-visible { outline: 2px solid var(--edify-series-1); outline-offset: 2px; border-radius: 4px; }
+.edify-chart-panel-title { font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--edify-text-muted); margin: .25rem 0 0; }
+.edify-chart-empty { margin: 0; padding: 2.5rem 0; font-size: var(--edify-text-micro-size); text-align: center; }
+.edify-chart-data { margin: 0; font-size: var(--edify-text-micro-size); overflow-x: auto; }
+.edify-chart-data summary { display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; padding: .3rem 0; color: var(--edify-text-muted); font-weight: 500; list-style: none; }
+.edify-chart-data summary::-webkit-details-marker { display: none; }
+.edify-chart-data summary::before { content: ""; width: .35rem; height: .35rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+.edify-chart-data[open] summary::before { transform: rotate(45deg); }
+.edify-chart-data table { width: 100%; border-collapse: collapse; margin: .25rem 0 .5rem; }
+.edify-chart-data th, .edify-chart-data td { padding: .35rem .5rem; text-align: start; border-bottom: 1px solid var(--edify-chart-grid); }
+.edify-chart-data thead th { font-weight: 600; color: var(--edify-text-muted); }
+.edify-chart-data td, .edify-chart-data thead th:not(:first-child) { text-align: end; font-variant-numeric: tabular-nums; }
+.edify-chart-data tbody th { font-weight: 500; }
+.edify-data-chart .apexcharts-legend { padding-inline: 0 !important; }
+.edify-data-chart .apexcharts-legend-text { color: var(--edify-text-muted) !important; }
+.edify-data-chart .apexcharts-tooltip { box-shadow: var(--edify-shadow-sm); border-radius: 6px; }
+.edify-stat-bars { min-width: 100px; width: 100%; color: var(--edify-text); }
+.edify-stat-bars__headline { font-weight: 600; font-size: 14px; margin: 0 0 .75rem; }
+.edify-stat-bars__row { display: grid; grid-template-columns: 1fr auto; gap: .4rem .75rem; font-size: var(--edify-text-micro-size); margin: .75rem 0; }
+.edify-stat-bars__track { grid-column: 1 / -1; height: 18px; border-bottom: 1px solid var(--edify-border); }
+.edify-stat-bars__track > span { display: block; height: 100%; background: var(--edify-series-1); }
+.edify-column-chart { display: flex; gap: 1.25rem; overflow-x: auto; padding: 1rem .5rem; align-items: stretch; min-width: 0; }
+.edify-column-chart__item { min-width: 60px; flex: 1; display: flex; flex-direction: column; gap: .5rem; align-items: center; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); text-align: center; }
+.edify-column-chart__track { height: 160px; width: 100%; display: flex; align-items: end; justify-content: center; border-bottom: 1px solid var(--edify-border); }
+.edify-column-chart__track > span { display: block; width: 70%; max-width: 50px; background: var(--edify-series-1); }
+.spa-trend-bar i, .spa-efficiency-bar i, .spa-score-bars span:first-child i { background: var(--edify-series-1) !important; border-radius: 0 !important; }
+.spa-score-bars span:nth-child(2) i { background: var(--edify-series-2) !important; border-radius: 0 !important; }
+.edify-mini-columns { height: 30px; min-width: 70px; display: flex; gap: 3px; align-items: end; border-bottom: 1px solid var(--edify-border); }
+.edify-mini-columns > span[style] { flex: 1; background: var(--edify-series-1); }
+.edify-paired-bars { display: flex; flex-direction: column; gap: 5px; border-left: 1px solid var(--edify-border); }
+.edify-paired-bars__bar { height: 16px; }
+.rpl-mix__fill, .hrd-bars__fill { background: var(--edify-series-1) !important; border-radius: 0 !important; }
+.rpl-mix__track, .hrd-bars__track { border-radius: 0 !important; }
+.edify-chart-page-select { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .25rem 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
+.edify-chart-page-select select { width: auto; max-width: 100%; padding: .25rem 1.6rem .25rem .5rem; font-size: var(--edify-text-micro-size); background: var(--edify-surface); color: var(--edify-text); border: 1px solid var(--edify-border); border-radius: 6px; }
+.admin-progress, .admin-progress > span { border-radius: 0 !important; }
+.admin-progress > span { background: var(--edify-series-1) !important; }
+.edify-column-chart__track > span { position: relative; }
+.edify-column-chart__track > span > strong { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 500; }
+
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */
 .context-metrics {
   --kpi-surface: #fff;
@@ -5429,56 +5482,3 @@ table > tbody:first-of-type .edify-group-head > th { border-block-start: 0; }
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   caret-color: var(--edify-text);
 }
-
-/* Shared statistical chart layout: September 2026 bar standard.
-   One card, one quiet header, a 220px plot and a folded data table. The card
-   is sized by its content — no fixed height holds it open, so a chart with a
-   legend and one without sit at their own natural heights. */
-main :has(> .edify-standard-charts) { height: auto !important; min-width: 0; max-width: 100%; }
-.edify-data-chart { padding: .875rem 1rem 0.5rem; min-width: 0; }
-.edify-data-chart__header { display: flex; flex-direction: column; gap: .125rem; margin-bottom: .25rem; }
-main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-title-size); font-weight: 600; line-height: 1.35; color: var(--edify-text); background: none; padding: 0; border: 0; text-transform: none; letter-spacing: normal; }
-.edify-data-chart__subtitle { margin: 0; font-size: var(--edify-text-micro-size); line-height: 1.4; color: var(--edify-text-muted); }
-.edify-data-chart__plot { min-width: 0; }
-.edify-standard-charts { width: 100%; min-width: 0; color: var(--edify-text); }
-.edify-chart-family + .edify-chart-family { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--edify-chart-grid); }
-.edify-chart-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-.edify-chart-scroll:focus-visible { outline: 2px solid var(--edify-series-1); outline-offset: 2px; border-radius: 4px; }
-.edify-chart-panel-title { font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--edify-text-muted); margin: .25rem 0 0; }
-.edify-chart-empty { margin: 0; padding: 2.5rem 0; font-size: var(--edify-text-micro-size); text-align: center; }
-.edify-chart-data { margin: 0; font-size: var(--edify-text-micro-size); overflow-x: auto; }
-.edify-chart-data summary { display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; padding: .3rem 0; color: var(--edify-text-muted); font-weight: 500; list-style: none; }
-.edify-chart-data summary::-webkit-details-marker { display: none; }
-.edify-chart-data summary::before { content: ""; width: .35rem; height: .35rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
-.edify-chart-data[open] summary::before { transform: rotate(45deg); }
-.edify-chart-data table { width: 100%; border-collapse: collapse; margin: .25rem 0 .5rem; }
-.edify-chart-data th, .edify-chart-data td { padding: .35rem .5rem; text-align: start; border-bottom: 1px solid var(--edify-chart-grid); }
-.edify-chart-data thead th { font-weight: 600; color: var(--edify-text-muted); }
-.edify-chart-data td, .edify-chart-data thead th:not(:first-child) { text-align: end; font-variant-numeric: tabular-nums; }
-.edify-chart-data tbody th { font-weight: 500; }
-.edify-data-chart .apexcharts-legend { padding-inline: 0 !important; }
-.edify-data-chart .apexcharts-legend-text { color: var(--edify-text-muted) !important; }
-.edify-data-chart .apexcharts-tooltip { box-shadow: var(--edify-shadow-sm); border-radius: 6px; }
-.edify-stat-bars { min-width: 100px; width: 100%; color: var(--edify-text); }
-.edify-stat-bars__headline { font-weight: 600; font-size: 14px; margin: 0 0 .75rem; }
-.edify-stat-bars__row { display: grid; grid-template-columns: 1fr auto; gap: .4rem .75rem; font-size: 12px; margin: .75rem 0; }
-.edify-stat-bars__track { grid-column: 1 / -1; height: 18px; border-bottom: 1px solid var(--edify-border); }
-.edify-stat-bars__track > span { display: block; height: 100%; background: var(--edify-series-1); }
-.edify-column-chart { display: flex; gap: 1.25rem; overflow-x: auto; padding: 1rem .5rem; align-items: stretch; min-width: 0; }
-.edify-column-chart__item { min-width: 60px; flex: 1; display: flex; flex-direction: column; gap: .5rem; align-items: center; color: var(--edify-text-muted); font-size: 12px; text-align: center; }
-.edify-column-chart__track { height: 160px; width: 100%; display: flex; align-items: end; justify-content: center; border-bottom: 1px solid var(--edify-border); }
-.edify-column-chart__track > span { display: block; width: 70%; max-width: 50px; background: var(--edify-series-1); }
-.spa-trend-bar i, .spa-efficiency-bar i, .spa-score-bars span:first-child i { background: var(--edify-series-1) !important; border-radius: 0 !important; }
-.spa-score-bars span:nth-child(2) i { background: var(--edify-series-2) !important; border-radius: 0 !important; }
-.edify-mini-columns { height: 30px; min-width: 70px; display: flex; gap: 3px; align-items: end; border-bottom: 1px solid var(--edify-border); }
-.edify-mini-columns > span[style] { flex: 1; background: var(--edify-series-1); }
-.edify-paired-bars { display: flex; flex-direction: column; gap: 5px; border-left: 1px solid var(--edify-border); }
-.edify-paired-bars__bar { height: 16px; }
-.rpl-mix__fill, .hrd-bars__fill { background: var(--edify-series-1) !important; border-radius: 0 !important; }
-.rpl-mix__track, .hrd-bars__track { border-radius: 0 !important; }
-.edify-chart-page-select { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .25rem 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
-.edify-chart-page-select select { width: auto; max-width: 100%; padding: .25rem 1.6rem .25rem .5rem; font-size: var(--edify-text-micro-size); background: var(--edify-surface); color: var(--edify-text); border: 1px solid var(--edify-border); border-radius: 6px; }
-.admin-progress, .admin-progress > span { border-radius: 0 !important; }
-.admin-progress > span { background: var(--edify-series-1) !important; }
-.edify-column-chart__track > span { position: relative; }
-.edify-column-chart__track > span > strong { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 500; }

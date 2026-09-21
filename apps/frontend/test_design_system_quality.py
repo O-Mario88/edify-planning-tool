@@ -801,13 +801,13 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-brand-primary: var(--brand-primary)",
             "--edify-brand-primary-hover: var(--brand-primary-hover)",
             "--edify-brand-secondary: #ef564b",
-            "--edify-bg: #e8eef5",
+            "--edify-bg: #dbe4eb",
             "--edify-section-bg: #f2f5f6",
             "--edify-surface: #f8fafb",
             "--edify-surface-raised: #ffffff",
             "--edify-border: #c7d1d7",
             "--edify-text: #17232b",
-            "--edify-text-muted: #3f515c",
+            "--edify-text-muted: #233844",
         ):
             self.assertIn(declaration, tokens)
 
@@ -829,18 +829,20 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         for declaration in (
             "--edify-text: #17232b",
-            "--edify-text-muted: #3f515c",
-            "--edify-text-subtle: #5a6b75",
+            "--edify-text-muted: #233844",
+            "--edify-text-subtle: #263d4b",
             "--edify-text-disabled: #6b7b84",
         ):
             self.assertIn(declaration, tokens)
 
         # Body-text steps clear AA on the card plane they actually sit on.
         # (#6b7b84 is the disabled step, which WCAG exempts from the minimum.)
-        # Subtle text must also remain AA on the darker blue-grey canvas.
-        for colour in ("#17232b", "#3f515c", "#5a6b75"):
+        # Subtle text must also remain AA on the darker blue-grey canvas,
+        # which the owner restored to its original #dbe4eb on 2026-09-20
+        # while deepening the muted and subtle steps for contrast.
+        for colour in ("#17232b", "#233844", "#263d4b"):
             self.assertGreaterEqual(_contrast_ratio(colour, "#f8fafb"), 4.5)
-            self.assertGreaterEqual(_contrast_ratio(colour, "#e8eef5"), 4.5)
+            self.assertGreaterEqual(_contrast_ratio(colour, "#dbe4eb"), 4.5)
 
         # Primary brand must stay legible under white button labels in every
         # interaction state.
@@ -1710,7 +1712,10 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("svg.viewBox.baseVal", runtime)
         self.assertIn("rect.width / viewBox.width", runtime)
         self.assertIn("`${size / scale}px`", runtime)
-        self.assertIn("20260804svgtype2", base)
+        # The runtime must be cache-busted, but the key is not pinned here:
+        # pinning it meant every bump of the script edited this test, which
+        # is how it came to assert a key three changes old.
+        self.assertRegex(base, r"js/svg-typography\.js' %\}\?v=[0-9a-z]+")
         for token in (
             "--edify-text-micro-size",
             "--edify-text-label-size",
@@ -1745,7 +1750,12 @@ class StableTypographyContractTest(SimpleTestCase):
         pages = _read("static/css/pages.css")
         hcos = _read("static/css/hcos-workspace.css")
 
-        self.assertIn("minmax(min(100%, 14rem), 1fr)", components)
+        # The KPI strip stopped yielding wrapped columns on 2026-09-20: it is a
+        # one-row scroller now, which is the other way a label avoids wrapping.
+        self.assertRegex(
+            components,
+            r"\.kpi-strip__grid\s*\{[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto",
+        )
         self.assertIn(
             "grid-template-columns: repeat(2, minmax(0, 1fr)) !important",
             components,
