@@ -88,6 +88,27 @@
       ]
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1174,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Bar Chart",
+      "purpose": "Reusable bar chart interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/bar_chart.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 2350,
       "deprecated_alternatives": [],
@@ -183,7 +204,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5595,
+      "bytes": 5825,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance",
@@ -561,6 +582,32 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 311,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cluster-oversight/",
+        "/core-schools-oversight/",
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Ssa Score",
+      "purpose": "Reusable ssa score interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/ssa_score.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -592,7 +639,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1530,
+      "bytes": 1700,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts/activities/<str:activity_id>",
@@ -1086,7 +1133,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2648,
+      "bytes": 2642,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1369,7 +1416,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30834,
+      "bytes": 30824,
       "deprecated_alternatives": [],
       "example_pages": [
         "/impact"
@@ -2097,7 +2144,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2298,
+      "bytes": 2297,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2141,7 +2188,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 5225,
+      "bytes": 5192,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2775,10 +2822,11 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6827,
+      "bytes": 6835,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters"
+        "/clusters",
+        "/planning"
       ],
       "findings": [],
       "forms": 0,
@@ -2821,7 +2869,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3827,
+      "bytes": 3952,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -2926,12 +2974,25 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5281,
+      "bytes": 6753,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -2971,7 +3032,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3683,
+      "bytes": 3671,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/impact/<str:cluster_id>"
@@ -3039,7 +3100,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6597,
+      "bytes": 4113,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -3058,7 +3119,7 @@
         "default",
         "open"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/clusters/oversight_workspace.html",
       "variants": []
     },
@@ -3183,7 +3244,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3225,
+      "bytes": 612,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3203,7 +3264,8 @@
       "purpose": "Reusable donut rings interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "empty"
       ],
       "tables": 0,
       "template": "partials/components/donut_rings.html",
@@ -3319,7 +3381,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3975,
+      "bytes": 4095,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assessment"
@@ -3345,7 +3407,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5815,
+      "bytes": 5841,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3366,8 +3428,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3867,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3803,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3380,7 +3444,8 @@
       "purpose": "Reusable intervention impact interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "empty"
       ],
       "tables": 1,
       "template": "partials/core_schools/intervention_impact.html",
@@ -3414,7 +3479,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 21350,
+      "bytes": 19855,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3439,7 +3504,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13143,
+      "bytes": 13257,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3508,7 +3573,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15480,
+      "bytes": 15673,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -3536,7 +3601,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23227,
+      "bytes": 23420,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3563,7 +3628,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10662,
+      "bytes": 11365,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3588,7 +3653,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4127,
+      "bytes": 4247,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/strategy-playbook"
@@ -3613,7 +3678,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10344,
+      "bytes": 11164,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3862,7 +3927,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2841,
+      "bytes": 2302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/planning-progress"
@@ -3926,7 +3991,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20470,
+      "bytes": 19887,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4132,7 +4197,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 33613,
+      "bytes": 33729,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4299,10 +4364,8 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1879,
+      "accessibility_requirements": [],
+      "bytes": 457,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4318,8 +4381,7 @@
       "tables": 0,
       "template": "partials/dashboards/pl/body.html",
       "variants": [
-        "executive",
-        "{{ a.tone }}"
+        "executive"
       ]
     },
     {
@@ -4441,10 +4503,23 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9238,
+      "bytes": 9769,
       "deprecated_alternatives": [],
       "example_pages": [],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -4468,7 +4543,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9749,
+      "bytes": 10104,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4532,6 +4607,29 @@
       "variants": [
         "danger",
         "{% if group.overdue %}danger{% else %}warning{% endif %}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1575,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Today View",
+      "purpose": "Reusable today view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/today_view.html",
+      "variants": [
+        "{{ a.tone }}"
       ]
     },
     {
@@ -4606,7 +4704,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1067,
+      "bytes": 1069,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5089,6 +5187,51 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 37381,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard"
+      ],
+      "findings": [
+        {
+          "evidence": "A radius outside the approved geometry is present.",
+          "key": "non-canonical-radius",
+          "recommended_action": "Cards, KPI cards, charts and table wrappers use 12px (rounded-card); buttons, inputs, selects, tabs and nav controls use 8px (rounded-control); drawers, modals and overlays use 16px. Full rounding stays for badges, pills, avatars and progress bars.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "forms": 0,
+      "htmx_controls": 15,
+      "kind": "application-partial",
+      "name": "What Needs You Now",
+      "purpose": "Reusable what needs you now interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "disabled",
+        "open"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/what_needs_you_now.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 2003,
       "deprecated_alternatives": [],
@@ -5178,8 +5321,11 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 8760,
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 8557,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -5194,7 +5340,8 @@
       "states": [
         "default",
         "empty",
-        "disabled"
+        "disabled",
+        "selected"
       ],
       "tables": 1,
       "template": "partials/debriefs/dashboard_table.html",
@@ -5407,7 +5554,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6924,
+      "bytes": 6865,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5492,7 +5639,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6514,
+      "bytes": 6502,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6063,7 +6210,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6756,
+      "bytes": 6732,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -6211,7 +6358,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3573,
+      "bytes": 3549,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -7107,7 +7254,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 27424,
+      "bytes": 27592,
       "deprecated_alternatives": [],
       "example_pages": [
         "/leave/approvals",
@@ -7415,9 +7562,7 @@
       "accessibility_requirements": [],
       "bytes": 2154,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -7487,14 +7632,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5464,
+      "bytes": 6242,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 8,
+      "htmx_controls": 9,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -7511,7 +7656,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 7642,
+      "bytes": 8122,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7555,7 +7700,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9607,
+      "bytes": 11239,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7601,7 +7746,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2663,
+      "bytes": 4597,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7622,12 +7767,19 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3164,
+      "bytes": 6755,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -7693,7 +7845,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4392,
+      "bytes": 5603,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7714,7 +7866,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3882,
+      "bytes": 5620,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7739,22 +7891,30 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4816,
+      "bytes": 10178,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Evidence Drawer",
       "purpose": "Reusable evidence drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty",
-        "disabled"
+        "disabled",
+        "open"
       ],
       "tables": 0,
       "template": "partials/my_plan/evidence_drawer.html",
@@ -7768,14 +7928,14 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8629,
+      "bytes": 9621,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Filters",
       "purpose": "Reusable filters interface primitive",
@@ -7861,9 +8021,7 @@
       "accessibility_requirements": [],
       "bytes": 1691,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -7884,7 +8042,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2567,
+      "bytes": 3742,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7952,7 +8110,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2935,
+      "bytes": 4478,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8063,7 +8221,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2048,
+      "bytes": 1840,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8129,6 +8287,54 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 4928,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cluster-oversight/",
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Cluster Table",
+      "purpose": "Reusable  cluster table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/_cluster_table.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4490,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Core Schools Table",
+      "purpose": "Reusable  core schools table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/_core_schools_table.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -8176,6 +8382,38 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 5181,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/team/<str:staff_id>",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "forms": 0,
+      "htmx_controls": 6,
+      "kind": "application-partial",
+      "name": " Row Actions",
+      "purpose": "Reusable  row actions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_row_actions.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
@@ -8205,7 +8443,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5311,
+      "bytes": 31726,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8213,7 +8451,14 @@
         "/team-targets",
         "/team-targets/"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
       "forms": 0,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -8221,9 +8466,11 @@
       "purpose": "Reusable cd team detail interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "selected",
+        "open"
       ],
-      "tables": 1,
+      "tables": 4,
       "template": "partials/oversight/cd_team_detail.html",
       "variants": []
     },
@@ -8231,12 +8478,25 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8603,
+      "bytes": 12324,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 1,
       "htmx_controls": 3,
       "kind": "application-partial",
@@ -8245,9 +8505,10 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
+        "selected",
         "open"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/cd_workspace.html",
       "variants": [
         "executive"
@@ -8257,35 +8518,94 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9206,
+      "bytes": 7696,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/cluster-oversight/",
         "/country-planning-oversight/",
         "/team-planning-oversight/",
         "/team-targets",
         "/team-targets/"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
+      "name": "Cluster Oversight Workspace",
+      "purpose": "Reusable cluster oversight workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "selected",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/cluster_oversight_workspace.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 438,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
       "name": "Cluster Performance Workspace",
       "purpose": "Reusable cluster performance workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/cluster_performance_workspace.html",
-      "variants": [
-        "executive"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10789,
+      "bytes": 8286,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools-oversight/"
+      ],
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Core Schools Oversight Workspace",
+      "purpose": "Reusable core schools oversight workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "selected",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/core_schools_oversight_workspace.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 10811,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8338,7 +8658,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5350,
+      "bytes": 5355,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -8435,9 +8755,11 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3623,
+      "bytes": 3757,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/cluster-oversight/",
+        "/core-schools-oversight/",
         "/country-planning-oversight/",
         "/partner-oversight/",
         "/team-planning-oversight/",
@@ -8463,7 +8785,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12685,
+      "bytes": 5499,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8472,7 +8794,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Pl Workspace",
       "purpose": "Reusable pl workspace interface primitive",
@@ -8480,7 +8802,7 @@
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/pl_workspace.html",
       "variants": [
         "executive"
@@ -8521,7 +8843,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3861,
+      "bytes": 4335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8686,9 +9008,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 2898,
+      "bytes": 2999,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/members/drawer"
@@ -8948,7 +9271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7125,
+      "bytes": 7770,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -8976,21 +9299,20 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16442,
+      "bytes": 9050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 6,
+      "htmx_controls": 4,
       "kind": "application-partial",
       "name": "School Table",
       "purpose": "Reusable school table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/planning/school_table.html",
@@ -9025,7 +9347,28 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4954,
+      "bytes": 814,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View Controls",
+      "purpose": "Reusable view controls interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/view_controls.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 3227,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9329,7 +9672,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 20669,
+      "bytes": 20677,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development",
@@ -9564,7 +9907,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15268,
+      "bytes": 15305,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -10148,7 +10491,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12475,
+      "bytes": 12515,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"
@@ -10249,7 +10592,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9789,
+      "bytes": 10186,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -10299,7 +10642,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 806,
+      "bytes": 846,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer",
@@ -10656,7 +10999,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21495,
+      "bytes": 20131,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -10847,7 +11190,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3366,
+      "bytes": 3351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -11198,7 +11541,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 2303,
+      "bytes": 2310,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today/act",
@@ -11223,7 +11566,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8365,
+      "bytes": 8385,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -11254,14 +11597,21 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13597,
+      "bytes": 13852,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
         "/today/panel",
         "/today/unsnooze"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 3,
       "htmx_controls": 0,
       "kind": "application-partial",
@@ -11399,13 +11749,20 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6247,
+      "bytes": 6575,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
         "/work-plan/"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 0,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -16211,7 +16568,7 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.5,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
       "card_count": 0,
@@ -16223,8 +16580,16 @@
         "permission:my_plan"
       ],
       "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-04BC7FFD42",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -16245,7 +16610,7 @@
       "primary_action": "Upload",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate evidence upload drawer within the frontend workflow.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
       "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
@@ -16305,6 +16670,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[11px]",
         "text-[12px]",
         "text-[13px]",
         "text-[14px]"
@@ -25856,6 +26222,110 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
+      "automated_quality_score": 9.1,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/oversight/cluster_oversight_workspace.html",
+        "template:pages/oversight/cluster_oversight.html",
+        "test:referenced-by-automated-test",
+        "permission:cluster_oversight"
+      ],
+      "filters": "canvas-level shared filter bar",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-31AC7F7FE9",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ lens_base_url|default:"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-273FCBD571",
+      "page_title": "Cluster Oversight",
+      "page_type": "interaction-fragment",
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
+      "permission_key": "cluster_oversight",
+      "primary_action": "Cluster Oversight",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Cluster oversight page \u2014 executive performance metrics, SSA scores and activity recency.",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/cluster-oversight/",
+      "route_name": "cluster_oversight",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 3,
+        "type": "in-page-tabs"
+      },
+      "templates": [
+        "partials/oversight/cluster_oversight_workspace.html",
+        "pages/oversight/cluster_oversight.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[10px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_list_view",
@@ -25950,7 +26420,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.0,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "card_count": 0,
@@ -25962,8 +26432,30 @@
         "permission:cluster_detail"
       ],
       "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-E34453E391",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "finding_id": "UI-FINDING-5898252BBE",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "Static inline styling reduces theme and component consistency.",
+          "finding_id": "UI-FINDING-12B8EE4CDD",
+          "key": "inline-style",
+          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
+          "severity": "low"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
@@ -25990,7 +26482,7 @@
       "primary_action": "Edit Details",
       "primary_user_decision": "What is the correct next action for this record?",
       "purpose": "District: &bull; Sub-county:",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.; Use the semantic card, elevated or muted surface token.; Move static presentation into a shared component class; keep inline custom properties only for live data.",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -26040,6 +26532,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[11px]",
         "text-[12px]",
         "text-[15px]"
       ]
@@ -28858,7 +29351,7 @@
       "backend_view": "apps.frontend.views.core_schools_views.core_schools_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:partials/core_schools/matrix_table.html",
         "template:pages/core_schools/index.html",
@@ -28875,7 +29368,7 @@
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-635D9F0FEB",
@@ -28943,6 +29436,108 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.1,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.core_schools_oversight_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/oversight/core_schools_oversight_workspace.html",
+        "template:pages/oversight/core_schools_oversight.html",
+        "test:referenced-by-automated-test",
+        "permission:core_schools_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-B88A3FF19D",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8BB204A012",
+      "page_title": "Core School Oversight",
+      "page_type": "interaction-fragment",
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
+      "permission_key": "core_schools_oversight",
+      "primary_action": "Core Schools Oversight",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Core schools oversight page \u2014 packages progress, visits/trainings status.",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/core-schools-oversight/",
+      "route_name": "core_schools_oversight",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 3,
+        "type": "in-page-tabs"
+      },
+      "templates": [
+        "partials/oversight/core_schools_oversight_workspace.html",
+        "pages/oversight/core_schools_oversight.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[10px]"
       ]
     },
     {
@@ -29659,7 +30254,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "core_schools",
-      "primary_action": "Review",
+      "primary_action": "View Graduated Champions &rarr;",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "View to list Proposed Champion Candidates.",
       "remediation": "No automated remediation outstanding",
@@ -31646,7 +32241,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 8.7,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "card_count": 0,
@@ -31659,13 +32254,28 @@
         "permission:country_planning_oversight"
       ],
       "filters": "filter controls detected; parent/context review",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-5EDB34F0BC",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        },
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "finding_id": "UI-FINDING-82AEC79ABB",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}",
-        "POST /country-planning-oversight/send"
+        "POST /country-planning-oversight/send",
+        "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -31684,7 +32294,7 @@
       "primary_action": "Complete planning form",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "What the country has planned, how it is distributed, and who must act.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.; Use the semantic card, elevated or muted surface token.",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -31702,6 +32312,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -31718,12 +32329,12 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
         "pages/oversight/country_planning.html",
@@ -31733,7 +32344,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[11px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -31787,6 +32400,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -31869,6 +32483,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -31904,7 +32519,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.1,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_team_view",
       "card_count": 0,
@@ -31916,8 +32531,16 @@
         "permission:country_planning_oversight"
       ],
       "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "Text below the shared readable type scale is present.",
+          "finding_id": "UI-FINDING-80EFD6F428",
+          "key": "tiny-text",
+          "recommended_action": "Migrate labels and metadata to the semantic typography tokens.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
@@ -31936,7 +32559,7 @@
       "primary_action": "Country Planning Oversight Team",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "One Program Lead's team, expanded \u2014 the CD page's level 2 and 3.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Migrate labels and metadata to the semantic typography tokens.",
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
@@ -31952,6 +32575,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -31972,8 +32596,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
         "partials/oversight/cd_team_detail.html"
@@ -31982,7 +32606,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[10px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -32610,6 +33236,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -32704,6 +33331,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -32789,6 +33417,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -32885,6 +33514,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -32977,6 +33607,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33070,6 +33701,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33168,6 +33800,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33269,6 +33902,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33366,6 +34000,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.notifications.models",
+        "apps.notifications.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33850,8 +34485,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 7,
+        "type": "in-page-tabs"
       },
       "templates": [
         "partials/debriefs/dashboard_table.html",
@@ -61651,6 +62286,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -61746,6 +62382,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -61837,6 +62474,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -61927,6 +62565,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -62014,6 +62653,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -62099,6 +62739,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -62189,6 +62830,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -62276,6 +62918,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -62361,6 +63004,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -64562,7 +65206,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_member_drawer",
       "card_count": 0,
@@ -64642,7 +65286,7 @@
       "state_coverage": {
         "disabled": true,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -66716,8 +67360,6 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=training{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
-        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=meeting{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
         "GET /planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
         "GET /planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
         "GET /planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
@@ -66730,7 +67372,7 @@
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-5F1957110F",
@@ -66738,7 +67380,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Group Training",
+      "primary_action": "Planning Dashboard",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.",
       "remediation": "No automated remediation outstanding",
@@ -66802,8 +67444,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
+        "text-[13px]"
       ]
     },
     {
@@ -74804,7 +75445,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-9DCE536863",
-      "page_title": "School Directory",
+      "page_title": "Schools",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
@@ -76739,7 +77380,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-232F86FE85",
-      "page_title": "Upload Schools",
+      "page_title": "Upload School Data - Edify Command Center",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_upload",
@@ -78065,7 +78706,7 @@
       "page_type": "planning-or-creation",
       "per_page_css": [],
       "permission_key": "ssa",
-      "primary_action": "Upload and Import",
+      "primary_action": "Download Template",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "Upload a sheet of initial and monitoring SSA scores to map directly to school records in your country. Imported scores wait for a verifier other than you before they count.",
       "remediation": "No automated remediation outstanding",
@@ -79988,7 +80629,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-EA89AC9A38",
-      "page_title": "Team Oversight",
+      "page_title": "Planning Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
@@ -80019,6 +80660,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -80115,6 +80757,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -80202,6 +80845,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -80287,6 +80931,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
@@ -83262,6 +83907,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
+        "text-[15px]",
         "text-[16px]"
       ]
     },
@@ -83381,6 +84027,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
+        "text-[15px]",
         "text-[16px]"
       ]
     },
@@ -94442,6 +95089,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.cluster_oversight_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cluster_oversight",
+      "required_permissions": [],
+      "route": "/cluster-oversight/",
+      "route_name": "cluster_oversight",
+      "templates": [
+        "partials/oversight/cluster_oversight_workspace.html",
+        "pages/oversight/cluster_oversight.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.cluster_list_view",
       "kind": "partial",
       "methods": [
@@ -94928,6 +95590,21 @@
       "templates": [
         "partials/core_schools/matrix_table.html",
         "pages/core_schools/index.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.core_schools_oversight_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "core_schools_oversight",
+      "required_permissions": [],
+      "route": "/core-schools-oversight/",
+      "route_name": "core_schools_oversight",
+      "templates": [
+        "partials/oversight/core_schools_oversight_workspace.html",
+        "pages/oversight/core_schools_oversight.html"
       ]
     },
     {
@@ -95501,6 +96178,18 @@
       "templates": [
         "partials/dashboards/cd/body.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.dashboard_views.notify_past_due_activity",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/dashboard/notify-past-due/<str:activity_id>/",
+      "route_name": "dashboard_notify_past_due",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
@@ -103562,39 +104251,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 527,
+    "accessibility_contract_pass": 529,
     "activity_states": 24,
-    "all_routes": 1287,
+    "all_routes": 1290,
     "api_routes": 360,
-    "component_templates": 463,
+    "component_templates": 473,
     "full_pages": 258,
-    "mobile_contract_pass": 527,
+    "mobile_contract_pass": 529,
     "nonvisual_actions": 263,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 529,
+      "interaction-fragment": 531,
       "operational-queue": 149,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 266,
-    "permission_gated": 800,
+    "partials_and_drawers": 268,
+    "permission_gated": 802,
     "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 815,
+    "routed_surfaces": 817,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
       "high": 0,
-      "low": 0,
-      "medium": 0
+      "low": 1,
+      "medium": 8
     },
-    "tablet_contract_pass": 527,
-    "test_referenced": 708,
-    "theme_contract_pass": 527
+    "tablet_contract_pass": 529,
+    "test_referenced": 710,
+    "theme_contract_pass": 529
   }
 }

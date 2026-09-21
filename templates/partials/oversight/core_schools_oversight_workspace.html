@@ -29,7 +29,7 @@
                   :aria-selected="activeCceo === '{{ cceo.id }}'"
                   @click="activeCceo = '{{ cceo.id }}'"
                   class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-            <span>{{ cceo.tab_label|default:cceo.name }}</span>
+            <span>{% firstof cceo.tab_label cceo.name %}</span>
             <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} schools</span>
           </button>
           {% endfor %}
@@ -41,7 +41,7 @@
         <div class="card p-0 overflow-hidden shadow-xs border edify-border">
           <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
-              <span>{{ cceo.heading|default:cceo.name }}</span>
+              <span>{% firstof cceo.heading cceo.name %}</span>
               <span class="pill pill-info text-xs font-semibold">{{ cceo.count }} schools</span>
               <span class="pill pill-success text-xs font-semibold">{{ cceo.completed }} completed packages</span>
             </h3>
