@@ -6825,7 +6825,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 151,
+   "line": 173,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
