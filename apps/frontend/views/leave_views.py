@@ -1733,7 +1733,7 @@ def team_availability_view(request):
             span = f"{start.day}–{end.day} {end.strftime('%b')}"
         else:
             span = f"{start.day} {start.strftime('%b')}–{end.day} {end.strftime('%b')}"
-        weeks_headers.append(f"Wk {i+1} · {span}")
+        weeks_headers.append(f"Wk {i + 1} · {span}")
 
     context = {
         "matrix": matrix,

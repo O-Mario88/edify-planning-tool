@@ -972,7 +972,7 @@ class Command(BaseCommand):
 
         clusters = []
         for i in range(15):
-            cl_name = f"Cluster {chr(65+i)}"
+            cl_name = f"Cluster {chr(65 + i)}"
             group_key, group_schools = (
                 ranked_groups[i] if i < len(ranked_groups) else ((None, None), [])
             )

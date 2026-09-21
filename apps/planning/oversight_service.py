@@ -421,7 +421,15 @@ def _activities_in_scope(
         Activity.objects.filter(
             deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
         )
-        .select_related("school", "school__district", "school__region", "cluster", "cluster__district", "cluster__district__region", "training_course")
+        .select_related(
+            "school",
+            "school__district",
+            "school__region",
+            "cluster",
+            "cluster__district",
+            "cluster__district__region",
+            "training_course",
+        )
         .only(
             "id",
             "activity_type",
@@ -595,7 +603,13 @@ def _unscheduled_assignments_in_scope(
             )
         )
         .select_related(
-            "school", "school__district", "school__region", "cluster", "cluster__district", "cluster__district__region", "partner"
+            "school",
+            "school__district",
+            "school__region",
+            "cluster",
+            "cluster__district",
+            "cluster__district__region",
+            "partner",
         )
         .only(
             "id",
@@ -793,9 +807,15 @@ def _activity_item(
     raw_cost = int(costs.get(activity.id, 0))
     planned_cost = 0 if is_in_school else raw_cost
     budget = raw_cost
-    cluster_planned_from = "School Visit" if is_in_school else (getattr(activity.cluster, "name", "") or "—")
+    cluster_planned_from = (
+        "School Visit"
+        if is_in_school
+        else (getattr(activity.cluster, "name", "") or "—")
+    )
     delivery_type_str = "in-school" if is_in_school else "group"
-    participants_count = int(activity.participants_per_school or activity.expected_participants or 0)
+    participants_count = int(
+        activity.participants_per_school or activity.expected_participants or 0
+    )
     is_training = (
         activity.activity_type in TRAINING_TYPES
         or "training" in str(activity.activity_type or "").lower()
@@ -825,17 +845,25 @@ def _activity_item(
     )
 
     geo = _geography_of(activity.school if activity.school_id else None)
-    if not geo.get("district_name") and activity.cluster and getattr(activity.cluster, "district", None):
+    if (
+        not geo.get("district_name")
+        and activity.cluster
+        and getattr(activity.cluster, "district", None)
+    ):
         geo["district_id"] = activity.cluster.district_id
         geo["district_name"] = getattr(activity.cluster.district, "name", "") or ""
         if getattr(activity.cluster.district, "region", None):
-            geo["region_name"] = getattr(activity.cluster.district.region, "name", "") or ""
+            geo["region_name"] = (
+                getattr(activity.cluster.district.region, "name", "") or ""
+            )
 
     item = PlanningOversightItem(
         stage=STAGE_PARTNER_SCHEDULED if is_partner else STAGE_STAFF_SCHEDULED,
         activity_id=activity.id,
         school_id=activity.school_id,
-        school_code=getattr(activity.school, "school_id", "") or activity.school_id or "—",
+        school_code=getattr(activity.school, "school_id", "")
+        or activity.school_id
+        or "—",
         school_name=getattr(activity.school, "name", "") or "",
         school_type=getattr(activity.school, "school_type", "") or "",
         **geo,
@@ -909,17 +937,27 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
     supervising_pl_id, supervising_pl_name = directory.supervisor_of(owner_id)
 
     geo_assign = _geography_of(assignment.school if assignment.school_id else None)
-    if not geo_assign.get("district_name") and assignment.cluster and getattr(assignment.cluster, "district", None):
+    if (
+        not geo_assign.get("district_name")
+        and assignment.cluster
+        and getattr(assignment.cluster, "district", None)
+    ):
         geo_assign["district_id"] = assignment.cluster.district_id
-        geo_assign["district_name"] = getattr(assignment.cluster.district, "name", "") or ""
+        geo_assign["district_name"] = (
+            getattr(assignment.cluster.district, "name", "") or ""
+        )
         if getattr(assignment.cluster.district, "region", None):
-            geo_assign["region_name"] = getattr(assignment.cluster.district.region, "name", "") or ""
+            geo_assign["region_name"] = (
+                getattr(assignment.cluster.district.region, "name", "") or ""
+            )
 
     return PlanningOversightItem(
         stage=STAGE_PARTNER_AWAITING_SCHEDULE,
         partner_assignment_id=assignment.id,
         school_id=assignment.school_id,
-        school_code=getattr(assignment.school, "school_id", "") or assignment.school_id or "—",
+        school_code=getattr(assignment.school, "school_id", "")
+        or assignment.school_id
+        or "—",
         school_name=getattr(assignment.school, "name", "") or "",
         school_type=getattr(assignment.school, "school_type", "") or "",
         **geo_assign,
@@ -932,7 +970,11 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
             assignment.purpose_of_visit or assignment.purpose or assignment.notes or ""
         ),
         purpose_of_visit=(
-            (visit_purpose_label(assignment.purpose_of_visit, fallback="") if assignment.purpose_of_visit else "")
+            (
+                visit_purpose_label(assignment.purpose_of_visit, fallback="")
+                if assignment.purpose_of_visit
+                else ""
+            )
             or assignment.purpose_of_visit
             or assignment.purpose
             or assignment.notes
@@ -1251,9 +1293,7 @@ def group_by_program_lead(items, *, program_leads=None) -> list[dict]:
     """
     if program_leads is None:
         # Fallback: bottom-up grouping from item data.
-        return _group(
-            items, key=lambda i: (i.supervising_pl_id, i.supervising_pl_name)
-        )
+        return _group(items, key=lambda i: (i.supervising_pl_id, i.supervising_pl_name))
 
     # Build PL-id → group mapping from the system PLs.
     pl_lookup: dict[str, dict] = {}
@@ -1268,9 +1308,7 @@ def group_by_program_lead(items, *, program_leads=None) -> list[dict]:
 
     for item in items:
         target = (
-            pl_lookup.get(item.supervising_pl_id)
-            if item.supervising_pl_id
-            else None
+            pl_lookup.get(item.supervising_pl_id) if item.supervising_pl_id else None
         )
         if target is not None:
             target["items"].append(item)

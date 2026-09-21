@@ -398,8 +398,7 @@ def submit_assessment(
         ReviewStage.FINAL_RATING_CONFIRMED,
     ):
         raise BadRequest(
-            f"This review is {review.get_stage_display()} — reopen it before "
-            f"assessing."
+            f"This review is {review.get_stage_display()} — reopen it before assessing."
         )
     review.manager_feedback = assessment
     review.manager_rating = rating or None

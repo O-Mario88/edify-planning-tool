@@ -144,7 +144,9 @@ class SpecialProjectImpactAnalyticsTest(TestCase):
             project["cost_per_improved_value"],
             round(project["budget_value"] / len(project["improved_schools"])),
         )
-        self.assertEqual(project["cost_per_improved_pct"], 100 if project["budget_value"] else 0)
+        self.assertEqual(
+            project["cost_per_improved_pct"], 100 if project["budget_value"] else 0
+        )
         for period in analytics["trend"]:
             if not period["improved"]:
                 self.assertEqual(period["bar_pct"], 0)

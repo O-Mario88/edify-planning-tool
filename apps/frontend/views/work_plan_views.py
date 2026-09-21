@@ -56,7 +56,7 @@ def _manual_activity_permission(view):
             return _signed_out_redirect(request)
         if not has_permission(request.user, Permission.MANUAL_ACTIVITY_CREATE.value):
             return HttpResponseForbidden(
-                "You do not have permission to add non-school programme " "activities."
+                "You do not have permission to add non-school programme activities."
             )
         return view(request, *args, **kwargs)
 

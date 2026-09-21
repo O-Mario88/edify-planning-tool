@@ -270,7 +270,7 @@ class PLDashboardTest(TestCase):
 
         self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "operations"
         response = self.client.get("/dashboard", {"fy": FY})
-        self.assertIn('data-pl-today', response.content.decode())
+        self.assertIn("data-pl-today", response.content.decode())
         self.assertEqual(response.context["dashboard_view"], "today")
 
     def test_a_tab_click_builds_the_view_without_the_fixed_part(self):

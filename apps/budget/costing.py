@@ -357,9 +357,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add_staff_day(days, fed=True)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        add_group_session(
-            _days_of(a), "cluster_meetings_trainings"
-        )
+        add_group_session(_days_of(a), "cluster_meetings_trainings")
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not

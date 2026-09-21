@@ -122,7 +122,7 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
                 r["code"],
                 r["district"],
                 r["status"],
-                f'{r["slotsDone"]}/{r["slotsTotal"]}',
+                f"{r['slotsDone']}/{r['slotsTotal']}",
                 r["progressPct"],
                 r["visits"],
                 r["trainings"],

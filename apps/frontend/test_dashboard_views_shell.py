@@ -174,7 +174,8 @@ class DashboardViewRenderTest(TestCase):
         self.assertNotContains(other, 'data-section="what-needs-you-now"')
         self.client.force_login(self.pl)
         today = self.client.get(
-            "/dashboard?view=today", HTTP_HX_REQUEST="true",
+            "/dashboard?view=today",
+            HTTP_HX_REQUEST="true",
             HTTP_HX_TARGET="pl-dashboard-view-shell",
         )
         self.assertContains(today, "data-pl-attention")

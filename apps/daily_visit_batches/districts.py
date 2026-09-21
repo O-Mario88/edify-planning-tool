@@ -14,10 +14,16 @@ def district_type_for_staff(responsible_id, district):
     from apps.accounts.models import StaffProfile
 
     home = (
-        StaffProfile.objects.filter(Q(user_id=responsible_id) | Q(id=responsible_id))
-        .values_list("primary_district_id", flat=True)
-        .first()
-    ) if responsible_id else None
+        (
+            StaffProfile.objects.filter(
+                Q(user_id=responsible_id) | Q(id=responsible_id)
+            )
+            .values_list("primary_district_id", flat=True)
+            .first()
+        )
+        if responsible_id
+        else None
+    )
     if home:
         return "primary" if str(home) == str(district.pk) else "secondary"
     return district.district_type

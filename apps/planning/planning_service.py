@@ -362,7 +362,9 @@ class PlanningDashboardService:
                     .values_list("cluster_id", flat=True)
                     .distinct()
                 )
-                ready_clusters_qs = ready_clusters_qs.exclude(id__in=scheduled_cluster_ids)
+                ready_clusters_qs = ready_clusters_qs.exclude(
+                    id__in=scheduled_cluster_ids
+                )
 
             if search_q:
                 ready_clusters_qs = ready_clusters_qs.filter(name__icontains=search_q)
@@ -385,7 +387,9 @@ class PlanningDashboardService:
             )
             for c in paginated_clusters:
                 c["school_count"] = c.get("schools_count", 0)
-                c["readiness"] = "Ready" if c.get("schools_count", 0) > 0 else "No Schools"
+                c["readiness"] = (
+                    "Ready" if c.get("schools_count", 0) > 0 else "No Schools"
+                )
         else:
             total_schools_count = table_schools_qs.count()
             start_idx = (page - 1) * per_page

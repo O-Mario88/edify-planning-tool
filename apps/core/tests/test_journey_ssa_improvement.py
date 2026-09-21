@@ -247,8 +247,7 @@ class SsaToImprovementJourneyTest(TestCase):
             float(shown["delta"]),
             float(expected_row["delta"]),
             places=2,
-            msg="the delta on the leadership view is not the delta the "
-            "engine computed",
+            msg="the delta on the leadership view is not the delta the engine computed",
         )
 
     def test_an_unconfirmed_follow_up_never_counts_as_improvement(self):

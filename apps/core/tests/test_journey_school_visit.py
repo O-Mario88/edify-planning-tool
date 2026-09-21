@@ -411,8 +411,7 @@ class SchoolVisitSpineJourneyTest(TestCase):
         self.assertEqual(
             wfr.status,
             "disbursed",
-            f"the money did not move through the endpoints; it sits at "
-            f"{wfr.status}",
+            f"the money did not move through the endpoints; it sits at {wfr.status}",
         )
 
         post(

@@ -479,8 +479,8 @@ class ProgramLeadDashboardService:
                 "programmes": lambda: ProgramLeadDashboardService.programmes_view(
                     ctx, urgent_page=urgent_page
                 ),
-                "collaboration": lambda: (
-                    ProgramLeadDashboardService.collaboration_view(ctx)
+                "collaboration": lambda: ProgramLeadDashboardService.collaboration_view(
+                    ctx
                 ),
             }
             data.update(builders[view]())
@@ -1676,7 +1676,9 @@ class ProgramLeadDashboardService:
             )
         payload_series = [{"name": label, "data": series[key]} for key, label in people]
         if any(others):
-            payload_series.append({"name": "Others (at portfolio schools)", "data": others})
+            payload_series.append(
+                {"name": "Others (at portfolio schools)", "data": others}
+            )
         return {
             "title": "Team Execution Progress",
             "labels": [b[0].strftime("%b") for b in bounds],

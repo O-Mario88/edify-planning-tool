@@ -258,18 +258,28 @@ class DailyVisitBatchTestCase(TestCase):
 
     # A secondary visit determines the shared rate for the whole day.
     def test_mixing_primary_and_secondary_uses_secondary_total(self):
-        result = self._schedule(["BATCH-P-1", "BATCH-SEC-A"], date(2026, 8, 5), reason="two schools")
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-SEC-A"], date(2026, 8, 5), reason="two schools"
+        )
         batch = DailyVisitBatch.objects.get(pk=result["batchId"])
         self.assertEqual(batch.district_type, "secondary")
         self.assertEqual(batch.daily_pool_amount, sum(v for _, v in SECONDARY_RATES))
-        self.assertEqual(sum(a.est_cost_cents for a in batch.activities.all()), batch.daily_pool_amount)
+        self.assertEqual(
+            sum(a.est_cost_cents for a in batch.activities.all()),
+            batch.daily_pool_amount,
+        )
 
     def test_secondary_visit_reprices_existing_primary_member(self):
-        self._schedule(["BATCH-P-1"], date(2026, 8, 6), reason="under target on purpose")
+        self._schedule(
+            ["BATCH-P-1"], date(2026, 8, 6), reason="under target on purpose"
+        )
         result = self._schedule(["BATCH-SEC-A"], date(2026, 8, 6))
         batch = DailyVisitBatch.objects.get(pk=result["batchId"])
         self.assertEqual(batch.district_type, "secondary")
-        self.assertEqual(sum(a.est_cost_cents for a in batch.activities.all()), batch.daily_pool_amount)
+        self.assertEqual(
+            sum(a.est_cost_cents for a in batch.activities.all()),
+            batch.daily_pool_amount,
+        )
 
     # ── 4. Unapproved secondary combo rejected, then approved ───────────────
     def test_unapproved_secondary_group_rejected_then_approved(self):
@@ -730,9 +740,14 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         # Group training keeps its shared staff lunch and never takes the
         # meeting-only participant meal rate, regardless of headcount.
         self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000)
-        self.assertFalse(training.schedule_cost_lines.filter(
-            cost_setting_key__in=["tot_trainings_meals", "cluster_meetings_trainings_meals"]
-        ).exists())
+        self.assertFalse(
+            training.schedule_cost_lines.filter(
+                cost_setting_key__in=[
+                    "tot_trainings_meals",
+                    "cluster_meetings_trainings_meals",
+                ]
+            ).exists()
+        )
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(
                 activity__daily_visit_batch=training.daily_visit_batch,
@@ -970,6 +985,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             30000,
         )
 
+
 class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
     def _four_visits(self, *, secondary=False):
         from datetime import datetime
@@ -994,8 +1010,15 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
         }
         for key, amount in rates.items():
             CostSetting.objects.update_or_create(
-                catalogue=self.catalogue, key=key,
-                defaults={"label": key, "unit_cost": amount, "approved_minimum": amount, "fy": "2026", "version": 1},
+                catalogue=self.catalogue,
+                key=key,
+                defaults={
+                    "label": key,
+                    "unit_cost": amount,
+                    "approved_minimum": amount,
+                    "fy": "2026",
+                    "version": 1,
+                },
             )
         day = date(2026, 8, 10)
         visits = []
@@ -1003,48 +1026,83 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
             activity = Activity.objects.create(
                 school=self.schools[f"p{index}"],
                 activity_type="core_visit" if index == 1 else "school_visit",
-                delivery_type="staff", status="scheduled",
+                delivery_type="staff",
+                status="scheduled",
                 responsible_staff_id=self.staff_profile.id,
-                planned_date=day, fy="2026", quarter="Q4",
-                scheduled_date=timezone.make_aware(datetime.combine(day, datetime.min.time())),
+                planned_date=day,
+                fy="2026",
+                quarter="Q4",
+                scheduled_date=timezone.make_aware(
+                    datetime.combine(day, datetime.min.time())
+                ),
             )
             with transaction.atomic():
-                _apply_schedule_cost_snapshot(activity, {"districtType": "primary"}, self.principal)
+                _apply_schedule_cost_snapshot(
+                    activity, {"districtType": "primary"}, self.principal
+                )
             visits.append(activity)
         return list(Activity.objects.filter(pk__in=[a.pk for a in visits]))
 
     def _assert_shares(self, secondary, amount):
         from django.db.models import Sum
         from apps.budget.costing_service import planned_minimum_amounts, preview
+
         visits = self._four_visits(secondary=secondary)
         self.assertEqual([a.est_cost_cents for a in visits], [amount] * 4)
         self.assertEqual(list(planned_minimum_amounts(visits).values()), [amount] * 4)
         self.assertEqual(len({a.daily_visit_batch_id for a in visits}), 1)
-        self.assertEqual(visits[0].daily_visit_batch.district_type, "secondary" if secondary else "primary")
+        self.assertEqual(
+            visits[0].daily_visit_batch.district_type,
+            "secondary" if secondary else "primary",
+        )
         for activity in visits:
-            self.assertEqual(activity.schedule_cost_lines.aggregate(total=Sum("amount"))["total"], amount)
+            self.assertEqual(
+                activity.schedule_cost_lines.aggregate(total=Sum("amount"))["total"],
+                amount,
+            )
         from apps.frontend.views.work_plan_page import build_work_plan_context
         from apps.fund_requests.models import WeeklyFundRequest
         from apps.fund_requests.finance_models import TransportPayment
         from apps.fund_requests.fundable import vendor_direct_filter
+
         plan = build_work_plan_context(self.staff_user, {"fy": "2026", "view": "fy"})
         self.assertEqual(len(plan["rows"]), 4)
         for row in plan["rows"]:
             self.assertEqual(row["cost"], amount)
         lines = ActivityScheduleCostLine.objects.filter(activity__in=visits)
-        payable = lines.exclude(vendor_direct_filter()).aggregate(total=Sum("amount"))["total"]
-        weekly = WeeklyFundRequest.objects.get(responsible_user=self.staff_user.id, week_start_date=date(2026, 8, 10))
+        payable = lines.exclude(vendor_direct_filter()).aggregate(total=Sum("amount"))[
+            "total"
+        ]
+        weekly = WeeklyFundRequest.objects.get(
+            responsible_user=self.staff_user.id, week_start_date=date(2026, 8, 10)
+        )
         self.assertEqual(weekly.total_amount, payable)
         from apps.fund_requests.models import FundRequest
-        monthly = FundRequest.objects.get(submitted_by_user_id=self.staff_user.id, period_key="2026-M8", scope="own")
+
+        monthly = FundRequest.objects.get(
+            submitted_by_user_id=self.staff_user.id, period_key="2026-M8", scope="own"
+        )
         self.assertEqual(monthly.total_amount, payable)
         from apps.my_plan.services import get as my_plan_get
+
         items = my_plan_get(self.staff_user, {"period": "fy", "fy": "2026"})["items"]
         visit_items = [item for item in items if item["id"] in {a.id for a in visits}]
         self.assertEqual(len(visit_items), 4)
         self.assertEqual([item["costCents"] for item in visit_items], [amount] * 4)
-        self.assertEqual(payable + TransportPayment.objects.get(batch=visits[0].daily_visit_batch).amount, amount * 4)
-        proposed = preview({"activityType": "school_visit", "schoolId": "BATCH-P-5", "plannedDate": "2026-08-10", "districtType": "primary"}, responsible_user_id=self.staff_user.id)
+        self.assertEqual(
+            payable
+            + TransportPayment.objects.get(batch=visits[0].daily_visit_batch).amount,
+            amount * 4,
+        )
+        proposed = preview(
+            {
+                "activityType": "school_visit",
+                "schoolId": "BATCH-P-5",
+                "plannedDate": "2026-08-10",
+                "districtType": "primary",
+            },
+            responsible_user_id=self.staff_user.id,
+        )
         self.assertEqual(proposed["dailyActivityCount"], 5)
         self.assertEqual(proposed["amount"], amount * 4 // 5)
 
@@ -1061,14 +1119,26 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
 
         visits = self._four_visits()
         core = next(a for a in visits if a.activity_type == "core_visit")
-        Activity.objects.filter(pk=core.pk).update(daily_visit_batch=None, est_cost_cents=330000)
-        call_command("refresh_daily_cost_allocations", apply=True, fy="2026", stdout=StringIO())
+        Activity.objects.filter(pk=core.pk).update(
+            daily_visit_batch=None, est_cost_cents=330000
+        )
+        call_command(
+            "refresh_daily_cost_allocations", apply=True, fy="2026", stdout=StringIO()
+        )
         members = list(Activity.objects.filter(pk__in=[a.pk for a in visits]))
         self.assertEqual([a.est_cost_cents for a in members], [82500] * 4)
         self.assertEqual(len({a.daily_visit_batch_id for a in members}), 1)
-        current = ActivityCostSnapshot.objects.filter(activity__in=members, is_current=True)
+        current = ActivityCostSnapshot.objects.filter(
+            activity__in=members, is_current=True
+        )
         self.assertEqual(current.count(), 4)
-        self.assertTrue(all(line["dailyAllocation"]["count"] == 4 for snapshot in current for line in snapshot.operational_breakdown))
+        self.assertTrue(
+            all(
+                line["dailyAllocation"]["count"] == 4
+                for snapshot in current
+                for line in snapshot.operational_breakdown
+            )
+        )
 
     def test_user_configuration_change_reprices_editable_day(self):
         from io import StringIO
@@ -1081,14 +1151,23 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
         self.staff_profile.primary_district_id = self.secondary_district_a.id
         self.staff_profile.save(update_fields=["primary_district_id"])
         self.assertTrue(batch_needs_repricing(batch))
-        call_command("refresh_daily_cost_allocations", apply=True, fy="2026", stdout=StringIO())
+        call_command(
+            "refresh_daily_cost_allocations", apply=True, fy="2026", stdout=StringIO()
+        )
         batch.refresh_from_db()
         self.assertEqual(batch.district_type, "secondary")
-        self.assertEqual(list(batch.activities.values_list("est_cost_cents", flat=True)), [122500] * 4)
+        self.assertEqual(
+            list(batch.activities.values_list("est_cost_cents", flat=True)),
+            [122500] * 4,
+        )
 
     def test_mixed_configured_day_shares_secondary_total_and_repairs_once(self):
-        from apps.daily_visit_batches.services import batch_needs_repricing, _recalculate_and_write_lines
+        from apps.daily_visit_batches.services import (
+            batch_needs_repricing,
+            _recalculate_and_write_lines,
+        )
         from django.db import transaction
+
         visits = self._four_visits()
         secondary = visits[-1].school
         secondary.district = self.secondary_district_a
@@ -1099,5 +1178,8 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
             _recalculate_and_write_lines(batch, None, batch.responsible_user)
         batch.refresh_from_db()
         self.assertEqual(batch.district_type, "secondary")
-        self.assertEqual(list(batch.activities.values_list("est_cost_cents", flat=True)), [122500] * 4)
+        self.assertEqual(
+            list(batch.activities.values_list("est_cost_cents", flat=True)),
+            [122500] * 4,
+        )
         self.assertFalse(batch_needs_repricing(batch))

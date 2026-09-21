@@ -248,7 +248,7 @@ def core_schools_view(request):
         render_precomputed_metric_item(
             "frontend_views_core_schools_views_core_schools_ready_for_planning",
             f"{ready_core}",
-            helper=f"{int((ready_core/total_core)*100) if total_core else 0}% of core",
+            helper=f"{int((ready_core / total_core) * 100) if total_core else 0}% of core",
             icon="check",
             variant="warning",
         ),
@@ -261,14 +261,14 @@ def core_schools_view(request):
         render_precomputed_metric_item(
             "frontend_views_core_schools_views_visits_scheduled",
             f"{visits_scheduled} / {total_target}",
-            helper=f"{int((visits_scheduled/total_target)*100) if total_target else 0}% complete",
+            helper=f"{int((visits_scheduled / total_target) * 100) if total_target else 0}% complete",
             icon="calendar",
             variant="info",
         ),
         render_precomputed_metric_item(
             "frontend_views_core_schools_views_trainings_scheduled",
             f"{trainings_scheduled} / {total_target}",
-            helper=f"{int((trainings_scheduled/total_target)*100) if total_target else 0}% complete",
+            helper=f"{int((trainings_scheduled / total_target) * 100) if total_target else 0}% complete",
             icon="calendar",
             variant="info",
         ),
@@ -286,7 +286,7 @@ def core_schools_view(request):
         render_precomputed_metric_item(
             "frontend_views_core_schools_views_regions_covered",
             f"{regions_covered} / {total_regions}",
-            helper=f"{int((regions_covered/total_regions)*100) if total_regions else 0}% coverage",
+            helper=f"{int((regions_covered / total_regions) * 100) if total_regions else 0}% coverage",
             icon="target",
             variant="success",
         ),
@@ -523,7 +523,6 @@ def _core_scheduled_response(request, created, scheduled_date, message):
         url = _calendar_url_for_scheduled_date(scheduled_date)
         link_label = "Open in Calendar"
     return _saved_without_leaving(message, plan_url=url, plan_link_label=link_label)
-
 
 
 @require_page_permission("core_schools")

@@ -416,7 +416,7 @@ class CancelAfterDisbursementJourneyTest(TestCase):
         self.assertEqual(
             Activity.objects.filter(id=activity.id, status="cancelled").count(),
             1,
-            "the cancelled activity stopped existing rather than stopping " "counting",
+            "the cancelled activity stopped existing rather than stopping counting",
         )
 
     def test_the_cancelled_activity_stops_counting_as_planned_output(self):

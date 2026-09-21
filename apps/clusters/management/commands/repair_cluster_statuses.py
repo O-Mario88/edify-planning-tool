@@ -58,7 +58,7 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(
-            f"{len(offenders)} cluster(s) carry a status outside " f"{sorted(VALID)}:"
+            f"{len(offenders)} cluster(s) carry a status outside {sorted(VALID)}:"
         )
         for cluster in offenders:
             self.stdout.write(f"  {cluster.name}: {cluster.status!r} → active")

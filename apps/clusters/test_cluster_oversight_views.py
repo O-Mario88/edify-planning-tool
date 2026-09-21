@@ -102,8 +102,14 @@ class OversightViewsAccessTest(TestCase):
 
     def test_core_oversight_has_only_one_active_sidebar_entry(self):
         from apps.core.navigation import build_sidebar_for_user
+
         sections = build_sidebar_for_user(self.pl, "/core-schools-oversight/")
-        active = [item["url"] for section in sections for item in section["items"] if item["active"]]
+        active = [
+            item["url"]
+            for section in sections
+            for item in section["items"]
+            if item["active"]
+        ]
         self.assertEqual(active, ["/core-schools-oversight/"])
 
     def test_annual_filters_render_options_and_swap_only_workspace(self):
@@ -173,7 +179,10 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Date of Last Activity")
 
         # Ensure "Responsible CCEO" is NOT a table header
-        self.assertNotContains(resp, "<th scope=\"col\" class=\"px-4 py-2.5 font-semibold min-w-[150px]\">Responsible CCEO</th>")
+        self.assertNotContains(
+            resp,
+            '<th scope="col" class="px-4 py-2.5 font-semibold min-w-[150px]">Responsible CCEO</th>',
+        )
         self.assertNotContains(resp, ">Responsible CCEO<")
 
         # Cluster performance overview metrics exist
@@ -202,7 +211,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Status")
         self.assertContains(resp, "Actions")
 
-    def test_country_planning_team_detail_renders_all_4_tables_and_role_aware_actions(self):
+    def test_country_planning_team_detail_renders_all_4_tables_and_role_aware_actions(
+        self,
+    ):
         # 1. Establish supervisory relationship PL -> CCEO
         StaffSupervisorAssignment.objects.create(
             supervisor=self.pl.staff_profile,
@@ -286,7 +297,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertContains(resp, "Cluster Planned From")
         self.assertContains(resp, "Delivery Type")
         self.assertContains(resp, "in-school")
-        self.assertContains(resp, "School Visit")  # For in-school training, cluster is "School Visit"
+        self.assertContains(
+            resp, "School Visit"
+        )  # For in-school training, cluster is "School Visit"
 
         # Verify role-aware action: CD sees View action button, NOT edit/reschedule/cancel dropdown
         self.assertContains(resp, "View")
@@ -294,7 +307,9 @@ class OversightViewsAccessTest(TestCase):
         self.assertNotContains(resp, ">Cancel<")
 
     def test_cluster_participants_sum_invited_school_composition(self):
-        from apps.frontend.views.oversight_views import _partition_owner_groups_by_stream
+        from apps.frontend.views.oversight_views import (
+            _partition_owner_groups_by_stream,
+        )
         from apps.planning import oversight_service
 
         second_school = School.objects.create(
@@ -324,12 +339,18 @@ class OversightViewsAccessTest(TestCase):
         )
         for activity in (meeting, training):
             ClusterActivityAttendance.objects.create(
-                activity=activity, school=self.school, invited=True,
-                teachers=2, leaders=1,
+                activity=activity,
+                school=self.school,
+                invited=True,
+                teachers=2,
+                leaders=1,
             )
             ClusterActivityAttendance.objects.create(
-                activity=activity, school=second_school, invited=True,
-                teachers=1, other=1,
+                activity=activity,
+                school=second_school,
+                invited=True,
+                teachers=1,
+                other=1,
             )
 
         items = oversight_service.build_items(self.cd, fy="2026")

@@ -549,7 +549,8 @@ def get_analytics(
                 ),
                 "cost_per_improved_value": (
                     round(budget / len(ssa["improved_schools"]))
-                    if ssa["improved_schools"] else None
+                    if ssa["improved_schools"]
+                    else None
                 ),
                 "budget_value": budget,
                 "budget": _fmt_ugx(budget),
@@ -569,8 +570,11 @@ def get_analytics(
     )
     for row in project_payloads:
         row["cost_per_improved_pct"] = (
-            round((row["cost_per_improved_value"] or 0) / max_cost_per_improved * 100, 2)
-            if max_cost_per_improved else 0
+            round(
+                (row["cost_per_improved_value"] or 0) / max_cost_per_improved * 100, 2
+            )
+            if max_cost_per_improved
+            else 0
         )
 
     if selected_status:
@@ -1025,9 +1029,7 @@ def get_analytics(
     max_improved = max((item["improved"] for item in trend), default=0) or 1
     for item in trend:
         item["bar_pct"] = (
-            round(item["improved"] / max_improved * 100, 2)
-            if item["improved"]
-            else 0
+            round(item["improved"] / max_improved * 100, 2) if item["improved"] else 0
         )
 
     best_projects = sorted(

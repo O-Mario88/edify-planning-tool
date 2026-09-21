@@ -399,8 +399,7 @@ class OverspendReimbursementJourneyTest(TestCase):
         self.assertEqual(
             advance.disbursed_amount,
             original_disbursed,
-            "reimbursing through the endpoint overwrote the original disbursed "
-            "amount",
+            "reimbursing through the endpoint overwrote the original disbursed amount",
         )
         self.assertEqual(
             advance.disburse_reference,

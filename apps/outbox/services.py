@@ -285,8 +285,7 @@ def _notify_dead_letter(event) -> None:
         )
         if not admins:
             logger.error(
-                "Outbox event %s dead-lettered but no active Admin exists to "
-                "notify.",
+                "Outbox event %s dead-lettered but no active Admin exists to notify.",
                 getattr(event, "id", "?"),
             )
             return

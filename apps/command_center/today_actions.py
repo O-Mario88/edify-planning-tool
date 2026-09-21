@@ -356,9 +356,11 @@ ADAPTERS: tuple[Adapter, ...] = (
             _open(
                 "log",
                 "Log it",
-                lambda rid, row: "/team/coaching/new?"
-                + "&".join(
-                    f"{k}={v}" for k, v in _query(row).items() if k not in ("open",)
+                lambda rid, row: (
+                    "/team/coaching/new?"
+                    + "&".join(
+                        f"{k}={v}" for k, v in _query(row).items() if k not in ("open",)
+                    )
                 ),
             ),
         ),

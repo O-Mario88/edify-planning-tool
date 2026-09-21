@@ -1483,8 +1483,7 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
     _require(
         principal,
         Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
-        "Only an authorized MFI Admin or MFI Loan Officer may update "
-        "repayment data.",
+        "Only an authorized MFI Admin or MFI Loan Officer may update repayment data.",
     )
     loan = MfiLoan.objects.select_for_update().filter(id=loan_id).first()
     if loan is None:

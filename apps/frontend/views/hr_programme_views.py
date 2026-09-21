@@ -2319,9 +2319,7 @@ def recovery_drawer(request, plan_id):
             action=f"/recovery-plans/{plan.id}/activate",
             submit="Authorise the plan",
             facts=facts,
-            note=(
-                "Authorising starts a 90-day plan with 30, 60 and 90-day " "reviews."
-            ),
+            note=("Authorising starts a 90-day plan with 30, 60 and 90-day reviews."),
             fields=[
                 _field(
                     "action_plan",

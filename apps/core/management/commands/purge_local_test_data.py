@@ -87,7 +87,7 @@ class Command(BaseCommand):
         )
         for path, n in counts.items():
             if n:
-                self.stdout.write(f"  {path.rsplit('.',1)[-1]}: {n}")
+                self.stdout.write(f"  {path.rsplit('.', 1)[-1]}: {n}")
 
         if not options["yes"]:
             confirm = input(

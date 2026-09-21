@@ -1685,7 +1685,18 @@ SIDEBAR_ITEMS = [
                 "label": "School Directory",
                 "url": "/schools",
                 "page_key": "schools",
-                "visible_to": {CCEO, PL, IA, CD, RPL, RVP, HR, ACCOUNTANT, ADMIN, PROJECT_COORDINATOR},
+                "visible_to": {
+                    CCEO,
+                    PL,
+                    IA,
+                    CD,
+                    RPL,
+                    RVP,
+                    HR,
+                    ACCOUNTANT,
+                    ADMIN,
+                    PROJECT_COORDINATOR,
+                },
             },
             {
                 "label": "Clusters",
@@ -2586,7 +2597,6 @@ SIDEBAR_ITEMS = [
                 # (IA_SECTIONS), where it is one of several sections sharing
                 # the Data Quality group's single durable destination, so it
                 # was reachable only from the strip's overflow menu and only
-
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
                 "page_key": "ia_verification_queue",

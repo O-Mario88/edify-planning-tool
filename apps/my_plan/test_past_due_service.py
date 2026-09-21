@@ -39,7 +39,10 @@ class PastDueServiceTest(TestCase):
         StaffSupervisorAssignment.objects.create(supervisee=cls.cceo, supervisor=cls.pl)
 
         cls.school = School.objects.create(
-            school_id="sch_pd_1", name="St. Jude Primary", district=cls.district, region=cls.region
+            school_id="sch_pd_1",
+            name="St. Jude Primary",
+            district=cls.district,
+            region=cls.region,
         )
 
         today = timezone.localdate()
@@ -92,7 +95,9 @@ class PastDueServiceTest(TestCase):
         self.assertFalse(ctx["is_pl"])
         self.assertEqual(ctx["past_due_total_count"], 1)
         self.assertEqual(len(ctx["past_due_school_visits"]), 1)
-        self.assertEqual(ctx["past_due_school_visits"][0]["id"], self.cceo_past_due_visit.id)
+        self.assertEqual(
+            ctx["past_due_school_visits"][0]["id"], self.cceo_past_due_visit.id
+        )
         self.assertTrue(ctx["past_due_school_visits"][0]["is_own"])
 
     def test_pl_dashboard_past_due_contains_both_own_and_team_past_due(self):
@@ -104,19 +109,27 @@ class PastDueServiceTest(TestCase):
 
         # PL's own meeting
         self.assertEqual(len(ctx["past_due_cluster_meetings"]), 1)
-        self.assertEqual(ctx["past_due_cluster_meetings"][0]["id"], self.pl_past_due_meeting.id)
+        self.assertEqual(
+            ctx["past_due_cluster_meetings"][0]["id"], self.pl_past_due_meeting.id
+        )
         self.assertTrue(ctx["past_due_cluster_meetings"][0]["is_own"])
 
         # CCEO's visit under PL's team
         self.assertEqual(len(ctx["past_due_school_visits"]), 1)
-        self.assertEqual(ctx["past_due_school_visits"][0]["id"], self.cceo_past_due_visit.id)
+        self.assertEqual(
+            ctx["past_due_school_visits"][0]["id"], self.cceo_past_due_visit.id
+        )
         self.assertFalse(ctx["past_due_school_visits"][0]["is_own"])
         self.assertEqual(ctx["past_due_school_visits"][0]["owner"], "Charles CCEO")
-        self.assertEqual(ctx["past_due_school_visits"][0]["owner_first_name"], "Charles")
+        self.assertEqual(
+            ctx["past_due_school_visits"][0]["owner_first_name"], "Charles"
+        )
 
     def test_my_plan_excludes_past_due_and_shows_upcoming(self):
         # When CCEO views My Plan for the FY, only upcoming visit should be present in category tables
-        ctx = my_plan_services.get_frontend_context(self.cceo_user, {"period": "fy", "fy": self.fy})
+        ctx = my_plan_services.get_frontend_context(
+            self.cceo_user, {"period": "fy", "fy": self.fy}
+        )
         visit_ids = [v["id"] for v in ctx["school_visits"]]
         self.assertIn(self.cceo_upcoming_visit.id, visit_ids)
         self.assertNotIn(self.cceo_past_due_visit.id, visit_ids)
@@ -125,7 +138,9 @@ class PastDueServiceTest(TestCase):
         client = Client()
         client.force_login(self.pl_user)
 
-        response = client.post(f"/dashboard/notify-past-due/{self.cceo_past_due_visit.id}/")
+        response = client.post(
+            f"/dashboard/notify-past-due/{self.cceo_past_due_visit.id}/"
+        )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Sent to Charles", response.content.decode("utf-8"))
 

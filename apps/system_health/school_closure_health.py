@@ -205,8 +205,7 @@ def _locked_activities_awaiting_closure_review() -> dict:
                 "id": c.id,
                 "school": getattr(c.school, "name", ""),
                 "actual": (
-                    f"{c.locked_activities_for_review} activity(s) with "
-                    "committed funds"
+                    f"{c.locked_activities_for_review} activity(s) with committed funds"
                 ),
             }
             for c in pending[:10]

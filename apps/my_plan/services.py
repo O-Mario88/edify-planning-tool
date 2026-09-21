@@ -803,18 +803,29 @@ def get_frontend_context(principal, query: dict) -> dict:
         | Q(planned_date__isnull=True, scheduled_date__isnull=True)
     )
     if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
-        qs_period = qs_period.filter(upcoming_filter | Q(status__in=COMPLETED_WORK_STATUSES))
+        qs_period = qs_period.filter(
+            upcoming_filter | Q(status__in=COMPLETED_WORK_STATUSES)
+        )
 
     # 7. Compute KPI values for upcoming plans
     current_week_start, current_week_end = get_week_date_range(
         today.year, today.month, min(5, (today.day - 1) // 7 + 1)
     )
     period_totals = qs.filter(upcoming_filter).aggregate(
-        week=Count("pk", filter=_scheduled_in_range(current_week_start, current_week_end)),
-        month=Count("pk", filter=_scheduled_in_range(
-            date(today.year, today.month, 1),
-            date(today.year, today.month, calendar.monthrange(today.year, today.month)[1]),
-        )),
+        week=Count(
+            "pk", filter=_scheduled_in_range(current_week_start, current_week_end)
+        ),
+        month=Count(
+            "pk",
+            filter=_scheduled_in_range(
+                date(today.year, today.month, 1),
+                date(
+                    today.year,
+                    today.month,
+                    calendar.monthrange(today.year, today.month)[1],
+                ),
+            ),
+        ),
         quarter=Count("pk", filter=Q(quarter=get_quarter_for_date(today))),
         fy=Count("pk"),
     )
@@ -826,32 +837,47 @@ def get_frontend_context(principal, query: dict) -> dict:
     # One scoped scan answers all five period metrics instead of five
     # separate database round trips for every person opening My Plan.
     activity_totals = qs_period.aggregate(
-        visits=Count("pk", filter=Q(activity_type__in=[
-            "school_visit",
-            "follow_up_visit",
-            "coaching_visit",
-            "in_school_support",
-            "donor_visit",
-            "story_gathering_visit",
-            "school_invitation",
-            "social_visit",
-            "training_follow_up_visit",
-            "in_school_coaching_visit",
-            "core_visit",
-            "baseline_ssa_visit",
-            "school_visit_ssa_collection",
-            "partner_ssa_collection",
-            "core_assessment_visit",
-        ])),
-        trainings=Count("pk", filter=Q(activity_type__in=[
-            "cluster_training",
-            "core_training",
-            "training",
-            "in_school_training",
-            "school_improvement_training",
-            "cluster_training_ssa_collection",
-        ])),
-        meetings=Count("pk", filter=Q(activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"])),
+        visits=Count(
+            "pk",
+            filter=Q(
+                activity_type__in=[
+                    "school_visit",
+                    "follow_up_visit",
+                    "coaching_visit",
+                    "in_school_support",
+                    "donor_visit",
+                    "story_gathering_visit",
+                    "school_invitation",
+                    "social_visit",
+                    "training_follow_up_visit",
+                    "in_school_coaching_visit",
+                    "core_visit",
+                    "baseline_ssa_visit",
+                    "school_visit_ssa_collection",
+                    "partner_ssa_collection",
+                    "core_assessment_visit",
+                ]
+            ),
+        ),
+        trainings=Count(
+            "pk",
+            filter=Q(
+                activity_type__in=[
+                    "cluster_training",
+                    "core_training",
+                    "training",
+                    "in_school_training",
+                    "school_improvement_training",
+                    "cluster_training_ssa_collection",
+                ]
+            ),
+        ),
+        meetings=Count(
+            "pk",
+            filter=Q(
+                activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"]
+            ),
+        ),
         total=Count("pk"),
         completed=Count("pk", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
     )
@@ -1150,14 +1176,29 @@ def get_frontend_context(principal, query: dict) -> dict:
             budget_status_color = "slate"
 
         # Verification status: "IA pending for PL and PL pending for CCEO"
-        is_pl_viewer = (
-            getattr(scope, "active_role", "") in ("Program Lead", "Country Director", "Impact Assessment", "Regional Programme Lead", "Admin")
-            or getattr(principal, "active_role", "") in ("Program Lead", "Country Director", "Impact Assessment", "Regional Programme Lead", "Admin")
+        is_pl_viewer = getattr(scope, "active_role", "") in (
+            "Program Lead",
+            "Country Director",
+            "Impact Assessment",
+            "Regional Programme Lead",
+            "Admin",
+        ) or getattr(principal, "active_role", "") in (
+            "Program Lead",
+            "Country Director",
+            "Impact Assessment",
+            "Regional Programme Lead",
+            "Admin",
         )
-        if a.status in ("ia_verified", "accountant_confirmed", "closed") or a.ia_verification_status == "confirmed":
+        if (
+            a.status in ("ia_verified", "accountant_confirmed", "closed")
+            or a.ia_verification_status == "confirmed"
+        ):
             verification_status = "Verified"
             verification_color = "green"
-        elif a.status in ("returned_by_pl", "returned_by_ia") or a.ia_verification_status == "returned":
+        elif (
+            a.status in ("returned_by_pl", "returned_by_ia")
+            or a.ia_verification_status == "returned"
+        ):
             verification_status = "Returned"
             verification_color = "red"
         elif is_pl_viewer:
@@ -1258,7 +1299,6 @@ def get_frontend_context(principal, query: dict) -> dict:
                 returned_by = "Internal Auditor"
             else:
                 returned_by = "Project Leader"
-
 
         cluster_district_name = ""
         if a.cluster and getattr(a.cluster, "district", None):
@@ -1367,7 +1407,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             # General details
             "purpose": (
                 a.activity_purpose_text
-                or (visit_purpose_label(a.purpose_type, fallback="") if a.purpose_type else "")
+                or (
+                    visit_purpose_label(a.purpose_type, fallback="")
+                    if a.purpose_type
+                    else ""
+                )
                 or a.get_activity_type_display()
             ),
             "focus_intervention": a.get_focus_intervention_display()
@@ -1510,9 +1554,7 @@ def get_frontend_context(principal, query: dict) -> dict:
 
         # 1. Fetch explicitly invited/attended schools from ClusterActivityAttendance
         _att_records = list(
-            ClusterActivityAttendance.objects.filter(
-                activity_id__in=_cluster_act_ids
-            )
+            ClusterActivityAttendance.objects.filter(activity_id__in=_cluster_act_ids)
             .filter(Q(invited=True) | Q(attended=True))
             .values_list("activity_id", "school_id")
         )
@@ -1575,7 +1617,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             act_obj = next((a for a in activities if a.id == _act_id), None)
             pps = None
             if act_obj:
-                pps = getattr(act_obj, "participants_per_school", None) or getattr(act_obj, "teachers_per_school", None)
+                pps = getattr(act_obj, "participants_per_school", None) or getattr(
+                    act_obj, "teachers_per_school", None
+                )
             if not pps:
                 total_p = row.get("expected_participants")
                 if total_p and _target_schools:
@@ -1596,7 +1640,9 @@ def get_frontend_context(principal, query: dict) -> dict:
                         _school.sub_county.name if _school.sub_county_id else ""
                     )
                     _school_row["school_cluster_name"] = row.get("cluster_name") or ""
-                    _school_row["place_url"] = f"/schools/{_school.school_id or _school.id}"
+                    _school_row["place_url"] = (
+                        f"/schools/{_school.school_id or _school.id}"
+                    )
                     _school_row["is_cluster_invited"] = True
                     _school_row["expected_participants"] = pps
                     _school_row["budget_total"] = per_school_meal_cost
@@ -1645,7 +1691,11 @@ def get_frontend_context(principal, query: dict) -> dict:
                 ),
                 "purpose": (
                     a.activity_purpose_text
-                    or (visit_purpose_label(a.purpose_type, fallback="") if a.purpose_type else "")
+                    or (
+                        visit_purpose_label(a.purpose_type, fallback="")
+                        if a.purpose_type
+                        else ""
+                    )
                     or a.get_activity_type_display()
                 ),
                 "district": a.school.district.name

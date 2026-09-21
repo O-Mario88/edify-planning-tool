@@ -42,9 +42,9 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     # 1. Query scoped core schools
-    base = School.objects.filter(deleted_at__isnull=True, school_type="core").select_related(
-        "district", "region"
-    )
+    base = School.objects.filter(
+        deleted_at__isnull=True, school_type="core"
+    ).select_related("district", "region")
 
     if is_programme_lead:
         # Supervisees' core schools
@@ -53,16 +53,19 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             core_qs = School.objects.none()
         else:
             from apps.clusters.models import Cluster
+
             cluster_ids = set(
-                Cluster.objects.filter(responsible_staff_id__in=sup_ids).values_list("id", flat=True)
+                Cluster.objects.filter(responsible_staff_id__in=sup_ids).values_list(
+                    "id", flat=True
+                )
             )
             core_qs = base.filter(
-                Q(account_owner_id__in=sup_ids)
-                | Q(cluster_id__in=cluster_ids)
+                Q(account_owner_id__in=sup_ids) | Q(cluster_id__in=cluster_ids)
             )
     else:
         # Country or Regional scope
         from apps.core.scoping import school_country_q
+
         if scope.country:
             core_qs = base.filter(school_country_q(scope))
         else:
@@ -92,6 +95,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     # 2b. Cluster lookup
     cluster_ids = {s.cluster_id for s in schools if s.cluster_id}
     from apps.clusters.models import Cluster
+
     cluster_map = {c.id: c.name for c in Cluster.objects.filter(id__in=cluster_ids)}
 
     # 3. Core plans lookup for this FY
@@ -143,30 +147,36 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             ssa_avg = plan.baseline_average
         ssa_str = f"{round(ssa_avg, 1)}" if ssa_avg is not None else "—"
 
-        formatted_schools.append({
-            "id": s.id,
-            "school_id": s.school_id or s.id,
-            "name": s.name,
-            "district": getattr(s.district, "name", "") or "—",
-            "cluster_name": cluster_map.get(s.cluster_id, "—"),
-            "cluster_id": s.cluster_id,
-            "owner_id": getattr(owner, "id", None),
-            "owner_user_id": getattr(owner, "user_id", None),
-            "owner_name": _label(owner) if owner else (s.account_owner_name_raw or "Unassigned"),
-            "lead_id": getattr(lead, "id", None),
-            "lead_user_id": getattr(lead, "user_id", None),
-            "lead_name": _label(lead) if lead else "Unassigned",
-            "visits_completed": v_done,
-            "visits_target": v_target,
-            "trainings_completed": t_done,
-            "trainings_target": t_target,
-            "total_done": total_done,
-            "total_target": total_target,
-            "progress_pct": int(round((total_done / total_target) * 100)) if total_target > 0 else 0,
-            "is_package_complete": is_package_complete,
-            "status": plan.status if plan else "Not Initialized",
-            "ssa_avg": ssa_str,
-        })
+        formatted_schools.append(
+            {
+                "id": s.id,
+                "school_id": s.school_id or s.id,
+                "name": s.name,
+                "district": getattr(s.district, "name", "") or "—",
+                "cluster_name": cluster_map.get(s.cluster_id, "—"),
+                "cluster_id": s.cluster_id,
+                "owner_id": getattr(owner, "id", None),
+                "owner_user_id": getattr(owner, "user_id", None),
+                "owner_name": _label(owner)
+                if owner
+                else (s.account_owner_name_raw or "Unassigned"),
+                "lead_id": getattr(lead, "id", None),
+                "lead_user_id": getattr(lead, "user_id", None),
+                "lead_name": _label(lead) if lead else "Unassigned",
+                "visits_completed": v_done,
+                "visits_target": v_target,
+                "trainings_completed": t_done,
+                "trainings_target": t_target,
+                "total_done": total_done,
+                "total_target": total_target,
+                "progress_pct": int(round((total_done / total_target) * 100))
+                if total_target > 0
+                else 0,
+                "is_package_complete": is_package_complete,
+                "status": plan.status if plan else "Not Initialized",
+                "ssa_avg": ssa_str,
+            }
+        )
 
     # 6. Build hierarchy tabs
     if is_programme_lead:

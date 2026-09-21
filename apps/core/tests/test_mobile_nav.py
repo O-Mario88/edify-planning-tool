@@ -102,11 +102,11 @@ class MobileShellCssContractTests(SimpleTestCase):
         )[0]
 
         self.assertIn(
-            "max(var(--edify-page-gutter), " "env(safe-area-inset-left, 0px))",
+            "max(var(--edify-page-gutter), env(safe-area-inset-left, 0px))",
             landscape_rule,
         )
         self.assertIn(
-            "max(var(--edify-page-gutter), " "env(safe-area-inset-right, 0px))",
+            "max(var(--edify-page-gutter), env(safe-area-inset-right, 0px))",
             landscape_rule,
         )
         self.assertNotIn(
@@ -295,8 +295,7 @@ class MobileNavLabelTests(SimpleTestCase):
                     self.assertLessEqual(
                         len(item["label"]),
                         22,
-                        "add a MOBILE_NAV_SHORT_LABELS entry for "
-                        f"{item['page_key']}",
+                        f"add a MOBILE_NAV_SHORT_LABELS entry for {item['page_key']}",
                     )
 
 

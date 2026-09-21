@@ -3385,8 +3385,7 @@ def _business_transformation_todos(principal, role, today):
                     "linked": f"{requirement.loan.school.name} · {requirement.loan.mfi.name}",
                     "action_label": "Plan Visit",
                     "action_url": (
-                        f"/schools/{requirement.loan.school.school_id}"
-                        "#school-bt-title"
+                        f"/schools/{requirement.loan.school.school_id}#school-bt-title"
                     ),
                     "actionable": True,
                     "source": "Business Transformation",
@@ -3997,8 +3996,7 @@ def todo_snapshot_key(principal) -> str:
         str(getattr(principal, "active_role", "")).encode()
     ).hexdigest()[:12]
     return (
-        f"todo-snapshot:v1:{principal.id}:{role_key}:"
-        f"{timezone.localdate().isoformat()}"
+        f"todo-snapshot:v1:{principal.id}:{role_key}:{timezone.localdate().isoformat()}"
     )
 
 

@@ -121,8 +121,7 @@ class CoverageCountIsPinnedTest(SimpleTestCase):
                 self.assertGreater(
                     len(journey.blocked_by),
                     40,
-                    "a blocked journey needs a reason someone can act on, not "
-                    "a label",
+                    "a blocked journey needs a reason someone can act on, not a label",
                 )
 
     def test_uncovered_journeys_claim_nothing(self):

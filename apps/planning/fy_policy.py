@@ -166,8 +166,7 @@ def assert_date_plannable(scheduled_for, *, at=None, country: str | None = None)
     today = _as_datetime(at).astimezone(timezone.get_current_timezone()).date()
     if day < today:
         raise BadRequest(
-            f"{_format(day)} has passed. Schedule work from {_format(today)} "
-            "onwards."
+            f"{_format(day)} has passed. Schedule work from {_format(today)} onwards."
         )
 
 

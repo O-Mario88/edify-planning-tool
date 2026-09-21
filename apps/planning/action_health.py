@@ -171,8 +171,7 @@ def _manual_resolution_check(now) -> dict:
         "severity": severity,
         "component": "School Action Queue",
         "current_state": (
-            f"{auto} of {total} resolutions ({share:.0%}) were confirmed by the "
-            "record"
+            f"{auto} of {total} resolutions ({share:.0%}) were confirmed by the record"
         ),
         "expected_state": (
             f"At least {AUTO_RESOLVE_FLOOR:.0%} auto-confirmed — a queue draining "

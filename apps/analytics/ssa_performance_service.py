@@ -240,7 +240,7 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
             }
         )
     polyline = " ".join(
-        f'{point["x"]},{point["y"]}' for point in points if point["y"] is not None
+        f"{point['x']},{point['y']}" for point in points if point["y"] is not None
     )
 
     # The chart the owner asked for (2026-09-05): interventions across the

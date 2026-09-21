@@ -124,19 +124,26 @@ def grouped_clusters(principal) -> dict:
 
     ssa_avgs = {
         row["school__cluster_id"]: row["avg_score"]
-        for row in SsaRecord.objects.filter(school__cluster_id__in=cluster_ids, deleted_at__isnull=True)
+        for row in SsaRecord.objects.filter(
+            school__cluster_id__in=cluster_ids, deleted_at__isnull=True
+        )
         .values("school__cluster_id")
         .annotate(avg_score=Avg("average_score"))
     }
 
     cluster_intervention_scores: dict[str, list] = {}
     for row in (
-        SsaScore.objects.filter(ssa_record__school__cluster_id__in=cluster_ids, ssa_record__deleted_at__isnull=True)
+        SsaScore.objects.filter(
+            ssa_record__school__cluster_id__in=cluster_ids,
+            ssa_record__deleted_at__isnull=True,
+        )
         .values("ssa_record__school__cluster_id", "intervention")
         .annotate(avg=Avg("score"))
     ):
         cid = row["ssa_record__school__cluster_id"]
-        cluster_intervention_scores.setdefault(cid, []).append((row["intervention"], row["avg"]))
+        cluster_intervention_scores.setdefault(cid, []).append(
+            (row["intervention"], row["avg"])
+        )
 
     least_interventions: dict[str, str] = {}
     for cid, scores in cluster_intervention_scores.items():
@@ -149,7 +156,9 @@ def grouped_clusters(principal) -> dict:
         least_interventions[cid] = f"{int_label} ({round(min_score, 1)})"
 
     last_activities = {
-        row["cluster_id"]: row["last_date"].strftime("%b %d, %Y") if row["last_date"] else "—"
+        row["cluster_id"]: row["last_date"].strftime("%b %d, %Y")
+        if row["last_date"]
+        else "—"
         for row in Activity.objects.filter(
             cluster_id__in=cluster_ids,
             deleted_at__isnull=True,
@@ -190,7 +199,9 @@ def grouped_clusters(principal) -> dict:
                 "cluster_leader_name": cluster.cluster_leader_name or "—",
                 "cluster_leader_phone": cluster.cluster_leader_phone or "—",
                 "ssa_score_avg": avg_str,
-                "least_performing_intervention": least_interventions.get(cluster.id, "—"),
+                "least_performing_intervention": least_interventions.get(
+                    cluster.id, "—"
+                ),
                 "last_activity_date": last_activities.get(cluster.id, "—"),
                 "schools": counts.get(cluster.id, 0),
                 "schools_count": counts.get(cluster.id, 0),
@@ -247,7 +258,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         cluster_queryset(
             scope,
             base=Cluster.objects.filter(deleted_at__isnull=True, status="active"),
-        ).select_related("district").order_by("name")
+        )
+        .select_related("district")
+        .order_by("name")
     )
     if not clusters and not is_programme_lead:
         return {
@@ -264,7 +277,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     # 1. School counts & mapping
     schools = list(
-        School.objects.filter(cluster_id__in=cluster_ids, deleted_at__isnull=True).values("id", "cluster_id")
+        School.objects.filter(
+            cluster_id__in=cluster_ids, deleted_at__isnull=True
+        ).values("id", "cluster_id")
     )
     school_to_cluster = {s["id"]: s["cluster_id"] for s in schools}
     cluster_schools_count: dict[str, int] = {}
@@ -273,7 +288,10 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         cluster_schools_count[cid] = cluster_schools_count.get(cid, 0) + 1
 
     # 2. SSA average per cluster
-    ssa_filter = {"school_id__in": list(school_to_cluster.keys()), "deleted_at__isnull": True}
+    ssa_filter = {
+        "school_id__in": list(school_to_cluster.keys()),
+        "deleted_at__isnull": True,
+    }
     if fy:
         ssa_filter["fy"] = str(fy)
 
@@ -299,7 +317,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         .annotate(avg=Avg("score"))
     ):
         cid = row["ssa_record__school__cluster_id"]
-        cluster_intervention_scores.setdefault(cid, []).append((row["intervention"], row["avg"]))
+        cluster_intervention_scores.setdefault(cid, []).append(
+            (row["intervention"], row["avg"])
+        )
 
     least_interventions: dict[str, str] = {}
     for cid, scores in cluster_intervention_scores.items():
@@ -335,23 +355,25 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         last_act = last_activities.get(cluster.id)
         last_act_str = last_act.strftime("%b %d, %Y") if last_act else "—"
 
-        formatted_clusters.append({
-            "cluster_id": cluster.id,
-            "name": cluster.name,
-            "district": getattr(cluster.district, "name", "") or "—",
-            "cluster_leader_name": cluster.cluster_leader_name or "—",
-            "cluster_leader_phone": cluster.cluster_leader_phone or "—",
-            "ssa_score_avg": avg_str,
-            "least_performing_intervention": least_str,
-            "last_activity_date": last_act_str,
-            "schools_count": cluster_schools_count.get(cluster.id, 0),
-            "owner_id": getattr(owner, "id", None),
-            "owner_user_id": getattr(owner, "user_id", None),
-            "owner_name": _label(owner) if owner else "Unassigned",
-            "lead_id": getattr(lead, "id", None),
-            "lead_user_id": getattr(lead, "user_id", None),
-            "lead_name": _label(lead) if lead else "Unassigned",
-        })
+        formatted_clusters.append(
+            {
+                "cluster_id": cluster.id,
+                "name": cluster.name,
+                "district": getattr(cluster.district, "name", "") or "—",
+                "cluster_leader_name": cluster.cluster_leader_name or "—",
+                "cluster_leader_phone": cluster.cluster_leader_phone or "—",
+                "ssa_score_avg": avg_str,
+                "least_performing_intervention": least_str,
+                "last_activity_date": last_act_str,
+                "schools_count": cluster_schools_count.get(cluster.id, 0),
+                "owner_id": getattr(owner, "id", None),
+                "owner_user_id": getattr(owner, "user_id", None),
+                "owner_name": _label(owner) if owner else "Unassigned",
+                "lead_id": getattr(lead, "id", None),
+                "lead_user_id": getattr(lead, "user_id", None),
+                "lead_name": _label(lead) if lead else "Unassigned",
+            }
+        )
 
     # 6. Build hierarchy tabs
     # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
@@ -363,7 +385,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             for identifier in (row["lead_id"], row["lead_user_id"])
             if identifier
         }
-        sys_pls = [pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))]
+        sys_pls = [
+            pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))
+        ]
     pl_lookup: dict[str, dict] = {}
     leads_data = []
     for pl in sys_pls:
@@ -427,6 +451,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     # Determine default selected PL tab (preselect viewing PL if applicable)
     from apps.core.scoping import owner_ids
+
     user_staff_ids = set(owner_ids(principal))
     selected_program_lead = None
     for pl_entry in leads_data:
@@ -434,7 +459,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             selected_program_lead = pl_entry["id"]
             break
         for pl in sys_pls:
-            if pl["id"] == pl_entry["id"] and any(pid in user_staff_ids for pid in pl["ids"]):
+            if pl["id"] == pl_entry["id"] and any(
+                pid in user_staff_ids for pid in pl["ids"]
+            ):
                 selected_program_lead = pl_entry["id"]
                 break
         if selected_program_lead:
@@ -442,13 +469,25 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     cceo_tabs = []
     if is_programme_lead:
-        own_rows = [row for row in formatted_clusters if str(row["owner_id"]) in user_staff_ids or str(row["owner_user_id"]) in user_staff_ids]
-        cceo_tabs = [{
-            "id": "my-clusters", "name": "My Clusters", "clusters": own_rows,
-            "count": len(own_rows), "schools": sum(row["schools_count"] for row in own_rows),
-        }]
+        own_rows = [
+            row
+            for row in formatted_clusters
+            if str(row["owner_id"]) in user_staff_ids
+            or str(row["owner_user_id"]) in user_staff_ids
+        ]
+        cceo_tabs = [
+            {
+                "id": "my-clusters",
+                "name": "My Clusters",
+                "clusters": own_rows,
+                "count": len(own_rows),
+                "schools": sum(row["schools_count"] for row in own_rows),
+            }
+        ]
         for lead in leads_data:
-            cceo_tabs.extend(tab for tab in lead["cceo_tabs"] if str(tab["id"]) not in user_staff_ids)
+            cceo_tabs.extend(
+                tab for tab in lead["cceo_tabs"] if str(tab["id"]) not in user_staff_ids
+            )
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import (
@@ -456,6 +495,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         NO_OWNER_KEY,
         cluster_performance,
     )
+
     officer_activity: list[dict] = []
     lead_activity: list[dict] = []
     try:
@@ -523,7 +563,8 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     return {
         "is_programme_lead": is_programme_lead,
-        "selected_program_lead": selected_program_lead or (leads_data[0]["id"] if leads_data else ""),
+        "selected_program_lead": selected_program_lead
+        or (leads_data[0]["id"] if leads_data else ""),
         "leads": leads_data,
         "cceo_tabs": cceo_tabs,
         "officer_activity": officer_activity,
@@ -552,4 +593,3 @@ def cluster_activity_by_person(name: str, rows, belongs) -> dict:
         "sessions_held": sum(row.sessions_done for row in mine),
         "schools_reached": sum(row.schools_reached for row in mine),
     }
-

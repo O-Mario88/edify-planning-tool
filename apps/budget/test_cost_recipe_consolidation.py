@@ -234,8 +234,7 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
         )
         self.assertEqual(
             cost.amount,
-            self._session(1, RATES["cluster_meetings_trainings"])
-            + MATERIALS,
+            self._session(1, RATES["cluster_meetings_trainings"]) + MATERIALS,
         )
         by_key = {line.key: line for line in cost.lines}
         printing = by_key["printing_training_materials"]
@@ -287,9 +286,7 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
                 )
                 self.assertEqual(
                     cost.amount,
-                    self._session(
-                        1, RATES["cluster_meetings_trainings"]
-                    ),
+                    self._session(1, RATES["cluster_meetings_trainings"]),
                 )
 
     def test_a_cluster_session_feeds_its_participants_per_head(self):
@@ -563,7 +560,9 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
 
     def test_cluster_training_never_uses_meeting_participant_meals(self):
         for kind in ("cluster_training", "cluster_training_ssa_collection"):
-            cost = _cost(activityType=kind, districtType="primary", expectedParticipants=30)
+            cost = _cost(
+                activityType=kind, districtType="primary", expectedParticipants=30
+            )
             self.assertNotIn("cluster_meetings_trainings_meals", _keys(cost))
             self.assertIn("lunch_per_day", _keys(cost))
             self.assertIn("group_training_facilitation_fee", _keys(cost))

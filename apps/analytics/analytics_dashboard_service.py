@@ -812,7 +812,7 @@ class AnalyticsDashboardService:
                 },
             )
             group["districts"].append(district)
-            group[f'{district["status"]}_count'] += 1
+            group[f"{district['status']}_count"] += 1
             group["planned"] += district["planned"]
             group["achieved"] += district["achieved"]
             group["schools"] += district["schools"]

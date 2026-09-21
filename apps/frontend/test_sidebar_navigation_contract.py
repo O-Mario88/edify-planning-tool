@@ -31,7 +31,7 @@ class SidebarNavigationContractTests(TestCase):
             for item in section["items"]:
                 icon_key = item.get("icon_key", item["page_key"])
                 if not ICONS.get(icon_key):
-                    missing.append(f'{section["group_label"]}: {item["label"]}')
+                    missing.append(f"{section['group_label']}: {item['label']}")
 
         self.assertEqual(missing, [])
 

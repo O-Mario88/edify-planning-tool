@@ -245,9 +245,11 @@ def main() -> int:
             page = context.new_page()
             page.on(
                 "console",
-                lambda m: console_errors.append(f"{m.type}: {m.text[:160]}")
-                if m.type == "error"
-                else None,
+                lambda m: (
+                    console_errors.append(f"{m.type}: {m.text[:160]}")
+                    if m.type == "error"
+                    else None
+                ),
             )
             page.on("pageerror", lambda e: console_errors.append(f"pageerror: {e}"))
 

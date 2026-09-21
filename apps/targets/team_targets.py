@@ -939,7 +939,7 @@ class PLTeamTargetsService:
                     for pa in m["per_area"]
                     if pa["target"] and pa["key"] in metric_area_keys
                 ],
-                key=lambda pa: (pa["pct"] or 0),
+                key=lambda pa: pa["pct"] or 0,
             )[:2]
             for pa in worst:
                 if pa["gap"] <= 0:

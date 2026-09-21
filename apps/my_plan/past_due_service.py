@@ -107,7 +107,11 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             team_members_by_id[m.id] = {"id": m.id, "name": m_name, "profile": m}
             if m.user_id:
                 team_member_ids.append(m.user_id)
-                team_members_by_id[m.user_id] = {"id": m.id, "name": m_name, "profile": m}
+                team_members_by_id[m.user_id] = {
+                    "id": m.id,
+                    "name": m_name,
+                    "profile": m,
+                }
 
     # Query all active, past-due activities for this user (or team if PL)
     all_scoped_ids = list(set(own_ids + team_member_ids))
@@ -162,9 +166,8 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     team_count = 0
 
     for a in activities:
-        is_own = (
-            a.responsible_staff_id in own_ids
-            or (not a.responsible_staff_id and a.monitored_by_staff_id in own_ids)
+        is_own = a.responsible_staff_id in own_ids or (
+            not a.responsible_staff_id and a.monitored_by_staff_id in own_ids
         )
         if is_own:
             own_count += 1
@@ -176,7 +179,9 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
         )
         first_name = owner_name.split()[0] if owner_name else "Team Member"
 
-        planned_dt = a.planned_date or (a.scheduled_date.date() if a.scheduled_date else None)
+        planned_dt = a.planned_date or (
+            a.scheduled_date.date() if a.scheduled_date else None
+        )
         days_overdue = (today - planned_dt).days if planned_dt else 0
 
         cluster_district_name = ""
@@ -215,9 +220,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
             "school_id": a.school.school_id if a.school else "",
             "school_name": (
-                a.school.name
-                if a.school
-                else (a.cluster.name if a.cluster else "—")
+                a.school.name if a.school else (a.cluster.name if a.cluster else "—")
             ),
             "school_district": (
                 a.school.district.name
@@ -226,9 +229,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             ),
             "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_name": (
-                a.cluster.name
-                if a.cluster
-                else (a.school.name if a.school else "—")
+                a.cluster.name if a.cluster else (a.school.name if a.school else "—")
             ),
             "cluster_district": cluster_district_name or "—",
             "place_url": (
@@ -236,18 +237,17 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
                 if a.cluster
                 else (f"/schools/{a.school.id}" if a.school else "")
             ),
-            "purpose": (
-                a.activity_purpose_text
-                or a.get_activity_type_display()
-            ),
+            "purpose": (a.activity_purpose_text or a.get_activity_type_display()),
             "focus_intervention": (
-                a.get_focus_intervention_display()
-                if a.focus_intervention
-                else "—"
+                a.get_focus_intervention_display() if a.focus_intervention else "—"
             ),
             "budget_total": minimum_amounts.get(a.id, 0),
-            "budget_status": "Budget Planned" if a.schedule_cost_lines.exists() else "No Budget",
-            "budget_status_color": "blue" if a.schedule_cost_lines.exists() else "slate",
+            "budget_status": "Budget Planned"
+            if a.schedule_cost_lines.exists()
+            else "No Budget",
+            "budget_status_color": "blue"
+            if a.schedule_cost_lines.exists()
+            else "slate",
             "verification_status": "Pending",
             "verification_color": "purple",
             "expected_participants": a.expected_participants or "—",

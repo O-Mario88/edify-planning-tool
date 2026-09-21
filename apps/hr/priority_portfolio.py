@@ -35,7 +35,7 @@ def priority_portfolio(
                 "meta": f"{remaining} remaining of {annual_target}",
                 "tone": "success" if not remaining else "warning",
                 "action": "Plan work",
-                "url": f'/planning?fy={fy}&priority_allocation={row["allocationId"]}',
+                "url": f"/planning?fy={fy}&priority_allocation={row['allocationId']}",
             }
         )
 
