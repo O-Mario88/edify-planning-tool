@@ -93,15 +93,13 @@ class BulkAssignmentTests(TestCase):
         )
 
     def test_add_to_cluster_drawer_lists_the_owners_clusters_only(self):
-        """Owner, 2026-09-15: the drawer lists the clusters belonging to the
-        school's owner. One that does not serve the school's district is
-        listed but cannot be chosen; an unowned cluster is not listed.
+        """The drawer lists the clusters belonging to the school's owner, and
+        every one of them may be chosen; an unowned cluster is not listed.
 
-        What may be chosen is no longer "same district" but the cluster's
-        governed catchment: its own district always, and any neighbouring
-        district a Country Director has approved it to serve. A cluster with
-        no approved catchment covering this school is refused with the reason,
-        not silently dropped from the list.
+        Owner, 2026-09-21: geography no longer narrows this. A cluster in
+        another district used to be listed-but-unchoosable, then refused with
+        a catchment reason — so a CCEO could see the right cluster for their
+        own schools and be unable to pick it. The portfolio is the rule.
         """
         Cluster.objects.filter(id=self.cluster.id).update(
             responsible_staff_id=self.staff_profile.id
@@ -124,18 +122,24 @@ class BulkAssignmentTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
+        # `serves_school` survives as a catchment LABEL; it no longer decides
+        # what is offered.
         listed = {c.id: c.serves_school for c in response.context["owner_clusters"]}
         self.assertEqual(listed, {self.cluster.id: True, far.id: False})
         self.assertNotContains(response, unowned.name)
 
-        refused = self.client.post(
+        saved = self.client.post(
             f"/schools/{self.school_other.id}/add-to-cluster",
-            {"cluster_action_type": "existing", "existing_cluster_id": far.id},
+            {
+                "cluster_action_type": "existing",
+                "existing_cluster_id": far.id,
+                "reason": "The centre these schools actually travel to.",
+            },
             HTTP_HX_REQUEST="true",
         )
-        self.assertContains(refused, "does not serve")
+        self.assertContains(saved, "added to")
         self.school_other.refresh_from_db()
-        self.assertIsNone(self.school_other.cluster_id)
+        self.assertEqual(self.school_other.cluster_id, far.id)
 
     def test_create_new_cluster_multi_sub_counties(self):
         self.client.force_login(self.user)

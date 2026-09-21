@@ -366,11 +366,7 @@ class School(SoftDeleteModel):
                 if new_cluster:
                     self.cluster_id = new_cluster.id
                     self.cluster_status = "clustered"
-                elif (
-                    current_cluster
-                    and not derived_membership
-                    and _cluster_serves(current_cluster, self.district_id)
-                ):
+                elif current_cluster and not derived_membership:
                     # Nothing covers this sub-county, and this membership is
                     # not one the lookup could have produced — a person put the
                     # school here. An explicit membership is broken by a
@@ -381,6 +377,14 @@ class School(SoftDeleteModel):
                     # told; the cluster page went on listing it. The membership
                     # stands, and the cluster declares the sub-county after the
                     # save so the next school there resolves by itself.
+                    #
+                    # This used to hold only while the cluster's catchment
+                    # covered the new district, so editing a school's
+                    # geography silently unclustered it whenever a person had
+                    # deliberately put it in a cluster across a district line.
+                    # Those memberships are ordinary now (owner, 2026-09-21:
+                    # a school joins its owner's clusters in any district), so
+                    # the catchment no longer decides whether one survives.
                     self.cluster_status = "clustered"
                     adopt_coverage_for = current_cluster
                 elif self.sub_county_id:
@@ -437,13 +441,6 @@ class School(SoftDeleteModel):
                 actor_id="system_reassign",
                 reason=("Cluster derived from the school's district and sub-county."),
             )
-
-
-def _cluster_serves(cluster, district_id) -> bool:
-    """Whether a cluster's catchment includes a district (own or approved)."""
-    from apps.clusters.catchment import serving_match
-
-    return serving_match(cluster, district_id) is not None
 
 
 def dq_condition_key(school_id, issue_type: str) -> str:

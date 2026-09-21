@@ -1,10 +1,18 @@
-"""Cluster catchments and Add / Change Cluster (owner, 2026-09-15).
+"""Cluster catchments and Add / Change Cluster.
 
-A school may join one of its owner's clusters when the cluster serves the
-school's district: its own district, or a neighbouring district a Country
-Director or Admin approved for it, inside the approval's window and within the
-same country. Joining never changes the school's geography. A school has one
-active cluster; every change closes the old membership in the history.
+A school may join ANY active cluster belonging to the staff member responsible
+for it, in any district (owner, 2026-09-21). District lines used to gate this
+as well — the cluster had to serve the school's district, its own or a
+neighbouring one a Country Director had approved — so a CCEO could not group
+their own schools around a centre across a border nobody had approved yet.
+
+What remains: the portfolio (another staff member's cluster needs a transfer,
+not an assignment), the country, and the cluster being active. The catchment
+is still computed and recorded — it labels the join, orders the picker, and
+rides the audit entry and the membership history — but it refuses nothing.
+
+Joining never changes the school's geography. A school has one active cluster;
+every change closes the old membership in the history.
 """
 
 from __future__ import annotations
@@ -159,10 +167,41 @@ class CatchmentRuleTests(CatchmentFixture):
             ).exists()
         )
 
-    def test_unapproved_district_is_rejected(self):
+    def test_a_district_nobody_approved_is_accepted(self):
+        """The portfolio decides, not the district (owner, 2026-09-21).
+
+        Far Cluster sits in a district no catchment row covers, and belongs to
+        the same staff member as the school. That used to be refused with
+        "does not serve Home District", which left a CCEO unable to group
+        their own schools around a centre across an unapproved border.
+        """
+        set_school_cluster_membership(self.school, self.far_cluster, self.cceo.id)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.far_cluster.id)
+        # Geography is still untouched, and the crossing is still recorded.
+        self.assertEqual(self.school.district_id, self.home.id)
+        membership = SchoolClusterMembership.objects.get(
+            school=self.school, ended_at__isnull=True
+        )
+        self.assertTrue(membership.is_cross_district)
+
+    def test_another_portfolio_is_still_refused(self):
+        """The one boundary that remains on which cluster may be chosen."""
+        other = User.objects.create_user(
+            email="catch-owner@edify.test",
+            name="Other Owner",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="StrongPassphrase!23",
+        )
+        other_profile = StaffProfile.objects.create(user=other, title="CCEO")
+        theirs = self._cluster("Their Cluster", self.home)
+        theirs.responsible_staff_id = other_profile.id
+        theirs.save(update_fields=["responsible_staff_id"])
+
         with self.assertRaises(BadRequest) as ctx:
-            set_school_cluster_membership(self.school, self.far_cluster, self.cceo.id)
-        self.assertIn("does not serve Home District", str(ctx.exception))
+            set_school_cluster_membership(self.school, theirs, self.cceo.id)
+        self.assertIn("belongs to another staff member", str(ctx.exception))
         self.school.refresh_from_db()
         self.assertIsNone(self.school.cluster_id)
 
@@ -178,14 +217,18 @@ class CatchmentRuleTests(CatchmentFixture):
         with self.assertRaises(BadRequest):
             set_school_cluster_membership(self.school, foreign_cluster, self.cceo.id)
 
-    def test_an_ended_or_future_or_expired_catchment_is_rejected(self):
+    def test_an_ended_or_future_or_expired_catchment_stops_serving(self):
+        """The catchment window still governs what `serving_match` reports.
+
+        It no longer governs whether the school may join: the membership is
+        the portfolio's call, and the catchment is the label on it.
+        """
         row = self._approve_border()
         end_catchment(row.id, self.cd, reason="The river bridge reopened.")
         self.assertIsNone(serving_match(self.border_cluster, self.home.id))
-        with self.assertRaises(BadRequest):
-            set_school_cluster_membership(
-                self.school, self.border_cluster, self.cceo.id
-            )
+        set_school_cluster_membership(self.school, self.border_cluster, self.cceo.id)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.border_cluster.id)
 
         today = timezone.localdate()
         future = self._approve_border(effective_from=today + timedelta(days=5))
@@ -317,6 +360,11 @@ class AddToClusterDrawerTests(CatchmentFixture):
         self.assertTrue(by_id[self.border_cluster.id].is_cross_district)
         self.assertFalse(by_id[self.far_cluster.id].serves_school)
         self.assertContains(response, "Cross-District Cluster")
+        # Marked, not withheld: a cluster outside the catchment is still the
+        # owner's to choose, so it renders enabled and counts as cross-district.
+        self.assertTrue(by_id[self.far_cluster.id].is_cross_district)
+        self.assertIn(self.far_cluster.id, response.context["cross_district_ids"])
+        self.assertTrue(response.context["has_selectable_cluster"])
 
     def test_a_cross_district_join_needs_a_reason_then_saves(self):
         self._approve_border()
@@ -344,19 +392,32 @@ class AddToClusterDrawerTests(CatchmentFixture):
         self.assertEqual(self.school.cluster_id, self.border_cluster.id)
         self.assertEqual(self.school.district_id, self.home.id)
 
-    def test_a_crafted_post_for_an_unserved_cluster_is_refused(self):
-        response = self.client.post(
+    def test_a_cluster_outside_the_catchment_saves_with_a_reason(self):
+        """Outside the catchment is a crossing to explain, not one to refuse."""
+        refused = self.client.post(
             self.url,
             {
                 "cluster_action_type": "existing",
                 "existing_cluster_id": self.far_cluster.id,
-                "reason": "Should never be allowed.",
             },
             HTTP_HX_REQUEST="true",
         )
-        self.assertContains(response, "does not serve Home District")
+        self.assertContains(refused, "across the district border")
         self.school.refresh_from_db()
         self.assertIsNone(self.school.cluster_id)
+
+        saved = self.client.post(
+            self.url,
+            {
+                "cluster_action_type": "existing",
+                "existing_cluster_id": self.far_cluster.id,
+                "reason": "The only secondary centre their pupils can reach.",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(saved, "added to Far Cluster")
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.far_cluster.id)
 
     def test_another_staff_members_cluster_is_never_offered(self):
         other = User.objects.create_user(
@@ -404,14 +465,20 @@ class AddToClusterDrawerTests(CatchmentFixture):
         self.assertEqual(self.school.cluster_id, self.home_cluster.id)
 
     def test_the_honest_empty_state(self):
-        Cluster.objects.filter(responsible_staff_id=self.profile.id).exclude(
-            id=self.far_cluster.id
-        ).update(status="inactive")
+        """Empty now means the owner holds no active cluster anywhere.
+
+        It used to be reachable while the owner still had one, because a
+        cluster outside the catchment was listed and then refused. Leaving
+        Far Cluster active no longer empties the drawer — it is offerable —
+        so the state this message describes is the owner having none at all.
+        """
+        Cluster.objects.filter(responsible_staff_id=self.profile.id).update(
+            status="inactive"
+        )
         response = self.client.get(self.url, HTTP_HX_REQUEST="true")
         self.assertContains(
             response,
-            "No eligible clusters serve this school's district or approved "
-            "neighbouring districts.",
+            "has no active cluster yet — create one to add the school.",
         )
 
     def test_a_supervisor_is_told_before_saving(self):
