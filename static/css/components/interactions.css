@@ -514,7 +514,10 @@ main :is(
   --edify-segment-rule: transparent;
 }
 
-/* The selected segment is filled, not raised. */
+/* The selected segment is filled, not raised, and reads as a pill in every
+   theme. `:nth-child(n)` lifts these two selectors above the connected-segment
+   corner rules below (0,3,1), which otherwise squared the pill everywhere but
+   the dark theme. */
 main :is(
   [role="tab"][aria-selected="true"],
   .edify-tab-btn.active,
@@ -531,7 +534,7 @@ main :is(
   .oversight-entity-tabs__link.is-active,
   .edify-section-nav__cluster.is-active,
   .edify-section-nav__link.is-active
-),
+):nth-child(n),
 .theme-dark main :is(
   [role="tab"][aria-selected="true"],
   .edify-tab-btn.active,
@@ -548,7 +551,7 @@ main :is(
   .oversight-entity-tabs__link.is-active,
   .edify-section-nav__cluster.is-active,
   .edify-section-nav__link.is-active
-) {
+):nth-child(n) {
   background: #1976d2 !important;
   color: #ffffff !important;
   border-color: #1976d2 !important;

@@ -187,19 +187,24 @@
    sides at all; it runs off the bottom of the window, and on a 1366 x 768
    laptop it stood 1154px tall.
 
-   So the width leads and carries the height bound with it: the sheet is the
-   narrower of the card, the 30cm sheet cap, and the room under the chrome.
-   Height then follows the ratio and the map is always whole on screen.
-   --sr-map-chrome covers the ~276px the map's top sits into the scroll
-   container, plus a margin. svh, not vh, so a phone's retracting toolbar
-   does not crop it. */
+   Since 2026-09-20 the sheet is the full width of the card at a fixed
+   600px height (no longer square). The height is still bounded by the room
+   under the chrome, so the whole map stays on screen on a laptop: 600px
+   where there is room, the room itself where there is less (owner,
+   2026-09-16: "make it fit exactly so that the users don't have to
+   scroll"). --sr-map-chrome covers the ~276px the map's top sits into the
+   scroll container, plus a margin. svh, not vh, so a phone's retracting
+   toolbar does not crop it. */
+.analytics-geo-card {
+  --sr-map-chrome: 19rem;
+}
 .analytics-geo-card .sr-map-viewport {
   margin-inline: auto;
   inline-size: 100% !important;
   max-inline-size: 100% !important;
   width: 100% !important;
-  min-height: 540px !important;
-  height: 600px !important;
+  min-height: min(540px, calc(100svh - var(--sr-map-chrome))) !important;
+  height: min(600px, calc(100svh - var(--sr-map-chrome))) !important;
   aspect-ratio: auto !important;
   block-size: auto;
 }

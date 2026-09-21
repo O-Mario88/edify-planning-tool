@@ -5,29 +5,29 @@ the same gate functions the request path calls. Do not edit by hand — a
 hand-maintained copy of an authority is how SEC-01 happened.
 
 - Routed surfaces: **1290**
-- Declaring an authority: **1096**
-- Declaring none: **194** (open by design, or guarded inside the view body — this module cannot tell which, so it lists them rather than scoring them)
+- Declaring an authority: **1097**
+- Declaring none: **193** (open by design, or guarded inside the view body — this module cannot tell which, so it lists them rather than scoring them)
 - Guarded surfaces no role can reach: **0**
 
 ## Surfaces reachable per role
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 525 |
-| Program Lead | 610 |
-| CountryDirector | 755 |
-| RegionalVicePresident | 366 |
-| RegionalProgramLead | 304 |
-| ImpactAssessment | 619 |
-| Accountant | 404 |
-| HumanResources | 329 |
-| ProjectCoordinator | 444 |
-| PartnerAdmin | 218 |
-| PartnerFieldOfficer | 218 |
-| BusinessTransformationOfficer | 231 |
-| MfiPartnerAdmin | 130 |
-| MfiLoanOfficer | 127 |
-| Admin | 999 |
+| CCEO | 526 |
+| Program Lead | 611 |
+| CountryDirector | 756 |
+| RegionalVicePresident | 367 |
+| RegionalProgramLead | 305 |
+| ImpactAssessment | 620 |
+| Accountant | 405 |
+| HumanResources | 330 |
+| ProjectCoordinator | 445 |
+| PartnerAdmin | 219 |
+| PartnerFieldOfficer | 219 |
+| BusinessTransformationOfficer | 232 |
+| MfiPartnerAdmin | 131 |
+| MfiLoanOfficer | 128 |
+| Admin | 1000 |
 
 ## Every guarded surface
 
@@ -568,6 +568,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/dashboard` | dashboard | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/dashboard/cd-approve` | cd_analytics |  |  | Y |  |  |  |  |  |  |  |  |  |  |  | Y |
 | `/dashboard/cd-return` | cd_analytics |  |  | Y |  |  |  |  |  |  |  |  |  |  |  | Y |
+| `/dashboard/notify-past-due/<str:activity_id>/` | dashboard | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/dashboard/pl` | dashboard | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/dashboard/pl-approve` | dashboard | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/dashboard/pl-drilldown` | dashboard | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
@@ -1296,7 +1297,6 @@ surface does not.
 | `/api/targets(?:/|)` | `apps.targets.views.view` |
 | `/auth/switch-role` | `apps.frontend.views.auth_views.switch_role_view` |
 | `/change-password` | `apps.frontend.views.auth_views.force_change_password_view` |
-| `/dashboard/notify-past-due/<str:activity_id>/` | `apps.frontend.views.dashboard_views.notify_past_due_activity` |
 | `/documents/<slug:slug>/` | `apps.documents.views.document_viewer_view` |
 | `/documents/<slug:slug>/download` | `apps.documents.views.document_download_view` |
 | `/documents/<slug:slug>/preview` | `apps.documents.views.document_preview_view` |

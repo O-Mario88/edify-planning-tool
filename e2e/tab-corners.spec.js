@@ -18,7 +18,7 @@ for (const width of [390,768,1600]) {
     await page.route('http://tabs.test/**', route => {
       const file = path.join(root,new URL(route.request().url()).pathname);
       if(fs.existsSync(file)&&fs.statSync(file).isFile()) return route.fulfill({path:file});
-      const rails = families.map(([rail,control,tag])=>`<nav class="${rail}">${['First','Middle','Last'].map((label,i)=>`<${tag} class="${control} ${i===0?'is-active active':''}" href="#" data-test-tab>${label}</${tag}>`).join('')}<span hidden>Updating</span></nav>`).join('');
+      const rails = families.map(([rail,control,tag])=>`<nav class="${rail}">${['First','Middle','Last'].map((label,i)=>`<${tag} class="${control} ${i===0?'is-active active':''}"${i===0?' aria-pressed="true"':''} href="#" data-test-tab>${label}</${tag}>`).join('')}<span hidden>Updating</span></nav>`).join('');
       return route.fulfill({contentType:'text/html',body:`<html class="theme-light"><head>${sheets.map(s=>`<link rel="stylesheet" href="/static/css/${s}">`).join('')}</head><body><main>${rails}</main></body></html>`});
     });
     await page.goto('http://tabs.test/');
@@ -29,7 +29,11 @@ for (const width of [390,768,1600]) {
       }));
       expect(corners).toHaveLength(families.length*3);
       const radius = await page.locator('main').evaluate(el => `${parseFloat(getComputedStyle(el).getPropertyValue('--edify-radius-sm')) - 2}px`);
-      for(const [i,radii] of corners.entries()) expect(radii, families[Math.floor(i/3)][0] + ":" + i).toEqual(i%3===0 ? [radius,"0px","0px",radius] : i%3===2 ? ["0px",radius,radius,"0px"] : ["0px","0px","0px","0px"]);
+      // The active segment reads as a pill in every theme since 2026-09-20
+      // (interactions.css; the inbox marks it with aria-pressed, the rest with
+      // is-active); the rail's inactive ends still round only outward and the
+      // middle stays square.
+      for(const [i,radii] of corners.entries()) expect(radii, families[Math.floor(i/3)][0] + ":" + i).toEqual(i%3===0 ? ["9999px","9999px","9999px","9999px"] : i%3===2 ? ["0px",radius,radius,"0px"] : ["0px","0px","0px","0px"]);
     }
   });
 }

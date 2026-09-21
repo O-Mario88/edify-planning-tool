@@ -6,6 +6,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
+const { Scanner } = require('@tailwindcss/oxide');
 const { transform } = require('lightningcss');
 
 const root = path.resolve(__dirname, '..');
@@ -48,9 +49,10 @@ for (const filename of cssFiles(directory)) {
     visitor: {
       Selector(selector) {
         walk(selector, node => {
-          if (node.type === 'class' && validClassRegex.test(node.name)) {
-            candidates.add(node.name);
-          }
+          // Every class a stylesheet declares is genuine by definition,
+          // brackets, fractions and opacity suffixes included: `bg-[var(--x)]`
+          // and `bg-slate-600/75` are what Tailwind writes for those utilities.
+          if (node.type === 'class') candidates.add(node.name);
           return node;
         });
       }
@@ -58,7 +60,22 @@ for (const filename of cssFiles(directory)) {
   });
 }
 
-// 2. Extract genuine classes from HTML template class attributes
+// 2. Every class candidate the templates and frontend scripts can put on an
+//    element, read with Tailwind's own scanner so arbitrary values, fractions,
+//    opacity suffixes and variants (`sm:px-6`, `hover:bg-[var(--x)]`) survive
+//    intact. Vendor scripts are included on purpose: FullCalendar and
+//    ApexCharts add their classes at runtime, and a substring pattern such as
+//    `[class*="w-"]` has to know `fc-view-harness` or the compiled rule loses
+//    it. Python is deliberately not scanned this way (step 4 reads only its
+//    badge and colour strings), which is what keeps the index to real classes.
+for (const candidate of new Scanner({
+  sources: [{ base: root, pattern: '{templates,static/js}/**/*.{html,js}', negated: false }],
+}).scan()) {
+  candidates.add(candidate);
+}
+
+// 2b. Template class attributes, token by token, for anything the scanner's
+//     heuristics leave out (Django tags inside a class attribute, for one).
 function walkHtml(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const file = path.join(dir, entry.name);
