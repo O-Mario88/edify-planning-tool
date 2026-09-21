@@ -24,10 +24,10 @@ partner work at Confirm Salesforce Entry.
       </div>
       <div class="min-w-0">
         <p class="text-[12px] font-bold text-slate-800">Team Google Drive</p>
-        <p class="text-[11px] text-slate-500 truncate">Shared documentation folder</p>
+        <p class="text-xs text-slate-500 truncate">Shared documentation folder</p>
       </div>
     </div>
-    <a href="{{ google_drive_folder_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold shrink-0 transition-colors shadow-xs">
+    <a href="{{ google_drive_folder_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shrink-0 transition-colors shadow-xs">
       <span>Open Drive</span>
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
     </a>
@@ -116,10 +116,10 @@ partner work at Confirm Salesforce Entry.
         </svg>
         <div class="min-w-0">
           <p class="font-bold truncate" x-text="fileName"></p>
-          <p class="text-[11px] text-emerald-700 font-medium">Selected (<span x-text="fileSize"></span>) — ready to upload</p>
+          <p class="text-xs text-emerald-700 font-medium">Selected (<span x-text="fileSize"></span>) — ready to upload</p>
         </div>
       </div>
-      <button type="button" @click="clearFile()" class="text-emerald-700 hover:text-emerald-950 text-[11px] font-bold px-2 py-1 rounded-control hover:bg-emerald-100 shrink-0">
+      <button type="button" @click="clearFile()" class="text-emerald-700 hover:text-emerald-950 text-xs font-bold px-2 py-1 rounded-control hover:bg-emerald-100 shrink-0">
         Change
       </button>
     </div>

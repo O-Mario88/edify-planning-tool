@@ -34,15 +34,16 @@ and level 3 (4 distinct tables per staff member:
       <button type="button"
               role="tab"
               :aria-selected="activeOfficer === '{{ group.id }}'"
+              aria-controls="officer-panel-{{ forloop.counter }}"
               @click="activeOfficer = '{{ group.id }}'"
               class="team-officer-tab px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-        <div class="w-5 h-5 rounded-full edify-avatar-neutral text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+        <div class="w-5 h-5 rounded-full edify-avatar-neutral text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
           {{ group.name|slice:":2"|upper }}
         </div>
         <span>{{ group.name }}</span>
-        <span class="pill pill-neutral text-[10px] py-0 px-1.5">{{ group.summary.total_planned|default:group.items|length }}</span>
+        <span class="pill pill-neutral text-xs py-0 px-1.5">{% firstof group.summary.total_planned group.items|length "0" %}</span>
         {% if group.summary.at_risk %}
-        <span class="pill pill-danger text-[10px] py-0 px-1.5 font-bold">{{ group.summary.at_risk }}</span>
+        <span class="pill pill-danger text-xs py-0 px-1.5 font-bold">{{ group.summary.at_risk }}</span>
         {% endif %}
       </button>
       {% endfor %}
@@ -54,6 +55,7 @@ and level 3 (4 distinct tables per staff member:
   <div x-show="activeOfficer === '{{ group.id }}'"
        x-cloak
        id="officer-panel-{{ forloop.counter }}"
+       role="tabpanel"
        class="space-y-6">
 
     {# ── Officer Header Summary ───────────────────────────────────────── #}
@@ -64,17 +66,17 @@ and level 3 (4 distinct tables per staff member:
         </div>
         <div>
           <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline hover:text-blue-600">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
+            {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline edify-primary-text-hover">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
             <span class="pill pill-neutral text-xs">Field Plan</span>
           </h4>
           <p class="edify-text-caption edify-text-muted">
-            {{ group.summary.total_planned|default:group.items|length }} planned activities · UGX {{ group.summary.planned_budget|default:0|intcomma }}
+            {% firstof group.summary.total_planned group.items|length "0" %} planned activities · UGX {{ group.summary.planned_budget|default:0|intcomma }}
           </p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 text-xs">
-        <span class="pill pill-info font-medium">{{ group.summary.total_planned|default:group.items|length }} planned</span>
+        <span class="pill pill-info font-medium">{% firstof group.summary.total_planned group.items|length "0" %} planned</span>
         <span class="pill pill-neutral">{{ group.client_school_visits|length }} client visits</span>
         <span class="pill pill-neutral">{{ group.core_school_visits|length }} core visits</span>
         <span class="pill pill-neutral">{{ group.cluster_meetings|length }} meetings</span>
@@ -126,7 +128,7 @@ and level 3 (4 distinct tables per staff member:
             {% for item in group.client_school_visits %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
-                {{ item.school_code|default:item.school_id|default:"—" }}
+                {% firstof item.school_code item.school_id "—" %}
               </td>
               <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
@@ -149,7 +151,7 @@ and level 3 (4 distinct tables per staff member:
                 {% if item.is_partner_work %}
                 <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.executor_name|default:group.name }}</span>
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
@@ -163,12 +165,16 @@ and level 3 (4 distinct tables per staff member:
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
-                UGX {{ item.planned_cost|intcomma }}
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
               <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
                 </span>
+                {% endif %}
               </td>
               {% include "partials/oversight/_row_actions.html" %}
             </tr>
@@ -222,7 +228,7 @@ and level 3 (4 distinct tables per staff member:
             {% for item in group.core_school_visits %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
-                {{ item.school_code|default:item.school_id|default:"—" }}
+                {% firstof item.school_code item.school_id "—" %}
               </td>
               <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                 {% if item.school_id %}
@@ -248,7 +254,7 @@ and level 3 (4 distinct tables per staff member:
                 {% if item.is_partner_work %}
                 <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.executor_name|default:group.name }}</span>
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
@@ -262,12 +268,16 @@ and level 3 (4 distinct tables per staff member:
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
-                UGX {{ item.planned_cost|intcomma }}
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
               <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
                 </span>
+                {% endif %}
               </td>
               {% include "partials/oversight/_row_actions.html" %}
             </tr>
@@ -321,9 +331,9 @@ and level 3 (4 distinct tables per staff member:
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
               <td class="px-4 py-2.5 font-semibold min-w-[200px]">
                 {% if item.cluster_id %}
-                <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white">{{ item.cluster_name|default:item.context_label }}</a>
+                <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white">{% firstof item.cluster_name item.context_label %}</a>
                 {% else %}
-                <span class="text-slate-800 dark:text-slate-200">{{ item.cluster_name|default:item.context_label }}</span>
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.cluster_name item.context_label %}</span>
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400">
@@ -333,10 +343,10 @@ and level 3 (4 distinct tables per staff member:
                 {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
-                {{ item.executor_name|default:group.name }}
+                {% firstof item.executor_name group.name %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
-                {{ item.purpose_of_visit|default:item.operational_rationale|default:"Cluster Meeting" }}
+                {% firstof item.purpose_of_visit item.operational_rationale "Cluster Meeting" %}
               </td>
               <td class="px-4 py-2.5">
                 {% if item.target_intervention %}
@@ -349,12 +359,16 @@ and level 3 (4 distinct tables per staff member:
                 {{ item.participants|default:"—" }}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
-                UGX {{ item.planned_cost|intcomma }}
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
               <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
                 </span>
+                {% endif %}
               </td>
               {% include "partials/oversight/_row_actions.html" %}
             </tr>
@@ -413,7 +427,7 @@ and level 3 (4 distinct tables per staff member:
                 </td>
                 <td class="px-4 py-2.5 font-semibold min-w-[240px]">
                   {% if item.school_id %}
-                  <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}{{ item.school_code|default:item.school_id }}{% endif %}</a>
+                  <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}{% firstof item.school_code item.school_id %}{% endif %}</a>
                   {% else %}
                   <span class="text-slate-800 dark:text-slate-200">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}—{% endif %}</span>
                   {% endif %}
@@ -427,18 +441,18 @@ and level 3 (4 distinct tables per staff member:
                   <span class="text-slate-700 dark:text-slate-300">{{ item.cluster_planned_from }}</span>
                   {% endif %}
                   {% if item.is_cluster_invited %}
-                  <span class="pill pill-info text-[10px] py-0 px-1.5 font-bold ml-1">Invited</span>
+                  <span class="pill pill-info text-xs py-0 px-1.5 font-bold ml-1">Invited</span>
                   {% endif %}
                 </td>
                 <td class="px-4 py-2.5">
                   {% if item.is_partner_work %}
                   <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
                   {% else %}
-                  <span class="text-slate-800 dark:text-slate-200">{{ item.executor_name|default:group.name }}</span>
+                  <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                   {% endif %}
                 </td>
                 <td class="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
-                  {{ item.training_name|default:item.activity_type|status_label }}
+                  {% firstof item.training_name|status_label item.activity_type|status_label %}
                 </td>
                 <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
                   {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
@@ -459,12 +473,16 @@ and level 3 (4 distinct tables per staff member:
                   </span>
                 </td>
                 <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
-                  UGX {{ item.planned_cost|intcomma }}
+                  {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
                 </td>
                 <td class="px-4 py-2.5">
+                  {% if item.is_awaiting_partner_schedule %}
+                  <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                  {% else %}
                   <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                     {{ item.activity_status|status_label }}
                   </span>
+                  {% endif %}
                 </td>
                 {% include "partials/oversight/_row_actions.html" %}
               </tr>

@@ -50,7 +50,7 @@ quarter inside a year.
             <td data-label="Planned date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
             <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
             <td data-label="Budget status">{{ row.budget_status }}{% if row.payment_status %} · {{ row.payment_status|status_label }}{% endif %}</td>
-            <td data-label="PL status">{{ row.pl_status|default:row.ia_status }}</td>
+            <td data-label="PL status">{% firstof row.pl_status row.ia_status %}</td>
             <td data-label="Status">{% firstof row.activity_status row.stage "—" %}</td>
             <td data-label="Action" data-record-action>{% if row.detail_url %}<a href="{{ row.detail_url }}" hx-get="{{ row.detail_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-card__link">Open</a>{% endif %}</td>
           </tr>

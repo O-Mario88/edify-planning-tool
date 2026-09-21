@@ -160,14 +160,17 @@ class MobileNavAuthorizationTests(SimpleTestCase):
 
 
 class MobileNavDestinationTests(SimpleTestCase):
-    def test_program_lead_has_one_team_oversight_destination(self):
+    def test_program_lead_has_one_planning_oversight_destination(self):
+        # The destination was renamed from Team Oversight on 2026-09-20 when
+        # What Needs You Now moved to the dashboard; it is still one entry.
         sections = build_sidebar_for_user(_User(ROLE_LABELS[PL]), "/dashboard")
         items = [item for section in sections for item in section["items"]]
 
         self.assertEqual(
-            [item["label"] for item in items].count("Team Oversight"),
+            [item["label"] for item in items].count("Planning Oversight"),
             1,
         )
+        self.assertNotIn("Team Oversight", {item["label"] for item in items})
         self.assertNotIn("Team Targets", {item["label"] for item in items})
         self.assertNotIn("Team Target Oversight", {item["label"] for item in items})
 

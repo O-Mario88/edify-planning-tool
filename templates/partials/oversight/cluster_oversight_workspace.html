@@ -43,13 +43,14 @@
     <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="My clusters and CCEOs under me">
       {% for officer in cceo_tabs %}
       <button type="button" role="tab" :aria-selected="activeOfficer === '{{ officer.id }}'"
+              aria-controls="cluster-officer-panel-{{ officer.id }}"
               @click="activeOfficer = '{{ officer.id }}'" class="px-3 py-2 whitespace-nowrap">
         {{ officer.name }} <span class="pill pill-neutral">{{ officer.count }}</span>
       </button>
       {% endfor %}
     </nav>
     {% for officer in cceo_tabs %}
-    <section x-show="activeOfficer === '{{ officer.id }}'" x-cloak class="card p-0 overflow-hidden">
+    <section x-show="activeOfficer === '{{ officer.id }}'" x-cloak id="cluster-officer-panel-{{ officer.id }}" role="tabpanel" class="card p-0 overflow-hidden">
       <header class="edify-table-titlebar flex flex-wrap items-center gap-2 px-4 py-3">
         <h3>{{ officer.name }}{% if officer.id != 'my-clusters' %}'s Clusters{% endif %}</h3>
         <span>{{ officer.count }} clusters · {{ officer.schools }} member schools</span>
@@ -59,7 +60,7 @@
     {% endfor %}
   </div>
   {% elif leads %}
-  <div x-data="{ activeLead: '{{ selected_program_lead|default:leads.0.id }}' }" class="space-y-5">
+  <div x-data="{ activeLead: '{% firstof selected_program_lead leads.0.id %}' }" class="space-y-5">
     {# Level 1: Supervising PL Tabs #}
     <div class="oversight-team-selector">
       <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
@@ -67,6 +68,7 @@
         <button type="button"
                 role="tab"
                 :aria-selected="activeLead === '{{ lead.id }}'"
+                aria-controls="cluster-lead-panel-{{ lead.id }}"
                 @click="activeLead = '{{ lead.id }}'"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
           <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -81,7 +83,7 @@
 
     {# Level 2: CCEO Tabs under each PL #}
     {% for lead in leads %}
-    <div x-show="activeLead === '{{ lead.id }}'" x-cloak class="space-y-4">
+    <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
       {% if lead.cceo_tabs %}
       <div x-data="{ activeOfficer: '{{ lead.cceo_tabs.0.id }}' }" class="space-y-4">
         <div class="oversight-team-selector">
@@ -96,17 +98,18 @@
             <button type="button"
                     role="tab"
                     :aria-selected="activeOfficer === '{{ cceo.id }}'"
+                    aria-controls="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}"
                     @click="activeOfficer = '{{ cceo.id }}'"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
               <span>{{ cceo.name }}</span>
-              <span class="pill pill-neutral text-[10px] py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
+              <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
             </button>
             {% endfor %}
           </nav>
         </div>
 
         {% for cceo in lead.cceo_tabs %}
-        <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak class="space-y-3">
+        <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak id="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
           <div class="card p-0 overflow-hidden shadow-xs border edify-border">
             <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
               <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">

@@ -44,10 +44,10 @@ that ask is re-derived server-side before it is written.
             {% for r in oversight_rows %}
               <tr>
                 <th scope="row" class="core-oversight-table__school" data-label="School" data-record-title>
-                  <span class="core-oversight-table__name"><a href="/schools/{{ r.school_id }}" class="hover:underline font-semibold text-slate-900 hover:text-blue-600">{% school_identity r.name r.school_id %}</a></span>
-                  <span class="core-oversight-caption edify-text-caption edify-text-muted">{% if r.district_id %}<a href="/districts/{{ r.district_id }}" class="hover:underline hover:text-blue-600">{{ r.district_name }}</a>{% elif r.district_name %}<a href="/schools?q={{ r.district_name|urlencode }}" class="hover:underline hover:text-blue-600">{{ r.district_name }}</a>{% endif %}</span>
+                  <span class="core-oversight-table__name"><a href="/schools/{{ r.school_id }}" class="hover:underline font-semibold text-slate-900 edify-primary-text-hover">{% school_identity r.name r.school_id %}</a></span>
+                  <span class="core-oversight-caption edify-text-caption edify-text-muted">{% if r.district_id %}<a href="/districts/{{ r.district_id }}" class="hover:underline edify-primary-text-hover">{{ r.district_name }}</a>{% elif r.district_name %}<a href="/schools?q={{ r.district_name|urlencode }}" class="hover:underline edify-primary-text-hover">{{ r.district_name }}</a>{% endif %}</span>
                 </th>
-                <td data-label="Responsible CCEO">{% if r.account_owner_id %}<a href="/staff/{{ r.account_owner_id }}" class="hover:underline font-semibold hover:text-blue-600">{{ r.responsible_cceo }}</a>{% else %}{{ r.responsible_cceo }}{% endif %}</td>
+                <td data-label="Responsible CCEO">{% if r.account_owner_id %}<a href="/staff/{{ r.account_owner_id }}" class="hover:underline font-semibold edify-primary-text-hover">{{ r.responsible_cceo }}</a>{% else %}{{ r.responsible_cceo }}{% endif %}</td>
                 <td data-label="Assessment"><span class="edify-status-badge {% if r.assessment_done %}success{% else %}danger{% endif %}">{% if r.assessment_done %}Complete{% else %}Outstanding{% endif %}</span></td>
                 <td class="tabular-nums" data-label="Visits">{{ r.scheduled_visit_count }} / {{ r.visits_target }}</td>
                 <td class="tabular-nums" data-label="Trainings">{{ r.scheduled_training_count }} / {{ r.trainings_target }}</td>

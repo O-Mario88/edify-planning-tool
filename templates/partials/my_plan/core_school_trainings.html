@@ -57,14 +57,14 @@ Open Core Schools
 <tr>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name|default:"—" }}</a>
   {% else %}
   <span>{{ row.school_name|default:"—" }}</span>
   {% endif %}
   <span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span>
 </td>
 <td class="font-bold text-slate-700" data-label="Package">{{ row.training_number|default:"—" }}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
-<td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline hover:text-blue-600">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
+<td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline edify-primary-text-hover">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
 <td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td data-label="Intervention">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">

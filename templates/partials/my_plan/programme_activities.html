@@ -41,14 +41,14 @@ Open Work Plan
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name|default:"—" }}</a>
   {% elif row.venue_name %}
   <span>{{ row.venue_name }}</span>
   {% else %}
   <span class="text-slate-400">—</span>
   {% endif %}
 </td>
-<td class="font-semibold text-slate-600" data-label="Activity">{{ row.activity_type_label|default:row.purpose|default:"—" }}</td>
+<td class="font-semibold text-slate-600" data-label="Activity">{% firstof row.activity_type_label row.purpose "—" %}</td>
 <td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td data-label="Budget status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>

@@ -45,7 +45,7 @@ Open Planning
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 hover:text-blue-600">{{ row.school_name|default:"—" }}</a>
+  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name|default:"—" }}</a>
   {% else %}
   <span>{{ row.school_name|default:"—" }}</span>
   {% endif %}

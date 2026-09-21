@@ -32,15 +32,15 @@ Responsible CCEO column is excluded (moved to tabs).
             <span class="font-semibold text-slate-900 dark:text-white">{% if row.cluster %}{{ row.cluster.name }}{% else %}{{ row.name }}{% endif %}</span>
           {% else %}
             {% if row.cluster %}
-              <a href="/clusters/{{ row.cluster.id }}" class="hover:underline text-primary hover:text-blue-600 dark:hover:text-blue-400">
+              <a href="/clusters/{{ row.cluster.id }}" class="hover:underline text-primary edify-primary-text-hover dark:edify-primary-text-hover">
                 {{ row.cluster.name }}
               </a>
             {% elif row.cluster_id %}
-              <a href="/clusters/{{ row.cluster_id }}" class="hover:underline text-primary hover:text-blue-600 dark:hover:text-blue-400">
+              <a href="/clusters/{{ row.cluster_id }}" class="hover:underline text-primary edify-primary-text-hover dark:edify-primary-text-hover">
                 {{ row.name }}
               </a>
             {% else %}
-              <a href="/clusters/{{ row.id }}" class="hover:underline text-primary hover:text-blue-600 dark:hover:text-blue-400">
+              <a href="/clusters/{{ row.id }}" class="hover:underline text-primary edify-primary-text-hover dark:edify-primary-text-hover">
                 {{ row.name }}
               </a>
             {% endif %}

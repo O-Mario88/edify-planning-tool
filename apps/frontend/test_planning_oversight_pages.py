@@ -228,20 +228,23 @@ class ScopeTest(OversightPageFixture):
         # IA accesses the country planning oversight page
         response = self.as_user(self.ia_user).get(CD_URL)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "cd-lead-toggle")
+        # Each Program Lead is a tab (2026-09-19 redesign); opening it loads
+        # the team's detail from its own route.
+        self.assertContains(response, 'role="tab"')
+        self.assertContains(response, f"/country-planning-oversight/team/{self.pl.id}")
         self.assertContains(response, "Team Lead")
         self.assertContains(response, "Other Lead")
 
-        # IA expands Team Lead's activities
+        # IA opens Team Lead's tab: officers are tabs of their own, each
+        # holding the officer's work.
         team_resp = self.as_user(self.ia_user).get(
             f"/country-planning-oversight/team/{self.pl.id}"
         )
         self.assertEqual(team_resp.status_code, 200)
-        self.assertContains(team_resp, "cd-officer-card")
-        self.assertContains(team_resp, "cd-officer-summary")
+        self.assertContains(team_resp, "cd-team-detail-wrapper")
+        self.assertContains(team_resp, "team-officer-tab")
         self.assertContains(team_resp, "James")
         self.assertContains(team_resp, "Alpha Primary")
-        self.assertContains(team_resp, "Expand all officers")
 
     def test_the_team_expansion_cannot_be_pointed_at_another_team(self):
         """The id in the URL is not trusted; the rows are rebuilt for the caller.

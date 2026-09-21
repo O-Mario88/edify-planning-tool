@@ -268,7 +268,7 @@ class PresenceServiceTest(TestCase):
         # Paula's last sitting, and where she was.
         self.assertFalse(paula["lead"]["online"])
         self.assertEqual(paula["lead"]["duration_label"], "30m")
-        self.assertEqual(paula["lead"]["section"], "Team Oversight")
+        self.assertEqual(paula["lead"]["section"], "Planning Oversight")
         # Ben is a Program Lead with nobody under him yet; Eve has no Program
         # Lead; Dan groups under his role.
         self.assertEqual(groups[f"pl:{self.ben.id}"]["total"], 1)
