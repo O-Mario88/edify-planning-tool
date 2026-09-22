@@ -225,6 +225,41 @@ class Reg02CalendarPolicyTest(TestCase):
         updated = Activity.objects.get(id=activity["id"])
         self.assertEqual(updated.planned_date.isoformat(), MONDAY)
 
+    def test_reschedule_is_gated_by_reschedule_itself_not_only_the_batch_path(self):
+        """`reschedule()` must carry the gate, not borrow one downstream.
+
+        Found by mutation testing, 2026-09-22. With the gate deleted from
+        `reschedule()` the test above still passed, because a staff school
+        visit is routed through `daily_visit_batches.reschedule_within_batch`,
+        which carries its own deliberately redundant copy. Defence in depth
+        working — but it meant no test actually covered `reschedule()`'s gate,
+        and the batch branch is entered only for
+        `DAILY_BATCH_ELIGIBLE_TYPES` + `delivery_type == "staff"` + a school.
+
+        Anything outside that shape — a partner-delivered visit, a cluster
+        meeting, a training — reaches `reschedule()` alone. This pins that
+        path, so removing either gate now fails a test.
+        """
+        activity = self._create(MONDAY)
+        row = Activity.objects.get(id=activity["id"])
+        # Partner delivery is a real shape here, and it is the one the batch
+        # branch legitimately skips: partners are not in a staff daily batch.
+        row.delivery_type = "partner"
+        row.save(update_fields=["delivery_type"])
+
+        with self.assertRaises(BadRequest) as caught:
+            reschedule(
+                activity["id"],
+                {"scheduledDate": RESCHEDULE_TARGET_SUNDAY, "reason": "test"},
+                self.cceo,
+            )
+        self.assertIn("Sunday", str(caught.exception))
+        self.assertEqual(
+            Activity.objects.get(id=activity["id"]).planned_date.isoformat(),
+            MONDAY,
+            "the refused reschedule still moved the activity",
+        )
+
     def test_partner_scheduling_is_blocked_on_sunday(self):
         partner_user = _user("reg02-partner@edify.test", EdifyRole.PARTNER_ADMIN.value)
         partner = Partner.objects.create(
