@@ -9,7 +9,7 @@
 | CONFLICT-004 | **Decided by the owner, 2026-09-22, and implemented** — see §3a |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
-| Final local suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
+| Final local suite | **8,315 tests, `OK`**, at `e9058ba10fc55900885dd829fb05cc0eb74d9356` (2026-09-22, PostgreSQL 16 / Python 3.13, `--parallel 4`, 1,286s). The run before it, at `84d75841`, was **red** — 1 failure, 2 errors — and §3a says what they were. The earlier figure of 6,228 belongs to the 2026-08-29 pass at `68ed46c2` and is kept in §5b. |
 | CI on the audit head | all six checks green at `2248cdf5` — see §5a |
 
 Every claim below is either a command whose output is quoted, or is marked
