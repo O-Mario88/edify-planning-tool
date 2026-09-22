@@ -26,6 +26,14 @@ PL." So the panel is a table of everyone with an account — status light,
 name, how long they have been on, what they were doing, which part of the
 system — with the CCEOs folded under their Program Lead and everyone else
 under their role.
+
+Owner, 2026-09-22: "Give PLs access to Who is online but restrict to their team
+members only." A Programme Lead reads the same table, over their own reporting
+line and nobody else's — themselves and the people they supervise. Every count
+in it is of that team, not of the country, so the panel a Lead reads is about
+the people they can actually ask. The scope is a set of user ids
+(``team_user_ids``) handed to ``presence_summary``; without one it is still the
+whole country, which is what the Admin and the Country Director read.
 """
 
 from __future__ import annotations
@@ -245,6 +253,32 @@ def _program_lead_of() -> tuple[dict[str, str], dict[str, str]]:
     return lead_of, names
 
 
+def team_user_ids(user) -> set[str]:
+    """The people this person supervises, and themselves.
+
+    The reporting line, not a role and not a geography: a Programme Lead's
+    Who's Online answers "who on my team is working", so it holds exactly the
+    officers whose work they are answerable for. Read from
+    ``StaffSupervisorAssignment``, the same links the country table folds its
+    groups by, so the Lead's own panel and the Admin's cannot disagree about
+    who is on a team.
+    """
+    from .models import StaffSupervisorAssignment
+
+    own = getattr(user, "id", None)
+    ids = {own} if own else set()
+    if own:
+        ids.update(
+            StaffSupervisorAssignment.objects.filter(
+                supervisor__user_id=own,
+                supervisor__deleted_at__isnull=True,
+                supervisee__deleted_at__isnull=True,
+            ).values_list("supervisee__user_id", flat=True)
+        )
+    ids.discard(None)
+    return ids
+
+
 def presence_groups(people: list[dict]) -> list[dict]:
     """The table's rows folded so a country's roster does not run to a
     hundred lines: one group per Program Lead holding their CCEOs, one for
@@ -306,7 +340,16 @@ def presence_groups(people: list[dict]) -> list[dict]:
     return out
 
 
-def presence_summary(*, now=None) -> dict:
+def presence_summary(*, now=None, only_user_ids=None) -> dict:
+    """Who is online and how often people signed in.
+
+    With *only_user_ids* the whole panel is about those people: the roster, the
+    online count, the sign-in totals and the fourteen-day chart. A Programme
+    Lead reading their team's panel must not see a country number beside a team
+    roster — that is two different questions on one line. An empty set is a
+    team of nobody, and is answered as such rather than falling back to the
+    country.
+    """
     from django.db.models import Count, F, Max, Q
     from django.db.models.functions import TruncDate
 
@@ -331,6 +374,8 @@ def presence_summary(*, now=None) -> dict:
     )
     week_start_dt = day_start - timedelta(days=today.weekday())
     events = LoginEvent.objects.filter(user__deleted_at__isnull=True)
+    if only_user_ids is not None:
+        events = events.filter(user_id__in=list(only_user_ids))
     logins_by_user = {
         row["user_id"]: row
         for row in events.values("user_id").annotate(
@@ -341,7 +386,10 @@ def presence_summary(*, now=None) -> dict:
         )
     }
 
-    people = User.objects.filter(is_active=True, deleted_at__isnull=True).values(
+    roster = User.objects.filter(is_active=True, deleted_at__isnull=True)
+    if only_user_ids is not None:
+        roster = roster.filter(id__in=list(only_user_ids))
+    people = roster.values(
         "id",
         "name",
         "email",

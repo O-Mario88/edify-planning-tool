@@ -144,4 +144,16 @@ where each is decided, and the follow-ups the lead has sent.
       </section>
     </div>
   </div>
+
+  {% comment %}Who's Online, this Lead's team only (owner, 2026-09-22: "give
+  PLs access to Who is online but restrict to their team members only"). The
+  same table the Admin and the Country Director read, over the reporting line
+  in `presence` — the view scopes it, so there is nothing here to get wrong.
+  Staff links are left off: the user records behind them are the admin panel's,
+  which is not a Lead's to open.{% endcomment %}
+  {% if presence %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card">
+    {% include "partials/dashboards/_whos_online.html" %}
+  </div>
+  {% endif %}
 </div>

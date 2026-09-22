@@ -1,8 +1,13 @@
-"""A day of visits across a cluster: five schools, four purposes, one door.
+"""A day of visits across a cluster: one to five schools, four purposes, one door.
 
 The owner's rule of 2026-09-21, pinned where it is enforced
 (apps.planning.cluster_bulk_scheduling) rather than only in the drawer that
 shows it — a browser can post whatever it likes.
+
+Five was first read as a floor, and the floor was the wrong end of the number
+(owner, 2026-09-22): "the staff can plan from 1 to 5 but it cannot exceed 5 ...
+some people are planning 4, other 3, other 2 and other 1 — make sure every
+plan." So one school is a day, and six is not.
 """
 
 from __future__ import annotations
@@ -16,7 +21,7 @@ from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region, SubCounty
-from apps.partners.purposes import CLUSTER_BULK_MINIMUM_SCHOOLS
+from apps.partners.purposes import CLUSTER_BULK_MAXIMUM_SCHOOLS
 from apps.planning.cluster_bulk_scheduling import (
     bulk_schedule_cluster_visits,
     schedulable_members,
@@ -88,24 +93,58 @@ class _ClusterDay(TestCase):
         return payload
 
 
-class TheFloorIsFiveSchoolsTest(_ClusterDay):
-    def test_four_schools_are_refused_by_number(self):
+class TheCeilingIsFiveSchoolsTest(_ClusterDay):
+    def test_one_school_is_a_day(self):
+        # The case the floor refused outright: a planner with one school to
+        # visit was sent away to plan nothing (owner, 2026-09-22).
+        result = bulk_schedule_cluster_visits(
+            self.cluster.id,
+            self._payload(schoolIds=[self.schools[0].id]),
+            self.user,
+        )
+        self.assertEqual(result["schools"], 1)
+        self.assertEqual(len(result["created"]), 1)
+
+    def test_two_three_and_four_schools_are_days_too(self):
+        for count in (2, 3, 4):
+            with self.subTest(schools=count):
+                result = bulk_schedule_cluster_visits(
+                    self.cluster.id,
+                    self._payload(
+                        schoolIds=[s.id for s in self.schools[:count]],
+                        scheduledDate=_next_working_day(
+                            date.fromisoformat(self._payload()["scheduledDate"])
+                            + timedelta(days=count)
+                        ).isoformat(),
+                    ),
+                    self.user,
+                )
+                self.assertEqual(result["schools"], count)
+
+    def test_six_schools_are_refused_by_number(self):
         with self.assertRaises(BadRequest) as ctx:
             bulk_schedule_cluster_visits(
                 self.cluster.id,
-                self._payload(schoolIds=[s.id for s in self.schools[:4]]),
+                self._payload(schoolIds=[s.id for s in self.schools[:6]]),
                 self.user,
             )
-        self.assertIn(str(CLUSTER_BULK_MINIMUM_SCHOOLS), str(ctx.exception.detail))
+        self.assertIn(str(CLUSTER_BULK_MAXIMUM_SCHOOLS), str(ctx.exception.detail))
 
-    def test_the_same_school_ticked_twice_is_still_one_school(self):
-        four = [school.id for school in self.schools[:4]]
+    def test_nothing_ticked_is_refused(self):
         with self.assertRaises(BadRequest):
             bulk_schedule_cluster_visits(
-                self.cluster.id,
-                self._payload(schoolIds=[*four, self.schools[0].school_id]),
-                self.user,
+                self.cluster.id, self._payload(schoolIds=[]), self.user
             )
+
+    def test_the_same_school_ticked_twice_is_still_one_school(self):
+        # Six ids, five schools: the duplicate must not spend the ceiling.
+        five = [school.id for school in self.schools[:5]]
+        result = bulk_schedule_cluster_visits(
+            self.cluster.id,
+            self._payload(schoolIds=[*five, self.schools[0].school_id]),
+            self.user,
+        )
+        self.assertEqual(result["schools"], 5)
 
     def test_a_school_outside_the_cluster_is_refused(self):
         # In a sub-county this cluster does not cover, so School.save's
@@ -161,10 +200,12 @@ class TheSelectionSaysWhyTest(_ClusterDay):
     def test_every_member_is_listed_with_its_own_answer(self):
         selection = schedulable_members(self.cluster, self.user)
         self.assertEqual(len(selection.members), len(self.schools))
-        self.assertTrue(selection.enough_schools)
+        self.assertTrue(selection.any_schools)
         self.assertEqual(selection.shortfall_reason, "")
 
-    def test_a_cluster_with_too_few_open_schools_says_so_before_a_press(self):
+    def test_one_open_school_is_a_day_and_the_drawer_opens(self):
+        # Under the floor this cluster was refused before a press. One school
+        # is a day now (owner, 2026-09-22).
         small = Cluster.objects.create(
             name="CB Small",
             region=self.region,
@@ -176,8 +217,21 @@ class TheSelectionSaysWhyTest(_ClusterDay):
         )
         School.objects.filter(id=self.schools[0].id).update(cluster_id=small.id)
         selection = schedulable_members(small, self.user)
-        self.assertFalse(selection.enough_schools)
-        self.assertIn("needs 5", selection.shortfall_reason)
+        self.assertTrue(selection.any_schools)
+        self.assertEqual(selection.shortfall_reason, "")
+
+    def test_a_cluster_with_nothing_open_says_so_before_a_press(self):
+        empty = Cluster.objects.create(
+            name="CB Empty",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            cluster_type="client",
+            status="active",
+            responsible_staff_id=self.staff.id,
+        )
+        selection = schedulable_members(empty, self.user)
+        self.assertFalse(selection.any_schools)
 
     def test_a_school_another_officer_owns_cannot_be_ticked(self):
         other_user = User.objects.create(

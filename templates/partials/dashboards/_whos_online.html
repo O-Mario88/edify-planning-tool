@@ -14,13 +14,16 @@
   of this table leaves it as plain text, because the admin panel is not theirs
   to open.
 
-  Expects `presence` (apps.accounts.presence.presence_summary).
+  Expects `presence` (apps.accounts.presence.presence_summary). With
+  `presence_scope_label` the caption says whose roster this is: the Programme
+  Lead's copy holds their reporting line only (owner, 2026-09-22), and every
+  number in it counts that team rather than the country.
 {% endcomment %}
 <section class="presence-panel" aria-labelledby="presence-title" data-admin-presence>
   <header class="presence-panel__header">
     <div>
       <h2 id="presence-title">Who's Online</h2>
-      <p class="presence-panel__caption">{{ presence.online_count }} of {{ presence.people_count }} online in the last {{ presence.window_minutes }} min · {{ presence.logins_today }} sign-in{{ presence.logins_today|pluralize }} today · {{ presence.logins_this_week }} this week</p>
+      <p class="presence-panel__caption">{{ presence.online_count }} of {{ presence.people_count }} {% if presence_scope_label %}in {{ presence_scope_label }} {% endif %}online in the last {{ presence.window_minutes }} min · {{ presence.logins_today }} sign-in{{ presence.logins_today|pluralize }} today · {{ presence.logins_this_week }} this week</p>
     </div>
     <span class="presence-legend" aria-hidden="true"><i class="admin-presence-light admin-presence-light--online"></i> online <i class="admin-presence-light admin-presence-light--offline"></i> offline</span>
   </header>

@@ -49,11 +49,15 @@ CLUSTER_BULK_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("story_gathering", "Content/Story Collection"),
 )
 
-#: The fewest member schools a cluster bulk schedule may name for one day
-#: (owner, 2026-09-21). Fewer than this is an ordinary day's work and belongs
-#: in the per-school drawer, where each school's own purpose and focus are
-#: chosen deliberately.
-CLUSTER_BULK_MINIMUM_SCHOOLS = 5
+#: The most member schools a cluster bulk schedule may name for one day.
+#:
+#: This was a FLOOR of five (owner, 2026-09-21: "a minimum of 5 schools per
+#: day"), and the floor turned out to describe the exception rather than the
+#: work: "some people are planning 4, other 3, other 2 and other 1 — make sure
+#: every plan" (owner, 2026-09-22). So five is now the ceiling. One school is a
+#: legitimate day and is planned here like any other; six is not a day's route,
+#: and is refused rather than quietly written.
+CLUSTER_BULK_MAXIMUM_SCHOOLS = 5
 
 # Purposes that move no single SSA intervention: collecting the SSA itself and
 # relationship visits. A visit for one of these may name a focus, but its
@@ -165,7 +169,7 @@ def _fallback_for_activity_type(activity_type: str | None, for_partner: bool) ->
 
 
 __all__ = [
-    "CLUSTER_BULK_MINIMUM_SCHOOLS",
+    "CLUSTER_BULK_MAXIMUM_SCHOOLS",
     "CLUSTER_BULK_VISIT_PURPOSES",
     "INTERVENTION_FREE_PURPOSES",
     "PARTNER_VISIT_PURPOSES",

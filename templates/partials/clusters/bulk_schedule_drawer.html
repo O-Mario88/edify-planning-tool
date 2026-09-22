@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Schedule a day of visits · {{ cluster.name }}{% endblock %}
-{% block drawer_subtitle %}One purpose, one day, at {{ minimum_schools }} or more of this cluster's schools.{% endblock %}
+{% block drawer_subtitle %}One purpose, one day, at up to {{ maximum_schools }} of this cluster's schools.{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -9,7 +9,9 @@ Bulk scheduling happens from a cluster and nowhere else (owner, 2026-09-21).
 Three rules the drawer shows before a press, and the service holds again on
 submit (apps.planning.cluster_bulk_scheduling):
 
-  * at least {{ minimum_schools }} schools ticked for the day;
+  * between one and {{ maximum_schools }} schools ticked for the day — five
+    was once the floor, which left a planner with four schools no door at all
+    (owner, 2026-09-22);
   * one of the four purposes that is the same errand at every school —
     In-school Training is not among them, because it pairs a governed course
     with a companion visit and the course is a per-school choice;
@@ -18,14 +20,20 @@ submit (apps.planning.cluster_bulk_scheduling):
 <div
 class="space-y-6 text-slate-700"
 x-data="{
-minimum: {{ minimum_schools }},
+maximum: {{ maximum_schools }},
 selected: [],
-get shortfall() { return Math.max(0, this.minimum - this.selected.length); },
+get overflow() { return Math.max(0, this.selected.length - this.maximum); },
+get ready() { return this.selected.length > 0 && this.overflow === 0; },
 toggleAll(checked) {
+let room = this.maximum;
 document.querySelectorAll('.cluster-bulk-checkbox:not(:disabled)').forEach(el => {
 const row = el.closest('.cluster-bulk-row');
 if (row && row.style.display === 'none') return;
-el.checked = checked;
+/* A day takes at most `maximum` schools, so Select all ticks that many and
+   stops — offering more than can be saved is not a selection, it is a
+   refusal waiting to happen. */
+el.checked = checked && room > 0;
+if (el.checked) room -= 1;
 });
 this.sync();
 },
@@ -43,7 +51,7 @@ document.querySelectorAll('.cluster-bulk-checkbox:checked')
 <p class="edify-text-caption text-slate-400 leading-normal">Add member schools to {{ cluster.name }} before planning a day of visits across it.</p>
 </div>
 </div>
-{% elif not selection.enough_schools %}
+{% elif not selection.any_schools %}
 <div class="edify-note" data-tone="warning" role="alert">
 <p class="edify-note__body">{{ selection.shortfall_reason }}</p>
 </div>
@@ -117,7 +125,7 @@ type="checkbox"
 @change="toggleAll($event.target.checked)"
 class="rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]"
 >
-<span>Select all schools open for a visit</span>
+<span>Select up to {{ maximum_schools }} schools open for a visit</span>
 </label>
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wide">{{ selection.selectable|length }} of {{ selection.members|length }} open</span>
 </div>
@@ -169,8 +177,9 @@ aria-live="polite"
 
 <div class="sticky bottom-[-28px] z-10 -mx-7 px-7 py-4 flex items-center justify-between gap-3 edify-surface border-t edify-border-top">
 <p class="edify-text-caption font-semibold text-slate-400" aria-live="polite">
-<span x-show="shortfall > 0"><span x-text="selected.length">0</span> ticked · <span x-text="shortfall"></span> more needed</span>
-<span x-show="shortfall === 0" x-cloak><span x-text="selected.length"></span> schools ticked for this day</span>
+<span x-show="selected.length === 0">Tick the schools this day is planned for · up to <span x-text="maximum"></span></span>
+<span x-show="overflow > 0" x-cloak><span x-text="selected.length"></span> ticked · <span x-text="overflow"></span> too many for one day</span>
+<span x-show="ready" x-cloak><span x-text="selected.length"></span> school<span x-show="selected.length !== 1">s</span> ticked for this day</span>
 </p>
 <div class="flex items-center gap-2">
 <button
@@ -183,11 +192,11 @@ Cancel
 <button
 type="submit"
 data-testid="cluster-bulk-schedule-save"
-:disabled="shortfall > 0"
-:class="shortfall > 0 ? 'opacity-50 cursor-not-allowed' : ''"
+:disabled="!ready"
+:class="!ready ? 'opacity-50 cursor-not-allowed' : ''"
 class="px-4 h-8 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 >
-<span x-text="shortfall > 0 ? `Tick ${minimum} schools to schedule` : `Schedule ${selected.length} visits`">Schedule the day</span>
+<span x-text="selected.length === 0 ? 'Tick a school to schedule' : (overflow > 0 ? `Untick ${overflow} to schedule` : `Schedule ${selected.length} visit${selected.length === 1 ? '' : 's'}`)">Schedule the day</span>
 </button>
 </div>
 </div>

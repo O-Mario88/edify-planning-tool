@@ -20,6 +20,7 @@
     <button type="button" @click="assignClusterOpen = true">Assign cluster</button>
     <button type="button" @click="bulkAssignProjectOpen = true">Assign project</button>
     <button type="button" @click="matchStaffOpen = true">Match staff</button>
+    {% if may_transfer_school %}<button type="button" @click="transferOwnerOpen = true">Reassign owner</button>{% endif %}
     <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
   </div>
   {% endif %}

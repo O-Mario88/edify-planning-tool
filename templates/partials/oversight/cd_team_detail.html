@@ -11,7 +11,7 @@ and level 3 (4 distinct tables per staff member:
 {% if owner_groups %}
 {% with can_open_activity_record=request.user|can_open:"/activities/0" %}
 <div class="cd-team-detail-wrapper space-y-5"
-     x-data="{ activeOfficer: '{% firstof request.GET.officer owner_groups.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }">
+     x-data="tabState('activeOfficer', 'officer', {% tab_values owner_groups %}, '{{ owner_groups.0.id }}')">
 
   {# ── Secondary Tabs: CCEOs / Officers under this Program Lead ───────── #}
   <div class="oversight-team-selector">

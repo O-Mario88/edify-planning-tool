@@ -64,3 +64,58 @@ def pager_query(context, param):
     from urllib.parse import urlencode
 
     return urlencode(pairs) + "&"
+
+
+@register.simple_tag
+def tab_values(rows, key="id"):
+    """The ids a tab strip may hold, as a JSON array for `tabState`.
+
+    A tab strip and its tables are two halves of one thing: the strip decides
+    which table is on screen and the pager decides which page of it. The strip
+    lives in the browser, so its choice reaches the server only as a query
+    parameter — and only a value the strip actually offers may be honoured.
+    Without that check a Country Director who paged one Lead's officer and
+    then opened a different Lead saw an empty panel, because the officer id in
+    the URL belonged to somebody else's team.
+
+    Each id is rendered exactly as ``{{ row.id }}`` renders it in the panel's
+    own `x-show`, `str()` and all — a group with no id at all (the "Unassigned"
+    fold on the country lens) is written "None" on both sides. Anything else
+    and that group's tab would be the one tab nothing could select.
+
+    The output is escaped by Django and decoded again by the HTML parser, so
+    it is read inside an attribute as ordinary JSON.
+    """
+    from json import dumps
+
+    def value(row):
+        if isinstance(row, dict):
+            return row.get(key)
+        return getattr(row, key, None)
+
+    return dumps([str(value(row)) for row in rows or []])
+
+
+@register.simple_tag(takes_context=True)
+def carry_query(context, *drop):
+    """Every current query parameter except *drop*, as `&key=value` pairs.
+
+    For a fragment the page fetches for itself: without this, a table inside
+    one arrives at page one whatever page the reader asked for, because the
+    fragment's own URL never carried the page number.
+    """
+    request = context.get("request")
+    if request is None:
+        return ""
+    dropped = set(drop)
+    pairs = [
+        (key, value)
+        for key, values in request.GET.lists()
+        for value in values
+        if value and key not in dropped
+    ]
+    if not pairs:
+        return ""
+    from urllib.parse import urlencode
+
+    return "&" + urlencode(pairs)

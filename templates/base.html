@@ -226,6 +226,16 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/micro-ux.js' %}?v=20260921railmore1"></script>
 
 {% comment %}
+A paginated link keeps the tab the reader chose. Oversight puts one person's
+tables inside a browser-side tab panel, while the pager under the table is a
+link the server wrote before any tab was touched — so page two used to arrive
+with the strip back at its first tab, which is the Programme Lead's own rows
+(owner, 2026-09-22). Loaded after Alpine's factories, which is where a strip
+registers the parameter this carries.
+{% endcomment %}
+<script defer src="{% static 'js/table-pagination.js' %}?v=20260922pagerstate1"></script>
+
+{% comment %}
 Keeps the reader where they were. The shell gives the workspace its own
 scrollbar, so the document never scrolls and the browser has nothing to
 restore on a refresh, a back, or a paginated link — and the sidebar's menu,

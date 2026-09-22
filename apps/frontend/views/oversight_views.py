@@ -1357,9 +1357,27 @@ def country_planning_oversight_view(request):
     sys_pls = oversight.system_program_leads()
     summary = oversight.summarize(items)
     groups = oversight.group_by_program_lead(items, program_leads=sys_pls)
+    # Which team opens with the page. The Lead strip is a browser-side choice —
+    # switching teams costs no request — and it writes itself into the URL as
+    # `lead` so a paginated link inside one team's tables comes back to that
+    # team. Only the team that is on screen fetches its rows; an id that names
+    # no team here (a stale link, a Lead outside this period) falls back to the
+    # first, which is what the strip shows in that case too.
+    # `str(...)` and not `or ""`: the Unassigned fold has no id, and the panel
+    # it draws compares against what `{{ group.id }}` writes, which is "None".
+    selected_lead = (request.GET.get("lead") or "").strip()
+    lead_ids = [str(group.get("id")) for group in groups]
+    open_lead = (
+        selected_lead
+        if selected_lead in lead_ids
+        else (lead_ids[0] if lead_ids else "")
+    )
+    for group in groups:
+        group["autoload"] = str(group.get("id")) == open_lead
     context = {
         **period,
         "program_lead": program_lead_id,
+        "selected_lead": open_lead,
         "summary": summary,
         "kpis": _kpi_items(summary, country=True),
         "groups": groups,

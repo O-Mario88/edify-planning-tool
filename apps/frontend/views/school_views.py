@@ -29,6 +29,7 @@ from apps.core.rbac import EdifyRole
 from apps.schools.upload_service import upload_school_file
 from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
+from apps.schools import ownership_transfer
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.accounts.staff_matching import OWNER_ROLES, on_staff
 from apps.clusters.eligibility import (
@@ -863,6 +864,18 @@ def school_directory_view(request):
         # so the row selection, bulk bar and per-row assign buttons are not
         # drawn for them: a control that can only answer "not you" is noise.
         "directory_read_only": scope.region_scope,
+        # Reassigning ownership in bulk, for the two roles that may (owner,
+        # 2026-09-22). The same governed transfer the single-school drawer
+        # runs, over whatever is ticked — one decision instead of forty.
+        "may_transfer_school": ownership_transfer.may_transfer_school(request.user),
+        "may_transfer_open_activities": (
+            ownership_transfer.may_transfer_open_activities(request.user)
+        ),
+        "portfolio_owner_options": staff_profiles.filter(
+            user__is_active=True,
+            user__status="active",
+            user__roles__overlap=list(ownership_transfer.PORTFOLIO_ROLES),
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":
