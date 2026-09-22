@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 701,
+  "titled_cards": 702,
   "templates": 267,
-  "distinct_titles": 668,
+  "distinct_titles": 669,
   "with_card_key": 13,
-  "untitled_surfaces": 780,
+  "untitled_surfaces": 781,
   "untitled_chrome": 176,
-  "untitled_nested": 252,
+  "untitled_nested": 253,
   "untitled_headless": 352,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
@@ -2969,7 +2969,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 210,
+   "line": 211,
    "title": "Assign Cluster to Schools",
    "heading_level": 3,
    "has_card_key": false,
@@ -2978,7 +2978,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 247,
+   "line": 248,
    "title": "Assign Project to Schools",
    "heading_level": 3,
    "has_card_key": false,
@@ -2987,12 +2987,26 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 284,
+   "line": 285,
    "title": "Match Staff to Schools",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
    "branch_path": []
+  },
+  {
+   "template": "templates/pages/schools/index.html",
+   "line": 335,
+   "title": "Reassign school ownership",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
+   "branch_path": [
+    [
+     15,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
@@ -4484,7 +4498,7 @@
   },
   {
    "template": "templates/partials/dashboards/_whos_online.html",
-   "line": 19,
+   "line": 22,
    "title": "Who's Online",
    "heading_level": 2,
    "has_card_key": false,

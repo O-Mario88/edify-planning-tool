@@ -2733,7 +2733,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8619,
+      "bytes": 9317,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-schedule-drawer"
@@ -3881,7 +3881,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4345,
+      "bytes": 4632,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4594,7 +4594,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9318,
+      "bytes": 9961,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8412,7 +8412,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 34491,
+      "bytes": 34302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8440,7 +8440,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12391,
+      "bytes": 12918,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8467,7 +8467,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8869,
+      "bytes": 8311,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -8515,7 +8515,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9453,
+      "bytes": 8895,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -10805,7 +10805,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7446,
+      "bytes": 7569,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -26553,7 +26553,7 @@
       "permission_key": "cluster_detail",
       "primary_action": "Cluster Bulk Schedule Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "A day of visits across five or more of a cluster's schools.",
+      "purpose": "A day of visits across one to five of a cluster's schools.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -32224,6 +32224,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "POST /country-planning-oversight/send",
+        "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -75707,7 +75708,8 @@
       "secondary_actions": [
         "/schools/bulk-assign-cluster",
         "/schools/bulk-assign-project",
-        "/schools/bulk-match-staff"
+        "/schools/bulk-match-staff",
+        "/schools/bulk-transfer-owner"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -77074,6 +77076,86 @@
         "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.ownership_views",
+      "backend_view": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9BA2BF3781",
+      "page_title": "Bulk School Owner Transfer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "Bulk School Owner Transfer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Reassign the schools ticked in the directory, in one decision.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/bulk-transfer-owner",
+      "route_name": "bulk_school_owner_transfer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.geography.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -103187,6 +103269,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/bulk-transfer-owner",
+      "route_name": "bulk_school_owner_transfer",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.school_views.closed_schools_view",
       "kind": "page",
       "methods": [
@@ -104533,28 +104627,28 @@
   "summary": {
     "accessibility_contract_pass": 532,
     "activity_states": 24,
-    "all_routes": 1293,
+    "all_routes": 1294,
     "api_routes": 360,
     "component_templates": 474,
     "full_pages": 260,
     "mobile_contract_pass": 532,
-    "nonvisual_actions": 264,
+    "nonvisual_actions": 265,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 533,
+      "interaction-fragment": 534,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
     "partials_and_drawers": 269,
-    "permission_gated": 806,
+    "permission_gated": 807,
     "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 821,
+    "routed_surfaces": 822,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -104563,7 +104657,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 532,
-    "test_referenced": 714,
+    "test_referenced": 715,
     "theme_contract_pass": 532
   }
 }
