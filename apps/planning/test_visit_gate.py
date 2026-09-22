@@ -11,18 +11,23 @@ So what these tests hold is the pair of statements the module now makes:
   four visits split between staff and partner, and what a live partner
   assignment means. Every page reads those numbers to SHOW where a school's
   visiting has reached;
-* and no count is a permission any more. `staff_can_schedule`,
-  `partner_can_schedule`, `can_assign_partner` and `can_assign_visit` stay
-  open with empty reasons however much of the year's support is already
-  scheduled, the `assert_*` helpers return instead of raising, and the drawers
-  and queues behind them offer a live button rather than a greyed one with a
-  tooltip.
+* and a CLIENT school's count is no longer a permission.
+  `staff_can_schedule`, `partner_can_schedule`, `can_assign_partner` and
+  `can_assign_visit` stay open with empty reasons however much of the year's
+  support is already scheduled, the `assert_*` helpers return instead of
+  raising, and the drawers and queues behind them offer a live button rather
+  than a greyed one with a tooltip.
 
-The cap constants are still named and still carry the owner's numbers, because
-a count shown without the figure it is counted against says nothing: a Core
-Schools row reads "1/2 visits" from them. The tests below therefore count to
-CLIENT_VISIT_CAP rather than to a literal, and assert that reaching it changes
-what the row says and not what it permits.
+The CORE package is the exception, and the second class below is about
+nothing else: its 2 + 2 split rests on the owner's own later instruction of
+2026-09-17, `core_planning_services.assert_can_schedule` enforces the staff
+half and delegates the partner half to this module, and the two have to
+agree or a Core Schools row offers what the POST refuses.
+
+CLIENT_VISIT_CAP is still named and still carries the owner's number, because
+a count shown without the figure it is counted against says nothing. The
+client tests therefore count to it rather than to a literal, and assert that
+reaching it changes what the row says and not what it permits.
 
 The gate (apps.planning.visit_gate) is the one definition the buttons and the
 services share, so the tests drive it directly and then check that both
@@ -280,7 +285,15 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
 
 
 class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
-    def test_the_two_halves_of_the_package_are_counted_and_capped_by_neither(self):
+    """The package's halves are the one thing 2026-09-21 did NOT lift.
+
+    They rest on the owner's own later instruction (2026-09-17) and are
+    enforced half here and half in `core_planning_services`, which delegates
+    the partner side to this module — so these have to keep refusing or a
+    Core Schools row offers a button the POST turns away.
+    """
+
+    def test_staff_stop_at_two_visits(self):
         school = self._school("VG-C1", school_type="core")
         self._visit(school)
         gate = visit_gate(school)
@@ -291,9 +304,9 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self._visit(school)
         gate = visit_gate(school)
         self.assertEqual(gate.staff_visits, CORE_STAFF_VISIT_CAP)
-        # The package is full and the Schedule button is still live.
-        self.assertTrue(gate.staff_can_schedule)
-        self.assertEqual(gate.staff_reason, "")
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertIn("Staff core visits complete", gate.staff_reason)
+        # The partner's half is untouched.
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
@@ -306,20 +319,21 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self.assertEqual(gate.partner_pending, 1)
         self.assertEqual(gate.partner_held_visits, CORE_PARTNER_VISIT_CAP)
         self.assertEqual(gate.partner_cap, CORE_PARTNER_VISIT_CAP)
-        # A full partner half no longer closes the Assign button.
-        self.assertTrue(gate.can_assign_partner)
-        self.assertEqual(gate.assign_reason, "")
+        self.assertFalse(gate.can_assign_partner)
+        self.assertIn("already assigned", gate.assign_reason)
+        # The assigned slot is still the partner's to schedule.
         self.assertTrue(gate.partner_can_schedule)
+        # Staff are not locked out by a partner assignment at a core school.
         self.assertTrue(gate.staff_can_schedule)
 
-    def test_the_partners_scheduled_visits_are_counted(self):
+    def test_the_partner_stops_at_two_scheduled_visits(self):
         school = self._school("VG-C3", school_type="core")
         self._visit(school, delivery="partner")
         self._visit(school, delivery="partner")
         gate = visit_gate(school)
         self.assertEqual(gate.partner_visits, CORE_PARTNER_VISIT_CAP)
-        self.assertTrue(gate.partner_can_schedule)
-        self.assertEqual(gate.partner_reason, "")
+        self.assertFalse(gate.partner_can_schedule)
+        self.assertIn("Partner core visits complete", gate.partner_reason)
 
     def test_a_training_assignment_does_not_use_a_visit_slot(self):
         school = self._school("VG-C4", school_type="core")
@@ -329,20 +343,19 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self.assertEqual(gate.partner_pending_trainings, 1)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_trainings_are_counted_apart_and_their_entry_stays_open(self):
+    def test_trainings_are_not_visits_and_keep_their_own_entry(self):
         school = self._school("VG-C5", school_type="core")
         self._visit(school)
         self._visit(school)
         gate = visit_gate(school)
+        self.assertFalse(gate.staff_can_schedule)
         self.assertEqual(gate.staff_trainings, 0)
         self.assertTrue(gate.staff_trainings_open)
         self._visit(school, kind="core_training")
         self._visit(school, kind="core_training")
         gate = visit_gate(school)
         self.assertEqual(gate.staff_trainings, CORE_STAFF_VISIT_CAP)
-        # It used to close here. A core school's Training entry now stays
-        # open however many have been delivered (owner, 2026-09-21).
-        self.assertTrue(gate.staff_trainings_open)
+        self.assertFalse(gate.staff_trainings_open)
 
 
 class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
