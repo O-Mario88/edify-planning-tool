@@ -25,7 +25,7 @@
  *
  * Two things, both only for links inside `.edify-pagination`:
  *
- * 1. It carries the view-state parameters that a tab strip registered
+ * 1. It carries the view state parameters that a tab strip registered
  *    (`window.__edifyUrlViewParams`, written by `tabState` and `urlTabs` in
  *    alpine-components.js) from the live URL onto the link, where the link does
  *    not set them itself. Nothing else is carried: a filter the reader has just
