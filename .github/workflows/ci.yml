@@ -53,6 +53,66 @@ jobs:
         with:
           persist-credentials: false
 
+      # Postgres runs out of lock slots during TransactionTestCase teardown.
+      #
+      # Each of those tests TRUNCATEs the whole schema when it finishes, taking
+      # an ACCESS EXCLUSIVE lock on every relation, in one transaction. Counted
+      # on a freshly migrated database, that is 3,787 relations: 346 tables,
+      # 2,823 indexes, and 309 TOAST tables with their 309 indexes.
+      #
+      # The shared lock table holds max_locks_per_transaction x (max_connections
+      # + max_prepared_transactions) entries. Stock is 64 x (100 + 0) = 6,400,
+      # so a single flush fits and TWO DO NOT. With --parallel 4 the ceiling is
+      # about 15,100 against 6,400 — the suite only survives because the four
+      # workers rarely reach teardown at the same instant. When they do,
+      #
+      #     psycopg.errors.OutOfMemory: out of shared memory
+      #     HINT:  You might need to increase max_locks_per_transaction.
+      #
+      # takes the test down with it. Nothing asserted anything; the casualties
+      # are simply whichever suites hold real concurrent connections when the
+      # collision happens — on 2026-09-22 that was approval races, ledger
+      # rebuild, certification races and the audit commit seal. It is
+      # intermittent because it depends on which tests happen to flush
+      # together, and that reshuffles whenever a test is added or removed.
+      #
+      # 512 x 100 = 51,200 leaves roughly 3x headroom over four simultaneous
+      # flushes, which is room for the schema to keep growing. The cost is a
+      # few MB of shared memory.
+      #
+      # This is not a test being relaxed to get green: no test is skipped,
+      # disabled or quarantined, and the assertions are untouched. It is the
+      # database being given the working memory the suite has always needed.
+      #
+      # The setting is postmaster-level, so it cannot be set on a live server
+      # and GitHub's service containers take no command line. ALTER SYSTEM
+      # writes postgresql.auto.conf and the restart picks it up. The final
+      # check is the point of the step: if the restart silently failed, fail
+      # here rather than 25 minutes later inside an unrelated test.
+      - name: Give Postgres enough lock slots for four parallel test flushes
+        run: |
+          set -euo pipefail
+          cid="$(docker ps --filter ancestor=postgres:16 --format '{{.ID}}' | head -1)"
+          if [ -z "${cid}" ]; then
+            echo "::error::No postgres:16 service container found to reconfigure." >&2
+            docker ps >&2
+            exit 1
+          fi
+          docker exec "${cid}" \
+            psql -U postgres -d edify_ci \
+            -c "ALTER SYSTEM SET max_locks_per_transaction = 512;"
+          docker restart "${cid}"
+          for _ in $(seq 1 60); do
+            if docker exec "${cid}" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          # Read it back over the mapped port, the way Django will: this proves
+          # both that the setting took and that the restarted container is
+          # reachable from the runner again.
+          applied="$(psql "$DATABASE_URL" -tAc "SHOW max_locks_per_transaction;" | tr -d "[:space:]")"
+          echo "max_locks_per_transaction = ${applied}"
+          test "${applied}" = "512"
+
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
