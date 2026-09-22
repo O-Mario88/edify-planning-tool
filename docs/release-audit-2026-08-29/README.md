@@ -230,6 +230,69 @@ inside `transaction.atomic()`, so a newly-refused Sunday releases the slot
 instead of leaking it — which is the regression a restored gate could plausibly
 have introduced and does not.
 
+#### What the first full run caught
+
+The restore passed its own module and the four affected apps. It was still
+wrong, and only the full suite said so: **8,314 tests, one failure and two
+errors** at `84d75841`. None of the three was visible from the five modules the
+change touched, which is the argument for running the whole thing.
+
+| Failure | What it really was |
+| --- | --- |
+| `test_activity_can_be_scheduled_during_leave` | A **behaviour disagreement**, and the one that mattered. `64ac5323` had renamed `test_prevent_activity_during_leave` and inverted it to assert that `create()` *succeeds* on a day the assignee is on approved leave. That is precisely what the owner reversed, so the original name and assertion are restored. |
+| `test_a_visit_past_the_client_allowance_is_scheduled_and_counted` | A **fixture artefact**, not a disagreement. It is about the client entitlement allowance — which stays removed — but it dates its visits `now() + N days` for a run of consecutive `N`, so it walks onto a Sunday about one run in seven. |
+| `test_the_code_has_not_moved_under_it` | The traceability artefact's **source fingerprint**. Regenerated with `python manage.py build_traceability_matrix`, never by editing the value: the failure message asks for exactly that, and editing it only makes a stale matrix look fresh. `payload` is unchanged — the code moved, what the journeys touch did not. |
+
+The leave test is worth dwelling on. Its fixture date, 2026-10-09, is *also* a
+public holiday, so a bare `assertRaises(BadRequest)` would have stayed green if
+the leave check were dropped and only the holiday check remained — a test about
+holidays still calling itself a test about leave. It now asserts on the phrase
+"approved leave" specifically, and additionally that the refusal leaves the
+`Leave` row intact and no `Activity` behind.
+
+#### Why 8,000 tests passed over a removed gate
+
+Worth naming, because it is the same shape as SEC-A1 and it will happen again.
+`apps/core/tests/test_leave_scheduling_rule.py` — "Nothing is planned onto a
+person's leave — except by whoever is covering" — was green the whole time the
+gate was gone, and is green now, unchanged. It tests
+`SchedulingPolicyService.check` **directly**.
+
+`23e3bfba` did not touch the policy. It removed the *call sites*. So the
+predicate kept its tests and kept passing, while nothing asked whether anybody
+still called it — exactly as `audience_matches` was correct in isolation while
+no test held the production audience shape. A predicate proven in isolation says
+nothing about whether it is wired in.
+
+The tests that did cover the wiring were rewritten in the same sweep to assert
+the new behaviour, which is honest — and is why the suite went quiet rather than
+red. The defence against the next one is the door-level assertion: REG-02 now
+posts to `/api/activities` and `/planning/schedule-action` and checks that no
+Activity exists afterwards, which no amount of correct policy can satisfy on its
+own.
+
+#### Proven by mutation, not by assertion
+
+A regression test that cannot fail proves nothing, so the gate was deleted and
+the contract re-run. With `SchedulingPolicyService.check` neutered in `create()`
+and `reschedule()`, **7 of 17 REG-02 tests failed** — Sunday, public holiday,
+blackout, country event, approved leave, project scheduling, and the API/HTMX
+door test. That last one matters: it confirms the door test is not passing
+merely because a route exists.
+
+The mutation also found something the suite could not. Deleting the gate from
+`reschedule()` did **not** turn `test_reschedule_to_sunday_is_blocked` red. The
+reason is benign — a staff school visit is routed through
+`daily_visit_batches.reschedule_within_batch`, whose own deliberately redundant
+copy caught it, which is the defence-in-depth this design is for. But it meant
+nothing actually covered `reschedule()`'s own gate, and that branch is entered
+only for `DAILY_BATCH_ELIGIBLE_TYPES` **and** `delivery_type == "staff"` **and**
+a school. A partner-delivered visit, a cluster meeting or a training reaches
+`reschedule()` alone, with no second net beneath it. That path is now pinned by
+`test_reschedule_is_gated_by_reschedule_itself_not_only_the_batch_path`, which
+was proven to fail — *"BadRequest not raised"* — against the mutant before it
+was kept.
+
 **Planning and scheduling therefore moves from Red to Green** for the calendar
 and leave half. §20.2's other clauses — the five-activity warning, conflicts —
 are not reinstated and are not claimed.
