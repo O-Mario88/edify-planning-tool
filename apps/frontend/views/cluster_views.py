@@ -6,6 +6,7 @@ from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
     RolePermissionService,
+    get_operational_cluster_or_404,
     get_scoped_object_or_404,
 )
 from django.contrib import messages
@@ -396,6 +397,10 @@ def cluster_schools_partial(request, cluster_id):
         "can_edit_cluster": RolePermissionService.can_view_page(
             request.user, "planning"
         ),
+        # Bulk scheduling is a planner's act, not a requester's: the drawer
+        # writes activities for several schools at once and the request flow
+        # decides them one at a time (owner, 2026-09-21).
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
 
@@ -882,6 +887,10 @@ def cluster_detail_view(request, cluster_id):
         # visit roles for any school (owner, 2026-09-21), the Accountant to
         # ask — see RolePermissionService.can_open_schedule_drawer.
         "can_schedule": RolePermissionService.can_open_schedule_drawer(request.user),
+        # Bulk scheduling is a planner's act, not a requester's (owner,
+        # 2026-09-21): one press writes activities at five or more schools,
+        # and a visit request is decided one school at a time.
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
     }
     context.update(_catchment_context(request.user, _cluster_row))
     return render(request, "pages/clusters/detail.html", context)
@@ -1738,3 +1747,72 @@ def delete_cluster_view(request, cluster_id):
         response["HX-Redirect"] = "/clusters"
         return response
     return redirect("/clusters")
+
+
+@require_page_permission("cluster_detail")
+def cluster_bulk_schedule_drawer_view(request, cluster_id):
+    """A day of visits across five or more of a cluster's schools.
+
+    Owner, 2026-09-21: bulk scheduling happens from a cluster and nowhere
+    else, needs at least five schools for the day, and offers only the four
+    purposes that are the same errand at every school on the route. Every rule
+    lives in apps.planning.cluster_bulk_scheduling; this view opens the drawer
+    and hands the selection to it.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.planning.cluster_bulk_scheduling import (
+        CLUSTER_BULK_MINIMUM_SCHOOLS,
+        CLUSTER_BULK_VISIT_PURPOSES,
+        bulk_schedule_cluster_visits,
+        schedulable_members,
+    )
+    from apps.frontend.views.planning_views import _saved_without_leaving
+
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
+
+    cluster = get_operational_cluster_or_404(
+        request.user, id=cluster_id, deleted_at__isnull=True
+    )
+    selection = schedulable_members(cluster, request.user)
+
+    def drawer(error=None, posted=None, status=200):
+        return render(
+            request,
+            "partials/clusters/bulk_schedule_drawer.html",
+            {
+                "cluster": cluster,
+                "selection": selection,
+                "members": [member.as_dict() for member in selection.members],
+                "minimum_schools": CLUSTER_BULK_MINIMUM_SCHOOLS,
+                "bulk_visit_purposes": CLUSTER_BULK_VISIT_PURPOSES,
+                "validation_error": error,
+                "posted": posted or {},
+                "drawer_size": "md",
+            },
+            status=status,
+        )
+
+    if request.method != "POST":
+        return drawer()
+
+    posted = {
+        "purposeOfVisit": request.POST.get("purpose_of_visit", "").strip(),
+        "scheduledDate": request.POST.get("scheduled_date", "").strip(),
+        "activityPurposeText": request.POST.get("activity_goal", "").strip(),
+        "schoolIds": request.POST.getlist("school_ids"),
+    }
+    try:
+        result = bulk_schedule_cluster_visits(cluster.id, posted, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        return drawer(str(getattr(exc, "detail", exc)), posted, status=400)
+    except Exception as exc:  # noqa: BLE001 — the service's sentence, shown as is
+        return error_fragment(exc, action="Could not schedule the day", status=400)
+    from apps.frontend.views.planning_views import _my_plan_url_for_scheduled_date
+
+    return _saved_without_leaving(
+        f"{result['purposeLabel']} scheduled at {result['schools']} "
+        f"{result['clusterName']} schools for {result['scheduledDate']}.",
+        plan_url=_my_plan_url_for_scheduled_date(result["scheduledDate"]),
+        plan_link_label="Open My Plan",
+    )

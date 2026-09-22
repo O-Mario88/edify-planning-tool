@@ -33,6 +33,10 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "calendar": (DAILY, 14),
     "core_schools": (DAILY, 16),
     "core_schools_oversight": (DAILY, 18),
+    # Beside the Core pages it came out of: Core Trained, Core Graduate and
+    # Champion schools are planned from daily, like any other portfolio list
+    # (owner, 2026-09-21).
+    "programme_schools": (DAILY, 19),
     "country_planning_oversight": (DAILY, 20),
     "todos": (DAILY, 28),
     "my_actions": (DAILY, 30),
@@ -44,6 +48,10 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "team_coaching": (WEEKLY, 45),
     "partners": (WEEKLY, 60),
     "projects": (WEEKLY, 65),
+    # Read-only watching, next to the projects it watches. Weekly, not daily:
+    # nobody acts on it — it answers "what has the coordinator delivered at
+    # the schools I put in" (owner, 2026-09-21).
+    "project_monitoring": (WEEKLY, 66),
     "coverage": (WEEKLY, 70),
     "escalations": (WEEKLY, 75),
     "actions_sent": (WEEKLY, 80),

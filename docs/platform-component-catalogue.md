@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **473**
+Components and application partials: **474**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -120,6 +120,7 @@ Components and application partials: **473**
 | `partials/calendar/event.html` | application-partial | Reusable event interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /calendar | 0 |
 | `partials/catalogue/new_activity_drawer.html` | application-partial | Reusable new activity drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label | /settings/activity-catalogue/new | 0 |
 | `partials/clusters/bulk_assign_drawer.html` | application-partial | Reusable bulk assign drawer interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/<str:cluster_id>/bulk-assign-drawer | 0 |
+| `partials/clusters/bulk_schedule_drawer.html` | application-partial | Reusable bulk schedule drawer interface primitive | danger, warning; default, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/<str:cluster_id>/bulk-schedule-drawer | 0 |
 | `partials/clusters/catchment_drawer.html` | application-partial | Reusable catchment drawer interface primitive | danger; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/<str:cluster_id>/catchment-drawer | 0 |
 | `partials/clusters/catchment_end_drawer.html` | application-partial | Reusable catchment end drawer interface primitive | danger, warning; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/<str:cluster_id>/catchment/<str:catchment_id>/end | 0 |
 | `partials/clusters/cluster_action_planner_drawer.html` | application-partial | Reusable cluster action planner drawer interface primitive | canonical; default, empty, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /clusters/planner-drawer<br>/clusters/schedule-activity<br>/clusters/schedule-meeting-drawer<br>/clusters/schedule-training-drawer | 0 |
@@ -322,7 +323,7 @@ Components and application partials: **473**
 | `partials/my_plan/cancel_drawer.html` | application-partial | Reusable cancel drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/cancel-drawer | 0 |
 | `partials/my_plan/cluster_meetings.html` | application-partial | Reusable cluster meetings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/cluster_trainings.html` | application-partial | Reusable cluster trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
-| `partials/my_plan/complete_drawer.html` | application-partial | Reusable complete drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/complete<br>/my-plan/<str:activity_id>/complete-drawer | 0 |
+| `partials/my_plan/complete_drawer.html` | application-partial | Reusable complete drawer interface primitive | danger; default, error, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/complete<br>/my-plan/<str:activity_id>/complete-drawer | 0 |
 | `partials/my_plan/confirm_reimbursement_receipt_drawer.html` | application-partial | Reusable confirm reimbursement receipt drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | 0 |
 | `partials/my_plan/core_school_trainings.html` | application-partial | Reusable core school trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/core_school_visits.html` | application-partial | Reusable core school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |

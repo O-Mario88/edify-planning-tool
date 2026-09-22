@@ -63,6 +63,7 @@ IA_SIDEBAR = [
             ("Planning Oversight", "/team-planning-oversight/"),
             ("Calendar", "/calendar"),
             ("Core School Oversight", "/core-schools-oversight/"),
+            ("Programme Schools", "/programme-schools"),
             ("Country Oversight", "/country-planning-oversight/"),
             ("Verification Queue", "/ia/verification/"),
             ("SSA Verification", "/ssa/verification/"),
@@ -74,6 +75,7 @@ IA_SIDEBAR = [
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
+            ("Project Monitoring", "/projects/monitoring"),
             ("Field Debrief", "/debriefs"),
             ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),

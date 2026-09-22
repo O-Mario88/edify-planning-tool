@@ -4406,3 +4406,52 @@ def unmatched_ssa_queue_view(request):
         "status_choices": UnmatchedSSARecord.STATUSES,
     }
     return render(request, "pages/admin/unmatched_ssa_queue.html", context)
+
+
+@require_page_permission("project_monitoring")
+def project_monitoring_view(request):
+    """Watching a Special Project without being able to touch it.
+
+    Owner, 2026-09-21: CCEO, Programme Lead and Impact Assessment monitor the
+    activities the project coordinator and their partners deliver, read only.
+    The coordinator keeps control of scheduling and partner assignment — this
+    page carries no control that would change any of it, and the enrolment
+    lens (apps.projects.monitoring) decides what each reader sees.
+    """
+    from django.http import HttpResponseNotAllowed
+
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.projects import monitoring
+
+    # Read only is a promise, so the door keeps it: nothing here writes, and a
+    # POST is refused rather than quietly rendering as though it had done
+    # something.
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
+    selected_project = (request.GET.get("project") or "").strip()
+
+    result = monitoring.project_monitoring(
+        request.user, fy=fy, project_id=selected_project
+    )
+    # The picker offers exactly the projects this reader is already allowed to
+    # watch, so it can never name one the page would then refuse to show.
+    everything = (
+        result
+        if not selected_project
+        else monitoring.project_monitoring(request.user, fy=fy)
+    )
+    return render(
+        request,
+        "pages/projects/monitoring.html",
+        {
+            "result": result,
+            "rows": result.rows,
+            "project_options": [(row.id, row.name) for row in everything.rows],
+            "selected_project": selected_project,
+            "fy": fy,
+            "fy_options": fy_options(),
+        },
+    )

@@ -178,6 +178,22 @@ Approve the district, or move the school to a cluster serving it: {% for s in ca
 <p class="mt-0.5 edify-text-caption font-semibold text-slate-500">Open a school profile or schedule support directly from this cluster.</p>
 </div>
 <div class="flex flex-wrap items-center gap-2">
+{% if can_bulk_schedule %}
+{% comment %}The one door to bulk scheduling (owner, 2026-09-21): one purpose,
+one day, at five or more of this cluster's schools. The drawer says why it
+cannot be used when too few schools are open, so the control stays visible
+rather than vanishing without a reason.{% endcomment %}
+<button
+  type="button"
+  hx-get="/clusters/{{ cluster.id }}/bulk-schedule-drawer"
+  hx-target="#drawer-container"
+  hx-swap="innerHTML"
+  aria-label="Schedule a day of visits across {{ cluster.name }}"
+  class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>
+  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 3.5v4M16 3.5v4M4 10h16"/></svg> Schedule a Day of Visits
+</button>
+{% endif %}
 {% if can_edit_cluster %}
 <button
   type="button"

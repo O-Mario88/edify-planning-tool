@@ -173,15 +173,43 @@ class PurposeDrivesCostingTest(TestCase):
         )
 
     def test_the_purposes_the_user_named_are_offered(self):
-        """Content gathering is no longer part of staff support scheduling."""
+        """Content/Story Collection is staff support scheduling again.
+
+        Owner, 2026-09-21, naming the purposes a cluster may schedule in
+        bulk: "training follow up, SSA Support, Donor Visit, Content/Story
+        Collection". It stays staff-only — the partner list is unchanged.
+        """
         offered = {value for value, _label in STAFF_VISIT_PURPOSES}
         for expected in (
             "ssa_support",
             "training_follow_up",
             "donor_visit",
+            "story_gathering",
         ):
             self.assertIn(expected, offered)
-        self.assertNotIn("story_gathering", offered)
+        self.assertNotIn(
+            "story_gathering", {value for value, _label in PARTNER_VISIT_PURPOSES}
+        )
+
+    def test_the_four_bulk_purposes_are_exactly_what_the_owner_named(self):
+        from apps.partners.purposes import (
+            CLUSTER_BULK_MINIMUM_SCHOOLS,
+            CLUSTER_BULK_VISIT_PURPOSES,
+        )
+
+        self.assertEqual(
+            [value for value, _label in CLUSTER_BULK_VISIT_PURPOSES],
+            ["training_follow_up", "ssa_support", "donor_visit", "story_gathering"],
+        )
+        self.assertEqual(CLUSTER_BULK_MINIMUM_SCHOOLS, 5)
+
+    def test_in_school_training_is_refused_by_name_in_bulk(self):
+        from apps.core.exceptions import BadRequest
+        from apps.partners.purposes import normalise_cluster_bulk_purpose
+
+        with self.assertRaises(BadRequest) as ctx:
+            normalise_cluster_bulk_purpose("in_school_training")
+        self.assertIn("one school at a time", str(ctx.exception.detail))
 
     def test_partner_purposes_are_a_subset_of_staff_purposes(self):
         """The drawer disables non-partner purposes when delivery is Partner,

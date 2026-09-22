@@ -7537,6 +7537,21 @@
     "ImpactAssessment",
     "Admin"
    ],
+   "route": "/clusters/<str:cluster_id>/bulk-schedule-drawer",
+   "route_name": "cluster_bulk_schedule_drawer",
+   "view": "apps.frontend.views.cluster_views.cluster_bulk_schedule_drawer_view"
+  },
+  {
+   "page_permission": "cluster_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
    "route": "/clusters/<str:cluster_id>/catchment-drawer",
    "route_name": "cluster_catchment_drawer",
    "view": "apps.frontend.views.cluster_views.cluster_catchment_drawer_view"
@@ -15720,6 +15735,21 @@
    "view": "apps.frontend.views.programme_rollout_views.school_list_drawer"
   },
   {
+   "page_permission": "programme_schools",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/programme-schools",
+   "route_name": "programme_schools",
+   "view": "apps.frontend.views.school_views.programme_schools_view"
+  },
+  {
    "page_permission": "projects",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15910,6 +15940,21 @@
    "route": "/projects/filters-drawer",
    "route_name": "projects_filters_drawer",
    "view": "apps.frontend.views.extended_views.projects_filters_drawer_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/projects/monitoring",
+   "route_name": "project_monitoring",
+   "view": "apps.frontend.views.extended_views.project_monitoring_view"
   },
   {
    "page_permission": "projects",
@@ -17889,26 +17934,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 405,
-  "Admin": 1000,
+  "Admin": 1003,
   "BusinessTransformationOfficer": 232,
-  "CCEO": 526,
-  "CountryDirector": 756,
+  "CCEO": 529,
+  "CountryDirector": 759,
   "HumanResources": 330,
-  "ImpactAssessment": 620,
+  "ImpactAssessment": 623,
   "MfiLoanOfficer": 128,
   "MfiPartnerAdmin": 131,
   "PartnerAdmin": 219,
   "PartnerFieldOfficer": 219,
-  "Program Lead": 611,
+  "Program Lead": 614,
   "ProjectCoordinator": 445,
   "RegionalProgramLead": 305,
   "RegionalVicePresident": 367
  },
  "summary": {
-  "page_keys_declared": 177,
-  "page_keys_in_navigation": 194,
-  "routes_guarded": 1097,
-  "routes_total": 1290,
+  "page_keys_declared": 179,
+  "page_keys_in_navigation": 196,
+  "routes_guarded": 1100,
+  "routes_total": 1293,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

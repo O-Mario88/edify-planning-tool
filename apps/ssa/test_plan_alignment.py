@@ -321,7 +321,13 @@ class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
         super().setUp()
         self.client.force_login(self.user)
 
-    def test_bulk_schedule_targets_each_schools_top_need(self):
+    def test_the_planning_page_no_longer_bulk_schedules(self):
+        """Owner, 2026-09-21: bulk scheduling "should only happen from
+        cluster". A day of visits obeys rules that are the cluster's — five
+        member schools, four purposes, never an In-school Training — and a
+        second bulk door here would be a second answer to the same question.
+        The refusal names where the act lives now; a single school is still
+        scheduled from its own row."""
         response = self.client.post(
             "/planning/bulk-action",
             {
@@ -330,12 +336,10 @@ class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
                 "scheduled_date": _schedulable_date().isoformat(),
             },
         )
-        self.assertEqual(response.status_code, 200, response.content[:300])
-        activity = Activity.objects.get(school=self.school)
-        # No named school-level activity answers Financial Health, so a
-        # standard visit targets it rather than a named one for a lesser need.
-        self.assertEqual(activity.focus_intervention, SsaIntervention.FINANCIAL_HEALTH)
-        self.assertEqual(activity.ssa_alignment, SsaAlignment.PRIORITY)
+        self.assertEqual(response.status_code, 400)
+        body = response.content.decode()
+        self.assertIn("Bulk scheduling happens from a cluster", body)
+        self.assertFalse(Activity.objects.filter(school=self.school).exists())
 
     def test_bulk_actions_refuse_schools_outside_the_portfolio(self):
         outside = School.objects.create(

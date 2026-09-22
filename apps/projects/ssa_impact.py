@@ -218,7 +218,9 @@ def classify(
 MIN_COHORT_FOR_A_RATE = 5
 
 
-def project_impact(project, *, intervention: str | None = None) -> dict:
+def project_impact(
+    project, *, intervention: str | None = None, assignments=None
+) -> dict:
     """The project's measured position, with its denominator shown.
 
     The cohort is deliberately narrow: a school counts only when it has a
@@ -226,11 +228,23 @@ def project_impact(project, *, intervention: str | None = None) -> dict:
     inside the window. Everything else is reported as the reason it is not
     countable rather than folded in as a zero — which is the difference
     between "we have not measured this yet" and "this did not work".
+
+    ``assignments`` narrows the cohort to a caller's own enrolments — the
+    Project Monitoring page passes the schools a CCEO or Programme Lead added
+    themselves (owner, 2026-09-21), so the improvement they read is over the
+    schools they contributed and not over somebody else's. The denominator
+    travels with it, so a narrowed rate still says what it is a rate of.
     """
     from apps.projects.models import ProjectSchoolAssignment
 
-    rows = list(
-        ProjectSchoolAssignment.objects.filter(project=project).select_related("school")
+    rows = (
+        list(assignments)
+        if assignments is not None
+        else list(
+            ProjectSchoolAssignment.objects.filter(project=project).select_related(
+                "school"
+            )
+        )
     )
     target = intervention or (project.intervention or "")
 

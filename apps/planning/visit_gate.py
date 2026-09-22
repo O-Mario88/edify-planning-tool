@@ -16,10 +16,23 @@ own later instruction (2026-09-17) and is enforced half here and half in
 side to this module; the two must agree or a Core Schools row offers what
 the POST refuses. `_decide` marks which half is which.
 
-The counting itself is unchanged, and is still read by the Planning, Cluster,
-Core Schools and Partner pages:
+Owner, 2026-09-21:
 
-* Client-rule schools (``client`` and ``core_trained``): the follow-up visit
+  "Core trained, core graduate and Champion Schools can receive all the
+  activities (visit, trainings) client schools should receive but cannot be
+  assigned to partner."
+
+So those three sit on the client rule beside ``client`` itself — the same
+purposes, and the same allowance, now counted rather than enforced — and the
+partner side of the gate is closed for them whatever the counts say. They are
+listed in ``PROGRAMME_SCHOOL_TYPES`` and the Programme Schools page is the
+list of them.
+
+What counts, and is still read by the Planning, Cluster, Core Schools and
+Partner pages:
+
+* Client-rule schools (``client`` and the three Programme types): the
+  follow-up visit
   — a support visit to the school in the operational fiscal year, whoever
   delivers it. Donor visits, story gathering, invitations and social visits
   are not it; neither is an in-school training, nor the companion visit the
@@ -71,8 +84,17 @@ CORE_STAFF_VISIT_CAP = 2
 CORE_PARTNER_VISIT_CAP = 2
 
 # School types under the once-a-year client rule. Core schools carry the
-# package; champions and core graduates are outside both rules.
-CLIENT_RULE_SCHOOL_TYPES = ("client", "core_trained")
+# package.
+#
+# Owner, 2026-09-21: Core Trained, Core Graduate and Champion schools "can
+# receive all the activities (visit, trainings) client schools should receive
+# but cannot be assigned to partner". So all three sit on the client rule —
+# the same two visits a year, the same purposes, the same trainings — and
+# PROGRAMME_SCHOOL_TYPES below withholds partner delivery from them. Champion
+# and Core Graduate were on no rule at all before, which read as an unlimited
+# entitlement rather than a deliberate one.
+PROGRAMME_SCHOOL_TYPES = ("core_trained", "core_graduate", "champion")
+CLIENT_RULE_SCHOOL_TYPES = ("client", *PROGRAMME_SCHOOL_TYPES)
 CORE_RULE_SCHOOL_TYPES = ("core",)
 
 DEAD_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
@@ -329,37 +351,57 @@ def visit_gate(school, fy: str | None = None, **kwargs) -> VisitGate:
     return visit_gates([school], fy, **kwargs)[school.id]
 
 
+def programme_school_partner_refusal(school_name: str, school_type: str) -> str:
+    """The refusal, in one voice: the greyed control, the drawer and the
+    partner creation door all say this same sentence."""
+    from apps.core.enums import SchoolType
+
+    label = dict(SchoolType.choices).get(school_type, "Programme")
+    return (
+        f"{school_name} is a {label} school. Edify staff deliver its visits "
+        "and trainings themselves; it is never assigned to a partner."
+    )
+
+
 def _decide(gate: VisitGate) -> None:
-    """Fill in the package's shape and leave every door open.
+    """Fill in the shape of the year's support, and say what is still refused.
 
     Owner, 2026-09-21: "can you lift restriction to school visits especially
     client school visit. All restrictions. right now it is restricting
     returning error and not scheduling."
 
-    So this function no longer refuses anything. What it used to do, and no
-    longer does:
+    So on the CLIENT rule this refuses nothing. What it used to do there, and
+    no longer does:
 
-    * a client school's follow-up visit was capped at CLIENT_VISIT_CAP a year
-      across staff and partner together, and the cap greyed the purpose in the
-      drawer and refused the POST behind it;
+    * the follow-up visit was capped at CLIENT_VISIT_CAP a year across staff
+      and partner together, and the cap greyed the purpose in the drawer and
+      refused the POST behind it;
     * a live partner assignment locked the school away from staff entirely
-      until the partner returned it;
-    * the core package's halves were caps too — two staff visits, two partner
-      visits (scheduled or merely assigned), after which the Schedule and
-      Assign buttons went grey.
+      until the partner returned it.
 
-    The counting above stays, because it is what the pages SHOW: the Core
-    Schools row reads "1/2 visits", the Planning row names the partner holding
-    a school, and the Core row asks whether staff trainings remain. A count is
-    information; it stopped being a permission. ``staff_cap`` and
-    ``partner_cap`` therefore still travel with the gate — they describe the
-    package a planner is working through, not a ceiling the service enforces.
+    The counting stays, because it is what the pages SHOW: the row reads
+    "2 of 2" and names the partner holding a school. A count is information;
+    on that rule it stopped being a permission.
 
-    Every ``can_*`` field keeps its ``True`` default and every reason stays
-    empty, which is what the templates read to render an enabled button with
-    no tooltip and what the ``assert_*`` helpers below read before returning
-    without raising.
+    Two things are still refused, and neither is part of that lift. The CORE
+    package keeps its halves — see the branch below. And a Programme school
+    (core trained, core graduate, champion) is never a partner's work, which
+    is applied here, after the rule, so a rule's own sentence about a spent
+    entitlement cannot overwrite it.
     """
+    _decide_by_rule(gate)
+    if gate.school_type in PROGRAMME_SCHOOL_TYPES:
+        refusal = programme_school_partner_refusal(gate.school_name, gate.school_type)
+        gate.partner_can_schedule = False
+        gate.partner_reason = refusal
+        gate.can_assign_partner = False
+        gate.assign_reason = refusal
+        gate.can_assign_visit = False
+        gate.assign_visit_reason = refusal
+        gate.partner_cap = 0
+
+
+def _decide_by_rule(gate: VisitGate) -> None:
     if gate.rule == "client":
         gate.staff_cap = CLIENT_VISIT_CAP
         gate.partner_cap = CLIENT_VISIT_CAP

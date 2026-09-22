@@ -361,10 +361,47 @@ class ClusterSessionCoreCreditTest(_CoreFixture):
         self._attend(session, [self.school])
         self.assertEqual(self._slot("t", 1).activity_id, session.id)
 
-    def test_attendance_is_not_credited_before_the_register_is_submitted(self):
+    def test_the_invitation_holds_the_slot_while_the_session_is_completed(self):
+        """Owner, 2026-09-21: a Core School trained through a cluster session
+        contributes to its package, and the booking "should move to core
+        school training planned table" — so the slot is taken at scheduling,
+        on the invitation, and the register only narrows it once submitted.
+
+        This used to assert the opposite: a session mid-completion credited
+        nobody, which RELEASED the slot back to the package for as long as
+        the register was being entered — the exact window in which the
+        scheduler could book a fifth training over it. Holding it on the
+        invitation closes that window. What the old name protected is
+        unchanged and is pinned by the two tests below: a register entered
+        mid-completion decides nothing, and a school that is not in the room
+        when it is submitted loses the slot.
+        """
         session = self._session(invited=[self.school])
         self._attend(session, [self.school], status="completion_started")
+        slot = self._slot("t", 1)
+        self.assertEqual(slot.activity_id, session.id)
+        self.assertEqual(slot.status, "completion_started")
+
+    def test_a_draft_register_decides_nothing_until_it_is_submitted(self):
+        """Mid-completion the slot follows the INVITATION, not the ticks: a
+        register still being entered is a draft, so unticking a school there
+        must not hand its slot back while the session is still open."""
+        session = self._session(invited=[self.school])
+        self._attend(session, [], status="completion_started")
+        self.assertEqual(self._slot("t", 1).activity_id, session.id)
+
+        # Submitted, and now the register is what counts.
+        self._attend(session, [])
         self.assertIsNone(self._slot("t", 1).activity_id)
+
+    def test_a_scheduled_session_takes_the_slot_before_anyone_attends(self):
+        """The reading the Core School Trainings Planned table needs: the
+        package shows 1/4 planned from the day the session is booked."""
+        session = self._session(invited=[self.school])
+        session.save()
+        slot = self._slot("t", 1)
+        self.assertEqual(slot.activity_id, session.id)
+        self.assertEqual(slot.status, "scheduled")
 
     def test_removing_the_school_from_the_register_releases_the_slot(self):
         session = self._session(invited=[self.school])

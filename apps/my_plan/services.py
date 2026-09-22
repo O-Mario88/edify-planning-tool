@@ -1536,6 +1536,16 @@ def get_frontend_context(principal, query: dict) -> dict:
     # it displays with blank School ID and "Unknown School" in the trainings table.
     # We expand each cluster training into its confirmed / invited member schools
     # so every school with training planned is listed with its School ID and Name.
+    #
+    # A Core School among them is a package training, not a cluster row
+    # (owner, 2026-09-21: "the core schools trained through cluster group
+    # training or cluster meeting should contribute to the core school
+    # training packages ... it should move to core school training planned
+    # table"). Its slot already carries the credit
+    # (apps.core_schools.cluster_credit); the expansion reads that slot for
+    # the T-number and moves the row to the package table, so one session
+    # shows as a cluster training for the client schools it reached and as
+    # T2 of the package for the Core School that sat in it.
     from collections import defaultdict
     from apps.activities.models import ClusterActivityAttendance
     from apps.schools.models import School as _School
@@ -1580,6 +1590,49 @@ def get_frontend_context(principal, query: dict) -> dict:
                 not _s.operational_status or _s.operational_status in OPERATING_STATUSES
             ):
                 _schools_by_cluster_confirmed[_s.cluster_id].append(_s)
+
+        # 3a. The Core package slots these very sessions occupy, keyed by
+        # (activity, school business id) — one session fills a slot at each
+        # Core School that sat in it, so activity id alone cannot answer this.
+        from apps.core_schools.models import CoreActivitySlot
+
+        _core_slot_rows = CoreActivitySlot.objects.filter(
+            activity_id__in=_cluster_act_ids,
+            activity_type="training",
+        ).values_list("activity_id", "core_plan__school_id", "sequence_number")
+        _cluster_core_slot = {
+            (_act, _plan_school): _seq for _act, _plan_school, _seq in _core_slot_rows
+        }
+        # "n/m Completed" for each of those packages, read the way the rest of
+        # this page reads it: over the 4 + 4 slots, with the onboarding
+        # assessment slot outside the denominator.
+        _cluster_core_progress: dict[str, str] = {}
+        _core_plan_schools = {school for _act, school in _cluster_core_slot}
+        if _core_plan_schools:
+            _package_rows = CoreActivitySlot.objects.filter(
+                core_plan__school_id__in=_core_plan_schools,
+                activity_type__in=("visit", "training"),
+            ).values_list(
+                "core_plan__school_id",
+                "core_plan__fy",
+                "activity_type",
+                "sequence_number",
+                "status",
+            )
+            _package_taken: dict[tuple, set] = defaultdict(set)
+            _package_done: dict[tuple, set] = defaultdict(set)
+            _package_of_school: dict[str, tuple] = {}
+            for _sch, _fy, _kind, _seq, _slot_status in _package_rows:
+                _key = (_sch, _fy)
+                _package_taken[_key].add((_kind, _seq))
+                if _slot_status_is_complete(_slot_status):
+                    _package_done[_key].add((_kind, _seq))
+                _package_of_school.setdefault(_sch, _key)
+            for _sch, _key in _package_of_school.items():
+                _cluster_core_progress[_sch] = (
+                    f"{len(_package_done.get(_key, ()))}/"
+                    f"{len(_package_taken.get(_key, ()))} Completed"
+                )
 
         # 3. Lookup for schools (include any attendance schools from other clusters)
         _school_lookup = {_s.id: _s for _s in _member_schools}
@@ -1646,7 +1699,18 @@ def get_frontend_context(principal, query: dict) -> dict:
                     _school_row["is_cluster_invited"] = True
                     _school_row["expected_participants"] = pps
                     _school_row["budget_total"] = per_school_meal_cost
-                    _new_cluster_trainings_list.append(_school_row)
+                    _slot_seq = _cluster_core_slot.get((_act_id, _school.school_id))
+                    if _slot_seq:
+                        # The package's own record of this session. It leaves
+                        # the cluster table entirely: counting it in both
+                        # would show one training twice.
+                        _school_row["training_number"] = f"T{_slot_seq}"
+                        _school_row["core_progress"] = _cluster_core_progress.get(
+                            _school.school_id, ""
+                        )
+                        core_school_trainings_list.append(_school_row)
+                    else:
+                        _new_cluster_trainings_list.append(_school_row)
             else:
                 _fallback_row = dict(row)
                 _fallback_row["school_name"] = (

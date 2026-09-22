@@ -1115,7 +1115,35 @@ def create_assignment(**fields):
     from .models import PartnerAssignment
 
     fields.pop("status", None)
-    assert_operating(fields.get("school"))
+    school = fields.get("school")
+    assert_operating(school)
+    _assert_school_takes_partner_work(school)
     return PartnerAssignment.objects.create(
         status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
     )
+
+
+def _assert_school_takes_partner_work(school) -> None:
+    """Core Trained, Core Graduate and Champion schools are staff-delivered.
+
+    Owner, 2026-09-21: they "can receive all the activities (visit, trainings)
+    client schools should receive but cannot be assigned to partner". The
+    drawers grey the control and the visit gate carries the sentence; this is
+    the same refusal at the one creation door, so a bulk path or an API client
+    cannot walk around it.
+    """
+    from apps.core.exceptions import BadRequest
+    from apps.planning.visit_gate import (
+        PROGRAMME_SCHOOL_TYPES,
+        programme_school_partner_refusal,
+    )
+
+    if school is None:
+        return
+    school_type = getattr(school, "school_type", "")
+    if school_type in PROGRAMME_SCHOOL_TYPES:
+        raise BadRequest(
+            programme_school_partner_refusal(
+                getattr(school, "name", "This school"), school_type
+            )
+        )

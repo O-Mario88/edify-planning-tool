@@ -23,19 +23,49 @@ PARTNER_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
 
 # Staff may deliver the delegated support above, as well as the operational
 # visit reasons that are not delegable to partner organisations.
+#
+# Content/Story Collection returned to this list on the owner's brief of
+# 2026-09-21, which names it among the purposes a cluster may schedule in
+# bulk. It was staff-only before it was withdrawn and it is staff-only now:
+# PARTNER_VISIT_PURPOSES is unchanged, so a partner still cannot be handed
+# one.
 STAFF_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     *PARTNER_VISIT_PURPOSES,
     ("donor_visit", "Donor Visit"),
+    ("story_gathering", "Content/Story Collection"),
     ("school_invitation", "School Invitation"),
     ("social_visit", "Social Visit"),
     ("in_school_coaching", "In-school Coaching Visit"),
 )
 
+# The purposes a cluster roster may schedule for several member schools on one
+# day (owner, 2026-09-21). In-school Training is deliberately absent: it pairs
+# a governed course with its own companion visit and is chosen one school at a
+# time. The order is the owner's.
+CLUSTER_BULK_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
+    ("training_follow_up", "Training Follow Up"),
+    ("ssa_support", "SSA Support"),
+    ("donor_visit", "Donor Visit"),
+    ("story_gathering", "Content/Story Collection"),
+)
+
+#: The fewest member schools a cluster bulk schedule may name for one day
+#: (owner, 2026-09-21). Fewer than this is an ordinary day's work and belongs
+#: in the per-school drawer, where each school's own purpose and focus are
+#: chosen deliberately.
+CLUSTER_BULK_MINIMUM_SCHOOLS = 5
+
 # Purposes that move no single SSA intervention: collecting the SSA itself and
 # relationship visits. A visit for one of these may name a focus, but its
 # governed workflow must not demand one (Core visits inherit theirs otherwise).
 INTERVENTION_FREE_PURPOSES = frozenset(
-    {"ssa_support", "donor_visit", "school_invitation", "social_visit"}
+    {
+        "ssa_support",
+        "donor_visit",
+        "story_gathering",
+        "school_invitation",
+        "social_visit",
+    }
 )
 
 PURPOSE_ACTIVITY_TYPES = {
@@ -51,11 +81,9 @@ PURPOSE_ACTIVITY_TYPES = {
 
 _PARTNER_VALUES = {value for value, _label in PARTNER_VISIT_PURPOSES}
 _STAFF_VALUES = {value for value, _label in STAFF_VISIT_PURPOSES}
+_BULK_VALUES = {value for value, _label in CLUSTER_BULK_VISIT_PURPOSES}
 _LABELS = {
     **{value: label for value, label in STAFF_VISIT_PURPOSES},
-    # Historical rows retain a readable label even though Content Gathering
-    # is no longer assignable from either staff or partner support drawers.
-    "story_gathering": "Content Gathering",
     "in_school_training_delivery_visit": "In-school Training Delivery Visit",
 }
 
@@ -94,6 +122,30 @@ def normalise_visit_purpose(
     return purpose
 
 
+def normalise_cluster_bulk_purpose(value: str | None) -> str:
+    """Validate a purpose chosen for a cluster's bulk day schedule.
+
+    Refuses by name rather than falling back. A bulk schedule writes the same
+    purpose to every school it names, so guessing one is the one place a
+    silent default would be expensive.
+    """
+    purpose = str(value or "").strip()
+    if not purpose:
+        raise BadRequest("Choose what this day of visits is for.")
+    if purpose == "in_school_training":
+        raise BadRequest(
+            "In-school Training is scheduled one school at a time, from that "
+            "school's own Schedule drawer — it pairs a governed course with "
+            "its companion visit."
+        )
+    if purpose not in _BULK_VALUES:
+        raise BadRequest(
+            f"{visit_purpose_label(purpose, purpose)} cannot be scheduled for "
+            "a cluster's schools in bulk."
+        )
+    return purpose
+
+
 def _fallback_for_activity_type(activity_type: str | None, for_partner: bool) -> str:
     """Give legacy posts a meaningful purpose until their UI is refreshed."""
     activity_type = str(activity_type or "")
@@ -113,9 +165,12 @@ def _fallback_for_activity_type(activity_type: str | None, for_partner: bool) ->
 
 
 __all__ = [
+    "CLUSTER_BULK_MINIMUM_SCHOOLS",
+    "CLUSTER_BULK_VISIT_PURPOSES",
     "INTERVENTION_FREE_PURPOSES",
     "PARTNER_VISIT_PURPOSES",
     "STAFF_VISIT_PURPOSES",
+    "normalise_cluster_bulk_purpose",
     "normalise_visit_purpose",
     "purpose_activity_type",
     "visit_purpose_label",

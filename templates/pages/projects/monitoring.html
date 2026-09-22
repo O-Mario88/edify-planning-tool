@@ -1,0 +1,189 @@
+{% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+{% load frontend_filters table_pagination %}
+
+{% block title %}Project Monitoring · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Read only, deliberately and visibly (owner, 2026-09-21). The project
+coordinator is in control of every project activity — scheduling one and
+handing one to a partner both live on their Project Planning surface — so
+this page carries no control that would change anything here. A reader who
+wants work done asks the coordinator, and the page says so rather than
+offering a button that would answer 403.
+
+What each reader sees is decided by apps.projects.monitoring: Impact
+Assessment, the Country Director and Admin read a project whole, because
+verification and country oversight need it; a CCEO or Programme Lead reads
+the schools they added themselves, never another officer's. The SSA cohort is
+narrowed by the same lens and shows its own denominator, so a contribution is
+never the project's total dressed up as one person's.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Special Projects</p>
+      <h1 class="edify-page-title edify-page-header__title">Project Monitoring</h1>
+      <p class="edify-page-header__description">What each project coordinator and their partners have scheduled and delivered, and what it moved. Read only — the coordinator schedules the work and assigns it to partners.</p>
+    </div>
+  </header>
+
+  <div class="edify-note" data-tone="info" role="note">
+    <p class="edify-note__body">{{ result.lens_note }}</p>
+  </div>
+
+  {% kpi_strip %}
+    {% kpi_metric %}
+      {% kpi_label %}Projects{% endkpi_label %}
+      {{ result.projects|intcomma }}
+      {% kpi_helper %}Live projects in this lens{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Schools{% endkpi_label %}
+      {{ result.schools|intcomma }}
+      {% kpi_helper %}{% if result.whole_project %}Enrolled in these projects{% else %}Enrolments you added{% endif %}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Trainings{% endkpi_label %}
+      {{ result.trainings_completed|intcomma }} / {{ result.trainings_scheduled|intcomma }}
+      {% kpi_helper %}Delivered of scheduled, FY{{ fy }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}School visits{% endkpi_label %}
+      {{ result.visits_completed|intcomma }} / {{ result.visits_scheduled|intcomma }}
+      {% kpi_helper %}Delivered of scheduled, FY{{ fy }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Schools improved{% endkpi_label %}
+      {{ result.schools_improved|intcomma }}
+      {% kpi_helper %}Confirmed SSA movement on the target intervention{% endkpi_helper %}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
+
+  <form method="get" action="/projects/monitoring" class="edify-filter-bar flex flex-wrap items-end gap-3">
+    <label class="block">
+      <span class="edify-filter-label">Project</span>
+      <select name="project" aria-label="Project" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All projects</option>
+        {% for value, label in project_options %}
+        <option value="{{ value }}"{% if value == selected_project %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for option in fy_options %}
+        <option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY{{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button>
+  </form>
+
+  {% if rows %}
+  {% paginate rows "monitoring_page" as pager %}
+  {% for row in pager.rows %}
+  <section class="card p-0 overflow-hidden">
+    <div class="px-5 py-4 border-b edify-border flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+          {{ row.name }}{% if row.code %} <span class="edify-text-caption edify-text-muted font-mono">{{ row.code }}</span>{% endif %}
+        </h2>
+        <p class="mt-0.5 edify-text-caption edify-text-muted">
+          Coordinator: <span class="font-semibold">{{ row.coordinator }}</span>
+          {% if row.partners %} · Partners: {{ row.partners|join:", " }}{% else %} · No partner assigned{% endif %}
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="pill">{{ row.status_label }}</span>
+        <span class="pill">{% if result.whole_project %}{{ row.my_schools }} schools{% else %}{{ row.my_schools }} of {{ row.schools }} schools yours{% endif %}</span>
+      </div>
+    </div>
+
+    <div class="px-5 py-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-keep-columns>
+      <div>
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Trainings</p>
+        <p class="text-[18px] font-semibold tabular-nums">{{ row.trainings_completed }} / {{ row.trainings_scheduled }}</p>
+        <p class="edify-text-caption edify-text-muted">Delivered of scheduled</p>
+      </div>
+      <div>
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">School visits</p>
+        <p class="text-[18px] font-semibold tabular-nums">{{ row.visits_completed }} / {{ row.visits_scheduled }}</p>
+        <p class="edify-text-caption edify-text-muted">Delivered of scheduled</p>
+      </div>
+      <div>
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Other project work</p>
+        <p class="text-[18px] font-semibold tabular-nums">{{ row.other_completed }} / {{ row.other_scheduled }}</p>
+        <p class="edify-text-caption edify-text-muted">{{ row.completion_label }}</p>
+      </div>
+      <div>
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Who delivered</p>
+        <p class="text-[18px] font-semibold tabular-nums">{{ row.staff_delivered }} staff · {{ row.partner_delivered }} partner</p>
+        <p class="edify-text-caption edify-text-muted">Activities in FY{{ fy }}</p>
+      </div>
+    </div>
+
+    {% comment %}
+    The contribution to SSA intervention improvement, said with its
+    denominator. apps.projects.ssa_impact withholds a rate over a cohort too
+    small to mean anything and says why instead — a young project must not be
+    made to look like a bad one.
+    {% endcomment %}
+    <div class="px-5 py-4 border-t edify-border space-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="text-[13px] font-semibold text-slate-800">Contribution to SSA improvement</h3>
+        {% for intervention in row.interventions %}
+        <span class="pill">{{ intervention }}</span>
+        {% empty %}
+        <span class="edify-text-caption edify-text-muted">No target intervention declared</span>
+        {% endfor %}
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-keep-columns>
+        <div>
+          <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Improved</p>
+          <p class="text-[18px] font-semibold tabular-nums">{{ row.impact.improved|default:0 }}</p>
+        </div>
+        <div>
+          <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">No change</p>
+          <p class="text-[18px] font-semibold tabular-nums">{{ row.impact.no_change|default:0 }}</p>
+        </div>
+        <div>
+          <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Declined</p>
+          <p class="text-[18px] font-semibold tabular-nums">{{ row.impact.declined|default:0 }}</p>
+        </div>
+        <div>
+          <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Measured of enrolled</p>
+          <p class="text-[18px] font-semibold tabular-nums">{{ row.impact.cohort_size|default:0 }} / {{ row.impact.pipeline.added|default:0 }}</p>
+          <p class="edify-text-caption edify-text-muted">Baseline, verified delivery and a confirmed follow-up</p>
+        </div>
+      </div>
+      {% if row.impact.average_change is not None %}
+      <p class="edify-text-caption edify-text-muted">Average movement on the target intervention: <span class="font-semibold tabular-nums">{{ row.impact.average_change }}</span> points, from {{ row.impact.average_baseline }} to {{ row.impact.average_follow_up }}.</p>
+      {% endif %}
+      {% if row.impact.limitation %}
+      <p class="edify-text-caption edify-text-muted">{{ row.impact.limitation }}</p>
+      {% endif %}
+      {% if row.impact.pipeline.awaiting_follow_up %}
+      <p class="edify-text-caption edify-text-muted">{{ row.impact.pipeline.awaiting_follow_up }} school{{ row.impact.pipeline.awaiting_follow_up|pluralize }} awaiting a confirmed follow-up assessment. Not yet measured is not the same as no improvement.</p>
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+
+  {% include "components/table_pager.html" with pager=pager param="monitoring_page" pagination_label="Project monitoring pages" %}
+
+  <p class="edify-text-caption edify-text-muted px-1">
+    Read only. Scheduling a project activity, or assigning one to a partner, is the project coordinator's — ask them to plan work you need at a school you added.
+  </p>
+  {% else %}
+  {% if result.whole_project %}
+  {% include "components/empty_state.html" with title="No live projects yet" message="A project appears here once it is created and running. Paused and closed projects keep their history on the project's own page." %}
+  {% else %}
+  {% include "components/empty_state.html" with title="You have not added a school to a project yet" message="Add a school to a project from its profile or the School Directory, and the coordinator's work at that school appears here. Schools other officers added stay with them." %}
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

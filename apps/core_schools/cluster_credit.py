@@ -4,6 +4,17 @@ Owner rule (2026-09-15): a cluster training or cluster meeting counts toward a
 Core School's trainings when the school was ticked on the session's invitation
 list at scheduling AND is on the register of who attended at completion.
 
+Owner, 2026-09-21: "the core schools trained through cluster group training or
+cluster meeting should contribute to the core school training packages and
+should be counted as part of the 4 trainings. It should move to core school
+training planned table." So the slot is taken at SCHEDULING, on the invitation
+alone — the package shows 1/4 planned the moment the session is booked, and
+the school appears on the Core School Trainings Planned table beside a
+training booked from the Core Schools page. The register then narrows it: a
+school that does not turn up has its slot released back to the package by the
+same pass, and the four trainings a Core School completes are still the four
+it attended.
+
 The Core package is counted from its slots (`CorePackageSchedulingService` and
 `resync_plan_completion`), so the credit is a slot: the session is linked to
 the school's next open training slot, and the Activity → slot mirror carries
@@ -39,13 +50,47 @@ CREDITED_STATUSES = frozenset(
     }
 )
 
+#: A session that is booked but whose register has not been confirmed. The
+#: invitation alone takes the slot here, so the package reads "planned" from
+#: the day the session is scheduled (owner, 2026-09-21) — the same reading a
+#: training booked from the Core Schools page gives.
+PLANNED_STATUSES = frozenset(
+    {
+        "planned",
+        "scheduled",
+        "rescheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "in_progress",
+        "completion_started",
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+        "returned_by_ia",
+    }
+)
+
+#: Every status in which this session holds a slot at all. Outside it — a
+#: cancelled, rejected, deferred or unplanned session — the slots go back.
+LIVE_STATUSES = CREDITED_STATUSES | PLANNED_STATUSES
+
 
 def credited_school_ids(activity) -> set[str]:
-    """School pks whose attendance at this session counts as Core training.
+    """School pks whose place at this session counts as Core training.
 
-    Attended and invited. A session scheduled before invitations were recorded
-    by name has no invitation row at all; the whole cluster was invited to it
-    (the planner's count meant every member), so attendance alone credits.
+    Two readings of the same list, because a session means different things
+    before and after it happens:
+
+    * **Booked, not yet registered** — the invitation is the commitment, so
+      every invited member school takes a slot. That is what puts the school
+      on the Core School Trainings Planned table.
+    * **Register confirmed** — attended *and* invited. A school that was
+      invited and did not come has its slot released by the same pass, so the
+      package never counts a training the school did not take.
+
+    A session scheduled before invitations were recorded by name has no
+    invitation row at all; the whole cluster was invited to it (the planner's
+    count meant every member), so attendance alone credits.
     """
     from apps.activities.models import ClusterActivityAttendance
 
@@ -54,12 +99,14 @@ def credited_school_ids(activity) -> set[str]:
             "school_id", "invited", "attended", "is_guest"
         )
     )
+    invited = {school_id for school_id, i, _a, guest in rows if i and not guest}
+    if activity.status in PLANNED_STATUSES:
+        return invited
     attended = {school_id for school_id, _i, a, _g in rows if a}
     attended |= set(activity.attended_school_ids or [])
-    if not any(invited for _s, invited, _a, _g in rows):
+    if not invited:
         guests = {school_id for school_id, _i, _a, guest in rows if guest}
         return attended - guests
-    invited = {school_id for school_id, i, _a, guest in rows if i and not guest}
     return attended & invited
 
 
@@ -81,7 +128,7 @@ def credit_cluster_session(activity) -> None:
             activity_id=activity.id, activity_type="training"
         ).select_related("core_plan")
     )
-    live = activity.deleted_at is None and activity.status in CREDITED_STATUSES
+    live = activity.deleted_at is None and activity.status in LIVE_STATUSES
     credited_codes = (
         set(
             School.objects.filter(
@@ -143,8 +190,19 @@ def credit_cluster_session(activity) -> None:
             )
             open_slot.assigned_staff_id = activity.responsible_staff_id
             open_slot.assigned_partner_id = activity.assigned_partner_id
-            if activity.scheduled_date:
-                open_slot.scheduled_for = activity.scheduled_date.date()
+            # The day the package shows for this training. `scheduled_date`
+            # is the instant the drawer wrote; `planned_date` is the calendar
+            # day every plan surface selects on, and a session created through
+            # a path that set only the latter must still date its slot —
+            # otherwise the Core School Trainings Planned table lists it with
+            # no day at all.
+            when = (
+                activity.scheduled_date.date()
+                if activity.scheduled_date
+                else activity.planned_date
+            )
+            if when:
+                open_slot.scheduled_for = when
             open_slot.scheduled_month = (
                 str(activity.planned_month) if activity.planned_month else None
             )
@@ -156,4 +214,10 @@ def credit_cluster_session(activity) -> None:
         resync_plan_completion(plan)
 
 
-__all__ = ["CREDITED_STATUSES", "credit_cluster_session", "credited_school_ids"]
+__all__ = [
+    "CREDITED_STATUSES",
+    "LIVE_STATUSES",
+    "PLANNED_STATUSES",
+    "credit_cluster_session",
+    "credited_school_ids",
+]

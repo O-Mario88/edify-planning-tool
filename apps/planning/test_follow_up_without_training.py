@@ -164,3 +164,132 @@ class FollowUpDrawerTest(StandardSupportBase):
         body = response.content.decode()
         self.assertIn("followUpRequiresTraining: false", body)
         self.assertIn("No prior training recorded", body)
+
+
+class CompletionMustNameTheTrainingTest(StandardSupportBase):
+    """Optional at planning, compulsory at completion (owner, 2026-09-21).
+
+    "Right now follow up visit has linked training optional. The user MUST
+    link it to training when completing the visit from action." Planning is
+    unchanged — the officer may not know yet which session the visit will
+    answer — but a completed follow-up that names no training is a visit no
+    report can attribute to the training it reinforced.
+    """
+
+    def _follow_up(self):
+        from apps.activities.models import Activity
+
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_TRAINING_FOLLOW_UP_VISIT").id,
+            purposeType="training_follow_up",
+        )
+        return Activity.objects.get(id=result["id"])
+
+    def _completed_training(self, *, attended=True):
+        import datetime
+
+        from django.utils import timezone
+
+        from apps.activities.models import Activity
+
+        training = Activity.objects.create(
+            activity_type="in_school_training",
+            school=self.school,
+            fy=get_operational_fy(),
+            quarter="Q1",
+            status="completed",
+            focus_intervention="financial_health",
+            planned_date=timezone.localdate() - datetime.timedelta(days=30),
+            teachers_attended=6 if attended else 0,
+        )
+        return training
+
+    def _complete(self, visit, **extra):
+        from apps.activities.services import complete
+
+        payload = {
+            "salesforceId": "",
+            "teachersAttended": 4,
+            "feedbackFinding": "Attendance registers are now up to date.",
+            "schoolImprovements": ["Registers updated weekly"],
+            **extra,
+        }
+        return complete(visit.id, payload, self.user)
+
+    def setUp(self):
+        super().setUp()
+        # Evidence and the Salesforce reservation are separate, already
+        # covered chains; these tests are about the follow-up link alone.
+        evidence = patch("apps.evidence.requirements.evidence_optional", lambda a: True)
+        self.addCleanup(evidence.stop)
+        evidence.start()
+        reserve = patch("apps.activities.services.reserve_salesforce_id")
+        self.addCleanup(reserve.stop)
+        reserve.start()
+
+    def test_completing_without_a_training_is_refused(self):
+        visit = self._follow_up()
+        visit.status = "completion_started"
+        visit.save(update_fields=["status"])
+        self._completed_training()
+        with self.assertRaises(BadRequest) as ctx:
+            self._complete(visit)
+        self.assertIn("Select the training", str(ctx.exception.detail))
+
+    def test_the_named_training_is_linked_by_completing(self):
+        from apps.activities.models import Activity
+
+        visit = self._follow_up()
+        visit.status = "completion_started"
+        visit.save(update_fields=["status"])
+        training = self._completed_training()
+        self._complete(visit, followUpOfActivityId=training.id)
+        visit = Activity.objects.get(id=visit.id)
+        self.assertEqual(visit.follow_up_of_activity_id, training.id)
+
+    def test_a_session_the_school_never_took_is_refused(self):
+        import datetime
+
+        from django.utils import timezone
+
+        from apps.activities.models import Activity
+        from apps.schools.models import School
+
+        elsewhere = School.objects.create(
+            school_id="STD-OTHER",
+            name="Another School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        stranger = Activity.objects.create(
+            activity_type="in_school_training",
+            school=elsewhere,
+            fy=get_operational_fy(),
+            quarter="Q1",
+            status="completed",
+            planned_date=timezone.localdate() - datetime.timedelta(days=30),
+        )
+        visit = self._follow_up()
+        visit.status = "completion_started"
+        visit.save(update_fields=["status"])
+        with self.assertRaises(BadRequest):
+            self._complete(visit, followUpOfActivityId=stranger.id)
+
+    def test_an_ordinary_visit_is_not_asked_for_a_training(self):
+        from apps.activities.models import Activity
+
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_DONOR_VISIT").id,
+            purposeType="donor_visit",
+        )
+        visit = Activity.objects.get(id=result["id"])
+        visit.status = "completion_started"
+        visit.save(update_fields=["status"])
+        self._complete(visit)
+        self.assertEqual(
+            Activity.objects.get(id=visit.id).status,
+            "submitted_to_pl",
+        )
