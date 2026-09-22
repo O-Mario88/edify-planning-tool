@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Visit Requests - Edify Planning Tool{% endblock %}
@@ -29,6 +29,7 @@
   <h2 id="visit-request-mine-heading" class="edify-section-heading text-sm font-bold">Your requests</h2>
   {% if mine %}
   <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-x-auto">
+  {% paginate mine "visit_requests_mine_page" as visit_requests_mine_pager %}
   <table class="w-full text-left text-[12px]">
     <thead>
       <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
@@ -39,7 +40,7 @@
       </tr>
     </thead>
     <tbody>
-    {% for a in mine %}
+    {% for a in visit_requests_mine_pager.rows %}
       <tr class="border-t edify-border" data-visit-request-row="{{ a.id }}">
         <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{% school_identity a.school.name a.school.id %}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
         <td class="px-4 py-2.5 tabular-nums">{% if a.planned_date %}{{ a.planned_date|date:"j M Y" }}{% else %}&mdash;{% endif %}</td>
@@ -53,6 +54,7 @@
     {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=visit_requests_mine_pager param="visit_requests_mine_page" %}
   </div>
   {% else %}
   <div class="edify-surface rounded-surface border border-[var(--edify-border)]">

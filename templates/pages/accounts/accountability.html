@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}Accountability Tracking - Edify Command Center{% endblock %}
 
@@ -24,6 +24,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
+{% paginate records "accountability_records_page" as accountability_records_pager %}
 <table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
@@ -40,7 +41,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% if records %}
-{% for rec in records %}
+{% for rec in accountability_records_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4" data-record-title>
@@ -122,6 +123,7 @@ Enter NetSuite ID
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=accountability_records_pager param="accountability_records_page" %}
 </div>
 
 <!-- NETSUITE EXPENSE ID DETAIL DRAWER (Slide-over overlay inside parent) -->

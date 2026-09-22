@@ -1,4 +1,4 @@
-{% load kpi_metrics frontend_filters school_identity chart_tags %}
+{% load kpi_metrics frontend_filters school_identity chart_tags table_pagination %}
 
 <div class="core-schools-oversight-content space-y-6">
 
@@ -14,7 +14,7 @@
     {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
     {% if cceo_tabs %}
     {% team_chart cceo_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
-    <div x-data="{ activeCceo: '{% firstof request.GET.cceo cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
+    <div x-data="tabState('activeCceo', 'cceo', {% tab_values cceo_tabs %}, '{{ cceo_tabs.0.id }}')" class="space-y-4">
       <div class="oversight-team-selector">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -62,7 +62,7 @@
     {# ── Country / Regional View: Level 1 Supervising PL -> Level 2 CCEO Tabs #}
     {% if leads %}
     {% team_chart leads "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by Programme Lead" "Summed over each Lead's team, this financial year" %}
-    <div x-data="{ activeLead: '{% firstof request.GET.lead leads.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-5">
+    <div x-data="tabState('activeLead', 'lead', {% tab_values leads %}, '{{ leads.0.id }}')" class="space-y-5">
       {# Level 1: Supervising PL Tabs #}
       <div class="oversight-team-selector">
         <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
@@ -87,7 +87,7 @@
       {% for lead in leads %}
       <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
         {% if lead.cceo_tabs %}
-        <div x-data="{ activeOfficer: '{% firstof request.GET.officer lead.cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
+        <div x-data="tabState('activeOfficer', 'officer', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
           <div class="oversight-team-selector">
             <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">

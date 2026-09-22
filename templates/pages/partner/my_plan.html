@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}My Plan · Edify{% endblock %}
 
@@ -33,6 +33,8 @@
     </div>
     {% if rows %}
     <div class="overflow-x-auto">
+      {% page_param "my_plan_rows_page" forloop.counter as my_plan_rows_param %}
+      {% paginate rows my_plan_rows_param as my_plan_rows_pager %}
       <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
         <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
           <tr>
@@ -46,7 +48,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 max-xl:block">
-          {% for row in rows|slice:":100" %}
+          {% for row in my_plan_rows_pager.rows %}
           <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
             <td class="px-5 py-3 max-xl:px-0" data-record-title>
               <a href="/partner/activities/{{ row.a.id }}/evidence" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
@@ -103,6 +105,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=my_plan_rows_pager param=my_plan_rows_param %}
     </div>
     {% else %}
     <p class="px-5 py-6 text-center text-[13px] font-semibold text-slate-400">Nothing here — all clear.</p>

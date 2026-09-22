@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Map view: the country map (moved here from Analytics, owner 2026-09-05) with
 its distribution table, then the team's districts beneath.
@@ -19,6 +19,7 @@ its distribution table, then the team's districts beneath.
     </div>
     {% if pl_map_rows %}
     <div class="overflow-x-auto">
+    {% paginate pl_map_rows "pl_map_rows_page" as pl_map_rows_pager %}
     <table class="w-full text-left text-[12px]">
       <thead>
         <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
@@ -36,7 +37,7 @@ its distribution table, then the team's districts beneath.
         </tr>
       </thead>
       <tbody>
-        {% for d in pl_map_rows %}
+        {% for d in pl_map_rows_pager.rows %}
         <tr class="border-t edify-border">
           <td class="px-3 py-2 font-semibold text-slate-800">{{ d.name }}</td>
           <td class="px-3 py-2 text-slate-500">{{ d.region|default:"—" }}</td>
@@ -53,6 +54,7 @@ its distribution table, then the team's districts beneath.
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=pl_map_rows_pager param="pl_map_rows_page" %}
     </div>
     <p class="edify-text-caption edify-text-muted">Achievement is completed activities as a share of planned. Critical counts schools flagged critical in the period.</p>
     {% else %}

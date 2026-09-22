@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}Operations view: the ten executive sections, approvals, next actions, field intelligence and strategy notes. `showNote` lives on the page root, so the note modal keeps working when this view is swapped in.{% endcomment %}
 <div class="space-y-4" data-rvp-operations-view>
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mobile-home-deferred">
@@ -45,6 +45,7 @@
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">3. Country Directors Performance</h2>
         <div class="overflow-x-auto -mx-4 px-4">
+          {% paginate cds "cds_page" as cds_pager %}
           <table class="w-full min-w-[760px] edify-text-caption">
             <thead>
               <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider edify-text-caption text-left">
@@ -60,7 +61,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-              {% for c in cds %}
+              {% for c in cds_pager.rows %}
               <tr class="hover:bg-slate-50/50">
                 <td class="py-2.5 pr-3">
                   <div class="flex items-center gap-2"><span class="h-6 w-6 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0">{{ c.initials }}</span>{{ c.name }}</div>
@@ -79,6 +80,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=cds_pager param="cds_page" %}
         </div>
       </div>
 
@@ -124,6 +126,7 @@
       <div id="special-projects" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">5. Special Projects Performance <span class="text-slate-400 font-medium edify-text-caption">— impact is measured on verified annual SSA only</span></h2>
         <div class="overflow-x-auto -mx-4 px-4">
+          {% paginate projects "projects_page" as projects_pager %}
           <table class="w-full min-w-[860px] edify-text-caption">
             <thead>
               <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider edify-text-caption text-left">
@@ -139,7 +142,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-              {% for p in projects %}
+              {% for p in projects_pager.rows %}
               <tr class="hover:bg-slate-50/50">
                 <td class="py-2.5 pr-3"><p class="truncate max-w-[160px]">{{ p.name }}</p><p class="edify-text-caption text-slate-400">{{ p.code }} · {{ p.country }}</p></td>
                 <td class="py-2.5 px-2 text-slate-500">{{ p.goal }}</td>
@@ -171,6 +174,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=projects_pager param="projects_page" %}
         </div>
       </div>
 
@@ -192,6 +196,7 @@
         <div id="partner-growth" class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">7. Partner &amp; Stakeholder Growth</h2>
           <div class="overflow-x-auto -mx-4 px-4">
+            {% paginate partners "operations_partners_page" as operations_partners_pager %}
             <table class="w-full min-w-[640px] edify-text-caption">
               <thead>
                 <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider edify-text-caption text-left">
@@ -205,7 +210,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-                {% for p in partners %}
+                {% for p in operations_partners_pager.rows %}
                 <tr class="hover:bg-slate-50/50">
                   <td class="py-2.5 pr-3 truncate max-w-[160px]">{{ p.name }}</td>
                   <td class="py-2.5 px-2 text-slate-500">{{ p.type }}</td>
@@ -220,6 +225,7 @@
                 {% endfor %}
               </tbody>
             </table>
+            {% include "components/table_pager.html" with pager=operations_partners_pager param="operations_partners_page" %}
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% if is_htmx and can_export %}
 <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
 {% endif %}
@@ -148,7 +149,9 @@
 <div class="spp-lower-grid">
   <section class="spp-card spp-summary">
     <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Portfolio</p><h2>Project Planning Summary</h2></div></div>
-    <div class="spp-table-wrap"><table><thead><tr><th>Project</th><th>Schools Assigned</th><th>Ready for Planning</th><th>SSA Required</th><th>Assigned to Partner</th><th>Scheduled</th></tr></thead><tbody>{% for item in summary %}<tr><td><a href="{{ item.url }}">{{ item.name }}</a></td><td>{{ item.assigned }}</td><td>{{ item.ready }} <small>({{ item.ready_pct }}%)</small></td><td>{{ item.baseline }}</td><td>{{ item.partner }}</td><td>{{ item.scheduled }}</td></tr>{% empty %}<tr><td colspan="6">No projects match these filters.</td></tr>{% endfor %}</tbody></table></div>
+    {% paginate summary "summary_page" as summary_pager %}
+    <div class="spp-table-wrap"><table><thead><tr><th>Project</th><th>Schools Assigned</th><th>Ready for Planning</th><th>SSA Required</th><th>Assigned to Partner</th><th>Scheduled</th></tr></thead><tbody>{% for item in summary_pager.rows %}<tr><td><a href="{{ item.url }}">{{ item.name }}</a></td><td>{{ item.assigned }}</td><td>{{ item.ready }} <small>({{ item.ready_pct }}%)</small></td><td>{{ item.baseline }}</td><td>{{ item.partner }}</td><td>{{ item.scheduled }}</td></tr>{% empty %}<tr><td colspan="6">No projects match these filters.</td></tr>{% endfor %}</tbody></table></div>
+    {% include "components/table_pager.html" with pager=summary_pager param="summary_page" %}
   </section>
   <section class="spp-card spp-delivery">
     <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Workflow</p><h2>Project Delivery Readiness</h2></div><span>Budget generated: <strong>{{ budget }}</strong></span></div>

@@ -173,6 +173,7 @@ loses focus mid-interaction.
       </p>
     </div>
     <div class="overflow-x-auto">
+      {% paginate by_reason "closure_quality_workspace_by_reason_page" as closure_quality_workspace_by_reason_pager %}
       <table class="w-full text-left">
         <caption class="sr-only">Closures grouped by reason</caption>
         <thead>
@@ -192,7 +193,7 @@ loses focus mid-interaction.
           anything. A pager on a table that cannot exceed fifteen rows would be
           furniture.
           {% endcomment %}
-          {% for row in by_reason|slice:":20" %}
+          {% for row in closure_quality_workspace_by_reason_pager.rows %}
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5 text-sm">
               {{ row.label }}
@@ -206,6 +207,7 @@ loses focus mid-interaction.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=closure_quality_workspace_by_reason_pager param="closure_quality_workspace_by_reason_page" %}
     </div>
   </section>
 

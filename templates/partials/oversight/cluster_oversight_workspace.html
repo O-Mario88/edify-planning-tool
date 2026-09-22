@@ -1,5 +1,5 @@
 {% load chart_tags %}
-{% load kpi_metrics frontend_filters %}
+{% load kpi_metrics frontend_filters table_pagination %}
 
 <div class="cluster-oversight-content space-y-6">
 
@@ -39,7 +39,7 @@
 
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
   {% if is_programme_lead %}
-  <div x-data="{ activeOfficer: '{% firstof request.GET.officer "my-clusters" %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
+  <div x-data="tabState('activeOfficer', 'officer', {% tab_values cceo_tabs %}, 'my-clusters')" class="space-y-4">
     <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="My clusters and CCEOs under me">
       {% for officer in cceo_tabs %}
       <button type="button" role="tab" :aria-selected="activeOfficer === '{{ officer.id }}'"
@@ -60,7 +60,7 @@
     {% endfor %}
   </div>
   {% elif leads %}
-  <div x-data="{ activeLead: '{% firstof request.GET.lead selected_program_lead leads.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-5">
+  <div x-data="tabState('activeLead', 'lead', {% tab_values leads %}, '{% firstof selected_program_lead leads.0.id %}')" class="space-y-5">
     {# Level 1: Supervising PL Tabs #}
     <div class="oversight-team-selector">
       <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Supervising Program Leads">
@@ -85,7 +85,7 @@
     {% for lead in leads %}
     <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
       {% if lead.cceo_tabs %}
-      <div x-data="{ activeOfficer: '{% firstof request.GET.officer lead.cceo_tabs.0.id %}', pick(key, id) { this[key === 'lead' ? 'activeLead' : (key === 'cceo' ? 'activeCceo' : 'activeOfficer')] = id; const u = new URL(location.href); u.searchParams.set(key, id); history.replaceState(null, '', u); } }" class="space-y-4">
+      <div x-data="tabState('activeOfficer', 'officer', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
         <div class="oversight-team-selector">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">

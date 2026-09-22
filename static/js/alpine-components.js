@@ -265,6 +265,9 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('urlTabs', (defaultTab, allowedTabs) => ({
     activeTab: defaultTab,
     init() {
+      /* Same contract as `tabState` below: a paginated link carries every
+         registered parameter, so the chosen dataset survives page two. */
+      (window.__edifyUrlViewParams || (window.__edifyUrlViewParams = new Set())).add('tab');
       const requested = new URL(window.location.href).searchParams.get('tab');
       if (allowedTabs.includes(requested)) this.activeTab = requested;
       window.addEventListener('popstate', () => {
@@ -280,6 +283,77 @@ document.addEventListener('alpine:init', () => {
       window.history.pushState({}, '', url);
     },
   }));
+
+  /* One tab strip whose choice survives a paginated link.
+   *
+   * THE DEFECT THIS FIXES (owner, 2026-09-22)
+   *
+   * "Oversight keeps taking the Programme Leads back to their page when they
+   * click the next page on the pagination." Every oversight workspace puts one
+   * person's tables inside a tab panel, and the tab was a browser-only choice:
+   * the strip set `activeOfficer` and wrote the id into the address bar, while
+   * the pager under the table was a link the SERVER had already written from
+   * the query it was asked with. That query never had the officer in it, so
+   * page two arrived with the strip back at its first tab — "my-clusters", "My
+   * Core Schools", the Lead's own group. The reader asked for the next ten rows
+   * of somebody else's work and got the first ten of their own.
+   *
+   * So the parameter is registered here and `table-pagination.js` carries every
+   * registered parameter onto the link as it is followed. The strip stays a
+   * browser-side choice — no request to change tabs — and stays addressable.
+   *
+   * `allowed` is the strip's own list of ids, and a value outside it is
+   * ignored. Nested strips (each Lead has an officer strip of their own) share
+   * one parameter name, so without that check opening a second Lead with the
+   * first Lead's officer still in the URL showed an empty panel.
+   *
+   * `prop` names the property the markup already reads — activeLead,
+   * activeCceo, activeOfficer — so the panels and the aria state are unchanged.
+   */
+  Alpine.data('tabState', (prop, param, allowed, fallback) => {
+    const values = (allowed || []).map(String);
+    const first = values.includes(String(fallback))
+      ? String(fallback)
+      : (values.length ? values[0] : String(fallback == null ? '' : fallback));
+    return {
+      [prop]: first,
+      init() {
+        const registry = window.__edifyUrlViewParams || (window.__edifyUrlViewParams = new Set());
+        registry.add(param);
+        this.syncFromUrl();
+        this._onPop = () => this.syncFromUrl();
+        window.addEventListener('popstate', this._onPop);
+      },
+      destroy() {
+        if (this._onPop) window.removeEventListener('popstate', this._onPop);
+      },
+      syncFromUrl() {
+        let requested = null;
+        try {
+          requested = new URL(window.location.href).searchParams.get(param);
+        } catch (error) {
+          requested = null;
+        }
+        this[prop] = requested !== null && values.includes(requested) ? requested : first;
+      },
+      /* The markup calls pick('officer', id). The key is the strip's own and is
+         already bound in `param`; it stays in the signature so the templates
+         read the same either way, and so a nested strip can never write the
+         parameter of the strip above it. */
+      pick(key, id) {
+        const value = String(id === undefined ? key : id);
+        if (!values.includes(value) || value === this[prop]) return;
+        this[prop] = value;
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set(param, value);
+          window.history.replaceState(null, '', url);
+        } catch (error) {
+          /* An address bar we cannot write is not a reason to refuse the tab. */
+        }
+      },
+    };
+  });
 
   // Impact charts read a single HTML-safe JSON script payload. This keeps
   // backend data out of Alpine attributes and remains stable after HTMX swaps.

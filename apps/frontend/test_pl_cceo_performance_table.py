@@ -59,9 +59,9 @@ class ProgramLeadCCEOPerformanceTableTest(SimpleTestCase):
         self.assertIn('hx-target="#drawer-container"', self.template)
         self.assertNotIn('tabindex="0"', self.template)
 
-        row_opening = self.template.split("{% for c in cceo_performance.rows %}", 1)[
-            1
-        ].split(">", 1)[0]
+        row_opening = self.template.split(
+            "{% for c in cceo_performance_rows_pager.rows %}", 1
+        )[1].split(">", 1)[0]
         self.assertNotIn("hx-get", row_opening)
         self.assertNotIn("style=", self.template)
 

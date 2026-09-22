@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 "Using SSA data, work with the Program Leads, RVP, and VP of CCE to identify
 new training priorities" (CCE Regional Lead, 2026-09-13). Each country's most
@@ -34,6 +34,7 @@ their schools have (apps.ssa.plan_alignment).
     </div>
   </div>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA needs by country; scroll sideways for more columns">
+    {% paginate ssa_needs.rows "ssa_needs_rows_page" as ssa_needs_rows_pager %}
     <table class="rpl-table" data-mobile-table="scroll">
       <caption class="sr-only">Each country's most common SSA needs and how far live plans answer them, FY {{ fy }}.</caption>
       <thead>
@@ -47,7 +48,7 @@ their schools have (apps.ssa.plan_alignment).
         </tr>
       </thead>
       <tbody>
-        {% for row in ssa_needs.rows|slice:":30" %}
+        {% for row in ssa_needs_rows_pager.rows %}
         <tr>
           <th scope="row" data-record-title><span>{{ row.country }}</span></th>
           <td class="is-num" data-label="Assessed">{{ row.assessed|intcomma }} of {{ row.schools|intcomma }}</td>
@@ -65,6 +66,7 @@ their schools have (apps.ssa.plan_alignment).
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=ssa_needs_rows_pager param="ssa_needs_rows_page" %}
   </div>
   <div class="rpl-card__footnote">Needs are the three weakest interventions on each school's latest confirmed SSA. "Needs not yet planned" are SSA recommendations no plan answers yet.</div>
 </section>

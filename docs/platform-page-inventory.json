@@ -616,12 +616,12 @@
       "example_pages": [
         "/accounts",
         "/accounts/",
+        "/accounts/accountability",
+        "/accounts/accountability/",
         "/accounts/activities/<str:activity_id>",
         "/accounts/activities/<str:activity_id>/",
-        "/accounts/approval-history",
-        "/accounts/approval-history/",
-        "/accounts/blocked",
-        "/accounts/blocked/"
+        "/accounts/advances",
+        "/accounts/advances/"
       ],
       "findings": [],
       "forms": 0,
@@ -729,7 +729,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7476,
+      "bytes": 7672,
       "deprecated_alternatives": [],
       "example_pages": [
         "/actions/<str:action_id>/<str:transition>",
@@ -872,7 +872,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3712,
+      "bytes": 3963,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -894,7 +894,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3028,
+      "bytes": 3264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -916,7 +916,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3098,
+      "bytes": 3464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -940,7 +940,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6232,
+      "bytes": 6483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1027,7 +1027,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2784,
+      "bytes": 3050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1068,7 +1068,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3616,
+      "bytes": 3847,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1175,7 +1175,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11212,
+      "bytes": 11649,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/school-closures"
@@ -1198,7 +1198,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13552,
+      "bytes": 13848,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/closure-quality"
@@ -1285,7 +1285,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 935,
+      "bytes": 1168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1416,7 +1416,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30824,
+      "bytes": 32202,
       "deprecated_alternatives": [],
       "example_pages": [
         "/impact"
@@ -1555,7 +1555,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3170,
+      "bytes": 3413,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1619,7 +1619,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4193,
+      "bytes": 4447,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1640,7 +1640,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10181,
+      "bytes": 10553,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1723,7 +1723,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2720,
+      "bytes": 2983,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1966,7 +1966,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3005,
+      "bytes": 3371,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2012,7 +2012,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3699,
+      "bytes": 3970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2119,7 +2119,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2882,
+      "bytes": 3098,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2416,7 +2416,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16929,
+      "bytes": 17120,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/visit-effectiveness"
@@ -2733,7 +2733,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8619,
+      "bytes": 9317,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-schedule-drawer"
@@ -3449,7 +3449,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3803,
+      "bytes": 4036,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3790,7 +3790,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6440,
+      "bytes": 6625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings/row/<str:key>"
@@ -3881,7 +3881,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4345,
+      "bytes": 4864,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4009,7 +4009,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19887,
+      "bytes": 20655,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4095,7 +4095,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12193,
+      "bytes": 12911,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4142,7 +4142,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3347,
+      "bytes": 3593,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4192,7 +4192,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6890,
+      "bytes": 7106,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4215,7 +4215,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 33729,
+      "bytes": 34460,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4309,7 +4309,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 48433,
+      "bytes": 49295,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4406,7 +4406,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3228,
+      "bytes": 3486,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4429,7 +4429,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7156,
+      "bytes": 7359,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4499,7 +4499,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4154,
+      "bytes": 4355,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4521,7 +4521,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9751,
+      "bytes": 10196,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4572,7 +4572,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3322,
+      "bytes": 3561,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4594,7 +4594,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9318,
+      "bytes": 10212,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4802,7 +4802,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5089,
+      "bytes": 5278,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4932,7 +4932,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4811,
+      "bytes": 5015,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4958,7 +4958,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4711,
+      "bytes": 4961,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5063,7 +5063,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36187,
+      "bytes": 36781,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5693,7 +5693,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4333,
+      "bytes": 4551,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -5934,7 +5934,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6685,
+      "bytes": 6940,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -6493,7 +6493,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1079,
+      "bytes": 1416,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -6663,7 +6663,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24550,
+      "bytes": 24790,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6896,7 +6896,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4041,
+      "bytes": 4386,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -7052,7 +7052,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24443,
+      "bytes": 24944,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -7086,7 +7086,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 26703,
+      "bytes": 27139,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7172,7 +7172,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6278,
+      "bytes": 6503,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7592,7 +7592,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13099,
+      "bytes": 13372,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -7686,7 +7686,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 11279,
+      "bytes": 12165,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8412,7 +8412,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 34491,
+      "bytes": 34302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8440,7 +8440,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12391,
+      "bytes": 13545,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8467,7 +8467,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8869,
+      "bytes": 8311,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -8515,7 +8515,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9453,
+      "bytes": 8895,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -8720,7 +8720,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5702,
+      "bytes": 6280,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8778,7 +8778,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4544,
+      "bytes": 5168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8855,10 +8855,38 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 4355,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/edit-drawer",
+        "/partners/create"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Capability Picker",
+      "purpose": "Reusable  capability picker interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_capability_picker.html",
+      "variants": [
+        "info"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5749,
+      "bytes": 5142,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -8887,7 +8915,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5227,
+      "bytes": 5183,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer"
@@ -8901,6 +8929,7 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
+        "empty",
         "error",
         "disabled"
       ],
@@ -9421,7 +9450,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3181,
+      "bytes": 3433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance/inbox"
@@ -9690,7 +9719,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2242,
+      "bytes": 2490,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9716,7 +9745,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 17208,
+      "bytes": 17638,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9745,7 +9774,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11686,
+      "bytes": 11898,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9842,7 +9871,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15305,
+      "bytes": 15948,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -10159,7 +10188,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17450,
+      "bytes": 17642,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -10188,7 +10217,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10703,
+      "bytes": 10898,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -10242,7 +10271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6489,
+      "bytes": 6760,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/projects/<str:project_id>/schools"
@@ -10805,7 +10834,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7446,
+      "bytes": 7569,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -10884,7 +10913,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1418,
+      "bytes": 1654,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -10934,7 +10963,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20131,
+      "bytes": 21146,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -11021,7 +11050,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5102,
+      "bytes": 5893,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets",
@@ -11072,7 +11101,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20266,
+      "bytes": 20817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -11176,7 +11205,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21527,
+      "bytes": 21773,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11297,7 +11326,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4795,
+      "bytes": 4995,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/staff-drawer"
@@ -11344,7 +11373,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11460,
+      "bytes": 11959,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11580,7 +11609,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5637,
+      "bytes": 6071,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/upload"
@@ -11753,7 +11782,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4001,
+      "bytes": 4272,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -26553,7 +26582,7 @@
       "permission_key": "cluster_detail",
       "primary_action": "Cluster Bulk Schedule Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "A day of visits across five or more of a cluster's schools.",
+      "purpose": "A day of visits across one to five of a cluster's schools.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -32224,6 +32253,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "POST /country-planning-oversight/send",
+        "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -32330,7 +32360,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The country plan, as CSV, honouring the current filters.",
+      "purpose": "The country plan, as CSV or Excel, honouring the current filters.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -64919,7 +64949,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_detail_view",
       "card_count": 0,
@@ -65002,7 +65032,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -65031,7 +65061,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_edit_drawer_view",
       "card_count": 0,
@@ -65110,7 +65140,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -75707,7 +75737,8 @@
       "secondary_actions": [
         "/schools/bulk-assign-cluster",
         "/schools/bulk-assign-project",
-        "/schools/bulk-match-staff"
+        "/schools/bulk-match-staff",
+        "/schools/bulk-transfer-owner"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -77074,6 +77105,86 @@
         "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.ownership_views",
+      "backend_view": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9BA2BF3781",
+      "page_title": "Bulk School Owner Transfer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "Bulk School Owner Transfer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Reassign the schools ticked in the directory, in one decision.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/bulk-transfer-owner",
+      "route_name": "bulk_school_owner_transfer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.geography.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -81063,7 +81174,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The Program Lead's current view, as CSV. Same scope, same filters.",
+      "purpose": "The Program Lead's current view, as CSV or Excel. Same scope, same filters.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -103187,6 +103298,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/bulk-transfer-owner",
+      "route_name": "bulk_school_owner_transfer",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.school_views.closed_schools_view",
       "kind": "page",
       "methods": [
@@ -104533,28 +104656,28 @@
   "summary": {
     "accessibility_contract_pass": 532,
     "activity_states": 24,
-    "all_routes": 1293,
+    "all_routes": 1294,
     "api_routes": 360,
-    "component_templates": 474,
+    "component_templates": 475,
     "full_pages": 260,
     "mobile_contract_pass": 532,
-    "nonvisual_actions": 264,
+    "nonvisual_actions": 265,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 533,
+      "interaction-fragment": 534,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
     "partials_and_drawers": 269,
-    "permission_gated": 806,
+    "permission_gated": 807,
     "permission_keys": 120,
     "roles": 15,
-    "routed_surfaces": 821,
+    "routed_surfaces": 822,
     "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
@@ -104563,7 +104686,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 532,
-    "test_referenced": 714,
+    "test_referenced": 715,
     "theme_contract_pass": 532
   }
 }

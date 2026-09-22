@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Strategic direction (owner, 2026-09-13): the team's priority contract with the
 plan-linked meters, how far each team target has been distributed and the
@@ -44,6 +44,7 @@ verified SSA, and the guidance the lead has issued to the team.
           <a class="rpl-card__link" href="{{ distribution.url }}">Target Distribution <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Target distribution; scroll sideways for more columns">
+          {% paginate distribution.rows "distribution_rows_page" as distribution_rows_pager %}
           <table class="rpl-table" data-mobile-table="scroll">
             <caption class="sr-only">Team targets received this year, how much of each is distributed, and the quarterly spreads waiting for your approval.</caption>
             <thead>
@@ -57,7 +58,7 @@ verified SSA, and the guidance the lead has issued to the team.
               </tr>
             </thead>
             <tbody>
-              {% for row in distribution.rows|slice:":80" %}
+              {% for row in distribution_rows_pager.rows %}
               <tr>
                 <th scope="row" data-record-title><span>{{ row.milestone }}</span></th>
                 <td class="is-num" data-label="Team target">{% if row.team_target is not None %}{{ row.team_target|floatformat:"-2" }}{% else %}—{% endif %}</td>
@@ -75,6 +76,7 @@ verified SSA, and the guidance the lead has issued to the team.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=distribution_rows_pager param="distribution_rows_page" %}
         </div>
       </section>
 
@@ -117,6 +119,7 @@ verified SSA, and the guidance the lead has issued to the team.
           <p class="text-[12px] text-slate-500">Share of each officer's judged plans the verified SSA informed{% if ssa_informed.rate is not None %} · team {{ ssa_informed.rate }}%{% endif %}</p>
         </header>
         <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-table-scroll-region tabindex="0" aria-label="SSA-informed plans by officer">
+          {% paginate ssa_informed.rows "ssa_informed_rows_page" as ssa_informed_rows_pager %}
           <table class="rpl-table w-full" data-mobile-table="scroll">
             <caption class="sr-only">For each officer, plans judged against the verified SSA this year and the share it informed.</caption>
             <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60">
@@ -127,7 +130,7 @@ verified SSA, and the guidance the lead has issued to the team.
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {% for row in ssa_informed.rows|slice:":60" %}
+              {% for row in ssa_informed_rows_pager.rows %}
               <tr class="hover:bg-slate-50/60 transition-colors">
                 <th scope="row" class="ps-4 pe-2 py-2 font-medium text-slate-800" data-record-title><span>{{ row.name }}</span></th>
                 <td class="is-num px-2 py-2" data-label="Judged plans">{{ row.judged }}</td>
@@ -142,6 +145,7 @@ verified SSA, and the guidance the lead has issued to the team.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=ssa_informed_rows_pager param="ssa_informed_rows_page" %}
         </div>
       </section>
 

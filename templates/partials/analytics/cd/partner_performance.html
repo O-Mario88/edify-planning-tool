@@ -1,10 +1,11 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">7. Performance by Partner</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Impact-weighted · recommendation review</p>
   </div>
   <div class="overflow-x-auto -mx-1">
+    {% paginate partner_performance.rows "partner_performance_rows_page" as partner_performance_rows_pager %}
     <table class="w-full edify-text-caption">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
@@ -16,7 +17,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-50">
-        {% for r in partner_performance.rows %}
+        {% for r in partner_performance_rows_pager.rows %}
         <tr class="cursor-pointer hover:bg-slate-50/60"
             hx-get="/analytics/country-director/drilldown?drill=partner&id={{ r.id }}&fy={{ fy }}"
             hx-target="#drawer-container" hx-swap="innerHTML">
@@ -39,6 +40,7 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=partner_performance_rows_pager param="partner_performance_rows_page" %}
   </div>
   <p class="edify-text-caption text-slate-400 font-medium pt-1">SSA Δ = annual verified cycle change · "Insufficient Data" = no partner-attributed verified activity yet.</p>
 </div>

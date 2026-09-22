@@ -361,6 +361,15 @@ def _program_lead_dashboard(request, avatar_initials: str):
 
         context.update(country_map_context(fy))
         context.update(_pl_map_context(user, fy, {}))
+    if view == "team":
+        # Who's Online, over this Lead's reporting line and nobody else's
+        # (owner, 2026-09-22). It is built only for the view that shows it:
+        # the Lead's other views ask different questions and should not pay a
+        # roster query for a panel they do not draw.
+        from apps.accounts.presence import presence_summary, team_user_ids
+
+        context["presence"] = presence_summary(only_user_ids=team_user_ids(user))
+        context["presence_scope_label"] = "your team"
     if tab_swap:
         response = render(
             request,

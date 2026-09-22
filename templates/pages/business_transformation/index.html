@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Business Transformation — Edify{% endblock %}
@@ -46,10 +46,11 @@
       {% include "components/badge.html" with tone="warning" label=active_cases_label size="md" %}
     </header>
     <div class="overflow-x-auto">
+      {% paginate cases "cases_page" as cases_pager %}
       <table class="edify-record-table w-full">
         <thead><tr><th>ID</th><th>School</th><th>Location</th><th>Verified recommendation</th><th>Status</th><th>Opened</th><th><span class="sr-only">Action</span></th></tr></thead>
         <tbody>
-          {% for case in cases %}
+          {% for case in cases_pager.rows %}
           <tr>
             <td class="tabular-nums" data-label="ID">{{ case.school.school_id }}</td>
             <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{% school_identity case.school.name case.school.id %}</a></td>
@@ -74,6 +75,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=cases_pager param="cases_page" %}
     </div>
   </section>
   {% endif %}

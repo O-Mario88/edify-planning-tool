@@ -352,6 +352,14 @@ urlpatterns = [
         school_views.bulk_match_staff_view,
         name="bulk_match_staff",
     ),
+    # Reassigning ownership in bulk is the governed transfer, not the directory's
+    # own staff match: it records who moved what and why, decides the open work
+    # and flags the targets that depended on the portfolio (owner, 2026-09-22).
+    path(
+        "schools/bulk-transfer-owner",
+        ownership_views.bulk_school_owner_transfer_view,
+        name="bulk_school_owner_transfer",
+    ),
     path("schools/add-school", school_views.add_school_view, name="add_school"),
     path(
         "schools/sub-counties",

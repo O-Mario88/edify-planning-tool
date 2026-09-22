@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div id="team-targets-workspace" class="tt-workspace">
   <section class="tt-filter-panel" aria-label="Team targets filters">
     <form method="get" action="/team-planning-oversight/"
@@ -89,11 +89,12 @@
     </div>
     {% if project_priorities %}
     <div class="overflow-x-auto">
+      {% paginate project_priorities "project_priorities_page" as project_priorities_pager %}
       <table class="w-full min-w-[1050px] text-left text-xs">
         <caption class="sr-only">Projects assigned as priorities to the selected supervised team</caption>
         <thead><tr><th class="p-3">Team member</th><th class="p-3">Project priority</th><th class="p-3">Interventions</th><th class="p-3 text-right">Schools</th><th class="p-3 text-right">Activities</th><th class="p-3 text-right">Completed</th><th class="p-3">Planning state</th><th class="p-3">Action</th></tr></thead>
         <tbody>
-          {% for row in project_priorities|slice:":60" %}
+          {% for row in project_priorities_pager.rows %}
           <tr class="border-t border-[var(--border-card)]">
             <td class="p-3 font-semibold">{{ row.teamMember }}</td>
             <td class="p-3"><strong class="block">{{ row.projectName }}</strong><span class="text-[var(--edify-text-muted)]">{{ row.responsibility }} · {{ row.schoolFocus }}</span></td>
@@ -112,6 +113,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=project_priorities_pager param="project_priorities_page" %}
     </div>
     {% else %}
     <div class="tt-empty tt-empty--compact">
@@ -125,6 +127,7 @@
     <div class="tt-panel__header"><div><span class="tt-eyebrow">Strategy cascade</span><h2 id="team-strategic-milestones">Supervised-Team Milestone Allocations</h2><p>Manager personal targets remain on My Targets. This table contains only the selected supervised team’s approved allocations and canonical actuals.</p></div></div>
     {% if strategic_milestones %}
     <div class="overflow-x-auto">
+      {% paginate strategic_milestones "workspace_strategic_milestones_page" as workspace_strategic_milestones_pager %}
       <table class="w-full min-w-[1120px] text-left text-xs">
         <caption class="sr-only">Approved supervised-team strategic milestone allocations and progress</caption>
         <thead>
@@ -140,7 +143,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for row in strategic_milestones|slice:":60" %}
+          {% for row in workspace_strategic_milestones_pager.rows %}
           <tr class="border-t border-[var(--border-card)]">
             <td class="p-3 font-semibold">{{ row.teamMember }}</td>
             <td class="p-3"><strong class="block">{{ row.milestone }}</strong><span class="text-[var(--edify-text-muted)]">{{ row.priority }}</span></td>
@@ -154,6 +157,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=workspace_strategic_milestones_pager param="workspace_strategic_milestones_page" %}
     </div>
     {% else %}
     <div class="tt-empty tt-empty--compact">

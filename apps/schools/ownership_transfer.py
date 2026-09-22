@@ -58,6 +58,12 @@ SETTLED_STATUSES = (
 #: Roles that can hold a school portfolio.
 PORTFOLIO_ROLES = ("CCEO", "Program Lead")
 
+#: How many ticked schools one bulk reassignment may carry (owner, 2026-09-22:
+#: "make sure time is not wasted reassigning one by one"). It is a guard on the
+#: request, not a policy: a directory page is at most 200 rows, and a selection
+#: larger than this is a district transfer, which has its own door.
+BULK_TRANSFER_LIMIT = 200
+
 
 @dataclass
 class TransferPreview:
@@ -524,6 +530,79 @@ def _notify_target_reconciliation(record) -> None:
 
 
 @transaction.atomic
+def transfer_schools(school_ids, data: dict, principal) -> dict:
+    """Move every school the actor ticked to one new owner, in one decision.
+
+    Owner, 2026-09-22: "The Admin and IA should be able to bulk reassign
+    ownership using either district, checkboxes... the idea is to make sure
+    time is not wasted reassigning one by one. But also allow the schools to
+    be assigned one by one."
+
+    A district transfer already existed and answers "everything this person
+    holds there". A selection answers the other half: these schools, whoever
+    holds them and wherever they are. Both run the same per-school service the
+    single drawer calls, so the transfer record, the open-activity decision,
+    the notifications and the target reconciliation are identical however many
+    schools were ticked.
+
+    A school that cannot move does not stop the ones that can: each is its own
+    savepoint, and the refusal is reported rather than raised — otherwise one
+    school already belonging to the new owner would undo forty that moved.
+    Nothing moving at all is still a refusal, with the reasons.
+    """
+    from apps.schools.models import School
+    from apps.schools.ownership_models import TargetReconciliation
+
+    if not may_transfer_school(principal):
+        raise Forbidden(
+            "Only an Admin or Impact Assessment can reassign school ownership."
+        )
+    ids = list(
+        dict.fromkeys(
+            str(value).strip() for value in (school_ids or []) if str(value).strip()
+        )
+    )
+    if not ids:
+        raise BadRequest("Tick the schools whose owner changes.")
+    if len(ids) > BULK_TRANSFER_LIMIT:
+        raise BadRequest(
+            f"Reassign at most {BULK_TRANSFER_LIMIT} schools at a time. For a "
+            "whole portfolio in one district, use the district transfer."
+        )
+
+    moved: list = []
+    skipped: list[dict] = []
+    with transaction.atomic():
+        for school_id in ids:
+            try:
+                with transaction.atomic():
+                    moved.append(transfer_school_owner(school_id, data, principal))
+            except (BadRequest, NotFoundError) as exc:
+                name = (
+                    School.objects.filter(Q(id=school_id) | Q(school_id=school_id))
+                    .values_list("name", flat=True)
+                    .first()
+                    or school_id
+                )
+                skipped.append(
+                    {"school": name, "reason": str(getattr(exc, "detail", exc))}
+                )
+        if not moved:
+            raise BadRequest(
+                "No school moved. " + " ".join(item["reason"] for item in skipped[:3])
+            )
+
+    return {
+        "moved": len(moved),
+        "records": moved,
+        "skipped": skipped,
+        "reconciliation_required": any(
+            record.target_reconciliation_status == TargetReconciliation.REQUIRED
+            for record in moved
+        ),
+    }
+
+
 def transfer_district_portfolio(district_id: str, data: dict, principal):
     """Move every school one person holds in a district to another person."""
     from apps.geography.models import District
@@ -817,4 +896,5 @@ __all__ = [
     "resolve_target_reconciliation",
     "transfer_district_portfolio",
     "transfer_school_owner",
+    "transfer_schools",
 ]

@@ -24,9 +24,16 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
         {% include "partials/oversight/filter_drawer.html" with target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
       </div>
     </details>
+    {% comment %}Excel beside CSV (owner, 2026-09-22): the plan a Lead sends on
+    is read in Excel, and a CSV argues with it about dates and money. Same rows,
+    same filters, same scope — only the file differs.{% endcomment %}
     <a class="btn btn-ghost h-8 inline-flex items-center"
        href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
+    </a>
+    <a class="btn btn-ghost h-8 inline-flex items-center"
+       href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx">
+      Export Excel
     </a>
   </div>
 

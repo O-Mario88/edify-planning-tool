@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% comment %}
   School Visit Effectiveness workspace — one canonical analysis, role-scoped
   emphasis. All figures come from SchoolVisitEffectivenessAnalyticsService;
@@ -138,6 +138,7 @@
   <h2 class="text-[14px] font-semibold edify-text mb-1">Regional variation</h2>
   <p class="text-[12px] edify-text-muted mb-3">The same visit model performs differently by region — associations, not causation.</p>
   <div class="overflow-x-auto">
+    {% paginate d.regions "d_regions_page" as d_regions_pager %}
     <table class="w-full text-left text-[12px]">
       <thead><tr class="edify-text-caption font-bold uppercase tracking-wider edify-text-muted">
         <th class="py-1.5 pr-2">Region</th><th class="py-1.5 px-2 text-right">Schools</th>
@@ -145,7 +146,7 @@
         <th class="py-1.5 px-2 text-right">r</th><th class="py-1.5 pl-2">Association</th>
       </tr></thead>
       <tbody class="divide-y divide-slate-100">
-        {% for r in d.regions %}
+        {% for r in d_regions_pager.rows %}
         <tr>
           <td class="py-1.5 pr-2 font-semibold edify-text">{{ r.region }}{% if r.low_sample %} <span class="edify-text-caption font-bold" style="color: var(--edify-warning-text)">small n</span>{% endif %}</td>
           <td class="py-1.5 px-2 text-right tabular-nums">{{ r.n }}</td>
@@ -157,6 +158,7 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=d_regions_pager param="d_regions_page" %}
   </div>
 </section>
 {% endif %}

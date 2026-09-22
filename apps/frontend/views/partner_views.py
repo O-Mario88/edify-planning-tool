@@ -26,6 +26,7 @@ from apps.core.fy import fy_options, get_fy_date_range, get_operational_fy
 from apps.core.metrics import MetricValue, render_kpi_item
 from apps.clusters.models import Cluster
 from apps.geography.models import Region
+from apps.partners import capabilities as partner_capabilities
 from apps.partners.models import Partner, PartnerAssignment
 from apps.partners.purposes import visit_purpose_label
 from apps.activities.models import Activity
@@ -513,7 +514,6 @@ def create_partner_view(request):
     from django.contrib import messages
     from django.utils.html import escape
 
-    from apps.core.enums import SsaIntervention
     from apps.core.exceptions import BadRequest, ConflictError, Forbidden
     from apps.partners.services import (
         may_create_partner_organisation,
@@ -540,15 +540,26 @@ def create_partner_view(request):
     )
 
     if request.method == "POST":
+        # Interventions and their activities are ticked, not chosen from one
+        # dropdown: a partner doing three things used to be recorded as doing
+        # one (owner, 2026-09-22). `capabilities` validates what comes back
+        # against the list the form actually offered, and decides which single
+        # intervention the old column keeps holding.
+        chosen = partner_capabilities.selected_capabilities(
+            request.POST.getlist("ssa_interventions"),
+            request.POST.getlist("activity_codes"),
+        )
         payload = {
             "name": request.POST.get("name", "").strip(),
             "regionName": request.POST.get("region_name", "").strip(),
             "contactPerson": request.POST.get("contact_person", "").strip(),
             "email": request.POST.get("email", "").strip(),
             "phone": request.POST.get("phone", "").strip(),
-            "ssaIntervention": request.POST.get("ssa_intervention", "").strip(),
             "notes": request.POST.get("notes", "").strip(),
             "expertiseAreas": request.POST.get("expertise", "").strip(),
+            "ssaIntervention": chosen["ssa_intervention"],
+            "ssaInterventions": chosen["ssa_interventions"],
+            "activityCodes": chosen["activity_codes"],
         }
         try:
             created = onboard_partner_service(payload, request.user)
@@ -582,7 +593,9 @@ def create_partner_view(request):
 
     context = {
         "regions": Region.objects.order_by("name"),
-        "interventions": SsaIntervention.choices,
+        "capability_groups": partner_capabilities.intervention_activity_options(),
+        "selected_interventions": [],
+        "selected_activities": [],
         "can_manage_partner_users": may_manage_partner_users(request.user),
         "drawer_size": "md",
     }
@@ -958,7 +971,6 @@ def partner_edit_drawer_view(request, partner_id):
     reloads the profile.
     """
 
-    from apps.core.enums import SsaIntervention
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
     from apps.core.scoping import resolve_user_scope
     from apps.partners.services import update as update_partner
@@ -981,12 +993,21 @@ def partner_edit_drawer_view(request, partner_id):
     if not (country_side or partner.id in scope.partner_ids):
         return HttpResponseForbidden("You may only edit your own partner organisation.")
 
-    def drawer_context(validation_error=None):
+    def drawer_context(validation_error=None, selected=None):
+        chosen = selected or {}
+        stored = list(partner.ssa_interventions or [])
+        if not stored and partner.ssa_intervention:
+            # Added before the tick-list: its one intervention is its answer.
+            stored = [partner.ssa_intervention]
         return {
             "partner": partner,
             "country_side": country_side,
             "regions": Region.objects.order_by("name"),
-            "interventions": SsaIntervention.choices,
+            "capability_groups": partner_capabilities.intervention_activity_options(),
+            "selected_interventions": chosen.get("ssa_interventions", stored),
+            "selected_activities": chosen.get(
+                "activity_codes", list(partner.activity_codes or [])
+            ),
             "validation_error": validation_error,
         }
 
@@ -997,7 +1018,13 @@ def partner_edit_drawer_view(request, partner_id):
         phone = (request.POST.get("phone") or "").strip()
         notes = (request.POST.get("notes") or "").strip()
         expertise = (request.POST.get("expertise") or "").strip()
-        intervention = ""
+        # Nothing ticked is a valid answer, and the partner-side editor never
+        # sees the tick-list at all, so the default is "no change asked for".
+        chosen = {
+            "ssa_intervention": None,
+            "ssa_interventions": [],
+            "activity_codes": [],
+        }
         payload = {
             "contactPerson": contact,
             "email": email,
@@ -1014,22 +1041,28 @@ def partner_edit_drawer_view(request, partner_id):
                 )
             payload["name"] = name
             payload["regionName"] = (request.POST.get("region_name") or "").strip()
-            intervention = (request.POST.get("ssa_intervention") or "").strip()
-            if intervention and intervention not in {
-                v for v, _ in SsaIntervention.choices
-            }:
-                return render(
-                    request,
-                    "partials/partners/edit_drawer.html",
-                    drawer_context("Choose a valid SSA intervention."),
-                )
+            chosen = partner_capabilities.selected_capabilities(
+                request.POST.getlist("ssa_interventions"),
+                request.POST.getlist("activity_codes"),
+            )
         try:
             update_partner(partner.id, payload, request.user)
-            if country_side and intervention:
-                # `update()` does not carry the intervention; it is set here,
-                # on the country side only.
-                partner.ssa_intervention = intervention
-                partner.save(update_fields=["ssa_intervention", "updated_at"])
+            if country_side:
+                # `update()` does not carry what the organisation does; it is
+                # set here, on the country side only. Untick everything and it
+                # is recorded as doing nothing in particular, which is an
+                # answer — the field was never required.
+                partner.ssa_intervention = chosen["ssa_intervention"]
+                partner.ssa_interventions = chosen["ssa_interventions"]
+                partner.activity_codes = chosen["activity_codes"]
+                partner.save(
+                    update_fields=[
+                        "ssa_intervention",
+                        "ssa_interventions",
+                        "activity_codes",
+                        "updated_at",
+                    ]
+                )
         except (BadRequest, Forbidden, NotFoundError) as exc:
             return render(
                 request,

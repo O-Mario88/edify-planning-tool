@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 
 {% load kpi_metrics %}
 {% load static %}
@@ -37,6 +37,7 @@ Verification Quality tab has no Map view, so they belong here for it.
 
       {% if queue_items %}
       <div class="ia-queue-table-scroll overflow-x-auto">
+        {% paginate queue_items "queue_items_page" as queue_items_pager %}
         <table class="ia-queue-table" data-mobile-table="scroll">
           <caption class="sr-only">Oldest pending verification records</caption>
           <thead>
@@ -50,7 +51,7 @@ Verification Quality tab has no Map view, so they belong here for it.
           </thead>
           <tbody>
           {# The view already caps this at 6; the slice makes the bound visible to the table-inventory scanner. #}
-          {% for item in queue_items|slice:":6" %}
+          {% for item in queue_items_pager.rows %}
           <tr class="ia-queue-row">
             <td class="ia-queue-row__record">
               <a href="{{ item.review_url }}">#{{ item.record_id }}</a>
@@ -75,6 +76,7 @@ Verification Quality tab has no Map view, so they belong here for it.
           {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=queue_items_pager param="queue_items_page" %}
       </div>
       {% else %}
       <div class="ia-empty">
@@ -229,6 +231,8 @@ Verification Quality tab has no Map view, so they belong here for it.
               lead's own row first, consolidated across the lead and the team, then
               each CCEO. Schools are counted as sets, so a school two CCEOs both
               reached is one school in the lead's row.{% endcomment %}
+              {% page_param "group_members_page" forloop.counter as group_members_param %}
+              {% paginate group.members group_members_param as group_members_pager %}
               <div class="ia-monitor-table-wrap"><table class="ia-monitor-table ia-monitor-table--reach">
                 <caption class="sr-only">{{ group.name }}: consolidated team reach, then each CCEO supervised</caption>
                 <thead>
@@ -237,9 +241,10 @@ Verification Quality tab has no Map view, so they belong here for it.
                 </thead>
                 <tbody>
                   {% if group.role %}<tr class="ia-monitor-table__lead"><td><strong>{{ group.name }}</strong><small>{{ group.role }} · lead and team, consolidated</small></td><td>{{ group.schools }}</td><td>{{ group.schools_planned }}</td><td>{{ group.schools_achieved }}</td><td><b>{{ group.schools_pct }}%</b></td><td>{{ group.planned }}</td><td>{{ group.achieved }}</td><td>{{ group.verified }}</td><td>{{ group.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate }}%"></i></span><b>{{ group.rate }}%</b></td></tr>{% endif %}
-                  {% for leader in group.members %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.schools }}</td><td>{{ leader.schools_planned }}</td><td>{{ leader.schools_achieved }}</td><td><b>{{ leader.schools_pct }}%</b></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="10" class="ia-list-empty">No CCEOs supervised yet.</td></tr>{% endfor %}
+                  {% for leader in group_members_pager.rows %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.schools }}</td><td>{{ leader.schools_planned }}</td><td>{{ leader.schools_achieved }}</td><td><b>{{ leader.schools_pct }}%</b></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="10" class="ia-list-empty">No CCEOs supervised yet.</td></tr>{% endfor %}
                 </tbody>
               </table></div>
+              {% include "components/table_pager.html" with pager=group_members_pager param=group_members_param %}
             </div>
           </section>
           {% empty %}

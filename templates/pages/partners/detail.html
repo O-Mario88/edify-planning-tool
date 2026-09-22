@@ -50,7 +50,10 @@ contract every profile page shares.
 <div><p class="edify-profile-field__label">Phone</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ partner.phone|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Email</p><p class="edify-profile-field__value mt-0.5">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}Not specified{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Region</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_name|default:"Not specified" }}</p></div>
-<div><p class="edify-profile-field__label">SSA intervention</p><p class="edify-profile-field__value mt-0.5">{{ partner.ssa_intervention_label }}</p></div>
+{% comment %}All of them, not the first (owner, 2026-09-22): an organisation
+running three kinds of work was described here by one.{% endcomment %}
+<div><p class="edify-profile-field__label">SSA interventions</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.interventions %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% empty %}{{ partner.ssa_intervention_label }}{% endfor %}</p></div>
+<div class="col-span-2"><p class="edify-profile-field__label">Activities delivered</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.activities %}{{ item.name }}{% if not forloop.last %} · {% endif %}{% empty %}None recorded{% endfor %}</p></div>
 <div><p class="edify-profile-field__label">Expertise</p><p class="edify-profile-field__value mt-0.5">{% if partner.expertise_areas %}{{ partner.expertise_areas|join:", " }}{% elif partner.trains_on %}{{ partner.trains_on|join:", " }}{% else %}Not specified{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Contract</p><p class="edify-profile-field__value mt-0.5">{{ partner.contract_status|default:"Not specified"|title }}</p></div>
 <div><p class="edify-profile-field__label">Schools assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school_count }}</p></div>

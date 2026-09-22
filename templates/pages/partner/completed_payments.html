@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Completed Work &amp; Payments · Edify{% endblock %}
@@ -22,6 +22,7 @@
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
+      {% paginate rows "completed_payments_rows_page" as completed_payments_rows_pager %}
       <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
         <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
           <tr>
@@ -40,7 +41,7 @@
           partners were linked to profiles that refuse them (2026-09-14). The page gate
           belongs to the route, not the record, so one check answers for every row.{% endcomment %}
           {% with link_schools=request.user|can_open:"/schools/row" link_clusters=request.user|can_open:"/clusters/row" %}
-          {% for row in rows|slice:":200" %}
+          {% for row in completed_payments_rows_pager.rows %}
           <tr class="max-xl:block max-xl:p-4">
             <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% if row.activity.school %}{% if link_schools %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{% school_identity row.activity.school.name row.activity.school.id %}</a>{% else %}{% school_identity row.activity.school.name row.activity.school.id %}{% endif %}{% elif row.activity.cluster %}{% if link_clusters %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}{{ row.activity.cluster.name }}{% endif %}{% else %}Field work{% endif %}</td>
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0">{{ row.activity.get_activity_type_display }}</td>
@@ -57,6 +58,7 @@
           {% endwith %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=completed_payments_rows_pager param="completed_payments_rows_page" %}
     </div>
   </div>
 

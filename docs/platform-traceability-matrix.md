@@ -15,7 +15,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 101 | 33 | 2 | 2 | 6 | 19 | 55 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 103 | 33 | 2 | 2 | 6 | 19 | 55 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 37 | 10 | 1 | 11 | 0 | 0 | 19 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 95 | 35 | 3 | 8 | 10 | 26 | 55 |
 | `journey-04` | Cluster training | ✓ | 1 | 51 | 17 | 1 | 2 | 0 | 1 | 51 |
@@ -24,7 +24,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 73 | 29 | 4 | 10 | 9 | 23 | 55 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 69 | 25 | 3 | 6 | 7 | 18 | 54 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 49 | 15 | 0 | 0 | 1 | 4 | 15 |
-| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 88 | 35 | 2 | 2 | 7 | 25 | 55 |
+| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 90 | 35 | 2 | 2 | 7 | 25 | 55 |
 | `journey-11` | Professional Development | ✓ | 1 | 39 | 8 | 0 | 0 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 33 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 36 | 7 | 0 | 0 | 0 | 3 | 1 |
@@ -32,7 +32,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-15` | Financial Health | ✓ | 1 | 50 | 17 | 2 | 4 | 1 | 6 | 19 |
 | `journey-16` | Government Requirements | ✓ | 1 | 49 | 17 | 2 | 4 | 1 | 5 | 19 |
 | `journey-17` | Loan | ✓ | 1 | 43 | 25 | 11 | 7 | 3 | 17 | 27 |
-| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 44 | 21 | 9 | 6 | 1 | 9 | 23 |
+| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 46 | 21 | 9 | 6 | 1 | 9 | 23 |
 | `journey-19` | Cross-role security | ✓ | 4 | 39 | 11 | 2 | 2 | 0 | 1 | 61 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
@@ -53,7 +53,7 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_target`, `performance_conversations`, `priorities_master` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py` _+91 more_ |
+| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py` _+93 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+21 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+11 more_ |
@@ -233,7 +233,7 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `performance_conversations` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing.py` _+78 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing.py` _+80 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+23 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `performance_window_opened`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed` _+17 more_ |
@@ -393,7 +393,7 @@ Steps: Second loan → Loan count increases → Unique school does not duplicate
 | Permissions checked | `businessTransformation.allocation.manage`, `businessTransformation.case.manage`, `businessTransformation.disbursement.write`, `businessTransformation.facility.approve`, `businessTransformation.facility.manage`, `businessTransformation.facility.transfer`, `businessTransformation.ia.validate`, `businessTransformation.loan.write`, `businessTransformation.mfi.manage` |
 | Page gates checked | `business_transformation` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py` _+34 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py` _+36 more_ |
 | Models written | `accounts.User`, `audit.AuditLog`, `business_transformation.EnrolmentSnapshot`, `business_transformation.FundingFacility`, `business_transformation.FundingFacilityAllocation`, `business_transformation.FundingFacilityTranche`, `business_transformation.LoanDisbursement`, `business_transformation.LoanImpactAssessment`, `business_transformation.LoanPurpose`, `business_transformation.LoanPurposeAllocation`, `business_transformation.LoanStatusHistory`, `business_transformation.LoanVerificationRequirement` _+9 more_ |
 | Notifications raised | `bt.loan.disbursed` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+1 more_ |

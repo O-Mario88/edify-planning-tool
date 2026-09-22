@@ -19,6 +19,7 @@ from apps.accounts.presence import (
     presence_summary,
     record_login,
     request_footprint,
+    team_user_ids,
     touch_presence,
 )
 from apps.accounts.presence_labels import activity_for, section_for
@@ -370,3 +371,81 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn(
             'data-presence-group="program_lead" data-presence-online="1"', html
         )
+
+
+class ProgrammeLeadReadsTheirOwnTeamTest(TestCase):
+    """Owner, 2026-09-22: "Give PLs access to Who is online but restrict to
+    their team members only."
+
+    The country's copy stays the country's. A Lead's copy is the reporting
+    line — themselves and the officers they supervise — and every number in it
+    counts that team, so a team roster never sits beside a country total.
+    """
+
+    def setUp(self):
+        self.lead = _user("lena", "Program Lead")
+        self.mine_one = _user("mina")
+        self.mine_two = _user("moses")
+        self.someone_elses = _user("otto")
+        self.other_lead = _user("olive", "Program Lead")
+        self.director = _user("dina", "CountryDirector")
+        for officer in (self.mine_one, self.mine_two):
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.lead.staff_profile, supervisee=officer.staff_profile
+            )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.other_lead.staff_profile,
+            supervisee=self.someone_elses.staff_profile,
+        )
+
+    def test_the_team_is_the_reporting_line_and_the_lead_themselves(self):
+        self.assertEqual(
+            team_user_ids(self.lead),
+            {self.lead.id, self.mine_one.id, self.mine_two.id},
+        )
+
+    def test_a_lead_with_nobody_under_them_still_sees_themselves(self):
+        alone = _user("alan", "Program Lead")
+        self.assertEqual(team_user_ids(alone), {alone.id})
+        summary = presence_summary(only_user_ids=team_user_ids(alone))
+        self.assertEqual(summary["people_count"], 1)
+
+    def test_each_lead_sees_their_own_line_and_not_the_other_s(self):
+        self.assertEqual(
+            team_user_ids(self.other_lead),
+            {self.other_lead.id, self.someone_elses.id},
+        )
+
+    def test_the_roster_holds_the_team_and_nobody_else(self):
+        summary = presence_summary(only_user_ids=team_user_ids(self.lead))
+        listed = {
+            person["name"]
+            for group in summary["groups"]
+            for person in ([group["lead"]] if group["lead"] else []) + group["members"]
+        }
+        self.assertEqual(listed, {"Lena", "Mina", "Moses"})
+        self.assertEqual(summary["people_count"], 3)
+
+    def test_the_counts_are_the_team_s_and_not_the_country_s(self):
+        now = timezone.now()
+        User.objects.filter(pk=self.mine_one.pk).update(
+            last_seen_at=now - timedelta(minutes=2)
+        )
+        # Someone else's officer, online and signed in, must not be counted.
+        User.objects.filter(pk=self.someone_elses.pk).update(
+            last_seen_at=now - timedelta(minutes=1)
+        )
+        for person in (self.mine_one, self.someone_elses, self.director):
+            LoginEvent.objects.create(user=person, role=person.active_role, at=now)
+
+        team = presence_summary(now=now, only_user_ids=team_user_ids(self.lead))
+        country = presence_summary(now=now)
+
+        self.assertEqual(team["online_count"], 1)
+        self.assertEqual(team["logins_today"], 1)
+        self.assertEqual(country["online_count"], 2)
+        self.assertEqual(country["logins_today"], 3)
+
+    def test_the_country_panel_is_unchanged_without_a_scope(self):
+        summary = presence_summary()
+        self.assertEqual(summary["people_count"], 6)

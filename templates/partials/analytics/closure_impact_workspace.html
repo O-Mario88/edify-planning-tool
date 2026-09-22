@@ -147,6 +147,7 @@ grouping changes — so the header keeps the control that fired the request.
       </p>
     </div>
     <div class="overflow-x-auto">
+      {% paginate by_reason "closure_impact_workspace_by_reason_page" as closure_impact_workspace_by_reason_pager %}
       <table class="w-full text-left">
         <caption class="sr-only">Closures grouped by reason</caption>
         <thead>
@@ -162,7 +163,7 @@ grouping changes — so the header keeps the control that fired the request.
           The slice cannot bind: this is a GROUP BY over ClosureReason, which
           has fifteen members. It states the bound rather than truncating.
           {% endcomment %}
-          {% for row in by_reason|slice:":20" %}
+          {% for row in closure_impact_workspace_by_reason_pager.rows %}
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5 text-sm">{{ row.label }}</td>
             <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.total|intcomma }}</td>
@@ -177,6 +178,7 @@ grouping changes — so the header keeps the control that fired the request.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=closure_impact_workspace_by_reason_pager param="closure_impact_workspace_by_reason_page" %}
     </div>
   </section>
 
@@ -188,6 +190,7 @@ grouping changes — so the header keeps the control that fired the request.
       The last twelve months, by the date each school stopped operating — not the date it was recorded, so a closure discovered late lands in the month it happened.
     </p>
     <div class="overflow-x-auto">
+      {% paginate trend "trend_page" as trend_pager %}
       <table class="w-full text-left">
         <caption class="sr-only">Closures per month</caption>
         <thead>
@@ -202,7 +205,7 @@ grouping changes — so the header keeps the control that fired the request.
           Bounded in the service to a twelve-month window, so the slice is a
           restatement of that ceiling rather than a second, quieter cap.
           {% endcomment %}
-          {% for row in trend|slice:":24" %}
+          {% for row in trend_pager.rows %}
           <tr class="border-t edify-border">
             <td class="px-2 py-2 text-sm">{{ row.month|date:"F Y" }}</td>
             <td class="px-2 py-2 text-sm text-right tabular-nums">{{ row.total|intcomma }}</td>
@@ -211,6 +214,7 @@ grouping changes — so the header keeps the control that fired the request.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=trend_pager param="trend_page" %}
     </div>
   </section>
   {% endif %}

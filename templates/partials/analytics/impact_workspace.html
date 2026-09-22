@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 <div id="impact-workspace" class="sp-workspace" aria-live="polite">
   {{ impact_chart_payload|json_script:"impact-chart-payload" }}
   <form id="impact-filters-form" class="sp-filter-panel impact-filter-panel"
@@ -66,6 +66,7 @@
          role="region"
          aria-labelledby="programme-driver-title"
          tabindex="0">
+      {% paginate dashboard.drivers "dashboard_drivers_page" as dashboard_drivers_pager %}
       <table class="impact-analysis-table impact-analysis-table--drivers" data-mobile-table="scroll" data-impact-driver-table>
         <caption class="sr-only">SSA improvement associations for all five programme activity families</caption>
         <thead>
@@ -86,7 +87,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for driver in dashboard.drivers %}
+          {% for driver in dashboard_drivers_pager.rows %}
           <tr>
             <th scope="row">
               <strong>{{ driver.label }}</strong>
@@ -108,6 +109,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=dashboard_drivers_pager param="dashboard_drivers_page" %}
     </div>
   </section>
 
@@ -235,10 +237,11 @@
         <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Schools starting below 7.0 on each intervention: median change where a verified visit focused on it, against schools with no such visit. Holm-corrected across the interventions tested; association, not proof.</p>
       </div>
       <div class="overflow-x-auto">
+        {% paginate dashboard.visits.per_intervention "dashboard_visits_per_intervention_page" as dashboard_visits_per_intervention_pager %}
         <table class="w-full text-[12px]">
           <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Focused</th><th class="py-1.5 pr-2">Not focused</th><th class="py-1.5 pr-2">Difference</th><th class="py-1.5 pr-2">Verdict (corrected)</th><th class="py-1.5">Evidence</th></tr></thead>
           <tbody>
-            {% for row in dashboard.visits.per_intervention %}
+            {% for row in dashboard_visits_per_intervention_pager.rows %}
             <tr class="border-t border-slate-100">
               <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
@@ -250,6 +253,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=dashboard_visits_per_intervention_pager param="dashboard_visits_per_intervention_page" %}
       </div>
     </div>
 
@@ -259,10 +263,11 @@
         <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Same design as visits, for verified training-type activities focused on the intervention.</p>
       </div>
       <div class="overflow-x-auto">
+        {% paginate dashboard.trainings.per_intervention "dashboard_trainings_per_intervention_page" as dashboard_trainings_per_intervention_pager %}
         <table class="w-full text-[12px]">
           <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Focused</th><th class="py-1.5 pr-2">Not focused</th><th class="py-1.5 pr-2">Difference</th><th class="py-1.5 pr-2">Verdict (corrected)</th><th class="py-1.5">Evidence</th></tr></thead>
           <tbody>
-            {% for row in dashboard.trainings.per_intervention %}
+            {% for row in dashboard_trainings_per_intervention_pager.rows %}
             <tr class="border-t border-slate-100">
               <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
               <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
@@ -274,6 +279,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=dashboard_trainings_per_intervention_pager param="dashboard_trainings_per_intervention_page" %}
       </div>
     </div>
   </section>
@@ -344,6 +350,7 @@
              role="region"
              aria-labelledby="lagging-district-interventions-title"
              tabindex="0">
+          {% paginate dashboard.geography.lagging "dashboard_geography_lagging_page" as dashboard_geography_lagging_pager %}
           <table class="impact-analysis-table impact-analysis-table--lagging" data-mobile-table="scroll" data-impact-lagging-table>
             <caption class="sr-only">District and SSA intervention combinations with declining median scores</caption>
             <thead>
@@ -355,7 +362,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for row in dashboard.geography.lagging %}
+              {% for row in dashboard_geography_lagging_pager.rows %}
               <tr>
                 <th scope="row">{{ row.district }}</th>
                 <td>{{ row.intervention }}</td>
@@ -365,6 +372,7 @@
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=dashboard_geography_lagging_pager param="dashboard_geography_lagging_page" %}
         </div>
       </div>
       {% endif %}
@@ -387,10 +395,11 @@
       <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Measured direction per intervention, overlaid with what field debriefs report — sorted worst first</p>
     </div>
     <div class="overflow-x-auto">
+      {% paginate dashboard.field_reality "dashboard_field_reality_page" as dashboard_field_reality_pager %}
       <table class="w-full text-[12px]">
         <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Median Δ</th><th class="py-1.5 pr-2">Direction</th><th class="py-1.5 pr-2">Debriefs</th><th class="py-1.5 pr-2">Critical</th><th class="py-1.5">Top field challenges</th></tr></thead>
         <tbody>
-          {% for row in dashboard.field_reality %}
+          {% for row in dashboard_field_reality_pager.rows %}
           <tr class="border-t border-slate-100">
             <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
             <td class="py-1.5 pr-2 text-slate-600">{% if row.median_delta is not None %}{{ row.median_delta }}{% else %}—{% endif %} <span class="text-slate-400">(n {{ row.n_schools }})</span></td>
@@ -404,6 +413,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=dashboard_field_reality_pager param="dashboard_field_reality_page" %}
     </div>
   </section>
 

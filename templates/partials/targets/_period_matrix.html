@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 "Cumulative progress by time period" — target, verified achievement and the
 share per reporting period, one row per agreed priority, written once.
@@ -15,6 +16,9 @@ the row is expanded.
   owner     whose priorities these are (caption)
   drawer    URL prefix that opens a priority's drawer on click (personal only)
   milestones  approved strategic milestone rows (personal only)
+  matrix_key  what tells one instance of this matrix from another. It is drawn
+              once per team member and twice on the personal page, so a single
+              page parameter between them would move every copy at once.
 {% endcomment %}
 <table class="{% if variant == 'team' %}tt-area-matrix{% else %}period-matrix w-full edify-text-caption border-collapse min-w-[860px]{% endif %}">
   <caption class="sr-only">{% if variant == 'team' %}{{ owner }} agreed-priority performance by reporting period{% else %}Personal cumulative target and verified achievement by reporting period{% endif %}</caption>
@@ -46,7 +50,9 @@ the row is expanded.
     </tr>
   </thead>
   <tbody>
-    {% for row in rows %}
+    {% page_param "period_rows" matrix_key as period_rows_param %}
+    {% paginate rows period_rows_param as period_rows_pager %}
+    {% for row in period_rows_pager.rows %}
     <tr{% if drawer %} class="is-openable" hx-get="{{ drawer }}?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>
       <th scope="row" class="period-matrix__label">{{ row.label }}</th>
       {% for cell in row.cells %}
@@ -57,7 +63,9 @@ the row is expanded.
       {% if variant == 'team' %}<td class="tt-area-matrix__action-spacer" aria-label="No review action"></td>{% endif %}
     </tr>
     {% endfor %}
-    {% for row in milestones %}
+    {% page_param "period_milestones" matrix_key as period_milestones_param %}
+    {% paginate milestones period_milestones_param as period_milestones_pager %}
+    {% for row in period_milestones_pager.rows %}
     <tr>
       <th scope="row" class="period-matrix__label">
         <span class="block">{{ row.milestone }}</span>
@@ -81,3 +89,5 @@ the row is expanded.
     {% endif %}
   </tbody>
 </table>
+{% include "components/table_pager.html" with pager=period_rows_pager param=period_rows_param %}
+{% include "components/table_pager.html" with pager=period_milestones_pager param=period_milestones_param %}

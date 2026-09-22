@@ -1,4 +1,6 @@
+{% load table_pagination %}
 <div class="pl-cceo-performance-scroll" data-table-scroll-region>
+  {% paginate cceo_performance.rows "cceo_performance_rows_page" as cceo_performance_rows_pager %}
   <table class="pl-cceo-performance-table w-full border-collapse" data-mobile-table="scroll">
     <caption class="sr-only">
       Supervised CCEO performance, ordered by highest operational risk and then lowest target achievement, with the handoffs each officer is waiting on you to decide.
@@ -15,7 +17,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for c in cceo_performance.rows %}
+      {% for c in cceo_performance_rows_pager.rows %}
       <tr class="edify-data-row">
         <th scope="row" class="pl-cceo-performance-table__person-cell">
           <span class="pl-cceo-person">
@@ -72,4 +74,5 @@
       {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=cceo_performance_rows_pager param="cceo_performance_rows_page" %}
 </div>

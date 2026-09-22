@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 The IA dashboard's Impact reports view (IA review, owner, 2026-09-13), under the
 fixed header and strip. apps.impact.reports.dashboard_reports_context gives it
@@ -38,11 +39,12 @@ period, labelled a draft: a submitted report freezes its own annex.
       </div>
     </header>
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Latest impact reports; scroll sideways for more columns">
+      {% paginate ia_reports.rows "ia_reports_rows_page" as ia_reports_rows_pager %}
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">The latest impact reports in your reach</caption>
         <thead><tr><th scope="col">Report</th><th scope="col">Period</th><th scope="col">Version</th><th scope="col">Author</th><th scope="col">Status</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
         <tbody>
-          {% for entry in ia_reports.rows|slice:":8" %}
+          {% for entry in ia_reports_rows_pager.rows %}
           <tr>
             <th scope="row" data-record-title><span>{{ entry.report.title }}</span></th>
             <td data-label="Period">{{ entry.period }}</td>
@@ -56,6 +58,7 @@ period, labelled a draft: a submitted report freezes its own annex.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=ia_reports_rows_pager param="ia_reports_rows_page" %}
     </div>
   </section>
   {% endif %}

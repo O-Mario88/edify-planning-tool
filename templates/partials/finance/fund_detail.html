@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 The selected record of the fund workspace. Expects `selected` (name,
 plan_label, district, region, period, status, status_tone, total_label,
@@ -65,13 +66,14 @@ full width.
       <div class="overflow-x-auto edify-table-scroll-region rounded-control border border-slate-200 mt-2">
         {% comment %}The category breakdown wears the Weekly Advance Request ledger's dress: blue header band, bold total row.{% endcomment %}
         <div class="budget-ledger">
+        {% paginate selected.breakdown "selected_breakdown_page" as selected_breakdown_pager %}
         <table class="budget-ledger-table fund-breakdown-table w-full edify-mobile-table--scroll">
           <caption class="sr-only">{{ selected.breakdown_title|default:"Funding breakdown from planned activities" }} for {{ selected.name }}, {{ selected.period }}</caption>
           <thead><tr class="budget-ledger-band">
             <th scope="col">Activity Category</th><th scope="col">Planned Qty</th><th scope="col">Unit Cost (UGX)</th><th scope="col">Total (UGX)</th>
           </tr></thead>
           <tbody>
-            {% for b in selected.breakdown %}
+            {% for b in selected_breakdown_pager.rows %}
             <tr>
               <th scope="row">{{ b.category }}{% if b.note %} <span class="fund-breakdown-table__note">{{ b.note }}</span>{% endif %}</th>
               <td>{{ b.qty|default:"—" }}</td>
@@ -95,6 +97,7 @@ full width.
             </tr>
           </tfoot>
         </table>
+        {% include "components/table_pager.html" with pager=selected_breakdown_pager param="selected_breakdown_page" %}
         </div>
       </div>
       {% endif %}

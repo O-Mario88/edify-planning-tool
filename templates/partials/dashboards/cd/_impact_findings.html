@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 The Country Director dashboard's "Impact findings" section, operations view
 (IA review, owner, 2026-09-13): what Impact Assessment's reports ask of the
@@ -19,11 +20,12 @@ opens the report.
   <p class="edify-text-caption edify-text-muted">Latest release: <a href="/ia/impact-reports/{{ impact_findings.latest.report_id }}/">{{ impact_findings.latest.title }}</a> (version {{ impact_findings.latest.version }}) · school change measured in {{ impact_findings.latest.portfolio_measured }} of {{ impact_findings.latest.portfolio_in_scope }} schools in scope.</p>
   {% endif %}
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Recommendations awaiting your response; scroll sideways for more columns">
+    {% paginate impact_findings.rows "impact_findings_rows_page" as impact_findings_rows_pager %}
     <table class="rpl-table" data-mobile-table="scroll">
       <caption class="sr-only">Impact report recommendations awaiting a response or overdue</caption>
       <thead><tr><th scope="col">Recommendation</th><th scope="col">Report</th><th scope="col">For</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
       <tbody>
-        {% for row in impact_findings.rows|slice:":5" %}
+        {% for row in impact_findings_rows_pager.rows %}
         <tr>
           <th scope="row" data-record-title><span>{{ row.text|truncatechars:140 }}</span></th>
           <td data-label="Report">{{ row.report }}</td>
@@ -37,5 +39,6 @@ opens the report.
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=impact_findings_rows_pager param="impact_findings_rows_page" %}
   </div>
 </section>

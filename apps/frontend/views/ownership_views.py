@@ -1,8 +1,21 @@
 """Reassigning school and district portfolio ownership (owner, 2026-09-15).
 
-Admin and Impact Assessment only. Both actions show a preview of what they
-would touch before anything is confirmed, and both leave school geography
-alone — this moves who is responsible, not where a school is.
+Admin and Impact Assessment only. Every action shows what it would touch
+before anything is confirmed, and all of them leave school geography alone —
+this moves who is responsible, not where a school is.
+
+Three doors onto the same service, because a reassignment arrives in three
+shapes (owner, 2026-09-22: "using either district, checkboxes... but also
+allow the schools to be assigned one by one"):
+
+* one school, from its own row in the directory (``school_owner_transfer_drawer``);
+* the schools ticked in the directory, however many and wherever they are
+  (``bulk_school_owner_transfer_view``);
+* every school one person holds in a district (``ownership_transfers_view``).
+
+All three run ``apps.schools.ownership_transfer.transfer_school_owner`` per
+school, so the transfer record, the open-activity decision, the notifications
+and the target reconciliation do not depend on which door was used.
 """
 
 from __future__ import annotations
@@ -111,6 +124,63 @@ def school_owner_transfer_drawer(request, school_id):
             return response
         return redirect(target)
     return drawer()
+
+
+@require_page_permission("school_directory")
+def bulk_school_owner_transfer_view(request):
+    """Reassign the schools ticked in the directory, in one decision.
+
+    The selection is the only thing that differs from the single drawer: the
+    reason, the effective date and the open-activity choice are one answer for
+    the whole tick-list, which is the point — "time is not wasted reassigning
+    one by one".
+    """
+    if request.method != "POST":
+        return redirect("/schools")
+    if not transfers.may_transfer_school(request.user):
+        messages.error(
+            request,
+            "Only an Admin or Impact Assessment can reassign school ownership.",
+        )
+        return redirect("/schools")
+
+    school_ids = [
+        value
+        for value in (request.POST.get("school_ids") or "").split(",")
+        if value.strip()
+    ]
+    payload = {
+        "newOwnerId": request.POST.get("new_owner_id", "").strip(),
+        "reason": request.POST.get("reason", "").strip(),
+        "effectiveDate": request.POST.get("effective_date", "").strip(),
+        "openActivityDecision": request.POST.get(
+            "open_activity_decision", "keep"
+        ).strip(),
+    }
+    try:
+        result = transfers.transfer_schools(school_ids, payload, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+        return redirect("/schools")
+
+    owner = transfers.resolve_staff(payload["newOwnerId"])
+    moved = result["moved"]
+    messages.success(
+        request,
+        f"{moved} school{'' if moved == 1 else 's'} now belong"
+        f"{'s' if moved == 1 else ''} to {owner.user.name}.",
+    )
+    # Named, not counted: a skipped school is one the actor ticked and expects
+    # to have moved, and "3 skipped" sends them back to compare two lists.
+    for item in result["skipped"]:
+        messages.warning(request, f"{item['school']}: {item['reason']}")
+    if result["reconciliation_required"]:
+        messages.warning(
+            request,
+            "An approved target depends on a portfolio that moved. Impact "
+            "Assessment and the Programme Lead have been asked to reconcile it.",
+        )
+    return redirect("/schools")
 
 
 @require_page_permission("ownership_transfers")

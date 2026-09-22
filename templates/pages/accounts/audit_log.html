@@ -1,5 +1,6 @@
 {% extends "layouts/shell.html" %}
 
+{% load table_pagination %}
 {% block title %}Finance Audit Log - Edify Command Center{% endblock %}
 
 {% block shell_content %}
@@ -23,6 +24,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate logs "logs_page" as logs_pager %}
 <table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
@@ -35,7 +37,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% if logs %}
-{% for log in logs %}
+{% for log in logs_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Event -->
 <td class="px-6 py-4" data-record-title>
@@ -75,6 +77,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=logs_pager param="logs_page" %}
 </div>
 </div>
 </div>

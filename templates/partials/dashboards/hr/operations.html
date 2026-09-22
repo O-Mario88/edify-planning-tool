@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 The Operations view of the Regional HR Director Dashboard. Sections follow the
 role description in order: staffing, recruiting and retention; performance,
@@ -29,6 +29,7 @@ Every card links to the register where the work is done.
         <a class="hrd-card__link" href="/workforce-planning">Workforce planning <span aria-hidden="true">&rarr;</span></a>
       </header>
       <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Staffing by country; scroll sideways for more columns">
+        {% paginate workforce_by_country "workforce_by_country_page" as workforce_by_country_pager %}
         <table class="hrd-table" data-mobile-table="scroll">
           <caption class="sr-only">Staffing, turnover and vacancies for each country you oversee, FY {{ fy }} to date.</caption>
           <thead>
@@ -45,7 +46,7 @@ Every card links to the register where the work is done.
             </tr>
           </thead>
           <tbody>
-            {% for row in workforce_by_country %}
+            {% for row in workforce_by_country_pager.rows %}
             <tr>
               <th scope="row" data-record-title>{{ row.country }}</th>
               <td class="is-num" data-label="Headcount">{{ row.headcount }}</td>
@@ -66,6 +67,7 @@ Every card links to the register where the work is done.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=workforce_by_country_pager param="workforce_by_country_page" %}
       </div>
     </section>
 
@@ -219,6 +221,7 @@ Every card links to the register where the work is done.
         <a class="hrd-card__link" href="/pulse-surveys">Pulse surveys <span aria-hidden="true">&rarr;</span></a>
       </header>
       <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Motivation signals by country; scroll sideways for more columns">
+        {% paginate motivation_rows "motivation_rows_page" as motivation_rows_pager %}
         <table class="hrd-table" data-mobile-table="scroll">
           <caption class="sr-only">Morale, sick leave, employee-relations cases, safety incidents, voluntary exits and recognitions for each country, FY {{ fy }} to date.</caption>
           <thead>
@@ -235,7 +238,7 @@ Every card links to the register where the work is done.
             </tr>
           </thead>
           <tbody>
-            {% for row in motivation_rows %}
+            {% for row in motivation_rows_pager.rows %}
             <tr>
               <th scope="row" data-record-title>{{ row.country }}</th>
               <td class="is-num" data-label="Morale">{% if row.morale %}<span class="hrd-ink" data-tone="{{ row.morale.tone }}" title="{{ row.morale.survey }} · {{ row.morale.responses }} answers">{{ row.morale.score|floatformat:1 }} of 5</span>{% else %}<span class="hrd-muted">No result</span>{% endif %}</td>
@@ -256,6 +259,7 @@ Every card links to the register where the work is done.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=motivation_rows_pager param="motivation_rows_page" %}
       </div>
     </section>
 
@@ -356,6 +360,7 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/compliance-register">Register <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Employment compliance by requirement; scroll sideways for more columns">
+          {% paginate compliance_status "compliance_status_page" as compliance_status_pager %}
           <table class="hrd-table hrd-table--compact" data-mobile-table="scroll">
             <caption class="sr-only">Employees compliant, due soon, expired and missing evidence for each employment-law requirement.</caption>
             <thead>
@@ -369,7 +374,7 @@ Every card links to the register where the work is done.
               </tr>
             </thead>
             <tbody>
-              {% for row in compliance_status|slice:":12" %}
+              {% for row in compliance_status_pager.rows %}
               <tr>
                 <th scope="row" data-record-title>{{ row.requirement }}</th>
                 <td data-label="Country">{% if row.country == "All" %}Every country{% else %}{{ row.country }}{% endif %}</td>
@@ -387,6 +392,7 @@ Every card links to the register where the work is done.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=compliance_status_pager param="compliance_status_page" %}
         </div>
         {% if compliance_status|length > 12 %}<span class="hrd-card__footnote">Showing 12 of {{ compliance_status|length }} requirements. The register lists every one.</span>{% endif %}
       </section>
@@ -498,6 +504,7 @@ Every card links to the register where the work is done.
         <a class="hrd-card__link" href="/hr-today">HR Today <span aria-hidden="true">&rarr;</span></a>
       </header>
       <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Upcoming people deadlines">
+        {% paginate deadlines "deadlines_page" as deadlines_pager %}
         <table class="hrd-table hrd-table--compact" data-mobile-table="scroll">
           <caption class="sr-only">The next people deadlines across your countries, soonest first.</caption>
           <thead>
@@ -510,7 +517,7 @@ Every card links to the register where the work is done.
             </tr>
           </thead>
           <tbody>
-            {% for row in deadlines %}
+            {% for row in deadlines_pager.rows %}
             <tr>
               <th scope="row" data-record-title><span>{{ row.name }}</span>{% if row.country %}<span>{{ row.country }}</span>{% endif %}</th>
               <td data-label="Deadline">{{ row.type }}</td>
@@ -527,6 +534,7 @@ Every card links to the register where the work is done.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=deadlines_pager param="deadlines_page" %}
       </div>
     </section>
 
