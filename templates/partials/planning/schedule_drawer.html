@@ -190,10 +190,10 @@ x-init="ensureTrainingActivity()"
     {% endfor %}
   </ul>
   <div class="mt-2.5 flex flex-wrap gap-2">
-    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 bg-white font-bold" @click="listOpen = !listOpen" :aria-expanded="listOpen.toString()" data-existing-plan-action="view">View Existing Plans</button>
-    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 bg-white font-bold" @click="shown = false" data-existing-plan-action="continue">Continue Planning</button>
-    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 bg-white font-bold" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); shown = false" data-existing-plan-action="follow-up">Plan as Follow-Up</button>
-    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 bg-white font-bold" @click="$dispatch('close-drawer')" data-existing-plan-action="cancel">Cancel</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="listOpen = !listOpen" :aria-expanded="listOpen.toString()" data-existing-plan-action="view">View Existing Plans</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="shown = false" data-existing-plan-action="continue">Continue Planning</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); shown = false" data-existing-plan-action="follow-up">Plan as Follow-Up</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="$dispatch('close-drawer')" data-existing-plan-action="cancel">Cancel</button>
   </div>
 </div>
 {% endif %}
