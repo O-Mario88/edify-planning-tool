@@ -5,12 +5,12 @@
 | | |
 | --- | --- |
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
-| Base moved mid-audit | `main` advanced repeatedly while this audit was open — `e2a0b64c` (PR #80, which removed the scheduling governance behind CONFLICT-004), `f79918f8` (PR #81), `f5999e00` (PR #82), then `6366fa18`. The audit's earlier fixes were carried onto `main` by those routes. **Every figure below is true of the commit it names and no later one** — that is the cost of auditing a branch that keeps moving. |
+| Base moved mid-audit | `main` advanced repeatedly while this audit was open — `e2a0b64c` (PR #80, which removed the scheduling governance behind CONFLICT-004), `f79918f8` (PR #81), `f5999e00` (PR #82), `6366fa18` (#116), then `8b0e8c80` (#118), the last of which arrived while the verification suite was running and was merged in. The audit's earlier fixes were carried onto `main` by those routes. **Every figure below is true of the commit it names and no later one** — that is the cost of auditing a branch that keeps moving. |
 | CONFLICT-004 | **Decided by the owner, 2026-09-22, and implemented** — see §3a |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
-| Final local suite | **8,315 tests, `OK`**, at `e9058ba10fc55900885dd829fb05cc0eb74d9356` (2026-09-22, PostgreSQL 16 / Python 3.13, `--parallel 4`, 1,286s). The run before it, at `84d75841`, was **red** — 1 failure, 2 errors — and §3a says what they were. The earlier figure of 6,228 belongs to the 2026-08-29 pass at `68ed46c2` and is kept in §5b. |
-| CI on the audit head | all six checks green at `2248cdf5` — see §5a |
+| Final local suite | **8,375 tests, `OK`**, at `4bc714bf0749d45c6f2f010d5eccdf0be723de22` — the merged tree, this branch on top of `8b0e8c80` (2026-09-22, PostgreSQL 16 / Python 3.13, `--parallel 4`, 1,287s). Before it: 8,315 `OK` at `e9058ba1`, and **red** at `84d75841` with 1 failure and 2 errors, which §3a accounts for. The 6,228 figure belongs to the 2026-08-29 pass at `68ed46c2` and is kept in §5b. |
+| CI on the audit head | **all seven checks green at `4bc714bf`** — Django suite, both Browser Journeys shards, Security Scans, CodeQL and the two CodeQL analyses. The browser shards matter here: they are the only gate in this audit that drives a real browser against a seeded application, and they cannot be run in the audit environment. See §5a and §3b. |
 
 Every claim below is either a command whose output is quoted, or is marked
 **Not Tested**. Not Tested is not Green. Where a prior audit's finding is
@@ -296,6 +296,54 @@ was kept.
 **Planning and scheduling therefore moves from Red to Green** for the calendar
 and leave half. §20.2's other clauses — the five-activity warning, conflicts —
 are not reinstated and are not claimed.
+
+### 3b. The CI failure that was not this change's
+
+Recorded because the mandate forbids calling something green that was not
+proven green, and equally forbids calling a failure a flake to get past it.
+
+CI's `Django Lint & Test Suite` **failed at `70664490`** — a commit whose local
+suite was green. Five errors, and not one of them a failed assertion. All five
+were the same exception:
+
+```
+psycopg.errors.OutOfMemory: out of shared memory
+HINT:  You might need to increase max_locks_per_transaction.
+```
+
+raised from `django/core/management/commands/flush.py` → `execute_sql_flush`:
+the `TRUNCATE` of every table that `TransactionTestCase` runs at **teardown**.
+The five tests are exactly the ones that open real concurrent connections —
+`ConcurrentWeeklyApprovalTest`, `ConcurrentLedgerRebuildTest`,
+`ConcurrentCertificationTest` (two), and the audit-chain `CommitTimeSealTest`.
+The Postgres service log agreed: `out of shared memory` on the TRUNCATE,
+`could not obtain lock on row in relation "advance_request"`, and duplicate
+keys on `region_name_key` (`Key (name)=(Race Region)`) as the flushes collided.
+
+None of those five touches scheduling, calendars or leave. Lock-table pressure
+is table count × concurrent transactions, and this change adds no models, no
+tables and no migrations (`makemigrations --check` reports none); the gate also
+raises *before* `create()`'s `transaction.atomic()` opens, so it holds fewer
+locks, not more. What it plausibly did was **redistribute** tests across the
+four parallel workers — it adds one test — changing which `TransactionTestCase`s
+flush at the same instant. That surfaces a limit; it does not create one. The
+CI `postgres:16` service runs stock, so `max_locks_per_transaction` is the
+default **64**.
+
+**It did not reproduce.** The next run, at `4bc714bf`, passed all seven checks.
+So the proposed fix (raising the lock ceiling on the CI service) was left
+**unpushed** and recorded on the PR instead: a one-off, diagnosed, non-repeating
+infrastructure failure does not justify changing CI configuration inside a
+scheduling PR, and pushing it would have widened the change on an assumption.
+
+Two honesty notes. First, this could **not** be dismissed as "red on the base
+too": `main` was also red at `ceee7e3f`, but on four different tests, so the
+precedent does not transfer and the argument above rests on mechanism alone.
+Second, `Browser Journeys shard 2/2` failed at `167ccfb2` and passed at
+`70664490` on **identical application code** — the commits between them changed
+only test files and a generated JSON, neither of which that job reads — and both
+shards have since passed twice. That one is **not root-caused**. It is recorded
+as unexplained rather than resolved.
 
 ---
 
