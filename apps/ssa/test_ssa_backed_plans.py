@@ -16,7 +16,6 @@ from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core.enums import SsaIntervention
-from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.planning.test_standard_support_scheduling import StandardSupportBase
 from apps.ssa import plan_alignment
@@ -25,16 +24,27 @@ from apps.ssa.plan_alignment import SsaAlignment
 
 
 class ReasonForDepartingFromTheSsaTest(StandardSupportBase):
-    def test_the_drawers_ask_why_a_plan_departs_from_the_ssa(self):
-        with self.assertRaisesMessage(BadRequest, "Say why this plan departs"):
-            self.schedule(
-                schoolId=self.school.school_id,
-                catalogueItemId=self.item("STANDARD_SCHOOL_VISIT").id,
-                focusIntervention=SsaIntervention.CHRISTLIKE_BEHAVIOUR,
-                requireSsaReason=True,
-            )
-        self.assertFalse(Activity.objects.exists(), "nothing is written without it")
+    def test_a_departure_from_the_ssa_schedules_without_a_reason(self):
+        """The reason is asked for, not required.
 
+        It used to be mandatory, which made the SSA recommendation a
+        requirement in practice: a planner who knew the school could not act
+        on that knowledge without writing an essay first. The plan now goes
+        through — and is still judged OFF_PRIORITY, so the departure stays
+        visible to everyone who reviews it.
+        """
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_SCHOOL_VISIT").id,
+            focusIntervention=SsaIntervention.CHRISTLIKE_BEHAVIOUR,
+            requireSsaReason=True,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.ssa_alignment, SsaAlignment.OFF_PRIORITY)
+        self.assertEqual(activity.ssa_deviation_reason, "")
+        self.assertEqual(plan_alignment.verdict_display(activity)["tone"], "warning")
+
+    def test_the_drawers_ask_why_a_plan_departs_from_the_ssa(self):
         result = self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_SCHOOL_VISIT").id,

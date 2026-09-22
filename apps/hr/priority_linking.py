@@ -45,16 +45,12 @@ def link_activity(
             "The activity owner or partner-work monitor must be the priority allocation owner."
         )
 
-    allowed_catalogue_ids = set(
-        allocation.milestone.activity_rules.filter(active=True).values_list(
-            "catalogue_item_id", flat=True
-        )
-    )
-    governed_selection_id = activity.training_course_id or activity.catalogue_item_id
-    if allowed_catalogue_ids and governed_selection_id not in allowed_catalogue_ids:
-        raise BadRequest(
-            "The selected Activity Catalogue item is not approved for this priority milestone."
-        )
+    # Planning restrictions removed: a milestone's activity rules say which
+    # Catalogue items are the RECOMMENDED way to move it, and they drive the
+    # suggestions the planner sees. They no longer refuse the link — and with
+    # it the whole schedule, since the client-school drawer posts the
+    # allocation alongside the visit. Work that genuinely advances a
+    # milestone by another route is the planner's call to record.
     contribution = None
     if planned_contribution not in (None, ""):
         try:

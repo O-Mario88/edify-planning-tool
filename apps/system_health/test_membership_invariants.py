@@ -107,7 +107,6 @@ class MembershipInvariantsAreCountedTest(TestCase):
         metrics = self._metrics()
 
         self.assertEqual(metrics["membershipOwnerMismatch"], 0)
-        self.assertEqual(metrics["membershipGeographyMismatch"], 0)
 
     def test_schools_in_another_owners_cluster_are_counted(self):
         for i in range(3):
@@ -134,40 +133,31 @@ class MembershipInvariantsAreCountedTest(TestCase):
 
         self.assertEqual(self._metrics()["membershipOwnerMismatch"], 0)
 
-    def test_a_school_outside_the_clusters_district_is_counted(self):
+    def test_geography_is_not_an_invariant_any_more(self):
+        """Owner, 2026-09-21: a school joins its owner's cluster in ANY
+        district, so a membership sitting outside the cluster's geography is
+        a deliberate arrangement, not drift.
+
+        This used to be counted and reported as a System Health blocker. Left
+        in, it would have put a permanent red row there for exactly the work
+        the platform now invites. The metric is gone; the portfolio half of
+        the check, which did not change, is asserted above.
+        """
         self._school(
             "INV-DISTRICT",
             owner=self.owner,
             district=self.other_district,
             sub_county=None,
         )
-
-        self.assertEqual(self._metrics()["membershipGeographyMismatch"], 1)
-
-    def test_a_school_outside_the_clusters_sub_county_is_counted(self):
         self._school(
             "INV-SUBCOUNTY", owner=self.owner, sub_county=self.other_sub_county
         )
 
-        self.assertEqual(self._metrics()["membershipGeographyMismatch"], 1)
+        metrics = self._metrics()
 
-    def test_a_school_with_no_sub_county_is_a_gap_not_a_violation(self):
-        """Only 4% of live schools have a sub-county. Counting the blanks would
-        have reported 16,000 violations and buried the real ones."""
-        self._school("INV-NO-SUBCOUNTY", owner=self.owner, sub_county=None)
-
-        self.assertEqual(self._metrics()["membershipGeographyMismatch"], 0)
-
-    def test_a_covered_sub_county_counts_as_the_clusters_own(self):
-        """A cluster covers several sub-counties through ClusterSubCounty; only
-        reading `cluster.sub_county` would call every one of them a violation."""
-        ClusterSubCounty.objects.create(
-            cluster=self.cluster, sub_county=self.other_sub_county
-        )
-
-        self._school("INV-COVERED", owner=self.owner, sub_county=self.other_sub_county)
-
-        self.assertEqual(self._metrics()["membershipGeographyMismatch"], 0)
+        self.assertNotIn("membershipGeographyMismatch", metrics)
+        # The owner rule still holds over the same rows.
+        self.assertEqual(metrics["membershipOwnerMismatch"], 0)
 
     def test_the_count_is_not_capped_at_a_report_sized_page(self):
         """More violations than the audit command's 200-row display limit.

@@ -335,7 +335,13 @@ def in_school_training_course_options(*, school=None, on_date=None) -> list[dict
 def validate_in_school_training_course_selection(
     item_id: str, *, intervention: str | None = None, on_date=None
 ) -> dict:
-    """Reject a forged/stale course selection from the in-school picker."""
+    """Reject a forged/stale course selection from the in-school picker.
+
+    ``intervention`` is accepted and ignored. The course's own SSA
+    association is governed metadata the caller may read off the returned
+    option, but it does not constrain the intervention the planner is
+    aiming this delivery at — see ``resolve_activity_intervention``.
+    """
     from apps.core.exceptions import BadRequest
 
     selected = next(
@@ -348,11 +354,6 @@ def validate_in_school_training_course_selection(
     )
     if selected is None:
         raise BadRequest("Select a training from the governed Training Catalogue.")
-    if intervention and intervention != selected["ssaIntervention"]:
-        raise BadRequest(
-            "The submitted SSA intervention does not match the selected "
-            "Training Catalogue course."
-        )
     return selected
 
 
@@ -365,9 +366,10 @@ def validate_priority_training_selection(
 ) -> dict:
     """Return one governed course or reject a forged/stale selection.
 
-    ``intervention`` remains accepted for legacy API callers, but it can only
-    confirm the catalogue mapping.  New forms do not ask for it: the selected
-    course supplies it automatically.
+    ``intervention`` remains accepted for legacy API callers and is ignored.
+    The selected course supplies the RECOMMENDED SSA association in
+    ``ssaIntervention``; a planner who is aiming the delivery at a different
+    need is not refused for it.
     """
     from apps.core.exceptions import BadRequest
 
@@ -384,11 +386,6 @@ def validate_priority_training_selection(
     )
     if selected is None:
         raise BadRequest("Select a training from the governed Training Catalogue.")
-    if intervention and intervention != selected["ssaIntervention"]:
-        raise BadRequest(
-            "The submitted SSA intervention does not match the selected "
-            "Training Catalogue course."
-        )
     return selected
 
 

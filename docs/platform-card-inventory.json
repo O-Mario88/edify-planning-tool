@@ -3439,7 +3439,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1096,
+   "line": 1083,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3448,7 +3448,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1129,
+   "line": 1116,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -6825,7 +6825,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 151,
+   "line": 173,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,

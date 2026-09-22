@@ -196,6 +196,11 @@ def resolve_activity_intervention(
 ) -> str | None:
     """The one intervention an Activity records for this Catalogue item.
 
+    The item's mapping RECOMMENDS an intervention; it does not restrict the
+    planner to it. A named ``requested_intervention`` is honoured whenever it
+    is one of the canonical eight, and the mapping is consulted only to supply
+    the default when the planner names none.
+
     ``intervention_optional`` is for work that moves no single intervention
     even when its item usually inherits one: an SSA collection, a relationship
     visit, or the follow-up of a course that is not SSA-scored (an
@@ -220,11 +225,13 @@ def resolve_activity_intervention(
         MappingMode.SSA_COMPLETION_PREREQUISITE,
         MappingMode.ADMINISTRATIVE,
     }:
-        if requested_intervention:
-            raise BadRequest(
-                "SSA Completion and administrative Activities cannot be recorded "
-                "as intervention support."
-            )
+        # Planning restrictions removed: an SSA collection or an
+        # administrative Activity still records no intervention — it moves
+        # none, and stamping one would make the intervention analytics read
+        # work that never happened. But a drawer that pre-fills the
+        # recommended intervention and is then switched to one of these
+        # purposes used to be REFUSED for carrying it. The recommendation is
+        # advice, so it is dropped here rather than blocking the plan.
         return None
     if mode == MappingMode.INHERIT_FROM_SOURCE_ACTIVITY:
         if source_activity:
@@ -251,11 +258,20 @@ def resolve_activity_intervention(
             )
         raise BadRequest("Choose a valid canonical SSA intervention.")
     allowed = {m.intervention for m in mappings if m.intervention}
-    if requested_intervention and requested_intervention not in allowed:
-        raise BadRequest(
-            "The selected Activity is not approved for that SSA intervention."
-        )
     if requested_intervention:
+        # Planning restrictions removed: the Catalogue mapping is the
+        # RECOMMENDED intervention for this item, not the only one it may be
+        # scheduled against. A planner who knows the school may aim the same
+        # training at a different need — the same course moves more than one
+        # score in practice — so the mapping no longer refuses the selection.
+        # It supplies the default below when the planner names none.
+        #
+        # Canonical membership still holds, because it is not an approval
+        # rule: intervention analytics and the SSA lineage stamped in
+        # apply_catalogue_snapshot are keyed on the eight, and a value
+        # outside them would be unreadable everywhere downstream.
+        if requested_intervention not in SsaIntervention.values:
+            raise BadRequest("Choose a valid canonical SSA intervention.")
         return requested_intervention
     primary = next((m.intervention for m in mappings if m.is_primary), None)
     return primary or next(iter(sorted(allowed)), None)

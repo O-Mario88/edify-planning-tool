@@ -298,17 +298,19 @@ class ASchoolOnlyJoinsAClusterInItsOwnDistrictTest(TestCase):
             school_type="client",
         )
 
-    def test_the_canonical_setter_refuses_a_cross_district_cluster(self):
+    def test_the_canonical_setter_accepts_a_cross_district_cluster(self):
+        """Owner, 2026-09-21: the portfolio decides, not the district."""
         from apps.clusters.services import set_school_cluster_membership
-        from apps.core.exceptions import BadRequest
 
         school = self._school("X-1", self.here, self.here_sc)
         far = self._cluster("Far Cluster", self.there, self.there_sc)
 
-        with self.assertRaises(BadRequest) as caught:
-            set_school_cluster_membership(school, far, "tester")
+        set_school_cluster_membership(school, far, "tester")
 
-        self.assertIn("own district", str(caught.exception))
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, far.id)
+        # Joining never moves the school.
+        self.assertEqual(school.district_id, self.here.id)
 
     def test_the_setter_accepts_a_cluster_in_the_same_district(self):
         from apps.clusters.services import set_school_cluster_membership

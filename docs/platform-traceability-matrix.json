@@ -76,6 +76,7 @@
         "apps/core/scoping.py",
         "apps/core/templatetags/kpi_metrics.py",
         "apps/core/templatetags/static_version.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/exceptions.py",
         "apps/daily_visit_batches/pricing.py",
@@ -475,6 +476,7 @@
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
         "apps/core/templatetags/kpi_metrics.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -1120,6 +1122,7 @@
         "apps/core/templatetags/kpi_metrics.py",
         "apps/core/templatetags/school_identity.py",
         "apps/core/templatetags/table_pagination.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -1373,6 +1376,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -1611,6 +1615,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -1959,6 +1964,7 @@
         "apps/core/request_context.py",
         "apps/core/school_identity_middleware.py",
         "apps/core/scoping.py",
+        "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -3677,9 +3683,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "fdf5afe21d8ff1d0bbb1858f2d37811d409e58f75f30d0886eea29227e2bad04",
-    "sources": "006e67176dc5e52f5051649e87b985d872ea8856e468c5f7158a6f2548dd3b55",
-    "sourceCount": 208,
+    "payload": "7c104f9eb60c169a55ff969f38fc227fe30b1e736fed713b0d0dc93221da9607",
+    "sources": "fded107c5cd48242085b703c3d19c79dccd38d7452f2c172fae994baefa88222",
+    "sourceCount": 209,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

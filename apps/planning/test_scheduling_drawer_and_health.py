@@ -128,22 +128,43 @@ class AvailableActivityTypeServiceTest(TestCase):
         )
         self.assertNotIn("EDTECH_FOUNDATIONS", cluster_rows)
 
+    def test_the_catalogue_mapping_recommends_an_intervention_it_does_not_impose(self):
+        """A course suggests a target; the planner names the real one.
+
+        TAM I is mapped to Exposure to God's Word. A planner delivering it at
+        a school whose confirmed weakness is Leadership used to be refused
+        outright — "not approved for that SSA intervention" — which made the
+        recommendation a requirement. The mapping is now the default, not a
+        gate.
+        """
         tam = ActivityCatalogueItem.objects.get(stable_code="TAM_I")
-        with self.assertRaisesMessage(
-            BadRequest, "does not match the selected Training Catalogue course"
-        ):
+
+        self.assertEqual(
             validate_priority_training_selection(
                 tam.id,
                 planning_context=CLUSTER,
                 intervention=SsaIntervention.LEADERSHIP,
-            )
-        with self.assertRaisesMessage(
-            BadRequest, "not approved for that SSA intervention"
-        ):
+            )["ssaIntervention"],
+            SsaIntervention.EXPOSURE_TO_WORD_OF_GOD,
+        )
+        self.assertEqual(
             resolve_activity_intervention(
                 tam,
                 requested_intervention=SsaIntervention.LEADERSHIP,
-            )
+            ),
+            SsaIntervention.LEADERSHIP,
+        )
+        # Naming none still falls back to what the catalogue recommends.
+        self.assertEqual(
+            resolve_activity_intervention(tam, requested_intervention=None),
+            SsaIntervention.EXPOSURE_TO_WORD_OF_GOD,
+        )
+        # A value outside the canonical eight is not a planning choice; every
+        # intervention analytic downstream is keyed on them.
+        with self.assertRaisesMessage(
+            BadRequest, "Choose a valid canonical SSA intervention."
+        ):
+            resolve_activity_intervention(tam, requested_intervention="not_an_ssa")
 
     def test_an_intervention_never_removes_standard_support(self):
         """The heart of the correction.
@@ -993,7 +1014,7 @@ class ClusterDrawerDeliveryTest(TestCase):
             {members[0].id, members[1].id},
         )
 
-    def test_selected_training_post_preserves_intervention_and_total(self):
+    def _post_cluster_training(self, **extra):
         client = Client()
         client.force_login(self.user)
         scheduled = timezone.localdate() + datetime.timedelta(days=2)
@@ -1005,23 +1026,43 @@ class ClusterDrawerDeliveryTest(TestCase):
                 "cluster_id": self.cluster.id,
                 "activity_type": "cluster_training",
                 "catalogue_item_id": self.tam_cluster_training.id,
-                "focus_intervention": SsaIntervention.TEACHING_ENVIRONMENT,
                 "scheduled_date": scheduled.isoformat(),
                 "participants_per_school": "2",
                 "schools_invited": "2",
                 "delivery_type": "staff",
                 "override_reason": "Drawer seam test fixture has no SSA records.",
+                **extra,
             },
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200, response.content)
-        activity = Activity.objects.get(catalogue_item=self.tam_cluster_training)
+        return Activity.objects.get(catalogue_item=self.tam_cluster_training)
+
+    def test_selected_training_post_keeps_the_planners_intervention_and_total(self):
+        """The planner names the need; the course does not overrule them.
+
+        TAM I is mapped to Exposure to God's Word. A planner delivering it
+        against a confirmed Teaching Environment weakness used to have that
+        choice silently replaced by the mapping — and, on the paths that
+        checked it, refused outright. The posted intervention is what is
+        stored.
+        """
+        activity = self._post_cluster_training(
+            focus_intervention=SsaIntervention.TEACHING_ENVIRONMENT,
+        )
         self.assertEqual(
-            activity.focus_intervention, SsaIntervention.EXPOSURE_TO_WORD_OF_GOD
+            activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
         )
         self.assertIsNone(activity.project_id)
         self.assertEqual(activity.schools_invited, 2)
         self.assertEqual(activity.expected_participants, 4)
+
+    def test_the_course_still_supplies_the_intervention_when_none_is_named(self):
+        """Removing the block does not remove the recommendation."""
+        activity = self._post_cluster_training()
+        self.assertEqual(
+            activity.focus_intervention, SsaIntervention.EXPOSURE_TO_WORD_OF_GOD
+        )
 
 
 class SchedulingHealthTest(TestCase):

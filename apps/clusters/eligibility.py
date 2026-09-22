@@ -196,7 +196,7 @@ def portfolio_owner_profile_id(school) -> str | None:
 
 
 def eligible_clusters_for_school(school, *, scope=None):
-    """Clusters this school may join, narrowed as far as its data allows.
+    """Clusters this school may join: its owner's, in any district.
 
     `scope` additionally constrains the result to what the caller may write —
     passed by the views so the picker cannot offer a cluster outside the user's
@@ -211,7 +211,8 @@ def eligible_clusters_for_school(school, *, scope=None):
         # offer everything. The drawer explains which field is missing.
         return Cluster.objects.none()
 
-    # Owned by this school's owner, or owned by nobody yet.
+    # Owned by this school's owner, or owned by nobody yet — and that is the
+    # whole rule (owner, 2026-09-21).
     #
     # The second half is not a loophole, and leaving it out made this service
     # disagree with `cluster_in_scope`, which has always treated an unowned
@@ -220,26 +221,20 @@ def eligible_clusters_for_school(school, *, scope=None):
     # service exists to end — and with every cluster in the deployment
     # currently unowned, the strict reading emptied the picker for every
     # school. Assigning a school to an unowned cluster is how it gets claimed.
-    from apps.clusters.catchment import clusters_serving_district_q
-
+    #
+    # District no longer narrows this. The picker used to intersect the
+    # owner's clusters with the ones whose catchment covered the school's
+    # district, then narrow again by sub-county — so a CCEO grouping their own
+    # schools around a centre across an unapproved border saw an empty list
+    # and had no way to act. `set_school_cluster_membership` no longer refuses
+    # those, and a picker that hides what the service accepts is the same
+    # disagreement in the other direction.
     unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     qs = Cluster.objects.filter(
-        clusters_serving_district_q(school.district_id),
         Q(responsible_staff_id__in=owner_ids) | unassigned,
         deleted_at__isnull=True,
         status=ClusterRecordStatus.ACTIVE,
     )
-
-    sub_county_id = getattr(school, "sub_county_id", None)
-    if sub_county_id:
-        # The sub-county narrows the school's own district only: a cluster
-        # serving the district across a border covers none of its sub-counties.
-        qs = qs.filter(
-            ~Q(district_id=school.district_id)
-            | Q(sub_county_id=sub_county_id)
-            | Q(covered_sub_counties__sub_county_id=sub_county_id)
-            | Q(sub_county__isnull=True)
-        ).distinct()
 
     if scope is not None:
         from apps.core.scoping import cluster_queryset

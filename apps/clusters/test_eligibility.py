@@ -1,16 +1,19 @@
-"""The eligible-cluster rule, and the scenario it was specified with.
+"""The eligible-cluster rule.
 
     Eligible cluster
       = active cluster
       + owned by the school's own staff owner
-      + in the school's district
-      + in the school's sub-county, when the school has one
 
-The worked example from the specification is the acceptance case, so it is
-written here as given rather than paraphrased into something easier to pass:
-James owns Chegere North and Chegere South in Apac; Mary owns Chegere Central;
-James also owns Akokoro. Assigning St. Mary Primary — James's school, in Apac,
-in Chegere — must offer exactly two clusters.
+Geography no longer narrows it (owner, 2026-09-21). The rule used to add "in
+the school's district" and "in the school's sub-county, when the school has
+one"; the sub-county half went on 2026-09-11, and the district half has now
+followed it. A CCEO could not group their own schools around a centre across
+a district line, however obviously the schools belonged together.
+
+The specification's worked example is kept because its portfolio half is
+still the whole rule: James owns Chegere North, Chegere South and Akokoro;
+Mary owns Chegere Central. Assigning St. Mary Primary — James's school — must
+offer James's three and never Mary's one, wherever they sit.
 """
 
 from __future__ import annotations
@@ -108,10 +111,14 @@ class EligibilityFixture(TestCase):
 
 
 class TheWorkedExampleTest(EligibilityFixture):
-    def test_it_offers_exactly_the_two_clusters_named(self):
+    def test_it_offers_every_cluster_the_owner_holds(self):
         self.assertEqual(
             self._names(),
-            {"Chegere North Cluster", "Chegere South Cluster"},
+            {
+                "Chegere North Cluster",
+                "Chegere South Cluster",
+                "Akokoro Cluster",
+            },
         )
 
     def test_it_excludes_another_owners_cluster_in_the_same_sub_county(self):
@@ -119,11 +126,16 @@ class TheWorkedExampleTest(EligibilityFixture):
         only the owner differs, which is the whole rule."""
         self.assertNotIn("Chegere Central Cluster", self._names())
 
-    def test_it_excludes_the_owners_own_cluster_in_another_sub_county(self):
-        """James owns Akokoro, and it is still wrong for a Chegere school."""
-        self.assertNotIn("Akokoro Cluster", self._names())
+    def test_it_offers_the_owners_cluster_in_another_sub_county(self):
+        """James owns Akokoro, and it is his to use for a Chegere school."""
+        self.assertIn("Akokoro Cluster", self._names())
 
-    def test_it_excludes_another_district(self):
+    def test_it_offers_the_owners_cluster_in_another_district(self):
+        """The half of the rule lifted on 2026-09-21.
+
+        Kole is a different district with no catchment approval of any kind.
+        It is James's cluster, and that is now the whole question.
+        """
         far = self._cluster(
             "Kole Cluster",
             self.james,
@@ -131,7 +143,7 @@ class TheWorkedExampleTest(EligibilityFixture):
             SubCounty.objects.create(name="Kole SC", district=self.kole),
         )
 
-        self.assertNotIn(far.name, self._names())
+        self.assertIn(far.name, self._names())
 
     def test_it_excludes_inactive_and_archived_clusters(self):
         for status in (ClusterRecordStatus.INACTIVE, ClusterRecordStatus.NEEDS_REVIEW):
@@ -171,7 +183,8 @@ class TheSubCountyFallbackTest(EligibilityFixture):
         self.assertIn("Akokoro Cluster", names)
         self.assertNotIn("Chegere Central Cluster", names, "owner still applies")
 
-    def test_it_never_widens_past_the_district_or_the_owner(self):
+    def test_it_never_widens_past_the_owner(self):
+        """The one boundary left. Kole is now offered; Mary's never is."""
         School.objects.filter(id=self.school.id).update(sub_county=None)
         self.school.refresh_from_db()
         self._cluster(
@@ -183,7 +196,7 @@ class TheSubCountyFallbackTest(EligibilityFixture):
 
         names = self._names()
 
-        self.assertNotIn("Kole Cluster", names)
+        self.assertIn("Kole Cluster", names)
         self.assertNotIn("Chegere Central Cluster", names)
 
 
@@ -256,25 +269,26 @@ class TheServiceEnforcesItToo(EligibilityFixture):
         self.assertIn("another staff member", str(caught.exception))
 
     def test_another_sub_county_in_the_same_district_is_accepted(self):
-        """The sub-county rule was lifted on 2026-09-11 (81bd28f9): a school
-        joins any active cluster of its OWN DISTRICT held by its own owner —
-        several clusters may share a sub-county, and a cluster may take
-        schools from across its district. The district boundary and the
-        portfolio boundary are the two that remain."""
+        """The sub-county rule was lifted on 2026-09-11 (81bd28f9) and the
+        district rule on 2026-09-21: a school joins any active cluster held by
+        its own owner. The portfolio boundary is the one that remains."""
 
         self._assign(self.akokoro_cluster)
 
         self.school.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.akokoro_cluster.id)
 
-    def test_another_district_is_still_refused(self):
+    def test_another_district_is_accepted(self):
+        """The district boundary went on 2026-09-21; the portfolio remains."""
         elsewhere = District.objects.create(name="Lira", region=self.region)
         far_cluster = self._cluster("Lira Cluster", self.james, elsewhere, None)
 
-        with self.assertRaises(BadRequest) as caught:
-            self._assign(far_cluster)
+        self._assign(far_cluster)
 
-        self.assertIn("own district", str(caught.exception))
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, far_cluster.id)
+        # The school's own geography is untouched by the join.
+        self.assertEqual(self.school.district_id, self.apac.id)
 
     def test_a_school_with_no_sub_county_is_not_blocked_by_the_sub_county_rule(self):
         School.objects.filter(id=self.school.id).update(sub_county=None)
@@ -313,9 +327,9 @@ class ADistrictLevelClusterIsNotAnotherSubCountyTest(EligibilityFixture):
         self.school.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.district_level.id)
 
-    def test_a_cluster_naming_a_different_sub_county_is_still_excluded(self):
-        """The relaxation is only for clusters that name none."""
-        self.assertNotIn("Akokoro Cluster", self._names())
+    def test_a_cluster_naming_a_different_sub_county_is_offered_too(self):
+        """Nothing about geography excludes a cluster from the picker now."""
+        self.assertIn("Akokoro Cluster", self._names())
 
 
 class EditingAClusterFollowsItsOwnerTest(EligibilityFixture):

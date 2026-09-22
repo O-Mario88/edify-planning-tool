@@ -46,7 +46,18 @@ get showTrainingActivityPicker() { return this.purposeOfVisit === 'in_school_tra
 get showFollowUpPicker() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsaDataGathering() { return this.purposeOfVisit === 'ssa_support'; },
 get followUpWithoutSource() { return this.showFollowUpPicker && !this.followUpRequiresTraining && !this.sourceActivityId; },
-get showManualIntervention() { return !this.showTrainingActivityPicker && !this.showSsaDataGathering && (!this.showFollowUpPicker || this.followUpWithoutSource); },
+{% comment %}
+  The intervention select is shown for In-school Training as well. It used to
+  be hidden there and the course's own SSA association posted instead, so the
+  course DECIDED the intervention: a planner delivering a governed training
+  against a different confirmed need had no way to say so, and the server
+  refused the plan if they posted one -- not approved for that SSA
+  intervention. The course now PRE-FILLS the field and the planner may
+  change it. It stays hidden only where there is genuinely nothing to name:
+  an SSA collection, and a follow-up that inherits its target from the
+  session being followed up.
+{% endcomment %}
+get showManualIntervention() { return !this.showSsaDataGathering && (!this.showFollowUpPicker || this.followUpWithoutSource); },
 get selectedSourceActivity() {
   return this.followUpActivities.find(activity => activity.id === this.sourceActivityId) || null;
 },
@@ -60,20 +71,31 @@ get availableTrainingActivities() {
 get selectedTrainingActivity() {
   return this.availableTrainingActivities.find(activity => activity.id === this.trainingActivityId) || null;
 },
-onTrainingActivityChange() {
+{% comment %}
+  Choosing a course SUGGESTS the intervention it is mapped to — a fresh
+  course is a fresh suggestion, so an explicit pick overwrites the field.
+  `keepChoice` is for the init/purpose-change path, which must not silently
+  undo an intervention the planner already chose.
+{% endcomment %}
+onTrainingActivityChange(keepChoice = false) {
   const selected = this.selectedTrainingActivity;
-  this.focusIntervention = selected ? selected.ssaIntervention : '';
+  const suggested = selected ? selected.ssaIntervention : '';
+  if (!keepChoice || !this.focusIntervention) { this.focusIntervention = suggested; }
   if (selected) {
     this.recommendationReason = selected.priorityTitles.length
       ? `Priority activity: ${selected.priorityTitles.join(', ')}`
       : `Governed ${selected.category} training.`;
   }
 },
+get suggestedTrainingIntervention() {
+  const selected = this.selectedTrainingActivity;
+  return selected ? selected.ssaIntervention : '';
+},
 ensureTrainingActivity() {
   if (!this.availableTrainingActivities.some(activity => activity.id === this.trainingActivityId)) {
     this.trainingActivityId = '';
   }
-  this.onTrainingActivityChange();
+  this.onTrainingActivityChange(true);
 },
 profiles: {{ purpose_profiles|default:'{}' }},
 get profile() {
@@ -269,7 +291,7 @@ its costing on, so the costing link is derived server-side and never asked for.
 {% endcomment %}
 <template x-if="showManualIntervention">
 <div>
-  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention <span x-show="showTrainingActivityPicker" class="text-rose-500">*</span></label>
+  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
   <select
     name="focus_intervention"
     id="focus_intervention"
@@ -281,19 +303,21 @@ its costing on, so the costing link is derived server-side and never asked for.
     <option value="{{ code }}">{{ label }}</option>
     {% endfor %}
   </select>
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Suggested from <span x-text="showTrainingActivityPicker && suggestedTrainingIntervention ? 'the selected training' : 'the weakest confirmed score'"></span> &mdash; change it if the work is aimed elsewhere.</p>
 </div>
 </template>
 
 {% comment %}
-  Owner, 2026-09-14: SSA scores inform every planned activity. When the focus
-  is not one of the school's SSA priorities (or none is named) the planner says
-  why; apps.activities.services.create refuses the plan without it.
+  SSA scores inform every planned activity. When the focus is not one of the
+  school's SSA priorities (or none is named) the planner is invited to say
+  why, and the note travels with the plan. It is no longer required:
+  apps.activities.services.create records it and schedules either way, and
+  stamps the alignment verdict so the departure stays visible in review.
 {% endcomment %}
 <div x-show="ssaDeviation" style="display:none" class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-1.5" data-ssa-deviation>
   <p class="edify-text-caption font-semibold normal-case tracking-normal text-amber-900" x-text="focusIntervention ? 'The verified SSA does not rank this intervention among the school\'s priorities{% if ssa_top_label %} ({{ ssa_top_label|escapejs }} is first){% endif %}.' : 'No intervention is named{% if ssa_top_label %}; the verified SSA ranks {{ ssa_top_label|escapejs }} first{% endif %}.'"></p>
-  <label for="ssa_deviation_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-900">Why this plan departs from the SSA <span class="text-rose-500">*</span></label>
-  <textarea name="ssa_deviation_reason" id="ssa_deviation_reason" rows="2" maxlength="2000" :required="ssaDeviation" :disabled="!ssaDeviation" class="w-full rounded-control border border-amber-200 edify-surface px-3 py-2 text-[12px] font-medium normal-case tracking-normal"></textarea>
+  <label for="ssa_deviation_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-900">Why this plan departs from the SSA <span class="font-semibold normal-case tracking-normal text-amber-700">(optional)</span></label>
+  <textarea name="ssa_deviation_reason" id="ssa_deviation_reason" rows="2" maxlength="2000" :disabled="!ssaDeviation" class="w-full rounded-control border border-amber-200 edify-surface px-3 py-2 text-[12px] font-medium normal-case tracking-normal"></textarea>
 </div>
 {% if ssa_stale %}<p class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2 edify-text-caption font-semibold normal-case tracking-normal text-amber-900" data-ssa-stale>This school's verified SSA is out of date. Plan an SSA collection so support rests on this year's scores.</p>{% endif %}
 
@@ -354,7 +378,6 @@ its costing on, so the costing link is derived server-side and never asked for.
   <p id="training-catalogue-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The governed list contains the approved trainings available in this School context.</p>
   <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Scheduling creates this School Training automatically. After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
   </div>
-  <input type="hidden" name="focus_intervention" :value="focusIntervention">
   <div x-show="selectedTrainingActivity" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
     <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
       <span class="block edify-text-caption font-semibold text-slate-400">Training category</span>
@@ -550,10 +573,10 @@ x-text="day"
 <input type="hidden" name="executor_type" :value="executorType">
 
 {% comment %}
-  No manual Focus Intervention select. It is chosen by the SSA-led catalogue
-  recommendation and travels in the hidden focus_intervention input near the
-  top of this form — a hand-picked intervention here would contradict the
-  recommendation the drawer just explained.
+  No second Focus Intervention select. The one near the top of this form is
+  the only one: it is pre-filled from the SSA-led catalogue recommendation
+  (or, for In-school Training, from the selected course) and the planner may
+  change it there. A duplicate here would post the field twice.
 
   The legacy select used to sit here wrapped in {% if reschedule_mode %},
   which inside this {% if not reschedule_mode %} branch could never be true —

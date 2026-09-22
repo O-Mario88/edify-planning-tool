@@ -266,6 +266,43 @@ Two new health checks: cluster totals are now verified against
 plus `scheduling_cluster_over_invited` for more schools invited than the
 cluster holds.
 
+## 4c. The recommendation is advice, not a gate (2026-09-21)
+
+§2 already said it — *"Derivation never overrules a person: a stated
+intervention wins"* — but four separate gates still enforced the opposite, and
+planners hit them as:
+
+> The selected Activity is not approved for that SSA intervention.
+
+A Catalogue item's `ActivityInterventionMapping` is what the item is
+*recommended* for. It was being read as the only intervention the item could
+ever be scheduled against, so a planner who knew a school had a different
+confirmed weakness could not deliver a governed training against it. The same
+course legitimately moves different scores at different schools; the catalogue
+cannot know which, and the planner can.
+
+| Where | Was | Now |
+|---|---|---|
+| `resolve_activity_intervention` | Refused a `requested_intervention` outside the item's mappings | Honours it; the mapping supplies the default when none is named |
+| `resolve_activity_intervention` (SSA-completion / administrative) | Refused a pre-filled intervention outright | Records none, as before, without refusing the plan |
+| `validate_*_training_selection` | Refused a submitted intervention that differed from the course's | Returns the course's association as the recommendation; the submitted value stands |
+| `schedule_action` / `assign_partner_action` | Overwrote the planner's `focus_intervention` with the course's mapping | Planner's choice wins; course fills the blank |
+| `link_activity` (HR priority milestone) | Refused a Catalogue item outside the milestone's activity rules — taking the whole schedule down with it | Rules drive the suggestions; the link is recorded |
+| `activities.services.create` | Refused a plan departing from the SSA with no written reason | Records the reason when given; schedules either way |
+| `assign_partner_action` | Refused a course whose `partner_delivery_allowed` was off | Informs the picker; `validate_context` had already stopped enforcing the delivery-approval flags |
+
+The drawer follows: the Focus Intervention select is now rendered for
+In-school Training too (it was hidden there, so the course *decided* the
+target), pre-filled from the selected course and editable. The
+departure-from-SSA note is optional.
+
+**What still holds.** An intervention must be one of the canonical eight —
+that is a data-integrity rule, not an approval one, since every intervention
+analytic and the SSA lineage in `apply_catalogue_snapshot` is keyed on them.
+The alignment verdict is unchanged and still stamped, so an off-priority plan
+stays visible as off-priority everywhere it is reviewed; nothing is hidden,
+the planner is simply not stopped.
+
 ## 5. Deliberately not changed
 
 * **Non-school programme participants.** The existing rule requires 1–100,000
