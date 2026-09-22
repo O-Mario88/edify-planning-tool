@@ -87,7 +87,10 @@ enforce. Nothing here can hold a different opinion of either.
         {% endfor %}
       </select>
     </label>
-    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    {% comment %}No hidden `q` here. The top bar owns the one search on every
+    page (§17), and a body input named `q` is a second one however it is
+    styled — so applying a filter starts from the whole list, as it does on
+    every other filtered page.{% endcomment %}
     <button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button>
   </form>
 

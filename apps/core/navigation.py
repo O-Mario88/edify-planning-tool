@@ -1764,6 +1764,16 @@ SIDEBAR_ITEMS = [
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
             },
             {
+                # Read-only watching of a coordinator's project work. It sits
+                # here, not beside Projects under SCHOOLS & FIELD, because
+                # that group is the field roles' own (FIELD_NAV_ROLES) and
+                # Impact Assessment — who the owner named first for this page
+                # — would have had no door to it at all (owner, 2026-09-21).
+                "label": "Project Monitoring",
+                "url": "/projects/monitoring",
+                "page_key": "project_monitoring",
+            },
+            {
                 "label": "Closed Schools",
                 "url": "/schools/closed",
                 "page_key": "closed_schools",
@@ -1995,15 +2005,6 @@ SIDEBAR_ITEMS = [
                 # A Programme Lead staffs no projects; project links from the
                 # school drawer still open (2026-09-13).
                 "visible_to": PAGE_PERMISSIONS["projects"] - {PL},
-            },
-            {
-                # The read-only lens beside the projects themselves. A
-                # Programme Lead IS here, unlike Projects above: watching
-                # what a coordinator delivered at the schools they added is
-                # precisely a supervisor's question (owner, 2026-09-21).
-                "label": "Project Monitoring",
-                "url": "/projects/monitoring",
-                "page_key": "project_monitoring",
             },
             {
                 "label": "Coverage",

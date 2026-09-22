@@ -149,13 +149,21 @@ class="cluster-bulk-checkbox rounded-control border-slate-300 text-[var(--edify-
 {% comment %}Route Intelligence for the day being planned — the same
 read-only preview the persisted DailyVisitRouteBatch scores a route with
 (apps.routes.engine). It moved here with bulk scheduling: a day across
-several schools is precisely what it exists to judge.{% endcomment %}
+several schools is precisely what it exists to judge.
+
+`hx-target` and `hx-disabled-elt` are stated, not inherited. Sitting inside
+the form, this div would otherwise take the form's own pair: the preview
+would swap itself over `#drawer-container` — replacing the whole drawer
+mid-edit — and `find button[type=submit]` would resolve to nothing from here
+and throw before the request was sent.{% endcomment %}
 <div
 id="cluster-route-preview"
 hx-post="/planning/route-preview"
 hx-trigger="route-refresh, change from:closest form"
 hx-include="closest form"
+hx-target="this"
 hx-swap="innerHTML"
+hx-disabled-elt="this"
 aria-live="polite"
 ></div>
 
