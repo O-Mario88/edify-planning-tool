@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
-| Base moved during the audit | `main` advanced repeatedly and the audit's fixes reached it by another route. **Every figure below is true of the commit it names and no later one.** |
+| Base moved mid-audit | `main` advanced repeatedly while this audit was open — `e2a0b64c` (PR #80, which removed the scheduling governance behind CONFLICT-004), `f79918f8` (PR #81), `f5999e00` (PR #82), then `6366fa18`. The audit's earlier fixes were carried onto `main` by those routes. **Every figure below is true of the commit it names and no later one** — that is the cost of auditing a branch that keeps moving. |
 | CONFLICT-004 | **Decided by the owner, 2026-09-22, and implemented** — see §3a |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
@@ -152,6 +152,7 @@ SEC-A4 was proven against the guard rather than inferred:
 
 | ID | Finding | Why not |
 | --- | --- | --- |
+| CONFLICT-004 | **Answered and closed — no longer in this table.** It was registered here rather than reverted, because `23e3bfba` removed the scheduling governance deliberately and an audit has no standing to overrule a product decision. The owner answered it on 2026-09-22. | See **§3a**: the calendar and leave blocks are restored, the frequency caps are not. |
 | CONFLICT-003 | RVP also holds `milestones.define`. Mandate §18.1 says "RVP and Admin remain read-only for business values"; `apps/hr/priority_cascade.py` has the RVP authoring strategy. Two sources genuinely disagree. | §3 requires a conflict be registered and decided by the product owner, not resolved silently inside an audit fix. The Admin half had three sources agreeing and was fixed. |
 | OBS-1 | `Permission.STRATEGIC_PRIORITIES_EDIT` is granted to four roles and checked nowhere — it appears only in `rbac.py`. The real gate is `milestones.define`. | Gates nothing today. Latent: adding one decorator would hand RVP and Admin an authority nobody re-reviewed. Removing it deletes the scaffold for an approved extension (§4). Needs a decision, not a patch. |
 | OBS-3 | The mandate requires dashboard cards to equal their drill-down totals (§28). Target percentages are pinned hard — `test_target_formula_unification.py` reconciles the CD and PL surfaces with 1,000-case property tests — but `/analytics/drilldown` is covered for *rendering* correctness, not for numeric agreement with the card that links to it. | A general card↔drill-down reconciliation harness is a piece of work, not a patch: it needs a card-to-query mapping that does not exist yet. Recorded rather than half-built. |
@@ -203,6 +204,31 @@ the file asserts through the real API and HTMX doors as well as the service, so 
 gate that only one entry point honours would fail. The six tests that remain true
 under the new decision — Saturday allowed, pending leave warns only, Monday
 scheduling, FY derivation — are unchanged.
+
+#### Is fifteen the whole set?
+
+Restoring most of a gate is worse than restoring none of it: it reads as
+governed while leaving a door open. So the call sites were not chosen from the
+old diff — every write of a scheduling date in the codebase was swept, and each
+one traced to where it comes from.
+
+| Writer | Verdict |
+| --- | --- |
+| `frontend/views/core_schools_views.py` (5 sites), `core_schools/visit_routing.py`, `planning/services.schedule_in_school_training_pair` | all call `activities.services.create` — **gated** |
+| `frontend/views/planning_views.py` (4 sites) | `partners.create_assignment`, which opens a `PartnerAssignment` at `pending_scheduling`. The date is a proposal; the Activity is minted later by `_partner_schedule_from_assignment` — **gated there** |
+| `partners.services.schedule_activity` | delegates to `activities.services.partner_schedule` — **gated** |
+| `partners.mark_assignment_scheduled`, `planning/partner_oversight_service.py` (2), `core_schools/cluster_credit.py`, `activities/models.py` save-sync, `activities/services.py:2858` | all copy a date off an Activity that already exists — **downstream bookkeeping, not an entry point** |
+| `admin_ops/services.py` (5 sites), `admin_ops/repair.py` | `AdminOperationsWorkItem` — the internal IT/support backlog, not field work. **Deliberately not gated**: REG-02 governs where staff are sent, and blocking a support ticket because a CCEO is on leave is not what was decided. Named here so the boundary is a decision rather than an omission |
+| `core/management/commands/seed.py` | demo seeding, behind the environment stamp — **not a user door** |
+
+Two placement details were checked rather than assumed. In `create()` the gate
+sits at line ~1954: there is no database write between the function's start and
+that point, and its `transaction.atomic()` block does not open until ~2422, so a
+refusal happens before any state exists to roll back. And every core-package
+path that locks a slot with `assert_can_schedule` before calling `create` does so
+inside `transaction.atomic()`, so a newly-refused Sunday releases the slot
+instead of leaking it — which is the regression a restored gate could plausibly
+have introduced and does not.
 
 **Planning and scheduling therefore moves from Red to Green** for the calendar
 and leave half. §20.2's other clauses — the five-activity warning, conflicts —
@@ -342,7 +368,7 @@ which the mandate says must never be read as Green.
 | Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
 | Backup / restore / rollback | **Not Tested** | no production access |
 | Performance and scale at 50k | **Not Tested** | not runnable here |
-| Planning and scheduling | **Green** (calendar/leave half) | CONFLICT-004 decided by the owner and implemented across 15 call sites in 5 modules; REG-02 contract tests flipped back and passing. The frequency caps and annual entitlements remain deliberately removed |
+| Planning and scheduling | **Green** (calendar/leave half) | CONFLICT-004 decided by the owner and implemented across 15 call sites in 5 modules; REG-02 contract tests flipped back and passing. The frequency caps and annual entitlements remain deliberately removed, so §20.2 is met in part and not in whole |
 | All remaining domains | **Not Tested** | not reached in this pass |
 
 ---
@@ -354,7 +380,8 @@ which the mandate says must never be read as Green.
    writing — manual Salesforce reconciliation stated plainly in the release notes,
    offline field operation deferred with "field staff need connectivity" said out
    loud — and they become disclosed limitations rather than blockers.
-3. The rest is ops, and one item is now closed: CI built and scanned the image on the
+3. **CONFLICT-004 is answered.** The owner's decision — keep the calendar and leave blocks, drop the frequency caps — is implemented and tested in this branch (§3a). Planning and scheduling moves from Red to Green for the half that was restored. §20.2's remaining clauses (the five-activity warning, conflict detection) are not reinstated and are not claimed as passing.
+4. The rest is ops, and one item is now closed: CI built and scanned the image on the
    audit head and it carries no fixable CRITICAL or HIGH, so **CVE-2026-14456 is no
    longer an open blocker**. What remains is to restore from a production backup
    once, rehearse the rollback, run the production smoke, and name an incident owner.
