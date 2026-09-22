@@ -9122,7 +9122,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 37876,
+      "bytes": 38117,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
