@@ -124,6 +124,24 @@ route's, so one constant URL answers it for every row.
         </button>
       {% endif %}
 
+      {% if "reassign_owner" in school.available_actions %}
+      {% comment %}Admin and Impact Assessment move a school to another staff
+      member (owner, 2026-09-15). The drawer shows what moves with it before
+      anything is confirmed, and the school's geography is never touched.{% endcomment %}
+      <button
+        type="button"
+        class="school-record-action school-record-action--assign"
+        aria-label="Reassign the owner of {{ school.school_name }}"
+        hx-get="/schools/{{ school.school_id }}/transfer-owner"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 1.5 0 2.75.37 3.7 1.05M15 16.5h6m0 0-2.2-2.2M21 16.5l-2.2 2.2"/></svg>
+        <span class="school-record-action__label--full">Reassign Owner</span>
+        <span class="school-record-action__label--compact" aria-hidden="true">Owner</span>
+      </button>
+      {% endif %}
+
       {% if "assign_to_project" in school.available_actions %}
         <button
           type="button"

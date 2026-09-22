@@ -343,6 +343,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The archive. IA and CD are here because closure data quality and country
     # closure trends are theirs to watch; RVP works from aggregates and is not.
     "closed_schools": {CCEO, PL, IA, CD, ADMIN},
+    # Core Trained, Core Graduate and Champion schools in one list (owner,
+    # 2026-09-21). The same readers as the directory it complements: the
+    # officers who plan the work, their Programme Lead, and the country roles
+    # that watch whether it happens.
+    "programme_schools": {CCEO, PL, IA, CD, ADMIN},
     "school_action_drawer": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
     "school_upload": {IA, ADMIN},
     "clusters": {CCEO, PL, IA, CD, ADMIN},
@@ -561,6 +566,15 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "partner_my_plan": {PARTNER, ADMIN},
     # Feature pages that previously had no key of their own
     "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
+    # Watching a Special Project without being able to touch it (owner,
+    # 2026-09-21): "Add project page to CCEO, PL and IA to monitor all the
+    # project activities ... but they Only have read only access." CD and
+    # Admin read it as they read every country surface. The Project
+    # Coordinator is deliberately absent — they are in control of the work
+    # and already see all of it from Project Planning, where the scheduling
+    # and partner-assignment controls are; a read-only copy for them would be
+    # a second answer to a question their own surface already answers.
+    "project_monitoring": {CCEO, PL, IA, CD, ADMIN},
     "analytics_publishing": {CD, IA, ADMIN},
     # IA owns evidence assurance before records can enter finance and
     # leadership analytics, so the role must be able to open the shared
@@ -828,6 +842,8 @@ ICONS.update(
         "my_team": ICONS["team_targets"],
         "uploads": ICONS["ia_upload_center"],
         "closed_schools": ICONS["completed_archive"],
+        "programme_schools": ICONS["core_schools"],
+        "project_monitoring": ICONS["projects"],
         "leave_tracker": ICONS["team_availability"],
         "priorities_master": ICONS["target_distribution"],
         "ssa_mapping": ICONS["target_distribution"],
@@ -1735,6 +1751,13 @@ SIDEBAR_ITEMS = [
                 "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
             },
             {
+                # Beside Core Schools, because that is the programme these
+                # three types came out of (owner, 2026-09-21).
+                "label": "Programme Schools",
+                "url": "/programme-schools",
+                "page_key": "programme_schools",
+            },
+            {
                 "label": "Country Oversight",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
@@ -1972,6 +1995,15 @@ SIDEBAR_ITEMS = [
                 # A Programme Lead staffs no projects; project links from the
                 # school drawer still open (2026-09-13).
                 "visible_to": PAGE_PERMISSIONS["projects"] - {PL},
+            },
+            {
+                # The read-only lens beside the projects themselves. A
+                # Programme Lead IS here, unlike Projects above: watching
+                # what a coordinator delivered at the schools they added is
+                # precisely a supervisor's question (owner, 2026-09-21).
+                "label": "Project Monitoring",
+                "url": "/projects/monitoring",
+                "page_key": "project_monitoring",
             },
             {
                 "label": "Coverage",

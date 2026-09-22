@@ -3031,6 +3031,66 @@ def complete_in_school_training_pair(activity_id: str, data: dict, principal) ->
     }
 
 
+def is_training_follow_up_visit(activity) -> bool:
+    """Is this the visit that follows up a training at a school?"""
+    return bool(
+        activity.school_id
+        and (
+            activity.purpose_type == "training_follow_up"
+            or activity.activity_type == ActivityType.TRAINING_FOLLOW_UP_VISIT
+        )
+    )
+
+
+def _bind_followed_up_training(activity, data):
+    """Name the training this follow-up followed up. Required at completion.
+
+    Owner, 2026-09-21: "right now follow up visit has linked training
+    optional. The user MUST link it to training when completing the visit
+    from action."
+
+    Planning stays as it was — a follow-up may be scheduled before anyone
+    knows which session it will answer, and Uganda's fiscal-year policy does
+    not demand the link up front (apps.planning.fy_policy). Completion is
+    where the officer knows, so completion is where the link is compulsory:
+    without it a follow-up is a visit no report can attribute to the training
+    it was meant to reinforce, and the visit↔training effectiveness engine
+    reads it as unattached.
+
+    The choice is bounded by the same rule the scheduling drawer offers from
+    (apps.activities.training_history.follow_up_source_problem), so a posted
+    id cannot attach the visit to a session the school never took. Returns the
+    Activity to link and writes nothing: the caller persists it inside the
+    same transaction as the rest of the completion.
+    """
+    if not is_training_follow_up_visit(activity):
+        return None
+
+    from apps.activities.training_history import follow_up_source_problem
+
+    posted = str(
+        data.get("followUpOfActivityId") or data.get("sourceActivityId") or ""
+    ).strip()
+    chosen = None
+    if posted:
+        chosen = Activity.objects.filter(id=posted, deleted_at__isnull=True).first()
+        if chosen is None:
+            raise BadRequest("The training you selected no longer exists.")
+    elif activity.follow_up_of_activity_id:
+        chosen = activity.follow_up_of_activity
+
+    if chosen is None:
+        raise BadRequest(
+            "Select the training this visit followed up. A follow-up visit is "
+            "completed against the exact session it answers."
+        )
+    problem = follow_up_source_problem(chosen, activity.school, activity.fy)
+    if problem:
+        raise BadRequest(problem)
+
+    return chosen
+
+
 def complete(activity_id: str, data: dict, principal) -> dict:
     """Submit completion: evidence present, Salesforce ID validated, attendance
     for trainings, CCEO routes to PL / staff routes to IA."""
@@ -3132,6 +3192,13 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     ):
         visit_feedback = _validate_school_visit_feedback(data)
 
+    # A follow-up visit names the training it followed up, at completion,
+    # always (owner, 2026-09-21). Resolved here so a refusal happens before
+    # any state moves, and written inside the transaction below with the rest
+    # of the completion — a link persisted by a completion that then failed
+    # would be a change nobody asked for.
+    followed_up = _bind_followed_up_training(a, data)
+
     # SF ID lock after IA confirmation.
     if a.ia_verification_status == "confirmed":
         raise Forbidden(
@@ -3190,6 +3257,8 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        if followed_up is not None:
+            a.follow_up_of_activity = followed_up
         a.teachers_attended = data.get("teachersAttended")
         a.leaders_attended = data.get("leadersAttended")
         a.other_participants = data.get("otherParticipants")
@@ -3228,6 +3297,9 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "actual_outcome",
                 "actual_observations",
                 "follow_up_note",
+                # The training this follow-up answered. Named at completion,
+                # never optional there (owner, 2026-09-21).
+                "follow_up_of_activity",
                 "status",
                 "submitted_to_ia_at",
                 "evidence_status",
@@ -3335,6 +3407,11 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "Record all SSA scores, or give a reason that SSA was not collected, "
                 "before submitting this activity."
             )
+    # The staged path is the same completion, entered in pieces — so it
+    # carries the same follow-up link rule (owner, 2026-09-21). It reads what
+    # completion already bound, or the id this submission carries, and writes
+    # nothing of its own.
+    _bind_followed_up_training(a, data)
 
     # Same §10 partner-aware routing as complete(): partner-delivered work
     # goes directly to IA even when the monitoring CCEO presses submit —

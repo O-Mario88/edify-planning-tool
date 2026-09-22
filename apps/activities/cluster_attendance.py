@@ -177,6 +177,14 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
         # no longer invites. Same transaction as the ticks, because a stored
         # total that disagrees with the rows it comes from is the defect.
         sync_expected_participants(activity)
+        # A Core School on this list has a package training booked by being on
+        # it (owner, 2026-09-21). The invitation rows are written after the
+        # Activity's own save, so the credit pass on `Activity.save` saw an
+        # empty list; re-run it here, in the same transaction, and the slot is
+        # taken — and released again when a school is unticked.
+        from apps.core_schools.cluster_credit import credit_cluster_session
+
+        credit_cluster_session(activity)
     return len(wanted)
 
 
@@ -242,6 +250,12 @@ def confirm_attendance(activity, school_ids, *, actor_id="") -> int:
                 row.attended = attended
                 row.recorded_by = actor_id or row.recorded_by
                 row.save(update_fields=["attended", "recorded_by", "updated_at"])
+        # The register is what decides a Core School's package training from
+        # here on: a school that was invited and did not come gives its slot
+        # back. Same transaction as the ticks.
+        from apps.core_schools.cluster_credit import credit_cluster_session
+
+        credit_cluster_session(activity)
     return len(confirmed)
 
 

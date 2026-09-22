@@ -51,6 +51,15 @@ from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
 
+#: Said in the drawer (as the greyed option's note) and again by the POST
+#: handler, so the control and the refusal use one sentence. Owner,
+#: 2026-09-21: In-school Training "should ONLY work with Client Schools".
+CORE_TRAINING_BELONGS_TO_THE_PACKAGE = (
+    "{school} is a Core School. Its trainings are the four in its core "
+    "package — schedule one from the Core Schools page, where the slot and "
+    "the course are chosen together."
+)
+
 
 def _purpose_workflow_profiles(purposes) -> dict:
     """The Workflow Profile behind every purpose the drawer offers (§7).
@@ -1002,6 +1011,18 @@ def schedule_modal_view(request):
         else []
     )
     locked_visit_reason = _gate.staff_reason if locked_visit_purposes else ""
+    # In-school Training works with client schools (owner, 2026-09-21). At a
+    # Core School the training is one of the package's four slots and is
+    # booked from the Core Schools page, where the slot, the course and the
+    # cap live together; scheduled from here it would create a training the
+    # package could never count (apps.core_schools.visit_routing deliberately
+    # routes visits and not trainings). The service refuses it too.
+    package_locked_purposes = ["in_school_training"] if _gate.rule == "core" else []
+    package_locked_reason = (
+        CORE_TRAINING_BELONGS_TO_THE_PACKAGE.format(school=school.name)
+        if package_locked_purposes
+        else ""
+    )
     project_id = request.GET.get("project_id", "")
     from apps.activity_catalogue.services import recommend_activities
 
@@ -1177,9 +1198,12 @@ def schedule_modal_view(request):
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "locked_visit_purposes": locked_visit_purposes,
         "locked_visit_reason": locked_visit_reason,
+        "package_locked_purposes": package_locked_purposes,
+        "package_locked_reason": package_locked_reason,
         "recommended_visit_purpose": (
             ""
-            if recommended_visit_purpose in locked_visit_purposes
+            if recommended_visit_purpose
+            in (*locked_visit_purposes, *package_locked_purposes)
             else recommended_visit_purpose
         ),
         "catalogue_recommendations": catalogue_recommendations,
@@ -1325,6 +1349,21 @@ def schedule_action_view(request):
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if school_id and purpose_of_visit == "in_school_training":
+        # A Core School's training is package work and is booked from the
+        # Core Schools page (owner, 2026-09-21). Refused before anything is
+        # resolved, in the same sentence the greyed option carries.
+        from apps.planning.visit_gate import rule_for
+
+        _target = School.objects.filter(
+            Q(id=school_id) | Q(school_id=school_id), deleted_at__isnull=True
+        ).first()
+        if _target is not None and rule_for(_target.school_type) == "core":
+            return error_fragment(
+                BadRequest(
+                    CORE_TRAINING_BELONGS_TO_THE_PACKAGE.format(school=_target.name)
+                ),
+                status=400,
+            )
         if not catalogue_item_id:
             return error_fragment(
                 BadRequest("Select the Training to deliver."),
@@ -2387,96 +2426,22 @@ def bulk_action_view(request):
             return error_fragment(exc, status=400)
 
     elif action == "schedule":
-        # Each School uses its own top eligible Catalogue recommendation.
-        if not RolePermissionService.can_schedule_activity(request.user):
-            return HttpResponseForbidden(
-                _no_scheduling_permission_message(request.user)
-            )
-
-        from datetime import date as _date
-
-        scheduled_date_raw = request.POST.get("scheduled_date", "").strip()
-        if not scheduled_date_raw:
-            return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Scheduled date is required.</div>',
-                status=400,
-            )
-        try:
-            _date.fromisoformat(scheduled_date_raw)
-        except ValueError:
-            return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Invalid date.</div>',
-                status=400,
-            )
-
-        from apps.activity_catalogue.services import recommend_activities
-        from apps.activities.services import create as create_activity
-
-        try:
-            with transaction.atomic():
-                from apps.activity_catalogue.services import (
-                    resolve_item_for_workflow_kind,
-                )
-
-                standard_visit = resolve_item_for_workflow_kind("school_visit")
-                for school in schools:
-                    result = recommend_activities(
-                        school=school,
-                        principal=request.user,
-                        executor_type="staff",
-                        limit=1,
-                    )
-                    recommendation = result["primary"][0] if result["primary"] else None
-                    unmet = result.get("unmetPriority")
-                    if (
-                        standard_visit is not None
-                        and result.get("hasApplicableSsa")
-                        and (recommendation is None or unmet)
-                    ):
-                        # SSA informed: when no named school-level activity
-                        # answers the school's top need, a standard school
-                        # visit targets that need rather than a named activity
-                        # for a lesser one (or a refusal).
-                        need = result["priority"]
-                        payload = {
-                            "catalogueItemId": standard_visit.id,
-                            "focusIntervention": need["intervention"],
-                            "recommendationReason": (
-                                f"{need['label']} is {need['band']} at "
-                                f"{need['score']}/10, the school's top SSA need."
-                            ),
-                        }
-                    elif recommendation is not None:
-                        payload = {
-                            "catalogueItemId": recommendation["catalogueItemId"],
-                            "focusIntervention": recommendation["targetIntervention"],
-                            "recommendationReason": recommendation[
-                                "recommendationReason"
-                            ],
-                        }
-                    else:
-                        raise BadRequest(
-                            f"No staff-deliverable Catalogue Activity is eligible for {school.name}."
-                        )
-                    create_activity(
-                        {
-                            **payload,
-                            "requireCatalogue": True,
-                            "schoolId": school.school_id,
-                            "scheduledDate": scheduled_date_raw,
-                            "activityPurposeText": request.POST.get(
-                                "activity_goal", "Bulk-scheduled visit"
-                            ),
-                            "deliveryType": "staff",
-                        },
-                        principal=request.user,
-                    )
-            return _saved_without_leaving(
-                "Scheduled. It is on your My Plan — keep planning.",
-                plan_url=_my_plan_url_for_scheduled_date(scheduled_date_raw),
-            )
-        except BadRequest as e:
-            return error_fragment(e, status=400)
+        # Retired to the cluster (owner, 2026-09-21: bulk scheduling "should
+        # only happen from cluster"). The rules a day of visits has to obey —
+        # at least five schools, one of four purposes, never an In-school
+        # Training — are cluster rules, and a second bulk door on this page
+        # would be a second answer to the same question. The button is gone;
+        # this refusal is for a stale tab or a typed POST, and it says where
+        # the act lives now.
+        return HttpResponse(
+            '<div class="edify-note" data-tone="warning" role="alert">'
+            '<p class="edify-note__body">Bulk scheduling happens from a '
+            "cluster. Open the cluster these schools belong to and use "
+            "&ldquo;Schedule a Day of Visits&rdquo; &mdash; a bulk day needs "
+            "at least five member schools. A single school is scheduled from "
+            "its own Schedule button.</p></div>",
+            status=400,
+        )
 
     return HttpResponse("Action processed", status=200)
 

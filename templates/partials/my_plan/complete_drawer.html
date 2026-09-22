@@ -385,6 +385,43 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 {% endif %}
 </div>
 
+{% if is_training_follow_up %}
+<hr class="border-slate-100">
+{% comment %}The training this visit followed up, named at completion and
+never optional (owner, 2026-09-21). The list is the school's completed
+sessions — in-school, Core, or a cluster session it is recorded as attending
+— and the service re-checks the choice against the same rule, so a stale
+option cannot attach the visit to a session the school never took.{% endcomment %}
+<div class="space-y-2.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">&bull;</span>
+Training followed up
+</h4>
+{% if follow_up_options %}
+<label class="block" for="follow_up_of_activity_id">
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Which training did this visit follow up? <span class="text-rose-500">*</span></span>
+<select
+id="follow_up_of_activity_id"
+name="follow_up_of_activity_id"
+required
+aria-describedby="follow-up-of-activity-help"
+class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+>
+<option value="">Select the training this visit followed up</option>
+{% for option in follow_up_options %}
+<option value="{{ option.id }}"{% if option.id == follow_up_selected_id %} selected{% endif %}>{{ option.label }} &middot; {{ option.interventionLabel }}</option>
+{% endfor %}
+</select>
+</label>
+<p id="follow-up-of-activity-help" class="edify-text-caption font-medium text-slate-400 leading-normal">The follow-up is reported against this exact session, so the training and the visit that reinforced it are read together.</p>
+{% else %}
+<div class="edify-note" data-tone="danger" role="alert">
+<p class="edify-note__body">This school has no completed training in FY{{ act.fy }} to follow up. Record the training's completion first — a follow-up visit is completed against the session it answers.</p>
+</div>
+{% endif %}
+</div>
+{% endif %}
+
 <hr class="border-slate-100">
 {% if requires_school_feedback %}
 <div class="space-y-3">

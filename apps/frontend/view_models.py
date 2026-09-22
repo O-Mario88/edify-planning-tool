@@ -132,6 +132,17 @@ class SchoolDirectoryViewModel:
         else:
             available_actions.append("add_to_cluster")
 
+        # Reassign Owner — Admin and Impact Assessment only (owner,
+        # 2026-09-15, restated 2026-09-21). It existed on the school's own
+        # profile alone, which is not where a registry administrator works:
+        # moving a portfolio means moving several schools, and the directory
+        # is the list they are looking at. The drawer behind it re-checks the
+        # same permission, so the control appears exactly where it opens.
+        from apps.schools.ownership_transfer import may_transfer_school
+
+        if may_transfer_school(user):
+            available_actions.append("reassign_owner")
+
         # Assign to Project action
         if not active_projects_exist:
             disabled_reasons["assign_to_project"] = "No active project available."
