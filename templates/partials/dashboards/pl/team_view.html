@@ -1,4 +1,4 @@
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 {% load frontend_filters %}
 {% comment %}
 Team leadership (owner, 2026-09-13): the compact roster (My Team holds the
@@ -31,6 +31,7 @@ where each is decided, and the follow-ups the lead has sent.
           <a class="rpl-card__link" href="/dashboard/pl-drilldown?drill=approvals&amp;fy={{ fy }}" hx-get="/dashboard/pl-drilldown?drill=approvals&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">Approvals by officer</a>
         </header>
         <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Handoffs waiting on you">
+          {% paginate waiting_on_you.groups "waiting_on_you_groups_page" as waiting_on_you_groups_pager %}
           <table class="rpl-table" data-mobile-table="scroll">
             <caption class="sr-only">Handoffs your team is waiting on you to decide, grouped by where each is decided.</caption>
             <thead>
@@ -41,7 +42,7 @@ where each is decided, and the follow-ups the lead has sent.
               </tr>
             </thead>
             <tbody>
-              {% for group in waiting_on_you.groups|slice:":12" %}
+              {% for group in waiting_on_you_groups_pager.rows %}
               <tr data-handoff="{{ group.key }}">
                 <th scope="row" data-record-title><span>{{ group.title }}</span><span>{{ group.hint }}</span></th>
                 <td class="is-num" data-label="Waiting">{% if group.count %}<span data-tone="{% if group.overdue %}danger{% else %}warning{% endif %}">{{ group.count }}</span>{% if group.overdue %}<span class="rpl-muted"> · {{ group.overdue }} overdue</span>{% endif %}{% else %}0{% endif %}</td>
@@ -50,6 +51,7 @@ where each is decided, and the follow-ups the lead has sent.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=waiting_on_you_groups_pager param="waiting_on_you_groups_page" %}
         </div>
       </section>
 

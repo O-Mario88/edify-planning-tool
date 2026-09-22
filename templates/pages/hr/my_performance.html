@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 {% block title %}Priorities · Edify{% endblock %}
 {% block shell_content %}
 <div class="edify-page-canvas space-y-4" data-mobile-family="performance">
@@ -58,9 +58,10 @@
     </header>
     {% if distributed.rows %}
     <div class="overflow-x-auto" data-table-scroll-region tabindex="0" role="region" aria-label="Distributed priorities">
+      {% paginate distributed.rows "my_performance_distributed_rows_page" as my_performance_distributed_rows_pager %}
       <table class="w-full text-left text-sm">
         <thead><tr><th>Priority</th><th>Approved target</th><th>Plan and completion</th><th>Verified</th><th>Action</th></tr></thead>
-        <tbody>{% for row in distributed.rows %}
+        <tbody>{% for row in my_performance_distributed_rows_pager.rows %}
           <tr data-distributed-priority="{{ row.id }}">
             <td><strong>{{ row.title }}</strong><p class="edify-text-caption">{{ row.priority }}</p></td>
             <td>{{ row.target|floatformat:'-2' }} {{ row.unit }}<p class="edify-text-caption">{{ row.source }} · FY{{ fy }}</p></td>
@@ -70,6 +71,7 @@
           </tr>
         {% endfor %}</tbody>
       </table>
+      {% include "components/table_pager.html" with pager=my_performance_distributed_rows_pager param="my_performance_distributed_rows_page" %}
     </div>
     {% else %}
     <div class="p-4">{% with fy_text=fy|stringformat:"s" %}{% with empty_message="No approved priorities distributed for FY"|add:fy_text|add:"." %}{% include "components/empty_state.html" with message=empty_message hint="Assigned targets appear here automatically after IA and your Program Lead approve the distribution." compact="true" %}{% endwith %}{% endwith %}</div>

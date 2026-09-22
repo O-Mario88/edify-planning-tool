@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}{{ page_title }} · Edify{% endblock %}
 
@@ -23,6 +23,7 @@
     its rows — the old max-xl:block collapsed each cell to ~1 char in the
     1024–1279px band. {% endcomment %}
     <div class="overflow-x-auto">
+      {% paginate rows "assigned_list_rows_page" as assigned_list_rows_pager %}
       <table class="w-full text-left text-[12px] font-semibold {% if school_scoped %}min-w-[1080px]{% else %}min-w-[680px]{% endif %}">
         <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
           {% if school_scoped %}
@@ -48,7 +49,7 @@
           {% endif %}
         </thead>
         <tbody class="divide-y divide-slate-100">
-          {% for a in rows|slice:":200" %}
+          {% for a in assigned_list_rows_pager.rows %}
           <tr class="hover:bg-slate-50/60 transition-colors">
             <td class="px-4 py-3.5 text-slate-600 tabular-nums whitespace-nowrap">{{ a.created_at|date:"d M Y" }}</td>
             {% if school_scoped %}
@@ -97,6 +98,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=assigned_list_rows_pager param="assigned_list_rows_page" %}
     </div>
   </div>
 

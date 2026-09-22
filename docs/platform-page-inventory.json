@@ -616,12 +616,12 @@
       "example_pages": [
         "/accounts",
         "/accounts/",
+        "/accounts/accountability",
+        "/accounts/accountability/",
         "/accounts/activities/<str:activity_id>",
         "/accounts/activities/<str:activity_id>/",
-        "/accounts/approval-history",
-        "/accounts/approval-history/",
-        "/accounts/blocked",
-        "/accounts/blocked/"
+        "/accounts/advances",
+        "/accounts/advances/"
       ],
       "findings": [],
       "forms": 0,
@@ -729,7 +729,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7476,
+      "bytes": 7672,
       "deprecated_alternatives": [],
       "example_pages": [
         "/actions/<str:action_id>/<str:transition>",
@@ -872,7 +872,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3712,
+      "bytes": 3963,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -894,7 +894,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3028,
+      "bytes": 3264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -916,7 +916,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3098,
+      "bytes": 3464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -940,7 +940,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6232,
+      "bytes": 6483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1027,7 +1027,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2784,
+      "bytes": 3050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1068,7 +1068,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3616,
+      "bytes": 3847,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1175,7 +1175,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11212,
+      "bytes": 11649,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/school-closures"
@@ -1198,7 +1198,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13552,
+      "bytes": 13848,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/closure-quality"
@@ -1285,7 +1285,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 935,
+      "bytes": 1168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1416,7 +1416,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30824,
+      "bytes": 32202,
       "deprecated_alternatives": [],
       "example_pages": [
         "/impact"
@@ -1555,7 +1555,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3170,
+      "bytes": 3413,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1619,7 +1619,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4193,
+      "bytes": 4447,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1640,7 +1640,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10181,
+      "bytes": 10553,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1723,7 +1723,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2720,
+      "bytes": 2983,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1966,7 +1966,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3005,
+      "bytes": 3371,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2012,7 +2012,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3699,
+      "bytes": 3970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2119,7 +2119,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2882,
+      "bytes": 3098,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2416,7 +2416,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16929,
+      "bytes": 17120,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/visit-effectiveness"
@@ -3449,7 +3449,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3803,
+      "bytes": 4036,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3790,7 +3790,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6440,
+      "bytes": 6625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings/row/<str:key>"
@@ -3881,7 +3881,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4632,
+      "bytes": 4864,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4009,7 +4009,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19887,
+      "bytes": 20655,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4095,7 +4095,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12193,
+      "bytes": 12911,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4142,7 +4142,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3347,
+      "bytes": 3593,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4192,7 +4192,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6890,
+      "bytes": 7106,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4215,7 +4215,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 33729,
+      "bytes": 34460,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4309,7 +4309,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 48433,
+      "bytes": 49295,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4406,7 +4406,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3228,
+      "bytes": 3486,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4429,7 +4429,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7156,
+      "bytes": 7359,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4499,7 +4499,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4154,
+      "bytes": 4355,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4521,7 +4521,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9751,
+      "bytes": 10196,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4572,7 +4572,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3322,
+      "bytes": 3561,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4594,7 +4594,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9961,
+      "bytes": 10212,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4802,7 +4802,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5089,
+      "bytes": 5278,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4932,7 +4932,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4811,
+      "bytes": 5015,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4958,7 +4958,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4711,
+      "bytes": 4961,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5063,7 +5063,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36187,
+      "bytes": 36781,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5693,7 +5693,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4333,
+      "bytes": 4551,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -5934,7 +5934,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6685,
+      "bytes": 6940,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -6493,7 +6493,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1079,
+      "bytes": 1416,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -6663,7 +6663,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24550,
+      "bytes": 24790,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6896,7 +6896,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4041,
+      "bytes": 4386,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -7052,7 +7052,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24443,
+      "bytes": 24944,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -7086,7 +7086,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 26703,
+      "bytes": 27139,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7172,7 +7172,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6278,
+      "bytes": 6503,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7592,7 +7592,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13099,
+      "bytes": 13372,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -7686,7 +7686,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 11279,
+      "bytes": 12165,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9450,7 +9450,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3181,
+      "bytes": 3433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance/inbox"
@@ -9719,7 +9719,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2242,
+      "bytes": 2490,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9745,7 +9745,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 17208,
+      "bytes": 17638,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9774,7 +9774,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11686,
+      "bytes": 11898,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9871,7 +9871,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15305,
+      "bytes": 15948,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -10188,7 +10188,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17450,
+      "bytes": 17642,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -10217,7 +10217,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10703,
+      "bytes": 10898,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -10271,7 +10271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6489,
+      "bytes": 6760,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/projects/<str:project_id>/schools"
@@ -10913,7 +10913,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1418,
+      "bytes": 1654,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -10963,7 +10963,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20131,
+      "bytes": 21146,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -11050,7 +11050,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5102,
+      "bytes": 5893,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets",
@@ -11101,7 +11101,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20266,
+      "bytes": 20817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -11205,7 +11205,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21527,
+      "bytes": 21773,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11326,7 +11326,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4795,
+      "bytes": 4995,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/staff-drawer"
@@ -11373,7 +11373,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11460,
+      "bytes": 11959,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11609,7 +11609,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5637,
+      "bytes": 6071,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/upload"
@@ -11782,7 +11782,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4001,
+      "bytes": 4272,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",

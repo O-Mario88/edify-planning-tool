@@ -119,3 +119,23 @@ def carry_query(context, *drop):
     from urllib.parse import urlencode
 
     return "&" + urlencode(pairs)
+
+
+@register.simple_tag
+def page_param(base, *parts) -> str:
+    """A page parameter unique to one instance of a repeated table.
+
+    A table drawn inside a loop is several tables sharing one template, and one
+    parameter between them moves all of them at once. The loop's own key — a
+    counter, a staff id, a section slug — makes each instance's parameter its
+    own:
+
+        {% templatetag openblock %} page_param "members" forloop.counter as members_param {% templatetag closeblock %}
+        {% templatetag openblock %} paginate group.members members_param as members_page {% templatetag closeblock %}
+
+    Positional rather than baked into `paginate`, because the caller is the only
+    one who knows which key distinguishes their instances.
+    """
+    return "-".join(
+        [str(base)] + [str(part) for part in parts if part not in (None, "")]
+    )

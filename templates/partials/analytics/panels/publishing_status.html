@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 {% comment %}
 The Publishing tab: which verified records have reached official reporting
@@ -9,6 +9,7 @@ panel).
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate records "publishing_status_records_page" as publishing_status_records_pager %}
 <table class="w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
@@ -22,7 +23,7 @@ panel).
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% if records %}
-{% for item in records %}
+{% for item in publishing_status_records_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4">
@@ -66,5 +67,6 @@ panel).
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=publishing_status_records_pager param="publishing_status_records_page" %}
 </div>
 </div>

@@ -1,5 +1,6 @@
 {% extends "layouts/shell.html" %}
 
+{% load table_pagination %}
 {% block title %}SSA Upload Preview — Edify{% endblock %}
 
 {% block shell_content %}
@@ -53,6 +54,7 @@ Blocked Rows ({{ blocked_count }})
 
 <!-- Ready Tab -->
 <div x-show="tab === 'ready'">
+{% paginate ready_rows "ready_rows_page" as ready_rows_pager %}
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
@@ -63,7 +65,7 @@ Blocked Rows ({{ blocked_count }})
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in ready_rows %}
+{% for r in ready_rows_pager.rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
 <td class="px-4 py-3.5 text-slate-900 font-bold">ID: {{ r.school_id }}</td>
@@ -81,10 +83,12 @@ Blocked Rows ({{ blocked_count }})
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=ready_rows_pager param="ready_rows_page" %}
 </div>
 
 <!-- Unmatched Tab -->
 <div x-show="tab === 'unmatched'">
+{% paginate unmatched_rows "unmatched_rows_page" as unmatched_rows_pager %}
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
@@ -95,7 +99,7 @@ Blocked Rows ({{ blocked_count }})
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in unmatched_rows %}
+{% for r in unmatched_rows_pager.rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
 <td class="px-4 py-3.5 text-slate-900 font-bold">ID: {{ r.school_id }}</td>
@@ -109,10 +113,12 @@ Blocked Rows ({{ blocked_count }})
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=unmatched_rows_pager param="unmatched_rows_page" %}
 </div>
 
 <!-- Blocked Tab -->
 <div x-show="tab === 'blocked'">
+{% paginate blocked_rows "blocked_rows_page" as blocked_rows_pager %}
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
@@ -123,7 +129,7 @@ Blocked Rows ({{ blocked_count }})
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in blocked_rows %}
+{% for r in blocked_rows_pager.rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
 <td class="px-4 py-3.5 text-rose-600 font-bold">ID: {{ r.school_id|default:"Missing" }}</td>
@@ -141,6 +147,7 @@ Blocked Rows ({{ blocked_count }})
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=blocked_rows_pager param="blocked_rows_page" %}
 </div>
 
 </div>

@@ -1,5 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block drawer_title %}{{ m.name }}{% endblock %}
 {% block drawer_subtitle %}{{ month_label }} — validated achievement, pace, and every blocker{% endblock %}
@@ -17,6 +17,7 @@
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Performance priorities — {{ month_label }}</p>
     <div class="overflow-x-auto rounded-surface border border-slate-100">
+      {% paginate m.per_area "m_per_area_page" as m_per_area_pager %}
       <table class="w-full min-w-[520px] edify-text-caption">
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider edify-text-caption text-left">
@@ -31,7 +32,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-          {% for pa in m.per_area %}
+          {% for pa in m_per_area_pager.rows %}
           <tr>
             <td class="py-2 px-3">{{ pa.label }} <span class="edify-text-caption text-slate-300">w{{ pa.weight }}%</span></td>
             <td class="py-2 px-2 text-center tabular-nums">{{ pa.target }}</td>
@@ -45,6 +46,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=m_per_area_pager param="m_per_area_page" %}
     </div>
     <p class="edify-text-caption text-slate-400 font-medium mt-1.5">Valid = executed + evidenced + Activity SF ID + IA verification where required, credited to the month the work happened. Provisional work is visible above but never counted.</p>
   </div>

@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load kpi_metrics %}
 
 {% load frontend_filters %}
@@ -68,6 +68,7 @@
     <h2 class="text-[15px] font-bold text-slate-800">Planned activity breakdown (snapshot)</h2>
     <p class="mt-0.5 text-[12px] font-medium text-slate-500">Country Operational is the planned amount submitted for implementation. Any older regional reserve is historical and separate from staff spending authority.</p>
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
+      {% paginate staff_rows "staff_rows_page" as staff_rows_pager %}
       <table class="min-w-[760px] w-full border-collapse text-left text-[12px]">
         <thead>
           <tr class="font-bold">
@@ -78,7 +79,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
-          {% for row in staff_rows %}
+          {% for row in staff_rows_pager.rows %}
           <tr>
             <td class="px-4 py-3 font-semibold text-slate-800">{{ row.name }}</td>
             <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.activity_count }}</td>
@@ -88,6 +89,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=staff_rows_pager param="staff_rows_page" %}
     </div>
   </section>
   {% endif %}
@@ -97,6 +99,7 @@
     <h2 class="text-[15px] font-bold text-slate-800">Line items (snapshot)</h2>
     <p class="mt-0.5 text-[12px] font-medium text-slate-500">The same governed plan inputs costed through both rate cards.</p>
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
+      {% paginate line_items "line_items_page" as line_items_pager %}
       <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
         <thead>
           <tr class="font-bold">
@@ -111,7 +114,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
-          {% for item in line_items %}
+          {% for item in line_items_pager.rows %}
           <tr>
             <td class="px-4 py-3 font-semibold text-slate-800">{{ item.label }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.category }}</td>
@@ -125,6 +128,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=line_items_pager param="line_items_page" %}
     </div>
   </section>
   {% endif %}
@@ -133,6 +137,7 @@
   <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm">
     <h2 class="text-[15px] font-bold text-slate-800">Admin plan (snapshot)</h2>
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
+      {% paginate admin_lines "admin_lines_page" as admin_lines_pager %}
       <table class="min-w-[640px] w-full border-collapse text-left text-[12px]">
         <thead>
           <tr class="font-bold">
@@ -144,7 +149,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
-          {% for line in admin_lines %}
+          {% for line in admin_lines_pager.rows %}
           <tr>
             <td class="px-4 py-3 font-semibold text-slate-800">{{ line.description }}</td>
             <td class="px-3 py-3 text-slate-600">{{ line.category }}</td>
@@ -155,6 +160,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=admin_lines_pager param="admin_lines_page" %}
     </div>
   </section>
   {% endif %}

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Map view: the country map (moved here from Analytics, owner 2026-09-05) with
 its distribution table, then the region and district delivery table beneath.
@@ -20,6 +20,7 @@ its distribution table, then the region and district delivery table beneath.
     </div>
     {% if geography.rows %}
     <div class="overflow-x-auto">
+    {% paginate geography.rows "geography_rows_page" as geography_rows_pager %}
     <table class="w-full text-left text-[12px]">
       <thead>
         <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
@@ -36,7 +37,7 @@ its distribution table, then the region and district delivery table beneath.
           <th scope="col" class="px-3 py-2 font-semibold text-right">Disbursed</th>
         </tr>
       </thead>
-      {% for r in geography.rows %}
+      {% for r in geography_rows_pager.rows %}
       <tbody x-data="{ open: false }">
         <tr class="border-t edify-border cursor-pointer hover:bg-slate-50" @click="open = !open" :aria-expanded="open.toString()">
           <td class="px-3 py-2.5 font-semibold text-slate-800"><span class="inline-block w-4 text-slate-400" x-text="open ? '−' : '+'">+</span>{{ r.name }}</td>
@@ -84,6 +85,7 @@ its distribution table, then the region and district delivery table beneath.
         </tr>
       </tfoot>
     </table>
+    {% include "components/table_pager.html" with pager=geography_rows_pager param="geography_rows_page" %}
     </div>
     <p class="edify-text-caption edify-text-muted">Backlog counts planned work whose date has passed without completion. Planned budget is the costed estimate of the period&rsquo;s activities; disbursed is money already released against them.</p>
     {% else %}

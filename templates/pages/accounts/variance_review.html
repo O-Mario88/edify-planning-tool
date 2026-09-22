@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Variance Review - Edify Command Center{% endblock %}
@@ -25,6 +25,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate reviews "reviews_page" as reviews_pager %}
 <table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
@@ -40,7 +41,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% if reviews %}
-{% for item in reviews %}
+{% for item in reviews_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4" data-record-title>
@@ -94,6 +95,7 @@ Reconcile
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=reviews_pager param="reviews_page" %}
 </div>
 </div>
 </div>

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="tt-dashboard">
   {% include "partials/hr/distributed_summary.html" %}
   {% include "components/context_metrics.html" with items=summary_kpis variant="executive" title="Team target progress" %}
@@ -92,7 +92,7 @@
                 share per period for each of this member's agreed priorities
                 (owner, 2026-09-05).{% endcomment %}
                 <div class="tt-area-matrix-shell tt-area-matrix-shell--matrix">
-                  {% include "partials/targets/_period_matrix.html" with variant="team" rows=member.period_matrix_rows heads=matrix_heads overall=member.period_matrix_overall quarter=quarter owner=member.name %}
+                  {% include "partials/targets/_period_matrix.html" with matrix_key=forloop.counter variant="team" rows=member.period_matrix_rows heads=matrix_heads overall=member.period_matrix_overall quarter=quarter owner=member.name %}
                 </div>
               </td>
             </tr>
@@ -295,14 +295,16 @@
       </header>
       {% if partners %}
       <div class="tt-table-scroll">
+        {% paginate partners "body_partners_page" as body_partners_pager %}
         <table class="tt-compact-table">
           <thead><tr><th>Partner</th><th>Region</th><th>Assigned</th><th>Scheduled</th><th>Valid done</th><th>Achievement</th><th>SF ID</th><th>Risk</th></tr></thead>
           <tbody>
-            {% for partner in partners %}
+            {% for partner in body_partners_pager.rows %}
             <tr><td><strong>{{ partner.name }}</strong></td><td>{{ partner.region }}</td><td>{{ partner.assigned }}</td><td>{{ partner.scheduled }}</td><td>{{ partner.valid }}</td><td>{{ partner.pct }}%</td><td>{{ partner.sf }}%</td><td><span class="tt-status" data-tone="{{ partner.tone }}">{{ partner.risk }}</span></td></tr>
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=body_partners_pager param="body_partners_page" %}
       </div>
       {% else %}
       <div class="tt-empty tt-empty--compact"><h3>No partner-delivered activities in this scope</h3><p>Assigned partner work will appear here without changing personal target credit.</p></div>

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <div class="flex items-center justify-between">
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">C. District Performance Under My Team</h3>
@@ -9,6 +9,7 @@
   share — then the activities. A row opens the district drawer, as the bars
   it replaces did.{% endcomment %}
   <div class="overflow-x-auto pt-1">
+    {% paginate district_performance.rows "district_performance_rows_page" as district_performance_rows_pager %}
     <table class="w-full text-left text-[12px] pl-district-table">
       <caption class="sr-only">District performance under my team: schools reached and activities</caption>
       <thead>
@@ -28,7 +29,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for d in district_performance.rows %}
+        {% for d in district_performance_rows_pager.rows %}
         <tr class="border-t border-slate-100 cursor-pointer hover:bg-slate-50" tabindex="0" role="button"
             hx-get="/analytics/program-lead/drilldown?drill=district&id={{ d.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
             hx-target="#drawer-container" hx-swap="innerHTML" hx-trigger="click, keyup[key=='Enter']"
@@ -47,5 +48,6 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=district_performance_rows_pager param="district_performance_rows_page" %}
   </div>
 </div>

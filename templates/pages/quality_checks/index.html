@@ -1,5 +1,6 @@
 {% extends "layouts/shell.html" %}
 
+{% load table_pagination %}
 {% block title %}Quality Checks — Edify{% endblock %}
 
 {% block shell_content %}
@@ -68,6 +69,7 @@ a one-column drawer that asks what was done.
 </div>
 </header>
 <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Quality flags; scroll sideways for more columns">
+{% paginate rows "index_rows_page" as index_rows_pager %}
 <table class="rpl-table" data-mobile-table="scroll">
 <caption class="sr-only">Quality flags raised by the Country Director</caption>
 {% if rows %}
@@ -86,7 +88,7 @@ a one-column drawer that asks what was done.
 </thead>
 {% endif %}
 <tbody>
-{% for row in rows %}
+{% for row in index_rows_pager.rows %}
 {% with f=row.flag %}
 <tr data-flag-row="{{ f.id }}">
 <th scope="row" data-record-title><span>{% firstof f.scope_name f.category "Flag" %}</span></th>
@@ -119,6 +121,7 @@ a one-column drawer that asks what was done.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=index_rows_pager param="index_rows_page" %}
 </div>
 </section>
 {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-flag-autoload></div>{% endif %}

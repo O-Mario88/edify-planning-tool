@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="space-y-5" x-data="{ showMscs: false }">
 
   {% include "partials/hr/distributed_summary.html" %}
@@ -26,7 +26,7 @@
     </summary>
     <div class="edify-disclosure__body">
       <div class="overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Scrollable personal cumulative target progress table. Scroll horizontally to compare every quarter and the full year.">
-        {% include "partials/targets/_period_matrix.html" with rows=matrix_rows heads=matrix_heads overall=overall_cells overall_label="Operational overall progress" quarter=current_quarter milestones=strategic_milestones drawer="/my-targets/area-drawer" fy=fy month_of_fy=month_of_fy %}
+        {% include "partials/targets/_period_matrix.html" with matrix_key="agreed" rows=matrix_rows heads=matrix_heads overall=overall_cells overall_label="Operational overall progress" quarter=current_quarter milestones=strategic_milestones drawer="/my-targets/area-drawer" fy=fy month_of_fy=month_of_fy %}
       </div>
       <p class="edify-text-caption text-slate-400 font-medium">Operational overall progress is priority-weighted{% if area_cards %} ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}. Strategic milestone rows are approved allocations and are not weighted into it.</p>
     </div>
@@ -37,7 +37,7 @@
   <details class="edify-disclosure" open>
     <summary><span><h2>Distributed allocations by reporting period</h2><small>Approved allocations · verified delivery, including monitored partners.</small></span></summary>
     <div class="edify-disclosure__body overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Priority progress by reporting period">
-      {% include "partials/targets/_period_matrix.html" with rows=contract_matrix.rows heads=matrix_heads overall=contract_matrix.overall milestones=None drawer=None %}
+      {% include "partials/targets/_period_matrix.html" with matrix_key="contract" rows=contract_matrix.rows heads=matrix_heads overall=contract_matrix.overall milestones=None drawer=None %}
     </div>
   </details>
   {% endif %}
@@ -57,13 +57,14 @@
     </div>
     {% if strategic_milestones %}
     <div class="overflow-x-auto">
+      {% paginate strategic_milestones "my_body_strategic_milestones_page" as my_body_strategic_milestones_pager %}
       <table class="w-full min-w-[1320px] text-left edify-text-caption">
         <caption class="sr-only">Approved strategic milestone allocations, plans, actuals, status, linked Activities, and source data</caption>
         <thead><tr class="border-b border-slate-100 uppercase tracking-wider text-slate-400">
           <th class="px-3 py-2">Strategic Priority / Milestone</th><th class="px-3 py-2">Target source</th><th class="px-3 py-2 text-right">Month plan / actual</th><th class="px-3 py-2 text-right">Quarter target / actual</th><th class="px-3 py-2 text-right">FY target / actual</th><th class="px-3 py-2 text-right">Progress</th><th class="px-3 py-2 text-right">Remaining</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Linked Activities</th><th class="px-3 py-2">Data source</th>
         </tr></thead>
         <tbody class="divide-y divide-slate-50">
-          {% for row in strategic_milestones|slice:":60" %}
+          {% for row in my_body_strategic_milestones_pager.rows %}
           <tr>
             <td class="px-3 py-2.5"><span class="block font-bold text-slate-800">{{ row.milestone }}</span><span class="text-slate-400">{{ row.priority }}</span></td>
             <td class="px-3 py-2.5 text-slate-500">{{ row.targetSource }}</td>
@@ -85,6 +86,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=my_body_strategic_milestones_pager param="my_body_strategic_milestones_page" %}
     </div>
     {% else %}
     <div class="rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5">
@@ -181,6 +183,7 @@
     </div>
     {% if core_tracker_data.rows %}
     <div class="overflow-x-auto">
+      {% paginate core_tracker_data.rows "core_tracker_data_rows_page" as core_tracker_data_rows_pager %}
       <table class="w-full text-left edify-text-caption border-collapse min-w-[680px]">
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
@@ -194,7 +197,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-          {% for c in core_tracker_data.rows|slice:":60" %}
+          {% for c in core_tracker_data_rows_pager.rows %}
           <tr class="hover:bg-slate-50/50">
             <td class="py-2.5 px-3 tabular-nums text-slate-500">{{ c.code }}</td>
             <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
@@ -228,6 +231,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=core_tracker_data_rows_pager param="core_tracker_data_rows_page" %}
     </div>
     {% else %}
     {% include "components/empty_state.html" with title="No core schools in your portfolio yet" message="When a school in your portfolio is onboarded as a core school, its assessment + 4 visits + 4 trainings package is tracked here." %}

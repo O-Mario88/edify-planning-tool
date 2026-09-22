@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 <!-- Attention Region: Returned / Waiting on Approval / Partner Monitoring / Finance Pending -->
 
 <!-- 1. Returned — Needs Correction (rose) -->
@@ -20,6 +20,7 @@ Returned — Needs Correction
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
+{% paginate returned_needs_correction "returned_needs_correction_page" as returned_needs_correction_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -31,7 +32,7 @@ Returned — Needs Correction
 </tr>
 </thead>
 <tbody>
-{% for row in returned_needs_correction %}
+{% for row in returned_needs_correction_pager.rows %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
@@ -57,6 +58,7 @@ Fix Now
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=returned_needs_correction_pager param="returned_needs_correction_page" %}
 </div>
 
 </div>
@@ -81,6 +83,7 @@ Waiting on Approval
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
+{% paginate waiting_on_approval "waiting_on_approval_page" as waiting_on_approval_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -91,7 +94,7 @@ Waiting on Approval
 </tr>
 </thead>
 <tbody>
-{% for row in waiting_on_approval %}
+{% for row in waiting_on_approval_pager.rows %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
@@ -109,6 +112,7 @@ Waiting on Approval
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=waiting_on_approval_pager param="waiting_on_approval_page" %}
 </div>
 
 </div>
@@ -134,6 +138,7 @@ Partner Planned — Monitoring
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
+{% paginate partner_monitoring "partner_monitoring_page" as partner_monitoring_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -150,7 +155,7 @@ Partner Planned — Monitoring
 </tr>
 </thead>
 <tbody>
-{% for row in partner_monitoring %}
+{% for row in partner_monitoring_pager.rows %}
 <tr>
 <td class="font-bold edify-primary-text" data-record-title>{{ row.partner_name }}</td>
 <td class="font-semibold text-slate-800 text-[13px]" data-label="School / Cluster">
@@ -178,6 +183,7 @@ Partner Planned — Monitoring
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=partner_monitoring_pager param="partner_monitoring_page" %}
 </div>
 
 </div>
@@ -202,6 +208,7 @@ Finance / Accountability Pending
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
+{% paginate finance_pending "finance_pending_page" as finance_pending_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -212,7 +219,7 @@ Finance / Accountability Pending
 </tr>
 </thead>
 <tbody>
-{% for row in finance_pending %}
+{% for row in finance_pending_pager.rows %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
@@ -248,6 +255,7 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-[var
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=finance_pending_pager param="finance_pending_page" %}
 </div>
 
 </div>

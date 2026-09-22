@@ -1,4 +1,4 @@
-{% load chart_tags %}
+{% load chart_tags table_pagination %}
 {% load school_identity %}
 
 {% load kpi_metrics %}
@@ -180,6 +180,7 @@ Program Leads table, verification, risk, field intelligence and actions.
         <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
       </div>
       <div class="overflow-x-auto -mx-1">
+        {% paginate pl_performance.rows "pl_performance_rows_page" as pl_performance_rows_pager %}
         <table class="edify-performance-table w-full min-w-[1120px] edify-text-caption">
           <thead>
             <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
@@ -202,7 +203,7 @@ Program Leads table, verification, risk, field intelligence and actions.
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            {% for r in pl_performance.rows %}
+            {% for r in pl_performance_rows_pager.rows %}
             <tr>
               <td class="text-left font-semibold text-slate-700 py-2 pl-1" title="{{ r.name }}">{{ r.name }}</td>
               <td class="text-left text-slate-500 py-2" title="{{ r.region }}">{{ r.region }}</td>
@@ -241,6 +242,7 @@ Program Leads table, verification, risk, field intelligence and actions.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=pl_performance_rows_pager param="pl_performance_rows_page" %}
       </div>
       <p class="edify-text-caption text-slate-400 font-medium">Area results pool the validated performance of each lead's supervised CCEOs: visits, meetings, trainings, SSA and MSCS. A dash means no CCEO under that lead has agreed a target for that area in this period. Select the lead in Analytics for individual CCEO detail.</p>
     </div>
@@ -365,6 +367,7 @@ Program Leads table, verification, risk, field intelligence and actions.
         </div>
         {% score_chart ssa_matrix.rows "label" "overall" "Overall SSA score by cluster" %}
         <div class="overflow-x-auto -mx-1 flex-1">
+          {% paginate ssa_matrix.rows "cd_ssa_matrix_page" as cd_ssa_matrix_pager %}
           <table class="w-full edify-text-caption border-separate border-spacing-y-1 min-w-[520px]">
             <thead>
               <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
@@ -374,7 +377,7 @@ Program Leads table, verification, risk, field intelligence and actions.
               </tr>
             </thead>
             <tbody>
-              {% for row in ssa_matrix.rows %}
+              {% for row in cd_ssa_matrix_pager.rows %}
               <tr>
                 <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}</td>
                 {% for cell in row.cells %}
@@ -401,6 +404,7 @@ Program Leads table, verification, risk, field intelligence and actions.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=cd_ssa_matrix_pager param="cd_ssa_matrix_page" %}
         </div>
         <p class="edify-text-caption text-slate-400 font-medium">Scores use the verified SSA scale: Critical &lt;5.0 · Warning 5.0–6.9 · Improving 7.0–7.9 · Strong 8.0–10.</p>
       </section>
@@ -414,6 +418,7 @@ Program Leads table, verification, risk, field intelligence and actions.
           <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all priority schools →</a>
         </div>
         <div class="overflow-x-auto -mx-1">
+          {% paginate priority_schools "operations_priority_schools_page" as operations_priority_schools_pager %}
           <table class="w-full edify-text-caption">
             <thead>
               <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
@@ -425,7 +430,7 @@ Program Leads table, verification, risk, field intelligence and actions.
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
-              {% for p in priority_schools %}
+              {% for p in operations_priority_schools_pager.rows %}
               <tr>
                 <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{% school_identity p.school p.school_id %}</td>
                 <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ p.region }}</td>
@@ -444,6 +449,7 @@ Program Leads table, verification, risk, field intelligence and actions.
               {% endfor %}
             </tbody>
           </table>
+          {% include "components/table_pager.html" with pager=operations_priority_schools_pager param="operations_priority_schools_page" %}
         </div>
       </section>
   </div>

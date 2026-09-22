@@ -64,6 +64,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Confirmed by the Program Lead against the plan. The entered amount equals the period's planned cost; the payable instalment is system-derived.</p>
 </div>
 <div class="overflow-x-auto edify-table-scroll-region">
+{% paginate invoice_queue "invoice_queue_page" as invoice_queue_pager %}
 <table class="edify-record-table w-full text-[12px] font-semibold edify-mobile-table--scroll">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
@@ -75,7 +76,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for inv in invoice_queue|slice:":100" %}
+{% for inv in invoice_queue_pager.rows %}
 <tr class="">
 <td class="px-6 py-3" data-record-title>
 <div class="font-semibold text-slate-900">{{ inv.get_invoice_type_display }}</div>
@@ -106,6 +107,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=invoice_queue_pager param="invoice_queue_page" %}
 </div>
 </div>
 {% endif %}

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}The HTMX swap target (#project-list) for the projects filter form.
    Contains both the desktop table and the mobile card list so a filter change
    updates both. Rendered by both pages/projects/index.html and the HX-Target
@@ -31,6 +31,7 @@
     </div>
 
     <div class="overflow-x-auto">
+      {% paginate portfolio "portfolio_page" as portfolio_pager %}
       <table class="edify-record-table w-full text-left border-collapse text-[12px]">
         <caption class="sr-only">Projects in your current scope with delivery, progress, budget and follow-up status</caption>
         <thead>
@@ -49,7 +50,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          {% for row in portfolio %}
+          {% for row in portfolio_pager.rows %}
           <tr class="hover:bg-slate-50/50 transition-colors group">
             <!-- Project -->
             <td class="px-5 py-4 align-top" data-record-title>
@@ -132,6 +133,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=portfolio_pager param="portfolio_page" %}
     </div>
   </div>
 

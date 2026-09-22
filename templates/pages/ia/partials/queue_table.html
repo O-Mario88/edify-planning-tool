@@ -1,4 +1,4 @@
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 {# act.schoolId is already the school's display ID (joined by the view), so it is passed as code= and the page needs no school lookup after rendering: the queue's query budget in apps/frontend/test_ia_performance.py counts on it. #}
 {% if drilldowns %}
@@ -14,6 +14,7 @@
 {% endif %}
 <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
   <div class="overflow-x-auto">
+    {% paginate queue "queue_page" as queue_pager %}
     <table class="w-full text-left" aria-describedby="ia-queue-caption">
       <caption id="ia-queue-caption" class="sr-only">Activity verification records ordered by critical risk, overdue status, and oldest submission.</caption>
       <thead>
@@ -31,7 +32,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for act in queue %}
+        {% for act in queue_pager.rows %}
         <tr>
           <td>
             <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
@@ -78,6 +79,7 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=queue_pager param="queue_page" %}
   </div>
 
   <ul class="hidden divide-y divide-[var(--edify-border)]" aria-label="Activity verification records">

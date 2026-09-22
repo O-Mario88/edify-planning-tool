@@ -12882,7 +12882,7 @@
   {
    "audit_id": "KPI-SURFACE-029",
    "template": "templates/pages/fund_requests/detail.html",
-   "line": 69,
+   "line": 71,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14831,7 +14831,7 @@
   {
    "audit_id": "KPI-SURFACE-101",
    "template": "templates/partials/dashboards/cd/_impact_findings.html",
-   "line": 17,
+   "line": 18,
    "source_pattern": "shared-component",
    "items_expression": "impact_findings.tiles",
    "presentation": "context",
@@ -14890,7 +14890,7 @@
   {
    "audit_id": "KPI-SURFACE-103",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 257,
+   "line": 259,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14912,7 +14912,7 @@
   {
    "audit_id": "KPI-SURFACE-104",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 291,
+   "line": 293,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15059,7 +15059,7 @@
   {
    "audit_id": "KPI-SURFACE-110",
    "template": "templates/partials/dashboards/pl/team_view.html",
-   "line": 64,
+   "line": 66,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15513,7 +15513,7 @@
   {
    "audit_id": "KPI-SURFACE-127",
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 272,
+   "line": 274,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15579,7 +15579,7 @@
   {
    "audit_id": "KPI-SURFACE-130",
    "template": "templates/partials/ia/operations.html",
-   "line": 315,
+   "line": 320,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15605,7 +15605,7 @@
   {
    "audit_id": "KPI-SURFACE-131",
    "template": "templates/partials/ia/operations.html",
-   "line": 340,
+   "line": 345,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15631,7 +15631,7 @@
   {
    "audit_id": "KPI-SURFACE-132",
    "template": "templates/partials/ia/operations.html",
-   "line": 433,
+   "line": 438,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15701,7 +15701,7 @@
   {
    "audit_id": "KPI-SURFACE-135",
    "template": "templates/partials/ia/outcomes.html",
-   "line": 235,
+   "line": 237,
    "source_pattern": "shared-component",
    "items_expression": "ia_outcomes.cohort_tiles",
    "presentation": "context",
@@ -15723,7 +15723,7 @@
   {
    "audit_id": "KPI-SURFACE-136",
    "template": "templates/partials/ia/reports_view.html",
-   "line": 27,
+   "line": 28,
    "source_pattern": "shared-component",
    "items_expression": "ia_reports.tiles",
    "presentation": "context",
@@ -16358,7 +16358,7 @@
   {
    "audit_id": "KPI-SURFACE-159",
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 34,
+   "line": 35,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",

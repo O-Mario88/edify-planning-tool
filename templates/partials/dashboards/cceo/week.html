@@ -1,4 +1,4 @@
-{% load static %}
+{% load static table_pagination %}
 {% comment %}The CCEO's week: schools needing urgent attention, this week's plan, overdue work and cluster activities.{% endcomment %}
 <!-- Owner-scoped urgent-school decisions -->
 <section id="urgent-schools" class="card overflow-hidden scroll-mt-20" aria-labelledby="urgent-schools-title">
@@ -38,12 +38,13 @@
         <a href="/my-plan" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
+        {% paginate overdue_last_week "overdue_last_week_page" as overdue_last_week_pager %}
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">Activity</th><th class="px-3 py-2.5">School / Cluster</th><th class="px-3 py-2.5">Due Date</th><th class="px-3 py-2.5">Status</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
-            {% for r in overdue_last_week %}
+            {% for r in overdue_last_week_pager.rows %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3"><span class="inline-flex items-center gap-2"><span class="h-8 w-8 rounded-pill bg-slate-50 flex items-center justify-center text-[15px] shrink-0">{{ r.icon }}</span><span class="text-[13px] font-bold text-slate-800">{{ r.activity }}</span></span></td>
               <td class="px-3 py-3 text-[12px] font-semibold text-slate-600">{{ r.where }}</td>
@@ -84,6 +85,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=overdue_last_week_pager param="overdue_last_week_page" %}
       </div>
     </div>
 
@@ -97,12 +99,13 @@
         <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
+        {% paginate school_visits_week "school_visits_week_page" as school_visits_week_pager %}
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">ID</th><th class="px-3 py-2.5">School</th><th class="px-3 py-2.5">District</th><th class="px-3 py-2.5">Visit Purpose</th><th class="px-3 py-2.5">Planned Date</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
-            {% for r in school_visits_week %}
+            {% for r in school_visits_week_pager.rows %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3 edify-text-caption tabular-nums text-slate-500">{{ r.code }}</td>
               <td class="px-3 py-3 text-[13px] font-bold text-slate-800">{{ r.school }}</td>
@@ -116,6 +119,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=school_visits_week_pager param="school_visits_week_page" %}
       </div>
     </div>
 
@@ -129,12 +133,13 @@
         <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
+        {% paginate cluster_activities_week "cluster_activities_week_page" as cluster_activities_week_pager %}
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">Cluster</th><th class="px-3 py-2.5">Activity Type</th><th class="px-3 py-2.5">Intervention Focus</th><th class="px-3 py-2.5">Date</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
-            {% for r in cluster_activities_week %}
+            {% for r in cluster_activities_week_pager.rows %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3 text-[13px] font-bold text-slate-800">{{ r.cluster }}</td>
               <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}edify-primary-soft edify-primary-text{% endif %}">{{ r.type_label }}</span></td>
@@ -147,6 +152,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=cluster_activities_week_pager param="cluster_activities_week_page" %}
       </div>
     </div>
   </div>

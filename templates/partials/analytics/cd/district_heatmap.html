@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Swapped whole by the level tabs below, so the wrapper carries the id and every
 level renders through this one template. `district_heatmap` is the context key
@@ -42,6 +42,7 @@ drilldown for no gain.
   {% endif %}
 
   <div class="overflow-x-auto -mx-1">
+    {% paginate district_heatmap.rows "district_heatmap_rows_page" as district_heatmap_rows_pager %}
     <table class="w-full edify-text-caption border-separate border-spacing-y-1">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
@@ -51,7 +52,7 @@ drilldown for no gain.
         </tr>
       </thead>
       <tbody>
-        {% for row in district_heatmap.rows %}
+        {% for row in district_heatmap_rows_pager.rows %}
         {% comment %}
         Only levels with a drilldown branch get a click target. Sub-county has
         none, so its rows are plain instead of dead.
@@ -89,6 +90,7 @@ drilldown for no gain.
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=district_heatmap_rows_pager param="district_heatmap_rows_page" %}
   </div>
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 edify-text-caption font-semibold text-slate-400">
     <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-emerald-100 border border-emerald-200"></span>Strong 8.0–10</span>

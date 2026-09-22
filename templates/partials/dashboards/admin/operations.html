@@ -1,4 +1,4 @@
-{% load static frontend_filters %}
+{% load static frontend_filters table_pagination %}
 {% comment %}Platform operations and business overview for the Admin dashboard.{% endcomment %}
 {% if admin_ops %}
   <div class="mobile-home-only">
@@ -40,11 +40,12 @@
                   <a href="/calendar">View Calendar</a>
                 </header>
                 <div class="admin-table-wrap">
+                  {% paginate priorities "priorities_page" as priorities_pager %}
                   <table class="admin-table admin-table--priorities">
                     <caption class="sr-only">Activities prioritized for today</caption>
                     <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
                     <tbody>
-                      {% for item in priorities %}
+                      {% for item in priorities_pager.rows %}
                       <tr>
                         <td data-label="Activity"><strong>{{ item.activity }}</strong></td>
                         <td data-label="Time">{{ item.time }}</td>
@@ -56,6 +57,7 @@
                       {% endfor %}
                     </tbody>
                   </table>
+                  {% include "components/table_pager.html" with pager=priorities_pager param="priorities_page" %}
                 </div>
                 <a class="admin-panel__footer-link" href="/planning">View all priorities ({{ priorities|length }}) <span aria-hidden="true">→</span></a>
               </section>
@@ -64,11 +66,13 @@
                        {% include "components/registered_card_attrs.html" with card=cards.priority_schools %} aria-labelledby="admin-priority-schools-title">
                 <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
                 <div class="admin-table-wrap">
+                  {% paginate priority_schools "operations_priority_schools_page" as operations_priority_schools_pager %}
                   <table class="admin-table admin-table--schools">
                     <caption class="sr-only">Schools requiring priority action</caption>
                     <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
-                    <tbody>{% for school in priority_schools %}<tr><td class="tabular-nums">{{ school.school_id }}</td><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="6"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
+                    <tbody>{% for school in operations_priority_schools_pager.rows %}<tr><td class="tabular-nums">{{ school.school_id }}</td><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="6"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
                   </table>
+                  {% include "components/table_pager.html" with pager=operations_priority_schools_pager param="operations_priority_schools_page" %}
                 </div>
                 <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>
               </section>
@@ -77,11 +81,13 @@
                        {% include "components/registered_card_attrs.html" with card=cards.cluster_performance %} aria-labelledby="admin-clusters-title">
                 <header class="admin-panel__header"><h2 id="admin-clusters-title">Cluster Performance</h2><a href="/clusters">View All</a></header>
                 <div class="admin-table-wrap">
+                  {% paginate cluster_performance "cluster_performance_page" as cluster_performance_pager %}
                   <table class="admin-table">
                     <caption class="sr-only">Cluster performance by average SSA score</caption>
                     <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
-                    <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{{ cluster.name }}{% endif %}{% endwith %}{% else %}{{ cluster.name }}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><span class="edify-text-muted">History unavailable</span></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+                    <tbody>{% for cluster in cluster_performance_pager.rows %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{{ cluster.name }}{% endif %}{% endwith %}{% else %}{{ cluster.name }}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><span class="edify-text-muted">History unavailable</span></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
                   </table>
+                  {% include "components/table_pager.html" with pager=cluster_performance_pager param="cluster_performance_page" %}
                 </div>
               </section>
       </div>

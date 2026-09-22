@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 The score is the colour, and it is the ink rather than the surface (owner,
 2026-09-18): red below 5, orange to 6, light green to 8, green to 10, and
@@ -19,6 +19,8 @@ title, so colour never carries the value on its own.
   <details class="analytics-context-disclosure" data-ssa-district>
     <summary>{{ district.grouper }} <span>{{ district.list|length }} cluster{{ district.list|length|pluralize }}</span></summary>
     <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="{{ district.grouper }} cluster SSA scores">
+  {% page_param "pl_ssa_district" forloop.counter as pl_ssa_param %}
+  {% paginate district.list pl_ssa_param as pl_ssa_pager %}
   <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap" data-mobile-table="scroll">
     <caption class="sr-only">
       Average SSA score out of 10 for each intervention, by cluster. Each
@@ -36,7 +38,7 @@ title, so colour never carries the value on its own.
       </tr>
     </thead>
     <tbody>
-      {% for r in district.list %}
+      {% for r in pl_ssa_pager.rows %}
       <tr>
         <th scope="row" class="px-2.5 py-[7px] text-left">{{ r.name }}</th>
         {% for cell in r.cells %}
@@ -51,6 +53,7 @@ title, so colour never carries the value on its own.
       {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=pl_ssa_pager param=pl_ssa_param %}
     </div>
   </details>
   {% endfor %}

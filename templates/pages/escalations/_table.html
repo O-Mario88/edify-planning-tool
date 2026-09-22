@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 One escalation list. `rows` are serialized escalations; `actionable` renders
 the acknowledge / decide forms on rows the reader may decide; `show_raiser`
@@ -5,6 +6,7 @@ adds the raiser column (hidden on "Raised by you", where it is always the
 reader); `key` keeps element ids unique when the page renders several lists.
 {% endcomment %}
 <div class="overflow-x-auto" x-data="{ open: null }">
+{% paginate rows "escalation_rows_page" as escalation_rows_pager %}
 <table class="edify-record-table w-full text-[12px]">
 <thead>
 <tr class="bg-slate-50/60 border-b border-slate-100">
@@ -19,7 +21,7 @@ reader); `key` keeps element ids unique when the page renders several lists.
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for e in rows %}
+{% for e in escalation_rows_pager.rows %}
 <tr class="hover:bg-slate-50/60 transition-colors">
 <td class="px-5 py-2" data-label="Severity">
 <span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill {% if e.severity == 'critical' %}bg-rose-50 text-rose-700{% elif e.severity == 'high' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ e.severity|upper }}</span>
@@ -87,4 +89,5 @@ reader); `key` keeps element ids unique when the page renders several lists.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=escalation_rows_pager param="escalation_rows_page" %}
 </div>

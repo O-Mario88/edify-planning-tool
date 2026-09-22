@@ -57,6 +57,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <h2 class="text-[13px] font-extrabold text-slate-800">Which interventions are failing</h2>
 </div>
 <div class="overflow-x-auto">
+{% paginate d.interventions "d_interventions_page" as d_interventions_pager %}
 <table class="w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
@@ -67,7 +68,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for i in d.interventions %}
+{% for i in d_interventions_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 text-slate-800 font-bold">{{ i.label }}</td>
 <td class="px-4 py-3 text-right tabular-nums {% if i.avgDelta < 0 %}text-rose-700 font-extrabold{% else %}text-slate-600{% endif %}">{{ i.avgDelta }}</td>
@@ -77,6 +78,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=d_interventions_pager param="d_interventions_page" %}
 </div>
 </div>
 
@@ -137,6 +139,7 @@ of them is the part anyone reads.
 <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Aggregated to district — your role sees regional patterns, not individual school records.</p>
 </div>
 <div class="overflow-x-auto">
+{% paginate d.districts "d_districts_page" as d_districts_pager %}
 <table class="w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
@@ -148,7 +151,7 @@ of them is the part anyone reads.
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in d.districts %}
+{% for r in d_districts_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 font-bold text-slate-800">{{ r.district }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-700">{{ r.decliningCount }}</td>
@@ -159,6 +162,7 @@ of them is the part anyone reads.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=d_districts_pager param="d_districts_page" %}
 </div>
 </div>
 {% endif %}

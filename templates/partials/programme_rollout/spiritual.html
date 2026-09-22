@@ -138,6 +138,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
         </div>
       </header>
       <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Spiritual programmes; scroll sideways for more columns">
+        {% paginate rollout.programmes "rollout_programmes_page" as rollout_programmes_pager %}
         <table class="rpl-table" data-mobile-table="scroll">
           <caption class="sr-only">Each spiritual transformation programme the team planned this year: planned, delivered, still to deliver, staff and partner delivery, and schools reached.</caption>
           <thead>
@@ -152,7 +153,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
             </tr>
           </thead>
           <tbody>
-            {% for row in rollout.programmes|slice:":40" %}
+            {% for row in rollout_programmes_pager.rows %}
             <tr>
               <th scope="row" data-record-title><span>{{ row.name }}</span></th>
               <td data-label="Family">{{ row.family }}</td>
@@ -171,6 +172,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=rollout_programmes_pager param="rollout_programmes_page" %}
       </div>
     </section>
   </div>
@@ -183,6 +185,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
         </div>
       </header>
       <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Spiritual programmes by deliverer; scroll sideways for more columns">
+        {% paginate rollout.deliverers "rollout_deliverers_page" as rollout_deliverers_pager %}
         <table class="rpl-table" data-mobile-table="scroll">
           <caption class="sr-only">Spiritual programme sessions delivered this year by each officer and training partner, by programme family, with sessions still to deliver.</caption>
           <thead>
@@ -193,7 +196,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
             </tr>
           </thead>
           <tbody>
-            {% for row in rollout.deliverers|slice:":40" %}
+            {% for row in rollout_deliverers_pager.rows %}
             <tr>
               <th scope="row" data-record-title title="{{ row.kind }}"><span>{{ row.name }}</span></th>
               <td class="is-num" data-label="Christian Transformation">{{ row.christian_transformation }}</td>
@@ -210,6 +213,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=rollout_deliverers_pager param="rollout_deliverers_page" %}
       </div>
     </section>
   </div>

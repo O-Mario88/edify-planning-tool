@@ -1,5 +1,5 @@
 
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 {% load frontend_filters %}
 <!-- Activity Detail Floating Drawer with Backdrop Blur -->
 <div
@@ -154,6 +154,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div class=" rounded-surface overflow-hidden">
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
+{% paginate act.schedule_cost_lines.all "act_schedule_cost_lines_all_page" as act_schedule_cost_lines_all_pager %}
 <table class="edify-record-table w-full text-left text-[12px] font-semibold">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
@@ -165,7 +166,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% if act.schedule_cost_lines.all %}
-{% for line in act.schedule_cost_lines.all %}
+{% for line in act_schedule_cost_lines_all_pager.rows %}
 <tr>
 <td class="px-4 py-2.5 font-bold text-slate-800" data-record-title>
 {{ line.label }}
@@ -195,6 +196,7 @@ No budget lines created.
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=act_schedule_cost_lines_all_pager param="act_schedule_cost_lines_all_page" %}
 </div>
 </div>
 </div>

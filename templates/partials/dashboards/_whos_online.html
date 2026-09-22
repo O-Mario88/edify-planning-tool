@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
   Who's Online (owner, 2026-09-15): who logged in, who is online, how long,
   what they were working on and which part of the system. One table for the
@@ -28,6 +29,7 @@
     <span class="presence-legend" aria-hidden="true"><i class="admin-presence-light admin-presence-light--online"></i> online <i class="admin-presence-light admin-presence-light--offline"></i> offline</span>
   </header>
   <div class="presence-table-wrap">
+    {% paginate presence.groups "presence_groups_page" as presence_groups_pager %}
     <table class="presence-table">
       <thead>
         <tr>
@@ -39,7 +41,7 @@
           <th scope="col">Part of the system accessed</th>
         </tr>
       </thead>
-      {% for group in presence.groups %}
+      {% for group in presence_groups_pager.rows %}
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="presence-group__row">
           <td colspan="6">
@@ -57,6 +59,7 @@
       <tbody><tr><td colspan="6" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
       {% endfor %}
     </table>
+    {% include "components/table_pager.html" with pager=presence_groups_pager param="presence_groups_page" %}
   </div>
   <script>
     (function () {

@@ -1,4 +1,4 @@
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 {% load frontend_filters %}
 {% comment %}
 Performance management and coaching (owner, 2026-09-13): for each officer, where
@@ -38,6 +38,7 @@ to the page where it is acted on; nothing is decided here.
       </div>
     </header>
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Performance and coaching by officer; scroll sideways for more columns">
+      {% paginate coaching_rows "coaching_rows_page" as coaching_rows_pager %}
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">Each officer's review stage, recovery plan, plans and requests waiting on you, last coaching conversation and evidence quality.</caption>
         <thead>
@@ -54,7 +55,7 @@ to the page where it is acted on; nothing is decided here.
           </tr>
         </thead>
         <tbody>
-          {% for row in coaching_rows|slice:":60" %}
+          {% for row in coaching_rows_pager.rows %}
           <tr>
             <th scope="row" data-record-title><span>{{ row.name }}</span></th>
             <td data-label="Review">{% if row.review_stage %}{% if row.review_waiting_on_you %}<span data-tone="warning">{{ row.review_stage }} · waiting on you</span>{% else %}{{ row.review_stage }}{% endif %}{% else %}<span class="rpl-muted">No review this year</span>{% endif %}</td>
@@ -75,6 +76,7 @@ to the page where it is acted on; nothing is decided here.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=coaching_rows_pager param="coaching_rows_page" %}
     </div>
     {% if coaching_totals.returned or coaching_totals.sf_pending %}
     <div class="rpl-card__footnote">{{ coaching_totals.returned }} returned activit{{ coaching_totals.returned|pluralize:"y,ies" }} and {{ coaching_totals.sf_pending }} completed activit{{ coaching_totals.sf_pending|pluralize:"y,ies" }} without an Activity SF ID. <a href="/dashboard/pl-drilldown?drill=sf_backlog&amp;fy={{ fy }}" hx-get="/dashboard/pl-drilldown?drill=sf_backlog&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">See the SF IDs pending</a> or open the <a href="{{ coaching_links.evidence }}">Evidence Center</a>.</div>

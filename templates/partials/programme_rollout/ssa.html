@@ -125,6 +125,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
     </div>
   </header>
   <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="SSA heatmap; scroll sideways for more interventions">
+    {% paginate rollout.matrix.rows "rollout_matrix_rows_page" as rollout_matrix_rows_pager %}
     <table class="pl-ssa-matrix rpl-table" data-mobile-table="scroll">
       <caption class="sr-only">Average SSA score out of 10 for each intervention, by cluster. Each score is coloured by its band — red below 5, orange to 6, light green to 8, green to 10, purple at 10 — and the score is stated in every cell, so colour never carries the value alone.</caption>
       <thead>
@@ -135,7 +136,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
         </tr>
       </thead>
       <tbody>
-        {% for r in rollout.matrix.rows|slice:":80" %}
+        {% for r in rollout_matrix_rows_pager.rows %}
         <tr>
           <th scope="row" data-record-title><span>{{ r.name }}</span></th>
           {% for cell in r.cells %}
@@ -152,5 +153,6 @@ apps.analytics.programme_rollout_service.ssa_rollout.
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=rollout_matrix_rows_pager param="rollout_matrix_rows_page" %}
   </div>
 </section>

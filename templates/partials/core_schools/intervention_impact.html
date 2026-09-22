@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 The Accountant opens Core Schools but not Visit Effectiveness, so the link is
 offered only to a reader who can open it.
@@ -12,6 +12,7 @@ Visit Effectiveness analysis
 </div>
 <div class="overflow-x-auto select-none">
 {% if intervention_impact %}
+{% paginate intervention_impact "intervention_impact_page" as intervention_impact_pager %}
 <table class="edify-record-table w-full border-collapse text-[12px] text-slate-700">
 <thead>
 <tr class="border-b border-slate-100 bg-slate-50/50 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider text-left">
@@ -24,7 +25,7 @@ Visit Effectiveness analysis
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100/45">
-{% for row in intervention_impact %}
+{% for row in intervention_impact_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <!-- Intervention Label -->
 <td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.label }}</td>
@@ -77,6 +78,7 @@ edify-primary-soft edify-primary-text edify-primary-border-alpha-60
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=intervention_impact_pager param="intervention_impact_page" %}
 {% else %}
 <div class="p-8 text-center select-none ">
 <span class="text-[32px] block mb-2">⭐</span>
