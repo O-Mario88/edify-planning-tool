@@ -16,9 +16,21 @@ Planning, Cluster, Core Schools and Partner pages (greyed, with the reason as
 the tooltip) and the services that create the work (which refuse with the same
 sentence). Both call here. Nothing else counts visits for this purpose.
 
+Owner, 2026-09-21:
+
+  "Core trained, core graduate and Champion Schools can receive all the
+  activities (visit, trainings) client schools should receive but cannot be
+  assigned to partner."
+
+So those three sit on the client rule beside ``client`` itself — the same two
+visits a year, the same purposes — and the partner side of the gate is closed
+for them whatever the counts say. They are listed in
+``PROGRAMME_SCHOOL_TYPES`` and the Programme Schools page is the list of them.
+
 What counts:
 
-* Client-rule schools (``client`` and ``core_trained``): the follow-up visit
+* Client-rule schools (``client`` and the three Programme types): the
+  follow-up visit
   — a support visit to the school in the operational fiscal year, whoever
   delivers it (owner, 2026-09-15: "follow up can only be scheduled once").
   Donor visits, story gathering, invitations and social visits are not it;
@@ -65,8 +77,17 @@ CORE_STAFF_VISIT_CAP = 2
 CORE_PARTNER_VISIT_CAP = 2
 
 # School types under the once-a-year client rule. Core schools carry the
-# package; champions and core graduates are outside both rules.
-CLIENT_RULE_SCHOOL_TYPES = ("client", "core_trained")
+# package.
+#
+# Owner, 2026-09-21: Core Trained, Core Graduate and Champion schools "can
+# receive all the activities (visit, trainings) client schools should receive
+# but cannot be assigned to partner". So all three sit on the client rule —
+# the same two visits a year, the same purposes, the same trainings — and
+# PROGRAMME_SCHOOL_TYPES below withholds partner delivery from them. Champion
+# and Core Graduate were on no rule at all before, which read as an unlimited
+# entitlement rather than a deliberate one.
+PROGRAMME_SCHOOL_TYPES = ("core_trained", "core_graduate", "champion")
+CLIENT_RULE_SCHOOL_TYPES = ("client", *PROGRAMME_SCHOOL_TYPES)
 CORE_RULE_SCHOOL_TYPES = ("core",)
 
 DEAD_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
@@ -317,7 +338,35 @@ def visit_gate(school, fy: str | None = None, **kwargs) -> VisitGate:
     return visit_gates([school], fy, **kwargs)[school.id]
 
 
+def programme_school_partner_refusal(school_name: str, school_type: str) -> str:
+    """The refusal, in one voice: the greyed control, the drawer and the
+    partner creation door all say this same sentence."""
+    from apps.core.enums import SchoolType
+
+    label = dict(SchoolType.choices).get(school_type, "Programme")
+    return (
+        f"{school_name} is a {label} school. Edify staff deliver its visits "
+        "and trainings themselves; it is never assigned to a partner."
+    )
+
+
 def _decide(gate: VisitGate) -> None:
+    _decide_by_rule(gate)
+    if gate.school_type in PROGRAMME_SCHOOL_TYPES:
+        # Last, so a rule's own sentence about a used entitlement cannot
+        # overwrite it: a Programme school is never a partner's work, whatever
+        # the year's counts say.
+        refusal = programme_school_partner_refusal(gate.school_name, gate.school_type)
+        gate.partner_can_schedule = False
+        gate.partner_reason = refusal
+        gate.can_assign_partner = False
+        gate.assign_reason = refusal
+        gate.can_assign_visit = False
+        gate.assign_visit_reason = refusal
+        gate.partner_cap = 0
+
+
+def _decide_by_rule(gate: VisitGate) -> None:
     if gate.rule == "client":
         gate.staff_cap = CLIENT_VISIT_CAP
         gate.partner_cap = CLIENT_VISIT_CAP

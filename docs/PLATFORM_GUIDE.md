@@ -132,8 +132,14 @@ ownership columns historically hold either).
   `apps/core/fy.py` and `apps/targets/fy_calendar.py` — the latter adds
   **working-day capacity**: weekdays minus public holidays minus the
   person's approved leave.
-- **Schools**: `school_type` defines two families — Core-family
-  (`core`, `champion`) and Client-family (`client`, `core_trained`).
+- **Schools**: `school_type` defines the Core package holder (`core`) and
+  everything on the **client entitlement** — `client` plus the three
+  *Programme* types, `core_trained`, `core_graduate` and `champion`. The
+  Programme types take every activity a client school takes (visits and
+  trainings, the same two visits a year) and are **never assigned to a
+  partner**: the visit gate closes the partner side for them and
+  `partners.services.create_assignment` refuses one at the single creation
+  door. **`/programme-schools`** is the combined list of the three.
   Operational status (active/reopened/closed) is a separate axis. Schools
   sit in the geography tree and may belong to one cluster.
 - **Activity catalogue**: every plannable activity derives from one of 40
@@ -144,7 +150,16 @@ ownership columns historically hold either).
   Activities snapshot their catalogue version at creation.
 - **Projects**: Special Projects reuse the whole planning/activity/budget
   engine scoped by `ProjectStaffAssignment`; project eligibility for a
-  school is an SSA judgement (weak in a target intervention).
+  school is an SSA judgement (weak in a target intervention). The
+  coordinator controls every project activity — scheduling one and handing
+  one to a partner both live on their Project Planning surface.
+  **`/projects/monitoring`** is the read-only lens beside it: the CCEO,
+  Programme Lead and Impact Assessment watch what the coordinator and their
+  partners scheduled and delivered, and what it moved on the target SSA
+  intervention. IA, CD and Admin read a project whole; a CCEO or Programme
+  Lead reads only the enrolments they added themselves
+  (`ProjectSchoolAssignment.assigned_by`), with the SSA cohort narrowed the
+  same way so a contribution is never the project's total relabelled.
 - **Partners**: external organisations that deliver assigned work through
   their own portal flow; partner-delivered work is paid through
   `PartnerPaymentService` and **never earns staff achievement credit**.
@@ -207,6 +222,10 @@ Key rules along the spine:
 - **Evidence** requirements come from the catalogue's evidence profile;
   completion is blocked until they are met (trainings additionally require
   non-zero attendance).
+- **A follow-up visit names the training it followed up, at completion.**
+  Optional at planning — the officer may not yet know which session the visit
+  will answer — and compulsory at completion, bounded by the school's own
+  completed sessions, so no follow-up reaches a report unattributed.
 - **Returns are real.** A PL or IA return moves the activity back with a
   required reason, reverses strategic milestone credit, and (in the
   personal ledger) flips prior credit to `reversed` on the next rebuild.
@@ -363,9 +382,18 @@ a published master is never rewritten by a reseed).
 Core schools carry a defined annual support package (visit and training
 slots) created through the same costed activity funnel; slot completion is
 driven by verified activities. The RVP locks an annual baseline; changes
-after the lock are amendments. Champion schools are Core-family;
-`core_trained` graduates are Client-family. Completion gates (e.g. the §26
-rule) prevent a Core year closing with undelivered package slots.
+after the lock are amendments. Champion, Core Graduate and Core Trained
+schools sit on the client entitlement (§4) and are listed together at
+`/programme-schools`. Completion gates (e.g. the §26 rule) prevent a Core
+year closing with undelivered package slots.
+
+A Core School invited to a **cluster training or cluster meeting** fills one
+of its four package training slots from the moment the session is scheduled
+(`apps/core_schools/cluster_credit.py`), so it appears on the Core School
+Trainings Planned table beside a training booked from the Core Schools page.
+The register then narrows it: a school invited that did not attend has its
+slot released, so the four trainings a package counts are the four the school
+actually took.
 
 ---
 
@@ -417,9 +445,21 @@ export authorities are all withheld from the Admin super-role.
   Saturdays never do; public holidays, blackout dates, org events and the
   person's approved leave block; pending leave warns; a 5-activity week
   warns. Create *and* reschedule both pass through it.
+- **Cluster bulk scheduling**: a day of visits across a cluster's member
+  schools is planned from the cluster and nowhere else
+  (`apps/planning/cluster_bulk_scheduling.py`). At least **five** schools for
+  the day, and one of four purposes — Training Follow Up, SSA Support, Donor
+  Visit, Content/Story Collection. In-school Training is refused by name: it
+  pairs a governed course with its companion visit and is chosen one school
+  at a time. Every school still goes through `schedule_school_visit`, so the
+  calendar gate, the entitlement, the costing and the daily visit batch
+  behave exactly as they do for one visit, and the whole selection is one
+  transaction.
 - **Route intelligence**: `DailyVisitRouteBatch` plans multi-school visit
   days using the location hierarchy (coordinates → structured → text),
-  scores routes in bands, and justifies focus schools from SSA weakness.
+  scores routes in bands, and justifies focus schools from SSA weakness. Its
+  live preview sits in the cluster bulk-schedule drawer, which is the surface
+  that plans a multi-school day.
 - **Urgent attention / school action queue**: schools in trouble surface
   as `TeamAction` items in an unassigned queue with per-school+FY
   exclusion rules, feeding the PL's assignment flow.

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 702,
+  "titled_cards": 701,
   "templates": 267,
-  "distinct_titles": 669,
+  "distinct_titles": 668,
   "with_card_key": 13,
-  "untitled_surfaces": 775,
-  "untitled_chrome": 174,
+  "untitled_surfaces": 780,
+  "untitled_chrome": 176,
   "untitled_nested": 252,
-  "untitled_headless": 349,
+  "untitled_headless": 352,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -928,7 +928,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 299,
+   "line": 315,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -937,7 +937,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 334,
+   "line": 350,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -946,7 +946,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 357,
+   "line": 373,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2575,16 +2575,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 287,
-   "title": "Schedule Recommended Activities",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/planning/index.html",
-   "line": 330,
+   "line": 285,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,

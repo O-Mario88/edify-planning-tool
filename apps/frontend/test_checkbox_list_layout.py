@@ -56,10 +56,13 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         # refusal), the project action two, and Schedule is the sixth: the
         # Impact Assessment role plans straight from the directory (owner,
         # 2026-09-17, "he can plan direct from the school directory. ONLY and
-        # ONLY IA can plan from the school directory").
+        # ONLY IA can plan from the school directory"). Reassign Owner is the
+        # seventh, for Admin and Impact Assessment (owner, 2026-09-21): moving
+        # a portfolio means moving several schools, and the directory is the
+        # list a registry administrator is looking at.
         full = directory.count("school-record-action__label--full")
         self.assertEqual(full, directory.count("school-record-action__label--compact"))
-        self.assertEqual(full, 6)
+        self.assertEqual(full, 7)
         self.assertEqual(directory.count("_cluster_action_icon.html"), 3)
         self.assertEqual(directory.count("_project_action_icon.html"), 2)
         self.assertIn('<circle cx="12" cy="5"', cluster_icon)

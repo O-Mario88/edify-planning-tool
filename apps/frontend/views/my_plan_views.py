@@ -596,6 +596,19 @@ def complete_drawer_view(request, activity_id):
             else None
         ),
     }
+    # A follow-up visit is completed against the exact training it answered
+    # (owner, 2026-09-21). The list is the school's completed sessions by
+    # either route — in-school, Core, or a cluster session it attended — the
+    # same options the scheduling drawer offers and the same ones the service
+    # re-checks on submit.
+    from apps.activities.services import is_training_follow_up_visit
+
+    context["is_training_follow_up"] = is_training_follow_up_visit(a)
+    if context["is_training_follow_up"]:
+        from apps.activities.training_history import follow_up_options
+
+        context["follow_up_options"] = follow_up_options(a.school, fy=a.fy)
+        context["follow_up_selected_id"] = a.follow_up_of_activity_id or ""
     # The platform already knows what this activity type needs, so the form
     # says so and pre-selects the outstanding one rather than offering twelve
     # kinds and letting someone guess wrong.
@@ -1152,6 +1165,11 @@ def complete_activity_action(request, activity_id):
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
             "attendedSchoolIds": attended_school_ids,
+            # Which training this visit followed up. Required by complete()
+            # for a follow-up visit and ignored for everything else.
+            "followUpOfActivityId": request.POST.get(
+                "follow_up_of_activity_id", ""
+            ).strip(),
             # What the officer saw -- stored by complete(); absent keys leave
             # earlier entries alone, so only send what the form carried.
             **{

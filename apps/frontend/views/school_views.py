@@ -2598,3 +2598,59 @@ def closed_schools_view(request):
             },
         },
     )
+
+
+@require_page_permission("programme_schools")
+def programme_schools_view(request):
+    """Core Trained, Core Graduate and Champion schools, in one list.
+
+    Owner, 2026-09-21: the three belong together and take everything a client
+    school takes, minus partner delivery. Deliberately its own page rather
+    than a School Directory filter — the directory answers "which school", and
+    this answers "what does this school's year still owe it", which needs the
+    entitlement and the partner rule on the row.
+    """
+    from apps.geography.models import District
+    from apps.schools import programme_schools as programme
+
+    query = (request.GET.get("q") or "").strip()
+    selected_type = (request.GET.get("school_type") or "").strip()
+    selected_district = (request.GET.get("district") or "").strip()
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
+
+    result = programme.programme_schools(
+        request.user,
+        query=query,
+        school_type=selected_type,
+        district=selected_district,
+        fy=fy,
+    )
+    type_counts = [
+        (value, label, result.by_type.get(value, 0))
+        for value, label in programme.type_options()
+    ]
+    return render(
+        request,
+        "pages/schools/programme_schools.html",
+        {
+            "result": result,
+            "rows": result.rows,
+            "type_counts": type_counts,
+            "selected_type": selected_type,
+            "selected_district": selected_district,
+            "fy": fy,
+            "fy_options": fy_options(),
+            "districts": District.objects.order_by("name").only("id", "name"),
+            "q": query,
+            # Planners plan; everyone else reads. The row control is greyed
+            # with its own reason either way (apps.schools.programme_schools).
+            "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+            # The one search on the page is the top bar's.
+            "topbar_search": {
+                "placeholder": "Search programme schools…",
+                "value": query,
+                "action": "/programme-schools",
+            },
+        },
+    )

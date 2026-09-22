@@ -1,0 +1,201 @@
+{% extends "layouts/shell.html" %}
+{% load school_identity %}
+{% load kpi_metrics %}
+{% load frontend_filters table_pagination %}
+
+{% block title %}Programme Schools · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Core Trained, Core Graduate and Champion schools, in one list (owner,
+2026-09-21). Deliberately its own page rather than a School Directory filter:
+the directory answers "which school", and this answers "what does this
+school's year still owe it" — which needs the visit entitlement and the
+partner rule on the row itself.
+
+Both rules are read, never restated. The entitlement comes from
+apps.planning.visit_gate (all three sit on the client rule, so they take the
+same visits and trainings a client school takes) and the partner refusal from
+the same gate, which every drawer and the one partner creation door already
+enforce. Nothing here can hold a different opinion of either.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">School lifecycle</p>
+      <h1 class="edify-page-title edify-page-header__title">Programme Schools</h1>
+      <p class="edify-page-header__description">Core Trained, Core Graduate and Champion schools. They take every activity a client school takes — visits and trainings — and are delivered by Edify staff; they are never assigned to a partner.</p>
+    </div>
+    {% if q %}
+    <div class="edify-page-header__controls">
+      <a href="/programme-schools" class="btn h-8 inline-flex items-center gap-1.5">
+        Clear search<span class="edify-text-muted">&ldquo;{{ q|truncatechars:24 }}&rdquo;</span>
+      </a>
+    </div>
+    {% endif %}
+  </header>
+
+  {% kpi_strip %}
+    {% kpi_metric %}
+      {% kpi_label %}Programme schools{% endkpi_label %}
+      {{ result.total|intcomma }}
+      {% kpi_helper %}Core Trained, Core Graduate and Champion{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}With a visit planned{% endkpi_label %}
+      {{ result.visits_planned|intcomma }}
+      {% kpi_helper %}FY{{ fy }}, from the Activity ledger{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}No visit planned{% endkpi_label %}
+      {{ result.visit_gap|intcomma }}
+      {% kpi_helper %}The year's outstanding work{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Attached to a training{% endkpi_label %}
+      {{ result.trainings_planned|intcomma }}
+      {% kpi_helper %}Named on a live cluster session{% endkpi_helper %}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
+
+  {% comment %}Filters on the canvas, not in a drawer — the page contract.{% endcomment %}
+  <form method="get" action="/programme-schools" class="edify-filter-bar flex flex-wrap items-end gap-3">
+    <label class="block">
+      <span class="edify-filter-label">School type</span>
+      <select name="school_type" aria-label="School type" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All three types</option>
+        {% for value, label, count in type_counts %}
+        <option value="{{ value }}"{% if value == selected_type %} selected{% endif %}>{{ label }} ({{ count }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-filter-label">District</span>
+      <select name="district" aria-label="District" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All districts</option>
+        {% for district in districts %}
+        <option value="{{ district.id }}"{% if district.id == selected_district %} selected{% endif %}>{{ district.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for option in fy_options %}
+        <option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY{{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% comment %}No hidden `q` here. The top bar owns the one search on every
+    page (§17), and a body input named `q` is a second one however it is
+    styled — so applying a filter starts from the whole list, as it does on
+    every other filtered page.{% endcomment %}
+    <button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button>
+  </form>
+
+  {% if rows %}
+  {% paginate rows "programme_page" as pager %}
+  <section class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="edify-data-table w-full text-left">
+        <caption class="sr-only">Core Trained, Core Graduate and Champion schools with their visit entitlement, planned visit and training attachment for FY{{ fy }}</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Type</th>
+            <th scope="col" class="px-4 py-2 font-semibold">District</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Owner</th>
+            <th scope="col" class="px-4 py-2 font-semibold">SSA</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Visits FY{{ fy }}</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Visit plan</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Training</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right"><span class="sr-only">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pager.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5" data-record-title>
+              <a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline edify-primary-text-hover">{% school_identity row.name row.id %}</a>
+              <span class="block edify-text-caption edify-text-muted">{{ row.school_id }}</span>
+            </td>
+            <td class="px-4 py-2.5"><span class="pill">{{ row.school_type_label }}</span></td>
+            <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
+            <td class="px-4 py-2.5 text-sm">{{ row.owner|default:"Unassigned" }}</td>
+            <td class="px-4 py-2.5 text-sm tabular-nums">
+              {% if row.ssa_average is not None %}
+              <span class="edify-status-text" data-edify-tone="{{ row.ssa_tone }}">{{ row.ssa_average|floatformat:"-1" }}/10</span>
+              {% else %}<span class="edify-text-muted">Not assessed</span>{% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-sm tabular-nums">
+              {{ row.visits_used }}/{{ row.visits_allowed }}
+              <span class="block edify-text-caption edify-text-muted">{% if row.visits_left %}{{ row.visits_left }} left{% else %}entitlement used{% endif %}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm">
+              <span class="edify-status-text" data-edify-tone="{{ row.visit_status_tone }}">{{ row.visit_status_label }}</span>
+              {% if row.next_visit_date %}<span class="block edify-text-caption edify-text-muted">{{ row.next_visit_date|date:"j M Y" }}</span>{% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-sm">
+              <span class="edify-status-text" data-edify-tone="{% if row.training_planned %}neutral{% else %}danger{% endif %}">{{ row.training_label }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-right whitespace-nowrap">
+              {% if can_schedule %}
+              {% if row.can_schedule %}
+              <button
+                type="button"
+                class="school-record-action school-record-action--schedule ml-auto"
+                hx-get="/planning/schedule-modal?school_id={{ row.school_id }}"
+                hx-target="#drawer-container"
+                hx-swap="innerHTML"
+                aria-label="Schedule support for {{ row.name }}"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
+                <span>Schedule</span>
+              </button>
+              {% else %}
+              <button type="button" class="school-record-action school-record-action--schedule ml-auto" disabled title="{{ row.schedule_reason }}" aria-label="Schedule support for {{ row.name }} unavailable: {{ row.schedule_reason }}">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
+                <span>Schedule</span>
+              </button>
+              {% endif %}
+              {% else %}
+              <a href="/schools/{{ row.school_id }}" class="text-sm font-semibold hover:underline edify-primary-text">View</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% comment %}Phone: the same rows read down instead of across.{% endcomment %}
+    <ul class="hidden divide-y edify-border">
+      {% for row in pager.rows %}
+      <li class="p-4 space-y-1.5">
+        <div class="flex items-start justify-between gap-2">
+          <p class="font-semibold text-sm">{{ row.name }}</p>
+          <span class="pill whitespace-nowrap">{{ row.school_type_label }}</span>
+        </div>
+        <p class="edify-text-caption edify-text-muted">{{ row.school_id }}{% if row.district %} · {{ row.district }}{% endif %}</p>
+        <p class="edify-text-caption edify-text-muted">Visits {{ row.visits_used }}/{{ row.visits_allowed }} · {{ row.visit_status_label }} · {{ row.training_label }}</p>
+        <a href="/schools/{{ row.school_id }}" class="text-sm font-semibold hover:underline edify-primary-text min-h-11 inline-flex items-center">View school</a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% include "components/table_pager.html" with pager=pager param="programme_page" pagination_label="Programme school pages" %}
+  </section>
+
+  <p class="edify-text-caption edify-text-muted px-1">
+    Partner delivery is closed to every school on this page. The Assign control is greyed on the school's own profile with the same reason, and the partner creation door refuses it, so a bulk path cannot hand one over.
+  </p>
+  {% else %}
+  {% if q or selected_type or selected_district %}
+  {% include "components/empty_state.html" with title="No programme school matches those filters" message="Clear the filters to see every Core Trained, Core Graduate and Champion school in your portfolio." %}
+  {% else %}
+  {% include "components/empty_state.html" with title="No programme schools yet" message="A school arrives here when it is verified as a core candidate, graduates the core programme, or is advanced to Champion. Until then it is on the School Directory with everyone else." %}
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

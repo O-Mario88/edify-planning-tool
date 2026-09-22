@@ -377,6 +377,14 @@ urlpatterns = [
     # This MUST stay above the <str:school_id> detail route below. Move it
     # after and "closed" is read as a school id, and the archive 404s.
     path("schools/closed", school_views.closed_schools_view, name="closed_schools"),
+    # Core Trained, Core Graduate and Champion schools in one list (owner,
+    # 2026-09-21). Its own path rather than /schools/..., so it can never be
+    # read as a school id.
+    path(
+        "programme-schools",
+        school_views.programme_schools_view,
+        name="programme_schools",
+    ),
     path(
         "schools/<str:school_id>", school_views.school_detail_view, name="school_detail"
     ),
@@ -517,6 +525,13 @@ urlpatterns = [
         "clusters/<str:cluster_id>/bulk-assign-drawer",
         cluster_views.cluster_bulk_assign_drawer_view,
         name="cluster_bulk_assign_drawer",
+    ),
+    # A day of visits across five or more of this cluster's schools (owner,
+    # 2026-09-21). The only bulk scheduling door there is.
+    path(
+        "clusters/<str:cluster_id>/bulk-schedule-drawer",
+        cluster_views.cluster_bulk_schedule_drawer_view,
+        name="cluster_bulk_schedule_drawer",
     ),
     # Planning oversight — supervision lenses over the canonical plan. These
     # read the same Activities and PartnerAssignments the Planning and My Plan
@@ -2243,6 +2258,14 @@ urlpatterns = [
         "projects/my-plan",
         extended_views.special_projects_my_plan_view,
         name="special_projects_my_plan",
+    ),
+    # Read-only monitoring for CCEO, Programme Lead and Impact Assessment
+    # (owner, 2026-09-21). Above the <str:project_id> detail route, which
+    # would otherwise read "monitoring" as a project id.
+    path(
+        "projects/monitoring",
+        extended_views.project_monitoring_view,
+        name="project_monitoring",
     ),
     path(
         "projects/<str:project_id>/staff/assign",

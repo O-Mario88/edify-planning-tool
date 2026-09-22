@@ -241,15 +241,52 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertTrue(gate.staff_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_core_trained_schools_follow_the_client_rule_and_champions_neither(self):
-        trained = self._school("VG-9", school_type="core_trained")
-        champion = self._school("VG-10", school_type="champion")
-        self._spend_client_visits(trained, kind="school_visit")
-        self._spend_client_visits(champion, kind="school_visit")
-        gates = visit_gates([trained, champion])
-        self.assertFalse(gates[trained.id].staff_can_schedule)
-        self.assertEqual(gates[champion.id].rule, "none")
-        self.assertTrue(gates[champion.id].staff_can_schedule)
+    def test_every_programme_school_follows_the_client_rule(self):
+        """Owner, 2026-09-21: Core Trained, Core Graduate and Champion schools
+        "can receive all the activities (visit, trainings) client schools
+        should receive". Champion and Core Graduate carried no rule at all
+        before, which read as an unlimited entitlement rather than a chosen
+        one."""
+        schools = [
+            self._school("VG-9", school_type="core_trained"),
+            self._school("VG-10", school_type="champion"),
+            self._school("VG-11", school_type="core_graduate"),
+        ]
+        for school in schools:
+            self._spend_client_visits(school, kind="school_visit")
+        gates = visit_gates(schools)
+        for school in schools:
+            gate = gates[school.id]
+            self.assertEqual(gate.rule, "client", school.school_type)
+            self.assertFalse(gate.staff_can_schedule, school.school_type)
+
+    def test_a_programme_school_is_never_assigned_to_a_partner(self):
+        """The other half of the same instruction: they "cannot be assigned to
+        partner", whatever the year's counts say."""
+        for index, school_type in enumerate(
+            ("core_trained", "champion", "core_graduate")
+        ):
+            school = self._school(f"VG-P{index}", school_type=school_type)
+            gate = visit_gate(school)
+            self.assertFalse(gate.can_assign_partner, school_type)
+            self.assertFalse(gate.partner_can_schedule, school_type)
+            self.assertIn("never assigned to a partner", gate.assign_reason)
+
+    def test_the_partner_creation_door_refuses_a_programme_school(self):
+        """The drawers grey the control; the one creation door refuses it, so
+        a bulk path or an API client cannot walk around the rule."""
+        from apps.core.exceptions import BadRequest
+        from apps.partners import services as partner_services
+
+        school = self._school("VG-P9", school_type="champion")
+        with self.assertRaises(BadRequest) as ctx:
+            partner_services.create_assignment(
+                school=school,
+                partner=self.partner,
+                assigning_staff_id=self.cceo.id,
+                assignment_mode="specific_activity",
+            )
+        self.assertIn("never assigned to a partner", str(ctx.exception.detail))
 
 
 class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
@@ -471,9 +508,15 @@ class TheServicesRefuseWhatTheButtonsGreyOutTest(_GateFixture, TestCase):
         from apps.activities.services import _partner_schedule_from_assignment
 
         school = self._school("VG-S10")
-        self._spend_client_visits(school)
+        # The allowance is counted in the fiscal year the PARTNER's date falls
+        # in, so the visits that spend it have to be booked in that same year.
+        # Pinning them to today's FY made this test pass for most of the year
+        # and fail every late September, when today + 10 days crosses into the
+        # next FY and the gate correctly finds an untouched allowance.
+        when_on = date.today() + timedelta(days=10)
+        self._spend_client_visits(school, fy=get_operational_fy(when_on))
         assignment = self._assign(school, expected_activity_type="school_visit")
-        when = (date.today() + timedelta(days=10)).isoformat()
+        when = when_on.isoformat()
         with self.assertRaises(BadRequest) as ctx:
             _partner_schedule_from_assignment(
                 assignment.id,
