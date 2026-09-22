@@ -8440,7 +8440,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12918,
+      "bytes": 13545,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8720,7 +8720,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5702,
+      "bytes": 6280,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8778,7 +8778,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4544,
+      "bytes": 5168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8855,10 +8855,38 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 4355,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/edit-drawer",
+        "/partners/create"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Capability Picker",
+      "purpose": "Reusable  capability picker interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_capability_picker.html",
+      "variants": [
+        "info"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5749,
+      "bytes": 5142,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -8887,7 +8915,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5227,
+      "bytes": 5183,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer"
@@ -8901,6 +8929,7 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
+        "empty",
         "error",
         "disabled"
       ],
@@ -32331,7 +32360,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The country plan, as CSV, honouring the current filters.",
+      "purpose": "The country plan, as CSV or Excel, honouring the current filters.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -64920,7 +64949,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_detail_view",
       "card_count": 0,
@@ -65003,7 +65032,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -65032,7 +65061,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_edit_drawer_view",
       "card_count": 0,
@@ -65111,7 +65140,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -81145,7 +81174,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The Program Lead's current view, as CSV. Same scope, same filters.",
+      "purpose": "The Program Lead's current view, as CSV or Excel. Same scope, same filters.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -104629,7 +104658,7 @@
     "activity_states": 24,
     "all_routes": 1294,
     "api_routes": 360,
-    "component_templates": 474,
+    "component_templates": 475,
     "full_pages": 260,
     "mobile_contract_pass": 532,
     "nonvisual_actions": 265,

@@ -51,7 +51,20 @@ class Partner(SoftDeleteModel):
     expertise_areas = ArrayField(
         base_field=models.CharField(max_length=128), default=list, blank=True
     )
+    # One intervention, kept because the register, the oversight grouping and
+    # the profile have always read it. It holds the FIRST of the ticked
+    # interventions below, so a partner saved either way reads the same.
     ssa_intervention = models.CharField(max_length=64, null=True, blank=True)
+    # What the organisation actually does (owner, 2026-09-22: "some partners are
+    # doing more than one activity"). Interventions and the catalogue activities
+    # under them, both ticked from the live catalogue —
+    # `apps.partners.capabilities` builds the list and validates what comes back.
+    ssa_interventions = ArrayField(
+        base_field=models.CharField(max_length=64), default=list, blank=True
+    )
+    activity_codes = ArrayField(
+        base_field=models.CharField(max_length=96), default=list, blank=True
+    )
     active_status = models.BooleanField(default=True)
     # Backend login link — a partner field officer authenticates as this user.
     user = models.OneToOneField(
@@ -86,6 +99,18 @@ class Partner(SoftDeleteModel):
             return SsaIntervention(self.ssa_intervention).label
         except ValueError:
             return self.ssa_intervention.replace("_", " ").title()
+
+    @property
+    def capabilities(self) -> dict:
+        """Every intervention and activity this organisation is recorded for.
+
+        The label above answers "which one", which was the only question the
+        form could ask. This answers "which ones", and falls back to the single
+        column for an organisation added before the tick-list existed.
+        """
+        from apps.partners.capabilities import describe
+
+        return describe(self)
 
 
 class PartnerReturnReason(models.TextChoices):

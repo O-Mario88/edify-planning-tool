@@ -2480,7 +2480,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 62,
+   "line": 65,
    "title": "Schools supported",
    "heading_level": 3,
    "has_card_key": false,
@@ -2489,7 +2489,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 106,
+   "line": 109,
    "title": "Activity history",
    "heading_level": 3,
    "has_card_key": false,
@@ -2498,7 +2498,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 156,
+   "line": 159,
    "title": "Activities",
    "heading_level": 3,
    "has_card_key": false,
@@ -2507,7 +2507,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 178,
+   "line": 181,
    "title": "Staff and volunteers",
    "heading_level": 3,
    "has_card_key": false,
@@ -2516,7 +2516,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 110,
+   "line": 113,
    "title": "Scheduling Status Breakdown",
    "heading_level": 2,
    "has_card_key": false,
@@ -2525,7 +2525,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 136,
+   "line": 139,
    "title": "Pending Partner Reminders",
    "heading_level": 2,
    "has_card_key": false,
@@ -2534,7 +2534,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 146,
+   "line": 149,
    "title": "Upcoming Partner Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2543,7 +2543,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 156,
+   "line": 159,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": false,

@@ -520,15 +520,19 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_the_country_director_edits_region_and_name(self):
+        # The intervention is ticked, not chosen from a dropdown, and more than
+        # one may be ticked (owner, 2026-09-22). `ssa_intervention` keeps
+        # holding the first, so every existing reader of it is unaffected.
         self.client.force_login(self.cd)
         response = self.client.get(f"/partners/{self.partner.id}/edit-drawer")
         self.assertContains(response, 'name="region_name"')
+        self.assertContains(response, 'name="ssa_interventions"')
         response = self.client.post(
             f"/partners/{self.partner.id}/edit-drawer",
             {
                 "name": "Supporting Partner Ltd",
                 "region_name": "Northern",
-                "ssa_intervention": "christlike_behaviour",
+                "ssa_interventions": ["christlike_behaviour", "financial_health"],
                 "contact_person": "Grace N",
                 "phone": "",
                 "email": "",
@@ -541,3 +545,7 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.assertEqual(self.partner.name, "Supporting Partner Ltd")
         self.assertEqual(self.partner.region_name, "Northern")
         self.assertEqual(self.partner.ssa_intervention, "christlike_behaviour")
+        self.assertEqual(
+            self.partner.ssa_interventions,
+            ["christlike_behaviour", "financial_health"],
+        )

@@ -1537,12 +1537,34 @@ def _system_program_leads_for_filter(sys_pls: list[dict]) -> list[dict]:
     return [{"id": pl["id"], "name": pl["name"]} for pl in sys_pls]
 
 
-def _export_response(items, filename: str):
-    """CSV of exactly the rows the page is showing.
+def _wants_excel(request) -> bool:
+    """Whether the reader asked for the workbook rather than the CSV.
 
-    Streamed from the same item list, so the export and the page can never
-    disagree about scope, period or totals.
+    Owner, 2026-09-22: "IA and PL and CD and Regional Programme Leads, and CCEO
+    should be able to export all of their plans into Excel." CSV stays the
+    default so every existing link, script and bookmark keeps working.
     """
+    return (request.GET.get("format") or "").strip().lower() in {"xlsx", "excel"}
+
+
+def _export_response(items, filename: str, *, excel: bool = False):
+    """Exactly the rows the page is showing, as CSV or as a workbook.
+
+    Both are built from the same item list and the same `export_rows`, so the
+    export and the page can never disagree about scope, period or totals, and
+    the two formats can never disagree with each other.
+    """
+    rows = list(oversight.export_rows(items))
+    headers, body = (rows[0], rows[1:]) if rows else ([], [])
+
+    if excel:
+        from apps.core.excel import workbook_response
+
+        return workbook_response(
+            filename.replace(".csv", ".xlsx"),
+            [{"title": "Plan", "headers": headers, "rows": body}],
+        )
+
     import csv
 
     from django.http import StreamingHttpResponse
@@ -1553,7 +1575,7 @@ def _export_response(items, filename: str):
 
     writer = csv.writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in oversight.export_rows(items)),
+        (writer.writerow(row) for row in rows),
         content_type="text/csv",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -1563,7 +1585,11 @@ def _export_response(items, filename: str):
 @require_page_permission("team_planning_oversight")
 @require_export_permission
 def team_planning_export_view(request):
-    """The Program Lead's current view, as CSV. Same scope, same filters."""
+    """The Program Lead's current view, as CSV or Excel. Same scope, same filters.
+
+    Read by the Programme Lead, Impact Assessment, the Country Director and the
+    Regional Programme Lead — each one exports the team it supervises.
+    """
     period = _period_filters(request)
     items = oversight.build_items(
         request.user,
@@ -1584,13 +1610,17 @@ def team_planning_export_view(request):
         _, _, visible = _team_owner_tabs(
             scope, items, (request.GET.get("owner") or WHOLE_TEAM_TAB).strip()
         )
-    return _export_response(visible, f"team-planning-oversight-{period['fy']}.csv")
+    return _export_response(
+        visible,
+        f"team-planning-oversight-{period['fy']}.csv",
+        excel=_wants_excel(request),
+    )
 
 
 @require_page_permission("country_planning_oversight")
 @require_export_permission
 def country_planning_export_view(request):
-    """The country plan, as CSV, honouring the current filters."""
+    """The country plan, as CSV or Excel, honouring the current filters."""
     period = _period_filters(request)
     items = oversight.build_items(
         request.user,
@@ -1598,7 +1628,11 @@ def country_planning_export_view(request):
         filters=oversight.read_filters(request),
         **_service_period(period),
     )
-    return _export_response(items, f"country-planning-oversight-{period['fy']}.csv")
+    return _export_response(
+        items,
+        f"country-planning-oversight-{period['fy']}.csv",
+        excel=_wants_excel(request),
+    )
 
 
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")
