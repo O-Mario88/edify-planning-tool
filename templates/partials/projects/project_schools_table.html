@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
   The schools belonging to one project, inside that project's card (owner,
   2026-09-16: "the projects created should all be in their own cards so that
@@ -39,6 +40,7 @@
 
 {% if rows %}
 <div class="overflow-x-auto">
+  {% paginate rows "project_schools_table_rows_page" as project_schools_table_rows_pager %}
   <table class="edify-record-table w-full text-left border-collapse text-[12px]">
     <caption class="sr-only">Schools assigned to {{ project_name }}, with where each one's planning has reached</caption>
     <thead>
@@ -52,7 +54,7 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
-      {% for row in rows|slice:":12" %}
+      {% for row in project_schools_table_rows_pager.rows %}
       <tr class="hover:bg-slate-50/50 transition-colors">
         <td class="px-4 py-3 align-top" data-record-title>
           <a href="{{ row.school_url }}" class="font-bold edify-primary-text edify-primary-text-hover hover:underline leading-tight">{{ row.school_name }}</a>
@@ -100,6 +102,7 @@
       {% endfor %}
     </tbody>
   </table>
+  {% include "components/table_pager.html" with pager=project_schools_table_rows_pager param="project_schools_table_rows_page" %}
 </div>
 {% if rows|length > 12 %}
 <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between gap-3">

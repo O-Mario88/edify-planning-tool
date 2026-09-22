@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}Partner Evidence · Edify{% endblock %}
 
@@ -16,6 +16,7 @@
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
+      {% paginate rows "partner_evidence_queue_rows_page" as partner_evidence_queue_rows_pager %}
       <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
         <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
           <tr>
@@ -30,7 +31,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 max-xl:block">
-          {% for row in rows|slice:":50" %}
+          {% for row in partner_evidence_queue_rows_pager.rows %}
           <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
             <td class="px-5 py-3.5 max-xl:px-0" data-record-title>
               <a href="/ia/partner-evidence/{{ row.a.id }}/" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
@@ -50,6 +51,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=partner_evidence_queue_rows_pager param="partner_evidence_queue_rows_page" %}
     </div>
     {% if total > shown %}
     <p class="px-5 py-3 border-t border-slate-100 edify-text-caption font-semibold text-slate-400">Showing the {{ shown }} oldest of {{ total }} — clear these to see the rest.</p>

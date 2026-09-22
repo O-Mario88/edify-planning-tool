@@ -1,10 +1,11 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">9. PL Oversight Summary</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Supervised CCEO performance across all five target areas · click a PL for individual results</p>
   </div>
   <div class="overflow-x-auto -mx-1">
+    {% paginate pl_oversight.rows "pl_oversight_rows_page" as pl_oversight_rows_pager %}
     <table class="edify-performance-table w-full min-w-[760px] edify-text-caption">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
@@ -18,7 +19,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-50">
-        {% for r in pl_oversight.rows %}
+        {% for r in pl_oversight_rows_pager.rows %}
         <tr class="cursor-pointer hover:bg-slate-50/60"
             hx-get="/analytics/country-director/drilldown?drill=pl&id={{ r.id }}&fy={{ fy }}"
             hx-target="#drawer-container" hx-swap="innerHTML">
@@ -53,5 +54,6 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=pl_oversight_rows_pager param="pl_oversight_rows_page" %}
   </div>
 </div>

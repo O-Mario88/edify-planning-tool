@@ -149,33 +149,31 @@ def my_plan_view(request):
         "hx_include": "#filters-form",
     }
 
-    # CSV export of the currently filtered feed (same pattern as /clusters).
-    if request.GET.get("export", "").strip() == "csv":
-        import csv
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
-        writer = csv.writer(response)
-        writer.writerow(
-            [
-                "Activity ID",
-                "Type",
-                "School / Cluster",
-                "District",
-                "Planned Date",
-                "Status",
-                "Owner",
-                "Budget (UGX)",
-            ]
-        )
-        rows = (
+    # The currently filtered feed, as CSV or as a workbook. Owner, 2026-09-22:
+    # "IA and PL and CD and Regional Programme Leads, and CCEO should be able
+    # to export all of their plans into Excel." This is the personal plan every
+    # one of them holds; the team and country plans export from their own
+    # oversight pages. CSV stays, so existing links keep working.
+    export = request.GET.get("export", "").strip().lower()
+    if export in {"csv", "xlsx", "excel"}:
+        headers = [
+            "Activity ID",
+            "Type",
+            "School / Cluster",
+            "District",
+            "Planned Date",
+            "Status",
+            "Owner",
+            "Budget (UGX)",
+        ]
+        rows = []
+        for a in (
             context.get("school_visits", [])
             + context.get("cluster_trainings", [])
             + context.get("cluster_meetings", [])
-        )
-        for a in rows:
+        ):
             is_cluster = a["activity_type"].startswith("cluster")
-            writer.writerow(
+            rows.append(
                 [
                     a["id"],
                     a["activity_type_label"],
@@ -187,6 +185,31 @@ def my_plan_view(request):
                     a.get("budget_total", ""),
                 ]
             )
+
+        if export in {"xlsx", "excel"}:
+            from apps.core.excel import workbook_response
+
+            return workbook_response(
+                "my_plan_export.xlsx",
+                [
+                    {
+                        "title": "My Plan",
+                        "headers": headers,
+                        "rows": rows,
+                        # Budget is a number, and a plan people add up.
+                        "number_formats": {8: "#,##0"},
+                    }
+                ],
+            )
+
+        import csv
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        for row in rows:
+            writer.writerow(row)
         return response
 
     # Partners get their own My Plan — the accepted implementation schedule

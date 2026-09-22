@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **821**
-- All registered routes: **1293**
+- Routed product surfaces: **822**
+- All registered routes: **1294**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **120**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **474**
+- Shared component templates: **475**
 - Full pages: **260**
 - Partials and drawers: **269**
-- Permission-gated surfaces: **806**
-- Referenced by automated tests: **714**
+- Permission-gated surfaces: **807**
+- Referenced by automated tests: **715**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -762,6 +762,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-326063C770 | /schools/bulk-assign-cluster | Bulk Assign Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3B0EF3899D | /schools/bulk-assign-project | Bulk Assign Project | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B0CF01F2F7 | /schools/bulk-match-staff | Bulk Match Staff | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-9BA2BF3781 | /schools/bulk-transfer-owner | Bulk School Owner Transfer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-ADDF2AFAA1 | /schools/closed | Closed Schools · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-43A1B1DC79 | /schools/create-drawer | School Onboard Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-415C2B49E8 | /schools/parishes | School Parish Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

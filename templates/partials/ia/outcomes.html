@@ -149,11 +149,12 @@ was measured. Tables are plain text: a status is a word with a tone.
         <a class="rpl-row-link rounded-control" href="/declining-schools?fy={{ pf.fy }}">Open Declining Schools</a>
       </header>
       <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="School change by outcome area; scroll sideways for more columns">
+        {% paginate pf.rows "pf_rows_page" as pf_rows_pager %}
         <table class="rpl-table" data-mobile-table="scroll">
           <caption class="sr-only">Schools measured, improved and declined by outcome area and SSA domain</caption>
           <thead><tr><th scope="col">Outcome area / domain</th><th scope="col">Schools measured</th><th scope="col">Improved</th><th scope="col">Declined</th><th scope="col">No change</th><th scope="col">Median change</th><th scope="col">Evidence</th></tr></thead>
           <tbody>
-            {% comment %}Bounded by the eight SSA domains and the outcome areas that group them.{% endcomment %}{% for row in pf.rows|slice:":24" %}
+            {% comment %}Bounded by the eight SSA domains and the outcome areas that group them.{% endcomment %}{% for row in pf_rows_pager.rows %}
             <tr{% if row.is_area %} data-ia-area-row{% endif %}>
               <th scope="row" data-record-title>{% if row.is_area %}<strong>{{ row.name }}</strong>{% else %}<span class="edify-text-muted" aria-hidden="true">— </span>{{ row.name }}{% endif %}</th>
               {% if row.n %}
@@ -170,6 +171,7 @@ was measured. Tables are plain text: a status is a word with a tone.
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=pf_rows_pager param="pf_rows_page" %}
       </div>
     </section>
     <p class="edify-text-caption edify-text-muted leading-relaxed">{{ pf.limitation }} {{ pf.rule_sentence }}{% if pf.median_interval_days %} Median {{ pf.median_interval_days }} days between the readings compared.{% endif %}</p>
@@ -289,10 +291,15 @@ was measured. Tables are plain text: a status is a word with a tone.
       </div>
     </header>
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Project enrolments; scroll sideways for more columns">
+    {% comment %}The view pages this queryset already; the tag pages the same
+    list with the same parameter and the same size, so the rows the table draws
+    and the pages the control offers are one answer rather than two that agree
+    by coincidence.{% endcomment %}
+    {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">Project-school evidence and next actions</caption>
         <thead><tr><th scope="col">School</th><th scope="col">Project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Next action</th></tr></thead>
-        <tbody>{% for row in ia_evidence_page %}<tr>
+        <tbody>{% for row in evidence_pager.rows %}<tr>
           <th scope="row" data-record-title><a href="/schools/{{ row.school_id }}">{% school_identity row.school row.school_id %}</a></th>
           <td data-label="Project"><a href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
           <td data-label="Domain">{{ row.intervention }}</td>
@@ -304,7 +311,6 @@ was measured. Tables are plain text: a status is a word with a tone.
         </tr>{% empty %}<tr><td class="rpl-table__empty" colspan="8">{% include "components/empty_state.html" with message="No project enrolments" hint="Choose another project cohort, or enrol schools in a special project to measure its cohort." compact="true" %}</td></tr>{% endfor %}</tbody>
       </table>
     </div>
-    {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
     {% include "components/table_pager.html" with pager=evidence_pager param="page" %}
   </section>
   {% endif %}

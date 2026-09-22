@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Activity Plan Summary — the CD/RVP roll-up of the scoped plan. Every figure
 is aggregated from the same Activity rows and persisted cost lines the table
@@ -29,6 +29,8 @@ See Details
 <div>
 <h3 class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500 mb-2">{{ section.label }}</h3>
 <div class="overflow-x-auto">
+{% page_param "section_rows_page" forloop.counter as section_rows_param %}
+{% paginate section.rows section_rows_param as section_rows_pager %}
 <table class="edify-record-table edify-data-table w-full text-[12px]">
 <caption class="sr-only">{{ section.label }} summary — {{ period_label }}</caption>
 <thead>
@@ -40,7 +42,7 @@ See Details
 </tr>
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
-{% for row in section.rows %}
+{% for row in section_rows_pager.rows %}
 <tr class="edify-data-row">
 <th scope="row" class="text-left font-semibold text-slate-700">{{ row.label }}</th>
 <td class="text-right tabular-nums font-semibold text-slate-700">{{ row.count|intcomma }}</td>
@@ -60,6 +62,7 @@ See Details
 </tr>
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=section_rows_pager param=section_rows_param %}
 </div>
 </div>
 {% endfor %}

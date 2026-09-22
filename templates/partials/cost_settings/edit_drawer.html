@@ -1,5 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% comment %}
 Editing a rate is a drawer, not an inline row (owner, 2026-09-07).
@@ -101,6 +101,7 @@ every other decision on the platform, not a cell.
     </summary>
     {% if history %}
     <div class="max-h-56 overflow-y-auto px-3 pb-3">
+      {% paginate history "history_page" as history_pager %}
       <table class="w-full text-[12px]">
         <thead>
           <tr class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-subtle)] text-left">
@@ -111,7 +112,7 @@ every other decision on the platform, not a cell.
           </tr>
         </thead>
         <tbody class="align-top">
-          {% for h in history %}
+          {% for h in history_pager.rows %}
           <tr class="border-t border-[var(--edify-border)]">
             <td class="py-1.5 pr-2 tabular-nums text-[var(--edify-text-muted)] whitespace-nowrap">{{ h.changedAt|slice:":10" }}</td>
             <td class="py-1.5 pr-2 tabular-nums font-semibold text-[var(--edify-text)] whitespace-nowrap">
@@ -125,6 +126,7 @@ every other decision on the platform, not a cell.
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=history_pager param="history_page" %}
     </div>
     {% else %}
     <p class="px-3 pb-3 text-[12px] font-medium text-[var(--edify-text-subtle)]">No recorded change yet — this rate is at its original value.</p>

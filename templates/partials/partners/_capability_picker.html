@@ -1,0 +1,87 @@
+{% comment %}
+What this organisation does — interventions, and the activities under them.
+
+Owner, 2026-09-22: "Some partners are doing more than one activity. Can you
+make sure the list of interventions and their activities are in checkbox so
+that many activities can be assigned to partners."
+
+One dropdown could hold one answer, so a partner running literacy training and
+financial-health coaching was recorded as running one of them. This is a
+tick-list instead, built from the live catalogue by
+`apps.partners.capabilities`: each SSA intervention, and under it the catalogue
+activities a partner may actually be given (`partner_delivery_allowed`).
+
+An intervention can be ticked on its own — an organisation may cover a whole
+intervention before the catalogue has a named activity for it. Ticking any
+activity ticks its intervention too, because an organisation delivering the
+work covers the intervention by doing so; that is done here rather than on
+save, so the form shows what it is about to record.
+
+Expects `capability_groups`, `selected_interventions`, `selected_activities`.
+{% endcomment %}
+{% comment %}The two handlers below match on `dataset` rather than building a
+CSS selector, because a group key can hold a colon and an attribute selector
+would need a quote this attribute cannot carry.{% endcomment %}
+<fieldset class="partner-capabilities" x-data="{
+clearActivities(key) {
+  this.$root.querySelectorAll('[data-capability-activity]').forEach(el => {
+    if (el.dataset.capabilityActivity === key) el.checked = false;
+  });
+},
+coverIntervention(key) {
+  this.$root.querySelectorAll('[data-capability-group]').forEach(el => {
+    if (el.dataset.capabilityGroup === key) el.checked = true;
+  });
+}
+}">
+  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+    Interventions and activities
+  </legend>
+  <p class="edify-text-caption font-medium text-slate-400 leading-normal mt-1">
+    Tick everything this organisation delivers. An intervention on its own is
+    enough; tick its activities where you know them.
+  </p>
+
+  <div class="partner-capabilities__list mt-2 max-h-[38vh] overflow-y-auto pr-1 space-y-1.5">
+    {% for group in capability_groups %}
+    <div class="partner-capabilities__group rounded-control border border-[var(--edify-border)] px-3 py-2">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox"
+               name="ssa_interventions"
+               value="{{ group.key }}"
+               data-capability-group="{{ group.key }}"
+               id="cap-{{ forloop.counter }}"
+               {% if group.key in selected_interventions %}checked{% endif %}
+               @change="if (!$event.target.checked) clearActivities('{{ group.key }}')"
+               class="h-4 w-4 rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]">
+        <span class="text-[13px] font-bold text-slate-800">{{ group.label }}</span>
+        {% if group.activities %}
+        <span class="edify-text-caption font-semibold text-slate-400">{{ group.activities|length }} activit{{ group.activities|length|pluralize:"y,ies" }}</span>
+        {% endif %}
+      </label>
+
+      {% if group.activities %}
+      <div class="partner-capabilities__activities mt-1.5 pl-6 space-y-1">
+        {% for activity in group.activities %}
+        <label class="flex items-start gap-2 cursor-pointer">
+          <input type="checkbox"
+                 name="activity_codes"
+                 value="{{ activity.code }}"
+                 data-capability-activity="{{ group.key }}"
+                 {% if activity.code in selected_activities %}checked{% endif %}
+                 @change="if ($event.target.checked) coverIntervention('{{ group.key }}')"
+                 class="mt-0.5 h-4 w-4 rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]">
+          <span class="text-[12px] font-semibold text-slate-600 leading-snug">{{ activity.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p class="edify-note" data-tone="info">
+      The activity catalogue has nothing a partner may deliver yet. Add the
+      organisation now and record what it does once the catalogue does.
+    </p>
+    {% endfor %}
+  </div>
+</fieldset>

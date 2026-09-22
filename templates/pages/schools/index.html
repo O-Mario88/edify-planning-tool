@@ -9,6 +9,7 @@ selectedSchools: [],
 assignClusterOpen: false,
 bulkAssignProjectOpen: false,
 matchStaffOpen: false,
+transferOwnerOpen: false,
 }"
 data-mobile-family="directory"
 {% endblock %}
@@ -311,6 +312,78 @@ style="display: none;"
 </form>
 </div>
 </div>
+
+<!-- Modal 3: Reassign Ownership (Admin and Impact Assessment) -->
+{% comment %}
+Owner, 2026-09-22: "The Admin and IA should be able to bulk reassign ownership
+using either district, checkboxes... the idea is to make sure time is not
+wasted reassigning one by one. But also allow the schools to be assigned one by
+one." One by one is each row's own Reassign owner drawer, and a district at a
+time is /ownership-transfers/. This is the middle: whatever is ticked here.
+
+Not the Match Staff modal above, which writes the owner column and nothing
+else. This is the governed transfer — it records who moved what and why,
+decides what happens to open work, and flags approved targets that depended on
+the portfolio — so a bulk reassignment leaves the same trail as a single one.
+{% endcomment %}
+{% if may_transfer_school %}
+<div
+x-show="transferOwnerOpen"
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="transferOwnerOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-semibold text-slate-800">Reassign school ownership</h3>
+<button @click="transferOwnerOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form action="/schools/bulk-transfer-owner" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
+
+<div class="space-y-1">
+<label for="bulk-transfer-owner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">New owner</label>
+<select id="bulk-transfer-owner" name="new_owner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose the new owner --</option>
+{% for sp in portfolio_owner_options %}
+<option value="{{ sp.id }}">{{ sp.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="bulk-transfer-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason</label>
+<input type="text" id="bulk-transfer-reason" name="reason" minlength="5" maxlength="500" required
+placeholder="Why these schools change hands"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
+</div>
+
+<div class="space-y-1">
+<label for="bulk-transfer-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date</label>
+<input type="date" id="bulk-transfer-date" name="effective_date"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
+</div>
+
+<div class="space-y-1">
+<label for="bulk-transfer-open-work" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Open activities</label>
+<select id="bulk-transfer-open-work" name="open_activity_decision" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
+<option value="keep">Keep open work with its current owner</option>
+{% if may_transfer_open_activities %}<option value="transfer">Move open work to the new owner</option>{% endif %}
+</select>
+<p class="edify-text-caption text-slate-400 font-semibold">Verified, confirmed and closed work is never re-owned.</p>
+</div>
+
+<p class="edify-text-caption text-slate-400 font-semibold">This reassigns <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s). Geography is unchanged.</p>
+
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="transferOwnerOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Reassign ownership</button>
+</div>
+</form>
+</div>
+</div>
+{% endif %}
 
 {% comment %}
 The Add School modal that used to live here is gone. It was a second,

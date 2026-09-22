@@ -1,5 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 
 {% comment %}
 The schools behind a Programme Rollout figure (owner, 2026-09-13): an officer's,
@@ -19,6 +19,7 @@ with the reason (apps.analytics.programme_rollout_service.school_list).
 <div class="space-y-3" data-rollout-school-list>
   <p class="rpl-card__subtitle">{{ total }} school{{ total|pluralize }}{% if truncated %}, the first {{ rows|length }} shown{% endif %}</p>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ title }}; scroll sideways for more columns">
+    {% paginate rows "school_list_drawer_rows_page" as school_list_drawer_rows_pager %}
     <table class="rpl-table" data-mobile-table="scroll">
       <caption class="sr-only">{{ title }}: {{ subtitle }}</caption>
       <thead>
@@ -30,7 +31,7 @@ with the reason (apps.analytics.programme_rollout_service.school_list).
         </tr>
       </thead>
       <tbody>
-        {% for row in rows|slice:":200" %}
+        {% for row in school_list_drawer_rows_pager.rows %}
         <tr>
           <th scope="row" data-record-title><span><a href="{{ row.url }}">{% school_identity row.name row.school_id %}</a></span></th>
           <td data-label="Officer">{{ row.officer|default:"—" }}</td>
@@ -46,6 +47,7 @@ with the reason (apps.analytics.programme_rollout_service.school_list).
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=school_list_drawer_rows_pager param="school_list_drawer_rows_page" %}
   </div>
 </div>
 {% endif %}

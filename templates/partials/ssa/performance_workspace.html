@@ -1,4 +1,4 @@
-{% load chart_tags %}
+{% load chart_tags table_pagination %}
 {% load frontend_filters %}
 <div id="ssa-performance-workspace" class="sp-workspace" aria-live="polite">
   <form class="edify-filter-bar sp-filter-panel"
@@ -80,17 +80,19 @@
         <div><span class="sp-card__eyebrow">Geographic comparison</span><h2 id="sp-district-title">District SSA performance</h2></div>
       </header>
       <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable district SSA performance table">
+        {% paginate dashboard.districts "dashboard_districts_page" as dashboard_districts_pager %}
         <table class="sp-table">
           <caption>Confirmed SSA performance by district for {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }}</caption>
           <thead><tr><th scope="col">#</th><th scope="col">District</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
           <tbody>
-          {% for district in dashboard.districts %}
+          {% for district in dashboard_districts_pager.rows %}
           <tr><td>{{ forloop.counter }}</td><th scope="row">{{ district.name }}</th><td>{{ district.schools_assessed }}/{{ district.total_schools }}</td><td><strong data-tone="{{ district.band.tone }}">{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong></td><td>{{ district.weakest }}</td><td><span class="sp-risk-count">{{ district.high_risk }}</span></td><td>{{ district.completion_rate }}%</td></tr>
           {% empty %}
           <tr><td colspan="7" class="sp-empty-cell">No districts are available in this scope.</td></tr>
           {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=dashboard_districts_pager param="dashboard_districts_page" %}
       </div>
     </section>
 
@@ -111,11 +113,13 @@
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Decision queue</span><h2 id="sp-urgent-title">{% if dashboard.scope.can_view_school_details %}Schools requiring urgent attention{% else %}Urgent-attention summary{% endif %}</h2></div><span class="sp-count-badge">{{ dashboard.urgent_total }}</span></header>
       {% if dashboard.scope.can_view_school_details %}
       <div class="sp-table-scroll">
+        {% paginate dashboard.urgent_schools "dashboard_urgent_schools_page" as dashboard_urgent_schools_pager %}
         <table class="sp-table sp-urgent-table">
           <caption>Schools with an intervention score below {{ dashboard.engine.high_risk_score }}</caption>
           <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
-          <tbody>{% for school in dashboard.urgent_schools|slice:":5" %}<tr><td class="tabular-nums">{{ school.school_id }}</td><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="6" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
+          <tbody>{% for school in dashboard_urgent_schools_pager.rows %}<tr><td class="tabular-nums">{{ school.school_id }}</td><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="6" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
         </table>
+        {% include "components/table_pager.html" with pager=dashboard_urgent_schools_pager param="dashboard_urgent_schools_page" %}
       </div>
       {% else %}
       <div class="sp-protected-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><div><strong>{{ dashboard.urgent_total }} high-risk school{{ dashboard.urgent_total|pluralize }}</strong><p>Your role receives regional aggregates. School identities remain protected by the field-data access policy.</p></div></div>
@@ -165,6 +169,7 @@
         </span>
       </header>
       <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable FY2026 to FY2027 SSA improvement table">
+        {% paginate dashboard.improvement_monitor.rows "dashboard_improvement_monitor_rows_page" as dashboard_improvement_monitor_rows_pager %}
         <table class="sp-table sp-fy-comparison-table" data-mobile-table="scroll">
           <caption>All confirmed SSA intervention scores tracked from FY{{ dashboard.improvement_monitor.baseline_fy }} to FY{{ dashboard.improvement_monitor.comparison_fy }}</caption>
           <thead>
@@ -177,7 +182,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for row in dashboard.improvement_monitor.rows %}
+            {% for row in dashboard_improvement_monitor_rows_pager.rows %}
             <tr>
               <th scope="row">{{ row.label }}</th>
               <td>{% if row.baseline_average != None %}{{ row.baseline_average }}{% else %}—{% endif %}</td>
@@ -188,6 +193,7 @@
             {% endfor %}
           </tbody>
         </table>
+        {% include "components/table_pager.html" with pager=dashboard_improvement_monitor_rows_pager param="dashboard_improvement_monitor_rows_page" %}
       </div>
       <footer class="sp-fy-comparison__coverage">
         <span>FY{{ dashboard.improvement_monitor.baseline_fy }}: {{ dashboard.improvement_monitor.baseline_scores }} scores across {{ dashboard.improvement_monitor.baseline_assessments }} school assessments</span>
@@ -244,11 +250,13 @@
         <div x-ref="el" class="sp-trend__chart" role="img" aria-label="SSA score by intervention, one line per financial year"></div>
         <p class="sp-trend__caption">Each year uses every school’s latest confirmed SSA in that financial year. Scores out of 10; the dashed line is the target.</p>
       </div>
+      {% paginate dashboard.trend.by_intervention.categories "trend_categories_page" as trend_categories_pager %}
       <table class="sp-visually-hidden">
         <caption>SSA score by intervention and financial year</caption>
         <thead><tr><th scope="col">Intervention</th>{% for line in dashboard.trend.by_intervention.series %}<th scope="col">{{ line.name }}</th>{% endfor %}</tr></thead>
-        <tbody>{% for label in dashboard.trend.by_intervention.categories %}<tr><th scope="row">{{ label }}</th>{% for line in dashboard.trend.by_intervention.series %}<td>{% with value=line.data|slice:forloop.parentloop.counter0|last %}{% if value != None %}{{ value }}{% else %}—{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+        <tbody>{% for label in trend_categories_pager.rows %}<tr><th scope="row">{{ label }}</th>{% for line in dashboard.trend.by_intervention.series %}<td>{% with value=line.data|slice:forloop.parentloop.counter0|last %}{% if value != None %}{{ value }}{% else %}—{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}</tbody>
       </table>
+      {% include "components/table_pager.html" with pager=trend_categories_pager param="trend_categories_page" %}
       {% else %}<div class="sp-empty-state"><strong>No confirmed intervention scores yet</strong><p>The trend appears once SSA records in this scope are confirmed with their intervention scores.</p></div>{% endif %}
     </section>
   </div>

@@ -1751,17 +1751,19 @@ def delete_cluster_view(request, cluster_id):
 
 @require_page_permission("cluster_detail")
 def cluster_bulk_schedule_drawer_view(request, cluster_id):
-    """A day of visits across five or more of a cluster's schools.
+    """A day of visits across one to five of a cluster's schools.
 
-    Owner, 2026-09-21: bulk scheduling happens from a cluster and nowhere
-    else, needs at least five schools for the day, and offers only the four
-    purposes that are the same errand at every school on the route. Every rule
-    lives in apps.planning.cluster_bulk_scheduling; this view opens the drawer
-    and hands the selection to it.
+    Bulk scheduling happens from a cluster and nowhere else (owner,
+    2026-09-21), and takes at most five schools for a day — five was first
+    read as a floor, and a floor left a planner with four schools no door at
+    all (owner, 2026-09-22). It offers only the four purposes that are the
+    same errand at every school on the route. Every rule lives in
+    apps.planning.cluster_bulk_scheduling; this view opens the drawer and
+    hands the selection to it.
     """
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
     from apps.planning.cluster_bulk_scheduling import (
-        CLUSTER_BULK_MINIMUM_SCHOOLS,
+        CLUSTER_BULK_MAXIMUM_SCHOOLS,
         CLUSTER_BULK_VISIT_PURPOSES,
         bulk_schedule_cluster_visits,
         schedulable_members,
@@ -1784,7 +1786,7 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
                 "cluster": cluster,
                 "selection": selection,
                 "members": [member.as_dict() for member in selection.members],
-                "minimum_schools": CLUSTER_BULK_MINIMUM_SCHOOLS,
+                "maximum_schools": CLUSTER_BULK_MAXIMUM_SCHOOLS,
                 "bulk_visit_purposes": CLUSTER_BULK_VISIT_PURPOSES,
                 "validation_error": error,
                 "posted": posted or {},

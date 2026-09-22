@@ -1,83 +1,54 @@
 """Tables must stay bounded, and the count may only go down.
 
 A table with no bound grows with the data behind it: two cards side by side end
-up different heights and the page scrolls for reasons nobody chose. The first
-scan found 172 data tables of which 143 showed everything.
+up different heights and the page scrolls for reasons nobody chose. A table
+capped with `|slice:` is worse — it is bounded and silent, which is how somebody
+comes to believe they have seen everything there is.
 
-The ceiling below is a ratchet, not a target. It exists so the number cannot
-creep back up while nobody is looking, and so the remaining ones stay visible
-instead of being forgotten.
+The first scan found 172 data tables of which 143 showed everything. The sweep
+of 2026-09-22 ("fix the tables that are capped and unbounded") wired the rest:
+of 293 tables, 285 page and 0 are sliced. The eight that remain unbounded are
+each bounded by something other than a dataset, and the ceiling below names
+every one — it is a ratchet, not a target.
 """
 
 from __future__ import annotations
 
+import pathlib
+import tempfile
+
 from django.test import SimpleTestCase
 
+from apps.system_health import table_inventory
 from apps.system_health.table_inventory import scan_tables, table_report
 
 
 class TableBoundsTest(SimpleTestCase):
-    #: Measured after the first sweep. Lower it when more are wired; raise it
-    #: only for a table bounded by something other than the dataset, and say
-    #: what bounds it. A new unbounded table should fail here on the day it is
-    #: added -- it did, which is why the two entries below are written down.
+    #: Every table that still shows all its rows, and what bounds it instead of
+    #: the dataset. Lower this when one is wired; raise it only for a table
+    #: bounded by something other than the data, and say what bounds it here.
+    #: A new unbounded table fails this test on the day it is added.
     #:
-    #: 79 rather than 78 for one deliberate exception: the Uganda master table
-    #: on /priorities reproduces the approved master in full, and a page of a
-    #: master plan is not the master plan. It is bounded by the plan itself
-    #: (75 milestone rows), not by the size of any dataset.
-    #:
-    #: 81 rather than 79 for two more on the impact workspace, both bounded in
-    #: Python where this scanner -- which reads templates -- cannot see it:
-    #:
-    #: * `dashboard.drivers` is exactly len(DRIVER_DEFINITIONS) rows: five
-    #:   pre-declared association tests whose p-values are corrected as a
-    #:   family. The count is fixed by the analysis, not by the data. Adding a
-    #:   sixth would change the correction, so it cannot drift unnoticed.
-    #: * `dashboard.geography.lagging` is capped at LAGGING_SHOWN (10) in
-    #:   impact_engine.py. That cap used to be silent, which is the failure
-    #:   this module's docstring describes -- a reader takes ten rows headed
-    #:   "Lagging district-intervention combinations" to be all of them. The
-    #:   page now states the count it is showing and the total it came from,
-    #:   so the bound is disclosed rather than hidden.
-    #: * `distributed.rows` on the performance review / conversation summary
-    #:   is naturally bounded by the number of strategic priorities assigned
-    #:   to the user's role (typically 3 to 6).
-    #: * The PL Team Targets performance matrix (`members`, bounded by supervisees)
-    #:   and monthly trend table (`team_trend`, exactly 12 financial-year months).
-    #:
-    #: 82 rather than 81 for the "Waiting on you" table on Today
-    #: (partials/today/workbench.html, owner 2026-09-14): `waiting` is capped
-    #: at WAITING_LIMIT (8) in apps.frontend.views.today_views, and the card's
-    #: header discloses the whole queue ("View all N") — bounded in Python,
-    #: and the reader is told there is more.
-    #:
-    #: 83 rather than 82 for the fiscal-year table on FY Planning Policy
-    #: (pages/planning/fiscal_years.html, owner 2026-09-15): `policies` is one
-    #: row per fiscal year the platform has ever governed — three today, and
-    #: one more each October. A pager over a list that grows once a year would
-    #: be furniture, and the page exists precisely to see the years side by
-    #: side.
-    #:
-    #: The three tables on Team Oversight · Schools & Coverage and the two on
-    #: Ownership Transfers are NOT exempt and are paginated: "Schools with No
-    #: Training Planned" is 694 rows in the country lens on the day it shipped.
-    #:
-    #: 87 rather than 83 for the four cards on My Plan — School Visits,
-    #: Trainings, Cluster Meetings and Programme Activities (owner,
-    #: 2026-09-16). They were paginated at ten rows a card, which is the shape
-    #: of a week; the page now shows a person's whole fiscal year arranged by
-    #: month, and a pager over it puts the thing the page exists for behind
-    #: "Next". These are bounded by something other than a dataset: one
-    #: person's own plan for one year, which is what one officer can physically
-    #: do in twelve months — tens of rows, not the size of the activity table.
-    #: A CCEO's plan growing past that is a workload finding, and it should
-    #: show on the page rather than be hidden a page at a time.
-    #:
-    #: The lenses added with them — Country Portfolio and Cluster Performance —
-    #: are NOT exempt and are paginated: the portfolio is 700 schools under one
-    #: CCEO on the day it shipped.
-    UNBOUNDED_CEILING = 87
+    #: * `pages/planning/fiscal_years.html` — one row per fiscal year the
+    #:   platform has ever governed: three today, one more each October. The
+    #:   page exists to see the years side by side.
+    #: * The four My Plan cards — School Visits, Trainings, Cluster Meetings and
+    #:   Programme Activities (owner, 2026-09-16). The page shows a person's
+    #:   whole fiscal year arranged by month, and a pager over it puts the thing
+    #:   the page exists for behind "Next". Bounded by what one officer can
+    #:   physically do in twelve months; a plan growing past that is a workload
+    #:   finding that should show rather than be hidden a page at a time.
+    #: * `partials/priorities/master_view.html` — the Uganda master table
+    #:   reproduces the approved master in full, and a page of a master plan is
+    #:   not the master plan. Bounded by the plan (75 milestone rows).
+    #: * `partials/targets/team/body.html` — the scanner reads the matrix's
+    #:   column loop. Its rows are the team (bounded by supervisees) and its
+    #:   companion trend is exactly twelve financial-year months; both exist to
+    #:   be compared side by side, which is what a pager would break.
+    #: * `partials/today/workbench.html` — `waiting` is capped at WAITING_LIMIT
+    #:   (8) in today_views and the card's header discloses the whole queue
+    #:   ("View all N"): bounded in Python, and the reader is told there is more.
+    UNBOUNDED_CEILING = 8
 
     def test_no_new_unbounded_tables(self):
         report = table_report()
@@ -96,15 +67,57 @@ class TableBoundsTest(SimpleTestCase):
         self.assertGreater(report["total"], 100)
         self.assertGreater(report["paginated"], 50)
 
-    def test_a_sliced_table_is_not_counted_as_done(self):
-        """`|slice:` caps the rows and tells the reader nothing. It is bounded
-        but silent, which is how somebody comes to believe they have seen
-        everything there is."""
-        states = {f.state for f in scan_tables()}
-        self.assertIn("sliced", states)
+    def test_no_table_hides_rows_behind_a_silent_cap(self):
+        """`|slice:` caps the rows and tells the reader nothing.
+
+        Fifty-one tables did this, which is fifty-one places a reader could
+        believe they had seen everything. None do now, and one appearing again
+        fails here rather than in somebody's report.
+        """
         report = table_report()
-        self.assertNotEqual(report["sliced"], 0)
-        # Sliced is reported separately from paginated, never folded into it.
+        self.assertEqual(
+            report["sliced"],
+            0,
+            "a table caps its rows with |slice: and says nothing. Give it "
+            '{% paginate rows "x_page" as pager %} and '
+            "components/table_pager.html so the rest can be reached.",
+        )
+
+    def test_a_sliced_table_is_still_recognised_as_one(self):
+        """The check above is only worth anything while the scanner can tell.
+
+        Asserted against a table written here rather than against the live
+        count, which is now zero — a scanner that had stopped recognising a cap
+        would otherwise pass that test forever.
+        """
+        # Inside the project, because the scanner reports every finding as a
+        # path relative to it.
+        from django.conf import settings
+
+        with tempfile.TemporaryDirectory(dir=settings.BASE_DIR) as directory:
+            root = pathlib.Path(directory)
+            (root / "capped.html").write_text(
+                "<table><tbody>"
+                "{% for row in rows|slice:':40' %}<tr><td>{{ row }}</td></tr>"
+                "{% endfor %}</tbody></table>"
+            )
+            (root / "whole.html").write_text(
+                "<table><tbody>"
+                "{% for row in rows %}<tr><td>{{ row }}</td></tr>"
+                "{% endfor %}</tbody></table>"
+            )
+            original = table_inventory.TEMPLATES
+            table_inventory.TEMPLATES = root
+            try:
+                states = {f.template.split("/")[-1]: f.state for f in scan_tables()}
+            finally:
+                table_inventory.TEMPLATES = original
+        self.assertEqual(states.get("capped.html"), "sliced")
+        self.assertEqual(states.get("whole.html"), "unbounded")
+
+    def test_the_three_states_stay_separate(self):
+        # Sliced is reported beside paginated, never folded into it.
+        report = table_report()
         self.assertEqual(
             report["total"],
             report["paginated"] + report["sliced"] + report["unbounded"],

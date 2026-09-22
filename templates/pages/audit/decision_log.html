@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static table_pagination %}
 
 {% block title %}Decision Log — Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260915mapsheet1">{% endblock %}
@@ -40,6 +40,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 {% if log.rows %}
 <div class="overflow-x-auto">
+{% paginate log.rows "decision_log_log_rows_page" as decision_log_log_rows_pager %}
 <table class="edify-record-table w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
@@ -51,7 +52,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in log.rows %}
+{% for r in decision_log_log_rows_pager.rows %}
 <tr class="hover:bg-slate-50/40 {% if not r.success %}bg-rose-50/30{% endif %}">
 <td class="px-5 py-3 text-slate-500 whitespace-nowrap tabular-nums">{{ r.at|date:"j M, H:i" }}</td>
 <td class="px-4 py-3" data-record-title>
@@ -65,6 +66,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=decision_log_log_rows_pager param="decision_log_log_rows_page" %}
 </div>
 {% else %}
 <div class="p-12 text-center">

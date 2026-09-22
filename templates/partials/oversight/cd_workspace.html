@@ -26,14 +26,21 @@ summary and the detail are the same numbers by construction.
         {% include "partials/oversight/filter_drawer.html" with target_url="/country-planning-oversight/" target_id="#country-workspace" %}
       </div>
     </details>
+    {% comment %}Excel beside CSV (owner, 2026-09-22): the plan a Lead sends on
+    is read in Excel, and a CSV argues with it about dates and money. Same rows,
+    same filters, same scope — only the file differs.{% endcomment %}
     <a class="btn btn-ghost h-8 inline-flex items-center"
        href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
     </a>
+    <a class="btn btn-ghost h-8 inline-flex items-center"
+       href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx">
+      Export Excel
+    </a>
   </div>
 
   {% if groups %}
-  <div x-data="{ activeLead: '{{ groups.0.id|default:"" }}' }" class="space-y-4">
+  <div x-data="tabState('activeLead', 'lead', {% tab_values groups %}, '{% firstof selected_lead groups.0.id "" %}')" class="space-y-4">
     {# ── Primary Tabs: Program Leads ────────────────────────────────────── #}
     <div class="border-b edify-border edify-surface-raised rounded-t-xl px-2 pt-2 shadow-xs">
       <nav class="flex items-center gap-1.5 overflow-x-auto pb-px" role="tablist" aria-label="Program Leads">
@@ -42,7 +49,7 @@ summary and the detail are the same numbers by construction.
                 role="tab"
                 :aria-selected="activeLead === '{{ group.id }}'"
                 aria-controls="lead-panel-{{ forloop.counter }}"
-                @click="activeLead = '{{ group.id }}'; if ($refs.panel_{{ forloop.counter }} && !$refs.panel_{{ forloop.counter }}.dataset.loaded) { htmx.trigger($refs.panel_{{ forloop.counter }}, 'load-team'); $refs.panel_{{ forloop.counter }}.dataset.loaded = 'true'; }"
+                @click="pick('lead', '{{ group.id }}'); if ($refs.panel_{{ forloop.counter }} && !$refs.panel_{{ forloop.counter }}.dataset.loaded) { htmx.trigger($refs.panel_{{ forloop.counter }}, 'load-team'); $refs.panel_{{ forloop.counter }}.dataset.loaded = 'true'; }"
                 :class="activeLead === '{{ group.id }}' ? 'border-primary text-primary font-bold bg-slate-50/80 dark:bg-slate-800/80 shadow-xs' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50/50'"
                 class="px-4 py-3 border-b-2 rounded-t-lg text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2.5 cursor-pointer">
           <div class="w-6 h-6 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
@@ -150,9 +157,12 @@ summary and the detail are the same numbers by construction.
       {# ── Team Details with CCEO Secondary Tabs & 3 Tables ────────────── #}
       <div id="team-detail-{{ forloop.counter }}"
            x-ref="panel_{{ forloop.counter }}"
-           {% if forloop.first %}data-loaded="true"{% endif %}
-           hx-get="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
-           {% if forloop.first %}
+           {% if group.autoload %}data-loaded="true"{% endif %}
+           {% comment %}The fragment's own address, so a page click inside it
+           re-asks for this team rather than rebuilding the country's page.{% endcomment %}
+           data-pager-fragment="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query "period" "fy" "week" "month" "quarter" %}"
+           hx-get="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query "period" "fy" "week" "month" "quarter" %}"
+           {% if group.autoload %}
            hx-trigger="load"
            {% else %}
            hx-trigger="load-team"

@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Advances Queue - Edify Command Center{% endblock %}
@@ -50,6 +50,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto"
      :inert="disburseOpen" :aria-hidden="disburseOpen ? 'true' : null">
+{% paginate advances "advances_page" as advances_pager %}
 <table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
 <tr>
@@ -64,7 +65,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 </thead>
 <tbody class="divide-y divide-slate-100 max-xl:block">
 {% if advances %}
-{% for act in advances %}
+{% for act in advances_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors max-xl:block max-xl:p-4 max-xl:space-y-1">
 <!-- ID -->
 <td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-record-title>
@@ -125,6 +126,7 @@ Process Advance
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=advances_pager param="advances_page" %}
 </div>
 
 <!-- DISBURSEMENT DETAIL DRAWER (Slide-over overlay inside parent) -->

@@ -193,7 +193,7 @@ class PurposeDrivesCostingTest(TestCase):
 
     def test_the_four_bulk_purposes_are_exactly_what_the_owner_named(self):
         from apps.partners.purposes import (
-            CLUSTER_BULK_MINIMUM_SCHOOLS,
+            CLUSTER_BULK_MAXIMUM_SCHOOLS,
             CLUSTER_BULK_VISIT_PURPOSES,
         )
 
@@ -201,7 +201,7 @@ class PurposeDrivesCostingTest(TestCase):
             [value for value, _label in CLUSTER_BULK_VISIT_PURPOSES],
             ["training_follow_up", "ssa_support", "donor_visit", "story_gathering"],
         )
-        self.assertEqual(CLUSTER_BULK_MINIMUM_SCHOOLS, 5)
+        self.assertEqual(CLUSTER_BULK_MAXIMUM_SCHOOLS, 5)
 
     def test_in_school_training_is_refused_by_name_in_bulk(self):
         from apps.core.exceptions import BadRequest

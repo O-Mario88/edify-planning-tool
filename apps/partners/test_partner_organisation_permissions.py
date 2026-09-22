@@ -224,14 +224,24 @@ class PartnerOrganisationPermissionTests(TestCase):
         self.assertContains(page, "Add Partner Organisation")
         drawer = self.client.get("/partners/create", HTTP_HX_REQUEST="true")
         self.assertContains(drawer, "No sign-in account is created here")
+        # Interventions arrive as ticks, and an organisation may do more than
+        # one of them (owner, 2026-09-22).
         response = self.client.post(
             "/partners/create",
-            {"name": "Browser Org", "ssa_intervention": "christlike_behaviour"},
+            {
+                "name": "Browser Org",
+                "ssa_interventions": ["christlike_behaviour", "financial_health"],
+            },
             HTTP_HX_REQUEST="true",
         )
         partner = Partner.objects.get(name="Browser Org")
         self.assertContains(response, f"/partners/{partner.id}")
         self.assertIsNone(partner.user_id)
+        self.assertEqual(
+            partner.ssa_interventions,
+            ["christlike_behaviour", "financial_health"],
+        )
+        self.assertEqual(partner.ssa_intervention, "christlike_behaviour")
 
     def test_the_program_lead_is_offered_no_create_door(self):
         self.client.force_login(self.pl)

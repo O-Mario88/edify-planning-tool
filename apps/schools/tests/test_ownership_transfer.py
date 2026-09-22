@@ -435,3 +435,109 @@ class TargetReconciliationTest(OwnershipFixture):
             self.school.id, self._payload(), self.admin
         )
         self.assertEqual(record.target_reconciliation_status, "not_required")
+
+
+class TickedSchoolsTransferTest(OwnershipFixture):
+    """Reassigning a selection, not a district and not one school at a time.
+
+    Owner, 2026-09-22: "The Admin and IA should be able to bulk reassign
+    ownership using either district, checkboxes... the idea is to make sure
+    time is not wasted reassigning one by one. But also allow the schools to
+    be assigned one by one."
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.second = self._school("TR-2", "Transfer Two")
+        self.third = self._school(
+            "TR-3", "Transfer Three", district=self.other_district
+        )
+
+    def test_every_ticked_school_moves_in_one_decision(self):
+        result = transfers.transfer_schools(
+            [self.school.id, self.second.id, self.third.id],
+            self._payload(),
+            self.admin,
+        )
+        self.assertEqual(result["moved"], 3)
+        self.assertEqual(result["skipped"], [])
+        for school in (self.school, self.second, self.third):
+            school.refresh_from_db()
+            self.assertEqual(school.account_owner_id, self.new.id)
+        # The same trail a single transfer leaves, once per school.
+        self.assertEqual(
+            SchoolOwnershipTransfer.objects.filter(to_staff=self.new).count(), 3
+        )
+
+    def test_a_district_is_no_longer_the_only_way_to_move_several(self):
+        # Two districts in one selection: the district door cannot express this.
+        transfers.transfer_schools(
+            [self.school.id, self.third.id], self._payload(), self.admin
+        )
+        self.assertEqual(
+            set(
+                School.objects.filter(
+                    id__in=[self.school.id, self.third.id]
+                ).values_list("account_owner_id", flat=True)
+            ),
+            {self.new.id},
+        )
+
+    def test_one_school_that_cannot_move_does_not_undo_the_rest(self):
+        # Already the new owner's: a refusal on its own, and irrelevant to the
+        # other two, which the actor ticked and expects to have moved.
+        School.objects.filter(id=self.second.id).update(account_owner_id=self.new.id)
+        result = transfers.transfer_schools(
+            [self.school.id, self.second.id, self.third.id],
+            self._payload(),
+            self.admin,
+        )
+        self.assertEqual(result["moved"], 2)
+        self.assertEqual(len(result["skipped"]), 1)
+        self.assertIn("Transfer Two", result["skipped"][0]["school"])
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.account_owner_id, self.new.id)
+
+    def test_nothing_moving_at_all_is_a_refusal_with_the_reason(self):
+        School.objects.filter(id=self.school.id).update(account_owner_id=self.new.id)
+        with self.assertRaises(BadRequest) as ctx:
+            transfers.transfer_schools([self.school.id], self._payload(), self.admin)
+        self.assertIn("already belongs", str(ctx.exception.detail))
+
+    def test_an_empty_selection_is_refused(self):
+        with self.assertRaises(BadRequest):
+            transfers.transfer_schools([], self._payload(), self.admin)
+        with self.assertRaises(BadRequest):
+            transfers.transfer_schools(["", "  "], self._payload(), self.admin)
+
+    def test_more_than_the_limit_is_refused_before_anything_is_written(self):
+        with self.assertRaises(BadRequest) as ctx:
+            transfers.transfer_schools(
+                [f"id-{index}" for index in range(transfers.BULK_TRANSFER_LIMIT + 1)],
+                self._payload(),
+                self.admin,
+            )
+        self.assertIn(str(transfers.BULK_TRANSFER_LIMIT), str(ctx.exception.detail))
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.account_owner_id, self.old.id)
+
+    def test_only_admin_and_impact_assessment_may_do_it(self):
+        for principal in (self.admin, self.ia):
+            with self.subTest(role=principal.active_role):
+                School.objects.filter(id=self.school.id).update(
+                    account_owner_id=self.old.id
+                )
+                self.assertEqual(
+                    transfers.transfer_schools(
+                        [self.school.id], self._payload(), principal
+                    )["moved"],
+                    1,
+                )
+        for principal in (self.pl_user, self.old_user, self.accountant_user):
+            with self.subTest(role=principal.active_role):
+                with self.assertRaises(Forbidden):
+                    transfers.transfer_schools(
+                        [self.second.id], self._payload(), principal
+                    )
+        self.second.refresh_from_db()
+        self.assertEqual(self.second.account_owner_id, self.old.id)

@@ -1,4 +1,4 @@
-"""One day, one purpose, five or more of a cluster's schools.
+"""One day, one purpose, up to five of a cluster's schools.
 
 Owner, 2026-09-21:
 
@@ -8,6 +8,17 @@ Owner, 2026-09-21:
   are doing training follow up, SSA Support, Donor Visit, Content/Story
   Collection. In-School Training CANNOT be scheduled from bulk scheduling."
 
+Five was read as a floor and became one. It was the wrong end of the number,
+and the owner said so on 2026-09-22:
+
+  "On the bulk planning the staff can plan from 1 to 5 but it cannot exceed 5.
+  Don't restrict numbers below 5. Some people are planning 4, other 3, other 2
+  and other 1 — make sure every plan."
+
+A route of one school is a real day and had no door here at all: the drawer
+refused it and the planner went away without planning. So five is the ceiling
+now, and one is enough.
+
 Three rules, and all three live here rather than in the drawer:
 
 * **A cluster, and only a cluster.** The schools are resolved from live
@@ -15,9 +26,9 @@ Three rules, and all three live here rather than in the drawer:
   page's own bulk Schedule is retired to this surface
   (:mod:`apps.frontend.views.planning_views`), so there is one place a day of
   visits is planned and one set of rules it obeys.
-* **Five schools or none.** Fewer than five is an ordinary day and belongs in
-  the per-school drawer, where the purpose and the focus are chosen for that
-  school deliberately. The floor is ``CLUSTER_BULK_MINIMUM_SCHOOLS``.
+* **One to five schools.** At least one, because every plan must be
+  plannable; at most ``CLUSTER_BULK_MAXIMUM_SCHOOLS``, because beyond five
+  it is not a day's route and the day would be written as a wish.
 * **Four purposes.** Training Follow Up, SSA Support, Donor Visit and
   Content/Story Collection — the support that is the same errand at every
   school on the route. In-school Training is refused by name, because it
@@ -41,7 +52,7 @@ from django.db import transaction
 
 from apps.core.exceptions import BadRequest
 from apps.partners.purposes import (
-    CLUSTER_BULK_MINIMUM_SCHOOLS,
+    CLUSTER_BULK_MAXIMUM_SCHOOLS,
     CLUSTER_BULK_VISIT_PURPOSES,
     normalise_cluster_bulk_purpose,
     purpose_activity_type,
@@ -49,7 +60,7 @@ from apps.partners.purposes import (
 )
 
 __all__ = [
-    "CLUSTER_BULK_MINIMUM_SCHOOLS",
+    "CLUSTER_BULK_MAXIMUM_SCHOOLS",
     "CLUSTER_BULK_VISIT_PURPOSES",
     "BulkMember",
     "BulkSelection",
@@ -87,27 +98,30 @@ class BulkSelection:
     cluster_id: str
     cluster_name: str
     members: list[BulkMember] = field(default_factory=list)
-    minimum: int = CLUSTER_BULK_MINIMUM_SCHOOLS
+    maximum: int = CLUSTER_BULK_MAXIMUM_SCHOOLS
 
     @property
     def selectable(self) -> list[BulkMember]:
         return [member for member in self.members if member.selectable]
 
     @property
-    def enough_schools(self) -> bool:
-        return len(self.selectable) >= self.minimum
+    def any_schools(self) -> bool:
+        """Whether a day can be planned here at all — one school is enough."""
+        return bool(self.selectable)
 
     @property
     def shortfall_reason(self) -> str:
-        """Why the drawer cannot be used yet, said before a press."""
-        if self.enough_schools:
+        """Why the drawer cannot be used at all, said before a press.
+
+        It is no longer about how many: one open school is a day. This is the
+        empty case, where every member is locked or belongs to someone else.
+        """
+        if self.any_schools:
             return ""
-        available = len(self.selectable)
         return (
-            f"{self.cluster_name} has {available} school"
-            f"{'' if available == 1 else 's'} open for a visit today, and a "
-            f"bulk day needs {self.minimum}. Schedule these from each "
-            f"school's own row instead."
+            f"No school in {self.cluster_name} is open for a visit from you "
+            "today. A school its owner plans, or one the visit gate has "
+            "locked, says so on its own row."
         )
 
 
@@ -248,13 +262,8 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
         if str(value).strip()
     ]
     requested = list(dict.fromkeys(requested))
-    if len(requested) < CLUSTER_BULK_MINIMUM_SCHOOLS:
-        raise BadRequest(
-            f"Tick at least {CLUSTER_BULK_MINIMUM_SCHOOLS} schools for one "
-            f"day. You ticked {len(requested)}; fewer than "
-            f"{CLUSTER_BULK_MINIMUM_SCHOOLS} is an ordinary day and is "
-            "scheduled from each school's own row."
-        )
+    if not requested:
+        raise BadRequest("Tick the schools this day is planned for.")
 
     selection = schedulable_members(cluster, principal)
     by_id = {member.id: member for member in selection.members}
@@ -271,13 +280,17 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
             raise BadRequest(member.reason)
         chosen.append(member)
 
-    # Ticked twice under two ids is still one school; count what will be
-    # written, because that is what the floor is about.
+    # Ticked twice under two ids is still one school, and a school is what the
+    # ceiling counts. A row carries both its record id and its school code, so
+    # the raw tick-list can name five schools in six values; refusing on the
+    # values would refuse a legal day.
     chosen = list({member.id: member for member in chosen}.values())
-    if len(chosen) < CLUSTER_BULK_MINIMUM_SCHOOLS:
+    if not chosen:
+        raise BadRequest("Tick the schools this day is planned for.")
+    if len(chosen) > CLUSTER_BULK_MAXIMUM_SCHOOLS:
         raise BadRequest(
-            f"Tick at least {CLUSTER_BULK_MINIMUM_SCHOOLS} different schools "
-            "for one day."
+            f"A day takes at most {CLUSTER_BULK_MAXIMUM_SCHOOLS} schools. "
+            f"You ticked {len(chosen)}; plan the rest as another day."
         )
 
     label = visit_purpose_label(purpose, purpose)

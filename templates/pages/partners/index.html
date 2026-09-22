@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}Partner Activities — Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
@@ -70,15 +70,20 @@
               <div><dt>Assigned Schools</dt><dd>{{ card.assigned_school_count }}</dd></div>
               <div><dt>Scheduled</dt><dd class="partner-activity-card__positive">{{ card.scheduled_count }}</dd></div>
               <div><dt>Pending</dt><dd class="partner-activity-card__warning">{{ card.pending_count }}</dd></div>
-              <div><dt>Linked SSA Intervention</dt><dd class="font-semibold text-sky-700">{{ card.partner.ssa_intervention_label }}</dd></div>
+              {% comment %}All of them, because a partner may do several
+              (owner, 2026-09-22). The pill above the name keeps the first, so
+              the card still reads at a glance.{% endcomment %}
+              <div><dt>Linked SSA Interventions</dt><dd class="font-semibold text-sky-700">{% for item in card.partner.capabilities.interventions %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% empty %}{{ card.partner.ssa_intervention_label }}{% endfor %}{% with activities=card.partner.capabilities.activities %}{% if activities %}<small>{{ activities|length }} activit{{ activities|length|pluralize:"y,ies" }}</small>{% endif %}{% endwith %}</dd></div>
             </dl>
           </header>
           {% if card.rows %}
           <div class="partner-activity-card__table-wrap">
+            {% page_param "card_rows_page" forloop.counter as card_rows_param %}
+            {% paginate card.rows card_rows_param as card_rows_pager %}
             <table class="edify-record-table partner-activity-table">
               <thead><tr><th>ID</th><th>School</th><th>District / Cluster</th><th>Purpose of Visit</th><th>Intervention Focus</th><th>Scheduled Date / Status</th><th>Cost</th><th><span class="sr-only">Action</span></th></tr></thead>
               <tbody>
-                {% for row in card.rows %}
+                {% for row in card_rows_pager.rows %}
                 <tr>
                   <td class="tabular-nums" data-label="ID">{{ row.school_code|default:"—" }}</td>
                   <td data-record-title><strong>{{ row.school_name }}</strong></td>
@@ -92,6 +97,7 @@
                 {% endfor %}
               </tbody>
             </table>
+            {% include "components/table_pager.html" with pager=card_rows_pager param=card_rows_param %}
           </div>
           {% else %}
           <div class="partner-activity-card__empty">No partner work matches these filters.</div>

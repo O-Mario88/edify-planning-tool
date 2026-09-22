@@ -122,6 +122,8 @@
     </div>
 
     <div class="overflow-x-auto">
+      {% page_param "row_rules_page" forloop.counter as row_rules_param %}
+      {% paginate row.rules row_rules_param as row_rules_pager %}
       <table class="w-full text-[13px]">
         <caption class="sr-only">How each role carries {{ row.priority.title }}</caption>
         <thead>
@@ -134,7 +136,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for rule in row.rules %}
+          {% for rule in row_rules_pager.rows %}
           <tr class="border-t border-slate-100">
             <td class="py-1.5 pr-3 font-semibold text-slate-700">{{ rule.role }}</td>
             <td class="py-1.5 pr-3 text-slate-600">{{ rule.get_accountability_display }}</td>
@@ -147,6 +149,7 @@
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=row_rules_pager param=row_rules_param %}
     </div>
 
     {% if row.editable and row.priority.status != "retired" %}

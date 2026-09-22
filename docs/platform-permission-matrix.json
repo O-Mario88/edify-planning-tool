@@ -16676,6 +16676,23 @@
    "view": "apps.frontend.views.school_views.bulk_match_staff_view"
   },
   {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/schools/bulk-transfer-owner",
+   "route_name": "bulk_school_owner_transfer",
+   "view": "apps.frontend.views.ownership_views.bulk_school_owner_transfer_view"
+  },
+  {
    "page_permission": "closed_schools",
    "required_permissions": [],
    "role_exclusive": false,
@@ -17934,26 +17951,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 405,
-  "Admin": 1003,
+  "Admin": 1004,
   "BusinessTransformationOfficer": 232,
-  "CCEO": 529,
-  "CountryDirector": 759,
+  "CCEO": 530,
+  "CountryDirector": 760,
   "HumanResources": 330,
-  "ImpactAssessment": 623,
+  "ImpactAssessment": 624,
   "MfiLoanOfficer": 128,
   "MfiPartnerAdmin": 131,
   "PartnerAdmin": 219,
   "PartnerFieldOfficer": 219,
-  "Program Lead": 614,
-  "ProjectCoordinator": 445,
-  "RegionalProgramLead": 305,
+  "Program Lead": 615,
+  "ProjectCoordinator": 446,
+  "RegionalProgramLead": 306,
   "RegionalVicePresident": 367
  },
  "summary": {
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
-  "routes_guarded": 1100,
-  "routes_total": 1293,
+  "routes_guarded": 1101,
+  "routes_total": 1294,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

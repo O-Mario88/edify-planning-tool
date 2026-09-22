@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 
 {% block title %}Roles & Permissions — Edify{% endblock %}
 
@@ -19,6 +19,7 @@
 <!-- Matrix Card Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate permission_groups "permission_groups_page" as permission_groups_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -31,7 +32,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for group in permission_groups %}
+{% for group in permission_groups_pager.rows %}
 <tr class="bg-slate-50/70">
 <td colspan="{{ roles|length|add:1 }}" class="px-5 py-2 edify-text-caption font-semibold uppercase tracking-wider text-slate-500">
 {{ group.name }}
@@ -70,6 +71,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=permission_groups_pager param="permission_groups_page" %}
 </div>
 </div>
 

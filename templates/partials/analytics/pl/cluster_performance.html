@@ -1,7 +1,8 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">D. Cluster Performance</h3>
   <div class="overflow-x-auto -mx-1">
+    {% paginate cluster_performance.rows "cluster_performance_cluster_performance_rows_page" as cluster_performance_cluster_performance_rows_pager %}
     <table class="w-full text-left border-collapse min-w-[560px]">
       <thead>
         <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
@@ -15,7 +16,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-50">
-        {% for c in cluster_performance.rows %}
+        {% for c in cluster_performance_cluster_performance_rows_pager.rows %}
         <tr class="hover:bg-slate-50/60 transition-colors cursor-pointer"
             hx-get="/analytics/program-lead/drilldown?drill=cluster&id={{ c.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
             hx-target="#drawer-container" hx-swap="innerHTML">
@@ -43,5 +44,6 @@
         {% endfor %}
       </tbody>
     </table>
+    {% include "components/table_pager.html" with pager=cluster_performance_cluster_performance_rows_pager param="cluster_performance_cluster_performance_rows_page" %}
   </div>
 </div>

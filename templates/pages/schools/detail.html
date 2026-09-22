@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 
 {% load frontend_filters %}
 
@@ -257,11 +257,14 @@ not proof it caused the change. Built by apps.analytics.ia_workflow.school_progr
 <span class="text-[12px] font-semibold" data-tone="{{ pair.tone }}">{{ pair.classification_label }}{% if pair.mean_delta is not None %} ({{ pair.mean_delta|floatformat:"+2" }}){% endif %}</span>
 </div>
 {% if pair.domains %}
+{% page_param "pair_domains_page" forloop.counter as pair_domains_param %}
+{% paginate pair.domains pair_domains_param as pair_domains_pager %}
 <div class="overflow-x-auto"><table class="w-full text-left text-[12px]" data-mobile-table="scroll">
 <caption class="sr-only">SSA domain change FY{{ pair.before.fy }} to FY{{ pair.after.fy }}</caption>
 <thead><tr><th scope="col">Domain</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Change</th><th scope="col">Result</th></tr></thead>
-<tbody>{% for d in pair.domains|slice:":8" %}<tr><td>{{ d.name }}</td><td class="tabular-nums">{{ d.before }}</td><td class="tabular-nums">{{ d.after }}</td><td class="tabular-nums">{{ d.delta|floatformat:"+2" }}</td><td><span data-tone="{{ d.tone }}">{{ d.classification }}</span></td></tr>{% endfor %}</tbody>
+<tbody>{% for d in pair_domains_pager.rows %}<tr><td>{{ d.name }}</td><td class="tabular-nums">{{ d.before }}</td><td class="tabular-nums">{{ d.after }}</td><td class="tabular-nums">{{ d.delta|floatformat:"+2" }}</td><td><span data-tone="{{ d.tone }}">{{ d.classification }}</span></td></tr>{% endfor %}</tbody>
 </table></div>
+{% include "components/table_pager.html" with pager=pair_domains_pager param=pair_domains_param %}
 {% endif %}
 <p class="edify-text-caption text-slate-500 font-semibold">Verified support between the readings: {% if pair.support_count %}{{ pair.support_count }} activit{{ pair.support_count|pluralize:"y,ies" }} — {{ pair.support|join:", " }}{% if pair.support_count > pair.support|length %} …{% endif %}{% else %}none recorded{% endif %}.</p>
 </article>
