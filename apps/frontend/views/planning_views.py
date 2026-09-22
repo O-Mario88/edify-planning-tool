@@ -1176,8 +1176,15 @@ def schedule_modal_view(request):
         responsible_staff_id = _requester_identity(request.user)
         responsible_staff_name = getattr(request.user, "name", "") or "You"
 
+    # What the school already has this year, said before another is planned
+    # (owner, 2026-09-22). A note, never a gate: every action stays open.
+    from apps.planning.school_planning_badges import existing_plan_warning
+
     context = {
         "school": school,
+        "existing_plan_warning": existing_plan_warning(
+            school.id, financial_year=get_operational_fy()
+        ),
         "visit_request_owner_name": visit_request_owner_name,
         # Says, in the drawer, what `visit_owner_for` just decided: the school
         # is not this person's, so the visit is theirs rather than its owner's.

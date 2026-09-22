@@ -67,6 +67,7 @@
                 <div class="school-record-row__ssa {% if s.ssaAverageTone %}is-{{ s.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if s.currentSsaAverage is not None %} style="color: {{ s.currentSsaAverage|ssa_score_colour }}" title="{{ s.currentSsaAverage|ssa_score_band_label }}"{% endif %}>{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
                 <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</dd></div>
                 <div><dt>Last Training:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</dd></div>
+                {% include "components/school_planning_badges.html" with badges=s.planningBadges %}
               </dl>
             </div>
           </div>

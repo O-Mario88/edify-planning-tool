@@ -213,7 +213,7 @@ rather than vanishing without a reason.{% endcomment %}
 <div class="overflow-x-auto">
 {% paginate schools "schools_page" as schools_pager %}
 <table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse">
-<caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, and planning readiness.</caption>
+<caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, visit and training planning status, and planning readiness.</caption>
 <thead>
 <tr class="bg-slate-50/80 border-b border-[var(--edify-border)] text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
 <th scope="col" class="px-4 py-2.5">School ID</th>
@@ -221,6 +221,8 @@ rather than vanishing without a reason.{% endcomment %}
 <th scope="col" class="px-4 py-2.5">SSA Average</th>
 <th scope="col" class="px-4 py-2.5">Last Visit</th>
 <th scope="col" class="px-4 py-2.5">Last Training</th>
+<th scope="col" class="px-4 py-2.5">Visit Status</th>
+<th scope="col" class="px-4 py-2.5">Training Status</th>
 <th scope="col" class="px-4 py-2.5">Readiness</th>
 {% if can_schedule %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Plan</th>{% endif %}
 {% if can_edit_cluster %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Remove</th>{% endif %}
@@ -237,6 +239,7 @@ rather than vanishing without a reason.{% endcomment %}
 <td class="px-4 py-3 font-semibold tabular-nums" data-label="SSA Average"><span class="edify-status-text" data-edify-tone="{{ s.ssaAverageTone|default:'neutral' }}">{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:1 }}/10{% else %}Not assessed{% endif %}</span></td>
 <td class="px-4 py-3 font-semibold" data-label="Last Visit"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</span></td>
 <td class="px-4 py-3 font-semibold" data-label="Last Training"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</span></td>
+{% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
 <td class="px-4 py-3" data-label="Readiness">
 <span class="inline-flex items-center rounded-control px-2 py-0.5 text-xs font-semibold border {% if s.planningStatus == 'ready_for_support_planning' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif s.planningStatus == 'ready_for_baseline_ssa' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-slate-100 text-slate-600 border-slate-200{% endif %}">
 {{ s.planningStatusLabel }}
@@ -288,7 +291,7 @@ aria-label="Remove {{ s.name }} from this cluster"
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if can_schedule and can_edit_cluster %}8{% elif can_schedule or can_edit_cluster %}7{% else %}6{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if can_schedule and can_edit_cluster %}10{% elif can_schedule or can_edit_cluster %}9{% else %}8{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button

@@ -58,6 +58,55 @@
   color: var(--edify-danger-text);
 }
 
+/* Visit and Training planning badges — Planning school list and Cluster
+   School List only (templates/components/school_planning_badges.html).
+   Orange planned, blue awaiting verification, green IA-verified complete,
+   amber needs replanning, gray not planned. */
+.school-planning-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-inline-size: 100%;
+}
+
+.school-planning-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--edify-border);
+  border-radius: 9999px;
+  padding: 0.0625rem 0.5rem;
+  background-color: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text-muted, var(--edify-text));
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  line-height: var(--edify-text-micro-leading);
+  white-space: nowrap;
+}
+
+.school-planning-badge[data-planning-tone="planned"] {
+  background-color: color-mix(in oklab, var(--edify-chart-orange) 12%, transparent);
+  border-color: color-mix(in oklab, var(--edify-chart-orange) 45%, transparent);
+  color: color-mix(in oklab, var(--edify-chart-orange) 60%, var(--edify-text));
+}
+
+.school-planning-badge[data-planning-tone="awaiting"] {
+  background-color: var(--edify-info-light);
+  border-color: var(--edify-info-border);
+  color: var(--edify-info-text);
+}
+
+.school-planning-badge[data-planning-tone="verified"] {
+  background-color: var(--edify-success-light);
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
+
+.school-planning-badge[data-planning-tone="replan"] {
+  background-color: var(--edify-warning-light);
+  border-color: var(--edify-warning-border);
+  color: var(--edify-warning-text);
+}
+
 .edify-surface {
   background-color: var(--edify-surface) !important;
 }
