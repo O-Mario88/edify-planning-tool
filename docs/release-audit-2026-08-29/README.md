@@ -10,7 +10,7 @@
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
 | Final local suite | **8,375 tests, `OK`**, at `4bc714bf0749d45c6f2f010d5eccdf0be723de22` — the merged tree, this branch on top of `8b0e8c80` (2026-09-22, PostgreSQL 16 / Python 3.13, `--parallel 4`, 1,287s). Before it: 8,315 `OK` at `e9058ba1`, and **red** at `84d75841` with 1 failure and 2 errors, which §3a accounts for. The 6,228 figure belongs to the 2026-08-29 pass at `68ed46c2` and is kept in §5b. |
-| CI on the audit head | **all seven checks green at `4bc714bf`** — Django suite, both Browser Journeys shards, Security Scans, CodeQL and the two CodeQL analyses. The browser shards matter here: they are the only gate in this audit that drives a real browser against a seeded application, and they cannot be run in the audit environment. See §5a and §3b. |
+| CI on the audit head | **all seven checks green at `8f99da76`** — Django suite (8,353 + 22 tests, both `OK`), both Browser Journeys shards, Security Scans, CodeQL and the two CodeQL analyses. Green at `4bc714bf` and `993f656d` before it, so the branch is green with and without the CI Postgres fix. The browser shards matter here: they are the only gate in this audit that drives a real browser against a seeded application, and cannot be run in the audit environment. See §5a and §3b. |
 
 Every claim below is either a command whose output is quoted, or is marked
 **Not Tested**. Not Tested is not Green. Where a prior audit's finding is
@@ -330,11 +330,42 @@ flush at the same instant. That surfaces a limit; it does not create one. The
 CI `postgres:16` service runs stock, so `max_locks_per_transaction` is the
 default **64**.
 
-**It did not reproduce.** The next run, at `4bc714bf`, passed all seven checks.
-So the proposed fix (raising the lock ceiling on the CI service) was left
-**unpushed** and recorded on the PR instead: a one-off, diagnosed, non-repeating
-infrastructure failure does not justify changing CI configuration inside a
-scheduling PR, and pushing it would have widened the change on an assumption.
+**It did not reproduce.** The next run, at `4bc714bf`, passed all seven checks,
+as did `993f656d` after it. The fix was therefore left **unpushed** at first and
+recorded on the PR instead: a one-off, diagnosed, non-repeating infrastructure
+failure does not justify changing CI configuration inside a scheduling PR.
+
+**The owner then asked for it, so it is pushed** (`8f99da76`), and measuring it
+properly made the case much stronger than the original estimate. Counted on a
+freshly migrated database, one `TRUNCATE` of the schema locks **3,787
+relations**:
+
+| Relation kind | Count |
+| --- | --- |
+| Tables | 346 |
+| Indexes | 2,823 |
+| TOAST tables | 309 |
+| TOAST indexes | 309 |
+| **Locked by one flush** | **3,787** |
+
+Against `64 × (100 + 0)` = **6,400** slots, **one flush fits and two do not**;
+`--parallel 4` asks for roughly 15,100. The suite has only ever passed because
+four workers rarely reach teardown at the same instant, and which tests die when
+they do is incidental — it reshuffles whenever a test is added. That is why
+adding a single test to this branch was enough to surface a limit that predates
+it. `512 × 100 = 51,200` leaves 3.4× headroom. No test is skipped, disabled or
+quarantined, and no assertion is touched.
+
+Verified on the first CI run carrying it (`8f99da76`): the step went green, and
+its exit status is the evidence rather than its log. Its last command is
+`test "${applied}" = "512"`, where `applied` is read back over the mapped port
+the way Django connects — a shell script exits with the status of its last
+command, so the step can only pass if the restarted container really reports
+512. The audit environment has no Docker daemon, so that path could not be
+rehearsed locally; what *was* rehearsed locally is the mechanism —
+`ALTER SYSTEM` writes `postgresql.auto.conf`, the running value stays 64 until
+the postmaster restarts, and reads back 512 afterwards with the lock table at
+51,200 slots.
 
 Two honesty notes. First, this could **not** be dismissed as "red on the base
 too": `main` was also red at `ceee7e3f`, but on four different tests, so the
