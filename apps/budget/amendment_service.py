@@ -59,6 +59,25 @@ def request_amendment(activity_id: str, data: dict, principal) -> BudgetAmendmen
         raise BadRequest("An amendment requires a reason.")
     new_date = _parse_date(data["newDate"])
 
+    # REG-02 calendar gate. Restored by owner decision (2026-09-22): "keep the
+    # calendar and leave blocks, drop the frequency caps". Only the calendar
+    # half of 23e3bfba comes back; the frequency caps and the client/partner
+    # annual entitlements stay removed.
+    # Moving a locked activity's date is still scheduling, checked here at
+    # request time so the requester gets immediate feedback instead of a
+    # silent reviewer-side rejection.
+    from apps.core.calendar_policy import (
+        SchedulingPolicyService,
+        resolve_scheduling_user,
+    )
+
+    staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+    avail = SchedulingPolicyService.check(
+        resolve_scheduling_user(staff_id) if staff_id else None, new_date
+    )
+    if avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     if BudgetAmendment.objects.filter(
         activity=activity,
         status__in=[
@@ -148,6 +167,25 @@ def approve_amendment(amendment_id: str, data: dict, principal) -> BudgetAmendme
         activity = amendment.activity
 
         new_day = amendment.new_date
+
+        # REG-02 re-check at apply time: calendar policy (a holiday declared
+        # after the amendment was requested) may have changed since
+        # request_amendment() first validated this date.
+        from apps.core.calendar_policy import (
+            SchedulingPolicyService,
+            resolve_scheduling_user,
+        )
+
+        staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+        avail = SchedulingPolicyService.check(
+            resolve_scheduling_user(staff_id) if staff_id else None, new_day
+        )
+        if avail["status"] == "blocked":
+            raise BadRequest(
+                "Scheduling blocked: "
+                + " · ".join(avail["blockers"])
+                + " Ask the requester to submit a new amendment with a different date."
+            )
 
         new_dt = datetime.combine(new_day, time(9, 0), tzinfo=dt_tz.utc)
         week_start = new_day - timedelta(days=new_day.weekday())

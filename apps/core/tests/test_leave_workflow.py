@@ -303,8 +303,20 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertIsNotNone(entry)
         self.assertEqual(entry.subject_id, cov.id)
 
-    def test_activity_can_be_scheduled_during_leave(self):
-        """Approved leave remains recorded without blocking activity planning."""
+    def test_prevent_activity_during_leave(self):
+        """Approved leave blocks scheduling the person it covers.
+
+        Restored by owner decision (2026-09-22): "keep the calendar and leave
+        blocks, drop the frequency caps". `64ac5323` renamed this test to
+        `test_activity_can_be_scheduled_during_leave` and inverted it to assert
+        the create() succeeds, matching `23e3bfba`'s removal of the gate. The
+        assertion is restored; the fiscal-year rate fixture that same commit
+        corrected is kept, because that fix was about costing, not the calendar.
+
+        Journey 9 requires leave to produce a calendar block, and this is the
+        integration-level proof of it — `test_reg02_calendar_policy` proves the
+        policy, this proves the leave workflow's own surface honours it.
+        """
         # Create approved leave for CCEO-2 on Oct 8 to Oct 12
         Leave.objects.create(
             staff=self.cceo2_profile,
@@ -328,18 +340,30 @@ class LeaveWorkflowIntegrationTest(APITestCase):
                 catalogue=catalogue, fy="2027", key=key, label=key, unit_cost=100
             )
 
-        result = create(
-            data={
-                "activityType": "school_visit",
-                "schoolId": self.school2.school_id,
-                "scheduledDate": "2026-10-09",
-                "responsibleStaffId": self.cceo2_user.id,
-            },
-            principal=self.cceo2_user,
-        )
-        self.assertEqual(result["status"], "scheduled")
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest) as ctx:
+            create(
+                data={
+                    "activityType": "school_visit",
+                    "schoolId": self.school2.school_id,
+                    "scheduledDate": "2026-10-09",
+                    "responsibleStaffId": self.cceo2_user.id,
+                },
+                principal=self.cceo2_user,
+            )
+        # Named specifically. 2026-10-09 is also a public holiday in this
+        # fixture, so a bare assertRaises would stay green if the leave check
+        # were removed and only the holiday check remained — the test would
+        # then be about holidays while still claiming to be about leave.
+        self.assertIn("approved leave", str(ctx.exception))
         self.assertTrue(
-            Leave.objects.filter(staff=self.cceo2_profile, status="approved").exists()
+            Leave.objects.filter(staff=self.cceo2_profile, status="approved").exists(),
+            "the refusal must not consume or alter the leave record it reads",
+        )
+        self.assertFalse(
+            Activity.objects.filter(school=self.school2).exists(),
+            "the refusal must leave no activity behind",
         )
 
     def test_audit_log_coverage_injection(self):
