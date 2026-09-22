@@ -91,13 +91,19 @@ class PeriodMatrixContractTest(SimpleTestCase):
         my_body = _read("templates/partials/targets/my_body.html")
         team_body = _read("templates/partials/targets/team/body.html")
         self.assertTrue(
-            "with rows=matrix_rows heads=matrix_heads" in my_body
-            or "with rows=contract_matrix.rows heads=matrix_heads" in my_body
+            'matrix_key="agreed" rows=matrix_rows heads=matrix_heads' in my_body
+            or 'matrix_key="contract" rows=contract_matrix.rows heads=matrix_heads'
+            in my_body
         )
         self.assertTrue(
-            'with variant="team" rows=member.period_matrix_rows' in team_body
+            'matrix_key=forloop.counter variant="team" rows=member.period_matrix_rows'
+            in team_body
             or "with rows=member.matrix.rows heads=matrix_heads" in team_body
         )
+        # Every instance names itself: the partial is drawn twice on the
+        # personal page and once per team member, and one page parameter
+        # between them would move every copy at once.
+        self.assertIn('{% page_param "period_rows" matrix_key', shared)
         # The team member's dict carries the normalised rows the partial reads.
         service = _read("apps/targets/team_targets.py")
         self.assertIn('"period_matrix_rows": period_matrix_rows,', service)

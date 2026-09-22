@@ -97,7 +97,10 @@ class IADashboardDesignContractTest(SimpleTestCase):
             'aria-controls="ia-district-group-{{ group.key }}"', self.template
         )
         self.assertIn('aria-controls="ia-leader-group-{{ group.key }}"', self.template)
-        self.assertIn("{% for district in group.districts %}", self.template)
+        # Paged since 2026-09-22, so the loop reads the page and the group is
+        # what the page is taken from.
+        self.assertIn("{% paginate group.districts", self.template)
+        self.assertIn("{% for district in group_districts_pager.rows %}", self.template)
         for header in (
             "<th># Schools</th>",
             "<th># Planned</th>",
@@ -105,7 +108,8 @@ class IADashboardDesignContractTest(SimpleTestCase):
             "<th>% Achieved</th>",
         ):
             self.assertIn(header, self.template)
-        self.assertIn("{% for leader in group.members %}", self.template)
+        self.assertIn("{% paginate group.members", self.template)
+        self.assertIn("{% for leader in group_members_pager.rows %}", self.template)
         # The lead's consolidated row heads the same two bands the districts use.
         self.assertIn('class="ia-monitor-table__lead"', self.template)
         self.assertEqual(
