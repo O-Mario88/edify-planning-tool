@@ -64,17 +64,58 @@ SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
 # in their region and of the CCEOs those Leads supervise (owner, 2026-09-12);
 # unlike the RVP they need the rows, not just the summary.
 REGION_ROLES = {EdifyRole.REGIONAL_PROGRAM_LEAD.value}
-# Country roles with no portfolio of their own. They never plan *directly*
-# into a CCEO's or Programme Lead's schools or clusters — a visit they need at
-# somebody else's school is scheduled the ordinary way, carries the reason for
-# it, and waits for that owner's approval before it takes effect. The Country
-# Director and Impact Assessment keep their direct authority over targets
-# nobody owns (COUNTRY_SCHEDULING_ROLES); the Accountant, who schedules
-# nothing of their own, can only ask. See apps.planning.visit_requests.
-VISIT_REQUEST_ROLES = {
+# Country roles with no portfolio of their own. A cluster meeting, a group
+# training and a core school's trainings are the programme of the CCEO or
+# Programme Lead who holds them, and these three roles never plan one, owned or
+# not. What they DO is go to schools, so the school visit is the one piece of
+# field work the set does not govern — see `SCHOOL_VISIT_ROLES` below and
+# `apps.planning.visit_requests.refuse_cluster`.
+VISIT_ONLY_ROLES = {
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.IMPACT_ASSESSMENT.value,
     EdifyRole.PROGRAM_ACCOUNTANT.value,
+}
+# Whose school visit still waits for the school owner's yes.
+#
+# Owner, 2026-09-21: "some roles are not able to schedule client school visits
+# while others can ... lift all the restrictions", for the CCEO, the Country
+# Director, the Programme Lead, Impact Assessment and the Project Coordinator.
+# The Country Director and Impact Assessment were in this set and are now in
+# `SCHOOL_VISIT_ROLES`: their visit is scheduled outright rather than filed as
+# a request nobody had decided on. The Programme Accountant, who was not named
+# in the lift, keeps the request path exactly as it was — they observe, pay and
+# follow up accountabilities, and schedule no field work of their own.
+#
+# The queue and the approve/decline decisions in `apps.planning.visit_requests`
+# stay whatever this set holds: requests filed before today are still waiting
+# on their owners.
+VISIT_REQUEST_ROLES = {
+    EdifyRole.PROGRAM_ACCOUNTANT.value,
+}
+# Who may put a school visit in the calendar, at ANY school, with nobody's
+# approval (owner, 2026-09-21 — the five roles named above).
+#
+# This is the one place the answer lives. Before today it was spread across six
+# surfaces that each re-derived it: the drawer's own permission check, the
+# school resolver behind the drawer and its POST, the activity service's
+# create-time target check, the request detour that turned a Country Director's
+# visit into somebody else's decision, and the per-school visit counts in
+# `apps.planning.visit_gate`. A role was refused at whichever of them it
+# reached first, which is why the same person could see a Schedule button and
+# still be told the visit could not be saved.
+#
+# Deliberately a list of roles rather than a portfolio test. The restriction
+# being lifted IS the portfolio test: a Programme Lead could not schedule at a
+# school of a CCEO they supervise, and a CCEO could not schedule at a school
+# they cover but do not hold. Partner and MFI logins are not here — they belong
+# to outside organisations, reach their own work through `partner_ids`, and
+# keep the partner queue they already had.
+SCHOOL_VISIT_ROLES = {
+    EdifyRole.CCEO.value,
+    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.PROJECT_COORDINATOR.value,
 }
 
 
@@ -1136,17 +1177,47 @@ def may_plan_school(scope: UserScope, school) -> bool:
     return bool(scope.own_school_ids) and school_id in scope.own_school_ids
 
 
-def may_request_school_visit(scope: UserScope, school) -> bool:
-    """Whether this person may ask the school's owner for a visit.
+def may_schedule_school_visit(scope: UserScope, school=None) -> bool:
+    """Whether this person may schedule a visit at `school`.
 
-    The request path, not the planning path: a Country Director, Impact
-    Assessment or the Accountant reaching a school that belongs to a CCEO or
-    Programme Lead. `may_plan_school` stays the answer for everyone who owns
-    what they are planning in.
+    The school-visit answer, read by the drawer, by the resolver behind it and
+    by the activity service, so those three can no longer disagree about the
+    same person and the same school (owner, 2026-09-21: "lift all the
+    restrictions"). `may_plan_school` stays the answer for everything else a
+    portfolio owner does — editing the school, the core package, the cluster
+    programme — which is why this is a second predicate rather than a widening
+    of the first.
+
+    `school` is accepted and unused: the rule is deliberately the same at every
+    school in the country, and a caller that has the row should not have to
+    know that.
+    """
+    return getattr(scope, "active_role", None) in SCHOOL_VISIT_ROLES
+
+
+def may_request_school_visit(scope: UserScope, school) -> bool:
+    """Whether this person's visit must wait for the school owner's yes.
+
+    The request path, which since 2026-09-21 is the Programme Accountant's
+    alone: the Country Director and Impact Assessment were lifted out of it
+    and now schedule directly (`may_schedule_school_visit`).
     """
     # Any school: where it has an owner the visit waits for their approval,
     # where it has none it is simply scheduled (owner, 2026-09-02).
     return getattr(scope, "active_role", None) in VISIT_REQUEST_ROLES
+
+
+def schedules_visits_only(scope: UserScope) -> bool:
+    """Whether school visits are the whole of this person's field programme.
+
+    The cluster meeting, the group training and a core school's trainings stay
+    with the CCEO or Programme Lead who holds them. Separated from
+    `may_request_school_visit` on 2026-09-21: until then one set answered both
+    "must this visit be approved?" and "may this role plan a cluster?", so
+    lifting the approval off the Country Director and Impact Assessment would
+    have handed them the cluster programme as a side effect.
+    """
+    return getattr(scope, "active_role", None) in VISIT_ONLY_ROLES
 
 
 def assert_may_plan_school(principal, school) -> None:
@@ -1324,6 +1395,12 @@ __all__ = [
     "team_oversight_schools",
     "may_plan_school",
     "assert_may_plan_school",
+    "may_schedule_school_visit",
+    "may_request_school_visit",
+    "schedules_visits_only",
+    "SCHOOL_VISIT_ROLES",
+    "VISIT_ONLY_ROLES",
+    "VISIT_REQUEST_ROLES",
     "may_write_school",
     "assert_may_write_school",
     "scope_cache_fingerprint",

@@ -28,7 +28,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from django.utils.html import format_html
 
-from apps.core.exceptions import UNEXPECTED_MESSAGE, EdifyAPIException
+from apps.core.exceptions import UNEXPECTED_MESSAGE, EdifyAPIException, Forbidden
 
 logger = logging.getLogger(__name__)
 
@@ -88,12 +88,18 @@ def error_fragment(
         # Callers are inside one today, but a helper that silently logs
         # "NoneType: None" when they are not is worse than no log at all.
         logger.error("Unhandled error during %s", action or "an action", exc_info=exc)
-    if isinstance(exc, PermissionDenied):
+    if isinstance(exc, (PermissionDenied, Forbidden)):
         # The status belongs to the refusal, not to the call site. Most views
         # pass `status=400` because that is the right default for the failures
         # they were written around; a refusal answered with 400 tells the
         # client the request was malformed when it was in fact understood
         # perfectly and declined.
+        #
+        # Both kinds of refusal, since they reach the same swap: Django raises
+        # `PermissionDenied` from the view-level resolvers, the domain raises
+        # `Forbidden` (which carries its own 403) from the services behind
+        # them. Which one a caller meets depends only on how far into the
+        # request the refusal lives, and the client should not be able to tell.
         status = 403
     return HttpResponse(
         format_html(FRAGMENT, error_message(exc, action=action)), status=status

@@ -1,20 +1,20 @@
-"""Who may schedule a visit at a school this year — one answer for every button.
+"""What a school's visits add up to this year — one answer for every button.
 
-Owner, 2026-09-15:
+Owner, 2026-09-21:
 
-  "Client school visits: they are supposed to be visited once in a year, so if
-  a staff or partner has already scheduled it, the schedule buttons should be
-  disabled. Assigned school to a partner should also be disabled from staff
-  scheduling; only the partner can schedule it unless the partner returns the
-  school back to the staff. Core schools should be scheduled by staff twice
-  for visit and assigned twice to a partner. Staff can only schedule a core
-  school visit twice and the button disables once those visits are done;
-  the partner can also only schedule twice."
+  "can you lift restriction to school visits especially client school visit.
+  All restrictions. right now it is restricting returning error and not
+  scheduling."
 
-The rule is read in two places that must never disagree: the buttons on the
-Planning, Cluster, Core Schools and Partner pages (greyed, with the reason as
-the tooltip) and the services that create the work (which refuse with the same
-sentence). Both call here. Nothing else counts visits for this purpose.
+So the CLIENT school's allowance no longer refuses anything. It is still
+counted — that is what the pages show — but the count stopped being a
+permission, and the buttons that used to grey out of it stay live.
+
+The CORE package is not part of that. Its 2 + 2 split rests on the owner's
+own later instruction (2026-09-17) and is enforced half here and half in
+`core_planning_services.assert_can_schedule`, which delegates the partner
+side to this module; the two must agree or a Core Schools row offers what
+the POST refuses. `_decide` marks which half is which.
 
 Owner, 2026-09-21:
 
@@ -22,39 +22,41 @@ Owner, 2026-09-21:
   activities (visit, trainings) client schools should receive but cannot be
   assigned to partner."
 
-So those three sit on the client rule beside ``client`` itself — the same two
-visits a year, the same purposes — and the partner side of the gate is closed
-for them whatever the counts say. They are listed in
-``PROGRAMME_SCHOOL_TYPES`` and the Programme Schools page is the list of them.
+So those three sit on the client rule beside ``client`` itself — the same
+purposes, and the same allowance, now counted rather than enforced — and the
+partner side of the gate is closed for them whatever the counts say. They are
+listed in ``PROGRAMME_SCHOOL_TYPES`` and the Programme Schools page is the
+list of them.
 
-What counts:
+What counts, and is still read by the Planning, Cluster, Core Schools and
+Partner pages:
 
 * Client-rule schools (``client`` and the three Programme types): the
   follow-up visit
   — a support visit to the school in the operational fiscal year, whoever
-  delivers it (owner, 2026-09-15: "follow up can only be scheduled once").
-  Donor visits, story gathering, invitations and social visits are not it;
-  neither is an in-school training, nor the companion visit the training
-  pair creates, nor an in-school coaching visit ("if the training is
-  in-school, allow those"). A catalogue item the CD has taken out of the
-  entitlement (its rule's counts_toward_entitlement off) neither counts nor
-  is refused. A live partner assignment that has not been scheduled yet
-  locks the school for staff altogether; a returned one does not.
+  delivers it. Donor visits, story gathering, invitations and social visits
+  are not it; neither is an in-school training, nor the companion visit the
+  training pair creates, nor an in-school coaching visit. A catalogue item the
+  CD has taken out of the entitlement (its rule's counts_toward_entitlement
+  off) does not count. ``partner_pending`` names a live partner assignment
+  nobody has scheduled yet — which is worth SAYING on the row, and no longer
+  closes the school to staff.
 * Core schools: ``core_visit`` activities in the fiscal year, split by
-  ``delivery_type``. Staff may hold two; the partner side (scheduled partner
-  visits plus visit slots assigned to a partner and not yet scheduled) may
-  hold two. These are the halves of the package's four visits, and the same
-  two the core scheduling service caps at. Trainings are not visits: the
-  Core Schools row keeps its own Training entry open while staff trainings
-  remain.
+  ``delivery_type``, beside the package's trainings. Staff may hold two and
+  the partner side (scheduled partner visits plus visit slots assigned to a
+  partner and not yet scheduled) may hold two. These are the halves of the
+  package's four visits, and the same two the core scheduling service caps
+  at. Trainings are not visits: the Core Schools row keeps its own Training
+  entry open while staff trainings remain.
 
-Two answers per side, because a row button and a purpose inside a drawer
-are gated differently: ``staff_can_schedule`` says whether the follow-up
-visit itself may be scheduled (the purpose in the drawer, the core-visit
-option, the core row's Schedule button); ``staff_locked`` says whether the
-whole Schedule button on a Planning or cluster row is off (only when a
-partner holds the school). Likewise ``can_assign_partner`` (the Assign
-button) and ``can_assign_visit`` (the visit purposes in the assign drawer).
+Two answers per side, because a row button and a purpose inside a drawer are
+gated differently: ``staff_can_schedule`` says whether the visit itself may be
+scheduled (the purpose in the drawer, the core-visit option, the core row's
+Schedule button); ``staff_locked`` says whether the whole Schedule button on a
+Planning or cluster row is off. Likewise ``can_assign_partner`` (the Assign
+button) and ``can_assign_visit`` (the visit purposes in the assign drawer). On
+a client school all four are now always open, with an empty reason, so the
+templates render a live button and no tooltip.
 
 "Live" excludes cancelled, rejected, deferred and not-planned work, which is
 what every other counter here excludes. A completed visit still counts: the
@@ -67,11 +69,16 @@ from dataclasses import asdict, dataclass, field
 
 from django.db.models import Count
 
-# Two follow-up visits a year at a client school, raised from one on
-# 2026-09-17 on the owner's instruction, alongside the core package's two. The
-# cap governs the FOLLOW-UP visit only: in-school training, donor, social and
-# invitation visits at a client school were never counted against it, and are
-# not now.
+# The shape of a year's support, as the pages display it — "1/2 visits" on a
+# Core Schools row, "2 of 2" beside a client school.
+#
+# CLIENT_VISIT_CAP is display only since 2026-09-21: it was the figure the
+# gate refused past (one visit a year until 2026-09-17, two after it), and it
+# is kept named, at the owner's number, because a count shown without the
+# figure it is counted against says nothing.
+#
+# The two CORE caps are still enforced — the package's halves, which the lift
+# did not touch. See `_decide`.
 CLIENT_VISIT_CAP = 2
 CORE_STAFF_VISIT_CAP = 2
 CORE_PARTNER_VISIT_CAP = 2
@@ -137,7 +144,13 @@ class VisitGate:
 
     @property
     def staff_trainings_open(self) -> bool:
-        """Core only: staff still have one of their two trainings to give."""
+        """Core only: staff still have one of their two trainings to give.
+
+        The package's halves are not part of the 2026-09-21 lift — see
+        `_decide` — and `core_planning_services.assert_can_schedule` caps
+        staff trainings at the same figure, so this has to agree with it or
+        the row offers an entry the POST refuses.
+        """
         return self.rule == "core" and self.staff_trainings < CORE_STAFF_VISIT_CAP
 
     def as_dict(self) -> dict:
@@ -351,11 +364,33 @@ def programme_school_partner_refusal(school_name: str, school_type: str) -> str:
 
 
 def _decide(gate: VisitGate) -> None:
+    """Fill in the shape of the year's support, and say what is still refused.
+
+    Owner, 2026-09-21: "can you lift restriction to school visits especially
+    client school visit. All restrictions. right now it is restricting
+    returning error and not scheduling."
+
+    So on the CLIENT rule this refuses nothing. What it used to do there, and
+    no longer does:
+
+    * the follow-up visit was capped at CLIENT_VISIT_CAP a year across staff
+      and partner together, and the cap greyed the purpose in the drawer and
+      refused the POST behind it;
+    * a live partner assignment locked the school away from staff entirely
+      until the partner returned it.
+
+    The counting stays, because it is what the pages SHOW: the row reads
+    "2 of 2" and names the partner holding a school. A count is information;
+    on that rule it stopped being a permission.
+
+    Two things are still refused, and neither is part of that lift. The CORE
+    package keeps its halves — see the branch below. And a Programme school
+    (core trained, core graduate, champion) is never a partner's work, which
+    is applied here, after the rule, so a rule's own sentence about a spent
+    entitlement cannot overwrite it.
+    """
     _decide_by_rule(gate)
     if gate.school_type in PROGRAMME_SCHOOL_TYPES:
-        # Last, so a rule's own sentence about a used entitlement cannot
-        # overwrite it: a Programme school is never a partner's work, whatever
-        # the year's counts say.
         refusal = programme_school_partner_refusal(gate.school_name, gate.school_type)
         gate.partner_can_schedule = False
         gate.partner_reason = refusal
@@ -370,47 +405,22 @@ def _decide_by_rule(gate: VisitGate) -> None:
     if gate.rule == "client":
         gate.staff_cap = CLIENT_VISIT_CAP
         gate.partner_cap = CLIENT_VISIT_CAP
-        visited = gate.total_visits >= CLIENT_VISIT_CAP
-        if visited:
-            who = (
-                "a partner"
-                if gate.partner_visits and not gate.staff_visits
-                else "staff"
-            )
-            # Worded from the constant so the sentence and the rule cannot
-            # drift apart the next time the cap moves.
-            visited_reason = (
-                f"{gate.school_name} already has its {CLIENT_VISIT_CAP} visits "
-                f"for FY{gate.fy} (scheduled by {who}). Client schools take "
-                f"{CLIENT_VISIT_CAP} visits a year."
-            )
-            # The follow-up visit is used; the rest of the drawer (in-school
-            # training, donor and social visits) stays open.
-            gate.staff_can_schedule = False
-            gate.staff_reason = visited_reason
-            gate.partner_can_schedule = False
-            gate.partner_reason = visited_reason
-            gate.can_assign_visit = False
-            gate.assign_visit_reason = visited_reason
-        if gate.partner_pending:
-            partner = gate.partner_name or "a partner"
-            locked = (
-                f"{gate.school_name} is assigned to {partner}. Only the partner "
-                "can schedule it until they return the school to staff."
-            )
-            gate.staff_can_schedule = False
-            gate.staff_reason = locked
-            gate.staff_locked = True
-            gate.staff_locked_reason = locked
-            # The follow-up visit is the partner's; other support (an
-            # in-school training) may still be handed over.
-            gate.can_assign_visit = False
-            gate.assign_visit_reason = (
-                f"{gate.school_name}'s visit is already assigned to {partner}."
-            )
         return
 
     if gate.rule == "core":
+        # The core package's 2 + 2 split is NOT part of the lift, and stands
+        # on the owner's own later instruction (2026-09-17, quoted in
+        # `core_planning_services.assert_can_schedule`): "Lift all FY
+        # restriction and package restrictions. Only block staff visit
+        # schedule after 2 scheduling and block partner assignment and
+        # schedule after 2 assignment and scheduling."
+        #
+        # That service enforces the staff half itself and delegates the
+        # partner half here, so dropping these would have removed the partner
+        # cap outright and left a Core Schools row offering a Schedule button
+        # the staff cap then refused. The client school's allowance is what
+        # 2026-09-21 lifted; the package is a funded 4 + 4 and keeps its
+        # halves.
         gate.staff_cap = CORE_STAFF_VISIT_CAP
         gate.partner_cap = CORE_PARTNER_VISIT_CAP
         if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
@@ -438,6 +448,14 @@ def _decide_by_rule(gate: VisitGate) -> None:
 
 
 def assert_staff_may_schedule_visit(school, fy=None, **kwargs) -> VisitGate:
+    """The school's counts, and no refusal (owner, 2026-09-21).
+
+    The three helpers below read the same always-open fields the buttons do,
+    so they return the gate rather than raising. They are called from the
+    scheduling services, the partner queue and the core package, and they stay
+    because the gate they return is used there — and because a restriction the
+    owner asks for again belongs at this seam, not spread back out.
+    """
     from apps.core.exceptions import BadRequest
 
     gate = visit_gate(school, fy, **kwargs)

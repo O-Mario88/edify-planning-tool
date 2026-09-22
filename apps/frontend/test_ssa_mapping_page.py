@@ -185,7 +185,11 @@ class SsaMappingPageTest(TestCase):
             f"/priorities/ssa-mapping/{self.item.id}/save", {"intervention": CB}
         )
 
-        self.assertEqual(response.status_code, 400)
+        # 403, not 400: the request was understood perfectly and declined.
+        # `error_fragment` has always said so for Django's `PermissionDenied`
+        # and now says the same for the domain's `Forbidden`, which is what
+        # this view raises.
+        self.assertEqual(response.status_code, 403)
         self.assertFalse(
             ActivityInterventionMapping.objects.filter(
                 catalogue_item=self.item

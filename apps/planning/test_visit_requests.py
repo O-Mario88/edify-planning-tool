@@ -1,14 +1,21 @@
-"""Visits into somebody else's portfolio wait for that owner's yes.
+"""The Programme Accountant's visit waits for the school owner's yes.
 
-The country roles with no portfolio — the Country Director, Impact Assessment
-and the Accountant — do not plan into a CCEO's or Programme Lead's schools.
-They ask: the visit is scheduled the ordinary way, carries the reason for it,
-and sits in ``awaiting_owner_approval`` until the school's owner approves it
-onto the requester's plan or declines it with a reason. Cluster meetings and
-trainings of an owned cluster have no request path at all.
+Owner, 2026-09-21: "some roles are not able to schedule client school visits
+while others can ... lift all the restrictions" — for the CCEO, the Country
+Director, the Programme Lead, Impact Assessment and the Project Coordinator.
+The Country Director and Impact Assessment used to arrive here and got a
+request nobody had yet decided on; they now schedule outright, at any school.
 
-Where nobody owns the target the older rule stands: the CD and IA plan
-directly, the Accountant is refused. See apps.planning.visit_requests.
+So the request path is the Accountant's alone: their visit is scheduled the
+ordinary way, carries the reason for it, and sits in
+``awaiting_owner_approval`` until the school's owner approves it onto the
+requester's plan or declines it with a reason. Where nobody owns the school
+there is nobody to ask and the visit is simply scheduled.
+
+Two things the lift deliberately did NOT move, and this file pins both:
+cluster meetings and trainings are the cluster owner's programme for all
+three portfolio-less country roles, and a core school's trainings likewise.
+See apps.planning.visit_requests.
 """
 
 from __future__ import annotations
@@ -191,29 +198,40 @@ class VisitRequestFixture(TestCase):
 
 
 class RequestingAVisitTest(VisitRequestFixture):
-    def test_a_director_at_an_owned_school_asks_rather_than_plans(self):
-        a = self._request(self.cd)
+    def test_an_accountant_at_an_owned_school_asks_rather_than_plans(self):
+        a = self._request(self.accountant)
 
         self.assertEqual(a.status, visit_requests.AWAITING)
         self.assertEqual(a.approval_owner_id, self.cceo_sp.id)
         # The requester is the one going, not the owner being asked.
-        self.assertEqual(a.responsible_staff_id, self.cd_sp.id)
+        self.assertEqual(a.responsible_staff_id, self.acct_sp.id)
         self.assertEqual(a.visit_justification, "Spot check on last quarter's advance")
         # Not a plan yet, so not priced yet: it draws no money and must not
         # dilute the day pool of the owner's own visits.
         self.assertEqual(a.est_cost_cents, 0)
 
-    def test_impact_assessment_and_the_accountant_ask_the_same_way(self):
-        for who in (self.ia, self.accountant):
+    def test_the_director_and_impact_assessment_schedule_outright(self):
+        """The lift. Both used to land in `awaiting_owner_approval` at a
+        school somebody else owns — an error to the person who pressed Save,
+        and a decision for somebody who had not asked for one."""
+        for who, profile in ((self.cd, self.cd_sp), (self.ia, self.ia_sp)):
             with self.subTest(role=who.active_role):
-                a = self._request(who)
-                self.assertEqual(a.status, visit_requests.AWAITING)
-                self.assertEqual(a.approval_owner_id, self.cceo_sp.id)
+                a = self._request(who, justification=None)
+                self.assertEqual(a.status, "scheduled")
+                self.assertEqual(a.approval_owner_id, "")
+                # Theirs, not the school owner's: nobody inherits a visit
+                # they did not plan.
+                self.assertEqual(a.responsible_staff_id, profile.id)
+                self.assertEqual(a.visit_justification, "")
+                # Scheduled means priced, from the moment it is saved.
+                self.assertGreater(a.est_cost_cents, 0)
+                a.status = "cancelled"
+                a.save(update_fields=["status"])
 
     def test_the_owner_is_told_and_the_request_is_audited(self):
         from apps.audit.models import AuditLog
 
-        a = self._request(self.cd)
+        a = self._request(self.accountant)
 
         notice = Notification.objects.filter(
             recipient_id=self.cceo.id,
@@ -221,7 +239,7 @@ class RequestingAVisitTest(VisitRequestFixture):
             context_id=a.id,
         ).first()
         self.assertIsNotNone(notice, "the owner was never told a request arrived")
-        self.assertIn("Dan Director", notice.body)
+        self.assertIn("Ann Counts", notice.body)
         self.assertIn("Spot check", notice.body)
         self.assertTrue(
             AuditLog.objects.filter(
@@ -231,18 +249,24 @@ class RequestingAVisitTest(VisitRequestFixture):
 
     def test_a_request_without_a_reason_is_refused(self):
         with self.assertRaises(BadRequest):
-            self._request(self.cd, justification="")
+            self._request(self.accountant, justification="")
         with self.assertRaises(BadRequest):
-            self._request(self.cd, justification=None)
+            self._request(self.accountant, justification=None)
         self.assertFalse(Activity.objects.filter(school=self.owned).exists())
+
+    def test_a_scheduled_visit_needs_no_reason(self):
+        """The justification belongs to the ask. Nobody is being asked when
+        the Country Director schedules, so nothing is required of them."""
+        a = self._request(self.cd, justification=None)
+        self.assertEqual(a.status, "scheduled")
 
     def test_a_request_is_not_funded_until_approved(self):
         from apps.fund_requests.models import WeeklyFundRequest
 
-        self._request(self.cd)
+        self._request(self.accountant)
 
         self.assertFalse(
-            WeeklyFundRequest.objects.filter(responsible_user=self.cd.id)
+            WeeklyFundRequest.objects.filter(responsible_user=self.accountant.id)
             .exclude(total_amount=0)
             .exists(),
             "a visit nobody has approved yet must not enter a fund request",
@@ -305,14 +329,14 @@ class RequestingAVisitTest(VisitRequestFixture):
 
 class DecidingAVisitRequestTest(VisitRequestFixture):
     def setUp(self):
-        self.request = self._request(self.cd)
+        self.request = self._request(self.accountant)
 
     def test_only_the_owner_holds_the_request(self):
         self.assertEqual(
             [a.id for a in visit_requests.pending_for_owner(self.cceo)],
             [self.request.id],
         )
-        for who in (self.pl, self.other_cceo, self.cd):
+        for who in (self.pl, self.other_cceo, self.accountant):
             with self.subTest(role=who.active_role):
                 self.assertEqual(list(visit_requests.pending_for_owner(who)), [])
                 with self.assertRaises(Forbidden):
@@ -328,12 +352,12 @@ class DecidingAVisitRequestTest(VisitRequestFixture):
         self.assertEqual(self.request.status, "scheduled")
         self.assertEqual(self.request.owner_decided_by, self.cceo.id)
         self.assertEqual(self.request.owner_decision_note, "Go ahead, Tuesday is fine")
-        self.assertEqual(self.request.responsible_staff_id, self.cd_sp.id)
+        self.assertEqual(self.request.responsible_staff_id, self.acct_sp.id)
         # Priced at approval, against the requester, and it now draws money on
         # the requester's own request.
         self.assertGreater(self.request.est_cost_cents, 0)
         self.assertTrue(
-            WeeklyFundRequest.objects.filter(responsible_user=self.cd.id)
+            WeeklyFundRequest.objects.filter(responsible_user=self.accountant.id)
             .exclude(total_amount=0)
             .exists(),
             "an approved visit must enter the requester's weekly fund request",
@@ -346,7 +370,7 @@ class DecidingAVisitRequestTest(VisitRequestFixture):
         # The requester is told, and the owner's own notice is closed.
         self.assertTrue(
             Notification.objects.filter(
-                recipient_id=self.cd.id,
+                recipient_id=self.accountant.id,
                 source_event_type=visit_requests.EVENT_APPROVED,
                 context_id=self.request.id,
             ).exists()
@@ -386,7 +410,7 @@ class DecidingAVisitRequestTest(VisitRequestFixture):
         self.assertEqual(self.request.status, "rejected")
         self.assertEqual(self.request.owner_decision_note, "Exams that week")
         notice = Notification.objects.get(
-            recipient_id=self.cd.id,
+            recipient_id=self.accountant.id,
             source_event_type=visit_requests.EVENT_DECLINED,
             context_id=self.request.id,
         )
@@ -401,10 +425,12 @@ class DecidingAVisitRequestTest(VisitRequestFixture):
         new_day = _at(self.day + datetime.timedelta(days=1)).isoformat()
         with self.assertRaises(BadRequest):
             reschedule(
-                self.request.id, {"scheduledDate": new_day, "reason": "x"}, self.cd
+                self.request.id,
+                {"scheduledDate": new_day, "reason": "x"},
+                self.accountant,
             )
         with self.assertRaises(BadRequest):
-            reassign(self.request.id, {"deliveryType": "staff"}, self.cd)
+            reassign(self.request.id, {"deliveryType": "staff"}, self.accountant)
         self.request.refresh_from_db()
         self.assertEqual(self.request.status, visit_requests.AWAITING)
 
@@ -446,15 +472,25 @@ class VisitRequestSurfacesTest(VisitRequestFixture):
         return self.client.post("/planning/schedule-action", data)
 
     def test_the_drawer_asks_a_requester_why(self):
-        for who in (self.cd, self.ia, self.accountant):
+        self.client.force_login(self.accountant)
+        response = self.client.get(
+            f"/planning/schedule-modal?school_id={self.owned.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="visit_justification"')
+        self.assertContains(response, "Vera Owner")
+
+    def test_the_drawer_asks_the_lifted_roles_nothing(self):
+        """Nobody is being asked, so there is no reason to give and no
+        owner to name (owner, 2026-09-21)."""
+        for who in (self.cd, self.ia):
             with self.subTest(role=who.active_role):
                 self.client.force_login(who)
                 response = self.client.get(
                     f"/planning/schedule-modal?school_id={self.owned.school_id}"
                 )
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, 'name="visit_justification"')
-                self.assertContains(response, "Vera Owner")
+                self.assertNotContains(response, 'name="visit_justification"')
 
     def test_the_drawer_is_the_ordinary_one_where_nobody_owns_the_school(self):
         self.client.force_login(self.cd)
@@ -473,7 +509,7 @@ class VisitRequestSurfacesTest(VisitRequestFixture):
         self.assertNotContains(response, 'name="visit_justification"')
 
     def test_submitting_without_a_reason_is_refused_with_one_sentence(self):
-        response = self._post_visit(self.cd, self.owned, visit_justification="")
+        response = self._post_visit(self.accountant, self.owned, visit_justification="")
         self.assertEqual(response.status_code, 400)
         self.assertContains(
             response, "Explain why you need to visit this school", status_code=400
@@ -482,23 +518,34 @@ class VisitRequestSurfacesTest(VisitRequestFixture):
 
     def test_submitting_files_a_request_and_says_where_it_went(self):
         response = self._post_visit(
-            self.cd, self.owned, visit_justification="Monitoring visit before the board"
+            self.accountant,
+            self.owned,
+            visit_justification="Monitoring visit before the board",
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(visit_requests.QUEUE_URL, response.content.decode())
         a = Activity.objects.get(school=self.owned)
         self.assertEqual(a.status, visit_requests.AWAITING)
-        self.assertEqual(a.responsible_staff_id, self.cd_sp.id)
+        self.assertEqual(a.responsible_staff_id, self.acct_sp.id)
         self.assertEqual(a.visit_justification, "Monitoring visit before the board")
 
+    def test_submitting_as_a_lifted_role_schedules_it_there_and_then(self):
+        response = self._post_visit(self.cd, self.owned)
+        self.assertEqual(response.status_code, 200)
+        a = Activity.objects.get(school=self.owned)
+        self.assertEqual(a.status, "scheduled")
+        self.assertEqual(a.approval_owner_id, "")
+        # The Country Director is the one going, not the school's CCEO.
+        self.assertEqual(a.responsible_staff_id, self.cd_sp.id)
+
     def test_the_owner_decides_on_the_page(self):
-        a = self._request(self.cd)
+        a = self._request(self.accountant)
 
         self.client.force_login(self.cceo)
         response = self.client.get(visit_requests.QUEUE_URL)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'data-visit-request-pending="{a.id}"')
-        self.assertContains(response, "Dan Director asks to visit Owned Primary")
+        self.assertContains(response, "Ann Counts asks to visit Owned Primary")
 
         response = self.client.post(
             f"{visit_requests.QUEUE_URL}/{a.id}/approve", {"note": "Fine by me"}
@@ -508,7 +555,7 @@ class VisitRequestSurfacesTest(VisitRequestFixture):
         self.assertEqual(a.status, "scheduled")
 
     def test_someone_else_is_refused_on_the_page(self):
-        a = self._request(self.cd)
+        a = self._request(self.accountant)
         self.client.force_login(self.other_cceo)
         response = self.client.post(
             f"{visit_requests.QUEUE_URL}/{a.id}/decline", {"reason": "no"}
@@ -656,11 +703,13 @@ class CoreVisitRequestTest(VisitRequestFixture):
             school_id=school.school_id, activity_type="visit", sequence_number=1
         )
 
-    def test_a_core_visit_by_a_country_role_waits_for_the_owner_at_every_stage(self):
+    def test_a_core_visit_by_the_accountant_waits_for_the_owner_at_every_stage(self):
         for stage, school in self.core_schools.items():
             with self.subTest(stage=stage):
                 response = self._post_core_visit(
-                    self.cd, school, visit_justification="Board asked me to see it"
+                    self.accountant,
+                    school,
+                    visit_justification="Board asked me to see it",
                 )
                 self.assertEqual(response.status_code, 200, response.content[:300])
                 self.assertIn(visit_requests.QUEUE_URL, response.content.decode())
@@ -668,22 +717,43 @@ class CoreVisitRequestTest(VisitRequestFixture):
                 self.assertEqual(a.status, visit_requests.AWAITING)
                 self.assertEqual(a.approval_owner_id, self.cceo_sp.id)
                 # Filed against the requester, not the posted owner.
-                self.assertEqual(a.responsible_staff_id, self.cd_sp.id)
+                self.assertEqual(a.responsible_staff_id, self.acct_sp.id)
                 slot = self._slot(school)
                 self.assertEqual(slot.status, "Scheduled")
                 self.assertEqual(slot.activity_id, a.id)
 
+    def test_a_core_visit_by_a_lifted_role_is_scheduled_at_every_stage(self):
+        for stage, school in self.core_schools.items():
+            with self.subTest(stage=stage):
+                response = self._post_core_visit(self.cd, school)
+                self.assertEqual(response.status_code, 200, response.content[:300])
+                a = Activity.objects.get(school=school, activity_type="core_visit")
+                self.assertEqual(a.status, "scheduled")
+                self.assertEqual(a.approval_owner_id, "")
+                slot = self._slot(school)
+                self.assertEqual(slot.status.lower(), "scheduled")
+                self.assertEqual(slot.activity_id, a.id)
+
     def test_the_core_drawer_asks_the_requester_why(self):
         school = self.core_schools["core"]
-        for who in (self.cd, self.ia, self.accountant):
+        self.client.force_login(self.accountant)
+        response = self.client.get(
+            f"/core-schools/schedule-visit?school_id={school.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="visit_justification"')
+        self.assertContains(response, "Vera Owner")
+
+    def test_the_core_drawer_asks_the_lifted_roles_nothing(self):
+        school = self.core_schools["core"]
+        for who in (self.cd, self.ia):
             with self.subTest(role=who.active_role):
                 self.client.force_login(who)
                 response = self.client.get(
                     f"/core-schools/schedule-visit?school_id={school.school_id}"
                 )
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, 'name="visit_justification"')
-                self.assertContains(response, "Vera Owner")
+                self.assertNotContains(response, 'name="visit_justification"')
 
     def test_without_a_reason_the_core_request_is_refused(self):
         school = self.core_schools["champion"]
@@ -694,7 +764,9 @@ class CoreVisitRequestTest(VisitRequestFixture):
 
     def test_declining_hands_the_package_slot_back(self):
         school = self.core_schools["core_trained"]
-        self._post_core_visit(self.ia, school, visit_justification="Verification")
+        self._post_core_visit(
+            self.accountant, school, visit_justification="Verification"
+        )
         a = Activity.objects.get(school=school)
         visit_requests.decline(a.id, self.cceo, "Not this term")
         slot = self._slot(school)
@@ -705,7 +777,9 @@ class CoreVisitRequestTest(VisitRequestFixture):
 
     def test_approving_keeps_the_slot_and_schedules_the_visit(self):
         school = self.core_schools["core_graduate"]
-        self._post_core_visit(self.cd, school, visit_justification="Graduation review")
+        self._post_core_visit(
+            self.accountant, school, visit_justification="Graduation review"
+        )
         a = Activity.objects.get(school=school)
         visit_requests.approve(a.id, self.cceo)
         a.refresh_from_db()

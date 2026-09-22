@@ -1,9 +1,15 @@
-"""An approved visit runs the ordinary lifecycle from the requester's plan.
+"""A country role's visit runs the ordinary lifecycle from their own plan.
 
-Owner, 2026-09-03: once the school owner approves, the visit belongs on the
-My Plan of whoever asked (CD, IA or Accountant) and follows the normal
-procedure — completion, verification, funding — through to closure of that
-activity by the person who ran it.
+Owner, 2026-09-03: the visit belongs on the My Plan of whoever is going —
+the Country Director, Impact Assessment or the Accountant — and follows the
+normal procedure (completion, verification, funding) through to closure of
+that activity by the person who ran it.
+
+Two ways in since 2026-09-21. The Country Director and Impact Assessment
+schedule outright, so their visit is on their plan from the moment they save
+it. The Accountant still asks, so theirs arrives when the school's owner
+approves it. Both land in the same place and run the same course, which is
+what this file walks.
 """
 
 from __future__ import annotations
@@ -15,26 +21,29 @@ from apps.planning.test_visit_requests import VisitRequestFixture
 
 
 class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
-    def test_the_approved_visit_appears_on_the_requesters_plan(self):
+    def test_the_visit_appears_on_the_plan_of_whoever_is_going(self):
         for who in (self.cd, self.ia, self.accountant):
             with self.subTest(role=who.active_role):
                 a = self._request(who)
-                visit_requests.approve(a.id, self.cceo)
-                a.refresh_from_db()
+                if a.status == visit_requests.AWAITING:
+                    visit_requests.approve(a.id, self.cceo)
+                    a.refresh_from_db()
                 self.assertEqual(a.status, "scheduled")
 
                 self.client.force_login(who)
                 page = self.client.get(f"/my-plan?fy={a.fy}&period=fy&status=scheduled")
                 self.assertEqual(page.status_code, 200, who.active_role)
                 self.assertContains(page, "Owned Primary")
-                # A client school's visits are capped: free one so
-                # the next role's request can be approved too.
+                # One visit per person per day at a school: clear this one
+                # before the next role schedules the same day.
                 a.status = "cancelled"
                 a.save(update_fields=["status"])
 
     def test_a_pending_request_is_not_on_the_plan_yet(self):
-        a = self._request(self.ia)
-        self.client.force_login(self.ia)
+        """The Accountant's, since theirs is the visit that still waits."""
+        a = self._request(self.accountant)
+        self.assertEqual(a.status, visit_requests.AWAITING)
+        self.client.force_login(self.accountant)
         page = self.client.get(f"/my-plan?fy={a.fy}&period=fy")
         self.assertEqual(page.status_code, 200)
         self.assertNotContains(page, "Owned Primary")
@@ -43,7 +52,6 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
         import datetime
 
         theirs = self._request(self.cd)
-        visit_requests.approve(theirs.id, self.cceo)
         theirs.refresh_from_db()
         # The Country Director closes on planning authority, as before.
         _assert_may_close(self.cd, theirs)
@@ -51,11 +59,11 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
             with self.subTest(role=who.active_role):
                 # One visit per person per day at a school; move the date.
                 self.day = self.__class__.day + datetime.timedelta(days=offset)
-                # And one visit a year per client school: theirs holds Owned
-                # Primary's, so each requester's own visit is at another
-                # school in the same portfolio.
+                # Each person's own visit at another school in the portfolio,
+                # so the one being closed is unambiguously theirs.
                 own = self._request(who, self._owned_school(who.active_role))
-                visit_requests.approve(own.id, self.cceo)
+                if own.status == visit_requests.AWAITING:
+                    visit_requests.approve(own.id, self.cceo)
                 own.refresh_from_db()
                 _assert_may_close(who, own)  # theirs: allowed
                 with self.assertRaises(Forbidden):

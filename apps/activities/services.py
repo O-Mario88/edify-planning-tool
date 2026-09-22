@@ -29,6 +29,8 @@ from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
     COUNTRY_SCHEDULING_ROLES,
+    SCHOOL_VISIT_ROLES,
+    VISIT_ONLY_ROLES,
     VISIT_REQUEST_ROLES,
     activity_country_q,
     country_bound,
@@ -554,17 +556,20 @@ def _assert_target_in_scope(
 ) -> None:
     """Validate create-time targets before an Activity exists.
 
-    Planning follows **direct** ownership, so this reads `own_school_ids` and
-    not `school_ids`. The latter unions in the schools of everyone a supervisor
-    supervises, which let a Programme Lead schedule work at a CCEO's school
-    purely because that CCEO reports to them — supervision acting as ownership.
-    A PL supervising two CCEOs could plan across 1,030 schools that were not
-    theirs.
+    Two rules meet here, and they answer different questions.
 
-    The PL still sees that work: it is on Team Planning Oversight, read-only,
-    where the response to a problem is to ask the person who owns it rather
-    than to reach past them. `own_school_ids` is populated for the CCEO and the
-    Project Coordinator alike, so narrowing changes the supervisor's reach and
+    A **school visit** is open to `SCHOOL_VISIT_ROLES` at any school (owner,
+    2026-09-21: "lift all the restrictions"). Ownership decides who the visit
+    is filed against, not who may make one.
+
+    Everything else — the cluster programme, and a school target reached by a
+    role outside that set — follows **direct** ownership, so the tests below
+    read `own_school_ids` and not `school_ids`. The latter unions in the
+    schools of everyone a supervisor supervises, which once let a Programme
+    Lead plan a CCEO's *cluster* work purely because that CCEO reports to them
+    — supervision acting as ownership across 1,030 schools that were not
+    theirs. `own_school_ids` is populated for the CCEO and the Project
+    Coordinator alike, so this narrowing changes the supervisor's reach and
     nobody else's.
 
     `owner_id` covers the one legitimate case where the two come apart — see
@@ -578,18 +583,33 @@ def _assert_target_in_scope(
     flag could not tell those two apart, so it granted the union.
     """
     scope = resolve_user_scope(principal)
-    if scope.active_role in VISIT_REQUEST_ROLES:
-        # School visits only, at any school. At somebody else's school the
-        # target is admitted here and `create` files it as a request the
-        # owner decides on (apps.planning.visit_requests); where nobody owns
-        # it there is nobody to ask and the visit is simply scheduled. A
-        # cluster meeting or training is the cluster owner's programme and
-        # is refused whoever holds the cluster (owner, 2026-09-02).
+    if scope.active_role in VISIT_ONLY_ROLES:
+        # A cluster meeting or training is the cluster owner's programme and
+        # is refused whoever holds the cluster (owner, 2026-09-02). School
+        # visits are not — they fall through to the school branch below.
         from apps.planning.visit_requests import refuse_cluster
 
         refuse_cluster(cluster_id, principal)
-        if school is not None:
+    if school is not None and scope.active_role in SCHOOL_VISIT_ROLES:
+        # Any school, whoever owns it (owner, 2026-09-21: "lift all the
+        # restrictions"). This is the branch the portfolio test below used to
+        # refuse: a Programme Lead at a supervised CCEO's school, a CCEO at a
+        # school they cover but do not hold, a Country Director or Impact
+        # Assessment anywhere in the country.
+        #
+        # Their own visit, that is. Naming somebody else as the responsible
+        # person is delegation rather than a visit of one's own — it puts the
+        # day, its cost lines and its fund request on that person's plan — so
+        # it still has to pass the supervision test below. Lifting the
+        # restriction lets everyone schedule a visit they will make; it does
+        # not let a peer plant work in somebody else's portfolio uninvited.
+        if not owner_id or owner_id in owner_ids(principal):
             return
+    if scope.active_role in VISIT_REQUEST_ROLES and school is not None:
+        # The Programme Accountant: the target is admitted here and `create`
+        # files it as a request the owner decides on
+        # (apps.planning.visit_requests).
+        return
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         # Admin stays permitted *here* on purpose, even though the drawer no
         # longer offers it (`can_schedule_activity`). The two are different

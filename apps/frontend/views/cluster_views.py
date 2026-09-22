@@ -388,10 +388,10 @@ def cluster_schools_partial(request, cluster_id):
     context = {
         "schools": schools,
         "cluster_id": cluster_id,
-        # Planners plan, and the request-only country roles ask through the
-        # same drawer — see apps.planning.visit_requests.
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
-        or RolePermissionService.can_request_school_visit(request.user),
+        # Whoever the drawer opens for: planners for their programme, the
+        # visit roles for any school (owner, 2026-09-21), the Accountant to
+        # ask — see RolePermissionService.can_open_schedule_drawer.
+        "can_schedule": RolePermissionService.can_open_schedule_drawer(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         # The same check the edit drawer and the remove endpoint enforce.
         "can_edit_cluster": RolePermissionService.can_view_page(
@@ -883,10 +883,10 @@ def cluster_detail_view(request, cluster_id):
             request.user, "planning"
         )
         and RolePermissionService.can_schedule_activity(request.user),
-        # Planners plan, and the request-only country roles ask through the
-        # same drawer — see apps.planning.visit_requests.
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
-        or RolePermissionService.can_request_school_visit(request.user),
+        # Whoever the drawer opens for: planners for their programme, the
+        # visit roles for any school (owner, 2026-09-21), the Accountant to
+        # ask — see RolePermissionService.can_open_schedule_drawer.
+        "can_schedule": RolePermissionService.can_open_schedule_drawer(request.user),
         # Bulk scheduling is a planner's act, not a requester's (owner,
         # 2026-09-21): one press writes activities at five or more schools,
         # and a visit request is decided one school at a time.

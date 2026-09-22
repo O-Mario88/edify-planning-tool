@@ -843,7 +843,7 @@ def school_directory_view(request):
         "intelligence": selected_school_data,
         "can_toggle_core": user.active_role
         in ("Admin", "CountryDirector", "ImpactAssessment"),
-        "can_schedule": RolePermissionService.can_schedule_activity(user),
+        "can_schedule": RolePermissionService.can_open_schedule_drawer(user),
         # Owner, 2026-09-17: "ONLY and ONLY IA can plan from the school
         # directory." Impact Assessment reads every school in the country here
         # and does its own field work, so the directory is where its visits

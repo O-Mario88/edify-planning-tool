@@ -815,10 +815,8 @@ def planning_dashboard_view(request):
 
 
 def _may_open_schedule_drawer(user) -> bool:
-    """Planners plan; the request-only country roles ask. Same drawer."""
-    return RolePermissionService.can_schedule_activity(
-        user
-    ) or RolePermissionService.can_request_school_visit(user)
+    """Planners plan, visitors visit, the Accountant asks. Same drawer."""
+    return RolePermissionService.can_open_schedule_drawer(user)
 
 
 def _requester_identity(user) -> str | None:
@@ -987,9 +985,11 @@ def schedule_modal_view(request):
     school = get_visit_target_school_or_404(
         request.user, Q(id=school_id) | Q(school_id=school_id)
     )
-    # The school's own visit rule (owner, 2026-09-15). The Schedule button is
-    # greyed for the same reason; a stale row or a typed URL gets the
-    # sentence, not a form the service will refuse.
+    # The school's own visit rule, read from the one place that holds it. It
+    # refuses nothing since 2026-09-21, so this branch and the purpose greying
+    # below no longer fire — both are kept because they are the seam a rule
+    # the owner asks for again goes back into, and because the gate still
+    # carries the counts the drawer displays.
     from apps.planning.visit_gate import visit_gate
 
     _gate = visit_gate(school)
@@ -999,10 +999,9 @@ def schedule_modal_view(request):
             "partials/schools/drawer_error.html",
             {"error": _gate.staff_locked_reason},
         )
-    # A used follow-up visit greys the visit purposes; in-school training,
-    # donor and social visits stay open (owner, 2026-09-15). For a core
+    # Which visit purposes the gate says to grey — none, today. For a core
     # school the follow-up purposes are general support outside the package
-    # and stay open; the package's own visits are gated on the Core page.
+    # anyway; the package's own visits are scheduled from the Core page.
     from apps.planning.visit_gate import FOLLOW_UP_PURPOSES
 
     locked_visit_purposes = (
@@ -1159,12 +1158,13 @@ def schedule_modal_view(request):
         school=school,
     )
     follow_up_options = _school_training_follow_up_options(school)
-    responsible_staff_id, responsible_staff_name = resolve_monitoring_staff(
-        school, request.user
-    )
-    # A request-only role at somebody else's school: the drawer asks for the
-    # reason, names the owner who will decide, and files the visit against the
-    # person going rather than the person being asked.
+    # Who the drawer NAMES as responsible has to be who the POST files it
+    # against — `schedule_action` resolves the same way, from the same helper.
+    responsible_staff_id, responsible_staff_name = visit_owner_for(school, request.user)
+    # The Programme Accountant at somebody else's school: the drawer asks for
+    # the reason, names the owner who will decide, and files the visit against
+    # the person going rather than the person being asked.
+    from apps.core.scoping import resolve_user_scope
     from apps.planning.visit_requests import approval_owner_for, staff_name
 
     visit_request_owner_id = approval_owner_for(school, request.user)
@@ -1179,6 +1179,13 @@ def schedule_modal_view(request):
     context = {
         "school": school,
         "visit_request_owner_name": visit_request_owner_name,
+        # Says, in the drawer, what `visit_owner_for` just decided: the school
+        # is not this person's, so the visit is theirs rather than its owner's.
+        "visit_is_yours": bool(
+            school is not None
+            and not visit_request_owner_id
+            and school.id not in (resolve_user_scope(request.user).own_school_ids or [])
+        ),
         "recommendations": recommendations,
         "interventions": SsaIntervention.choices,
         "partners": partners,
@@ -1541,15 +1548,12 @@ def schedule_action_view(request):
     visit_request_owner_id = None
     if school_id:
         payload["schoolId"] = school_id
-        # School scheduling is owned by the portfolio owner, not whichever
-        # authorised staff member happened to open the drawer.  Resolve again
-        # on POST so a forged/stale hidden field cannot reassign the work.
+        # Resolved again on POST so a forged or stale hidden field cannot
+        # reassign the work.
         owner_school = get_visit_target_school_or_404(
             request.user, Q(id=school_id) | Q(school_id=school_id)
         )
-        responsible_staff_id, _name = resolve_monitoring_staff(
-            owner_school, request.user
-        )
+        responsible_staff_id, _name = visit_owner_for(owner_school, request.user)
         from apps.planning.visit_requests import approval_owner_for
 
         visit_request_owner_id = approval_owner_for(owner_school, request.user)
@@ -1823,6 +1827,34 @@ def _prior_withdrawals(school):
         .select_related("partner")
         .order_by("-requested_at")[:5]
     ]
+
+
+def visit_owner_for(school, actor):
+    """Whose visit this is: the school's owner, or the person scheduling it.
+
+    School work used to be filed against the portfolio owner whoever opened
+    the drawer, because only the portfolio owner could open it. Since the lift
+    (owner, 2026-09-21) five roles schedule at any school, and filing their
+    visit against the school's CCEO would put a visit on a stranger's My Plan,
+    hand them its cost lines and weekly fund request, and send the person who
+    actually pressed Save to their own plan to look for something that could
+    never appear there — the exact failure the request path avoided by making
+    the requester the one going, and the reason an Admin was kept out of this
+    drawer altogether.
+
+    So: their own portfolio, and it is the owner's as before. Anybody else's,
+    and it belongs to whoever is going to the school.
+
+    Returns (staff_profile_id, display_name), the same shape as
+    `resolve_monitoring_staff`, because the drawer shows the name and the POST
+    stores the id and the two must not disagree.
+    """
+    from apps.core.scoping import resolve_user_scope
+
+    scope = resolve_user_scope(actor)
+    if school is not None and school.id not in (scope.own_school_ids or []):
+        return _requester_identity(actor), (getattr(actor, "name", "") or "You")
+    return resolve_monitoring_staff(school, actor)
 
 
 def resolve_monitoring_staff(school, actor):
@@ -2503,7 +2535,15 @@ def schedule_activity_form_view(request):
                 )
 
     if request.method == "POST":
-        if not RolePermissionService.can_schedule_activity(request.user):
+        # A school target is the visit rule's (owner, 2026-09-21); a cluster
+        # session is still the cluster owner's programme. `_assert_target_in_scope`
+        # asks the same two questions of the same person, so the button and the
+        # service cannot disagree about which of them applies.
+        if request.POST.get("school_id", "").strip():
+            may_post = _may_open_schedule_drawer(request.user)
+        else:
+            may_post = RolePermissionService.can_schedule_activity(request.user)
+        if not may_post:
             return HttpResponseForbidden(
                 _no_scheduling_permission_message(request.user)
             )
@@ -2662,7 +2702,10 @@ def route_preview_view(request):
     hierarchy → grouping → working-day feasibility → quality score → CD-target
     check → recommendations) but nothing is scheduled or persisted. Accepts
     `school_ids` (bulk popover) or `school_id` (single-visit drawer)."""
-    if not RolePermissionService.can_schedule_activity(request.user):
+    # Whoever may open the drawer may read its preview: it persists nothing,
+    # and a role that can schedule the visit but not see the route it makes is
+    # being asked to plan blind.
+    if not _may_open_schedule_drawer(request.user):
         return HttpResponseForbidden("Access Denied")
 
     from apps.routes.engine import PlanningRoutePreviewService

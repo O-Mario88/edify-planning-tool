@@ -645,10 +645,13 @@ class PlanningDashboardService:
                         "blockedReason": readiness_details["reason"]
                         if readiness_details["blockedActions"]
                         else None,
-                        # The row's Schedule button is off only while a partner
-                        # holds the school; a used follow-up visit greys that
-                        # purpose inside the drawer and leaves in-school
-                        # training, donor and social visits open.
+                        # Read from the gate, which since 2026-09-21 counts a
+                        # school's visits and refuses none of them: these stay
+                        # open, and the counts beside them are what the row
+                        # shows. The fields are kept because the template and
+                        # the drawer read them, and because a rule the owner
+                        # asks for again goes back into the gate rather than
+                        # being rebuilt here.
                         "staffCanSchedule": not gate.staff_locked,
                         "staffScheduleReason": gate.staff_locked_reason,
                         "followUpVisitOpen": gate.staff_can_schedule,
