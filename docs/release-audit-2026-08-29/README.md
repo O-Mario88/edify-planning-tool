@@ -5,6 +5,8 @@
 | | |
 | --- | --- |
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
+| Base moved during the audit | `main` advanced repeatedly and the audit's fixes reached it by another route. **Every figure below is true of the commit it names and no later one.** |
+| CONFLICT-004 | **Decided by the owner, 2026-09-22, and implemented** — see §3a |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
 | Final local suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
@@ -155,6 +157,57 @@ SEC-A4 was proven against the guard rather than inferred:
 | OBS-3 | The mandate requires dashboard cards to equal their drill-down totals (§28). Target percentages are pinned hard — `test_target_formula_unification.py` reconciles the CD and PL surfaces with 1,000-case property tests — but `/analytics/drilldown` is covered for *rendering* correctness, not for numeric agreement with the card that links to it. | A general card↔drill-down reconciliation harness is a piece of work, not a patch: it needs a card-to-query mapping that does not exist yet. Recorded rather than half-built. |
 | OBS-2 | `permission_matrix` recognises only `page_permission` / `required_permissions`, so it reports 21 routes as "unguarded" that are in fact guarded by `_permission`, `_catalogue_permission`, `_require_permission`, `_manual_activity_permission` and `_require_export`. | **This is how SEC-A1 hid** — four genuinely open routes sat undistinguished among 184 false positives. The fix is small (have those five decorators also set `required_permissions`, the contract the matrix already reads) but it changes four checked-in artifacts, so under the §5 scope freeze it is recommended as the first post-release change rather than folded in here. |
 
+### 3a. CONFLICT-004 — decided and closed
+
+`main` commit `23e3bfba` removed the scheduling governance §20.2 requires, in one
+sweep: recommendation override reasons, applicable SSAs, calendar-policy dates
+(Sundays, holidays, blackouts, **leave**), catalogue eligibility and delivery
+approvals, frequency caps, and client/partner annual entitlements. The audit
+registered it rather than reverting it, because it was a deliberate product
+decision and the mandate had no standing to overrule one.
+
+**The owner's answer (2026-09-22): "keep the calendar and leave blocks, drop the
+frequency caps."** So only the calendar half is restored. The frequency caps and
+the client/partner annual entitlements stay removed, as do the recommendation
+override reasons, SSA applicability and catalogue eligibility gates — none of
+those were named, and an audit does not widen a decision it was given.
+
+One predicate does the work — `apps.core.calendar_policy.SchedulingPolicyService`
+— and it was never deleted; only its call sites were. It blocks Sundays, public
+holidays (from both `PublicHoliday` and `CalendarBlock`), organisational
+blackouts, staff conferences, country events and a staff member's **approved**
+leave, and warns without blocking on pending leave. It contains no frequency or
+entitlement logic at all, which is why restoring its call sites restores exactly
+what was asked and nothing more.
+
+Fifteen call sites across five modules:
+
+| Module | Sites | Surface |
+| --- | --- | --- |
+| `apps/activities/services.py` | 4 | create (incl. the end date), reschedule, partner intake, partner reschedule |
+| `apps/budget/amendment_service.py` | 2 | amendment **request** and **apply** — policy can change between them |
+| `apps/core_schools/services.py` | 2 | core slot scheduling, follow-up scheduling |
+| `apps/daily_visit_batches/services.py` | 1 | batch reschedule |
+| `apps/routes/engine.py` | 1 | route feasibility scoring |
+
+The breadth is the point, and it is not defensive over-reach: the deleted comment
+recorded that `b4fc9570` had once removed this gate from a single module and left
+a blocked date reachable by going in through another door. A partial restore
+rebuilds that asymmetry.
+
+`apps/core/tests/test_reg02_calendar_policy.py` had been rewritten to assert the
+opposite of all this — `test_sunday_scheduling_is_allowed`,
+`test_approved_leave_does_not_block_employee_scheduling`,
+`test_calendar_blackout_is_advisory`. Those assertions are now flipped back, and
+the file asserts through the real API and HTMX doors as well as the service, so a
+gate that only one entry point honours would fail. The six tests that remain true
+under the new decision — Saturday allowed, pending leave warns only, Monday
+scheduling, FY derivation — are unchanged.
+
+**Planning and scheduling therefore moves from Red to Green** for the calendar
+and leave half. §20.2's other clauses — the five-activity warning, conflicts —
+are not reinstated and are not claimed.
+
 ---
 
 ## 4. Gates run
@@ -289,6 +342,7 @@ which the mandate says must never be read as Green.
 | Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
 | Backup / restore / rollback | **Not Tested** | no production access |
 | Performance and scale at 50k | **Not Tested** | not runnable here |
+| Planning and scheduling | **Green** (calendar/leave half) | CONFLICT-004 decided by the owner and implemented across 15 call sites in 5 modules; REG-02 contract tests flipped back and passing. The frequency caps and annual entitlements remain deliberately removed |
 | All remaining domains | **Not Tested** | not reached in this pass |
 
 ---
