@@ -1,10 +1,10 @@
 {
  "summary": {
-  "generated": "2026-09-23T10:52:27.403Z",
+  "generated": "2026-09-23T15:01:35.200Z",
   "beforeLabel": "before",
   "afterLabel": "after",
   "pages": 207,
-  "rolePages": 1086,
+  "rolePages": 1085,
   "roles": [
    "ACCOUNTANT",
    "ADMIN",
@@ -108,67 +108,67 @@
   "current": {
    "byGeometry": {
     "mobile-320": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "mobile-360": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "mobile-390": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "mobile-430": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "tablet-768": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "tablet-834": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "tablet-1024x768": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "square-1024": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "laptop-1280": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "laptop-1366": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "desktop-1440": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "desktop-1920": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     },
     "ultrawide-2560": {
-     "Pass": 1086,
+     "Pass": 1085,
      "Partial": 0,
      "Fail": 0
     }
@@ -180,17 +180,17 @@
     "navigation": 0,
     "tableHeaders": 0,
     "tableCells": 0,
-    "silentTruncation": 417,
+    "silentTruncation": 0,
     "tinyText": 0,
     "tinyChartText": 0,
-    "smallTargets": 60,
+    "smallTargets": 0,
     "documentOverflow": 0,
     "mainOverflow": 0,
     "unscrolled": 0
    }
   },
   "status": {
-   "Verified": 975,
+   "Verified": 974,
    "Fixed": 111
   }
  },
@@ -3472,24 +3472,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 1,
-     "geometries": [
-      "tablet-1024x768",
-      "square-1024"
-     ],
-     "examples": [
-      "Accountability Pending <p.edify-text-caption.font-bold.text-slate-700>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -3620,27 +3605,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "View full risk list →"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -3663,27 +3630,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 5,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "View"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -13072,33 +13021,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 18,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440"
-     ],
-     "examples": [
-      "Ending in 30 days <span.hrd-figure__label>",
-      "Action or appeal <span.hrd-figure__label>",
-      "Resolved this FY <span.hrd-figure__label>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -13392,27 +13317,9 @@
     "tablet": "Fail",
     "desktop": "Fail"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Review Annual Budgets →"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -13632,33 +13539,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 18,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440"
-     ],
-     "examples": [
-      "Ending in 30 days <span.hrd-figure__label>",
-      "Action or appeal <span.hrd-figure__label>",
-      "Resolved this FY <span.hrd-figure__label>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -13952,27 +13835,9 @@
     "tablet": "Fail",
     "desktop": "Fail"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Review Annual Budgets →"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -19672,27 +19537,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "INPUT"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -19720,27 +19567,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "INPUT"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24437,37 +24266,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 4,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Primary School · SSA Support <p.>",
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24576,37 +24377,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 4,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Primary School · SSA Support <p.>",
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24678,37 +24451,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 4,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Primary School · SSA Support <p.>",
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24743,37 +24488,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 4,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Primary School · SSA Support <p.>",
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24808,36 +24525,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 2,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -24946,37 +24636,9 @@
     "tablet": "Pass",
     "desktop": "Pass"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 4,
-     "geometries": [
-      "mobile-320",
-      "mobile-360",
-      "mobile-390",
-      "mobile-430",
-      "tablet-768",
-      "tablet-834",
-      "tablet-1024x768",
-      "square-1024",
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Central Division Primary School · SSA Support <p.>",
-      "Central Division Church of Uganda Primary · SSA Support <p.>",
-      "KCCA Primary School · SSA Support <p.>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Verified"
   },
   {
@@ -27903,35 +27565,6 @@
    "role": "ADMIN",
    "roles": [
     "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL"
-   ],
-   "pageType": "operational-queue",
-   "header": "canonical-page-header-anatomy",
-   "table": "none",
-   "mobile": "Pass",
-   "tablet": "Pass",
-   "desktop": "Pass",
-   "before": {
-    "mobile": "Pass",
-    "tablet": "Pass",
-    "desktop": "Pass"
-   },
-   "findings": [],
-   "defects": {},
-   "correction": [],
-   "status": "Verified"
-  },
-  {
-   "page": "Project Monitoring",
-   "route": "/projects/monitoring",
-   "module": "frontend",
-   "role": "CCEO",
-   "roles": [
-    "ADMIN",
-    "CCEO",
     "CD",
     "IA",
     "PL"
@@ -27959,7 +27592,6 @@
    "role": "CD",
    "roles": [
     "ADMIN",
-    "CCEO",
     "CD",
     "IA",
     "PL"
@@ -27987,7 +27619,6 @@
    "role": "IA",
    "roles": [
     "ADMIN",
-    "CCEO",
     "CD",
     "IA",
     "PL"
@@ -28015,7 +27646,6 @@
    "role": "PL",
    "roles": [
     "ADMIN",
-    "CCEO",
     "CD",
     "IA",
     "PL"
@@ -31439,27 +31069,9 @@
     "tablet": "Fail",
     "desktop": "Fail"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Review Annual Budgets →"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -31681,27 +31293,9 @@
     "tablet": "Fail",
     "desktop": "Fail"
    },
-   "findings": [
-    "RSP-12 target below 24px"
-   ],
-   "defects": {
-    "smallTargets": {
-     "count": 1,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440",
-      "desktop-1920",
-      "ultrawide-2560"
-     ],
-     "examples": [
-      "Review Annual Budgets →"
-     ]
-    }
-   },
-   "correction": [
-    "Control height tokens"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
@@ -32655,26 +32249,9 @@
     "tablet": "Partial",
     "desktop": "Partial"
    },
-   "findings": [
-    "RSP-10 truncated without full text"
-   ],
-   "defects": {
-    "silentTruncation": {
-     "count": 2,
-     "geometries": [
-      "laptop-1280",
-      "laptop-1366",
-      "desktop-1440"
-     ],
-     "examples": [
-      "Salesforce: manual references · 0 synced · 0 manual <span.edify-badge>",
-      "Netsuite: manual references · 0 synced · 0 manual <span.edify-badge>"
-     ]
-    }
-   },
-   "correction": [
-    "Title or accessible name on truncated values"
-   ],
+   "findings": [],
+   "defects": {},
+   "correction": [],
    "status": "Fixed"
   },
   {
