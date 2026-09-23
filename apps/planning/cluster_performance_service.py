@@ -320,11 +320,11 @@ def cluster_performance(
     """Every cluster in scope, measured and ordered by how active it is."""
     from apps.clusters.models import Cluster
     from apps.clusters.oversight_service import _label, _staff_directory, _supervisor_of
-    from apps.core.scoping import cluster_queryset, resolve_user_scope
+    from apps.core.scoping import cluster_queryset, or_empty, resolve_user_scope
 
     scope = resolve_user_scope(principal)
     clusters = list(
-        (cluster_queryset(scope) or Cluster.objects.none())
+        or_empty(cluster_queryset(scope), Cluster)
         .select_related("district")
         .order_by("name")
     )

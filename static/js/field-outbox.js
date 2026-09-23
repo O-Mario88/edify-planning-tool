@@ -62,6 +62,23 @@
   function save(entry) { return withStore('readwrite', function (s) { return s.put(entry); }); }
   function discard(id) { return withStore('readwrite', function (s) { return s.delete(id); }); }
 
+  /* -- whose it is ------------------------------------------------------ */
+
+  /* The signed-in account's opaque outbox token (base.html, from the
+     outbox_owner filter), or '' on a page that does not know who is signed
+     in. An action is replayed only under the account that saved it: a phone
+     shared by two officers must never send one person's saved "complete
+     activity" with the other's session. */
+  function currentOwner() {
+    return (document.body && document.body.getAttribute('data-edify-outbox-owner')) || '';
+  }
+
+  function mayReplay(entry) {
+    // Saved before owners were recorded: replayed as it always was.
+    if (!entry.owner) return true;
+    return entry.owner === currentOwner();
+  }
+
   /* -- what qualifies --------------------------------------------------- */
 
   function pathOf(target) {
@@ -99,6 +116,7 @@
     });
     var subtitle = document.getElementById('drawer-subtitle');
     return {
+      owner: currentOwner(),
       path: path,
       label: LABELS[actionOf(path)] || 'Field action',
       subject: (subtitle && subtitle.textContent.trim()) || ('Activity ' + (path.split('/')[2] || '').slice(0, 8)),
@@ -218,7 +236,9 @@
       return listAll().then(function (entries) {
         // Read inside the cross-tab lock: another tab may already have sent
         // these entries while this tab was waiting for its turn.
-        return entries.filter(function (e) { return e.status !== 'attention'; })
+        // Someone else's saved actions wait on the device for them to sign
+        // in again; they neither send nor block this person's queue.
+        return entries.filter(function (e) { return e.status !== 'attention' && mayReplay(e); })
           .reduce(function (chain, entry) {
             return chain.then(function (halted) { return halted || send(entry); });
           }, Promise.resolve(false));
@@ -299,7 +319,9 @@
   }
 
   function refresh() {
-    return listAll().then(function (entries) {
+    return listAll().then(function (all) {
+      // Only this account's saved work is counted and listed on its pages.
+      var entries = all.filter(mayReplay);
       var count = entries.length;
       var attention = entries.filter(function (e) { return e.status === 'attention'; }).length;
       document.querySelectorAll('[data-field-outbox-count]').forEach(function (node) {

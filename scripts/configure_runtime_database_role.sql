@@ -49,6 +49,11 @@ SELECT format(
   'ALTER ROLE %I SET idle_in_transaction_session_timeout = %L',
   :'runtime_role', '60s'
 ) \gexec
+-- JIT compilation off, matching the `-c jit=off` direct connections send.
+-- The scoped ORM queries carry cost estimates far above jit_above_cost while
+-- reading a handful of rows; one lending KPI spent 4.7 s compiling and 76 ms
+-- executing. Readiness reports a pooled session that still has JIT on.
+SELECT format('ALTER ROLE %I SET jit = %L', :'runtime_role', 'off') \gexec
 
 SELECT current_user AS configured_by,
        current_database() AS configured_database,

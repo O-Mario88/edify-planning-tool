@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db.models import Count, Q
 
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import or_empty, resolve_user_scope, school_queryset
 from apps.schools.models import School
 
 
@@ -27,7 +27,7 @@ def _distinct(base, column: str) -> list[str]:
 def options(principal) -> dict:
     """Distinct values for the filter bar (regions, districts, types, statuses)."""
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope) or School.objects.none()
+    base = or_empty(school_queryset(scope), School)
     return {
         "regions": _distinct(base, "region__name"),
         "districts": _distinct(base, "district__name"),
@@ -40,7 +40,7 @@ def options(principal) -> dict:
 
 def counts(query: dict, principal) -> dict:
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope) or School.objects.none()
+    base = or_empty(school_queryset(scope), School)
     q = Q()
     for f in (
         "school_type",
@@ -69,7 +69,7 @@ def counts(query: dict, principal) -> dict:
 
 def core_header_summary(principal) -> dict:
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope) or School.objects.none()
+    base = or_empty(school_queryset(scope), School)
     return {
         "total": base.count(),
         "core": base.filter(school_type="core").count(),

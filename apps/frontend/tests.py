@@ -228,7 +228,12 @@ class FrontendViewsTestCase(TestCase):
         # the purpose and the focus intervention from the school's weakest
         # confirmed SSA score, and shows the interventions behind that choice.
         self.assertIn('name="purpose_of_visit"', html)
-        self.assertIn("SSA interventions performing poorly", html)
+        # Named in the "Recommended interventions" list (compact drawer,
+        # 8bb11a1), with the weakest score first.
+        recommendations = html.split('class="planning-recommendations"', 1)[1]
+        recommendations = recommendations.split("</section>", 1)[0]
+        self.assertIn("Recommended interventions", recommendations)
+        self.assertIn("1.0/10", recommendations)
         # Prefilled by selecting the option, not by checking a radio in a list
         # of engine-chosen activities.
         self.assertIn("selected", html)
@@ -792,9 +797,14 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/planning/index.html")
         self.assertTemplateUsed(response, "partials/planning/school_row.html")
-        self.assertContains(response, 'class="planning-school-list school-record-list"')
+        # One table per list since the planning table redesign (8bb11a1): a
+        # row opens its details from the named toggle and Escape closes them.
+        self.assertContains(
+            response, 'class="school-plan-table school-plan-table--selectable"'
+        )
+        self.assertContains(response, 'class="school-plan-table__name-toggle"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
-        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
         self.assertContains(response, "SSA interventions needing urgent attention")
         self.assertContains(response, "(3.5/10)")
         self.assertContains(response, self.cluster.name)
@@ -826,10 +836,13 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'class="cluster-school-list school-record-list"')
-        self.assertContains(response, 'class="school-record-row__expander"')
+        # The same school-plan table as Planning (8bb11a1): the named toggle
+        # opens a row's details and Escape closes them.
+        self.assertContains(response, 'aria-label="Schools in cluster"')
+        self.assertContains(response, 'class="cluster-school-row"')
+        self.assertContains(response, 'class="school-plan-table__name-toggle"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
-        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
         self.assertContains(response, "Plot 12, Kampala Road")
         self.assertContains(response, "School Type:")
         self.assertContains(response, "Schedule")
@@ -966,10 +979,11 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "data-owner-clusters")
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, 'name="existing_cluster_id"')
-        self.assertContains(response, self.cceo_user.name)
-        # The drawer says whose it is in its own words now: the owner is
-        # still automatic, and still named.
-        self.assertContains(response, "The school's owner.")
+        # The simplified drawer (7586e32) names the school in its title and
+        # no longer restates the owner: the owner is still automatic, and
+        # the clusters offered are still only the owner's.
+        self.assertContains(response, f"Add {self.school.name} to cluster")
+        self.assertNotContains(response, "Responsible field staff")
         self.assertContains(response, "cluster-assignment-drawer")
         self.assertNotContains(response, "Cluster selected automatically")
         self.assertNotContains(response, "Assignment Notes")

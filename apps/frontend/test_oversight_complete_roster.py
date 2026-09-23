@@ -1,4 +1,5 @@
 """Country and regional oversight keep the full reporting roster in every period."""
+
 from dataclasses import replace
 
 from apps.accounts.models import StaffGeographyAssignment, StaffSupervisorAssignment
@@ -12,17 +13,25 @@ class CompleteRosterTest(OversightPageFixture):
         self.regional_user, regional = self._staff(
             "regional@t.test", "Regional Lead", EdifyRole.REGIONAL_PROGRAM_LEAD
         )
-        StaffGeographyAssignment.objects.create(staff=regional, region_id=self.region.id)
+        StaffGeographyAssignment.objects.create(
+            staff=regional, region_id=self.region.id
+        )
         self.members = [self.james]
         for number in range(9):
-            _, member = self._staff(f"member{number}@t.test", f"Member {number}", EdifyRole.CCEO)
-            StaffSupervisorAssignment.objects.create(supervisor=self.pl, supervisee=member)
+            _, member = self._staff(
+                f"member{number}@t.test", f"Member {number}", EdifyRole.CCEO
+            )
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.pl, supervisee=member
+            )
             self.members.append(member)
         self._activity(self.pl, self.school)
         self._activity(self.members[-1], self.school)
 
     def assert_roster(self, groups):
-        self.assertEqual({g["id"] for g in groups}, {self.pl.id, *(p.id for p in self.members)})
+        self.assertEqual(
+            {g["id"] for g in groups}, {self.pl.id, *(p.id for p in self.members)}
+        )
         self.assertEqual(groups[0]["id"], self.pl.id)
         empty = next(g for g in groups if g["id"] == self.members[1].id)
         self.assertEqual(empty["items"], [])
@@ -31,12 +40,20 @@ class CompleteRosterTest(OversightPageFixture):
     def test_all_readers_see_the_full_roster_on_the_team_page(self):
         for user in (self.ia_user, self.cd_user, self.regional_user):
             with self.subTest(role=user.active_role):
-                response = self.as_user(user).get(PL_URL, {"program_lead": self.pl.id, "fy": self.fy, "period": "fy"})
+                response = self.as_user(user).get(
+                    PL_URL, {"program_lead": self.pl.id, "fy": self.fy, "period": "fy"}
+                )
                 self.assertEqual(response.status_code, 200)
                 self.assert_roster(response.context["groups"])
-                shown = [item for group in response.context["groups"] for item in group["items"]]
+                shown = [
+                    item
+                    for group in response.context["groups"]
+                    for item in group["items"]
+                ]
                 self.assertEqual(len(shown), 3)
-                self.assertNotIn(self.rival_activity.id, {item.activity_id for item in shown})
+                self.assertNotIn(
+                    self.rival_activity.id, {item.activity_id for item in shown}
+                )
 
     def test_country_team_drawer_keeps_members_with_no_work(self):
         for user in (self.ia_user, self.cd_user):
@@ -47,7 +64,9 @@ class CompleteRosterTest(OversightPageFixture):
                 )
                 self.assertEqual(response.status_code, 200)
                 self.assert_roster(response.context["owner_groups"])
-                self.assertEqual(sum(len(g["items"]) for g in response.context["owner_groups"]), 3)
+                self.assertEqual(
+                    sum(len(g["items"]) for g in response.context["owner_groups"]), 3
+                )
 
     def test_empty_filtered_period_keeps_every_member(self):
         roster = oversight.program_lead_members(self.pl.id)
@@ -61,4 +80,6 @@ class CompleteRosterTest(OversightPageFixture):
             owners=oversight.program_lead_members(self.pl.id),
         )
         self.assert_roster(groups)
-        self.assertEqual(len(next(g for g in groups if g["id"] == self.james.id)["items"]), 2)
+        self.assertEqual(
+            len(next(g for g in groups if g["id"] == self.james.id)["items"]), 2
+        )

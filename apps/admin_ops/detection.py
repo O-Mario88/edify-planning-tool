@@ -164,7 +164,13 @@ class PlatformFailureDetectionMiddleware:
             return
 
         if elapsed_ms > _slo_ms() and request.method in ("GET", "POST"):
-            key = f"{request.method}:{path}"
+            # Counted per route pattern, not per concrete path: the path
+            # carries record ids, so the tally grew by one entry per slow
+            # record for the life of the process, and three slow opens of
+            # three different schools never added up to the repeatedly slow
+            # route this is meant to catch.
+            match = getattr(request, "resolver_match", None)
+            key = f"{request.method}:{getattr(match, 'route', None) or path}"
             _slow_counts[key] = _slow_counts.get(key, 0) + 1
             if _slow_counts[key] >= SLOW_OCCURRENCES_BEFORE_INCIDENT:
                 _slow_counts[key] = 0

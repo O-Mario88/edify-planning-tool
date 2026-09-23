@@ -100,9 +100,9 @@ class DirectoryEmptyStateTest(TestCase):
 class PlanningClusterDisclosureTest(SimpleTestCase):
     """F-04: the cluster card opens from one named control that says whether
     it is open and which panel it controls. Since 2026-09-19 the planning
-    clusters tab draws the canonical cluster card shared with /clusters: the
-    name is a link to the profile, and one toggle button carries the
-    disclosure state and names the details panel."""
+    clusters tab draws the canonical cluster card shared with /clusters. Since
+    ffa2431 the cluster name itself is that toggle button, and the profile
+    link sits in the details panel it opens."""
 
     def test_the_cluster_card_has_one_named_disclosure_control(self):
         html = render_to_string(
@@ -125,7 +125,12 @@ class PlanningClusterDisclosureTest(SimpleTestCase):
         self.assertIn(':aria-expanded="cardExpanded.toString()"', html)
         self.assertIn('id="cluster-details-cl-1"', html)
         self.assertEqual(html.count('aria-controls="cluster-details-cl-1"'), 1)
-        self.assertRegex(html, r'<a href="/clusters/cl-1"[^>]*>Mukono North</a>')
+        details = html.split('id="cluster-details-cl-1"', 1)[1]
+        self.assertRegex(
+            details,
+            r'<a href="/clusters/cl-1"[^>]*>Open Mukono North cluster profile</a>',
+        )
+        self.assertEqual(html.count('href="/clusters/cl-1"'), 1)
         self.assertNotIn(
             "focus:outline-none", html.split('id="cluster-details-cl-1"')[0]
         )

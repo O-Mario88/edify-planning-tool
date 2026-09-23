@@ -461,15 +461,21 @@ class PLTeamTargetsService:
         if all_staff_ids:
             from apps.schools.models import School
 
+            # Only the columns this page reads (id, code, name, district name).
+            # A country or regional roster is every school in scope, and full
+            # rows were ~16,000 schools, districts and assignments instantiated
+            # per load (performance rescue, 2026-09-23).
             assigns = list(
-                StaffSchoolAssignment.objects.filter(staff_id__in=all_staff_ids)
+                StaffSchoolAssignment.objects.filter(staff_id__in=all_staff_ids).only(
+                    "staff_id", "school_id"
+                )
             )
             school_pks = {a.school_id for a in assigns}
             schools = {
                 s.id: s
-                for s in School.objects.filter(id__in=school_pks).select_related(
-                    "district"
-                )
+                for s in School.objects.filter(id__in=school_pks)
+                .select_related("district")
+                .only("id", "school_id", "name", "district_id", "district__name")
             }
             for assignment in assigns:
                 school = schools.get(assignment.school_id)
@@ -712,12 +718,13 @@ class PLTeamTargetsService:
             pass
         core_pct = round(core_on_track / core_total * 100) if core_total else None
         for m in members:
-            sids = {s.school_id for s in m["schools"]}
-            mine = [
-                r
-                for r in core_rows
-                if r["school"] in {school_names.get(x, x) for x in sids}
-            ]
+            # Built once per member. It sat inside the comprehension's
+            # condition, so it was rebuilt for every core row: members x core
+            # rows x schools lookups — 39.8 million on a regional roster, and
+            # 7 of the 16 profiled seconds of /team-targets (performance
+            # rescue, 2026-09-23).
+            names = {school_names.get(s.school_id, s.school_id) for s in m["schools"]}
+            mine = [r for r in core_rows if r["school"] in names]
             m["core_pct"] = (
                 round(sum(r["pct"] for r in mine) / len(mine)) if mine else None
             )

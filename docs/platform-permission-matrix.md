@@ -19,7 +19,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | RegionalVicePresident | 369 |
 | RegionalProgramLead | 317 |
 | ImpactAssessment | 626 |
-| Accountant | 407 |
+| Accountant | 408 |
 | HumanResources | 330 |
 | ProjectCoordinator | 446 |
 | PartnerAdmin | 219 |
@@ -489,7 +489,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/cce-leadership/reports/<str:report_id>/save` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
 | `/cce-leadership/reports/new` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
 | `/cce-leadership/reports/start` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
-| `/cluster-oversight/` | cluster_oversight |  | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
+| `/cluster-oversight/` | cluster_oversight |  | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
 | `/clusters` | clusters | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/clusters/<str:cluster_id>` | cluster_detail | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/clusters/<str:cluster_id>/bulk-assign-drawer` | planning | Y | Y | Y |  |  | Y | Y |  | Y |  |  |  |  |  | Y |

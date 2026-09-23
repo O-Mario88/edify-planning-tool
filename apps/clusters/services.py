@@ -359,9 +359,14 @@ def create_cluster(data: dict, principal) -> dict:
 def may_edit_cluster_profile(cluster, principal) -> bool:
     """Use the same ownership rule for the edit control, drawer and save."""
     from apps.core.scoping import cluster_owner_ids
+
     scope = resolve_user_scope(principal)
     owner = (cluster.responsible_staff_id or "").strip()
-    return not owner or scope.country_scope or owner in cluster_owner_ids(scope, direct_only=True)
+    return (
+        not owner
+        or scope.country_scope
+        or owner in cluster_owner_ids(scope, direct_only=True)
+    )
 
 
 def update_cluster(cluster_id: str, data: dict, principal) -> dict:
@@ -720,11 +725,12 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
         OVERSIGHT_ONLY_MESSAGE,
         cluster_queryset,
         direct_portfolio_schools,
+        or_empty,
     )
 
     scope = resolve_user_scope(principal)
     schools = direct_portfolio_schools(scope)
-    school = (schools or School.objects.none()).filter(school_id=school_id).first()
+    school = or_empty(schools, School).filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found or outside your scope.")
     cluster = _scoped_cluster(cluster_id, principal)
@@ -762,12 +768,13 @@ def remove_school_from_cluster(school_id: str, cluster_id: str, principal) -> di
         OVERSIGHT_ONLY_MESSAGE,
         cluster_queryset,
         direct_portfolio_schools,
+        or_empty,
     )
 
     scope = resolve_user_scope(principal)
     schools = direct_portfolio_schools(scope)
     school = (
-        (schools or School.objects.none())
+        or_empty(schools, School)
         .filter(Q(id=school_id) | Q(school_id=school_id), deleted_at__isnull=True)
         .first()
     )

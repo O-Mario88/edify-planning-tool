@@ -158,6 +158,51 @@ class SharedCacheWindowTest(SimpleTestCase):
             )
 
 
+_LOCMEM = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "throttle-detect-test",
+    }
+}
+
+
+class SharedCacheDetectionTest(SimpleTestCase):
+    """`django.core.cache.cache` is a ConnectionProxy, and its type names
+    `django.utils.connection` whatever the backend. The check read that type,
+    so it answered "shared" for LocMemCache too: tests and a deployment
+    without Redis counted in a per-process fixed window instead of the
+    sliding window."""
+
+    @override_settings(CACHES=_LOCMEM)
+    def test_a_per_process_cache_is_not_shared(self):
+        self.assertFalse(throttling._cache_is_shared())
+
+    @override_settings(
+        CACHES={"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
+    )
+    def test_a_dummy_cache_is_not_shared(self):
+        self.assertFalse(throttling._cache_is_shared())
+
+    # Port 1 because nothing should connect: only the backend's type is read.
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.redis.RedisCache",
+                "LOCATION": "redis://127.0.0.1:1/0",
+            }
+        }
+    )
+    def test_redis_is_shared(self):
+        self.assertTrue(throttling._cache_is_shared())
+
+    @override_settings(CACHES=_LOCMEM)
+    def test_a_per_process_cache_counts_in_the_sliding_window(self):
+        key = _key("detect")
+        self.addCleanup(reset_throttle_state, [key])
+        _hit(key, window_ms=60_000, limit=5)
+        self.assertIn(key, _window._hits)  # noqa: SLF001
+
+
 @override_settings(
     CACHES={
         "default": {

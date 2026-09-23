@@ -165,6 +165,7 @@ class StripsAreAddressableTests(SimpleTestCase):
             {
                 "request": _request("/team-planning-oversight/?view=clusters"),
                 "is_programme_lead": True,
+                "uses_member_tabs": True,
                 "cceo_tabs": [
                     {
                         "id": "my-clusters",

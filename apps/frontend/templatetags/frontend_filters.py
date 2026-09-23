@@ -208,3 +208,21 @@ def ssa_score_band_label(value):
     from apps.core.enums import ssa_score_band
 
     return ssa_score_band(score)[0]
+
+
+@register.filter
+def outbox_owner(user):
+    """An opaque, per-account token for the offline field outbox.
+
+    static/js/field-outbox.js stamps each saved action with it and replays an
+    action only on a page signed in as the same account, so a phone shared by
+    two officers never sends one person's saved "complete activity" under the
+    other's session (frontend audit, 2026-09-23). Derived with the site
+    secret, so it identifies nobody outside this deployment and is not the
+    account id.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return ""
+    from django.utils.crypto import salted_hmac
+
+    return salted_hmac("edify.field-outbox.owner", str(user.pk)).hexdigest()[:24]

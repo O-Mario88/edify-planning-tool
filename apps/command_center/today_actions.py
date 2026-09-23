@@ -542,12 +542,9 @@ def perform(
 def forget_queue(principal) -> None:
     """Drop the principal's cached queue so the next read reflects the change."""
     from apps.command_center.todo_service import todo_snapshot_key
-    from django.core.cache import cache
+    from apps.core.cache_utils import forget_snapshot
 
-    try:
-        cache.delete(todo_snapshot_key(principal))
-    except Exception:  # noqa: BLE001 - the cache is an optimisation only
-        pass
+    forget_snapshot(todo_snapshot_key(principal))
 
 
 # ── Snoozing ────────────────────────────────────────────────────────────────

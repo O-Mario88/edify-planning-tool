@@ -7473,6 +7473,7 @@
     "RegionalVicePresident",
     "RegionalProgramLead",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/cluster-oversight/",
@@ -17994,7 +17995,7 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 407,
+  "Accountant": 408,
   "Admin": 1006,
   "BusinessTransformationOfficer": 232,
   "CCEO": 531,

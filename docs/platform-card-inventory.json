@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 702,
+  "titled_cards": 703,
   "templates": 267,
-  "distinct_titles": 669,
+  "distinct_titles": 670,
   "with_card_key": 13,
-  "untitled_surfaces": 782,
+  "untitled_surfaces": 784,
   "untitled_chrome": 175,
-  "untitled_nested": 252,
+  "untitled_nested": 254,
   "untitled_headless": 355,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
@@ -3390,7 +3390,16 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 189,
+   "line": 190,
+   "title": "Route Performance",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 225,
    "title": "Durable Outbox",
    "heading_level": 3,
    "has_card_key": false,
@@ -3399,7 +3408,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 211,
+   "line": 247,
    "title": "External Integrations",
    "heading_level": 3,
    "has_card_key": false,
@@ -3408,7 +3417,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 231,
+   "line": 267,
    "title": "Data Quality Queues",
    "heading_level": 3,
    "has_card_key": false,
@@ -3417,7 +3426,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 256,
+   "line": 292,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3426,7 +3435,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 272,
+   "line": 308,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3435,7 +3444,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 293,
+   "line": 329,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3444,7 +3453,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1083,
+   "line": 1119,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3453,7 +3462,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1116,
+   "line": 1152,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -6707,7 +6716,7 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 27,
+   "line": 29,
    "title": "'s Clusters",
    "heading_level": 3,
    "has_card_key": false,
@@ -6721,7 +6730,7 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 88,
+   "line": 90,
    "title": "'s Clusters clusters ( member schools)",
    "heading_level": 4,
    "has_card_key": false,

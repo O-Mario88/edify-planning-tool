@@ -77,18 +77,14 @@ document.addEventListener('alpine:init', () => {
     isLight()  { return this.actualTheme === 'light'; },
   });
 
-  // ── HTMX: preserve theme after partial swaps ──
-  document.body.addEventListener('htmx:afterSwap', function() {
-    // Theme is driven by root classes + CSS variables — partial swaps
-    // inherit automatically. This listener exists for future chart re-inits.
-    var evt = new CustomEvent('edify-theme-change', {
-      detail: {
-        theme: document.documentElement.dataset.theme,
-        preference: document.documentElement.dataset.themePref
-      }
-    });
-    window.dispatchEvent(evt);
-  });
+  // No theme event on HTMX swaps. Theme is driven by root classes and CSS
+  // variables, so swapped content inherits it. An `edify-theme-change` was
+  // dispatched after EVERY swap "for future chart re-inits", and every live
+  // chart listens for that event to redraw itself: one drawer, one table page
+  // or one search keystroke redrew all of the page's charts — 280-350 ms of
+  // blocked main thread per chart per swap, measured in Chromium
+  // (performance rescue, 2026-09-23; e2e/htmx-swap-cost.spec.js). New
+  // content draws its own charts; only a real theme switch redraws old ones.
 
   // Shared Toast Alerts Controller
   /* Install the app.

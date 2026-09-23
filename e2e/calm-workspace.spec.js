@@ -22,7 +22,11 @@ test('populated oversight and finance remain compact, readable and interactive',
     for(const header of await page.locator('main .edify-page-header:visible').all())await expect(header).toHaveCSS('box-shadow','none');
    }
    if(route.includes('team-planning')&&width===1048){
-    const row=await page.locator('tbody tr').first().evaluate(el=>{const r=el.getBoundingClientRect();return {top:r.top+document.querySelector('main').scrollTop,bottom:r.bottom+document.querySelector('main').scrollTop,fold:innerHeight};});
+    // Since 2026-09-23 the roster lists the Programme Lead first and opens on
+    // them, work or not; the seed's lead holds none. Open the first member who
+    // does, so the table the budget and the Cost column describe is on screen.
+    await page.locator('.team-officer-tab:visible').filter({has:page.locator('.pill-neutral',{hasNotText:/^0$/})}).first().click();
+    const row=await page.getByRole('tabpanel').locator('tbody tr').first().evaluate(el=>{const r=el.getBoundingClientRect();return {top:r.top+document.querySelector('main').scrollTop,bottom:r.bottom+document.querySelector('main').scrollTop,fold:innerHeight};});
     // A desktop fold budget: the first row is wholly visible before anyone
     // scrolls. Since 2026-09-20 the context strip, the officer tabs and the
     // officer summary sit above the rows, so the budget is the fold itself

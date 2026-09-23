@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 from django.db.models import Q
@@ -125,6 +126,101 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
         # team) owns and delivers. Overdue Partner work is followed on Partner
         # Monitoring's Overdue filter, not offered here as staff work.
         .filter(staff_my_plan_q(all_scoped_ids, user))
+        # The id settles ties between plans due the same day. Without it the
+        # order among them was whatever the plan chose, so page two of a table
+        # could repeat a row from page one or skip one.
+        .order_by("planned_date", "scheduled_date", "id")
+    )
+
+    # Counts, ownership and the three tables' order come from a narrow read of
+    # every past-due row. The full row — joins, cost-line prefetch, minimum
+    # amount, owner names, reminder state — is built only for the rows a table
+    # actually renders: the template shows ten at a time through
+    # {% paginate %}, and a Programme Lead's team can hold thousands of
+    # past-due plans. Building all of them was 2.2 s of every PL dashboard
+    # load on a production-sized estate, outside the dashboard's own cache
+    # (performance rescue, 2026-09-23).
+    light = list(
+        qs.values_list(
+            "id", "activity_type", "responsible_staff_id", "monitored_by_staff_id"
+        )
+    )
+    if not light:
+        return _empty_past_due_context(is_pl)
+
+    own_count = 0
+    team_count = 0
+    visit_ids: list[str] = []
+    training_ids: list[str] = []
+    meeting_ids: list[str] = []
+    for activity_id, activity_type, responsible, monitored in light:
+        if responsible in own_ids or (not responsible and monitored in own_ids):
+            own_count += 1
+        else:
+            team_count += 1
+        if activity_type in VISIT_TYPES:
+            visit_ids.append(activity_id)
+        elif activity_type in TRAINING_TYPES:
+            training_ids.append(activity_id)
+        elif activity_type in MEETING_TYPES:
+            meeting_ids.append(activity_id)
+        else:
+            # Fallback to visits table if unmatched
+            visit_ids.append(activity_id)
+
+    def build(ids):
+        return _build_rows(ids, own_ids=own_ids, today=today)
+
+    past_due_school_visits = PastDueRows(visit_ids, build)
+    past_due_cluster_trainings = PastDueRows(training_ids, build)
+    past_due_cluster_meetings = PastDueRows(meeting_ids, build)
+
+    return {
+        "past_due_total_count": len(light),
+        "pl_own_past_due_count": own_count,
+        "pl_team_past_due_count": team_count,
+        "past_due_school_visits": past_due_school_visits,
+        "past_due_cluster_trainings": past_due_cluster_trainings,
+        "past_due_cluster_meetings": past_due_cluster_meetings,
+        "past_due_visits_count": len(past_due_school_visits),
+        "past_due_trainings_count": len(past_due_cluster_trainings),
+        "past_due_meetings_count": len(past_due_cluster_meetings),
+        "is_pl": is_pl,
+    }
+
+
+class PastDueRows(Sequence):
+    """One past-due table, in order, whose rows are built when read.
+
+    ``len()`` is free and a slice builds only its own rows, so
+    ``{% paginate %}`` (apps.core.pagination.paginate_rows) pays for the ten it
+    shows. Iterating the whole sequence still yields every row, for callers
+    that want them all.
+    """
+
+    def __init__(self, ids: list[str], build):
+        self._ids = ids
+        self._build = build
+
+    def __len__(self) -> int:
+        return len(self._ids)
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return self._build(self._ids[index])
+        return self._build([self._ids[index]])[0]
+
+    def __iter__(self):
+        return iter(self._build(self._ids))
+
+
+def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
+    """The display rows for these activities, in the order given."""
+    if not activity_ids:
+        return []
+    by_id = {
+        a.id: a
+        for a in Activity.objects.filter(id__in=activity_ids)
         .select_related(
             "school",
             "school__district",
@@ -133,12 +229,8 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             "cluster__district",
         )
         .prefetch_related("schedule_cost_lines")
-        .order_by("planned_date", "scheduled_date")
-    )
-
-    activities = list(qs)
-    if not activities:
-        return _empty_past_due_context(is_pl)
+    }
+    activities = [by_id[i] for i in activity_ids if i in by_id]
 
     # Names for the people on these rows only, in both id spaces, from one
     # profile query; a bare User id without a profile costs a second query
@@ -178,22 +270,11 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
 
     minimum_amounts = planned_minimum_amounts(activities)
 
-    past_due_school_visits: list[dict[str, Any]] = []
-    past_due_cluster_trainings: list[dict[str, Any]] = []
-    past_due_cluster_meetings: list[dict[str, Any]] = []
-
-    own_count = 0
-    team_count = 0
-
+    rows: list[dict[str, Any]] = []
     for a in activities:
         is_own = a.responsible_staff_id in own_ids or (
             not a.responsible_staff_id and a.monitored_by_staff_id in own_ids
         )
-        if is_own:
-            own_count += 1
-        else:
-            team_count += 1
-
         owner_name = users_map.get(a.responsible_staff_id) or users_map.get(
             a.monitored_by_staff_id, "Staff"
         )
@@ -280,30 +361,8 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             "is_completed": False,
         }
 
-        if a.activity_type in VISIT_TYPES:
-            past_due_school_visits.append(row)
-        elif a.activity_type in TRAINING_TYPES:
-            past_due_cluster_trainings.append(row)
-        elif a.activity_type in MEETING_TYPES:
-            past_due_cluster_meetings.append(row)
-        else:
-            # Fallback to visits table if unmatched
-            past_due_school_visits.append(row)
-
-    total_count = len(activities)
-
-    return {
-        "past_due_total_count": total_count,
-        "pl_own_past_due_count": own_count,
-        "pl_team_past_due_count": team_count,
-        "past_due_school_visits": past_due_school_visits,
-        "past_due_cluster_trainings": past_due_cluster_trainings,
-        "past_due_cluster_meetings": past_due_cluster_meetings,
-        "past_due_visits_count": len(past_due_school_visits),
-        "past_due_trainings_count": len(past_due_cluster_trainings),
-        "past_due_meetings_count": len(past_due_cluster_meetings),
-        "is_pl": is_pl,
-    }
+        rows.append(row)
+    return rows
 
 
 def _empty_past_due_context(is_pl: bool) -> dict[str, Any]:

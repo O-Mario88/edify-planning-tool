@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import LoginEvent, StaffProfile, StaffSupervisorAssignment
@@ -46,10 +46,14 @@ class PresenceServiceTest(TestCase):
         self.ben = _user("ben", "Program Lead")
         self.rf = RequestFactory()
 
+    @override_settings(CLIENT_IP_HEADER="HTTP_DO_CONNECTING_IP")
     def test_a_sign_in_is_recorded_with_its_role_and_address(self):
+        # The address the platform edge saw, not the X-Forwarded-For entry
+        # the client wrote (apps.core.client_ip).
         request = self.rf.post(
             "/login",
-            HTTP_X_FORWARDED_FOR="203.0.113.9, 10.0.0.1",
+            HTTP_DO_CONNECTING_IP="203.0.113.9",
+            HTTP_X_FORWARDED_FOR="198.51.100.66, 10.0.0.1",
             HTTP_USER_AGENT="Edify/1",
         )
         record_login(request, self.anna)
@@ -153,11 +157,13 @@ class PresenceServiceTest(TestCase):
         record_login(request, self.anna)  # must not raise
         event = LoginEvent.objects.get(user=self.anna)
         self.assertIsNone(event.ip)
+        # A malformed forwarded value is not trusted, so it cannot blank or
+        # replace the address of the peer that actually connected.
         request = self.rf.post(
             "/login", HTTP_X_FORWARDED_FOR="not-an-address", REMOTE_ADDR="10.1.2.3"
         )
         record_login(request, self.ben)
-        self.assertIsNone(LoginEvent.objects.get(user=self.ben).ip)
+        self.assertEqual(LoginEvent.objects.get(user=self.ben).ip, "10.1.2.3")
 
     def test_touch_marks_the_person_seen(self):
         touch_presence(self.ben)

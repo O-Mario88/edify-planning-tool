@@ -182,6 +182,9 @@ Programme Rollout holds the full picture behind each card.
   window.addEventListener('edify-theme-change', function () {
     if (_themeTimer) clearTimeout(_themeTimer);
     _themeTimer = setTimeout(function () {
+      // A parked or swapped-out panel is not redrawn: building a chart into
+      // a detached element is main-thread work nobody sees.
+      if (!el.isConnected) { return; }
       if (chart) { chart.destroy(); }
       el.replaceChildren();
       chart = window.EdifyChartSystem.renderDetached(el, build());

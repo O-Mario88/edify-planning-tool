@@ -36,7 +36,7 @@
 </div>
 
 {% if schools %}
-  <div class="school-plan-table-scroll"><table class="school-plan-table{% if schools.0.supportRule %} school-plan-table--support{% endif %}" aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+  <div class="school-plan-table-scroll"><table class="school-plan-table"{% if schools.0.supportRule %} data-support-column{% endif %} aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
     <caption class="sr-only">School planning statuses</caption>
           {% include "components/school_plan_table_head.html" with support=schools.0.supportRule %}
     <tbody>

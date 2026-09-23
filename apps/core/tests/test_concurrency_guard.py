@@ -81,6 +81,37 @@ class ConcurrencyGuardTest(SimpleTestCase):
             timer.cancel()
         self.assertEqual(waited.status_code, 200)
 
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=1, WEB_QUEUE_TIMEOUT_SECONDS=5)
+    def test_a_browser_prefetch_is_refused_at_once_when_the_worker_is_full(self):
+        """Nobody waits on a speculative fetch; queued, it competes for a slot
+        with the people who are waiting (performance rescue, 2026-09-23)."""
+        import time
+
+        view, entered, release = self._holding_view()
+        guard = DatabaseConcurrencyGuardMiddleware(view)
+        thread, _first = self._hold_one_slot(guard, entered)
+        try:
+            started = time.monotonic()
+            refused = guard(
+                self.factory.get("/analytics", HTTP_SEC_PURPOSE="prefetch;prerender")
+            )
+            self.assertLess(time.monotonic() - started, 1.0, "the prefetch queued")
+            self.assertEqual(refused.status_code, 503)
+            self.assertEqual(refused["Cache-Control"], "no-store")
+            legacy = guard(self.factory.get("/analytics", HTTP_PURPOSE="prefetch"))
+            self.assertEqual(legacy.status_code, 503)
+        finally:
+            release.set()
+            thread.join(5)
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=1, WEB_QUEUE_TIMEOUT_SECONDS=5)
+    def test_a_browser_prefetch_is_served_when_a_slot_is_free(self):
+        guard = DatabaseConcurrencyGuardMiddleware(lambda request: HttpResponse("ok"))
+        served = guard(self.factory.get("/analytics", HTTP_SEC_PURPOSE="prefetch"))
+        self.assertEqual(served.status_code, 200)
+        # And the slot was released: an ordinary request still goes through.
+        self.assertEqual(guard(self.factory.get("/dashboard")).status_code, 200)
+
     @override_settings(WEB_MAX_CONCURRENT_REQUESTS=1, WEB_QUEUE_TIMEOUT_SECONDS=0.2)
     def test_health_probes_and_the_realtime_stream_never_wait(self):
         view, entered, release = self._holding_view()

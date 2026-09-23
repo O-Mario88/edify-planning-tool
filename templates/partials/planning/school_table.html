@@ -19,7 +19,7 @@
     <!-- Partner Assigned School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable{% if schools.0.supportRule %} school-plan-table--support{% endif %}" aria-label="Partner-assigned schools" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable"{% if schools.0.supportRule %} data-support-column{% endif %} aria-label="Partner-assigned schools" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
           <caption class="sr-only">School planning statuses</caption>
           {% include "components/school_plan_table_head.html" with selectable=True support=schools.0.supportRule %}
           <tbody>
@@ -44,7 +44,7 @@
     <!-- Default (Client / Core) School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable{% if schools.0.supportRule %} school-plan-table--support{% endif %}" aria-label="Schools ready for planning" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable"{% if schools.0.supportRule %} data-support-column{% endif %} aria-label="Schools ready for planning" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
           <caption class="sr-only">School planning statuses</caption>
           {% include "components/school_plan_table_head.html" with selectable=True support=schools.0.supportRule %}
           <tbody>

@@ -119,9 +119,13 @@ class PartnerWorkspaceTests(TestCase):
         # added partner-delivered activities with no PartnerAssignment row as a
         # second source — `activity_services.create` writes them, the old
         # directory listed them, and oversight alone would have lost them.
+        # Since 2026-09-23 the page lists work in three tables rather than
+        # per-partner groups: activities, assigned schools, assigned clusters.
         self.assertContains(response, "In School Training")
+        self.assertContains(response, "Partner activities (1)")
         # The handover, from the live PartnerAssignment row.
         self.assertContains(response, "School Visit Ssa Collection")
+        self.assertContains(response, "Schools assigned (1)")
         # Partner Monitoring counts the same two rows by stage in its status
         # filter, where the workflow-group headings used to count them.
         self.assertContains(response, "Scheduled (1)")
