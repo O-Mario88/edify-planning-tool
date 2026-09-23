@@ -143,7 +143,7 @@
         <div class="partner-aside-card__heading"><h2>Pending Partner Reminders</h2><span>{{ pending_reminders|length }}</span></div>
         <ul class="partner-reminder-list">
           {% for row in pending_reminders %}
-          <li><span class="partner-reminder-list__avatar">{{ row.partner.name|avatar_initials }}</span><div><strong>{{ row.partner.name }}</strong><p>{{ row.school_name }} · {{ row.purpose }}</p></div><time>{% if row.date %}{{ row.date|date:"d M" }}{% else %}No date{% endif %}</time></li>
+          <li><span class="partner-reminder-list__avatar">{{ row.partner.name|avatar_initials }}</span><div><strong title="{{ row.partner.name }}">{{ row.partner.name }}</strong><p title="{{ row.school_name }} · {{ row.purpose }}">{{ row.school_name }} · {{ row.purpose }}</p></div><time>{% if row.date %}{{ row.date|date:"d M" }}{% else %}No date{% endif %}</time></li>
           {% empty %}<li class="partner-aside-card__blank">Every current assignment has a delivery date.</li>{% endfor %}
         </ul>
         <a href="#partner-activity-filters" class="partner-aside-card__link">Review pending work <span>→</span></a>
@@ -153,7 +153,7 @@
         <div class="partner-aside-card__heading"><h2>Upcoming Partner Activities</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg></div>
         <ul class="partner-upcoming-list">
           {% for row in upcoming_activities %}
-          <li><time><b>{{ row.date|date:"M" }}</b><strong>{{ row.date|date:"d" }}</strong></time><div><strong>{{ row.school_name }}</strong><p>{{ row.purpose }} · {{ row.partner.name }}</p></div></li>
+          <li><time><b>{{ row.date|date:"M" }}</b><strong>{{ row.date|date:"d" }}</strong></time><div><strong title="{{ row.school_name }}">{{ row.school_name }}</strong><p title="{{ row.purpose }} · {{ row.partner.name }}">{{ row.purpose }} · {{ row.partner.name }}</p></div></li>
           {% empty %}<li class="partner-aside-card__blank">No future partner activities are scheduled.</li>{% endfor %}
         </ul>
         <a href="/calendar" class="partner-aside-card__link">View full calendar <span>→</span></a>

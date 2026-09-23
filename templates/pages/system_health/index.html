@@ -212,7 +212,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <h3 class="text-[22px] font-extrabold tracking-tight">External Integrations</h3>
 <div class="flex flex-wrap items-center gap-2">
 {% for s in health.integrations.systems %}
-<span class="edify-badge" {% if s.enabled %}data-tone="info"{% endif %}>{{ s.system|title }}: {% if s.enabled %}enabled{% else %}manual references{% endif %} · {{ s.succeeded }} synced · {{ s.reconciledManual }} manual</span>
+<span class="edify-badge" {% if s.enabled %}data-tone="info"{% endif %} title="{{ s.system|title }}: {% if s.enabled %}enabled{% else %}manual references{% endif %} · {{ s.succeeded }} synced · {{ s.reconciledManual }} manual">{{ s.system|title }}: {% if s.enabled %}enabled{% else %}manual references{% endif %} · {{ s.succeeded }} synced · {{ s.reconciledManual }} manual</span>
 {% endfor %}
 </div>
 <div class="space-y-2">

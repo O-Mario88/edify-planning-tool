@@ -8,6 +8,6 @@
   <div class="min-w-0">
     <p class="text-[13px] font-bold text-slate-800">{{ c.title }}</p>
     <p class="edify-text-caption font-semibold text-slate-600 leading-snug mt-0.5">{{ c.line1 }}</p>
-    <a href="{{ c.link }}" class="inline-block mt-1.5 edify-text-caption font-bold {% if c.tone == 'danger' %}text-rose-700{% elif c.tone == 'warning' %}text-amber-700{% else %}text-sky-700{% endif %} hover:underline">{{ c.action }} →</a>
+    <a href="{{ c.link }}" class="inline-flex min-h-6 items-center mt-1.5 edify-text-caption font-bold {% if c.tone == 'danger' %}text-rose-700{% elif c.tone == 'warning' %}text-amber-700{% else %}text-sky-700{% endif %} hover:underline">{{ c.action }} →</a>
   </div>
 </div>

@@ -8,7 +8,7 @@
     </div>
     <button type="button" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View full risk list &rarr;</button>
+       class="inline-flex min-h-6 items-center edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View full risk list &rarr;</button>
   </div>
   <div class="overflow-x-auto -mx-1">
     {% paginate risk_list.rows "risk_list_rows_page" as risk_list_rows_pager %}

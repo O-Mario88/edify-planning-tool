@@ -1053,7 +1053,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1771,
+      "bytes": 1793,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -2166,7 +2166,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3124,
+      "bytes": 3157,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -4162,7 +4162,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1155,
+      "bytes": 1175,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4355,7 +4355,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 49321,
+      "bytes": 50181,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
