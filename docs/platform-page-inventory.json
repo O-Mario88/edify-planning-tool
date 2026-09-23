@@ -2897,10 +2897,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 6835,
+      "bytes": 6299,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -2970,7 +2969,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9253,
+      "bytes": 9234,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"

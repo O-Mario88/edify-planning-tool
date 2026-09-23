@@ -90,9 +90,9 @@
 }
 
 .school-planning-badge[data-planning-tone="planned"] {
-  background-color: color-mix(in oklab, var(--edify-chart-orange) 18%, transparent);
-  border-color: color-mix(in oklab, var(--edify-chart-orange) 45%, transparent);
-  color: color-mix(in oklab, var(--edify-chart-orange) 60%, var(--edify-text));
+  background-color: #fbbf24;
+  border-color: #f59e0b;
+  color: #78350f;
 }
 
 .school-planning-badge[data-planning-tone="awaiting"] {

@@ -4605,7 +4605,7 @@ main .edify-avatar-neutral {
   display: inline-flex !important; align-items: baseline !important; gap: .35rem !important;
   white-space: normal !important;
 }
-.school-plan-table .planning-school-row { cursor: pointer; }
+.school-plan-table :is(.planning-school-row, .cluster-school-row) { cursor: pointer; }
 .school-plan-table .school-plan-table__name-toggle {
   background: transparent !important; border: 0 !important; padding: 0 !important;
   text-align: start !important; justify-content: flex-start !important;
@@ -4651,4 +4651,10 @@ main .edify-avatar-neutral {
 }
 .edify-popup-dialog .edify-popup-dialog__surface > .drawer-footer {
   margin: 0 !important; inline-size: 100% !important; padding: .75rem 1.25rem !important;
+}
+
+.cluster-card__summary { cursor: pointer; }
+.cluster-card .cluster-card__name-toggle {
+  padding: 0; border: 0; background: transparent; color: inherit;
+  font: inherit; text-align: start; cursor: pointer;
 }
