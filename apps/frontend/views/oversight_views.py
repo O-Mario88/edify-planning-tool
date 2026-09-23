@@ -1968,6 +1968,7 @@ def partner_oversight_view(request):
             "returned",
         ],
         "workspace_tables": partner_oversight.workspace_tables(items),
+        "partner_contacts": partner_oversight.partner_contacts(items),
         "summary": summary,
         "kpis": _partner_kpis(summary),
         # Requests a CCEO raised that this Program Lead has to answer. Kept

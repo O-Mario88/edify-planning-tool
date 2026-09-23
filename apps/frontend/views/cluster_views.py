@@ -1609,9 +1609,10 @@ def edit_cluster_drawer_view(request, cluster_id):
     staff = get_eligible_staff(cluster.district_id)
     # Keep a recorded owner selectable even when they have no school or
     # geography assignment in the cluster's district.
+    # `get_eligible_staff` falls back to a list, so take the ids in Python.
     staff = (
         StaffProfile.objects.filter(
-            Q(id__in=staff.values("id"))
+            Q(id__in=[profile.id for profile in staff])
             | Q(id=cluster.responsible_staff_id)
             | Q(user_id=cluster.responsible_staff_id)
         )

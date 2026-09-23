@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 703,
+  "titled_cards": 704,
   "templates": 267,
-  "distinct_titles": 670,
+  "distinct_titles": 671,
   "with_card_key": 13,
   "untitled_surfaces": 781,
   "untitled_chrome": 175,
@@ -6832,6 +6832,20 @@
    "branch_path": [
     [
      10,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/oversight/partner_workspace.html",
+   "line": 133,
+   "title": "Partner contacts ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     15,
      0
     ]
    ]

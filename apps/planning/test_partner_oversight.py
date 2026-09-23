@@ -547,6 +547,54 @@ class PartnerTeamWorkspaceTest(PartnerOversightFixture):
             self.assertEqual(len(svc.build_items(regional, fy=self.fy)), 1)
             self.assertTrue(svc.assignment_in_scope(regional, assignment.id))
 
+    def test_regional_withdrawal_queue_reaches_a_cluster_handover(self):
+        """A withdrawal names its school, not its cluster: a cluster
+        handover's request reaches the region through its assignment."""
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from apps.clusters.models import Cluster
+        from apps.partners.withdrawal_models import (
+            PartnerAssignmentWithdrawal,
+            WithdrawalAttribution,
+            WithdrawalDisposition,
+            WithdrawalKind,
+            WithdrawalReason,
+        )
+
+        regional = self._staff(
+            "regional-w@p.test", "Regional", EdifyRole.REGIONAL_PROGRAM_LEAD
+        )[0]
+        cluster = Cluster.objects.create(
+            name="Withdrawn cluster", region=self.region, district=self.district
+        )
+        assignment = PartnerAssignment.objects.create(
+            cluster=cluster,
+            partner=self.partner,
+            expected_activity_type="cluster_meeting",
+            status="assigned",
+        )
+        PartnerAssignmentWithdrawal.objects.create(
+            assignment=assignment,
+            partner=self.partner,
+            requested_by=self.cceo.id,
+            kind=WithdrawalKind.choices[0][0],
+            reason_category=WithdrawalReason.choices[0][0],
+            partner_facing_reason="Withdrawn",
+            attribution=WithdrawalAttribution.choices[0][0],
+            disposition=WithdrawalDisposition.choices[0][0],
+        )
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[self.region.id]),
+        ):
+            self.assertEqual(len(svc.withdrawal_requests(regional)), 1)
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[]),
+        ):
+            self.assertEqual(svc.withdrawal_requests(regional), [])
+
     def test_overdue_count_uses_the_same_deadline_as_assignment_details(self):
         assignment = self.assign()
         PartnerAssignment.objects.filter(id=assignment.id).update(
