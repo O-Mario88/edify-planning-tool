@@ -243,6 +243,12 @@ SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365  # 1 year — preload-list minimum
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# The client address as App Platform's edge saw it. DigitalOcean documents
+# DO-Connecting-IP as the connecting client's address and uses X-Forwarded-For
+# for its own ingress hop, so the leftmost X-Forwarded-For entry is the
+# client's own claim and the rightmost is DigitalOcean's server. Overridable
+# for a deployment behind a different edge.
+CLIENT_IP_HEADER = os.environ.get("CLIENT_IP_HEADER", "HTTP_DO_CONNECTING_IP")
 SECURE_REFERRER_POLICY = "same-origin"
 
 # Django requires trusted origins (including scheme) for unsafe HTTPS

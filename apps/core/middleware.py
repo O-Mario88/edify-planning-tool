@@ -24,6 +24,7 @@ from django.http import (
 )
 from django.http.request import split_domain_port, validate_host
 
+from .client_ip import client_ip
 from .request_context import (
     RequestContext,
     new_correlation_id,
@@ -74,14 +75,10 @@ class RequestContextMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         correlation_id = request.headers.get("x-correlation-id") or new_correlation_id()
-        forwarded = request.headers.get("x-forwarded-for", "")
-        ip = (
-            forwarded.split(",")[0].strip()
-            if forwarded
-            else request.META.get("REMOTE_ADDR")
-        )
         ctx = RequestContext(
-            ip_address=ip,
+            # Audit rows record the address a trusted hop saw, never the
+            # leftmost X-Forwarded-For entry, which the caller writes.
+            ip_address=client_ip(request),
             user_agent=request.headers.get("user-agent"),
             correlation_id=correlation_id,
         )

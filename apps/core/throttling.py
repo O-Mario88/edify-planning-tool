@@ -159,6 +159,14 @@ class RouteRateThrottle(SimpleRateThrottle):
     def parse_rate(self, rate):  # type: ignore[override]
         return None, None
 
+    def get_ident(self, request):
+        # DRF's own get_ident, with NUM_PROXIES unset, keys on the whole raw
+        # X-Forwarded-For string — a new identity per header value the client
+        # chooses to send. One trusted source for every throttle instead.
+        from apps.core.client_ip import throttle_ident
+
+        return throttle_ident(request)
+
     def get_cache_key(self, request, view):
         ident = self.get_ident(request)
         view_name = getattr(view, "rate_name", self.rate_name)
@@ -209,9 +217,9 @@ def throttle_by_ip(request, *, name: str, limit: int, window_ms: int = 60_000) -
     Shares the window backing and key shape with the DRF throttles, so the two
     doors count against the same budget rather than granting a second one.
     """
-    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    ident = xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "")
-    return _hit(f"{name}:{ident}", window_ms=window_ms, limit=limit)
+    from apps.core.client_ip import throttle_ident
+
+    return _hit(f"{name}:{throttle_ident(request)}", window_ms=window_ms, limit=limit)
 
 
 def reset_throttle_state(keys: Iterable[str] = ()) -> None:

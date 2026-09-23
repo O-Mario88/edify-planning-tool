@@ -749,6 +749,14 @@ AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES = _as_int(
     os.environ.get("AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES"), 30
 )
 
+# Where the client's address comes from (apps.core.client_ip). A header the
+# platform edge sets and a count of proxies we operate, never the leftmost
+# X-Forwarded-For entry, which the client writes. Unset here: local and test
+# servers have no proxy in front, so REMOTE_ADDR is the client. Production sets
+# the App Platform header (config/settings/prod.py).
+CLIENT_IP_HEADER = os.environ.get("CLIENT_IP_HEADER", "")
+TRUSTED_PROXY_HOPS = _as_int(os.environ.get("TRUSTED_PROXY_HOPS"), 0)
+
 # Rate limits.
 RATE_LIMIT_LOGIN_PER_MIN = _as_int(os.environ.get("RATE_LIMIT_LOGIN_PER_MIN"), 10)
 RATE_LIMIT_FORGOT_PER_10MIN = _as_int(os.environ.get("RATE_LIMIT_FORGOT_PER_10MIN"), 4)
