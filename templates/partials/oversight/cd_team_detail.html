@@ -11,7 +11,7 @@ and level 3 (4 distinct tables per staff member:
 {% if owner_groups %}
 {% with can_open_activity_record=request.user|can_open:"/activities/0" %}
 <div class="cd-team-detail-wrapper space-y-5"
-     x-data="tabState('activeOfficer', 'officer', {% tab_values owner_groups %}, '{{ owner_groups.0.id }}')">
+     x-data="tabState('activeOfficer', 'officer', {% tab_values owner_groups %}, '{% if default_officer %}{{ default_officer }}{% else %}{{ owner_groups.0.id }}{% endif %}')">
 
   {# ── Secondary Tabs: CCEOs / Officers under this Program Lead ───────── #}
   <div class="oversight-team-selector">

@@ -154,7 +154,7 @@ class DashboardCardRowContractTest(SimpleTestCase):
         self.assertIn("r.areas_by_key|get_item:key", dashboard)
         self.assertNotIn("Supervised CCEO Areas", dashboard)
         self.assertIn("CCEO Area Results", oversight)
-        self.assertIn("Supervised CCEOs · All Target Areas", drawer)
+        self.assertIn("Supervised CCEOs · all target areas", drawer)
         self.assertIn("{% for area in c.areas %}", drawer)
 
 

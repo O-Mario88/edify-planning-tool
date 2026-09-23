@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Schedule School Support{% endblock %}
-{% block drawer_subtitle %}{% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% endif %}{% endblock %}
+{% block drawer_title %}Schedule support for {% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% else %}this assignment{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form method="post"
@@ -15,7 +15,7 @@
   <div id="partner-schedule-errors" aria-live="polite"></div>
 
   {% if not approved_item %}
-  <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">This assignment does not name an approved Activity yet. Ask the managing staff member to repair it — the choice is made at assignment, not here.</div>
+  <p class="edify-note" data-tone="danger" role="alert">This assignment does not name an approved Activity yet. Ask the managing staff member to repair it — the choice is made at assignment, not here.</p>
   {% endif %}
 
   {% comment %}
@@ -29,28 +29,26 @@
   down) and the real figure is captured with attendance at completion.
   {% endcomment %}
   {% if approved_item %}
-  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3" data-assignment-work>
-    <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">{% firstof assignment.purpose_label "Support" %}</span>
-    <p class="mt-1 text-[13px] font-bold text-slate-800">{% firstof assignment.training_course.display_name approved_item.display_name %}</p>
-    {% if assignment.training_course_id %}<p class="mt-1 edify-text-caption font-medium text-slate-500">The training was chosen at assignment. Choose the date it is delivered.</p>{% endif %}
-  </div>
+  <p class="font-medium text-slate-600" data-assignment-work>
+    <span class="font-semibold text-slate-800">{% firstof assignment.training_course.display_name approved_item.display_name %}</span> · {% firstof assignment.purpose_label "Support" %}{% if assignment.training_course_id %}. The training was chosen at assignment.{% endif %}
+  </p>
   {% endif %}
 
-  <div>
-    <label for="partner-scheduled-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery date</label>
-    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  <div class="space-y-1">
+    <label for="partner-scheduled-date" class="block edify-text-caption font-semibold text-slate-600">Delivery date <span class="text-rose-500">*</span></label>
+    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
-  <div>
-    <label for="partner-delivery-contact" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Name of person visiting the School</label>
+  <div class="space-y-1">
+    <label for="partner-delivery-contact" class="block edify-text-caption font-semibold text-slate-600">Person visiting the school <span class="text-rose-500">*</span></label>
     <input id="partner-delivery-contact" name="delivery_contact_name" type="text" maxlength="255" required autocomplete="name"
       value="{{ request.user.name }}"
-      class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="edify-surface px-4 h-8 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
-    <button type="submit" {% if not approved_item %}disabled{% endif %} class="schedule-drawer-submit btn-premium-primary px-4 h-8 rounded-control text-white font-bold disabled:cursor-not-allowed disabled:opacity-50">Submit</button>
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" {% if not approved_item %}disabled{% endif %} class="schedule-drawer-submit btn btn-primary h-8 disabled:cursor-not-allowed disabled:opacity-50">Schedule delivery</button>
   </div>
 </form>
 {% endblock %}

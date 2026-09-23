@@ -936,62 +936,10 @@
 /* ════════════════════════════════════════════════════════════════════════════
    CREATE CLUSTER — reference-matched, guided geography workflow
    ════════════════════════════════════════════════════════════════════════════ */
-.drawer-surface.type-center:has(.cluster-create-drawer) {
-  inline-size: min(72rem, calc(100vw - 2rem));
-  max-inline-size: 72rem;
-  max-block-size: min(96dvh, 54rem);
-  border-radius: 1.5rem;
-  background: var(--edify-surface-raised);
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-header {
-  min-block-size: 0;
-  align-items: flex-start;
-  padding: 1.5rem 2rem 1.25rem;
-  border-block-end: 1px solid var(--edify-border);
-  background: var(--edify-surface-raised);
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-header > div {
-  max-inline-size: 62rem;
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-header h3 {
-  color: var(--edify-text) !important;
-  font-size: clamp(1.25rem, 1.12rem + 0.35vw, 1.5rem) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.025em !important;
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-header p {
-  max-inline-size: 74ch;
-  margin-block-start: 0.3rem !important;
-  color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-label-size) !important;
-  font-weight: 450 !important;
-  line-height: 1.45 !important;
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-close-btn {
-  inline-size: 3rem;
-  block-size: 3rem;
-  flex: 0 0 auto;
-  padding: 0;
-  border: 1px solid var(--edify-border-strong);
-  border-radius: var(--edify-radius-md);
-  background: var(--edify-surface-raised);
-  color: var(--edify-text-muted);
-}
-
-.drawer-surface:has(.cluster-create-drawer) .drawer-close-btn:hover {
-  border-color: var(--edify-accent);
-  background: var(--edify-accent-light);
-  color: var(--edify-accent-text);
-}
-
+/* The header, title and close button are the shared drawer chrome; only the
+   field layout below is specific to this workflow. */
 .drawer-surface:has(.cluster-create-drawer) .drawer-body {
   padding: 0;
-  background: var(--edify-surface);
 }
 
 .cluster-create-form {
@@ -1239,32 +1187,6 @@
   min-block-size: var(--edify-action-button-block-size, 2.5rem);
 }
 
-.cluster-create-footer .school-record-action--schedule {
-  color: var(--edify-on-accent) !important;
-  border: 1px solid color-mix(in oklab, var(--edify-accent) 72%, var(--edify-primary-hover)) !important;
-  background-color: var(--edify-accent) !important;
-  background-image: var(--edify-button-primary-treatment) !important;
-  box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--edify-accent) 42%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-}
-
-.cluster-create-footer .school-record-action--schedule:hover:not(:disabled) {
-  background-color: var(--edify-accent-hover) !important;
-  background-image: linear-gradient(105deg, var(--edify-primary-hover), var(--edify-accent-hover)) !important;
-}
-
-.cluster-create-footer .cluster-create-cancel {
-  color: var(--edify-text-muted) !important;
-  border: 1px solid transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.cluster-create-footer .cluster-create-cancel:hover:not(:disabled) {
-  color: var(--edify-accent-text) !important;
-  border-color: transparent !important;
-  background-color: var(--edify-accent-light) !important;
-}
-
 .cluster-create-submit {
   display: inline-flex;
   align-items: center;
@@ -1277,31 +1199,6 @@
 }
 
 @media (max-width: 47.99rem) {
-  .drawer-surface.type-center:has(.cluster-create-drawer) {
-    inline-size: auto !important;
-    max-block-size: 82svh !important;
-    border-radius: 1.25rem !important;
-  }
-
-  .drawer-surface:has(.cluster-create-drawer) .drawer-header {
-    min-block-size: auto;
-    padding: 1.25rem 1rem 1rem;
-  }
-
-  .drawer-surface:has(.cluster-create-drawer) .drawer-header h3 {
-    font-size: 1.25rem !important;
-  }
-
-  .drawer-surface:has(.cluster-create-drawer) .drawer-header p {
-    font-size: var(--edify-text-label-size) !important;
-  }
-
-  .drawer-surface:has(.cluster-create-drawer) .drawer-close-btn {
-    inline-size: 2.75rem;
-    block-size: 2.75rem;
-    border-radius: 0.75rem;
-  }
-
   .cluster-create-fields {
     gap: 1rem;
     padding: 1rem 1rem 1.25rem;
@@ -1320,14 +1217,10 @@
     padding: 0.75rem 1rem;
   }
 
-  .cluster-create-footer :where(button) {
-    flex: 1;
-  }
 }
 
 @media (pointer: coarse) {
-  .drawer-body .cluster-create-field > :where(input, select),
-  .cluster-create-footer :where(.school-record-action) {
+  .drawer-body .cluster-create-field > :where(input, select) {
     min-block-size: 3rem;
   }
 }

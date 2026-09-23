@@ -55,13 +55,9 @@ class TableBoundsTest(SimpleTestCase):
     #:   16,000-school scaled estate has six).
     #: * `partials/dashboards/pl/programmes_view.html` — the monthly
     #:   completion table behind the Program Lead's chart (8bb11a1): one row
-    #:   per supervised officer, twelve month columns. Bounded by the team,
+    #:   per supervised officer, one column per month charted. Bounded by the team,
     #:   like the team targets matrix, and read side by side with the chart.
-    #: * `partials/oversight/cluster_activity_table.html` — one officer's group
-    #:   trainings and cluster meetings for the year on the cluster oversight
-    #:   page (7586e32). Bounded by what one officer can deliver in twelve
-    #:   months, the same reasoning as the My Plan cards above.
-    UNBOUNDED_CEILING = 11
+    UNBOUNDED_CEILING = 10
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

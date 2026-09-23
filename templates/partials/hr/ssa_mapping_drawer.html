@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Measurement rule{% endblock %}
-{% block drawer_subtitle %}{{ item.display_name }} — what this activity is meant to move, and how that is judged later.{% endblock %}
+{% block drawer_title %}Measurement rule for {{ item.display_name }}{% endblock %}
+{% block drawer_subtitle %}{{ item.stable_code }}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -16,12 +16,11 @@ for review" hands it to a second reviewer with the reason for the change.
       hx-post="/priorities/ssa-mapping/{{ item.id }}/save" hx-target="#ssa-mapping-errors"
       hx-disabled-elt="find button[type=submit]"
       x-data="{ notMeasured: {% if not_measured %}true{% else %}false{% endif %} }"
-      class="space-y-4 text-[12px] font-semibold text-slate-600" data-ssa-mapping-form>
+      class="space-y-4 text-[12px] text-slate-600" data-ssa-mapping-form>
   {% csrf_token %}
   <div id="ssa-mapping-errors" aria-live="polite"></div>
 
   <dl class="hr-drawer-facts">
-    <div class="hr-drawer-facts__row"><dt>Activity</dt><dd>{{ item.display_name }} · {{ item.stable_code }}</dd></div>
     <div class="hr-drawer-facts__row"><dt>Live rule</dt><dd>{% if live %}v{{ live.version }} · {% if reference_default %}{{ reference_label }}{% else %}{{ live.get_status_display }}{% endif %}{% else %}None — the activity needs a rule{% endif %}</dd></div>
     {% if pending %}
     <div class="hr-drawer-facts__row"><dt>Working version</dt><dd>v{{ pending.version }} · {% if in_review %}In review{% elif pending.review_note %}Returned{% else %}Draft{% endif %}</dd></div>
@@ -46,13 +45,13 @@ for review" hands it to a second reviewer with the reason for the change.
   </label>
 
   <div x-show="notMeasured" x-cloak class="hr-drawer-form__field">
-    <label for="not-reason">Why <span aria-hidden="true">*</span></label>
+    <label for="not-reason" class="block edify-text-caption font-semibold text-slate-600">Why <span class="text-rose-500">*</span></label>
     <textarea id="not-reason" name="not_ssa_measured_reason" rows="2">{{ current.not_ssa_measured_reason|default:"" }}</textarea>
   </div>
 
   <div x-show="!notMeasured" x-cloak class="space-y-4">
     <div class="hr-drawer-form__field">
-      <label for="mapping_mode">How the SSA domain is chosen</label>
+      <label for="mapping_mode" class="block edify-text-caption font-semibold text-slate-600">How the SSA domain is chosen</label>
       {% if mode_locked %}
       <input type="hidden" name="mapping_mode" value="">
       <p class="hr-drawer-form__help">{{ locked_mode_label }} — set by catalogue governance and kept as it is.</p>
@@ -65,7 +64,7 @@ for review" hands it to a second reviewer with the reason for the change.
     </div>
 
     <div class="hr-drawer-form__field">
-      <label for="intervention">SSA intervention</label>
+      <label for="intervention" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</label>
       <select id="intervention" name="intervention">
         <option value="">None — the planner or source activity names it</option>
         {% for value, label in interventions %}
@@ -75,7 +74,7 @@ for review" hands it to a second reviewer with the reason for the change.
     </div>
 
     <div class="hr-drawer-form__field">
-      <label for="relationship">Relationship</label>
+      <label for="relationship" class="block edify-text-caption font-semibold text-slate-600">Relationship</label>
       <select id="relationship" name="relationship">
         {% for value, label in relationships %}<option value="{{ value }}"{% if current and current.relationship == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
@@ -83,21 +82,21 @@ for review" hands it to a second reviewer with the reason for the change.
     </div>
 
     <div class="hr-drawer-form__field">
-      <label for="measurement_role">This score is used for</label>
+      <label for="measurement_role" class="block edify-text-caption font-semibold text-slate-600">This score is used for</label>
       <select id="measurement_role" name="measurement_role">
         {% for value, label in measurement_roles %}<option value="{{ value }}"{% if current.measurement_role|default:"eligibility_and_outcome" == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </div>
 
     <div class="hr-drawer-form__field">
-      <label for="expected_direction">Success looks like</label>
+      <label for="expected_direction" class="block edify-text-caption font-semibold text-slate-600">Success looks like</label>
       <select id="expected_direction" name="expected_direction">
         {% for value, label in directions %}<option value="{{ value }}"{% if current.expected_direction|default:"improve" == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </div>
 
     <fieldset class="hr-drawer-form__field">
-      <legend>Which schools this is for</legend>
+      <legend class="block edify-text-caption font-semibold text-slate-600">Which schools this is for</legend>
       {% for band in bands %}
       <label class="hr-drawer-form__check" for="band-{{ band|lower }}">
         <input type="checkbox" id="band-{{ band|lower }}" name="eligible_bands" value="{{ band }}"{% if band in current_bands %} checked{% endif %}>
@@ -108,7 +107,7 @@ for review" hands it to a second reviewer with the reason for the change.
     </fieldset>
 
     <div class="hr-drawer-form__field">
-      <label for="eligibility-note">Eligibility note</label>
+      <label for="eligibility-note" class="block edify-text-caption font-semibold text-slate-600">Eligibility note</label>
       <textarea id="eligibility-note" name="eligibility_note" rows="2">{{ current.eligibility_note|default:"" }}</textarea>
     </div>
 
@@ -117,28 +116,28 @@ for review" hands it to a second reviewer with the reason for the change.
     things have happened, so the reading is no longer about this activity.
     {% endcomment %}
     <div class="hr-drawer-form__field">
-      <label for="fu-min">Earliest valid follow-up, days after delivery</label>
+      <label for="fu-min" class="block edify-text-caption font-semibold text-slate-600">Earliest valid follow-up, days after delivery</label>
       <input id="fu-min" type="number" min="0" name="follow_up_min_days" value="{{ current.follow_up_min_days|default_if_none:'' }}">
     </div>
     <div class="hr-drawer-form__field">
-      <label for="fu-exp">Expected follow-up, days after delivery</label>
+      <label for="fu-exp" class="block edify-text-caption font-semibold text-slate-600">Expected follow-up, days after delivery</label>
       <input id="fu-exp" type="number" min="0" name="follow_up_expected_days" value="{{ current.follow_up_expected_days|default_if_none:'' }}">
       <span class="hr-drawer-form__help">Sets the date the follow-up is due.</span>
     </div>
     <div class="hr-drawer-form__field">
-      <label for="fu-max">Latest valid follow-up, days after delivery</label>
+      <label for="fu-max" class="block edify-text-caption font-semibold text-slate-600">Latest valid follow-up, days after delivery</label>
       <input id="fu-max" type="number" min="0" name="follow_up_max_days" value="{{ current.follow_up_max_days|default_if_none:'' }}">
     </div>
 
     <div class="hr-drawer-form__field">
-      <label for="threshold">Minimum meaningful change (optional)</label>
+      <label for="threshold" class="block edify-text-caption font-semibold text-slate-600">Minimum meaningful change <span class="font-normal text-slate-400">(optional)</span></label>
       <input id="threshold" type="number" step="0.01" min="0" max="10" name="min_meaningful_change" value="{{ current.min_meaningful_change|default_if_none:'' }}">
-      <span class="hr-drawer-form__help">Leave empty unless Edify has approved a threshold. Left empty, any movement counts — a default here would quietly reclassify a real half-point gain as no change.</span>
+      <span class="hr-drawer-form__help">Leave empty unless Edify has approved a threshold; empty means any movement counts.</span>
     </div>
   </div>
 
   <div class="hr-drawer-form__field">
-    <label for="change-reason">What changed and why</label>
+    <label for="change-reason" class="block edify-text-caption font-semibold text-slate-600">What changed and why</label>
     <textarea id="change-reason" name="change_reason" rows="2">{{ pending.change_reason|default:"" }}</textarea>
     <span class="hr-drawer-form__help">Required to submit for review.</span>
   </div>
@@ -146,7 +145,7 @@ for review" hands it to a second reviewer with the reason for the change.
 
   {% if history %}
   <section aria-labelledby="ssa-mapping-history-title" data-ssa-mapping-history>
-    <h3 id="ssa-mapping-history-title" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Version history</h3>
+    <h3 id="ssa-mapping-history-title" class="edify-text-caption font-semibold text-slate-600">Version history</h3>
     <dl class="hr-drawer-facts">
       {% for entry in history %}
       <div class="hr-drawer-facts__row">

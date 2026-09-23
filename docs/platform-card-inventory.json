@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 703,
-  "templates": 267,
-  "distinct_titles": 670,
+  "titled_cards": 679,
+  "templates": 249,
+  "distinct_titles": 647,
   "with_card_key": 13,
-  "untitled_surfaces": 784,
-  "untitled_chrome": 174,
-  "untitled_nested": 254,
-  "untitled_headless": 356,
+  "untitled_surfaces": 608,
+  "untitled_chrome": 158,
+  "untitled_nested": 237,
+  "untitled_headless": 213,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 26,
+  "titles_in_several_templates": 25,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -47,10 +47,6 @@
   "evidence": [
    "templates/pages/ia/partner_review.html",
    "templates/pages/partner/activity_workroom.html"
-  ],
-  "impact": [
-   "templates/partials/oversight/withdrawal_drawer.html",
-   "templates/partials/schools/close_drawer.html"
   ],
   "message rules": [
    "templates/pages/messages/index.html",
@@ -2968,47 +2964,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/pages/schools/index.html",
-   "line": 211,
-   "title": "Assign Cluster to Schools",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/index.html",
-   "line": 248,
-   "title": "Assign Project to Schools",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/index.html",
-   "line": 285,
-   "title": "Match Staff to Schools",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/index.html",
-   "line": 335,
-   "title": "Reassign school ownership",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
-   "branch_path": [
-    [
-     15,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/pages/schools/ownership_transfers.html",
    "line": 29,
    "title": "Target Reconciliation Required",
@@ -4344,39 +4299,12 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/clusters/edit_cluster_drawer.html",
-   "line": 125,
-   "title": "Cluster leader",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "border border-slate-200 rounded-surface p-4 edify-surface space-y-3.5",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/clusters/impact_panel.html",
    "line": 2,
    "title": "Cluster Impact",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 48,
-   "title": "Graduation Formula Weights",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-5 shadow-sm flex items-center justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 131,
-   "title": "Graduation Gate Checklist",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-3.5",
    "branch_path": []
   },
   {
@@ -4476,33 +4404,6 @@
    "heading_level": 4,
    "has_card_key": false,
    "classes": "rounded-surface bg-slate-50 /40 p-4 space-y-2 flex flex-col justify-center shadow-2xs",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/core_schools/schedule_activity_drawer.html",
-   "line": 8,
-   "title": "Core visits and trainings",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 bg-slate-50/70 p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/core_schools/schedule_activity_drawer.html",
-   "line": 64,
-   "title": "Schedule an additional visit or training",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface-raised p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/core_schools/strategy_playbook_drawer.html",
-   "line": 48,
-   "title": "The Core Program Rule",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "p-4 rounded-surface edify-primary-soft-alpha-50 border space-y-2",
    "branch_path": []
   },
   {
@@ -5602,33 +5503,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/disbursements/disburse_drawer.html",
-   "line": 8,
-   "title": "Disburse \u2014",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[500px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/hold_drawer.html",
-   "line": 8,
-   "title": "Hold \u2014",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/return_drawer.html",
-   "line": 8,
-   "title": "Return \u2014",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/evidence/workspace.html",
    "line": 76,
    "title": "No records in this workflow state",
@@ -5697,24 +5571,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/partials/finance/country_budget/plan_sources_drawer.html",
-   "line": 10,
-   "title": "Plan Sources \u2014",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[720px] edify-surface shadow-2xl border-l border-slate-200 overflow-hidden flex flex-col",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/finance/country_budget/return_drawer.html",
-   "line": 8,
-   "title": "Return General Budget",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
@@ -5850,15 +5706,6 @@
      1
     ]
    ]
-  },
-  {
-   "template": "templates/partials/fund_approvals/return_drawer.html",
-   "line": 8,
-   "title": "Return 's Fund Plan",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
   },
   {
    "template": "templates/partials/fund_approvals/root.html",
@@ -6383,19 +6230,10 @@
   {
    "template": "templates/partials/leave/request_leave_drawer.html",
    "line": 4,
-   "title": "Request Leave &amp; Delegate Coverage",
+   "title": "Request leave",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "px-6 py-5 edify-surface border-b border-slate-100 flex items-center justify-between shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/messages/compose_modal.html",
-   "line": 27,
-   "title": "New Message",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "h-9 w-9 rounded-surface edify-primary-soft edify-primary-text flex items-center justify-center shrink-0",
+   "classes": "px-4 sm:px-6 py-4 edify-surface border-b border-slate-100 flex items-center justify-between gap-3",
    "branch_path": []
   },
   {
@@ -6481,33 +6319,6 @@
    ]
   },
   {
-   "template": "templates/partials/my_plan/accountability_drawer.html",
-   "line": 19,
-   "title": "1 Actual Spend",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "p-3 rounded-surface bg-slate-50 border border-slate-200/60 space-y-1.5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/my_plan/accountability_drawer.html",
-   "line": 65,
-   "title": "3 NetSuite Code",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/my_plan/activity_detail_drawer.html",
-   "line": 127,
-   "title": "System Workflow Auditing",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "bg-slate-50 p-4 border border-slate-100 rounded-surface space-y-2.5",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/my_plan/attention.html",
    "line": 6,
    "title": "Returned \u2014 Needs Correction",
@@ -6562,15 +6373,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/partials/my_plan/cancel_drawer.html",
-   "line": 17,
-   "title": "1 What cancelling does",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "p-3 rounded-surface bg-amber-50 text-amber-800 text-[12px] font-bold",
-   "branch_path": []
   },
   {
    "template": "templates/partials/my_plan/cluster_meetings.html",
@@ -6716,32 +6518,32 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 29,
+   "line": 41,
    "title": "'s Clusters",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     0,
+     1,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 90,
+   "line": 102,
    "title": "'s Clusters clusters ( member schools)",
    "heading_level": 4,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": [
     [
-     0,
+     1,
      1
     ],
     [
-     2,
+     3,
      0
     ]
    ]
@@ -6837,56 +6639,6 @@
    ]
   },
   {
-   "template": "templates/partials/oversight/withdrawal_drawer.html",
-   "line": 79,
-   "title": "Impact",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border p-3 edify-border",
-   "branch_path": [
-    [
-     2,
-     2
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/planning/schedule_cluster_drawer.html",
-   "line": 125,
-   "title": "Cluster need \u00b7 of schools assessed",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3",
-   "branch_path": [
-    [
-     14,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 223,
-   "title": "Recommended interventions",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm",
-   "branch_path": [
-    [
-     12,
-     0
-    ],
-    [
-     15,
-     1
-    ],
-    [
-     16,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/priorities/guidance_inbox.html",
    "line": 11,
    "title": "Guidance from your Programme Lead",
@@ -6946,6 +6698,20 @@
    "branch_path": [
     [
      9,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/professional_development/allocation_history_drawer.html",
+   "line": 11,
+   "title": "FY",
+   "heading_level": 4,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 p-3 space-y-2",
+   "branch_path": [
+    [
+     0,
      0
     ]
    ]
@@ -7462,20 +7228,6 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/close_drawer.html",
-   "line": 52,
-   "title": "Impact",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border p-3 edify-border",
-   "branch_path": [
-    [
-     3,
-     3
-    ]
-   ]
   },
   {
    "template": "templates/partials/schools/directory_intelligence.html",

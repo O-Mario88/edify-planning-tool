@@ -1,5 +1,7 @@
 <div class="space-y-4 p-4">
   <p class="edify-text-caption font-semibold">{{ member.meetings_planned }} cluster meetings planned · {{ member.trainings_planned }} group trainings planned</p>
-  {% include "partials/oversight/cluster_activity_table.html" with activities=member.trainings heading="Group trainings" %}
-  {% include "partials/oversight/cluster_activity_table.html" with activities=member.meetings heading="Cluster meetings" %}
+  {% with member_key=member.id|stringformat:"s" %}
+  {% include "partials/oversight/cluster_activity_table.html" with activities=member.trainings heading="Group trainings" page_param="ct_page-"|add:member_key %}
+  {% include "partials/oversight/cluster_activity_table.html" with activities=member.meetings heading="Cluster meetings" page_param="cm_page-"|add:member_key %}
+  {% endwith %}
 </div>

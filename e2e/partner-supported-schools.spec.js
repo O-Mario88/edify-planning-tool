@@ -63,12 +63,11 @@ async function monitoringDetails(page, assignmentId) {
   return details;
 }
 
+// The scheduling drawers take their date in a native date input (the compact
+// drawer design, 2026-09-23), so the date is typed there like a person would,
+// firing the input and change events the cost previews listen for.
 async function setDrawerDate(page, isoDate) {
-  await page.evaluate(date => {
-    const holder = [...document.querySelectorAll('#drawer-container [x-data]')]
-      .find(el => window.Alpine && 'selectedDate' in window.Alpine.$data(el));
-    window.Alpine.$data(holder).selectedDate = date;
-  }, isoDate);
+  await page.locator('#drawer-container input[type="date"][name="scheduled_date"]').first().fill(isoDate);
 }
 
 // An activity is on a My Plan when one of its row actions points at it.
@@ -235,7 +234,7 @@ test.describe('Partner-supported schools — journeys', () => {
       await dateInput.fill(days[4].date);
     }
     await drawer.locator('input[name="delivery_contact_name"]').fill('Grace Visitor');
-    await drawer.getByRole('button', { name: 'Submit' }).click();
+    await drawer.getByRole('button', { name: 'Schedule delivery' }).click();
     await expect(page.locator('#drawer-container input[name="delivery_contact_name"]')).toHaveCount(0, { timeout: 15_000 });
 
     const facts = fixture('inspect', hope.school_id);

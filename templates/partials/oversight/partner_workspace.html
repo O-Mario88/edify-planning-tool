@@ -136,6 +136,13 @@ resolving a hand-back opens its own governed drawer.
             </p>
           </div>
         </div>
+        {% comment %}
+        The decision is offered only to the roles the review service accepts
+        (PARTNER_WITHDRAWAL_REVIEW). Other readers of the queue — a Regional
+        Programme Lead, IA, the Accountant — see the request without buttons
+        that could only answer 403.
+        {% endcomment %}
+        {% if can_review_withdrawals %}
         <form hx-post="/partner-oversight/withdraw/review"
               hx-target="#withdrawal-review-result-{{ forloop.counter }}"
               hx-swap="innerHTML"
@@ -150,6 +157,9 @@ resolving a hand-back opens its own governed drawer.
           <button type="submit" name="decision" value="reject" class="btn h-8">Reject</button>
         </form>
         <div id="withdrawal-review-result-{{ forloop.counter }}"></div>
+        {% else %}
+        <p class="edify-text-caption edify-text-muted">Awaiting the supervising Programme Lead's decision.</p>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>

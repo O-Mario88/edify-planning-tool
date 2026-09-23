@@ -5,7 +5,9 @@ the shared analytics pages IA reads; the grants and doors that had nothing to
 do with the role are gone; and the phone leads with the day's queue. Since
 2026-09-14 the sidebar is grouped by how often each page is visited
 (apps.core.nav_cadence): the verification queues IA works every day first, the
-five responsibilities after them in the rhythm they are worked.
+five responsibilities after them in the rhythm they are worked. Since
+2026-09-23 the dedicated oversight pages share one OVERSIGHT group, placed
+straight after DAILY (apps.core.navigation._regroup_by_visit).
 """
 
 from __future__ import annotations

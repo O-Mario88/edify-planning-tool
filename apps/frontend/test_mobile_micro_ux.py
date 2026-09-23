@@ -280,12 +280,21 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertEqual(offenders, [])
 
     def test_full_screen_overlays_are_declared_as_named_dialogs(self):
+        # The Core Schools drawers extend the shared shell, which declares the
+        # named dialog (asserted below) once for every drawer built on it.
+        for path in (
+            "templates/partials/core_schools/schedule_visit_drawer.html",
+            "templates/partials/core_schools/core_assessment_drawer.html",
+            "templates/partials/core_schools/champion_review_drawer.html",
+            "templates/partials/core_schools/schedule_training_drawer.html",
+            "templates/partials/core_schools/strategy_playbook_drawer.html",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(
+                    '{% extends "components/drawers/base_drawer.html" %}', _read(path)
+                )
         dialog_contracts = {
-            "templates/partials/core_schools/schedule_visit_drawer.html": "schedule-core-visit-title",
-            "templates/partials/core_schools/core_assessment_drawer.html": "core-school-assessment-title",
-            "templates/partials/core_schools/champion_review_drawer.html": "champion-review-title",
-            "templates/partials/core_schools/schedule_training_drawer.html": "schedule-core-training-title",
-            "templates/partials/core_schools/strategy_playbook_drawer.html": "core-strategy-playbook-title",
+            "templates/components/drawers/base_drawer.html": "drawer-title",
             "templates/pages/leave/public_holidays.html": "add-calendar-block-title",
             "templates/pages/targets/index.html": "target-rollup-title",
             "templates/pages/professional_development/index.html": "pd-policy-title",

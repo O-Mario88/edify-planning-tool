@@ -30,7 +30,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -1246,32 +1246,58 @@ def activity_tabs(items, active: str) -> list[dict]:
 
 def program_lead_members(program_lead_id) -> list[dict]:
     """The lead and their complete reporting roster, independent of activity dates."""
-    from apps.accounts.models import StaffProfile
+    return program_lead_rosters([program_lead_id]).get(str(program_lead_id), [])
+
+
+def program_lead_rosters(program_lead_ids) -> dict[str, list[dict]]:
+    """`program_lead_members` for many leads at once, in two queries.
+
+    Keyed by the id each lead was asked for (StaffProfile or User id). An id
+    that is not a Programme Lead has no entry. Each roster is the lead first,
+    then everyone with a supervisor link to them, by name.
+    """
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
     from apps.core.rbac import EdifyRole
 
-    lead = (
+    wanted = {str(i) for i in program_lead_ids if i}
+    if not wanted:
+        return {}
+    lead_for: dict[str, StaffProfile] = {}
+    for lead in (
         StaffProfile.objects.filter(
-            Q(id=program_lead_id) | Q(user_id=program_lead_id),
+            Q(id__in=wanted) | Q(user_id__in=wanted),
             user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         )
         .select_related("user")
-        .first()
-    )
-    if lead is None:
-        return []
-    members = (
-        StaffProfile.objects.filter(
-            supervisor_links__supervisor_id=lead.id,
+        .order_by("pk")
+    ):
+        for key in (lead.id, lead.user_id):
+            if key in wanted:
+                lead_for.setdefault(key, lead)
+    if not lead_for:
+        return {}
+    members: dict[str, list] = {}
+    for link in (
+        StaffSupervisorAssignment.objects.filter(
+            supervisor_id__in={lead.id for lead in lead_for.values()}
         )
-        .exclude(id=lead.id)
-        .select_related("user")
-        .distinct()
-        .order_by("user__name", "id")
-    )
-    return [
-        {"id": p.id, "name": p.user.name or p.user.email, "ids": {p.id, p.user_id}}
-        for p in [lead, *members]
-    ]
+        .exclude(supervisee_id=F("supervisor_id"))
+        .select_related("supervisee__user")
+        .order_by("supervisee__user__name", "supervisee_id")
+    ):
+        members.setdefault(link.supervisor_id, []).append(link.supervisee)
+
+    def entry(p):
+        return {
+            "id": p.id,
+            "name": p.user.name or p.user.email,
+            "ids": {p.id, p.user_id},
+        }
+
+    return {
+        key: [entry(p) for p in [lead, *members.get(lead.id, [])]]
+        for key, lead in lead_for.items()
+    }
 
 
 def group_by_owner(items, *, owners=None) -> list[dict]:

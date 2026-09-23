@@ -4606,6 +4606,11 @@ main .edify-avatar-neutral {
     transform: none !important; border-radius: var(--edify-drawer-radius) !important;
     overflow: hidden auto !important;
   }
+  /* The wide modifier still widens: the compact rule above must not flatten it. */
+  .edify-popup-dialog.edify-popup-dialog--wide .edify-popup-dialog__surface {
+    width: min(100%, var(--drawer-width-workspace)) !important;
+    max-width: var(--drawer-width-workspace) !important;
+  }
 }
 /* Keep record details as inline label/value pairs inside the table disclosure. */
 .school-plan-table .school-plan-table__details .school-record-row__metadata {

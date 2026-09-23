@@ -11,41 +11,41 @@ is an action, so it gets the platform's action surface.
 {% endcomment %}
 
 {% block drawer_title %}Add new cost{% endblock %}
-{% block drawer_subtitle %}Every cost is linked to one activity, and every schedule of that activity carries it as a line{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form method="post" action="/cost-settings/add" class="space-y-4">
   {% csrf_token %}
   <input type="hidden" name="fy" value="{{ selected_fy }}">
 
-  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-    Activity this cost belongs to
-    <select name="catalogue_item" required class="h-9 px-3 text-[13px] font-semibold">
+  <div class="space-y-1">
+    <label for="cost-add-activity" class="block edify-text-caption font-semibold text-slate-600">Activity this cost belongs to <span class="text-rose-500">*</span></label>
+    <select id="cost-add-activity" name="catalogue_item" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
       <option value="">Choose an activity</option>
       {% for activity in linkable_activities %}<option value="{{ activity.id }}">{{ activity.display_name }}</option>{% endfor %}
     </select>
-  </label>
-
-  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-    Cost name
-    <input name="label" required maxlength="120" placeholder="e.g. Diagnostic kit" class="h-9 px-3 text-[13px] font-semibold">
-  </label>
-
-  <div class="grid gap-3 sm:grid-cols-2">
-    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-      Country operational (UGX)
-      <input name="unit_cost" type="number" min="0" step="1" required class="h-9 px-3 text-[13px] font-semibold">
-    </label>
-    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-      Minimum viable (UGX)
-      <input name="approved_minimum" type="number" min="0" step="1" placeholder="Not set" class="h-9 px-3 text-[13px] font-semibold">
-    </label>
+    <p class="edify-text-caption text-slate-500">Every schedule of this activity carries the cost as a line.</p>
   </div>
 
-  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-    Why this cost is being added
-    <input name="reason" required maxlength="512" placeholder="The reason is kept on the cost's record" class="h-9 px-3 text-[13px] font-medium">
-  </label>
+  <div class="space-y-1">
+    <label for="cost-add-label" class="block edify-text-caption font-semibold text-slate-600">Cost name <span class="text-rose-500">*</span></label>
+    <input id="cost-add-label" name="label" required maxlength="120" placeholder="e.g. Diagnostic kit" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <label for="cost-add-unit-cost" class="block edify-text-caption font-semibold text-slate-600">Country operational (UGX) <span class="text-rose-500">*</span></label>
+    <input id="cost-add-unit-cost" name="unit_cost" type="number" min="0" step="1" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <label for="cost-add-minimum" class="block edify-text-caption font-semibold text-slate-600">Minimum viable (UGX) <span class="font-normal text-slate-400">(optional)</span></label>
+    <input id="cost-add-minimum" name="approved_minimum" type="number" min="0" step="1" placeholder="Not set" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <label for="cost-add-reason" class="block edify-text-caption font-semibold text-slate-600">Why this cost is being added <span class="text-rose-500">*</span></label>
+    <input id="cost-add-reason" name="reason" required maxlength="512" placeholder="Kept on the cost's record" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-medium">
+  </div>
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>

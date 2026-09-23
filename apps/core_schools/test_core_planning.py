@@ -497,10 +497,17 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/planning/schedule-modal?school_id={self.school.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        # The SSA evidence is the drawer's "Recommended interventions" list
-        # since the compact drawer redesign (8bb11a1).
         self.assertContains(response, "Recommended interventions")
-        self.assertContains(response, "Purpose of Visit")
+        # The SSA evidence is the list under that heading (it replaced "SSA
+        # interventions performing poorly"): the weakest confirmed scores.
+        recommendations = (
+            response.content.decode()
+            .split('aria-labelledby="top-ssa-recommendation-title"', 1)[1]
+            .split("</section>", 1)[0]
+        )
+        self.assertIn("Teacher&#x27;s Environment", recommendations)
+        self.assertIn("/10", recommendations)
+        self.assertContains(response, "Purpose of visit")
         self.assertContains(response, "In-school Training")
         self.assertContains(response, "SSA Support")
         self.assertContains(response, "Teacher&#x27;s Environment")

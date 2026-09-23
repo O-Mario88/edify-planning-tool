@@ -338,23 +338,22 @@ def _partner_assignment_label(assignment) -> str:
 
 def _partner_assignment_scope_q(user) -> Q | None:
     """The partner handovers a Programme Lead or officer oversees, as a Q over
-    PartnerAssignment — the Partner Oversight rule
-    (apps.planning.partner_oversight_service): the handover names them or
-    someone they supervise as monitor or assigner, or sits at a school they or
-    their team own. None for the country lens (no narrowing)."""
-    from apps.planning.partner_oversight_service import _resolve_scope
+    PartnerAssignment — the Partner Oversight rule itself
+    (apps.planning.partner_oversight_service._assignment_team_q), reused rather
+    than restated so the two cannot drift: the handover names them or someone
+    they supervise as monitor or assigner, or sits at a school or cluster they
+    or their team hold. None for the country lens (no narrowing)."""
+    from apps.planning.partner_oversight_service import (
+        _assignment_team_q,
+        _resolve_scope,
+    )
 
     scope = _resolve_scope(user)
-    if scope["is_country"]:
-        return None
-    ids = scope["staff_ids"]
-    if not ids:
+    # The same guard `assignment_in_scope` applies: a team lens with nobody in
+    # it reads nothing, rather than an unnarrowed queryset.
+    if scope["kind"] == "team" and not scope["staff_ids"]:
         return Q(pk__in=[])
-    return (
-        Q(monitoring_staff_id__in=ids)
-        | Q(assigning_staff_id__in=ids)
-        | Q(school__account_owner_id__in=ids)
-    )
+    return _assignment_team_q(scope)
 
 
 def _team_staff_ids(user) -> set[str]:

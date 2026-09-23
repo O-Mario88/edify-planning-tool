@@ -14,7 +14,7 @@ should confirm a budget change they have not seen.
 {% endcomment %}
 
 {% block drawer_title %}{% if preview %}{{ preview.kind_label }}{% else %}Not available{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if preview %}{{ preview.school }} · {{ preview.partner }}{% else %}This assignment is not in your scope, or no longer exists.{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if preview %}{{ preview.school }} · {{ preview.partner }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 {% if not preview %}
@@ -43,10 +43,9 @@ somebody to try.
   {% if must_request %}<input type="hidden" name="intent" value="request">{% endif %}
 
   {% if must_request %}
-  <p class="rounded-surface border p-3 edify-border text-sm">
-    {{ preview.partner }} has already scheduled this. Your Program Lead makes
-    the final decision on work a partner has planned around — this sends them
-    the request.
+  <p class="edify-note" data-tone="info">
+    {{ preview.partner }} has already scheduled this, so your Program Lead
+    decides. This sends them the request.
   </p>
   {% endif %}
 
@@ -54,17 +53,13 @@ somebody to try.
   <section aria-labelledby="wd-what">
     <h3 id="wd-what" class="text-sm font-semibold mb-2">The assignment</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">School</dt>
-        <dd>{{ preview.school|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Partner</dt>
-        <dd>{{ preview.partner|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Support slot</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Support slot</dt>
         <dd>{{ preview.support_slot|replace_underscore|title }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Activity</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Activity</dt>
         <dd>{{ preview.activity_type|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Scheduled for</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Scheduled for</dt>
         <dd>{% if preview.scheduled_date %}{{ preview.scheduled_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Current state</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Current state</dt>
         {% comment %}
         firstof, not `default:`. A dotted filter argument is resolved eagerly
         and raises VariableDoesNotExist rather than falling back, which would
@@ -76,7 +71,7 @@ somebody to try.
   </section>
 
   {# ── What confirming does ──────────────────────────────────────────────── #}
-  <section aria-labelledby="wd-impact" class="rounded-surface border p-3 edify-border">
+  <section aria-labelledby="wd-impact">
     <h3 id="wd-impact" class="text-sm font-semibold mb-2">Impact</h3>
     <ul class="space-y-1.5 text-sm">
       <li class="flex items-start justify-between gap-3">
@@ -118,84 +113,80 @@ somebody to try.
   </section>
 
   {# ── Why ───────────────────────────────────────────────────────────────── #}
-  <section aria-labelledby="wd-reason" class="space-y-2">
-    <h3 id="wd-reason" class="text-sm font-semibold">Reason</h3>
-    <label class="block">
-      <span class="sr-only">Reason category</span>
-      <select name="reason_category" required
-              class="h-9 w-full px-3 rounded-control border edify-border text-sm">
-        <option value="">Choose a reason…</option>
-        {% for value, label in reasons %}
-        <option value="{{ value }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <p class="edify-text-caption edify-text-muted">
-      The category decides whether this counts towards the partner's
-      performance. A closed school or an assignment we got wrong does not.
+  <div class="space-y-1">
+    <label for="wd-reason-category" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+    <select id="wd-reason-category" name="reason_category" required
+            aria-describedby="wd-reason-category-help"
+            class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
+      <option value="">Choose a reason…</option>
+      {% for value, label in reasons %}
+      <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+    <p id="wd-reason-category-help" class="edify-text-caption edify-text-muted">
+      Decides whether this counts against the partner's performance.
     </p>
+  </div>
 
-    <label class="block">
-      <span class="sr-only">Explanation for the partner</span>
-      <textarea name="partner_facing_reason" required rows="3" minlength="20" maxlength="600"
-                class="w-full px-3 py-2 rounded-control border edify-border text-sm"
-                placeholder="Briefly explain why this work is being withdrawn, what has happened so far, and what should happen next."></textarea>
-    </label>
-    <p class="edify-text-caption edify-text-muted">
-      The partner sees this. For a safeguarding or conduct concern it is
-      replaced with a neutral notice — put the detail in the internal note.
+  <div class="space-y-1">
+    <label for="wd-partner-reason" class="block edify-text-caption font-semibold text-slate-600">Explanation for the partner <span class="text-rose-500">*</span></label>
+    <textarea id="wd-partner-reason" name="partner_facing_reason" required rows="3" minlength="20" maxlength="600"
+              aria-describedby="wd-partner-reason-help"
+              class="w-full px-3 py-2 rounded-control border edify-border text-[16px] sm:text-[13px]"
+              placeholder="Why this work is being withdrawn and what happens next"></textarea>
+    <p id="wd-partner-reason-help" class="edify-text-caption edify-text-muted">
+      The partner sees this, except for a safeguarding or conduct concern, which
+      shows a neutral notice. Put that detail in the internal note.
     </p>
+  </div>
 
-    <label class="block">
-      <span class="sr-only">Internal note</span>
-      <textarea name="internal_note" rows="2" maxlength="2000"
-                class="w-full px-3 py-2 rounded-control border edify-border text-sm"
-                placeholder="Internal note (staff only — never shown to the partner)"></textarea>
-    </label>
-  </section>
+  <div class="space-y-1">
+    <label for="wd-internal-note" class="block edify-text-caption font-semibold text-slate-600">Internal note <span class="font-normal text-slate-500">(optional)</span></label>
+    <textarea id="wd-internal-note" name="internal_note" rows="2" maxlength="2000"
+              class="w-full px-3 py-2 rounded-control border edify-border text-[16px] sm:text-[13px]"
+              placeholder="Staff only, never shown to the partner"></textarea>
+  </div>
 
   {# ── What happens to the school's support ──────────────────────────────── #}
-  <section aria-labelledby="wd-next" class="space-y-2"
-           x-data="{ disposition: 'return_to_planning' }">
-    <h3 id="wd-next" class="text-sm font-semibold">What happens next</h3>
-    <label class="block">
-      <span class="sr-only">Next disposition</span>
-      <select name="disposition" required x-model="disposition"
-              class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+  <div class="space-y-3" x-data="{ disposition: 'return_to_planning' }">
+    <div class="space-y-1">
+      <label for="wd-disposition" class="block edify-text-caption font-semibold text-slate-600">What happens next <span class="text-rose-500">*</span></label>
+      <select id="wd-disposition" name="disposition" required x-model="disposition"
+              aria-describedby="wd-disposition-help"
+              class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
         {% for value, label in dispositions %}
         <option value="{{ value }}">{{ label }}</option>
         {% endfor %}
       </select>
-    </label>
-    <p class="edify-text-caption edify-text-muted">
-      Required. A withdrawal that does not say where the school's support goes
-      leaves the school worse off than before anyone intervened.
-    </p>
-
-    <div x-show="disposition === 'reassign_partner'" x-cloak class="space-y-1">
-      <label class="block">
-        <span class="sr-only">Replacement partner</span>
-        <select name="replacement_partner_id"
-                class="h-9 w-full px-3 rounded-control border edify-border text-sm">
-          <option value="">Choose the partner taking this on…</option>
-          {% for p in partners %}
-          <option value="{{ p.id }}">{{ p.name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <p class="edify-text-caption edify-text-muted">
-        The replacement starts with no date and no cost. Its price is fetched
-        from their own rate when they schedule, so nothing is carried over.
+      <p id="wd-disposition-help" class="edify-text-caption edify-text-muted">
+        Where the school's support goes after this.
       </p>
     </div>
-  </section>
 
-  <div class="flex flex-wrap items-center gap-2 pt-1">
+    <div x-show="disposition === 'reassign_partner'" x-cloak class="space-y-1">
+      <label for="wd-replacement-partner" class="block edify-text-caption font-semibold text-slate-600">Replacement partner</label>
+      <select id="wd-replacement-partner" name="replacement_partner_id"
+              aria-describedby="wd-replacement-partner-help"
+              class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
+        <option value="">Choose the partner taking this on…</option>
+        {% for p in partners %}
+        <option value="{{ p.id }}">{{ p.name }}</option>
+        {% endfor %}
+      </select>
+      <p id="wd-replacement-partner-help" class="edify-text-caption edify-text-muted">
+        They start with no date and no cost, priced from their own rate when they schedule.
+      </p>
+    </div>
+  </div>
+
+  <div id="withdrawal-result" class="mt-1"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
     <button type="submit" class="btn btn-primary h-8">
       {% if must_request %}Send request to Program Lead{% else %}{{ preview.kind_label }}{% endif %}
     </button>
   </div>
-  <div id="withdrawal-result" class="mt-1"></div>
 </form>
 {% endif %}
 {% endblock %}

@@ -374,11 +374,22 @@ class EditingAClusterFollowsItsOwnerTest(EligibilityFixture):
             self._update(self.mary, self.chegere_north)
 
     def test_an_unowned_cluster_stays_editable_so_it_can_be_claimed(self):
-        """Otherwise every cluster that never had an owner is frozen."""
+        """Otherwise every cluster that never had an owner is frozen.
+
+        Claimable from its district — the `cluster_in_scope` carve-out — so
+        Mary holds a school in Apac. Someone with no portfolio there may not
+        claim it (apps.clusters.test_cluster_owner_access)."""
         Cluster.objects.filter(id=self.chegere_north.id).update(
             responsible_staff_id=None
         )
         self.chegere_north.refresh_from_db()
+        self._school(
+            "MARY-1",
+            "Mary's School",
+            self.mary_profile,
+            district=self.apac,
+            sub_county=self.chegere,
+        )
 
         self._update(self.mary, self.chegere_north)
 

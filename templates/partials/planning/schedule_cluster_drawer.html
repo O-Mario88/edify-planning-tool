@@ -1,12 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}
-{% if action == 'meeting' %}Schedule Cluster Meeting{% else %}Schedule Group Training{% endif %}
-{% endblock %}
-
-{% block drawer_subtitle %}
-{% if fixed_cluster %}Configure cluster activity details for {{ cluster.name }}{% else %}Choose the cluster and configure the session{% endif %}
-{% endblock %}
+{% block drawer_title %}{% if action == 'meeting' %}Schedule cluster meeting{% else %}Schedule group training{% endif %} for {{ cluster.name }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -25,7 +20,7 @@ are never posted with it, and the swap replaces the whole drawer — the same
 mechanism the cluster planner's own type switch uses.
 {% endcomment %}
 <fieldset class="mb-4">
-<legend class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1.5">Activity Type <span class="text-rose-500">*</span></legend>
+<legend class="block edify-text-caption font-semibold text-slate-600 mb-1.5">Activity type <span class="text-rose-500">*</span></legend>
 <div class="cluster-activity-type-options">
 <label for="planning-activity-training" class="cluster-activity-type-option text-[12px] font-semibold text-slate-700">
 <input
@@ -69,8 +64,8 @@ activity-type switch above does: the member schools, the SSA need and the
 course list all belong to one cluster, and re-rendering is the only way they
 stay that cluster's. `pick=1` keeps the chooser on screen across the swap.
 {% endcomment %}
-<div class="mb-4">
-<label for="cluster-picker" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1.5">Cluster <span class="text-rose-500">*</span></label>
+<div class="mb-4 space-y-1">
+<label for="cluster-picker" class="block edify-text-caption font-semibold text-slate-600">Cluster <span class="text-rose-500">*</span></label>
 <select id="cluster-picker" aria-label="Cluster"
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none cursor-pointer"
         hx-get="/planning/schedule-modal"
@@ -88,7 +83,7 @@ stay that cluster's. `pick=1` keeps the chooser on screen across the swap.
 id="cluster-planner-form"
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
-class="space-y-4 text-[12px] font-bold text-slate-600"
+class="space-y-4 text-[12px] font-medium text-slate-600"
 x-data="{
   executorType: 'staff',
   selectedAgency: '',
@@ -108,10 +103,7 @@ x-data="{
 {% endif %}
 
 {% if planning_priority %}
-<div class="rounded-surface border edify-primary-border edify-primary-soft p-3 edify-primary-text" role="status">
-  <p class="font-bold">Links to priority: {{ planning_priority.milestone.title }}</p>
-  <p class="mt-1 font-medium">The scheduled activity will be traceable to this approved allocation.</p>
-</div>
+<p class="edify-note" data-tone="info" role="status">Links to priority: <strong>{{ planning_priority.milestone.title }}</strong></p>
 {% endif %}
 
 <!-- Form Error Messages container -->
@@ -122,164 +114,29 @@ Cluster SSA need (owner, 2026-09-13): the verified weakness across the member
 schools' latest confirmed assessments, so the session is chosen from evidence.
 There is no cluster SSA; the averages are of member schools' scores.
 {% endcomment %}
-<section class="rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3" aria-labelledby="cluster-ssa-need-title" data-cluster-ssa-need>
-  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA intelligence</p>
+<section class="space-y-1" aria-labelledby="cluster-ssa-need-title" data-cluster-ssa-need>
   {% if ssa_need.assessed %}
-  <h3 id="cluster-ssa-need-title" class="mt-0.5 text-[13px] font-extrabold text-slate-800">Cluster need · {{ ssa_need.assessed_schools }} of {{ ssa_need.member_count }} schools assessed</h3>
-  <ul class="mt-2 space-y-1.5" role="list">
+  <h3 id="cluster-ssa-need-title" class="edify-text-caption font-semibold text-slate-600">Cluster need · {{ ssa_need.assessed_schools }} of {{ ssa_need.member_count }} schools assessed</h3>
+  <ul class="space-y-1" role="list">
     {% for row in ssa_priority_rows %}
     <li class="flex items-center justify-between gap-2 text-[12px]">
-      <span class="font-bold text-slate-700">{{ row.label }}</span>
-      <span class="font-semibold text-slate-500 tabular-nums">avg {{ row.average }}/10 · {{ row.schoolsBelow }} of {{ row.schoolsAssessed }} below 5.5 · <span class="{% if row.band == 'Critical' %}edify-danger-text{% elif row.band == 'Warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ row.band }}</span></span>
+      <span class="font-semibold text-slate-700">{{ row.label }}</span>
+      <span class="text-slate-500 tabular-nums">avg {{ row.average }}/10 · {{ row.schoolsBelow }} of {{ row.schoolsAssessed }} below 5.5 · <span class="{% if row.band == 'Critical' %}edify-danger-text{% elif row.band == 'Warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ row.band }}</span></span>
     </li>
     {% endfor %}
   </ul>
-  <p class="mt-2 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Priorities first. Courses that answer one are listed first and marked.</p>
+  <p class="edify-text-caption text-slate-500">Courses that answer a priority are listed first and marked.</p>
   {% else %}
-  <h3 id="cluster-ssa-need-title" class="mt-0.5 text-[13px] font-extrabold text-amber-700">No member school has a verified SSA</h3>
-  <p class="mt-1 font-medium text-slate-600">Collect the member schools' assessments so this session can target a measured need.</p>
+  <div class="edify-note" data-tone="warning" role="status">
+    <p id="cluster-ssa-need-title" class="edify-note__title">No member school has a verified SSA</p>
+    <p class="edify-note__body">Collect the member schools' assessments so this session can target a measured need.</p>
+  </div>
   {% endif %}
 </section>
 
-<!-- Date -->
-<div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Scheduled Date</label>
-<div
-x-data="{
-open: false,
-selectedDate: '',
-currentYear: new Date().getFullYear(),
-currentMonth: new Date().getMonth(),
-months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-days: [],
-init() {
-if (this.selectedDate) {
-/* A saved date is a calendar day, not an instant: read its parts, so a reader west of UTC is not shown the previous month (controls audit F-07, 2026-09-14). */ let parts = String(this.selectedDate).slice(0, 10).split('-').map(Number); let d = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
-if (!isNaN(d.getTime())) {
-this.currentYear = d.getFullYear();
-this.currentMonth = d.getMonth();
-}
-}
-this.getDays();
-},
-getDays() {
-let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-this.days = [];
-for (let i = 0; i < firstDay; i++) {
-this.days.push(null);
-}
-for (let d = 1; d <= lastDate; d++) {
-this.days.push(d);
-}
-},
-prevMonth() {
-if (this.currentMonth === 0) {
-this.currentMonth = 11;
-this.currentYear--;
-} else {
-this.currentMonth--;
-}
-this.getDays();
-},
-nextMonth() {
-if (this.currentMonth === 11) {
-this.currentMonth = 0;
-this.currentYear++;
-} else {
-this.currentMonth++;
-}
-this.getDays();
-},
-selectDay(day) {
-if (day === null) return;
-let monthStr = String(this.currentMonth + 1).padStart(2, '0');
-let dayStr = String(day).padStart(2, '0');
-this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
-this.open = false;
-},
-formatDate(dateStr) {
-if (!dateStr) return 'Select Date';
-let parts = dateStr.split('-');
-if (parts.length !== 3) return dateStr;
-let d = new Date(parts[0], parts[1] - 1, parts[2]);
-return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-},
-isSelected(day) {
-if (!day || !this.selectedDate) return false;
-let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear &&
-(parseInt(parts[1]) - 1) === this.currentMonth &&
-parseInt(parts[2]) === day;
-}
-}"
-class="relative "
->
-<!-- Dropdown Trigger button -->
-<button
-type="button"
-@click="open = !open"
-class="w-full h-8 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
->
-<div class="flex items-center gap-2">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-</svg>
-<span x-text="formatDate(selectedDate)"></span>
-</div>
-<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-</svg>
-</button>
-
-<input type="hidden" name="scheduled_date" :value="selectedDate" required>
-
-<!-- Calendar Popover Card -->
-<div
-x-show="open"
-@click.outside="open = false"
-class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
-style="display: none;"
-x-transition:enter="transition ease-out duration-100"
-x-transition:enter-start="opacity-0 transform scale-95"
-x-transition:enter-end="opacity-100 transform scale-100"
-x-transition:leave="transition ease-in duration-75"
-x-transition:leave-start="opacity-100 transform scale-100"
-x-transition:leave-end="opacity-0 transform scale-95"
->
-<!-- Header -->
-<div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-</button>
-<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-</button>
-</div>
-
-<!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
-<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-</div>
-
-<!-- Days Grid -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
-<template x-for="(day, index) in days" :key="index">
-<div>
-<button
-type="button"
-x-show="day !== null"
-@click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
-x-text="day"
-></button>
-</div>
-</template>
-</div>
-</div>
-</div>
+<div class="space-y-1">
+<label for="cluster_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Scheduled date <span class="text-rose-500">*</span></label>
+<input id="cluster_scheduled_date" type="date" name="scheduled_date" value="" required class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
 {% comment %}
@@ -298,9 +155,7 @@ The numbers shown here are a preview. The backend recounts the cluster and
 recomputes the total at submission, so a drawer left open while membership
 changes cannot price an activity on a stale count.
 {% endcomment %}
-<div class="rounded-surface border edify-border edify-surface-muted p-3 space-y-3">
-  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Participants</p>
-
+<div class="space-y-3">
   <div class="flex items-center justify-between gap-3">
     <span class="text-[12px] font-medium edify-text-muted">Active schools in cluster</span>
     <span id="cluster-school-count" class="text-[13px] font-bold edify-text tabular-nums">{{ cluster_school_count }}</span>
@@ -333,10 +188,10 @@ changes cannot price an activity on a stale count.
       this.syncInvited();
     }
   }">
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Per school <span class="text-rose-500">*</span></p>
+    <p class="edify-text-caption font-semibold text-slate-600">Per school <span class="text-rose-500">*</span></p>
     <div class="mt-1 grid grid-cols-3 gap-2" data-keep-columns>
       <div>
-        <label for="teachers_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">Teachers</label>
+        <label for="teachers_per_school" class="block edify-text-caption font-medium text-slate-500">Teachers</label>
         <input
           type="number"
           name="teachers_per_school"
@@ -350,7 +205,7 @@ changes cannot price an activity on a stale count.
         >
       </div>
       <div>
-        <label for="leaders_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">School leaders</label>
+        <label for="leaders_per_school" class="block edify-text-caption font-medium text-slate-500">School leaders</label>
         <input
           type="number"
           name="leaders_per_school"
@@ -364,7 +219,7 @@ changes cannot price an activity on a stale count.
         >
       </div>
       <div>
-        <label for="other_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">Other</label>
+        <label for="other_per_school" class="block edify-text-caption font-medium text-slate-500">Other</label>
         <input
           type="number"
           name="other_per_school"
@@ -378,9 +233,7 @@ changes cannot price an activity on a stale count.
         >
       </div>
     </div>
-    <p id="participants-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-      Who you intend to invite from each school. Edify adds them up and calculates the total; a field left blank counts as 0.
-    </p>
+    <p id="participants-help" class="mt-1 edify-text-caption text-slate-500">Who you invite from each school; a blank field counts as 0.</p>
     {% comment %}
     Schools are ticked by name, not counted into a box. The number that
     multiplies into the budget is derived from the ticks, so the figure and
@@ -390,8 +243,8 @@ changes cannot price an activity on a stale count.
     {% endcomment %}
     <div class="mt-3">
       <div class="flex items-baseline justify-between gap-2">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-          Schools Invited <span class="text-rose-500">*</span>
+        <span class="edify-text-caption font-semibold text-slate-600">
+          Schools invited <span class="text-rose-500">*</span>
         </span>
         <button type="button" @click="toggleAll()"
                 class="edify-text-caption font-bold edify-primary-text hover:underline">
@@ -417,9 +270,7 @@ changes cannot price an activity on a stale count.
         </p>
         {% endfor %}
       </div>
-      <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-        Untick a school the selected {% if action == 'meeting' %}meeting{% else %}training{% endif %} does not apply to — a Literacy training does not reach the secondary and vocational schools in a mixed cluster.
-      </p>
+      <p id="schools-invited-help" class="mt-1 edify-text-caption text-slate-500">Untick schools this {% if action == 'meeting' %}meeting{% else %}training{% endif %} does not apply to.</p>
     </div>
 
     <div id="participants-total" class="mt-2 flex items-center justify-between gap-3 rounded-control bg-white/70 px-3 py-2" aria-live="polite">
@@ -444,12 +295,12 @@ changes cannot price an activity on a stale count.
   and it lands dated in the agency's My Plan. The picker therefore lists only
   agencies that are actually certified and free to take the work.
 {% endcomment %}
-<div>
-<label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
+<div class="space-y-1">
+<label for="delivery_type" class="block edify-text-caption font-semibold text-slate-600">Delivery type</label>
 <select
 id="delivery_type"
 @change="onDeliveryChange($event.target.value); $dispatch('training-delivery-changed')"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
 <option value="certified_partner_agency">Certified Partner Agency</option>
@@ -458,24 +309,23 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <input type="hidden" name="delivery_type" :value="isAgency ? 'partner' : 'staff'">
 
 <template x-if="isAgency">
-<div class="mt-3">
-<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Certified Partner Agency <span class="text-rose-500">*</span></label>
+<div class="mt-3 space-y-1">
+<label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">Certified partner agency <span class="text-rose-500">*</span></label>
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
 x-model="selectedAgency"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select a certified agency…</option>
 {% for p in certified_agencies %}
 <option value="{{ p.id }}">{{ p.name }}</option>
 {% endfor %}
 </select>
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-  Booking an agency schedules this now on the date you chose and puts it on their My&nbsp;Plan. They do not schedule it again.
-</p>
-{% if not certified_agencies %}
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No certified agency is available for this cluster. Choose Internal Field Staff, or ask the Country Director to certify one.</p>
+{% if certified_agencies %}
+<p class="edify-text-caption text-slate-500">The booking lands dated on the agency&rsquo;s My&nbsp;Plan; they do not schedule it again.</p>
+{% else %}
+<p class="edify-text-caption text-amber-700" role="status">No certified agency is available for this cluster. Choose Internal Field Staff, or ask the Country Director to certify one.</p>
 {% endif %}
 </div>
 </template>
@@ -513,15 +363,15 @@ x-init="ensureActivity()"
 @training-delivery-changed.window="ensureActivity()"
 class="space-y-3"
 >
-<div>
-<label for="training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+<label for="training_activity" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
 <select
 name="catalogue_item_id"
 id="training_activity"
 x-model="activityId"
 @change="onActivityChange()"
 required
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
 aria-describedby="cluster-training-help"
 >
 <option value="">Select a training…</option>
@@ -529,36 +379,26 @@ aria-describedby="cluster-training-help"
 <option :value="activity.id" x-text="activity.label"></option>
 </template>
 </select>
-<p id="cluster-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Approved trainings available for Cluster delivery.</p>
+<p id="cluster-training-help" x-show="selectedActivity" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedActivity ? selectedActivity.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedActivity ? selectedActivity.ssaIndicator : ''"></span></p>
 </div>
 <input type="hidden" name="focus_intervention" :value="intervention">
-<div x-show="selectedActivity" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
-  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
-    <span class="block edify-text-caption font-semibold text-slate-400">Training category</span>
-    <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedActivity ? selectedActivity.category : ''"></strong>
-  </div>
-  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
-    <span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span>
-    <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedActivity ? selectedActivity.ssaIndicator : ''"></strong>
-  </div>
-</div>
 </div>
 {% endif %}
 
 {% if action == 'meeting' %}
-<div>
-<label for="meeting_focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+<div class="space-y-1">
+<label for="meeting_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
 <select
 name="focus_intervention"
 id="meeting_focus_intervention"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">No specific intervention</option>
 {% for code, label, need in intervention_need_options %}
 <option value="{{ code }}" {% if code == selected_focus_intervention %}selected{% endif %}>{{ label }}{% if need %} · avg {{ need.average }}/10{% endif %}</option>
 {% endfor %}
 </select>
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this meeting is meant to move. Pre-selected from the weakest verified cluster need.</p>
+<p class="edify-text-caption text-slate-500">Pre-selected from the weakest verified cluster need.</p>
 </div>
 {% endif %}
 
@@ -568,36 +408,34 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
   without a reason and the refusal appears above.
 {% endcomment %}
 {% if ssa_priority_rows %}
-<div data-ssa-deviation>
-<label for="cluster_ssa_deviation_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">If this session departs from the SSA, say why</label>
-<textarea name="ssa_deviation_reason" id="cluster_ssa_deviation_reason" rows="2" maxlength="2000" class="w-full mt-1 rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-medium normal-case tracking-normal"></textarea>
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The cluster's SSA priorities: {% for row in ssa_priority_rows %}{{ row.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+<div class="space-y-1" data-ssa-deviation>
+<label for="cluster_ssa_deviation_reason" class="block edify-text-caption font-semibold text-slate-600">If this session departs from the SSA, say why</label>
+<textarea name="ssa_deviation_reason" id="cluster_ssa_deviation_reason" rows="2" maxlength="2000" class="w-full rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-medium"></textarea>
+<p class="edify-text-caption text-slate-500">The cluster's SSA priorities: {% for row in ssa_priority_rows %}{{ row.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
 </div>
 {% endif %}
 
-<!-- Activity Goal -->
 {% if action == 'meeting' %}
-<div>
-<label for="activity_goal" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
+<div class="space-y-1">
+<label for="activity_goal" class="block edify-text-caption font-semibold text-slate-600">Meeting goal</label>
 <textarea
 name="activity_goal"
 id="activity_goal"
 rows="2"
-placeholder="What needs to be achieved in this activity?"
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+placeholder="What should this meeting achieve?"
+class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 {% endif %}
 
-<!-- Expected Outcome -->
-<div>
-<label for="expected_outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Outcome / Goal</label>
+<div class="space-y-1">
+<label for="expected_outcome" class="block edify-text-caption font-semibold text-slate-600">Expected outcome</label>
 <textarea
 name="expected_outcome"
 id="expected_outcome"
 rows="2"
-placeholder="Checklist outcome or goals for the cluster..."
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+placeholder="What should change for these schools?"
+class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 
@@ -612,22 +450,22 @@ sees their own name and cannot change it, which is the rule the other drawer
 enforced. The service resolves the owner again on POST, so this is a choice
 offered to the roles that have it rather than the authority itself.
 {% endcomment %}
-<div>
-<label for="cluster_responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Staff</label>
+<div class="space-y-1">
+<label for="cluster_responsible_staff_id" class="block edify-text-caption font-semibold text-slate-600">Responsible staff</label>
 {% if request.user.active_role == 'Program Lead' or request.user.active_role == 'Admin' %}
 <select id="cluster_responsible_staff_id" name="responsible_staff_id"
         aria-label="Responsible staff"
         hx-get="/clusters/cost-preview" hx-trigger="change"
         hx-target="#cluster-cost-preview" hx-include="#cluster-planner-form"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 text-[12px] font-bold text-slate-700 focus:outline-none cursor-pointer">
-  <option value="">-- Choose Staff --</option>
+        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-700 focus:outline-none cursor-pointer">
+  <option value="">Choose staff…</option>
   {% for p in staff_profiles %}
   <option value="{{ p.id }}" {% if cluster.responsible_staff_id == p.id or cluster.responsible_staff_id == p.user_id %}selected{% endif %}>{{ p.user.name }}</option>
   {% endfor %}
 </select>
 {% else %}
-<select aria-label="Responsible staff" disabled
-        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 mt-1 text-[12px] font-bold text-slate-400 cursor-not-allowed">
+<select id="cluster_responsible_staff_id" aria-label="Responsible staff" disabled
+        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 text-[12px] font-semibold text-slate-400 cursor-not-allowed">
   {% for p in staff_profiles %}
   {% if cluster.responsible_staff_id == p.id or cluster.responsible_staff_id == p.user_id or not cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}
   <option selected>{{ p.user.name }}</option>
@@ -654,21 +492,9 @@ the form's error box and this container stayed empty.
      hx-target="#cluster-cost-preview" hx-swap="innerHTML"
      hx-include="#cluster-planner-form"></div>
 
-<!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="px-4 h-8 rounded-control btn-premium-secondary font-bold text-[12px]"
->
-Cancel
-</button>
-<button
-type="submit"
-class="px-4 h-8 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
->
-<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule
-</button>
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">{% if action == 'meeting' %}Schedule meeting{% else %}Schedule training{% endif %}</button>
 </div>
 </form>
 {% endblock %}

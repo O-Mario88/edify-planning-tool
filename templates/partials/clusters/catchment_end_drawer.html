@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}End Neighbouring District{% endblock %}
-{% block drawer_subtitle %}{{ cluster.name }} · {{ row.district.name }}{% endblock %}
+{% block drawer_title %}End {{ row.district.name }} approval for {{ cluster.name }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form method="post"
@@ -9,18 +9,18 @@
       hx-post="/clusters/{{ cluster.id }}/catchment/{{ row.id }}/end"
       hx-target="#drawer-container"
       hx-disabled-elt="find button[type=submit]"
-      class="space-y-4 text-[12px] font-semibold text-slate-600">
+      class="space-y-4 text-[12px] text-slate-600">
   {% csrf_token %}
   {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
-  <p class="edify-note" data-tone="warning">No new school from {{ row.district.name }} can join {{ cluster.name }} once this ends. Schools already in the cluster stay where they are and are listed on the cluster for review.</p>
-  <div>
-    <label for="ce-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-500">*</span></label>
+  <p class="edify-note" data-tone="warning">No new school from {{ row.district.name }} can join {{ cluster.name }} once this ends. Schools already in the cluster stay and are listed for review.</p>
+  <div class="space-y-1">
+    <label for="ce-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
     <textarea id="ce-reason" name="reason" rows="3" required
-              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+              class="w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
   </div>
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">End Approval</button>
+    <button type="submit" class="btn btn-danger h-8">End approval</button>
   </div>
 </form>
 {% endblock %}

@@ -247,11 +247,11 @@ class FundAllocationTest(TestCase):
             {"month": "April", "fy": self.fy},
         )
         self.assertEqual(resp_drill.status_code, 200)
-        self.assertContains(resp_drill, "Admin Budget Breakdown")
+        self.assertContains(resp_drill, "Admin budget breakdown")
 
         # Export drawer partial
         resp_exp = self.client.get(
             reverse("frontend:export_drawer"), {"month": "April", "fy": self.fy}
         )
         self.assertEqual(resp_exp.status_code, 200)
-        self.assertContains(resp_exp, "Export Consolidated Allocation")
+        self.assertContains(resp_exp, "Export consolidated allocation")

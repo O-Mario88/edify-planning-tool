@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}{% if is_paired_in_school_training %}Complete Training + Visit{% else %}Complete Activity{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if is_paired_in_school_training %}Submit both Salesforce records for {{ act.activityName }} at {{ act.schoolName }}{% else %}Complete and submit evidence for {{ act.activityType|title|replace_underscore }}{% if act.schoolName %} @ {{ act.schoolName }}{% endif %}{% endif %}{% endblock %}
+{% block drawer_title %}{% if is_paired_in_school_training %}Complete training + visit{% if act.schoolName %} at {{ act.schoolName }}{% endif %}{% else %}Complete {{ act.activityType|replace_underscore }}{% if act.schoolName %} at {{ act.schoolName }}{% endif %}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if is_paired_in_school_training %}{{ act.activityName }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -10,80 +10,74 @@ hx-post="/my-plan/{{ act.id }}/complete"
 hx-encoding="multipart/form-data"
 hx-request='{"timeout":120000}'
 hx-target="#complete-errors"
-class="space-y-5 text-[12px] font-bold text-slate-600"
+class="space-y-4 text-[12px] font-semibold text-slate-600"
 >
 <div id="complete-errors"></div>
 
-<!-- Step 1: Upload Evidence -->
-<div class="space-y-2.5">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
-Upload Verification Evidence
-</h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
-{% if is_paired_in_school_training %}Add the Training Attendance Form and School Visit Form. Each file is attached to its correct Salesforce activity automatically.{% else %}Upload a photo of the meeting, participant list, stamp, or report. This is required to complete verification.{% endif %}
-</p>
+<!-- Evidence -->
+<div class="space-y-2">
+<h4 class="text-[13px] font-semibold text-slate-800">Evidence</h4>
 
 {% if is_paired_in_school_training %}
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-<label class="p-3 bg-slate-50 rounded-surface border border-slate-200/60 space-y-2">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Training Attendance Form</span>
-<span class="block edify-text-caption font-medium text-slate-400">Evidence for the TS- Training record</span>
-<input type="file" name="training_evidence_file" accept="application/pdf"
+<p class="edify-text-caption text-slate-500">Each form is attached to its own Salesforce record.</p>
+<div class="space-y-1">
+<label for="training_evidence_file" class="block edify-text-caption font-semibold text-slate-600">Training attendance form <span class="font-normal text-slate-500">(TS- record)</span></label>
+<input id="training_evidence_file" type="file" name="training_evidence_file" accept="application/pdf"
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
-</label>
-<label class="p-3 bg-slate-50 rounded-surface border border-slate-200/60 space-y-2">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">School Visit Form</span>
-<span class="block edify-text-caption font-medium text-slate-400">Evidence for the SVE- Visit record</span>
-<input type="file" name="visit_evidence_file" accept="application/pdf"
+</div>
+<div class="space-y-1">
+<label for="visit_evidence_file" class="block edify-text-caption font-semibold text-slate-600">School visit form <span class="font-normal text-slate-500">(SVE- record)</span></label>
+<input id="visit_evidence_file" type="file" name="visit_evidence_file" accept="application/pdf"
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
-</label>
 </div>
 {% else %}
-<div class="mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between">
+<div class="space-y-1">
+<label for="evidence_file" class="block edify-text-caption font-semibold text-slate-600">Evidence file</label>
 <input
+id="evidence_file"
 type="file"
 name="evidence_file"
 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" capture="environment"
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
+aria-describedby="evidence-file-help"
+class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
+<p id="evidence-file-help" class="edify-text-caption text-slate-500">A photo of the meeting, participant list, stamp or report. Needed for verification.</p>
 </div>
 
-<div class="mt-2">
-<label for="evidence_kind" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</label>
+<div class="space-y-1">
+<label for="evidence_kind" class="block edify-text-caption font-semibold text-slate-600">Document type</label>
 <select name="evidence_kind" id="evidence_kind"
-        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 edify-text-caption font-semibold focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+        class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
 {% for item in evidence_checklist %}<option value="{{ item.kind }}" {% if not item.uploaded %}selected{% endif %}>{{ item.label }}{% if item.uploaded %} — already uploaded{% endif %}</option>{% endfor %}
 {% for value, label in evidence_kind_choices %}{% if value not in evidence_required_kinds %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}
 </select>
-{% if evidence_checklist %}<p class="mt-1 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">This activity needs {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %} before it can be submitted.</p>{% endif %}
+{% if evidence_checklist %}<p class="edify-text-caption text-slate-500">Needed before submission: {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
 </div>
 {% endif %}
 
 {% if is_paired_in_school_training and evidence_checklist %}
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<ul class="space-y-1">
 {% for item in evidence_checklist %}
-<div class="flex items-center gap-2 rounded-control border px-3 py-2 {% if item.uploaded %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-slate-200 bg-slate-50 text-slate-500{% endif %}">
+<li class="flex items-center gap-2 {% if item.uploaded %}text-emerald-700{% else %}text-slate-500{% endif %}">
 {% if item.uploaded %}<svg aria-hidden="true" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<svg aria-hidden="true" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/></svg>{% endif %}
 <span class="edify-text-caption font-semibold">{{ item.recordLabel }} · {{ item.label }}</span>
-</div>
+</li>
 {% endfor %}
-</div>
+</ul>
 {% endif %}
-
 
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
-<div class="space-y-1.5 pt-2">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
+<p class="edify-text-caption font-semibold text-slate-600">Already uploaded</p>
+<ul class="divide-y divide-slate-100 rounded-control border border-slate-200">
 {% for ev in evidence_list %}
-<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-surface p-2">
-<span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
-<span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
-</div>
+<li class="flex items-center justify-between gap-3 px-3 py-2 edify-text-caption">
+<span class="font-semibold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
+<span class="text-slate-500 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
+</li>
 {% endfor %}
-</div>
+</ul>
 </div>
 {% endif %}
 </div>
@@ -97,41 +91,38 @@ left its initial state: choosing "No" changed nothing on screen, the reason
 field stayed hidden, and the server then rejected the submit pointing at a
 field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 <div class="space-y-3" x-data="{ ssaCollected: 'yes' }">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-[var(--edify-chart-blue)] text-white edify-text-caption font-bold">1.5</span>
-SSA Assessment Collection
-</h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
-An SSA score collection was expected for this activity. Please enter the scores below or select a reason if you were unable to collect it.
-</p>
+<h4 class="text-[13px] font-semibold text-slate-800">SSA scores</h4>
 
-<div class="flex items-center gap-4 py-1">
+<fieldset class="space-y-2">
+<legend class="block edify-text-caption font-semibold text-slate-600">Were SSA scores collected on this activity?</legend>
+<div class="flex flex-wrap items-center gap-4">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
 <input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" checked class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>Yes, collected SSA scores</span>
+<span>Yes, collected</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
 <input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>No, was not able to collect</span>
+<span>No, not collected</span>
 </label>
 </div>
+</fieldset>
 
-<!-- SSA Scores Grid (data-driven from SsaIntervention enum) -->
-<div x-show="ssaCollected === 'yes'" class="bg-slate-50 p-4 rounded-surface grid grid-cols-2 gap-3 mt-2">
-<p class="col-span-2 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
+<!-- SSA Scores (data-driven from SsaIntervention enum) -->
+<div x-show="ssaCollected === 'yes'" class="grid gap-3">
+<p class="edify-text-caption text-slate-500">Each score is from 0 to 10.</p>
 {% for code, label in interventions %}
-<div>
-<label class="block edify-text-caption font-semibold text-slate-600">{{ label }}</label>
-<input aria-label="{{ label }} score" type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] edify-surface mt-1">
+<div class="space-y-1">
+<label for="score_{{ code }}" class="block edify-text-caption font-semibold text-slate-600">{{ label }}</label>
+<input id="score_{{ code }}" aria-label="{{ label }} score" type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums">
 </div>
 {% endfor %}
 </div>
 
 <!-- SSA Bypass Reason -->
-<div x-show="ssaCollected === 'no'" class="bg-rose-50 p-4 rounded-surface border border-rose-200 mt-2 space-y-2">
-<label for="ssa_not_collected_reason" class="block edify-text-caption font-bold uppercase text-rose-800">Reason for not collecting SSA</label>
-<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-control border border-rose-200 edify-surface text-[12px] focus:outline-none">
-<option value="">-- Choose reason --</option>
+<div x-show="ssaCollected === 'no'" class="space-y-1">
+<label for="ssa_not_collected_reason" class="block edify-text-caption font-semibold text-slate-600">Reason SSA was not collected</label>
+<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none">
+<option value="">Choose a reason…</option>
 <option value="School leader unavailable">School leader unavailable</option>
 <option value="Assessment not completed">Assessment not completed</option>
 <option value="Time insufficient">Time insufficient</option>
@@ -145,38 +136,32 @@ An SSA score collection was expected for this activity. Please enter the scores 
 
 <hr class="border-slate-100">
 
-<!-- Step 2: Finalize Completion -->
+<!-- Completion details -->
 <div class="space-y-4">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">2</span>
-Finalize details
-</h4>
 
 <!-- Salesforce ID -->
 {% if is_paired_in_school_training %}
-<div class="rounded-surface border border-slate-200 bg-slate-50/70 p-3 space-y-3">
-<div>
-<p class="text-[13px] font-semibold text-slate-800">Two linked Salesforce records</p>
-<p class="edify-text-caption font-medium text-slate-500 mt-0.5">Both IDs are validated and submitted together. Neither record completes unless both are valid.</p>
+<div class="space-y-3">
+<div class="space-y-1">
+<h4 class="text-[13px] font-semibold text-slate-800">Salesforce records</h4>
+<p class="edify-text-caption text-slate-500">Both IDs are checked together. Neither record completes unless both are valid.</p>
 </div>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-<div>
-<label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Training ID <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">Training ID <span class="text-rose-500">*</span></label>
 <input type="text" name="salesforce_id" id="salesforce_id" required autocomplete="off"
 placeholder="TS-…" value="{{ act.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus">
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
-<div>
-<label for="visit_salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">School Visit ID <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+<label for="visit_salesforce_id" class="block edify-text-caption font-semibold text-slate-600">School visit ID <span class="text-rose-500">*</span></label>
 <input type="text" name="visit_salesforce_id" id="visit_salesforce_id" required autocomplete="off"
 placeholder="SVE-…" value="{{ paired_school_visit.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus">
-</div>
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </div>
 {% else %}
-<div>
-<label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
+<div class="space-y-1">
+<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">Salesforce activity ID <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="salesforce_id"
@@ -184,7 +169,7 @@ id="salesforce_id"
 required
 placeholder="e.g. SVE-11223344 or TS-998877"
 value="{{ act.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 {% endif %}
@@ -192,10 +177,13 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 <!-- Accountability (If accountability pending) — submits for Accountant review,
      it does not close accountability itself (see advance_service.approve_accountability). -->
 {% if needs_netsuite_id %}
-<div class="space-y-3 p-3 rounded-surface bg-amber-50/40 border border-amber-100">
-<p class="edify-text-caption text-slate-500 font-semibold">This activity was disbursed{% if disbursed_amount %} (UGX {{ disbursed_amount }}){% endif %} and requires accountability before the Accountant can clear it.</p>
-<div>
-<label for="netsuite_id" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-600">NetSuite Expense ID <span class="text-rose-500">*</span></label>
+<div class="space-y-3">
+<div class="space-y-1">
+<h4 class="text-[13px] font-semibold text-slate-800">Accountability</h4>
+<p class="edify-text-caption text-slate-500">This activity was disbursed{% if disbursed_amount %} (UGX {{ disbursed_amount }}){% endif %}. The Accountant clears it once you account for it.</p>
+</div>
+<div class="space-y-1">
+<label for="netsuite_id" class="block edify-text-caption font-semibold text-slate-600">NetSuite expense ID <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="netsuite_id"
@@ -203,12 +191,11 @@ id="netsuite_id"
 required
 placeholder="e.g. EXP-2026-00889"
 value="{{ act.netsuite_id|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-<div class="grid grid-cols-2 gap-3">
-<div>
-<label for="amount_spent" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-600">Amount Spent (UGX) <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+<label for="amount_spent" class="block edify-text-caption font-semibold text-slate-600">Amount spent (UGX) <span class="text-rose-500">*</span></label>
 <input
 type="number"
 name="amount_spent"
@@ -216,53 +203,54 @@ id="amount_spent"
 required
 min="0"
 placeholder="{{ disbursed_amount|default:'0' }}"
-class="w-full h-10 px-3 rounded-control border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-<div>
-<label for="amount_returned" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Amount Returned (UGX)</label>
+<div class="space-y-1">
+<label for="amount_returned" class="block edify-text-caption font-semibold text-slate-600">Amount returned (UGX)</label>
 <input
 type="number"
 name="amount_returned"
 id="amount_returned"
 min="0"
 placeholder="0"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-</div>
-<div>
-<label for="variance_note" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Variance Explanation <span class="text-slate-300 normal-case">(required if spend + returned ≠ disbursed)</span></label>
+<div class="space-y-1">
+<label for="variance_note" class="block edify-text-caption font-semibold text-slate-600">Variance explanation</label>
 <textarea name="variance_note" id="variance_note" rows="2"
-placeholder="Explain any difference between disbursed and accounted amounts"
-class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"></textarea>
+aria-describedby="variance-note-help"
+placeholder="Why the amounts differ"
+class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus"></textarea>
+<p id="variance-note-help" class="edify-text-caption text-slate-500">Required if spent + returned ≠ disbursed.</p>
 </div>
 </div>
 {% endif %}
 
 <!-- Attendance (for trainings/meetings) -->
 {% if act.activityType == 'training' or act.activityType == 'in_school_training' or act.activityType == 'school_improvement_training' or act.activityType == 'cluster_training' or act.activityType == 'cluster_meeting' or act.activityType == 'core_training' %}
-<div class="grid grid-cols-2 gap-4">
-<div>
-<label for="teachers_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers Attended <span class="text-rose-500">*</span></label>
+<div class="grid gap-3">
+<div class="space-y-1">
+<label for="teachers_attended" class="block edify-text-caption font-semibold text-slate-600">Teachers attended</label>
 <input
 type="number"
 name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-<div>
-<label for="leaders_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Leaders Attended <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+<label for="leaders_attended" class="block edify-text-caption font-semibold text-slate-600">Leaders attended</label>
 <input
 type="number"
 name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leadersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 </div>
@@ -270,7 +258,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 <!-- School Attendance Checklist (Collapsible Dropdown) -->
 {% if cluster_schools %}
 <div
-class="space-y-2 mt-4"
+class="space-y-1"
 x-data="{
 openDropdown: false,
 scrollContainer: null,
@@ -321,18 +309,17 @@ window.removeEventListener('resize', this.repositionDropdown);
 }
 }"
 >
-<div class="flex items-center justify-between">
-<label id="school-attendance-checklist-label-{{ act.id }}" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Attendance Checklist</label>
+<div class="flex items-center justify-between gap-3">
+<p id="school-attendance-checklist-label-{{ act.id }}" class="edify-text-caption font-semibold text-slate-600">Schools that attended</p>
 <button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
 hx-target="#drawer-container"
 class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline"
 >
-+ Onboard New School
++ Onboard new school
 </button>
 </div>
-<p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Select which schools from the cluster were present at the session.</p>
 
 <!-- Dropdown Trigger Button -->
 <div class="relative">
@@ -342,10 +329,10 @@ x-ref="attendanceTrigger"
 popovertarget="school-attendance-checklist-{{ act.id }}"
 aria-controls="school-attendance-checklist-{{ act.id }}"
 :aria-expanded="openDropdown"
-class="w-full h-8 px-4 rounded-control border border-slate-200 edify-surface text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
+class="min-h-11 w-full px-3 rounded-control border border-slate-200 edify-surface text-left text-[13px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
 >
-<span>Click to view/select schools</span>
-<svg class="h-4 w-4 text-slate-400 transition-transform" :class="openDropdown ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<span>Select schools</span>
+<svg class="h-4 w-4 text-slate-400 transition-transform" :class="openDropdown ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
 </svg>
 </button>
@@ -373,8 +360,8 @@ value="{{ school.id }}"
 class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
 >
 <div class="flex-1">
-<span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>
-<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
+<span class="font-semibold text-slate-800 block leading-tight">{{ school.name }}</span>
+<span class="edify-text-caption text-slate-500 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 </label>
 {% endfor %}
@@ -392,28 +379,25 @@ never optional (owner, 2026-09-21). The list is the school's completed
 sessions — in-school, Core, or a cluster session it is recorded as attending
 — and the service re-checks the choice against the same rule, so a stale
 option cannot attach the visit to a session the school never took.{% endcomment %}
-<div class="space-y-2.5">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">&bull;</span>
-Training followed up
-</h4>
+<div class="space-y-2">
+<h4 class="text-[13px] font-semibold text-slate-800">Training followed up</h4>
 {% if follow_up_options %}
-<label class="block" for="follow_up_of_activity_id">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Which training did this visit follow up? <span class="text-rose-500">*</span></span>
+<div class="space-y-1">
+<label for="follow_up_of_activity_id" class="block edify-text-caption font-semibold text-slate-600">Which training did this visit follow up? <span class="text-rose-500">*</span></label>
 <select
 id="follow_up_of_activity_id"
 name="follow_up_of_activity_id"
 required
 aria-describedby="follow-up-of-activity-help"
-class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
 >
-<option value="">Select the training this visit followed up</option>
+<option value="">Select the training</option>
 {% for option in follow_up_options %}
 <option value="{{ option.id }}"{% if option.id == follow_up_selected_id %} selected{% endif %}>{{ option.label }} &middot; {{ option.interventionLabel }}</option>
 {% endfor %}
 </select>
-</label>
-<p id="follow-up-of-activity-help" class="edify-text-caption font-medium text-slate-400 leading-normal">The follow-up is reported against this exact session, so the training and the visit that reinforced it are read together.</p>
+<p id="follow-up-of-activity-help" class="edify-text-caption text-slate-500">The follow-up is reported against this session.</p>
+</div>
 {% else %}
 <div class="edify-note" data-tone="danger" role="alert">
 <p class="edify-note__body">This school has no completed training in FY{{ act.fy }} to follow up. Record the training's completion first — a follow-up visit is completed against the session it answers.</p>
@@ -425,53 +409,46 @@ class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-5
 <hr class="border-slate-100">
 {% if requires_school_feedback %}
 <div class="space-y-3">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">{% if is_paired_in_school_training %}4{% else %}3{% endif %}</span>
-School visit feedback
-</h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">This feedback is saved to the school profile and linked to this visit{% if is_paired_in_school_training %} and its paired training{% endif %}.</p>
-<label class="block" for="feedback_finding">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Finding <span class="normal-case tracking-normal font-medium">(what you found on the ground)</span> <span class="text-rose-500">*</span></span>
-<textarea id="feedback_finding" name="feedback_finding" rows="4" maxlength="3000" required placeholder="Describe what you observed at the school." class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.feedbackFinding|default:"" }}</textarea>
-</label>
-<label class="block" for="school_improvements">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">How has the school improved from the last visit? <span class="text-rose-500">*</span></span>
-<textarea id="school_improvements" name="school_improvements" rows="4" maxlength="10000" required placeholder="List one improvement per line&#10;Attendance records are now updated weekly&#10;Two classrooms received new desks" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.schoolImprovementsText|default:"" }}</textarea>
-<span class="mt-1 block edify-text-caption font-medium text-slate-400">Enter one improvement per line. These will appear as a list on the school profile.</span>
-</label>
+<div class="space-y-1">
+<h4 class="text-[13px] font-semibold text-slate-800">School visit feedback</h4>
+<p class="edify-text-caption text-slate-500">Saved to the school profile and linked to this visit{% if is_paired_in_school_training %} and its paired training{% endif %}.</p>
+</div>
+<div class="space-y-1">
+<label for="feedback_finding" class="block edify-text-caption font-semibold text-slate-600">Finding <span class="font-normal text-slate-500">(what you found on the ground)</span> <span class="text-rose-500">*</span></label>
+<textarea id="feedback_finding" name="feedback_finding" rows="4" maxlength="3000" required placeholder="What you observed at the school" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.feedbackFinding|default:"" }}</textarea>
+</div>
+<div class="space-y-1">
+<label for="school_improvements" class="block edify-text-caption font-semibold text-slate-600">How has the school improved since the last visit? <span class="text-rose-500">*</span></label>
+<textarea id="school_improvements" name="school_improvements" rows="4" maxlength="10000" required aria-describedby="school-improvements-help" placeholder="Attendance records are now updated weekly&#10;Two classrooms received new desks" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.schoolImprovementsText|default:"" }}</textarea>
+<p id="school-improvements-help" class="edify-text-caption text-slate-500">Enter one improvement per line; each is listed on the school profile.</p>
+</div>
 </div>
 {% else %}
 {% comment %}Non-visit activities retain their generic actuals fields. Visit
 feedback has a dedicated record above so it can be listed on School 360.{% endcomment %}
-<div class="space-y-2.5">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">3</span>
-What you observed
-</h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">A short record for IA verification and the activity file.</p>
-<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Outcome</span><textarea name="actual_outcome" rows="2" maxlength="1000" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualOutcome|default:"" }}</textarea></label>
-<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Observations</span><textarea name="actual_observations" rows="3" maxlength="2000" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualObservations|default:"" }}</textarea></label>
-<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up needed <span class="normal-case tracking-normal font-medium">(optional)</span></span><input type="text" name="follow_up_note" maxlength="500" value="{{ act.followUpNote|default:"" }}" class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"></label>
+<div class="space-y-3">
+<div class="space-y-1">
+<h4 class="text-[13px] font-semibold text-slate-800">What you observed</h4>
+<p class="edify-text-caption text-slate-500">A short record for IA verification and the activity file.</p>
+</div>
+<div class="space-y-1">
+<label for="actual_outcome" class="block edify-text-caption font-semibold text-slate-600">Outcome</label>
+<textarea id="actual_outcome" name="actual_outcome" rows="2" maxlength="1000" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualOutcome|default:"" }}</textarea>
+</div>
+<div class="space-y-1">
+<label for="actual_observations" class="block edify-text-caption font-semibold text-slate-600">Observations</label>
+<textarea id="actual_observations" name="actual_observations" rows="3" maxlength="2000" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualObservations|default:"" }}</textarea>
+</div>
+<div class="space-y-1">
+<label for="follow_up_note" class="block edify-text-caption font-semibold text-slate-600">Follow-up needed <span class="font-normal text-slate-500">(optional)</span></label>
+<input id="follow_up_note" type="text" name="follow_up_note" maxlength="500" value="{{ act.followUpNote|default:"" }}" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
 </div>
 {% endif %}
 
-<!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button
-type="button"
-@click="
-requestClose()
-"
-class="edify-action-button secondary h-9 transition-colors"
->
-Cancel
-</button>
-<button
-type="submit"
-class="edify-action-button primary h-9 transition-colors shadow-sm"
->
-{% if is_paired_in_school_training %}Submit Training + Visit{% else %}Submit Activity Completion{% endif %}
-</button>
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">{% if is_paired_in_school_training %}Submit training + visit{% else %}Submit completion{% endif %}</button>
 </div>
 </form>
 {% endblock %}

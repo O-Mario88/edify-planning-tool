@@ -223,7 +223,7 @@ class FrontendViewsTestCase(TestCase):
         html = response.content.decode()
         # A verified SSA exists, so the drawer must offer intervention
         # support, not the "complete SSA first" banner.
-        self.assertNotIn("Top Priority: Complete SSA", html)
+        self.assertNotIn("Top priority: complete SSA", html)
         # The drawer asks for a purpose now, not a catalogue row: it prefills
         # the purpose and the focus intervention from the school's weakest
         # confirmed SSA score, and shows the interventions behind that choice.
@@ -234,6 +234,7 @@ class FrontendViewsTestCase(TestCase):
         recommendations = recommendations.split("</section>", 1)[0]
         self.assertIn("Recommended interventions", recommendations)
         self.assertIn("1.0/10", recommendations)
+        self.assertIn("Learning Environment", recommendations)
         # Prefilled by selecting the option, not by checking a radio in a list
         # of engine-chosen activities.
         self.assertIn("selected", html)
@@ -797,14 +798,18 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/planning/index.html")
         self.assertTemplateUsed(response, "partials/planning/school_row.html")
-        # One table per list since the planning table redesign (8bb11a1): a
-        # row opens its details from the named toggle and Escape closes them.
+        # The planning list is the shared school-plan table since 8bb11a1: one
+        # header component, one open row at a time, closed with Escape.
+        self.assertTemplateUsed(response, "components/school_plan_table_head.html")
         self.assertContains(
             response, 'class="school-plan-table school-plan-table--selectable"'
         )
-        self.assertContains(response, 'class="school-plan-table__name-toggle"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
+        self.assertContains(response, 'class="school-plan-table__name-toggle"')
+        # The school name toggles the row; the profile stays one click away.
+        self.assertContains(response, f'href="/schools/{self.school.id}"')
+        self.assertContains(response, f"Open {self.school.name} school profile")
         self.assertContains(response, "SSA interventions needing urgent attention")
         self.assertContains(response, "(3.5/10)")
         self.assertContains(response, self.cluster.name)
@@ -836,13 +841,18 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
 
         self.assertEqual(response.status_code, 200)
-        # The same school-plan table as Planning (8bb11a1): the named toggle
-        # opens a row's details and Escape closes them.
-        self.assertContains(response, 'aria-label="Schools in cluster"')
-        self.assertContains(response, 'class="cluster-school-row"')
+        # The same shared school-plan table as the planning list (8bb11a1): the
+        # named toggle opens a row's details, Escape closes them, and the
+        # details link to the school profile.
+        self.assertTemplateUsed(response, "components/school_plan_table_head.html")
+        self.assertContains(response, 'class="school-plan-table"')
         self.assertContains(response, 'class="school-plan-table__name-toggle"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
+        self.assertContains(response, f'href="/schools/{self.school.id}"')
+        self.assertContains(response, f"Open {self.school.name} school profile")
+        self.assertContains(response, 'aria-label="Schools in cluster"')
+        self.assertContains(response, 'class="cluster-school-row"')
         self.assertContains(response, "Plot 12, Kampala Road")
         self.assertContains(response, "School Type:")
         self.assertContains(response, "Schedule")
@@ -979,10 +989,12 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "data-owner-clusters")
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, 'name="existing_cluster_id"')
-        # The simplified drawer (7586e32) names the school in its title and
-        # no longer restates the owner: the owner is still automatic, and
-        # the clusters offered are still only the owner's.
+        # The simplified drawer (7586e32) names the school in its title and has
+        # no owner card; the owner is still automatic, still named in one
+        # caption, and the clusters offered are still only the owner's.
         self.assertContains(response, f"Add {self.school.name} to cluster")
+        self.assertContains(response, self.cceo_user.name)
+        self.assertContains(response, "(the school's owner)")
         self.assertNotContains(response, "Responsible field staff")
         self.assertContains(response, "cluster-assignment-drawer")
         self.assertNotContains(response, "Cluster selected automatically")
@@ -1068,7 +1080,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, 'name="cluster_leader_name"')
         self.assertContains(response, 'name="cluster_leader_phone"')
         self.assertContains(response, "cluster-create-cancel")
-        self.assertContains(response, "school-record-action--schedule")
+        self.assertContains(
+            response, 'class="btn btn-primary h-8 cluster-create-submit"'
+        )
         self.assertContains(
             response,
             "Auto-suggested from your selection — edit if you like.",
@@ -2240,7 +2254,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Notification A")
         self.assertContains(response, "Notification B")
-        self.assertContains(response, "You have 2 unread messages")
+        self.assertContains(response, "2 unread")
 
         # 2. Mark one notification as read
         response = self.client.post(

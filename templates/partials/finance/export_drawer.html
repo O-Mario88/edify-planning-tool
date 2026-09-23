@@ -1,14 +1,14 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Export Consolidated Allocation{% endblock %}
-{% block drawer_subtitle %}Download CSV ledger for {{ selected_month }} {{ selected_fy }}{% endblock %}
+{% block drawer_title %}Export consolidated allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form
 method="GET"
 action="/finance/fund-allocation"
-class="space-y-5 text-[12px] font-bold text-slate-600 "
+class="space-y-4 text-[12px] text-slate-600"
 >
 <!-- Force CSV trigger -->
 <input type="hidden" name="export" value="csv">
@@ -16,35 +16,25 @@ class="space-y-5 text-[12px] font-bold text-slate-600 "
 <input type="hidden" name="month" value="{{ selected_month }}">
 <input type="hidden" name="fy" value="{{ selected_fy }}">
 
-<div>
-<label for="export_mode" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Export Format Scope</label>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5 mb-1.5 leading-normal">
-Choose which financial sections to include in the exported spreadsheet document.
-</p>
+<div class="space-y-1">
+<label for="export_mode" class="block edify-text-caption font-semibold text-slate-600">Sections to include</label>
 <select
 name="export_mode"
 id="export_mode"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
-<option value="full">Export Full Monthly Allocation (Combined)</option>
-<option value="field_only">Export Field Activity Allocation Only</option>
-<option value="admin_only">Export Admin Budget Only (CD Items)</option>
+<option value="full">Full monthly allocation (combined)</option>
+<option value="field_only">Field activity allocation only</option>
+<option value="admin_only">Admin budget only (CD items)</option>
 </select>
 </div>
 
-<!-- Drawer Footer (Sticky Actions) -->
-<div class="drawer-footer flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="btn btn-ghost h-8 text-[12px] font-semibold shadow-sm"
->
-Cancel
-</button>
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
 <button
 type="submit"
 @click="setTimeout(() => $dispatch('close-drawer'), 150)"
-class="btn btn-primary h-10 text-[12px] font-semibold shadow-sm"
+class="btn btn-primary h-8"
 >
 Download CSV
 </button>

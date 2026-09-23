@@ -354,7 +354,7 @@ class AddToClusterDrawerTests(CatchmentFixture):
     def test_the_drawer_lists_the_owner_clusters_and_marks_the_catchment(self):
         self._approve_border()
         response = self.client.get(self.url, HTTP_HX_REQUEST="true")
-        self.assertContains(response, "Add to Cluster")
+        self.assertContains(response, "Add to cluster")
         by_id = {c.id: c for c in response.context["owner_clusters"]}
         self.assertTrue(by_id[self.home_cluster.id].serves_school)
         self.assertTrue(by_id[self.border_cluster.id].is_cross_district)
@@ -494,7 +494,7 @@ class AddToClusterDrawerTests(CatchmentFixture):
         response = self.client.get(self.url, HTTP_HX_REQUEST="true")
         self.assertIn(response.status_code, (200, 403, 404))
         self.assertNotContains(
-            response, "Add to Cluster", status_code=response.status_code
+            response, "Add to cluster", status_code=response.status_code
         )
 
     def test_the_cluster_profile_manages_the_catchment_for_the_cd(self):

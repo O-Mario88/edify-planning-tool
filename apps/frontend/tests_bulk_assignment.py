@@ -444,7 +444,7 @@ class ClusterMembershipEditingTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-testid="bulk-assign-save"')
         self.assertContains(response, "Save schools to cluster")
-        self.assertContains(response, "sticky bottom-[-28px]")
+        self.assertContains(response, 'class="drawer-footer"')
         self.assertContains(response, "max-h-[42vh]")
 
     def test_the_edit_drawer_lists_the_member_schools_ticked(self):

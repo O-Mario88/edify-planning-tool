@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters table_pagination %}
 
-{% block drawer_title %}Admin Budget Breakdown{% endblock %}
-{% block drawer_subtitle %}CD Monthly Admin Plan allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
+{% block drawer_title %}Admin budget breakdown for {{ selected_month }} {{ selected_fy }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_badge %}
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold {{ admin_data.status_class }}">
@@ -11,41 +11,35 @@
 {% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-5 text-[12px] font-semibold text-slate-700 ">
+<div class="space-y-4 text-[12px] font-medium text-slate-700">
 
-<!-- Plan Summary Info -->
-<div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-surface text-[12px]">
+<dl class="grid grid-cols-2 gap-3 text-[12px]" data-keep-columns>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Total Planned</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
-</div>
-<div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Total Allocated</p>
-<p class="font-semibold text-emerald-700 mt-0.5">{{ admin_data.allocated_total|ugx }}</p>
+<dt class="edify-text-caption text-slate-500">Total planned</dt>
+<dd class="font-semibold text-slate-800">{{ admin_data.planned_total|ugx }}</dd>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Monthly Period</p>
-<p class="font-semibold text-[var(--edify-accent-text)] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
+<dt class="edify-text-caption text-slate-500">Total allocated</dt>
+<dd class="font-semibold text-emerald-700">{{ admin_data.allocated_total|ugx }}</dd>
 </div>
-</div>
+</dl>
 
-<!-- Admin lines table -->
 <div class="space-y-2">
-<p class="edify-text-caption uppercase font-bold text-slate-400">Plan Line Items</p>
+<p class="edify-text-caption font-semibold text-slate-600">Plan line items</p>
 
 {% if admin_data.lines %}
-<div class="border border-slate-200 rounded-surface overflow-hidden shadow-sm">
+<div class="border border-slate-200 rounded-surface overflow-hidden">
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
 {% paginate admin_data.lines "admin_data_lines_page" as admin_data_lines_pager %}
 <table class="w-full text-left text-[12px] border-collapse edify-surface">
 <thead>
-<tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
-<th class="px-4 py-2.5">Item Description</th>
+<tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-semibold text-slate-600">
+<th class="px-4 py-2.5">Item description</th>
 <th class="px-3 py-2.5">Category</th>
 <th class="px-3 py-2.5 text-center">Qty</th>
 <th class="px-3 py-2.5 text-right">Unit (UGX)</th>
-<th class="px-4 py-2.5 text-right font-semibold text-slate-800">Total (UGX)</th>
+<th class="px-4 py-2.5 text-right">Total (UGX)</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
@@ -54,12 +48,12 @@
 <td class="px-4 py-3 font-semibold text-slate-800">
 {{ line.description }}
 {% if line.justification and line.justification != "None" %}
-<p class="edify-text-caption font-semibold text-slate-400 mt-1 leading-normal">Justification: {{ line.justification }}</p>
+<p class="edify-text-caption font-medium text-slate-500 mt-1 leading-normal">Justification: {{ line.justification }}</p>
 {% endif %}
 </td>
-<td class="px-3 py-3 font-semibold text-slate-500">{{ line.cost_category }}</td>
-<td class="px-3 py-3 text-center font-bold text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
-<td class="px-3 py-3 text-right text-slate-500">{{ line.unit_cost|ugx }}</td>
+<td class="px-3 py-3 font-medium text-slate-600">{{ line.cost_category }}</td>
+<td class="px-3 py-3 text-center font-medium text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
+<td class="px-3 py-3 text-right text-slate-600">{{ line.unit_cost|ugx }}</td>
 <td class="px-4 py-3 text-right font-semibold text-[var(--edify-accent-text)]">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
@@ -69,35 +63,24 @@
 </div>
 </div>
 {% else %}
-<div class="p-8 text-center border border-dashed border-slate-200 rounded-surface bg-slate-50/50 text-slate-400 text-[12px] font-bold">
-No administrative budget lines exist for this month.
-</div>
+<p class="edify-text-caption text-slate-500">No administrative budget lines exist for this month.</p>
 {% endif %}
 </div>
 
-<!-- Sticky Actions Footer -->
-<div class="drawer-footer flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="btn btn-ghost h-8 text-[12px] shadow-sm font-semibold"
->
-Close
-</button>
-
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
 <a
 href="/finance/fund-allocation?export=csv&export_mode=admin_only&month={{ selected_month }}&fy={{ selected_fy }}"
-class="btn btn-ghost h-8 text-[12px] edify-primary-text edify-primary-border edify-primary-soft-hover shadow-sm font-semibold flex items-center gap-1"
+class="btn btn-secondary h-8"
 >
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg></span> Export Breakdown
+Export breakdown
 </a>
-
 <a
 href="/work-plan"
 target="_blank"
-class="btn btn-primary h-8 text-[12px] shadow-sm font-semibold"
+class="btn btn-primary h-8"
 >
-View CD Monthly Plan
+View CD monthly plan
 </a>
 </div>
 

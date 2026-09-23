@@ -339,3 +339,30 @@ class MoneyOnThePageTest(OversightPageFixture):
         # James's activity is the only costed work in this PL's scope.
         self.assertIn("UGX 75,000", body)
         self.assertNotIn("42,000", body)
+
+
+class RosterOpensOnWorkTest(OversightPageFixture):
+    """A roster lists the Programme Lead first whether or not they hold work
+    (2026-09-23). The officer strip keeps that order but opens on the first
+    person with work, so the page never lands on an empty panel — the table
+    under the tabs is what e2e/calm-workspace.spec.js reads above the fold."""
+
+    def test_the_team_page_opens_on_the_first_member_holding_work(self):
+        response = self.as_user(self.ia_user).get(PL_URL, {"program_lead": self.pl.id})
+
+        self.assertEqual(response.status_code, 200)
+        groups = response.context["groups"]
+        self.assertEqual(groups[0]["id"], self.pl.id)
+        self.assertEqual(groups[0]["items"], [])
+        self.assertEqual(response.context["default_officer"], self.james.id)
+        self.assertRegex(
+            response.content.decode(),
+            rf"tabState\('activeOfficer', 'officer', \[[^\]]*\], '{self.james.id}'\)",
+        )
+
+    def test_the_country_team_expansion_opens_on_the_same_member(self):
+        response = self.as_user(self.ia_user).get(
+            f"/country-planning-oversight/team/{self.pl.id}"
+        )
+
+        self.assertEqual(response.context["default_officer"], self.james.id)
