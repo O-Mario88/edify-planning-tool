@@ -647,8 +647,13 @@ def remove_priority(priority, *, principal, reason: str) -> dict:
     priority = StrategicPriority.objects.select_for_update(of=("self",)).get(
         pk=priority.pk
     )
+    # The model orders by source_order alone, and milestones added by hand
+    # share its default, so the audit payload listed them in whatever order
+    # the database returned. Creation order breaks the tie.
     milestones = list(
-        priority.milestones.select_related("priority", "metric_definition")
+        priority.milestones.select_related("priority", "metric_definition").order_by(
+            "source_order", "created_at", "id"
+        )
     )
     blocked = []
     for milestone in milestones:
