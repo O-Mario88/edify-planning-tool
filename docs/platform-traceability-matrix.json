@@ -2314,6 +2314,7 @@
         "apps/core/concurrency.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
+        "apps/core/logging_filters.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/nav_cadence.py",
@@ -3731,8 +3732,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "bf2877a13c3ab974ce3a465f7f1bc8a33f6ea5498baacbaecb1d5ed1cb0385b7",
-    "sources": "38ac2bb18a65dd2c7cf905ad7a285e5ade82be9ca479d027fa88ea550dbf5ade",
+    "payload": "7b74f5ffc3e1edf9bcab6e3ede457e5d6335447a1f4bbd645d3ec77bb5204d23",
+    "sources": "fbeebfefcd4f773f37739196b849d6eaad46401e6f2fd5b210d005c7d91602dc",
     "sourceCount": 211,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
