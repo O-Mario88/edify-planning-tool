@@ -174,7 +174,18 @@ class LoginThrottleEndToEndTest(TestCase):
     """The done-when: rotating a fake X-Forwarded-For no longer resets the
     web sign-in throttle."""
 
-    @override_settings(RATE_LIMIT_LOGIN_PER_MIN=3)
+    # Seven attempts against a limit of three, not four. The count can be a
+    # fixed one-minute window (a shared cache, and the test cache too), so a
+    # minute boundary may fall between two attempts and restart it once: four
+    # attempts straddling one all pass, which failed CI once. Seven split
+    # across two windows still put four in one of them, so the limit must
+    # bite whatever the clock does. If the rotating header bought a fresh
+    # identity per attempt, it never would. The fast hasher keeps the run
+    # far inside one boundary.
+    @override_settings(
+        RATE_LIMIT_LOGIN_PER_MIN=3,
+        PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+    )
     def test_rotating_a_fake_forwarded_for_still_hits_the_login_limit(self):
         peer = _peer()
         self.client.defaults["REMOTE_ADDR"] = peer
@@ -186,10 +197,10 @@ class LoginThrottleEndToEndTest(TestCase):
                 {"email": f"nobody{n}@example.test", "password": "wrong"},
                 HTTP_X_FORWARDED_FOR=f"203.0.113.{n}",
             ).status_code
-            for n in range(4)
+            for n in range(7)
         ]
         self.assertNotIn(429, statuses[:3])
-        self.assertEqual(statuses[3], 429)
+        self.assertIn(429, statuses)
 
     def test_the_audit_context_records_the_trusted_address(self):
         from apps.core.request_context import get_request_context
