@@ -209,7 +209,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
-    "cluster_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
+    # The Accountant read clusters as a section of Team Oversight until the
+    # section moved here (2026-09-23), and keeps that reading (owner,
+    # 2026-09-23: "give them the access"). The data stays scoped by
+    # `cluster_queryset`, and the page has no action for them to take.
+    "cluster_oversight": {PL, IA, CD, RVP, RPL, ACCOUNTANT, ADMIN},
     "core_schools_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
@@ -1724,7 +1728,7 @@ SIDEBAR_ITEMS = [
                 "label": "Cluster Oversight",
                 "url": "/cluster-oversight/",
                 "page_key": "cluster_oversight",
-                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
+                "visible_to": {PL, IA, CD, RPL, RVP, ACCOUNTANT, ADMIN},
             },
             {
                 "label": "Planning Oversight",

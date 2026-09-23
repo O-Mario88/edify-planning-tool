@@ -1,5 +1,7 @@
 {% load kpi_metrics frontend_filters table_pagination %}
 
+{# Readers without the cluster record (RVP, RPL, the Accountant) get names, not links they cannot open. #}
+{% with can_open_cluster=request.user|can_open:"/clusters/0" %}
 <div class="cluster-oversight-content space-y-6">
 
   {% kpi_strip %}
@@ -112,3 +114,4 @@
   {% endif %}
 
 </div>
+{% endwith %}

@@ -8573,7 +8573,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1262,
+      "bytes": 1367,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8618,7 +8618,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7078,
+      "bytes": 7263,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -26347,6 +26347,7 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CD",
         "IA",

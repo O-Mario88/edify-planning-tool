@@ -198,6 +198,7 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
         "finance_batch_payments": (WEEKLY, 5),
         "monthly_budget": (WEEKLY, 10),
         "team_planning_oversight": (MONTHLY, 30),
+        "cluster_oversight": (MONTHLY, 32),
         "planning": (MONTHLY, 35),
     },
     "HR": {

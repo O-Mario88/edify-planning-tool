@@ -15829,7 +15829,7 @@
   {
    "audit_id": "KPI-SURFACE-140",
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 5,
+   "line": 7,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15837,6 +15837,7 @@
    "route": "/cluster-oversight/",
    "page_title": "Cluster Oversight",
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CD",
     "IA",

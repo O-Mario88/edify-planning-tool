@@ -90,6 +90,26 @@ class DedicatedClusterOversightTest(TestCase):
         self.assertContains(response, 'aria-label="Cluster meetings"')
         self.assertNotContains(response, 'aria-label="Cluster filters"')
 
+    def test_the_accountant_reads_clusters_as_names_not_links(self):
+        """Owner, 2026-09-23: the Accountant keeps the cluster reading they had
+        on Team Oversight. They cannot open a cluster record, so each cluster
+        is named without a link they would be refused."""
+        accountant = _create_user(
+            "accountant@dedicated.test", EdifyRole.PROGRAM_ACCOUNTANT
+        )
+        self.client.force_login(accountant)
+        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Lead cluster")
+        self.assertContains(response, 'aria-label="Cluster meetings"')
+        self.assertNotContains(response, f'href="/clusters/{self.cluster.id}"')
+        self.assertContains(response, 'href="/cluster-oversight/"')
+
+    def test_readers_who_can_open_a_cluster_keep_its_link(self):
+        self.client.force_login(self.ia)
+        response = self.client.get("/cluster-oversight/", {"fy": self.fy})
+        self.assertContains(response, f'href="/clusters/{self.cluster.id}"')
+
     def test_cluster_sections_are_removed_and_old_links_redirect(self):
         self.client.force_login(self.ia)
         for route in ("/team-planning-oversight/", "/country-planning-oversight/"):
