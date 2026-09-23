@@ -10,10 +10,10 @@
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">{% if is_programme_lead %}Programme Lead{% else %}Leadership{% endif %}</p>
+      <p class="edify-page-eyebrow">{% if is_programme_lead %}Programme Lead{% elif uses_member_tabs %}My Clusters{% else %}Leadership{% endif %}</p>
       <h1 class="edify-page-title edify-page-header__title">Cluster Oversight</h1>
       <p class="edify-page-header__description">
-        {% if is_programme_lead %}
+        {% if uses_member_tabs %}
         Your clusters, group trainings and meetings, organised by team member.
         {% else %}
         Clusters, group trainings and meetings, organised by Programme Lead and team member.

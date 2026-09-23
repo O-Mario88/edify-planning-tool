@@ -169,3 +169,17 @@ class LifecyclePlanningTest(_Fixture):
                 for section in programme_sections(outsider, {"fy": self.fy})
             )
         )
+
+    def test_matrix_search_updates_the_full_width_lifecycle_tables(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            "/core-schools",
+            {"fy": self.fy, "q": self.champion.school_id},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="core-schools-table-container",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="core-lifecycle-tables"')
+        self.assertContains(response, 'hx-swap-oob="outerHTML"')
+        self.assertContains(response, self.champion.name)
+        self.assertNotContains(response, self.trained.name)

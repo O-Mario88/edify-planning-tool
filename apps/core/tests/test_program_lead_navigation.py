@@ -41,15 +41,22 @@ EXPECTED_PL_SIDEBAR = [
             ("My Plan", "/my-plan"),
             ("School Directory", "/schools"),
             ("Clusters", "/clusters"),
-            ("Cluster Oversight", "/cluster-oversight/"),
-            ("Planning Oversight", "/team-planning-oversight/"),
             ("Calendar", "/calendar"),
             ("Core Schools", "/core-schools"),
-            ("Core School Oversight", "/core-schools-oversight/"),
             ("Programme Schools", "/programme-schools"),
             ("Completion Reviews", "/pl/review-queue"),
             ("To-Do", "/todos"),
             ("My Actions", "/actions/mine"),
+        ],
+    ),
+    (
+        "OVERSIGHT",
+        [
+            ("Planning Oversight", "/team-planning-oversight/"),
+            ("Cluster Oversight", "/cluster-oversight/"),
+            ("Core School Oversight", "/core-schools-oversight/"),
+            ("Partner Oversight", "/partner-oversight/"),
+            ("Project Monitoring", "/projects/monitoring"),
         ],
     ),
     (
@@ -61,8 +68,6 @@ EXPECTED_PL_SIDEBAR = [
             ("Team Leave", "/leave/approvals"),
             ("Field Debrief", "/debriefs"),
             ("Coaching", "/team/coaching"),
-            ("Partners", "/partners"),
-            ("Project Monitoring", "/projects/monitoring"),
             ("Escalations", "/escalations"),
             ("Team Assignments", "/actions/sent"),
             ("Quality Flags", "/quality-checks"),
@@ -174,7 +179,7 @@ class ProgramLeadSidebarTest(SimpleTestCase):
             ("/target-distribution/team", "Priorities"),
             ("/priorities/guidance", "Priorities"),
             ("/team-targets", "Planning Oversight"),
-            ("/partner-oversight/", "Partners"),
+            ("/partner-oversight/", "Partner Oversight"),
         ):
             with self.subTest(path=path):
                 lit = [

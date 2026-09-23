@@ -5302,3 +5302,28 @@ main table thead .edify-frozen-cell { z-index: 2; }
   padding-inline: 1rem !important;
   white-space: nowrap;
 }
+
+/* Lifecycle tables use the full content width and wrap long names and plans. */
+main table.core-lifecycle-table.edify-record-table {
+  table-layout: fixed !important;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  width: 100%;
+}
+main table.core-lifecycle-table.edify-record-table :is(th, td),
+main table.core-lifecycle-table.edify-record-table :is(th, td) * {
+  min-width: 0;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+.core-lifecycle-table th:nth-child(1) { width: 8%; }
+.core-lifecycle-table th:nth-child(2) { width: 22%; }
+.core-lifecycle-table th:nth-child(3) { width: 10%; }
+.core-lifecycle-table th:nth-child(4),
+.core-lifecycle-table th:nth-child(5) { width: 13%; }
+.core-lifecycle-table th:nth-child(6) { width: 24%; }
+.core-lifecycle-table th:nth-child(7) { width: 10%; }
+.core-lifecycle-table .school-planning-badge {
+  white-space: normal;
+  max-width: 100%;
+}

@@ -864,7 +864,7 @@ def cluster_detail_view(request, cluster_id):
         return redirect("/clusters")
 
     from apps.clusters.models import Cluster as _Cluster
-    from apps.clusters.services import cluster_delete_block
+    from apps.clusters.services import cluster_delete_block, may_edit_cluster_profile
 
     _cluster_row = _Cluster.objects.filter(
         id=cluster_id, deleted_at__isnull=True
@@ -886,7 +886,8 @@ def cluster_detail_view(request, cluster_id):
         # hide one the user is entitled to.
         "can_edit_cluster": RolePermissionService.can_view_page(
             request.user, "planning"
-        ),
+        )
+        and bool(_cluster_row and may_edit_cluster_profile(_cluster_row, request.user)),
         # Cluster-level planning and school-level scheduling use the same
         # permission checks as the destinations behind their controls. This
         # keeps the profile useful as a planning launch point without showing
@@ -1387,6 +1388,12 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         ).values_list("district_id", flat=True)
     )
     served_district_q = Q(district_id__in=served_ids)
+    from apps.core.scoping import owner_ids
+
+    if cluster.responsible_staff_id in owner_ids(request.user):
+        # Owners may group their own schools across districts; the membership
+        # service still enforces portfolio ownership and country boundaries.
+        served_district_q = Q()
     if request.method == "POST":
         school_ids = request.POST.getlist("school_ids")
         user = request.user
@@ -1564,8 +1571,15 @@ def eligible_staff_options_view(request):
 @require_page_permission("planning")
 def edit_cluster_drawer_view(request, cluster_id):
     import json
+    from django.db.models import Q
 
-    cluster = get_object_or_404(Cluster, id=cluster_id)
+    cluster = get_object_or_404(
+        cluster_queryset(resolve_user_scope(request.user)), id=cluster_id
+    )
+    from apps.clusters.services import may_edit_cluster_profile
+
+    if not may_edit_cluster_profile(cluster, request.user):
+        return HttpResponseForbidden("Only the cluster owner can edit this profile.")
     districts = District.objects.all().order_by("name")
     sub_counties = SubCounty.objects.all().order_by("name")
 
@@ -1593,6 +1607,17 @@ def edit_cluster_drawer_view(request, cluster_id):
     ]
 
     staff = get_eligible_staff(cluster.district_id)
+    # Keep a recorded owner selectable even when they have no school or
+    # geography assignment in the cluster's district.
+    staff = (
+        StaffProfile.objects.filter(
+            Q(id__in=staff.values("id"))
+            | Q(id=cluster.responsible_staff_id)
+            | Q(user_id=cluster.responsible_staff_id)
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
     # The schools in the cluster, each ticked (owner, 2026-09-15): untick a
     # school added by mistake and save, and it goes back to unclustered.
     from apps.clusters.services import active_schools

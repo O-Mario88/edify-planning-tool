@@ -170,8 +170,8 @@ class TheRowNamesWhoIsInControlTest(_Fixture):
 
 
 class ThePageIsReadOnlyTest(_Fixture):
-    def test_it_opens_for_a_cceo_and_offers_no_write_control(self):
-        self.client.force_login(self.mine_user)
+    def test_oversight_offers_no_write_control(self):
+        self.client.force_login(self.ia_user)
         response = self.client.get("/projects/monitoring")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
@@ -182,6 +182,11 @@ class ThePageIsReadOnlyTest(_Fixture):
         self.assertNotIn("/planning/schedule-modal", html)
         self.assertNotIn("assign-partner-modal", html)
 
+    def test_cceo_only_has_partner_oversight(self):
+        self.client.force_login(self.mine_user)
+        response = self.client.get("/projects/monitoring")
+        self.assertIn(response.status_code, (302, 403))
+
     def test_it_opens_for_impact_assessment(self):
         self.client.force_login(self.ia_user)
         response = self.client.get("/projects/monitoring")
@@ -189,7 +194,7 @@ class ThePageIsReadOnlyTest(_Fixture):
         self.assertIn("PM Literacy Project", response.content.decode())
 
     def test_a_post_is_refused(self):
-        self.client.force_login(self.mine_user)
+        self.client.force_login(self.lead_user)
         response = self.client.post("/projects/monitoring", {})
         self.assertIn(response.status_code, (403, 405))
 

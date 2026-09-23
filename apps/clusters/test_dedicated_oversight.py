@@ -123,3 +123,39 @@ class DedicatedClusterOversightTest(TestCase):
                 f"/cluster-oversight/?fy={self.fy}",
                 fetch_redirect_response=False,
             )
+
+    def test_planned_counts_include_undated_and_overdue_but_not_completed(self):
+        self.meeting.planned_date = None
+        self.meeting.save()
+        Activity.objects.create(
+            activity_type="cluster_meeting",
+            cluster=self.cluster,
+            responsible_staff_id=self.pl.id,
+            fy=self.fy,
+            status="completed",
+            planned_date=date.today(),
+        )
+        Activity.objects.create(
+            activity_type="cluster_training",
+            cluster=self.cluster,
+            responsible_staff_id=self.pl.id,
+            fy=self.fy,
+            status="cancelled",
+        )
+        for user in (self.pl, self.ia, self.cceo):
+            with self.subTest(role=user.active_role):
+                data = cluster_oversight_table_data(user, fy=self.fy)
+                self.assertEqual(data["meetings_planned"], 1)
+                self.assertEqual(
+                    data["trainings_planned"], 1 if user != self.cceo else 0
+                )
+        data = cluster_oversight_table_data(self.pl, fy=self.fy)
+        member = next(
+            t for t in data["cceo_tabs"] if t["id"] == self.cceo.staff_profile.id
+        )
+        self.assertEqual(member["meetings_planned"], 1)
+
+    def test_owner_cannot_see_another_teams_plans(self):
+        outsider = _create_user("outside@dedicated.test", EdifyRole.CCEO)
+        data = cluster_oversight_table_data(outsider, fy=self.fy)
+        self.assertEqual((data["meetings_planned"], data["trainings_planned"]), (0, 0))

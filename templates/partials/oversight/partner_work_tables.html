@@ -1,0 +1,32 @@
+{% load frontend_filters table_pagination %}
+<dl class="flex flex-wrap gap-6 px-4 py-3 card">
+  <div><dt class="edify-text-caption edify-text-muted">Awaiting scheduling</dt><dd class="font-semibold">{{ summary.awaiting_schedule }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled visits</dt><dd class="font-semibold">{{ summary.scheduled_visits }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled trainings</dt><dd class="font-semibold">{{ summary.scheduled_trainings }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled meetings</dt><dd class="font-semibold">{{ summary.scheduled_meetings }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Overdue</dt><dd class="font-semibold">{{ summary.overdue }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Completed</dt><dd class="font-semibold">{{ summary.completed }}</dd></div>
+</dl>
+{% for table in workspace_tables %}
+{% paginate table.items table.page_param as page %}
+<section class="card p-0 overflow-hidden">
+  <header class="px-4 py-3 border-b edify-border"><h2 class="text-sm font-semibold">{{ table.title }} ({{ table.items|length }})</h2></header>
+  <div class="overflow-x-auto">
+    <table class="w-full edify-record-table partner-work-table">
+      <thead><tr><th>School / cluster</th><th>Partner</th><th>Staff member</th><th>Activity / purpose</th><th>{% if table.kind == 'activity' %}Scheduled{% else %}Assigned{% endif %}</th><th>Status</th><th>{% if table.kind == 'activity' %}Verification{% else %}Activity date{% endif %}</th><th>Actions</th></tr></thead>
+      <tbody>{% for item in page.rows %}
+        <tr>
+          <td>{{ item.school_code }} {{ item.school_name|default:item.cluster_name }}</td>
+          <td>{{ item.partner_name }}</td><td>{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
+          <td>{{ item.activity_type|replace_underscore|title }}{% if item.target_intervention %}<br><span class="edify-text-caption edify-text-muted">{{ item.target_intervention }}</span>{% endif %}</td>
+          <td>{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.assignment_date|date:"j M Y" }}{% endif %}</td>
+          <td><span class="pill">{{ item.delivery_phase|replace_underscore|title }}</span></td>
+          <td>{% if table.kind == 'activity' %}{{ item.ia_status|default:"Pending"|replace_underscore|title }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
+          <td>{% if item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" %}{% else %}<a class="edify-primary-text" href="/activities/{{ item.partner_activity_id }}">View activity</a>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="8" class="p-4 edify-text-muted">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=page param=table.page_param pagination_label=table.title %}
+</section>
+{% endfor %}

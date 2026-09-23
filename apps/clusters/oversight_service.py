@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
-from apps.core.scoping import cluster_queryset, or_empty, resolve_user_scope
+from apps.core.scoping import cluster_queryset, resolve_user_scope
 
 #: A cluster with no responsible staff is unassigned, not unowned-by-accident.
 #: It groups under its own heading rather than being dropped, because a cluster
@@ -94,7 +94,7 @@ def grouped_clusters(principal) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     clusters = list(
-        or_empty(cluster_queryset(scope), Cluster)
+        (cluster_queryset(scope) or Cluster.objects.none())
         .select_related("district", "sub_county")
         .order_by("name")
     )
@@ -253,6 +253,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     scope = resolve_user_scope(principal)
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    uses_member_tabs = is_programme_lead or scope.active_role == EdifyRole.CCEO.value
 
     clusters = list(
         cluster_queryset(
@@ -376,6 +377,20 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
     ]
 
+    # Keep the activity ledger within this page's cluster/team scope, even
+    # when a development account also carries superuser privileges.
+    from apps.core.scoping import owner_ids
+
+    allowed_people = planning._both_id_spaces(
+        set(owner_ids(principal)) | set(scope.supervised_staff_ids or [])
+    )
+    cluster_work = [
+        item
+        for item in cluster_work
+        if item.cluster_id in cluster_ids
+        or (uses_member_tabs and item.operational_owner_id in allowed_people)
+    ]
+
     # 6. Build hierarchy tabs
     # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
     sys_pls = system_program_leads()
@@ -476,7 +491,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             break
 
     cceo_tabs = []
-    if is_programme_lead:
+    if uses_member_tabs:
         own_rows = [
             row
             for row in formatted_clusters
@@ -561,7 +576,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
                 item for item in group["items"] if item.activity_type in TRAINING_TYPES
             ]
 
-    if is_programme_lead:
+    if uses_member_tabs:
         directory = _staff_directory(
             {item.operational_owner_id for item in cluster_work}
         )
@@ -586,6 +601,35 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
                 else "trainings",
                 [],
             ).append(item)
+
+    from apps.planning.school_planning_badges import PLANNED_STATUSES
+
+    def plan_counts(items):
+        live = {
+            item.activity_id: item
+            for item in items
+            if item.activity_status in PLANNED_STATUSES
+        }
+        return {
+            "meetings_planned": sum(
+                item.activity_type in CLUSTER_MEETING_TYPES for item in live.values()
+            ),
+            "trainings_planned": sum(
+                item.activity_type in TRAINING_TYPES for item in live.values()
+            ),
+        }
+
+    for member in cceo_tabs + [tab for lead in leads_data for tab in lead["cceo_tabs"]]:
+        member.update(
+            plan_counts(member.get("meetings", []) + member.get("trainings", []))
+        )
+    for lead in leads_data:
+        lead["meetings_planned"] = sum(
+            tab["meetings_planned"] for tab in lead["cceo_tabs"]
+        )
+        lead["trainings_planned"] = sum(
+            tab["trainings_planned"] for tab in lead["cceo_tabs"]
+        )
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import (
@@ -619,7 +663,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             for entry in perf.get("rows", [])
             if entry["row"].cluster_id in listed
         ]
-        if is_programme_lead:
+        if uses_member_tabs:
             own_label = f"{getattr(principal, 'name', '') or 'My clusters'} (you)"
             officer_activity = [
                 cluster_activity_by_person(
@@ -661,6 +705,8 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     return {
         "is_programme_lead": is_programme_lead,
+        "uses_member_tabs": uses_member_tabs,
+        **plan_counts(cluster_work),
         "selected_program_lead": selected_program_lead
         or (leads_data[0]["id"] if leads_data else ""),
         "leads": leads_data,

@@ -1886,45 +1886,64 @@ def partner_oversight_view(request):
     # one, choosing a partner would collapse the list to that partner and
     # leave no way back to any other.
     all_items = partner_oversight.build_items(request.user, **_service_period(period))
-    country_lens = _partner_scope(request.user)["is_country"]
+    partner_scope = _partner_scope(request.user)
+    country_lens = partner_scope["is_country"]
     if country_lens:
         sys_pls = oversight.system_program_leads()
+        if partner_scope.get("region_ids") is not None:
+            visible_leads = {i.supervising_pl_id for i in all_items}
+            sys_pls = [p for p in sys_pls if p["id"] in visible_leads]
         program_lead_tabs, requested_pl, team_items = _program_lead_tabs(
             all_items, requested_pl, program_leads=sys_pls
         )
     else:
         program_lead_tabs, team_items = [], all_items
 
-    partner_pairs = sorted(
-        {(i.partner_id, i.partner_name) for i in team_items if i.partner_id},
-        key=lambda pair: pair[1],
+    roster = oversight.program_lead_members(
+        requested_pl if country_lens else request.user.id
     )
-    partner_tabs = [
+    member_names = {p["id"]: p["name"] for p in roster}
+    member_names.update(
         {
-            "key": "all",
-            "label": "All Partners",
-            "count": len(team_items),
+            i.responsible_cceo_id or "unassigned": i.responsible_cceo_name
+            or "Unassigned"
+            for i in team_items
         }
+    )
+    member = (request.GET.get("member") or "all").strip()
+    if member not in member_names:
+        member = "all"
+    member_tabs = [
+        {"key": "all", "label": "All team members", "count": len(team_items)}
     ] + [
         {
-            "key": partner_id,
-            "label": partner_name,
-            "count": len([i for i in team_items if i.partner_id == partner_id]),
+            "key": key,
+            "label": name,
+            "count": sum(
+                (i.responsible_cceo_id or "unassigned") == key for i in team_items
+            ),
         }
-        for partner_id, partner_name in partner_pairs
+        for key, name in member_names.items()
     ]
-    active_partner = next(
-        (entry for entry in partner_tabs if entry["key"] == requested_partner),
-        partner_tabs[0],
+    for entry in member_tabs:
+        entry["is_active"] = entry["key"] == member
+    member_items = partner_oversight.filter_workspace(team_items, member=member)
+    partner_pairs = sorted(
+        {(i.partner_id, i.partner_name) for i in member_items if i.partner_id},
+        key=lambda p: p[1],
     )
-    for entry in partner_tabs:
-        entry["is_active"] = entry is active_partner
-    partner_id = active_partner["key"]
-    items = (
-        team_items
-        if partner_id == "all"
-        else [i for i in team_items if i.partner_id == partner_id]
+    partner_id = (
+        requested_partner if requested_partner in dict(partner_pairs) else "all"
     )
+    activity_type = request.GET.get("activity_type", "")
+    status = request.GET.get("status", "")
+    items = partner_oversight.filter_workspace(
+        member_items,
+        activity_type=activity_type,
+        status=status,
+    )
+    if partner_id != "all":
+        items = [i for i in items if i.partner_id == partner_id]
     summary = partner_oversight.summarize(items)
 
     context = {
@@ -1933,10 +1952,24 @@ def partner_oversight_view(request):
         "program_lead": requested_pl,
         "program_lead_tabs": program_lead_tabs,
         "partner": partner_id,
-        "partner_tabs": partner_tabs,
+        "member_tabs": member_tabs,
+        "member": member,
+        "activity_type": activity_type,
+        "activity_types": sorted(
+            {i.activity_type for i in member_items if i.activity_type}
+        ),
+        "status": status,
+        "statuses": [
+            "awaiting_schedule",
+            "scheduled",
+            "in_progress",
+            "verification",
+            "completed",
+            "returned",
+        ],
+        "workspace_tables": partner_oversight.workspace_tables(items),
         "summary": summary,
         "kpis": _partner_kpis(summary),
-        "groups": partner_oversight.group_by_partner(items),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
         # above the partner groups because a decision somebody is waiting on
         # outranks routine monitoring.
@@ -2207,6 +2240,13 @@ def partner_oversight_export_view(request):
         partner_id=partner_id,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
         **_service_period(period),
+    )
+
+    items = partner_oversight.filter_workspace(
+        items,
+        member=request.GET.get("member", ""),
+        activity_type=request.GET.get("activity_type", ""),
+        status=request.GET.get("status", ""),
     )
 
     class _Echo:
