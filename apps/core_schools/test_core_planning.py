@@ -497,7 +497,9 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/planning/schedule-modal?school_id={self.school.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "SSA interventions performing poorly")
+        # The SSA evidence is the drawer's "Recommended interventions" list
+        # since the compact drawer redesign (8bb11a1).
+        self.assertContains(response, "Recommended interventions")
         self.assertContains(response, "Purpose of Visit")
         self.assertContains(response, "In-school Training")
         self.assertContains(response, "SSA Support")

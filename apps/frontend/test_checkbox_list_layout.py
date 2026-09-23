@@ -12,19 +12,30 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         planning = (ROOT / "templates/partials/planning/school_row.html").read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        for row in (directory, planning):
-            self.assertIn("school-record-row__summary--selectable", row)
-            # The decorative building glyph is gone: the row leads with the
-            # operational school ID, which is what staff actually quote.
-            self.assertNotIn("school-record-row__icon", row)
-            self.assertLess(
-                row.index("school-record-row__select"),
-                row.index("school-record-row__school-id"),
-            )
-            self.assertLess(
-                row.index("school-record-row__school-id"),
-                row.index("school-record-row__title"),
-            )
+        self.assertIn("school-record-row__summary--selectable", directory)
+        # The decorative building glyph is gone: the row leads with the
+        # operational school ID, which is what staff actually quote.
+        self.assertNotIn("school-record-row__icon", directory)
+        self.assertLess(
+            directory.index("school-record-row__select"),
+            directory.index("school-record-row__school-id"),
+        )
+        self.assertLess(
+            directory.index("school-record-row__school-id"),
+            directory.index("school-record-row__title"),
+        )
+
+        # Planning is a table since 8bb11a1, in the same order: the checkbox
+        # cell, the School ID cell, then the name.
+        self.assertNotIn("school-record-row__icon", planning)
+        self.assertLess(
+            planning.index("school-record-row__select"),
+            planning.index("school-plan-table__id"),
+        )
+        self.assertLess(
+            planning.index("school-plan-table__id"),
+            planning.index("school-plan-table__name"),
+        )
 
         self.assertIn("grid-template-columns: 2rem minmax(0, 1fr) auto", css)
         self.assertIn("grid-column: 1;", css)
