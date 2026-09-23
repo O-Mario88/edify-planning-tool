@@ -593,7 +593,10 @@ class CoreSchoolsService:
                 )
             )
             .filter(Exists(has_confirmed_ssa))
-            .order_by("pk")[:SELF_HEAL_BATCH]
+            # School's own ordering (newest first) decides which schools a
+            # batch reaches first, exactly as before the bulk rewrite; the
+            # pk only breaks ties so the batch is deterministic.
+            .order_by("-created_at", "pk")[:SELF_HEAL_BATCH]
         )
         if not uninitialized_schools:
             return 0

@@ -161,3 +161,19 @@ class CoreSelfHealTest(TestCase):
             self.assertEqual(
                 CoreSchoolsService.self_heal_plans(scope, FY, self.cceo), 0
             )
+
+    def test_a_batch_reaches_the_newest_schools_first(self):
+        """Which schools one load heals is the order it always was (School's
+        own newest-first ordering), so the bulk rewrite does not change which
+        schools a reader sees healed first."""
+        from datetime import timedelta
+
+        older = self._schools(planning.SELF_HEAL_BATCH, prefix="O", with_ssa=True)
+        newer = self._schools(3, prefix="N", with_ssa=True)
+        School.objects.filter(id__in=[s.id for s in older]).update(
+            created_at=timezone.now() - timedelta(days=30)
+        )
+        CoreSchoolsService.self_heal_plans(self._scope(), FY, self.cceo)
+        healed = set(CorePlan.objects.filter(fy=FY).values_list("school_id", flat=True))
+        self.assertEqual(len(healed), planning.SELF_HEAL_BATCH)
+        self.assertTrue({s.school_id for s in newer} <= healed)
