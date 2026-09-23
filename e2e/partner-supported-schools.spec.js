@@ -53,6 +53,16 @@ async function planningRow(page, school, fy) {
   return row;
 }
 
+// A Partner Monitoring row's details, opened from the school's name as on
+// Planning: where the Partner is sending and where the work stands.
+async function monitoringDetails(page, assignmentId) {
+  const row = page.locator(`tr[data-assignment="${assignmentId}"]`);
+  await row.locator('.school-plan-table__name-toggle').click();
+  const details = page.locator(`#partner-row-details-a-${assignmentId}`);
+  await expect(details).toBeVisible();
+  return details;
+}
+
 async function setDrawerDate(page, isoDate) {
   await page.evaluate(date => {
     const holder = [...document.querySelectorAll('#drawer-container [x-data]')]
@@ -251,7 +261,9 @@ test.describe('Partner-supported schools — journeys', () => {
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${partnerWork.fy}`);
     const monitored = page.locator(`tr[data-assignment="${hope.assignment_id}"]`);
     await expect(monitored).toContainText('Scheduled');
-    await expect(monitored).toContainText('Grace Visitor');
+    // Who the Partner is sending is in the row's details, opened from the
+    // school's name as on Planning.
+    await expect(await monitoringDetails(page, hope.assignment_id)).toContainText('Grace Visitor');
     await shoot(page, 'j5-monitoring-scheduled', testInfo);
   });
 
@@ -265,7 +277,7 @@ test.describe('Partner-supported schools — journeys', () => {
     let row = await planningRow(page, hope, fy);
     await expect(row.locator('[data-planning-badges="visits"]')).toContainText('Awaiting Verification');
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${fy}`);
-    let monitored = page.locator(`tr[data-assignment="${hope.assignment_id}"]`);
+    let monitored = await monitoringDetails(page, hope.assignment_id);
     await expect(monitored).toContainText('Evidence Submitted');
     await expect(monitored).toContainText('Pending');
     await shoot(page, 'j6-under-ia-review', testInfo);
@@ -276,7 +288,7 @@ test.describe('Partner-supported schools — journeys', () => {
     row = await planningRow(page, hope, fy);
     await expect(row.locator('[data-planning-badges="visits"]')).toContainText('1 Complete');
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${fy}`);
-    monitored = page.locator(`tr[data-assignment="${hope.assignment_id}"]`);
+    monitored = await monitoringDetails(page, hope.assignment_id);
     await expect(monitored).toContainText('Verified');
     await expect(monitored).toContainText('Awaiting Payment');
     await shoot(page, 'j6-verified', testInfo);

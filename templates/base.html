@@ -105,8 +105,8 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923merge5">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260923merge2">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923partner6">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260923partner5">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -231,7 +231,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260923merge2"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260923partner5"></script>
 
 {% comment %}
 A paginated link keeps the tab the reader chose. Oversight puts one person's

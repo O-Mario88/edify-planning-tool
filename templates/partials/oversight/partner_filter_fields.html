@@ -1,0 +1,15 @@
+{% load frontend_filters %}
+<label class="edify-page-header-control">
+  <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Activity</span>
+  <select name="activity_type" aria-label="Activity">
+    <option value="">All activities</option>
+    {% for value in activity_types %}<option value="{{ value }}"{% if activity_type == value %} selected{% endif %}>{{ value|replace_underscore|title }}</option>{% endfor %}
+  </select>
+</label>
+<label class="edify-page-header-control">
+  <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Status</span>
+  <select name="status" aria-label="Status">
+    <option value="">All statuses</option>
+    {% for s in statuses %}<option value="{{ s.key }}"{% if status == s.key %} selected{% endif %}>{{ s.key|replace_underscore|title }} ({{ s.count }})</option>{% endfor %}
+  </select>
+</label>

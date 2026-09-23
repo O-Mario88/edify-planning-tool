@@ -8465,7 +8465,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1267,
+      "bytes": 1671,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -8830,8 +8830,31 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 5315,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 902,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Partner Filter Fields",
+      "purpose": "Reusable partner filter fields interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/partner_filter_fields.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6122,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -8839,6 +8862,33 @@
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Partner Work Row",
+      "purpose": "Reusable partner work row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/partner_work_row.html",
+      "variants": [
+        "danger",
+        "{% if item.awaits_staff_decision %}danger{% elif item.delivery_phase == "
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2598,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Partner Work Tables",
       "purpose": "Reusable partner work tables interface primitive",
@@ -8855,13 +8905,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10451,
+      "bytes": 11188,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
       ],
       "findings": [],
-      "forms": 2,
+      "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Partner Workspace",
@@ -8873,14 +8923,17 @@
       "tables": 0,
       "template": "partials/oversight/partner_workspace.html",
       "variants": [
-        "executive"
+        "executive",
+        "info",
+        "warning",
+        "{% if summary.overdue %}danger{% else %}neutral{% endif %}"
       ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4033,
+      "bytes": 4365,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -62665,9 +62718,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -105165,7 +105216,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 488,
+    "component_templates": 490,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

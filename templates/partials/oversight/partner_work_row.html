@@ -1,0 +1,72 @@
+{% load frontend_filters %}
+{% comment %}
+One row of a Partner Monitoring table, and its details. `row_id` is unique on
+the page ("a-<assignment>" or "p-<activity>"); the row keeps the ids the
+journeys and the Resolve drawer address it by.
+{% endcomment %}
+<tr class="partner-plan-row" {% if table.kind == 'activity' %}data-partner-activity="{{ item.partner_activity_id }}"{% else %}data-assignment="{{ item.partner_assignment_id }}"{% endif %}{% if item.awaits_staff_decision %} data-returned{% endif %}
+    @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+    :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
+  <td data-label="{% if item.school_name %}School{% else %}Cluster{% endif %}" class="school-plan-table__name"><span class="partner-plan-table__identity">
+    <button type="button" class="school-plan-table__name-toggle"
+            @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+            :aria-expanded="(openRowId === '{{ row_id }}').toString()"
+            aria-controls="partner-row-details-{{ row_id }}"
+            aria-label="Details for {% firstof item.school_name item.cluster_name %}">{% firstof item.school_name item.cluster_name %}</button>
+  </span></td>
+  <td data-label="Staff member">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
+  <td data-label="Activity / purpose">{{ item.activity_type|replace_underscore|title }}</td>
+  <td data-label="Status"><span class="partner-plan-table__status">
+    <span class="partner-status-chip" data-tone="{% if item.awaits_staff_decision %}danger{% elif item.delivery_phase == 'awaiting_schedule' or item.delivery_phase == 'verification' %}info{% elif item.delivery_phase == 'completed' %}{% if item.ia_status_label == 'Verified' %}success{% else %}info{% endif %}{% else %}warning{% endif %}"
+          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{% if item.awaits_staff_decision %}{{ item.schedule_status }}{% else %}{{ item.delivery_phase|replace_underscore|title }}{% endif %}</span>
+    {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
+  </span></td>
+  <td data-label="{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}">{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
+  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
+    {% if item.awaits_staff_decision and can_resolve_returns %}
+    <button type="button" class="school-record-action school-record-action--schedule"
+            hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
+      <span>Resolve Exception</span>
+    </button>
+    {% elif item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" %}{% else %}
+    <a class="school-record-action school-record-action--assign" href="/activities/{{ item.partner_activity_id }}">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+      <span>View activity</span>
+    </a>
+    {% endif %}
+    {% if item.can_enter_salesforce %}
+    <button type="button" class="school-record-action school-record-action--assign"
+            hx-get="/activities/{{ item.partner_activity_id }}/salesforce-id"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4.5l-2 15M17 4.5l-2 15M4.5 9h15M4 15h15"/></svg>
+      <span>Enter Salesforce ID</span>
+    </button>
+    {% endif %}
+  </div></td>
+</tr>
+<tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
+  <td aria-hidden="true"></td>
+  <td colspan="5">
+    <dl class="school-record-row__metadata">
+      {% if item.school_code %}<div><dt>School ID:</dt><dd>{{ item.school_code }}</dd></div>{% endif %}
+      {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
+      {% if item.field_officer %}<div><dt>Partner officer:</dt><dd>{{ item.field_officer }}</dd></div>{% endif %}
+      {% if item.district %}<div><dt>District:</dt><dd>{{ item.district }}</dd></div>{% endif %}
+      {% if item.cluster_name and item.school_name %}<div><dt>Cluster:</dt><dd>{{ item.cluster_name }}</dd></div>{% endif %}
+      {% if item.target_intervention %}<div><dt>Target intervention:</dt><dd>{{ item.target_intervention }}</dd></div>{% endif %}
+      {% if item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}
+      {% comment %}Where the Partner's work stands past its schedule (owner,
+      2026-09-23): read only — staff never edit these here.{% endcomment %}
+      {% if item.partner_activity_id %}
+      <div><dt>Execution:</dt><dd>{{ item.execution_status }}</dd></div>
+      <div><dt>IA:</dt><dd>{{ item.ia_status_label }}</dd></div>
+      <div><dt>Salesforce:</dt><dd>{{ item.salesforce_label }}</dd></div>
+      <div><dt>Payment:</dt><dd>{{ item.payment_label }}</dd></div>
+      {% endif %}
+      {% if item.return_reason %}<div><dt>Returned:</dt><dd>{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}</dd></div>{% endif %}
+      {% if item.is_returned and item.resolution_label %}<div><dt>Decision:</dt><dd>{{ item.resolution_label }}</dd></div>{% endif %}
+    </dl>
+  </td>
+</tr>

@@ -19,6 +19,22 @@ resolving a hand-back opens its own governed drawer.
 
 <section class="space-y-4">
 
+  {% comment %}One filter row, as on Planning: the period, then this Partner's
+  activity and status, each applying on change. Export sits at the row's end
+  because it exports what the row selects.{% endcomment %}
+  <div class="partner-plan-toolbar">
+    {% include "partials/oversight/period_filter_bar.html" with filter_label="Partner monitoring filters" target_url="/partner-oversight/" target_id="#partner-workspace" extra_filters="partials/oversight/partner_filter_fields.html" %}
+    {% if can_export %}
+    {% comment %}The export route refuses a role without data export; so does
+    the button, rather than offering a download that lands on a refusal.{% endcomment %}
+    <a class="edify-action-button secondary h-9 partner-plan-toolbar__export"
+       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
+      <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export CSV
+    </a>
+    {% endif %}
+  </div>
+
   {% if program_lead_tabs %}
   <div>
     <p class="edify-page-eyebrow">Programme Lead</p>
@@ -77,32 +93,9 @@ resolving a hand-back opens its own governed drawer.
     </a>
     {% endfor %}
   </nav>
-  <form method="get" class="flex flex-wrap items-end gap-3">
-    <input type="hidden" name="program_lead" value="{{ program_lead }}">
-    <input type="hidden" name="partner" value="{{ partner }}">
-    <input type="hidden" name="member" value="{{ member }}">
-    <input type="hidden" name="period" value="{{ period }}">
-    <input type="hidden" name="fy" value="{{ fy }}">
-    <input type="hidden" name="month" value="{{ selected_month }}">
-    <input type="hidden" name="quarter" value="{{ selected_quarter }}">
-    <input type="hidden" name="week" value="{{ week }}">
-    <label>Activity<select name="activity_type" class="input"><option value="">All activities</option>{% for value in activity_types %}<option value="{{ value }}"{% if activity_type == value %} selected{% endif %}>{{ value|replace_underscore|title }}</option>{% endfor %}</select></label>
-    <label>Status<select name="status" class="input"><option value="">All statuses</option>{% for s in statuses %}<option value="{{ s.key }}"{% if status == s.key %} selected{% endif %}>{{ s.key|replace_underscore|title }} ({{ s.count }})</option>{% endfor %}</select></label>
-    <button class="btn" type="submit">Apply</button>
-  </form>
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Partner planning context" %}
 
-  {% if can_export %}
-  {% comment %}The export route refuses a role without data export; so does
-  the button, rather than offering a download that lands on a refusal.{% endcomment %}
-  <div class="flex flex-wrap items-center justify-end gap-2">
-    <a class="btn h-8 inline-flex items-center"
-       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
-      Export CSV
-    </a>
-  </div>
-  {% endif %}
 
   {% comment %}
   Withdrawal requests. A CCEO noticed a problem with work a partner had
@@ -164,15 +157,27 @@ resolving a hand-back opens its own governed drawer.
   {% endif %}
 
   {% if active_partner %}
-  <header class="px-1" data-partner-table="{{ active_partner.id }}">
-    <h2 class="text-sm font-semibold">{% if active_partner.profile_url %}<a href="{{ active_partner.profile_url }}" class="hover:underline">{{ active_partner.name }}</a>{% else %}{{ active_partner.name }}{% endif %}</h2>
-    {% if active_partner.contact_person or active_partner.phone %}
-    <p class="edify-text-caption edify-text-muted">
-      {% if active_partner.contact_person %}{{ active_partner.contact_person }}{% endif %}{% if active_partner.phone %} · {{ active_partner.phone }}{% endif %}{% if active_partner.region_name %} · {{ active_partner.region_name }}{% endif %}
-    </p>
-    {% endif %}
-  </header>
-  {% include "partials/oversight/partner_work_tables.html" %}
+  <section class="card p-0 partner-plan" data-partner-table="{{ active_partner.id }}" aria-labelledby="partner-plan-name">
+    <header class="partner-plan__head" data-card-header>
+      <div class="partner-plan__identity">
+        <h2 id="partner-plan-name" class="partner-plan__name">{% if active_partner.profile_url %}<a href="{{ active_partner.profile_url }}">{{ active_partner.name }}</a>{% else %}{{ active_partner.name }}{% endif %}</h2>
+        {% if active_partner.contact_person or active_partner.phone %}
+        <p class="partner-plan__contact">{% if active_partner.contact_person %}{{ active_partner.contact_person }}{% endif %}{% if active_partner.phone %} · {{ active_partner.phone }}{% endif %}{% if active_partner.region_name %} · {{ active_partner.region_name }}{% endif %}</p>
+        {% endif %}
+      </div>
+      {% comment %}Where this Partner's work stands, in the tones its rows
+      use: blue waiting on the Partner, amber scheduled, red overdue.{% endcomment %}
+      <ul class="partner-plan__summary" aria-label="Where {{ active_partner.name }}'s work stands">
+        <li><span class="partner-status-chip" data-tone="info">{{ summary.awaiting_schedule }} awaiting scheduling</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_visits }} visits scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_trainings }} trainings scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_meetings }} meetings scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="{% if summary.overdue %}danger{% else %}neutral{% endif %}">{{ summary.overdue }} overdue</span></li>
+        <li><span class="partner-status-chip" data-tone="info">{{ summary.completed }} completed</span></li>
+      </ul>
+    </header>
+    {% include "partials/oversight/partner_work_tables.html" %}
+  </section>
   {% else %}
   {% include "components/empty_state.html" with title="No partner work in this period" message="When a school's support is handed to a Partner it appears here — first waiting on the Partner's date, then through delivery, IA verification and payment." %}
   {% endif %}

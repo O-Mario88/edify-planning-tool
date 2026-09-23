@@ -160,8 +160,9 @@
         var plain = element.namespaceURI === 'http://www.w3.org/1999/xhtml'
           && !element.matches('table, thead, tbody, tfoot, tr, td, th, script, style, template')
           && !element.closest('.edify-table-action')
-          // Planning status chips retain their semantic colour and compact border.
-          && !element.matches('.school-planning-badge, .school-planning-badges')
+          // Planning status chips, and Partner Monitoring's in the same
+          // design, retain their semantic colour and compact border.
+          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip')
           && !(popup && table.contains(popup))
           && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
         element.classList.toggle('edify-table-plain-content', plain);

@@ -15905,7 +15905,7 @@
   {
    "audit_id": "KPI-SURFACE-142",
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 94,
+   "line": 97,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
