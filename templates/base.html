@@ -74,7 +74,7 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260920bars2">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260923settings1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
@@ -105,7 +105,7 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923converge1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923settings1">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260923converge1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
@@ -116,7 +116,7 @@ other page was relying on them.
      identity column, the workspace overflow guard and the phone page header.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
-<link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923converge1">
+<link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923settings1">
 <link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260923converge1">
 
 

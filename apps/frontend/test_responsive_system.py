@@ -133,8 +133,10 @@ class ResponsiveLayerTest(SimpleTestCase):
         block = self.css[self.css.index("1. One-line controls") :]
         self.assertIn(":is(.edify-workspace, #drawer-container)", block)
         self.assertIn("white-space: nowrap;", block)
-        # A control with block content is a selection card, not a control.
+        # A control with block content is a selection card, not a control —
+        # including a description span made a block by `.block` (/settings).
         self.assertIn(":not(:has(", block)
+        self.assertIn("table, .block)))", block)
 
     def test_status_labels_stay_on_one_line_with_a_full_text_path(self):
         self.assertIn("text-overflow: ellipsis;", self.css)

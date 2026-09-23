@@ -24,8 +24,9 @@
    A button, tab or segmented control keeps its label on one line at every
    width. When a row of them does not fit, the ROW reflows (the page header
    below stacks its actions); the label never breaks. A control that carries
-   block content — a selection card with a description — is a card, not a
-   control, and keeps its wrapping. */
+   block content — a selection card with a description, whether the
+   description is a block element or a span made one with `.block` — is a
+   card, not a control, and keeps its wrapping. */
 :is(.edify-workspace, #drawer-container)
   :is(
     button,
@@ -41,7 +42,7 @@
     a.edify-primary-solid,
     a.edify-tab-btn,
     [data-edify-tab]
-  ):not(:has(:is(div, p, h1, h2, h3, h4, h5, h6, ul, ol, dl, table))) {
+  ):not(:has(:is(div, p, h1, h2, h3, h4, h5, h6, ul, ol, dl, table, .block))) {
   white-space: nowrap;
 }
 

@@ -48,6 +48,8 @@ const FAMILIES = [
   { family: 'hr', email: 'hr@edify.org', route: '/hr-today' },
   { family: 'loans', email: 'mfi-admin@edify.org', route: '/loans' },
   { family: 'administration', email: 'admin@edify.org', route: '/admin-panel/users' },
+  { family: 'settings', email: 'cceo@edify.org', route: '/settings' },
+  { family: 'program-lead-analytics', email: 'pl1@edify.org', route: '/analytics/program-lead' },
 ];
 
 function onlyChromiumDesktop({ browserName, isMobile }) {
