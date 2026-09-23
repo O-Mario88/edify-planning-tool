@@ -550,12 +550,12 @@ Every card links to the register where the work is done.
         {% if action.drawer %}
         <button type="button" class="hrd-action" hx-get="{{ action.url }}" hx-target="#drawer-container" hx-swap="innerHTML">
           <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
-          <span class="hrd-action__label">{{ action.label }}</span>
+          <span class="hrd-action__label" title="{{ action.label }}">{{ action.label }}</span>
         </button>
         {% else %}
         <a class="hrd-action" href="{{ action.url }}">
           <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
-          <span class="hrd-action__label">{{ action.label }}</span>
+          <span class="hrd-action__label" title="{{ action.label }}">{{ action.label }}</span>
         </a>
         {% endif %}
         {% endfor %}

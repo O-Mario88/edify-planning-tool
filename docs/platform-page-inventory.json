@@ -2142,7 +2142,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2865,
+      "bytes": 2891,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -4395,7 +4395,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 50181,
+      "bytes": 50235,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
