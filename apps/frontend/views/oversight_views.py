@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
@@ -26,7 +26,6 @@ from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
 )
-from apps.clusters.oversight_service import grouped_clusters
 from apps.planning.flagged_schools import team_flagged_schools
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
@@ -313,7 +312,6 @@ def _lens_tabs(
             "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
         ),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
-        ("clusters", "Cluster Performance"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
     )
@@ -426,7 +424,7 @@ def _cluster_performance_context(request, period: dict, *, base_url: str) -> dic
         "cluster_totals": totals,
         "cluster_leads": performance["leads"],
         "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
-        "cluster_performance_url": f"{base_url}?view=clusters",
+        "cluster_performance_url": "/cluster-oversight/",
         # The weighting is on the page. A ranking whose arithmetic nobody can
         # read is a ranking nobody can argue with, which is worse than a rough
         # one they can.
@@ -1024,11 +1022,18 @@ def team_planning_oversight_view(request):
     can_view_portfolio = can_view_planning and (request.user.active_role or "") in (
         PORTFOLIO_LENS_ROLES
     )
-    can_view_clusters = can_view_portfolio
     requested_view = (request.GET.get("view") or "planning").strip().lower()
+    if requested_view == "clusters":
+        query = request.GET.copy()
+        query.pop("view", None)
+        destination = "/cluster-oversight/" + ("?" + query.urlencode() if query else "")
+        response = redirect(destination)
+        if request.headers.get("HX-Request") == "true":
+            response["HX-Redirect"] = destination
+        return response
     active_view = (
         requested_view
-        if requested_view in {"targets", "coverage", "portfolio", "clusters"}
+        if requested_view in {"targets", "coverage", "portfolio"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
@@ -1037,10 +1042,8 @@ def team_planning_oversight_view(request):
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
-    if active_view == "clusters" and not can_view_clusters:
-        active_view = "planning"
     if (
-        active_view in ("planning", "coverage", "portfolio", "clusters")
+        active_view in ("planning", "coverage", "portfolio")
         and not can_view_planning
     ):
         active_view = "targets"
@@ -1050,7 +1053,6 @@ def team_planning_oversight_view(request):
         for key, allowed in (
             ("planning", can_view_planning),
             ("portfolio", can_view_portfolio),
-            ("clusters", can_view_clusters),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
         )
@@ -1086,18 +1088,9 @@ def team_planning_oversight_view(request):
     # not on the period's planning items. Answering them before `build_items`
     # keeps the expensive one out of the way: these are independent lenses, and
     # the inactive one must not delay the active one.
-    if active_view in ("portfolio", "clusters"):
-        if active_view == "portfolio":
-            context_data = _portfolio_context(
-                request, period, base_url=TEAM_OVERSIGHT_PATH
-            )
-            template = "partials/oversight/portfolio_workspace.html"
-        else:
-            from apps.clusters.oversight_service import cluster_oversight_table_data
-
-            fy = period.get("fy") or get_operational_fy()
-            context_data = cluster_oversight_table_data(request.user, fy=fy)
-            template = "partials/oversight/cluster_oversight_workspace.html"
+    if active_view == "portfolio":
+        context_data = _portfolio_context(request, period, base_url=TEAM_OVERSIGHT_PATH)
+        template = "partials/oversight/portfolio_workspace.html"
 
         context = {
             **period,
@@ -1194,7 +1187,9 @@ def team_planning_oversight_view(request):
     visible = oversight.in_family(visible, activity_family)
 
     summary = oversight.summarize(visible)
-    owner_groups = oversight.group_by_owner(visible)
+    owner_groups = oversight.group_by_owner(
+        visible, owners=oversight.program_lead_members(selected) if country_lens else None
+    )
     _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
         **period,
@@ -1225,7 +1220,7 @@ def team_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(available_items),
         "fy_options": fy_options(),
-        # IA and the Accountant read this page for Cluster Oversight below.
+        # IA and the Accountant read the plan without delegation authority.
         # The send controls are theirs to see refused, so they are not drawn:
         # a control that answers "not you" is worse than no control. The
         # country lens asks the country rule, so the CD can send from here as
@@ -1234,10 +1229,7 @@ def team_planning_oversight_view(request):
         "may_delegate": may_delegate(
             request.user, country=scope.is_country, region=scope.is_region
         ),
-        "cluster_oversight": grouped_clusters(request.user),
-        # §12's Team School Oversight, as a section rather than a page: plans,
-        # clusters and flagged schools are three lenses on one team, and a
-        # supervisor should not visit three pages to answer one question.
+        # Keep flagged schools alongside the team plan.
         "flagged_schools": team_flagged_schools(
             request.user, fy=period["fy"], month=period.get("month")
         ),
@@ -1312,25 +1304,24 @@ def country_planning_oversight_view(request):
     # reader holds every lens by definition: this route is already gated on
     # `country_planning_oversight`.
     requested_view = (request.GET.get("view") or "planning").strip().lower()
+    if requested_view == "clusters":
+        query = request.GET.copy()
+        query.pop("view", None)
+        destination = "/cluster-oversight/" + ("?" + query.urlencode() if query else "")
+        response = redirect(destination)
+        if request.headers.get("HX-Request") == "true":
+            response["HX-Redirect"] = destination
+        return response
     active_view = (
-        requested_view if requested_view in {"portfolio", "clusters"} else "planning"
+        requested_view if requested_view in {"portfolio"} else "planning"
     )
     lens_tabs = _lens_tabs(
-        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio", "clusters"}
+        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio"}
     )
 
-    if active_view in ("portfolio", "clusters"):
-        if active_view == "portfolio":
-            context_data = _portfolio_context(
-                request, period, base_url=COUNTRY_OVERSIGHT_PATH
-            )
-            template = "partials/oversight/portfolio_workspace.html"
-        else:
-            from apps.clusters.oversight_service import cluster_oversight_table_data
-
-            fy = period.get("fy") or get_operational_fy()
-            context_data = cluster_oversight_table_data(request.user, fy=fy)
-            template = "partials/oversight/cluster_oversight_workspace.html"
+    if active_view == "portfolio":
+        context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+        template = "partials/oversight/portfolio_workspace.html"
 
         context = {
             **period,
@@ -1395,10 +1386,9 @@ def country_planning_oversight_view(request):
         "active_oversight_view": "planning",
         "lens_tabs": lens_tabs,
         "lens_base_url": COUNTRY_OVERSIGHT_PATH,
-        # The RVP reads this page for Cluster Oversight below and does not
+        # The RVP reads this page for oversight and does not
         # delegate from it.
         "may_delegate": may_delegate(request.user, country=True),
-        "cluster_oversight": grouped_clusters(request.user),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -1863,7 +1853,9 @@ def country_planning_team_view(request, staff_id: str):
                 getattr(pl.user, "name", "") or pl.title or "Program Lead"
             )
 
-    owner_groups = oversight.group_by_owner(items)
+    owner_groups = oversight.group_by_owner(
+        items, owners=oversight.program_lead_members(staff_id)
+    )
     _partition_owner_groups_by_stream(owner_groups, request.user)
 
     return render(

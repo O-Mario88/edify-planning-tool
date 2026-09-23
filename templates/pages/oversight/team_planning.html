@@ -11,7 +11,7 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif active_oversight_view == "clusters" %}What every cluster planned, delivered, assessed and reached this year, most active first.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
@@ -48,8 +48,6 @@
     <div id="oversight-workspace">
       {% if active_oversight_view == "portfolio" %}
         {% include "partials/oversight/portfolio_workspace.html" %}
-      {% elif active_oversight_view == "clusters" %}
-        {% include "partials/oversight/cluster_oversight_workspace.html" %}
       {% elif active_oversight_view == "coverage" %}
         {% include "partials/oversight/coverage_workspace.html" %}
       {% elif country_lens %}
@@ -60,17 +58,7 @@
     </div>
 
   {% if active_oversight_view == "planning" %}
-  {% comment %}
-  Cluster Oversight — who is carrying which clusters.
 
-  A section here rather than a page of its own: the roles that need it already
-  come to planning oversight, and a second page would split "what is planned"
-  from "who holds the ground it is planned on".
-  {% endcomment %}
-    <section aria-labelledby="cluster-oversight-heading" class="pt-2">
-      <h2 id="cluster-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">Cluster Oversight</h2>
-      {% include "partials/clusters/oversight_workspace.html" with groups=cluster_oversight.groups total_clusters=cluster_oversight.total_clusters total_schools=cluster_oversight.total_schools unassigned=cluster_oversight.unassigned is_team_lens=is_team_lens %}
-    </section>
 
   {% comment %}
   School Oversight — the third lens on the same team, and the reason this page

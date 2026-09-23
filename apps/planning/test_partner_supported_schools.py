@@ -210,7 +210,10 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
         self.assertIn(self.school.name, html)
         self.assertIn('data-responsible="partner"', html)
         self.assertIn("Ozeki Foundation", html)
-        self.assertIn('<th scope="col" class="school-plan-table__responsible">Responsible</th>', html)
+        self.assertIn(
+            '<th scope="col" class="school-plan-table__responsible">Responsible</th>',
+            html,
+        )
         self.assertIn('data-label="Responsible"', html)
         self.assertIn("data-planning-support", html)
         # Selectable and plannable: the Schedule action is a live button.

@@ -1,7 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block title %}Cluster Oversight · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260923responsive1">{% endblock %}
@@ -15,9 +14,9 @@
       <h1 class="edify-page-title edify-page-header__title">Cluster Oversight</h1>
       <p class="edify-page-header__description">
         {% if is_programme_lead %}
-        Oversight of your team's clusters, cluster leaders, school SSA averages, and activity recency grouped by CCEO.
+        Your clusters, group trainings and meetings, organised by team member.
         {% else %}
-        Country cluster oversight and performance analytics grouped by Supervising Program Lead and CCEO.
+        Clusters, group trainings and meetings, organised by Programme Lead and team member.
         {% endif %}
       </p>
     </div>

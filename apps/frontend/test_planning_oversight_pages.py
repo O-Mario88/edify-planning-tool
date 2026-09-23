@@ -130,7 +130,7 @@ class RouteAccessTest(OversightPageFixture):
         # became "Team Plan", beside the portfolio lens it used to stand for.
         self.assertContains(response, "Team Plan")
         self.assertContains(response, "Team Portfolio")
-        self.assertContains(response, "Cluster Performance")
+        self.assertNotContains(response, "Cluster Performance")
         self.assertContains(response, "Target Performance")
 
     def test_the_country_page_opens_for_the_country_director(self):

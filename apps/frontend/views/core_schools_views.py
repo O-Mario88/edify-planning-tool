@@ -208,8 +208,13 @@ def core_schools_view(request):
     # some. A lens the user cannot hold falls back rather than 404s, so a
     # bookmarked ?lens=oversight from a former supervisor is harmless.
     scope = resolve_user_scope(request.user)
-    has_team_core = bool(
-        CoreSchoolsService.base_queryset(request.user, lens="oversight")[0].exists()
+    from apps.core.scoping import team_oversight_schools
+    from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES
+
+    has_team_core = (
+        team_oversight_schools(scope)
+        .filter(school_type__in=CORE_LIFECYCLE_TYPES)
+        .exists()
     )
     lens = "oversight" if request.GET.get("lens") == "oversight" else "direct"
     if lens == "oversight" and not has_team_core:
@@ -414,7 +419,12 @@ def core_schools_view(request):
 
     from apps.core.permissions import has_permission
 
+    from apps.core_schools.lifecycle import programme_sections
+
     context = {
+        "programme_sections": programme_sections(
+            request.user, filters, lens=lens, params=request.GET, per_page=per_page
+        ),
         "fy": fy,
         "selected_fy": fy,
         "fy_options": fy_options(),
