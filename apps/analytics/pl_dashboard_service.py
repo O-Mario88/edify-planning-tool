@@ -1489,6 +1489,9 @@ class ProgramLeadDashboardService:
             "training_counts": ctx.training_counts,
             "delivery_mix": ProgramLeadDashboardService.delivery_mix(ctx),
             "delivery_by_month": ProgramLeadDashboardService.delivery_by_month(ctx),
+            "planning_progress_chart": ProgramLeadDashboardService.planning_progress_by_member(
+                ctx
+            ),
             "spiritual": ProgramLeadDashboardService.spiritual_transformation(ctx),
             "urgent_schools": urgent["rows"],
             "urgent_pagination": urgent,
@@ -1685,6 +1688,70 @@ class ProgramLeadDashboardService:
             "series": payload_series,
             "cumulative_pct": cumulative,
             "has_work": any(any(v) for v in series.values()) or any(others),
+        }
+
+    @staticmethod
+    def planning_progress_by_member(ctx: DashboardContext) -> dict:
+        """Monthly completion rates, for up to six elapsed months in this FY.
+
+        Keep every roster member, including those with no plans. Attribute
+        partner delivery to its monitor only when no responsible owner exists.
+        Aggregate in SQL rather than loading every activity into Python.
+        """
+        from django.db.models.functions import TruncMonth
+
+        bounds = [get_month_date_range(ctx.fy, m) for m in range(1, 13)]
+        bounds = [b for b in bounds if b[0].date() <= ctx.today][-6:]
+        people = [("__lead__", f"{getattr(ctx.user, 'name', '') or 'My work'} (you)")]
+        people += [(c["staff_id"], c["name"] or "Officer") for c in ctx.team]
+        buckets = {key: [[0, 0] for _ in bounds] for key, _ in people}
+        index = {(b[0].year, b[0].month): i for i, b in enumerate(bounds)}
+        if bounds:
+            rows = (
+                ctx.acts.filter(
+                    planned_date__gte=bounds[0][0].date(),
+                    planned_date__lt=bounds[-1][1].date(),
+                )
+                .exclude(status__in=RELEASED_STATUSES)
+                .annotate(completion_month=TruncMonth("planned_date"))
+                .values(
+                    "completion_month", "responsible_staff_id", "monitored_by_staff_id"
+                )
+                .annotate(
+                    total=Count("id"),
+                    done=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                )
+                .order_by()
+            )
+            for row in rows:
+                responsible = row["responsible_staff_id"]
+                monitored = row["monitored_by_staff_id"]
+                owner = ctx.owner(responsible, monitored)
+                if owner is None and (responsible or monitored) in ctx.own_ids:
+                    owner = "__lead__"
+                if owner not in buckets:
+                    continue
+                slot = index[
+                    (row["completion_month"].year, row["completion_month"].month)
+                ]
+                buckets[owner][slot][0] += row["total"]
+                buckets[owner][slot][1] += row["done"]
+        series = [
+            {
+                "name": label,
+                "data": [
+                    round(done * 100 / total) if total else None
+                    for total, done in buckets[key]
+                ],
+            }
+            for key, label in people
+        ]
+        return {
+            "labels": [b[0].strftime("%b %y") for b in bounds],
+            "series": series,
+            "has_data": any(
+                value is not None for member in series for value in member["data"]
+            ),
         }
 
     @staticmethod

@@ -1248,6 +1248,9 @@ class FrontendViewsTestCase(TestCase):
             response, "partials/schools/assign_to_project_drawer.html"
         )
 
+        self.assertContains(response, f"Assign {self.school.name} to project")
+        self.assertNotContains(response, "School Details")
+
     def test_assign_to_project_drawer_admin(self):
         User = get_user_model()
         admin_user = User.objects.create(

@@ -1,51 +1,16 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Assign School to Project{% endblock %}
-{% block drawer_subtitle %}Attach this school to a special project. This creates project planning work and notifies the coordinator — the same engine as normal planning.{% endblock %}
+{% block drawer_title %}Assign {{ school.name }} to project{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-6 ">
+<div class="project-assignment-form space-y-4">
 {% if validation_error %}
 <!-- Validation Error Message -->
 <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-surface text-[12px] font-bold">
 {{ validation_error }}
 </div>
 {% endif %}
-
-<!-- School Summary Card -->
-<div class="bg-slate-50 border border-slate-200 rounded-surface p-4 space-y-3">
-<h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
-<div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
-<div>
-<span class="text-slate-400 font-semibold">School ID:</span>
-<span class="font-bold text-slate-700 block">{{ school.school_id }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold">School Name:</span>
-<span class="font-bold text-slate-700 block">{{ school.name }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold">District:</span>
-<span class="font-bold text-slate-700 block">{{ school.district.name }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold">Sub-county:</span>
-<span class="font-bold text-slate-700 block">{{ school.sub_county.name|default:"—" }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold">School Type:</span>
-<span class="font-bold text-slate-700 block uppercase">{{ school.get_school_type_display }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold">Enrolment:</span>
-<span class="font-bold text-slate-700 block">{{ school.enrollment|default:"0" }}</span>
-</div>
-<div class="col-span-2 border-t border-slate-200/60 pt-2 mt-1">
-<span class="text-slate-400 font-semibold">School Contact:</span>
-<span class="font-bold text-slate-700 block">{{ school_contact }}</span>
-</div>
-</div>
-</div>
 
 {% if not projects %}
 <!-- Empty State -->
@@ -75,7 +40,7 @@ class="space-y-4"
 
 <!-- Project Dropdown -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
+<label class="block edify-text-caption font-semibold text-slate-600">Select Project <span class="text-rose-500">*</span></label>
 <select aria-label="Project ID"
 name="project_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -88,10 +53,10 @@ required
 </select>
 </div>
 
-<div class="grid grid-cols-2 gap-3">
+<div class="grid gap-3">
 <!-- Project Type -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Type</label>
+<label class="block edify-text-caption font-semibold text-slate-600">Project Type</label>
 <input
 type="text"
 name="project_type"
@@ -101,7 +66,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-s
 </div>
 <!-- Expected Support Type -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Support Type</label>
+<label class="block edify-text-caption font-semibold text-slate-600">Expected Support Type</label>
 <select aria-label="Participation type"
 name="participation_type"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -117,10 +82,10 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </div>
 </div>
 
-<div class="grid grid-cols-2 gap-3">
+<div class="grid gap-3">
 <!-- Project Coordinator -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Coordinator</label>
+<label class="block edify-text-caption font-semibold text-slate-600">Project Coordinator</label>
 <select aria-label="Coordinator ID"
 name="coordinator_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -133,7 +98,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </div>
 <!-- Project Focus Area -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Focus Area</label>
+<label class="block edify-text-caption font-semibold text-slate-600">Project Focus Area</label>
 <select aria-label="Support area"
 name="support_area"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -146,150 +111,14 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </div>
 </div>
 
-<!-- Start Date -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Start Date</label>
-<div
-x-data="{
-open: false,
-selectedDate: '',
-currentYear: new Date().getFullYear(),
-currentMonth: new Date().getMonth(),
-months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-days: [],
-init() {
-if (this.selectedDate) {
-/* A saved date is a calendar day, not an instant: read its parts, so a reader west of UTC is not shown the previous month (controls audit F-07, 2026-09-14). */ let parts = String(this.selectedDate).slice(0, 10).split('-').map(Number); let d = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
-if (!isNaN(d.getTime())) {
-this.currentYear = d.getFullYear();
-this.currentMonth = d.getMonth();
-}
-}
-this.getDays();
-},
-getDays() {
-let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-this.days = [];
-for (let i = 0; i < firstDay; i++) {
-this.days.push(null);
-}
-for (let d = 1; d <= lastDate; d++) {
-this.days.push(d);
-}
-},
-prevMonth() {
-if (this.currentMonth === 0) {
-this.currentMonth = 11;
-this.currentYear--;
-} else {
-this.currentMonth--;
-}
-this.getDays();
-},
-nextMonth() {
-if (this.currentMonth === 11) {
-this.currentMonth = 0;
-this.currentYear++;
-} else {
-this.currentMonth++;
-}
-this.getDays();
-},
-selectDay(day) {
-if (day === null) return;
-let monthStr = String(this.currentMonth + 1).padStart(2, '0');
-let dayStr = String(day).padStart(2, '0');
-this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
-this.open = false;
-},
-formatDate(dateStr) {
-if (!dateStr) return 'Select Date';
-let parts = dateStr.split('-');
-if (parts.length !== 3) return dateStr;
-let d = new Date(parts[0], parts[1] - 1, parts[2]);
-return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-},
-isSelected(day) {
-if (!day || !this.selectedDate) return false;
-let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear &&
-(parseInt(parts[1]) - 1) === this.currentMonth &&
-parseInt(parts[2]) === day;
-}
-}"
-class="relative "
->
-<!-- Dropdown Trigger button -->
-<button
-type="button"
-@click="open = !open"
-class="w-full h-8 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
->
-<div class="flex items-center gap-2">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-</svg>
-<span x-text="formatDate(selectedDate)"></span>
-</div>
-<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-</svg>
-</button>
-
-<input type="hidden" name="start_date" :value="selectedDate">
-
-<!-- Calendar Popover Card -->
-<div
-x-show="open"
-@click.outside="open = false"
-class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
-style="display: none;"
-x-transition:enter="transition ease-out duration-100"
-x-transition:enter-start="opacity-0 transform scale-95"
-x-transition:enter-end="opacity-100 transform scale-100"
-x-transition:leave="transition ease-in duration-75"
-x-transition:leave-start="opacity-100 transform scale-100"
-x-transition:leave-end="opacity-0 transform scale-95"
->
-<!-- Header -->
-<div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-</button>
-<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-</button>
-</div>
-
-<!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
-<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-</div>
-
-<!-- Days Grid -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
-<template x-for="(day, index) in days" :key="index">
-<div>
-<button
-type="button"
-x-show="day !== null"
-@click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
-x-text="day"
-></button>
-</div>
-</template>
-</div>
-</div>
-</div>
+<label for="project-start-date" class="block edify-text-caption font-semibold">Start date</label>
+<input id="project-start-date" type="date" name="start_date" class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
 <!-- Notes -->
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Notes / Objectives</label>
+<label class="block edify-text-caption font-semibold text-slate-600">Notes / Objectives</label>
 <textarea
 name="notes"
 rows="3"
@@ -302,7 +131,7 @@ class="w-full p-3 rounded-control border border-slate-200 text-[12px] bg-slate-5
 <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
 <button
 type="button"
-@click="const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
+@click="requestClose()"
 class="px-5 h-9 rounded-surface btn-premium-secondary font-bold text-[12px]"
 >
 Cancel

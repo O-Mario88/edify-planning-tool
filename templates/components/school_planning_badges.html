@@ -13,10 +13,10 @@
 {% endcomment %}
 {% if badges %}
 {% if layout == "cells" %}
-<td class="px-4 py-3" data-label="Visit Status" data-planning-badges="visits">
+<td class="px-4 py-3" data-label="Visit Plan Status" data-planning-badges="visits">
   <span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span>
 </td>
-<td class="px-4 py-3" data-label="Training Status" data-planning-badges="trainings">
+<td class="px-4 py-3" data-label="Training Plan Status" data-planning-badges="trainings">
   <span class="school-planning-badges">{% for chip in badges.training_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% for chip in badges.cluster_meeting_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}" data-cluster-meeting>{{ chip.label }}</span>{% endfor %}</span>
 </td>
 {% else %}

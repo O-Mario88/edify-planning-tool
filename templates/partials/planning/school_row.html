@@ -1,7 +1,6 @@
 {% load frontend_filters %}
-<li class="planning-school-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
-  <div class="school-record-row__summary school-record-row__summary--selectable">
-    <label class="school-record-row__select" for="select-planning-school-{{ school.id }}">
+<tr class="planning-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+  <td class="school-plan-table__select"><label class="school-record-row__select" for="select-planning-school-{{ school.id }}">
       <input
         type="checkbox"
         id="select-planning-school-{{ school.id }}"
@@ -9,48 +8,17 @@
         x-model="selectedSchools"
       >
       <span class="sr-only">Select {{ school.name }}</span>
-    </label>
+    </label></td>
+  <td data-label="School ID" class="school-plan-table__id">{{ school.schoolId }}</td>
+  <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
+    <button type="button" class="school-plan-table__name-toggle" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'" aria-controls="planning-school-details-{{ school.id }}">
+  {{ school.name }}
+</button>
 
-    <div class="school-record-row__content">
-      <button
-        type="button"
-        class="school-record-row__expander"
-        @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
-        @keydown.escape.window="openSchoolId = null"
-        :aria-expanded="(openSchoolId === '{{ school.id }}').toString()"
-        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'"
-        aria-controls="planning-school-details-{{ school.id }}"
-      ></button>
-      <span class="school-record-row__school-id" title="School ID {{ school.schoolId }}">
-        <span class="sr-only">School ID </span>{{ school.schoolId }}
-      </span>
-
-      <div class="school-record-row__identity">
-        <div class="school-record-row__name-and-status">
-          <h2 class="school-record-row__title"><a href="/schools/{{ school.id }}" class="hover:underline text-slate-900 font-semibold">{{ school.name }}</a></h2>
-          <dl class="school-record-row__planning-status">
-            {% include "components/school_planning_badges.html" with badges=school.planningBadges %}
-          </dl>
-        </div>
-        <dl class="school-record-row__metadata">
-          <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
-          <div><dt>Shipping Address:</dt><dd>{{ school.shippingAddress }}</dd></div>
-          <div><dt>School Type:</dt><dd>{{ school.schoolType }}</dd></div>
-          <div><dt>Cluster:</dt><dd>{% if school.clusterName and school.clusterName != "—" %}{% if school.clusterId %}<a href="/clusters/{{ school.clusterId }}" class="hover:underline">{{ school.clusterName }}</a>{% else %}{{ school.clusterName }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
-          <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
-          <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
-          <div><dt>Primary Contact:</dt><dd>{{ school.schoolContact }}</dd></div>
-          <div><dt>Staff Name:</dt><dd>{% if school.ownerId %}<a href="/staff/{{ school.ownerId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.ownerName }}</a>{% else %}{{ school.ownerName }}{% endif %}</dd></div>
-          <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssaAverage is not None %} style="color: {{ school.ssaAverage|ssa_score_colour }}" title="{{ school.ssaAverage|ssa_score_band_label }}"{% endif %}>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
-          {% if not school.supportRule %}
-          <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
-          <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
-          {% endif %}
-        </dl>
-      </div>
-    </div>
-
-    <div class="school-record-row__actions">
+  </div></td>
+  {% include "components/school_planning_badges.html" with badges=school.planningBadges layout="cells" %}
+  {% if school.supportRule %}{% include "partials/planning/support_cell.html" %}{% endif %}
+  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
       {% comment %}
         Schedule and Assign grey out on the school's own visit rule as well as
         the role (owner, 2026-09-15): a client school visited or handed to a
@@ -94,15 +62,25 @@
         </button>
       {% endif %}
 
-    </div>
-    {% comment %}The support strip spans the row under the name and the
-    actions (2026-09-23): inside the name column it shared a phone's width
-    with the action buttons, and the Partner's name was cut to five letters.
-    {% endcomment %}
-    {% if school.supportRule %}{% include "partials/planning/support_fields.html" %}{% endif %}
-  </div>
-
-  <div id="planning-school-details-{{ school.id }}" class="school-record-row__details">
+    </div></td>
+</tr>
+<tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
+  <td aria-hidden="true"></td>
+  <td colspan="{% if school.supportRule %}6{% else %}5{% endif %}">
+    <dl class="school-record-row__metadata">
+          <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
+          <div><dt>Shipping Address:</dt><dd>{{ school.shippingAddress }}</dd></div>
+          <div><dt>School Type:</dt><dd>{{ school.schoolType }}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.clusterName and school.clusterName != "—" %}{% if school.clusterId %}<a href="/clusters/{{ school.clusterId }}" class="hover:underline">{{ school.clusterName }}</a>{% else %}{{ school.clusterName }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
+          <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
+          <div><dt>Primary Contact:</dt><dd>{{ school.schoolContact }}</dd></div>
+          <div><dt>Staff Name:</dt><dd>{% if school.ownerId %}<a href="/staff/{{ school.ownerId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.ownerName }}</a>{% else %}{{ school.ownerName }}{% endif %}</dd></div>
+          <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssaAverage is not None %} style="color: {{ school.ssaAverage|ssa_score_colour }}" title="{{ school.ssaAverage|ssa_score_band_label }}"{% endif %}>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
+          <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
+          {% if school.supportRule %}{% include "partials/planning/support_fields.html" %}{% endif %}
+        </dl>
     {% include "partials/schools/ssa_score_groups.html" with detail_id="planning-school-details-"|add:school.id ssa_groups=school.ssaGroups has_ssa_scores=school.hasSsaScores selected_fy=selected_fy %}
-  </div>
-</li>
+  </td>
+</tr>

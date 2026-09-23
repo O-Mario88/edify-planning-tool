@@ -16,8 +16,16 @@ data-row-disclosure-summary
 <div class="cluster-card__header-row">
 <div class="cluster-card__title-row">
 <h3 class="cluster-card__title" data-list-title>
-  {% comment %}The cluster profile existed at /clusters/<id> with nothing linking to it, so the page was only reachable by typing the URL — the same affordance a school name already carries in the directory.{% endcomment %}
-  <a href="/clusters/{{ cluster.id }}" @click.stop class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
+<button
+type="button"
+class="cluster-card__name-toggle"
+@click="cardExpanded = !cardExpanded"
+:aria-expanded="cardExpanded.toString()"
+aria-controls="cluster-details-{{ cluster.id }}"
+:aria-label="cardExpanded ? 'Hide details for {{ cluster.name|escapejs }}' : 'Show details for {{ cluster.name|escapejs }}'"
+>
+{{ cluster.name }}
+</button>
 </h3>
 
 {% if cluster.risk == 'critical' %}
@@ -65,18 +73,7 @@ aria-label="Assign staff to {{ cluster.name }}"
 </button>
 {% endif %}
 
-<button
-type="button"
-class="cluster-card__toggle"
-@click="cardExpanded = !cardExpanded"
-:aria-expanded="cardExpanded.toString()"
-aria-controls="cluster-details-{{ cluster.id }}"
-:aria-label="cardExpanded ? 'Hide details for {{ cluster.name|escapejs }}' : 'Show details for {{ cluster.name|escapejs }}'"
->
-<svg aria-hidden="true" class="h-5 w-5 transition-transform duration-300" :class="cardExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-</svg>
-</button>
+
 </div>
 </div>
 
@@ -146,6 +143,7 @@ aria-controls="cluster-details-{{ cluster.id }}"
 
 <!-- Expanded details block -->
 <div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-transition.opacity.duration.150ms x-cloak class="cluster-card__details">
+<a href="/clusters/{{ cluster.id }}" class="edify-text-caption hover:underline">Open {{ cluster.name }} cluster profile</a>
   <div class="cluster-ssa-summary">
     {% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-ssa-"|add:cluster.id ssa_groups=cluster.ssa_groups has_ssa_scores=cluster.has_ssa_scores selected_fy=selected_fy %}
   </div>

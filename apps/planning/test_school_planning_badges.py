@@ -369,7 +369,7 @@ class PagesTest(BadgeFixture):
 
     def _planning_row(self, html, school):
         start = html.index(f'id="select-planning-school-{school.id}"')
-        end = html.find("</li>", start)
+        end = html.find("</tr>", start)
         return html[start:end]
 
     def _planning_html(self):
@@ -422,7 +422,7 @@ class PagesTest(BadgeFixture):
         partial_row = partial_html[
             partial_html.index(f"cluster-school-details-{self.hope.id}") :
         ]
-        partial_row = partial_row[: partial_row.index("</li>")]
+        partial_row = partial_row[: partial_row.index("</tr>")]
         self.assertEqual(_chips(partial_row), hope_planning)
 
     def test_schools_with_plans_stay_selectable_and_plannable(self):

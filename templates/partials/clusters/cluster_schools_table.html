@@ -36,48 +36,22 @@
 </div>
 
 {% if schools %}
-  <ul class="cluster-school-list school-record-list" role="list" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+  <div class="school-plan-table-scroll"><table class="school-plan-table{% if schools.0.supportRule %} school-plan-table--support{% endif %}" aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+    <caption class="sr-only">School planning statuses</caption>
+          {% include "components/school_plan_table_head.html" with support=schools.0.supportRule %}
+    <tbody>
     {% for s in schools %}
-      <li class="cluster-school-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
-        <div class="school-record-row__summary">
-          <div class="school-record-row__content">
-            <button
-              type="button"
-              class="school-record-row__expander"
-              @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'"
-              @keydown.escape.window="openSchoolId = null"
-              :aria-expanded="(openSchoolId === '{{ s.id }}').toString()"
-              :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'"
-              aria-controls="cluster-school-details-{{ s.id }}"
-            ></button>
-            <span class="school-record-row__school-id" title="School ID {{ s.schoolId }}">
-              <span class="sr-only">School ID </span>{{ s.schoolId }}
-            </span>
-            <div class="school-record-row__identity">
-              <div class="school-record-row__name-and-status">
-                <h2 class="school-record-row__title">{{ s.name }}</h2>
-                <dl class="school-record-row__planning-status">
-                  {% include "components/school_planning_badges.html" with badges=s.planningBadges %}
-                </dl>
-              </div>
-              <dl class="school-record-row__metadata">
-                <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
-                <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
-                <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>
-                <div><dt>Cluster:</dt><dd>{{ s.clusterName }}</dd></div>
-                <div><dt>Enrollment:</dt><dd>{{ s.enrolment }}</dd></div>
-                <div><dt>Primary Contact:</dt><dd>{{ s.schoolContact }}</dd></div>
-                <div><dt>Phone:</dt><dd>{{ s.phone }}</dd></div>
-                <div><dt>Staff Name:</dt><dd>{{ s.assignedStaff }}</dd></div>
-                <div class="school-record-row__ssa {% if s.ssaAverageTone %}is-{{ s.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if s.currentSsaAverage is not None %} style="color: {{ s.currentSsaAverage|ssa_score_colour }}" title="{{ s.currentSsaAverage|ssa_score_band_label }}"{% endif %}>{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
-                <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</dd></div>
-                <div><dt>Last Training:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</dd></div>
-              </dl>
-              {% if s.supportRule %}{% include "partials/planning/support_fields.html" with school=s %}{% endif %}
-            </div>
-          </div>
+      <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
+        <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
+        <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
+          <button type="button" class="school-plan-table__name-toggle" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
+  {{ s.name }}
+</button>
 
-          <div class="school-record-row__actions">
+        </div></td>
+        {% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
+        {% if s.supportRule %}{% include "partials/planning/support_cell.html" with school=s %}{% endif %}
+        <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
             {% if can_schedule and s.staffCanSchedule %}
               <button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ s.name }}">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
@@ -120,15 +94,28 @@
                 <span>Remove</span>
               </button>
             {% endif %}
-          </div>
-        </div>
-
-        <div id="cluster-school-details-{{ s.id }}" class="school-record-row__details">
-          {% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-school-details-"|add:s.id ssa_groups=s.ssaGroups has_ssa_scores=s.hasSsaScores %}
-        </div>
-      </li>
+          </div></td>
+      </tr>
+      <tr id="cluster-school-details-{{ s.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ s.id }}'" x-cloak>
+        <td colspan="{% if s.supportRule %}6{% else %}5{% endif %}"><dl class="school-record-row__metadata">
+                <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
+                <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
+                <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>
+                <div><dt>Cluster:</dt><dd>{{ s.clusterName }}</dd></div>
+                <div><dt>Enrollment:</dt><dd>{{ s.enrolment }}</dd></div>
+                <div><dt>Primary Contact:</dt><dd>{{ s.schoolContact }}</dd></div>
+                <div><dt>Phone:</dt><dd>{{ s.phone }}</dd></div>
+                <div><dt>Staff Name:</dt><dd>{{ s.assignedStaff }}</dd></div>
+                <div class="school-record-row__ssa {% if s.ssaAverageTone %}is-{{ s.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if s.currentSsaAverage is not None %} style="color: {{ s.currentSsaAverage|ssa_score_colour }}" title="{{ s.currentSsaAverage|ssa_score_band_label }}"{% endif %}>{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+                <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</dd></div>
+                <div><dt>Last Training:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</dd></div>
+                {% if s.supportRule %}{% include "partials/planning/support_fields.html" with school=s %}{% endif %}
+              </dl>
+{% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-school-details-"|add:s.id ssa_groups=s.ssaGroups has_ssa_scores=s.hasSsaScores %}</td>
+      </tr>
     {% endfor %}
-  </ul>
+    </tbody>
+  </table></div>
 {% else %}
   <div class="px-6 py-10 text-center text-slate-400 font-bold">
     <p class="italic">This cluster has no schools yet.</p>

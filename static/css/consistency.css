@@ -4316,10 +4316,10 @@ main textarea,
    the available monitor width; scrolling handles long forms. */
 :root {
   --drawer-width-sm: 26rem;
-  --drawer-width-md: 35rem;
-  --drawer-width-lg: 43rem;
-  --drawer-width-xl: 50rem;
-  --drawer-width-workspace: 60rem;
+  --drawer-width-md: 30rem;
+  --drawer-width-lg: 32rem;
+  --drawer-width-xl: 34rem;
+  --drawer-width-workspace: 36rem;
 }
 @media (min-width: 48rem) {
   :root { --edify-drawer-inset: clamp(2rem, 6vh, 4rem); }
@@ -4590,4 +4590,90 @@ main .edify-avatar-neutral {
 }
 :root main .edify-page-header .sp-eyebrow {
   color: var(--edify-text-muted) !important;
+}
+
+/* Desktop drawers use the same centred, compact surface, including legacy rails. */
+@media (min-width: 48rem) {
+  .edify-popup-dialog.edify-popup-dialog { align-items: center !important; justify-content: center !important; }
+  .edify-popup-dialog.edify-popup-dialog .edify-popup-dialog__surface {
+    position: relative !important; inset: auto !important; margin: auto !important;
+    width: min(100%, var(--drawer-width-lg)) !important;
+    max-width: var(--drawer-width-lg) !important;
+    height: auto !important; min-height: 0 !important;
+    transform: none !important; border-radius: var(--edify-drawer-radius) !important;
+    overflow: hidden auto !important;
+  }
+}
+/* Keep record details as inline label/value pairs inside the table disclosure. */
+.school-plan-table .school-plan-table__details .school-record-row__metadata {
+  display: flex !important; flex-wrap: wrap !important; gap: .45rem 1.15rem !important;
+  white-space: normal !important; margin: .45rem 0 .75rem !important;
+}
+.school-plan-table .school-plan-table__details .school-record-row__metadata > div {
+  display: inline-flex !important; align-items: baseline !important; gap: .35rem !important;
+  white-space: normal !important;
+}
+.school-plan-table :is(.planning-school-row, .cluster-school-row) { cursor: pointer; }
+.school-plan-table .school-plan-table__name-toggle {
+  background: transparent !important; border: 0 !important; padding: 0 !important;
+  text-align: start !important; justify-content: flex-start !important;
+  color: var(--edify-text) !important; font-weight: var(--edify-text-label-weight);
+}
+:root main table.school-plan-table tbody td .school-planning-badges.school-planning-badges {
+  display: inline-flex !important; align-items: center !important;
+  block-size: auto !important; padding: 0 !important;
+}
+:root main table.school-plan-table tbody td .school-planning-badge.school-planning-badge {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; block-size: auto !important; min-block-size: 1.375rem !important;
+  line-height: 1rem !important; padding: .125rem .375rem !important;
+  text-align: center !important; vertical-align: middle !important;
+}
+.planning-recommendations__list { list-style: none; padding: 0; margin: .5rem 0; }
+.planning-recommendations__list li { margin-block: .3rem; }
+
+:root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 46rem !important; }
+.school-plan-table--selectable thead th:nth-child(1) { width: 5%; }
+.school-plan-table--selectable thead th:nth-child(2) { width: 9%; }
+.school-plan-table--selectable thead th:nth-child(3) { width: 30%; }
+.school-plan-table--selectable thead th:nth-child(4) { width: 15%; }
+.school-plan-table--selectable thead th:nth-child(5) { width: 17%; }
+.school-plan-table--selectable thead th:nth-child(6) { width: 24%; }
+.school-plan-table .school-plan-table__details > td { white-space: normal !important; overflow: visible !important; }
+/* With the Partner-supported school rule on, the planning table carries a
+   Responsible column before Actions (owner, 2026-09-23): seven columns, the
+   name giving up the room the new column takes. */
+:root main table.school-plan-table--selectable.school-plan-table--support { min-inline-size: 52rem !important; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(1) { width: 5%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(2) { width: 8%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(3) { width: 23%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(4) { width: 14%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(5) { width: 15%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(6) { width: 17%; }
+.school-plan-table--selectable.school-plan-table--support thead th:nth-child(7) { width: 18%; }
+.school-plan-table .school-plan-table__name-toggle { white-space: normal !important; height: auto !important; }
+.drawer-header__subtitle:empty { display: none; }
+
+:root main table.school-plan-table .school-plan-table__name-toggle.school-plan-table__name-toggle {
+  min-inline-size: 0 !important; max-inline-size: 100% !important;
+  block-size: auto !important; max-block-size: none !important;
+  overflow-wrap: break-word !important;
+}
+:root main table.school-plan-table .school-plan-table__details .school-record-row__metadata {
+  max-inline-size: 100% !important; flex-wrap: wrap !important;
+}
+
+.edify-popup-dialog .edify-popup-dialog__surface > .drawer-header {
+  display: flex !important; justify-content: space-between !important;
+  inline-size: 100% !important; min-inline-size: 0 !important;
+  padding: .875rem 1.25rem !important; text-align: start !important;
+}
+.edify-popup-dialog .edify-popup-dialog__surface > .drawer-footer {
+  margin: 0 !important; inline-size: 100% !important; padding: .75rem 1.25rem !important;
+}
+
+.cluster-card__summary { cursor: pointer; }
+.cluster-card .cluster-card__name-toggle {
+  padding: 0; border: 0; background: transparent; color: inherit;
+  font: inherit; text-align: start; cursor: pointer;
 }

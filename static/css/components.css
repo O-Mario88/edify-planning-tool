@@ -87,10 +87,16 @@
   white-space: nowrap;
 }
 
+.school-planning-badge[data-planning-tone="none"] {
+  background-color: var(--edify-danger-light);
+  border-color: var(--edify-danger-border);
+  color: var(--edify-danger-text);
+}
+
 .school-planning-badge[data-planning-tone="planned"] {
-  background-color: color-mix(in oklab, var(--edify-chart-orange) 12%, transparent);
-  border-color: color-mix(in oklab, var(--edify-chart-orange) 45%, transparent);
-  color: color-mix(in oklab, var(--edify-chart-orange) 60%, var(--edify-text));
+  background-color: #fbbf24;
+  border-color: #f59e0b;
+  color: #78350f;
 }
 
 .school-planning-badge[data-planning-tone="awaiting"] {
@@ -5312,7 +5318,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 
 /* ── Planning support ────────────────────────────────────────────────────
    Owner, 2026-09-23. Rendered ONLY on the Planning page and the Cluster
-   School List (partials/planning/support_fields.html, support_cells.html):
+   School List (partials/planning/support_cell.html, support_cells.html):
    who is responsible for the school, what comes next, and where a Partner's
    work stands. The Visit and Training Status counts are the shared
    .school-planning-badge chips above, and the Partner Workflow state wears
@@ -5343,70 +5349,31 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   font-weight: 600;
   color: var(--edify-text);
 }
-/* The strip the fields above sit in — outside the collapsible row metadata,
-   so the Responsible, Next Activity and Partner Workflow columns are read
-   without opening a row. Narrow screens wrap whole label-and-value pairs;
-   from 64rem the strip is a three-column grid, so the values line up down
-   the list the way table columns would. */
-.planning-support {
+/* The Responsible cell (partials/planning/support_cell.html): who supports
+   the school on the first line and, under a Partner, the Partner Workflow
+   chip on the second. Both lines stay single-line; a long Partner name or
+   workflow label ends in an ellipsis and keeps its full text as a title. */
+.planning-support-cell {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   min-inline-size: 0;
-  margin: 0.5rem 0 0;
+  max-inline-size: 100%;
 }
-.planning-support > div {
+.planning-support-cell__workflow {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   min-inline-size: 0;
   max-inline-size: 100%;
-}
-.planning-support dt {
-  flex: 0 0 auto;
-  margin: 0;
-  color: var(--edify-text-muted);
-  font-size: var(--edify-text-label-size);
-  font-weight: var(--edify-text-label-weight);
   white-space: nowrap;
 }
-.planning-support dd {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
+.planning-support-cell .school-planning-badge {
   min-inline-size: 0;
   max-inline-size: 100%;
-  margin: 0;
-  color: var(--edify-text);
-  font-size: var(--edify-text-label-size);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.planning-support .school-planning-badge {
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* On a Planning row the strip is its own grid row, under the school's name
-   and actions, so a phone gives its values the row's width rather than what
-   the action buttons leave of the name column. */
-.school-record-row__summary > .planning-support {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  margin: 0;
-}
-@media (min-width: 64rem) {
-  .planning-support {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: 0.25rem 1rem;
-  }
-  .planning-support > div {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.125rem;
-  }
 }
 
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */
@@ -5635,59 +5602,51 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   caret-color: var(--edify-text);
 }
 
-/* Keep both compact status groups on one line, including collapsed rows. */
-.school-record-row__planning-status {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: .75rem;
-  margin: 0;
-  max-inline-size: 100%;
-  overflow-x: auto;
-  font-size: var(--edify-text-micro-size);
-  line-height: 1.35;
+/* School planning tables share headers instead of repeating row labels. */
+.school-plan-table-scroll { overflow-x: auto; max-inline-size: 100%; }
+.school-plan-table {
+  width: 100%;
+  min-inline-size: 46rem;
+  border-collapse: collapse;
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
 }
-.school-record-row__planning-status > div {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: .25rem;
+.school-plan-table th, .school-plan-table td {
+  padding: .6rem .75rem;
+  text-align: start;
+  vertical-align: middle;
+  border-block-end: 1px solid var(--edify-border);
 }
-.school-record-row__planning-status .school-planning-badges {
-  flex-wrap: nowrap;
-  gap: .2rem;
-}
-.school-record-row__planning-status dt,
-.school-record-row__planning-status dd { margin: 0; }
-.school-record-row__planning-status dt {
+.school-plan-table thead th {
   color: var(--edify-text-muted);
+  background: var(--edify-surface-muted, var(--edify-surface));
+  font-size: var(--edify-text-micro-size);
   font-weight: var(--edify-text-label-weight);
   white-space: nowrap;
 }
-.school-record-row__planning-status dd { display: flex; }
-
-.school-record-row__name-and-status {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: .75rem;
-  min-inline-size: 0;
+.school-plan-table__select { width: 1%; }
+.school-plan-table .school-record-row__select { padding: 0; inline-size: 1rem; block-size: 1.5rem; }
+.school-plan-table__id { white-space: nowrap; color: var(--edify-text-muted); }
+.school-plan-table__name { min-inline-size: 13rem; }
+.school-plan-table__identity { display: flex; align-items: center; gap: .4rem; }
+.school-plan-table__identity a { color: var(--edify-text); font-weight: var(--edify-text-label-weight); }
+.school-plan-table__identity a:hover { text-decoration: underline; }
+.school-plan-table__expander {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 1.5rem; width: 1.5rem; height: 1.5rem;
+  border-radius: var(--edify-radius-control);
+  color: var(--edify-text-muted); background: transparent; border: 0;
 }
-.school-record-row__name-and-status > .school-record-row__title {
-  flex: 1 1 0;
-  min-inline-size: 6rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.school-plan-table__expander svg { width: .85rem; height: .85rem; }
+.school-plan-table__expander[aria-expanded="true"] svg { transform: rotate(90deg); }
+.school-plan-table__expander:focus-visible { outline: 2px solid var(--edify-accent); outline-offset: 2px; }
+.school-plan-table .school-plan-table__actions { text-align: end; white-space: nowrap; }
+.school-plan-table .school-record-row__actions {
+  display: flex; justify-content: flex-end; flex-wrap: nowrap;
+  max-inline-size: none; padding: 0; gap: .35rem;
 }
-.school-record-row__name-and-status > .school-record-row__title a {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.school-record-row__name-and-status > .school-record-row__planning-status {
-  flex: 0 0 auto;
-  max-inline-size: calc(100% - 6.75rem);
-  min-inline-size: 0;
-}
+.school-plan-table .school-planning-badges { gap: .2rem; }
+.school-plan-table__details > td { background: var(--edify-surface-muted, var(--edify-surface)); white-space: normal; }
+.school-plan-table__details .school-record-row__metadata { margin: 0 0 .75rem; }
+.school-plan-table__group th { background: var(--edify-surface-muted, var(--edify-surface)); }
+.school-plan-table tbody > tr:not(.school-plan-table__details):hover { background: var(--edify-hover); }

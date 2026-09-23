@@ -552,7 +552,29 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2207,
+      "bytes": 460,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partials/clusters/<str:cluster_id>/schools",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "School Plan Table Head",
+      "purpose": "Reusable school plan table head interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/school_plan_table_head.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2217,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -2875,10 +2897,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 6835,
+      "bytes": 6299,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -2948,7 +2969,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11105,
+      "bytes": 11268,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -2965,7 +2986,7 @@
         "disabled",
         "open"
       ],
-      "tables": 0,
+      "tables": 1,
       "template": "partials/clusters/cluster_schools_table.html",
       "variants": [
         "{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}",
@@ -4573,7 +4594,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10104,
+      "bytes": 12975,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4584,9 +4605,10 @@
       "purpose": "Reusable programmes view interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "loading"
       ],
-      "tables": 0,
+      "tables": 1,
       "template": "partials/dashboards/pl/programmes_view.html",
       "variants": [
         "{{ row.tone }}"
@@ -9234,7 +9256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 42741,
+      "bytes": 41407,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -9285,7 +9307,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7924,
+      "bytes": 7539,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9311,7 +9333,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9174,
+      "bytes": 9974,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9326,9 +9348,34 @@
       "states": [
         "default"
       ],
-      "tables": 0,
+      "tables": 2,
       "template": "partials/planning/school_table.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2201,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partials/clusters/<str:cluster_id>/schools",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Support Cell",
+      "purpose": "Reusable support cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/support_cell.html",
+      "variants": [
+        "replan",
+        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9356,7 +9403,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2744,
+      "bytes": 672,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -9374,10 +9421,7 @@
       ],
       "tables": 0,
       "template": "partials/planning/support_fields.html",
-      "variants": [
-        "replan",
-        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -10552,7 +10596,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12515,
+      "bytes": 5454,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"
@@ -10566,8 +10610,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "error",
-        "open"
+        "error"
       ],
       "tables": 0,
       "template": "partials/schools/assign_to_project_drawer.html",
@@ -58469,8 +58512,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]"
+        "text-[13px]"
       ]
     },
     {
@@ -61439,8 +61481,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -67771,8 +67813,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -104974,7 +105016,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 479,
+    "component_templates": 481,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

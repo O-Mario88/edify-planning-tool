@@ -210,7 +210,8 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
         self.assertIn(self.school.name, html)
         self.assertIn('data-responsible="partner"', html)
         self.assertIn("Ozeki Foundation", html)
-        self.assertIn("<dt>Responsible</dt>", html)
+        self.assertIn('<th scope="col" class="school-plan-table__responsible">Responsible</th>', html)
+        self.assertIn('data-label="Responsible"', html)
         self.assertIn("data-planning-support", html)
         # Selectable and plannable: the Schedule action is a live button.
         self.assertIn(
@@ -940,6 +941,7 @@ class PlanningBadgesOnPartnerSchoolsTest(PartnerSchoolFixture):
         """The two pages the owner named, and no other template."""
         templates = ROOT / "templates"
         partials = (
+            "partials/planning/support_cell.html",
             "partials/planning/support_fields.html",
             "partials/planning/support_cells.html",
         )

@@ -81,6 +81,31 @@ Programme Rollout holds the full picture behind each card.
         </div>
       </section>
 
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-completion-title">
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-completion-title" class="rpl-card__title">Monthly completion by team member</h2>
+            <span class="rpl-card__subtitle">Completed ÷ planned activities in each month · latest six elapsed months in FY {{ fy }} · includes the current month’s plans · field execution, not IA-verified</span>
+          </div>
+        </header>
+        {% if planning_progress_chart.has_data %}
+        <div id="plCompletionChart" class="w-full min-h-[220px]" role="img" aria-label="Monthly activity completion percentages for you and every supervised officer"></div>
+        {{ planning_progress_chart|json_script:"pl-completion-payload" }}
+        <details>
+          <summary>View completion percentages</summary>
+          <div class="overflow-x-auto">
+            <table class="edify-data-table w-full">
+              <caption class="sr-only">Monthly completion percentages. A dash means no activities were planned.</caption>
+              <thead><tr><th scope="col">Team member</th>{% for month in planning_progress_chart.labels %}<th scope="col">{{ month }}</th>{% endfor %}</tr></thead>
+              <tbody>{% for member in planning_progress_chart.series %}<tr><th scope="row">{{ member.name }}</th>{% for value in member.data %}<td>{% if value is not None %}{{ value }}%{% else %}—{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+            </table>
+          </div>
+        </details>
+        {% else %}
+        {% include "components/empty_state.html" with message="No planned work in this reporting period." hint="Monthly completion appears once you or a supervised officer has planned activities." compact="true" %}
+        {% endif %}
+      </section>
+
       <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
         <header class="rpl-card__header">
           <div class="rpl-card__heading">
@@ -162,6 +187,31 @@ Programme Rollout holds the full picture behind each card.
       chart = window.EdifyChartSystem.renderDetached(el, build());
     }, 50);
   });
+})();
+</script>
+{% endif %}
+
+{% if planning_progress_chart.has_data %}
+<script>
+(function () {
+ function drawCompletion() {
+  var el = document.getElementById('plCompletionChart');
+  var payloadEl = document.getElementById('pl-completion-payload');
+  if (!el || !payloadEl || !window.EdifyChartSystem) return;
+  var payload = JSON.parse(payloadEl.textContent);
+  var cfg = window.EdifyChartSystem.mixedTrend(payload.series.length);
+  cfg.chart.type = 'bar';
+  cfg.chart.height = 260;
+  cfg.chart.stacked = false;
+  cfg.series = payload.series.map(function (s) { return {name: s.name, type: 'column', data: s.data}; });
+  cfg.labels = payload.labels;
+  cfg.xaxis.type = 'category';
+  cfg.yaxis = window.EdifyChartSystem.rateAxis('Completed (%)');
+  window.EdifyChartSystem.renderDetached(el, cfg);
+ }
+ if (document.readyState === "loading") {
+   document.addEventListener("DOMContentLoaded", drawCompletion, {once: true});
+ } else { drawCompletion(); }
 })();
 </script>
 {% endif %}
