@@ -41,13 +41,13 @@
           {% include "components/school_plan_table_head.html" %}
     <tbody>
     {% for s in schools %}
-      <tr class="cluster-school-row" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
+      <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
         <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
         <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
-          <button type="button" class="school-plan-table__expander" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
-  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m7 4 6 6-6 6"/></svg>
+          <button type="button" class="school-plan-table__name-toggle" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
+  {{ s.name }}
 </button>
-          <a href="/schools/{{ s.id }}">{{ s.name }}</a>
+
         </div></td>
         {% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
         <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
