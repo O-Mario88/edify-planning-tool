@@ -28,7 +28,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-11` | Professional Development | ✓ | 1 | 39 | 8 | 0 | 0 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 33 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 36 | 7 | 0 | 0 | 0 | 3 | 1 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 51 | 14 | 0 | 0 | 2 | 3 | 15 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 50 | 14 | 0 | 0 | 2 | 3 | 15 |
 | `journey-15` | Financial Health | ✓ | 1 | 50 | 17 | 2 | 4 | 1 | 6 | 19 |
 | `journey-16` | Government Requirements | ✓ | 1 | 49 | 17 | 2 | 4 | 1 | 5 | 19 |
 | `journey-17` | Loan | ✓ | 1 | 43 | 25 | 11 | 7 | 3 | 17 | 27 |
@@ -313,7 +313,7 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Permissions checked | — |
 | Page gates checked | `evidence_center`, `team_planning_oversight`, `team_targets` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py` _+41 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py` _+40 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |

@@ -9,12 +9,12 @@
   "labels_in_several_modules": 0,
   "breakdown_rows": 531,
   "registered_metrics": 545,
-  "rendered_summaries": 165,
-  "context_summaries": 165,
+  "rendered_summaries": 162,
+  "context_summaries": 162,
   "headline_summaries": 0,
   "unclassified_summaries": 0,
   "legacy_summary_surfaces": 0,
-  "shared_component_surfaces": 165,
+  "shared_component_surfaces": 162,
   "registered_payload_groups": 35,
   "source_items_in_registered_payloads": 197,
   "payload_groups_over_six": 12,
@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1182,
+   "line": 1183,
    "label": null,
    "keys": [
     "label",
@@ -3596,7 +3596,7 @@
    "audit_id": "KPI-SOURCE-190",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 463,
+   "line": 473,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -8438,7 +8438,7 @@
    "audit_id": "KPI-SOURCE-467",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 542,
+   "line": 540,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8457,7 +8457,7 @@
    "audit_id": "KPI-SOURCE-468",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 552,
+   "line": 550,
    "label": "My Work",
    "keys": [
     "count",
@@ -8476,7 +8476,7 @@
    "audit_id": "KPI-SOURCE-469",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 562,
+   "line": 560,
    "label": null,
    "keys": [
     "count",
@@ -8495,7 +8495,7 @@
    "audit_id": "KPI-SOURCE-470",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 597,
+   "line": 595,
    "label": null,
    "keys": [
     "count",
@@ -8514,7 +8514,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 637,
+   "line": 635,
    "label": null,
    "keys": [
     "count",
@@ -8533,8 +8533,8 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1913,
-   "label": "All Partners",
+   "line": 1935,
+   "label": "All team members",
    "keys": [
     "count",
     "key",
@@ -8551,7 +8551,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1919,
+   "line": 1937,
    "label": null,
    "keys": [
     "count",
@@ -8569,7 +8569,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 622,
+   "line": 620,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -13692,7 +13692,6 @@
    "page_title": "Project Monitoring \u00b7 Edify",
    "roles": [
     "ADMIN",
-    "CCEO",
     "CD",
     "IA",
     "PL"
@@ -14598,96 +14597,6 @@
   },
   {
    "audit_id": "KPI-SURFACE-093",
-   "template": "templates/partials/clusters/cluster_detail_drawer.html",
-   "line": 28,
-   "source_pattern": "shared-component",
-   "items_expression": "template-authored-metrics",
-   "presentation": "context",
-   "page_type": "operational",
-   "route": "/clusters/detail-drawer/<str:cluster_id>",
-   "page_title": "Cluster Detail Drawer",
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR"
-   ],
-   "page_purpose": "Operate cluster detail drawer within the frontend workflow.",
-   "primary_action": "Cluster Detail Drawer",
-   "previous_presentation": "independent KPI tile grid",
-   "new_prominent_kpi_limit": 0,
-   "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
-   "accessibility_result": "Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
-   "recommendation": "convert",
-   "reason": "All metric summaries use the shared responsive performance strip.",
-   "replacement_pattern": "compact performance strip",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SURFACE-094",
-   "template": "templates/partials/clusters/intervention_impact_drawer.html",
-   "line": 30,
-   "source_pattern": "shared-component",
-   "items_expression": "template-authored-metrics",
-   "presentation": "context",
-   "page_type": "operational",
-   "route": "/clusters/impact-drawer/<str:cluster_id>",
-   "page_title": "Cluster Impact Drawer",
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR"
-   ],
-   "page_purpose": "Operate cluster impact drawer within the frontend workflow.",
-   "primary_action": "Cluster Impact Drawer",
-   "previous_presentation": "independent KPI tile grid",
-   "new_prominent_kpi_limit": 0,
-   "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
-   "accessibility_result": "Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
-   "recommendation": "convert",
-   "reason": "All metric summaries use the shared responsive performance strip.",
-   "replacement_pattern": "compact performance strip",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SURFACE-095",
-   "template": "templates/partials/clusters/intervention_impact_drawer.html",
-   "line": 47,
-   "source_pattern": "shared-component",
-   "items_expression": "template-authored-metrics",
-   "presentation": "context",
-   "page_type": "operational",
-   "route": "/clusters/impact-drawer/<str:cluster_id>",
-   "page_title": "Cluster Impact Drawer",
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "CCEO",
-    "CD",
-    "IA",
-    "PL",
-    "PROJECT_COORDINATOR"
-   ],
-   "page_purpose": "Operate cluster impact drawer within the frontend workflow.",
-   "primary_action": "Cluster Impact Drawer",
-   "previous_presentation": "independent KPI tile grid",
-   "new_prominent_kpi_limit": 0,
-   "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
-   "accessibility_result": "Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
-   "recommendation": "convert",
-   "reason": "All metric summaries use the shared responsive performance strip.",
-   "replacement_pattern": "compact performance strip",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SURFACE-096",
    "template": "templates/partials/clusters/kpi_strip.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -14715,23 +14624,18 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-097",
+   "audit_id": "KPI-SURFACE-094",
    "template": "templates/partials/clusters/oversight_workspace.html",
    "line": 18,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
    "page_type": "operational",
-   "route": "/country-planning-oversight/",
-   "page_title": "Country Oversight",
-   "roles": [
-    "ADMIN",
-    "CD",
-    "IA",
-    "RVP"
-   ],
-   "page_purpose": "What the country has planned, how it is distributed, and who must act.",
-   "primary_action": "Complete planning form",
+   "route": "",
+   "page_title": "",
+   "roles": [],
+   "page_purpose": "Requires product-purpose documentation",
+   "primary_action": "Requires manual product review",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -14742,9 +14646,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-098",
+   "audit_id": "KPI-SURFACE-095",
    "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 49,
+   "line": 11,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14760,7 +14664,7 @@
     "PL"
    ],
    "page_purpose": "Drawer to review details of a Potential Champion candidate.",
-   "primary_action": "Champion Review Drawer",
+   "primary_action": "Graduate school",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -14771,7 +14675,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-099",
+   "audit_id": "KPI-SURFACE-096",
    "template": "templates/partials/core_schools/performance_insights.html",
    "line": 166,
    "source_pattern": "shared-component",
@@ -14800,7 +14704,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-100",
+   "audit_id": "KPI-SURFACE-097",
    "template": "templates/partials/core_schools/performance_insights.html",
    "line": 250,
    "source_pattern": "shared-component",
@@ -14829,7 +14733,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-101",
+   "audit_id": "KPI-SURFACE-098",
    "template": "templates/partials/dashboards/cd/_impact_findings.html",
    "line": 18,
    "source_pattern": "shared-component",
@@ -14851,7 +14755,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-102",
+   "audit_id": "KPI-SURFACE-099",
    "template": "templates/partials/dashboards/cd/body.html",
    "line": 9,
    "source_pattern": "shared-component",
@@ -14888,7 +14792,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-103",
+   "audit_id": "KPI-SURFACE-100",
    "template": "templates/partials/dashboards/cd/operations.html",
    "line": 259,
    "source_pattern": "shared-component",
@@ -14910,7 +14814,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-104",
+   "audit_id": "KPI-SURFACE-101",
    "template": "templates/partials/dashboards/cd/operations.html",
    "line": 293,
    "source_pattern": "shared-component",
@@ -14932,7 +14836,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-105",
+   "audit_id": "KPI-SURFACE-102",
    "template": "templates/partials/dashboards/hr/body.html",
    "line": 18,
    "source_pattern": "shared-component",
@@ -14969,7 +14873,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-106",
+   "audit_id": "KPI-SURFACE-103",
    "template": "templates/partials/dashboards/pl/body.html",
    "line": 6,
    "source_pattern": "shared-component",
@@ -14991,7 +14895,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-107",
+   "audit_id": "KPI-SURFACE-104",
    "template": "templates/partials/dashboards/pl/coaching_view.html",
    "line": 20,
    "source_pattern": "shared-component",
@@ -15013,7 +14917,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-108",
+   "audit_id": "KPI-SURFACE-105",
    "template": "templates/partials/dashboards/pl/collaboration_view.html",
    "line": 108,
    "source_pattern": "shared-component",
@@ -15035,7 +14939,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-109",
+   "audit_id": "KPI-SURFACE-106",
    "template": "templates/partials/dashboards/pl/programmes_view.html",
    "line": 22,
    "source_pattern": "shared-component",
@@ -15057,7 +14961,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-110",
+   "audit_id": "KPI-SURFACE-107",
    "template": "templates/partials/dashboards/pl/team_view.html",
    "line": 66,
    "source_pattern": "shared-component",
@@ -15079,7 +14983,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-111",
+   "audit_id": "KPI-SURFACE-108",
    "template": "templates/partials/debriefs/dashboard_body.html",
    "line": 7,
    "source_pattern": "shared-component",
@@ -15111,7 +15015,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-112",
+   "audit_id": "KPI-SURFACE-109",
    "template": "templates/partials/finance/country_budget/execution.html",
    "line": 26,
    "source_pattern": "shared-component",
@@ -15139,7 +15043,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-113",
+   "audit_id": "KPI-SURFACE-110",
    "template": "templates/partials/finance/country_budget/execution.html",
    "line": 48,
    "source_pattern": "shared-component",
@@ -15167,7 +15071,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-114",
+   "audit_id": "KPI-SURFACE-111",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 139,
    "source_pattern": "shared-component",
@@ -15195,7 +15099,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-115",
+   "audit_id": "KPI-SURFACE-112",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 148,
    "source_pattern": "shared-component",
@@ -15223,7 +15127,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-116",
+   "audit_id": "KPI-SURFACE-113",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 300,
    "source_pattern": "shared-component",
@@ -15251,7 +15155,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-117",
+   "audit_id": "KPI-SURFACE-114",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 324,
    "source_pattern": "shared-component",
@@ -15279,7 +15183,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-118",
+   "audit_id": "KPI-SURFACE-115",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 338,
    "source_pattern": "shared-component",
@@ -15307,7 +15211,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-119",
+   "audit_id": "KPI-SURFACE-116",
    "template": "templates/partials/finance/fund_allocation_kpis.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -15329,7 +15233,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-120",
+   "audit_id": "KPI-SURFACE-117",
    "template": "templates/partials/finance/fund_workspace.html",
    "line": 69,
    "source_pattern": "shared-component",
@@ -15354,7 +15258,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-121",
+   "audit_id": "KPI-SURFACE-118",
    "template": "templates/partials/finance/fund_workspace.html",
    "line": 71,
    "source_pattern": "shared-component",
@@ -15379,7 +15283,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-122",
+   "audit_id": "KPI-SURFACE-119",
    "template": "templates/partials/finance/monthly_request/root.html",
    "line": 58,
    "source_pattern": "shared-component",
@@ -15408,7 +15312,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-123",
+   "audit_id": "KPI-SURFACE-120",
    "template": "templates/partials/finance/monthly_request/root.html",
    "line": 110,
    "source_pattern": "shared-component",
@@ -15437,7 +15341,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-124",
+   "audit_id": "KPI-SURFACE-121",
    "template": "templates/partials/fund_requests/kpis.html",
    "line": 4,
    "source_pattern": "shared-component",
@@ -15467,7 +15371,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-125",
+   "audit_id": "KPI-SURFACE-122",
    "template": "templates/partials/hr/pd_dashboard/body.html",
    "line": 10,
    "source_pattern": "shared-component",
@@ -15489,7 +15393,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-126",
+   "audit_id": "KPI-SURFACE-123",
    "template": "templates/partials/hr/pd_dashboard/body.html",
    "line": 41,
    "source_pattern": "shared-component",
@@ -15511,7 +15415,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-127",
+   "audit_id": "KPI-SURFACE-124",
    "template": "templates/partials/hr/pd_dashboard/body.html",
    "line": 274,
    "source_pattern": "shared-component",
@@ -15533,7 +15437,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-128",
+   "audit_id": "KPI-SURFACE-125",
    "template": "templates/partials/hr/pd_dashboard/team_body.html",
    "line": 12,
    "source_pattern": "shared-component",
@@ -15555,7 +15459,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-129",
+   "audit_id": "KPI-SURFACE-126",
    "template": "templates/partials/hr/pd_dashboard/team_body.html",
    "line": 33,
    "source_pattern": "shared-component",
@@ -15577,7 +15481,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-130",
+   "audit_id": "KPI-SURFACE-127",
    "template": "templates/partials/ia/operations.html",
    "line": 320,
    "source_pattern": "shared-component",
@@ -15603,7 +15507,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-131",
+   "audit_id": "KPI-SURFACE-128",
    "template": "templates/partials/ia/operations.html",
    "line": 345,
    "source_pattern": "shared-component",
@@ -15629,7 +15533,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-132",
+   "audit_id": "KPI-SURFACE-129",
    "template": "templates/partials/ia/operations.html",
    "line": 438,
    "source_pattern": "shared-component",
@@ -15655,7 +15559,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-133",
+   "audit_id": "KPI-SURFACE-130",
    "template": "templates/partials/ia/outcomes.html",
    "line": 71,
    "source_pattern": "shared-component",
@@ -15677,7 +15581,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-134",
+   "audit_id": "KPI-SURFACE-131",
    "template": "templates/partials/ia/outcomes.html",
    "line": 142,
    "source_pattern": "shared-component",
@@ -15699,7 +15603,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-135",
+   "audit_id": "KPI-SURFACE-132",
    "template": "templates/partials/ia/outcomes.html",
    "line": 237,
    "source_pattern": "shared-component",
@@ -15721,7 +15625,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-136",
+   "audit_id": "KPI-SURFACE-133",
    "template": "templates/partials/ia/reports_view.html",
    "line": 28,
    "source_pattern": "shared-component",
@@ -15743,9 +15647,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-137",
+   "audit_id": "KPI-SURFACE-134",
    "template": "templates/partials/my_plan/activity_detail_drawer.html",
-   "line": 150,
+   "line": 102,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15763,7 +15667,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "School: Cluster:",
-   "primary_action": "Update SSA &amp; Complete",
+   "primary_action": "Update SSA &amp; complete",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -15774,7 +15678,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-138",
+   "audit_id": "KPI-SURFACE-135",
    "template": "templates/partials/my_plan/kpi_cards.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -15805,7 +15709,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-139",
+   "audit_id": "KPI-SURFACE-136",
    "template": "templates/partials/oversight/cd_workspace.html",
    "line": 17,
    "source_pattern": "shared-component",
@@ -15832,9 +15736,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-140",
+   "audit_id": "KPI-SURFACE-137",
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 27,
+   "line": 6,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -15842,6 +15746,7 @@
    "route": "/cluster-oversight/",
    "page_title": "Cluster Oversight",
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CD",
     "IA",
@@ -15861,7 +15766,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-141",
+   "audit_id": "KPI-SURFACE-138",
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
    "line": 5,
    "source_pattern": "shared-component",
@@ -15890,15 +15795,15 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-142",
+   "audit_id": "KPI-SURFACE-139",
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 50,
+   "line": 56,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Oversight \u00b7 Edify",
+   "page_title": "Partner Oversight",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -15906,6 +15811,7 @@
     "CD",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Which schools are with partners, who has scheduled, and what it costs.",
@@ -15920,7 +15826,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-143",
+   "audit_id": "KPI-SURFACE-140",
    "template": "templates/partials/oversight/pl_workspace.html",
    "line": 15,
    "source_pattern": "shared-component",
@@ -15950,7 +15856,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-144",
+   "audit_id": "KPI-SURFACE-141",
    "template": "templates/partials/oversight/portfolio_workspace.html",
    "line": 21,
    "source_pattern": "shared-component",
@@ -15977,7 +15883,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-145",
+   "audit_id": "KPI-SURFACE-142",
    "template": "templates/partials/oversight/team_country_workspace.html",
    "line": 9,
    "source_pattern": "shared-component",
@@ -16007,7 +15913,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-146",
+   "audit_id": "KPI-SURFACE-143",
    "template": "templates/partials/partners/engagement_register.html",
    "line": 29,
    "source_pattern": "shared-component",
@@ -16015,7 +15921,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Oversight \u00b7 Edify",
+   "page_title": "Partner Oversight",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -16023,6 +15929,7 @@
     "CD",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Which schools are with partners, who has scheduled, and what it costs.",
@@ -16037,7 +15944,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-147",
+   "audit_id": "KPI-SURFACE-144",
    "template": "templates/partials/priorities/distribution_view.html",
    "line": 83,
    "source_pattern": "shared-component",
@@ -16063,7 +15970,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-148",
+   "audit_id": "KPI-SURFACE-145",
    "template": "templates/partials/priorities/distribution_view.html",
    "line": 131,
    "source_pattern": "shared-component",
@@ -16089,7 +15996,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-149",
+   "audit_id": "KPI-SURFACE-146",
    "template": "templates/partials/priorities/guidance_view.html",
    "line": 33,
    "source_pattern": "shared-component",
@@ -16114,7 +16021,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-150",
+   "audit_id": "KPI-SURFACE-147",
    "template": "templates/partials/priorities/setting_view.html",
    "line": 69,
    "source_pattern": "shared-component",
@@ -16144,7 +16051,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-151",
+   "audit_id": "KPI-SURFACE-148",
    "template": "templates/partials/priorities/team_view.html",
    "line": 45,
    "source_pattern": "shared-component",
@@ -16169,7 +16076,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-152",
+   "audit_id": "KPI-SURFACE-149",
    "template": "templates/partials/priorities/team_view.html",
    "line": 56,
    "source_pattern": "shared-component",
@@ -16194,7 +16101,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-153",
+   "audit_id": "KPI-SURFACE-150",
    "template": "templates/partials/priorities/team_view.html",
    "line": 69,
    "source_pattern": "shared-component",
@@ -16219,7 +16126,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-154",
+   "audit_id": "KPI-SURFACE-151",
    "template": "templates/partials/priorities/team_view.html",
    "line": 74,
    "source_pattern": "shared-component",
@@ -16244,7 +16151,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-155",
+   "audit_id": "KPI-SURFACE-152",
    "template": "templates/partials/professional_development/body.html",
    "line": 23,
    "source_pattern": "shared-component",
@@ -16276,7 +16183,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-156",
+   "audit_id": "KPI-SURFACE-153",
    "template": "templates/partials/programme_rollout/view.html",
    "line": 10,
    "source_pattern": "shared-component",
@@ -16298,7 +16205,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-157",
+   "audit_id": "KPI-SURFACE-154",
    "template": "templates/partials/projects/analytics_workspace.html",
    "line": 23,
    "source_pattern": "shared-component",
@@ -16327,7 +16234,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-158",
+   "audit_id": "KPI-SURFACE-155",
    "template": "templates/partials/projects/my_plan_workspace.html",
    "line": 54,
    "source_pattern": "shared-component",
@@ -16356,7 +16263,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-159",
+   "audit_id": "KPI-SURFACE-156",
    "template": "templates/partials/projects/planning_workspace.html",
    "line": 35,
    "source_pattern": "shared-component",
@@ -16385,7 +16292,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-160",
+   "audit_id": "KPI-SURFACE-157",
    "template": "templates/partials/schools/kpi_cards.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -16415,7 +16322,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-161",
+   "audit_id": "KPI-SURFACE-158",
    "template": "templates/partials/ssa/performance_workspace.html",
    "line": 57,
    "source_pattern": "shared-component",
@@ -16452,7 +16359,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-162",
+   "audit_id": "KPI-SURFACE-159",
    "template": "templates/partials/targets/my_body.html",
    "line": 8,
    "source_pattern": "shared-component",
@@ -16481,7 +16388,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-163",
+   "audit_id": "KPI-SURFACE-160",
    "template": "templates/partials/targets/project_priorities.html",
    "line": 28,
    "source_pattern": "shared-component",
@@ -16510,7 +16417,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-164",
+   "audit_id": "KPI-SURFACE-161",
    "template": "templates/partials/targets/strategic_priority_overview.html",
    "line": 32,
    "source_pattern": "shared-component",
@@ -16539,7 +16446,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-165",
+   "audit_id": "KPI-SURFACE-162",
    "template": "templates/partials/targets/team/body.html",
    "line": 4,
    "source_pattern": "shared-component",
@@ -40101,7 +40008,7 @@
   {
    "audit_id": "KPI-PAYLOAD-002",
    "module": "apps/clusters/services.py",
-   "line": 1871,
+   "line": 1880,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -40312,7 +40219,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 329,
+   "line": 334,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,

@@ -7473,6 +7473,7 @@
     "RegionalVicePresident",
     "RegionalProgramLead",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/cluster-oversight/",
@@ -14147,6 +14148,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14164,6 +14166,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14181,6 +14184,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14198,6 +14202,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14215,6 +14220,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14232,6 +14238,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14249,6 +14256,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14266,6 +14274,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14283,6 +14292,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -15946,7 +15956,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
     "CountryDirector",
     "ImpactAssessment",
@@ -17950,10 +17959,10 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 405,
+  "Accountant": 406,
   "Admin": 1004,
   "BusinessTransformationOfficer": 232,
-  "CCEO": 530,
+  "CCEO": 529,
   "CountryDirector": 760,
   "HumanResources": 330,
   "ImpactAssessment": 624,
@@ -17963,7 +17972,7 @@
   "PartnerFieldOfficer": 219,
   "Program Lead": 615,
   "ProjectCoordinator": 446,
-  "RegionalProgramLead": 306,
+  "RegionalProgramLead": 315,
   "RegionalVicePresident": 367
  },
  "summary": {
