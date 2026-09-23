@@ -304,20 +304,25 @@ def build_items(
     staff_id: str | None = None,
     program_lead_id: str | None = None,
     filters: dict | None = None,
+    fys: tuple[str, ...] | None = None,
 ) -> list[PlanningOversightItem]:
     """Every oversight item this principal may see for the period.
 
     One bulk query per source, then one pass to build. No per-row queries: the
     cost of a country page is a fixed handful of statements whatever the number
     of activities, which is the difference between a page and a timeout.
+
+    ``fys``, when given, reads those fiscal years instead of ``fy`` alone — a
+    planning horizon (``fy_policy.planning_horizon``) in one query.
     """
     scope = resolve_oversight_scope(principal)
     if scope.kind == "pl" and not scope.team_ids:
         return []
 
+    years = tuple(str(y) for y in fys) if fys else ((fy,) if fy else ())
     activities = _activities_in_scope(
         scope,
-        fy=fy,
+        fy=years,
         month=month,
         quarter=quarter,
         date_start=date_start,
@@ -325,7 +330,7 @@ def build_items(
     )
     assignments = _unscheduled_assignments_in_scope(
         scope,
-        fy=fy,
+        fy=years,
         month=month,
         quarter=quarter,
         date_start=date_start,
@@ -412,6 +417,13 @@ def build_item_by_reference(
     return item
 
 
+def _fy_tuple(fy) -> tuple[str, ...]:
+    """One fiscal year or several, as the tuple the period filters compare."""
+    if isinstance(fy, (list, tuple, set, frozenset)):
+        return tuple(str(y) for y in fy)
+    return (str(fy),)
+
+
 def _activities_in_scope(
     scope: OversightScope, *, fy, month, quarter, date_start=None, date_end=None
 ):
@@ -481,7 +493,7 @@ def _activities_in_scope(
         )
     )
     if fy:
-        qs = qs.filter(fy=fy)
+        qs = qs.filter(fy__in=_fy_tuple(fy))
     if month:
         qs = qs.filter(planned_month=month)
     if quarter:
@@ -655,7 +667,8 @@ def _unscheduled_assignments_in_scope(
     if fy:
         from apps.core.fy import get_operational_fy
 
-        rows = [r for r in rows if get_operational_fy(r.created_at.date()) == fy]
+        years = _fy_tuple(fy)
+        rows = [r for r in rows if get_operational_fy(r.created_at.date()) in years]
     if month:
         rows = [r for r in rows if r.created_at.date().month == month]
     if quarter:

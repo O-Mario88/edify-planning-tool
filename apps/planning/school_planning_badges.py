@@ -6,6 +6,11 @@ verification and IA-verified in the selected financial year. Nowhere else —
 My Plan stays the detailed execution list, and every other surface is left as
 it was.
 
+On the operational year the lists read forward into the years ahead
+(``fy_policy.planning_horizon``, owner 2026-09-23): a school planned in
+September for October is planned, not "Not Planned" because its date falls in
+the next fiscal year.
+
 One read-only calculation serves both lists, so for the same school, financial
 year and period the two cannot disagree. Nothing is stored: every count is
 derived from the canonical Activity records and their workflow status each
@@ -241,6 +246,16 @@ def _period_q(prefix: str, period) -> Q:
     )
 
 
+def _fy_values(financial_year) -> list[str] | None:
+    """One fiscal year, or the several a planning horizon covers
+    (``apps.planning.fy_policy.planning_horizon``)."""
+    if not financial_year:
+        return None
+    if isinstance(financial_year, (list, tuple, set, frozenset)):
+        return sorted({str(fy) for fy in financial_year if fy}) or None
+    return [str(financial_year)]
+
+
 _TRAINING_FLAG = Q(catalogue_item__counts_toward_client_training=True) | Q(
     catalogue_item__is_training_course=True
 )
@@ -269,7 +284,7 @@ class SchoolPlanningBadgeService:
         if not ids:
             return badges
 
-        fy = str(financial_year) if financial_year else None
+        fys = _fy_values(financial_year)
         # (school_id, activity_id) already counted — a session reached by two
         # routes (named on the row and in the register) is one session.
         seen: set[tuple[str, str]] = set()
@@ -304,8 +319,8 @@ class SchoolPlanningBadgeService:
             Q(activity_type__in=(*VISIT_TYPES, *TRAINING_TYPES, *CLUSTER_MEETING_TYPES))
             | _TRAINING_FLAG
         )
-        if fy:
-            direct = direct.filter(fy=fy)
+        if fys:
+            direct = direct.filter(fy__in=fys)
         if period:
             direct = direct.filter(_period_q("", period))
         for row in direct.values(
@@ -337,8 +352,8 @@ class SchoolPlanningBadgeService:
             activity__deleted_at__isnull=True,
             activity__activity_type__in=CLUSTER_SESSION_TYPES,
         ).filter(Q(invited=True) | Q(attended=True))
-        if fy:
-            register = register.filter(activity__fy=fy)
+        if fys:
+            register = register.filter(activity__fy__in=fys)
         if period:
             register = register.filter(_period_q("activity__", period))
         for row in register.values(
@@ -378,8 +393,8 @@ class SchoolPlanningBadgeService:
             status__in=_POST_DELIVERY,
             attended_school_ids__overlap=ids,
         )
-        if fy:
-            attended = attended.filter(fy=fy)
+        if fys:
+            attended = attended.filter(fy__in=fys)
         if period:
             attended = attended.filter(_period_q("", period))
         wanted = set(ids)

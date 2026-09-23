@@ -13,7 +13,7 @@
           <td>{% firstof item.activity_status item.assignment_status as status %}{{ status|replace_underscore|title }}</td>
           <td>{% firstof item.executor_name member.name %}</td>
         </tr>
-        {% empty %}<tr><td colspan="5">No {{ heading|lower }} in this financial year.</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="5">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

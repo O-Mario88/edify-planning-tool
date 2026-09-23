@@ -209,13 +209,19 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
 
         self.assertIn(self.school.name, html)
         self.assertIn('data-responsible="partner"', html)
-        self.assertIn("Ozeki Foundation", html)
         self.assertIn(
             '<th scope="col" class="school-plan-table__responsible">Responsible</th>',
             html,
         )
-        self.assertIn('data-label="Responsible"', html)
-        self.assertIn("data-planning-support", html)
+        # One word, Partner or Staff; the Partner's name is its title, and
+        # where the Partner's work stands is on My Plan and the oversight
+        # pages (owner, 2026-09-23).
+        cell = html[html.index('data-label="Responsible"') :]
+        cell = cell[: cell.index("</td>")]
+        self.assertIn('title="Partner Support: Ozeki Foundation"', cell)
+        self.assertIn('<span class="planning-responsible__kind">Partner</span>', cell)
+        self.assertNotIn("school-planning-badge", cell)
+        self.assertNotIn("data-partner-workflow", html)
         # Selectable and plannable: the Schedule action is a live button.
         self.assertIn(
             f"/planning/schedule-modal?school_id={self.school.school_id}", html

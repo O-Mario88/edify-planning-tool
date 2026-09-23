@@ -111,9 +111,10 @@ test.describe('Partner-supported schools — journeys', () => {
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope);
 
+    // One word, Partner; the Partner's name is its title (owner, 2026-09-23).
     const responsible = row.locator('[data-responsible="partner"] .planning-responsible');
-    await expect(responsible).toContainText('Partner');
-    await expect(responsible).toContainText(hope.partner);
+    await expect(responsible).toHaveText('Partner');
+    await expect(responsible).toHaveAttribute('title', new RegExp(hope.partner));
     // The owner is unchanged; like every school's, it sits in the row's
     // details, which the name opens.
     await row.locator('.school-plan-table__name-toggle').click();
@@ -252,8 +253,10 @@ test.describe('Partner-supported schools — journeys', () => {
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope, partnerWork.fy);
     await expect(row.locator('[data-planning-badges="visits"]')).toContainText('Planned');
-    await expect(row.locator('[data-partner-workflow]')).toContainText('Scheduled');
-    await expect(row.locator('.planning-responsible[data-responsible="partner"]')).toContainText(hope.partner);
+    // Planning says who delivers; where the Partner's work stands is on
+    // Partner Monitoring, below (owner, 2026-09-23).
+    await expect(row.locator('[data-partner-workflow]')).toHaveCount(0);
+    await expect(row.locator('.planning-responsible[data-responsible="partner"]')).toHaveText('Partner');
     await page.goto('/my-plan');
     await expect(activityControls(page, partnerWork.id)).toHaveCount(0);
     // Partner Monitoring reads one financial year; the Partner dated this work
@@ -317,14 +320,16 @@ test.describe('Partner-supported schools — journeys', () => {
     }
   });
 
-  test('J8 · a Partner return is flagged on Planning and resolved once', async ({ page }, testInfo) => {
+  test('J8 · a Partner return is flagged on Partner Monitoring and resolved once', async ({ page }, testInfo) => {
     const returned = data.handovers[3];
     fixture('partner-return', returned.assignment_id);
     const before = fixture('inspect', returned.school_id);
 
     await signIn(page, 'cceo@edify.org', PASSWORD);
+    // The return is Partner workflow: it is flagged on Partner Monitoring,
+    // not in Planning's Responsible column (owner, 2026-09-23).
     const row = await planningRow(page, returned);
-    await expect(row.locator('[data-partner-workflow="returned"]')).toContainText('Partner Returned — Staff Action Required');
+    await expect(row.locator('[data-partner-workflow]')).toHaveCount(0);
     await shoot(page, 'j8-planning-returned', testInfo);
 
     await page.goto(`/partner-oversight/?partner=${returned.partner_id}`);
@@ -344,8 +349,8 @@ test.describe('Partner-supported schools — journeys', () => {
     expect(after.assignments).toBe(before.assignments);
     expect(after.activities.length).toBe(before.activities.length);
     const planningAfter = await planningRow(page, returned);
-    await expect(planningAfter.locator('[data-partner-workflow="returned"]')).toHaveCount(0);
-    await expect(planningAfter.locator('.planning-responsible[data-responsible="staff"]')).toContainText(data.cceo_name);
+    await expect(planningAfter.locator('.planning-responsible[data-responsible="staff"]')).toHaveText('Staff');
+    await expect(planningAfter.locator('.planning-responsible[data-responsible="staff"]')).toHaveAttribute('title', new RegExp(data.cceo_name));
   });
 });
 

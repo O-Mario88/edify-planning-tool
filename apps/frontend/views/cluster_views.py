@@ -390,7 +390,8 @@ def cluster_list_view(request):
 def _attach_planning_badges(request, schools) -> str:
     """The Visit and Training badges on a Cluster School List (owner,
     2026-09-22), from the one calculation the Planning page reads, for the
-    same financial year Planning defaults to. Returns that year.
+    same financial year Planning defaults to and the same planning horizon
+    (``fy_policy.planning_horizon``). Returns that year.
 
     With the Partner-supported school rule on, Next Activity (owner,
     2026-09-23) is read from the same pass, as it is on Planning."""
@@ -400,11 +401,15 @@ def _attach_planning_badges(request, schools) -> str:
         SchoolPlanningBadgeService,
     )
 
+    from apps.planning.fy_policy import planning_horizon
+
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     rows = list(schools)
     details = [] if any(row.get("supportRule") for row in rows) else None
     badges = SchoolPlanningBadgeService.get_for_schools(
-        [row["id"] for row in rows], financial_year=fy, details=details
+        [row["id"] for row in rows],
+        financial_year=planning_horizon(fy),
+        details=details,
     )
     upcoming = {}
     if details is not None:
@@ -938,7 +943,7 @@ def cluster_detail_view(request, cluster_id):
         # 2026-09-21): one press writes activities at five or more schools,
         # and a visit request is decided one school at a time.
         "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
-        # Responsible, Visit, Training / Cluster and Partner Workflow columns
+        # Responsible (Staff or Partner), Visit and Training / Cluster columns
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
     }
