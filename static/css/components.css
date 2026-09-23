@@ -74,12 +74,12 @@
   align-items: center;
   border: 1px solid var(--edify-border);
   border-radius: 9999px;
-  padding: 0.0625rem 0.5rem;
+  padding: 0 .35rem;
   background-color: var(--edify-surface-muted, var(--edify-surface));
   color: var(--edify-text-muted, var(--edify-text));
-  font-size: var(--edify-text-micro-size);
+  font-size: .6875rem;
   font-weight: var(--edify-text-micro-weight);
-  line-height: var(--edify-text-micro-leading);
+  line-height: 1.35;
   white-space: nowrap;
 }
 
@@ -5530,4 +5530,61 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 }
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   caret-color: var(--edify-text);
+}
+
+/* Keep both compact status groups on one line, including collapsed rows. */
+.school-record-row__planning-status {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .75rem;
+  margin: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  font-size: .6875rem;
+  line-height: 1.35;
+}
+.school-record-row__planning-status > div {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .25rem;
+}
+.school-record-row__planning-status .school-planning-badges {
+  flex-wrap: nowrap;
+  gap: .2rem;
+}
+.school-record-row__planning-status dt,
+.school-record-row__planning-status dd { margin: 0; }
+.school-record-row__planning-status dt {
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-label-weight);
+  white-space: nowrap;
+}
+.school-record-row__planning-status dd { display: flex; }
+
+.school-record-row__name-and-status {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .75rem;
+  min-inline-size: 0;
+}
+.school-record-row__name-and-status > .school-record-row__title {
+  flex: 1 1 0;
+  min-inline-size: 6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.school-record-row__name-and-status > .school-record-row__title a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.school-record-row__name-and-status > .school-record-row__planning-status {
+  flex: 0 0 auto;
+  max-inline-size: calc(100% - 6.75rem);
+  min-inline-size: 0;
 }
