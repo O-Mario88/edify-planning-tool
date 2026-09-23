@@ -492,8 +492,8 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.client.force_login(self.partner_user)
         response = self.client.get(f"/partners/{self.partner.id}/edit-drawer")
         self.assertEqual(response.status_code, 200)
-        # Region and intervention are Edify's call: shown, not editable.
-        self.assertNotContains(response, 'name="region_name"')
+        # Regions and intervention are Edify's call: shown, not editable.
+        self.assertNotContains(response, 'name="region_names"')
         self.assertContains(response, "set by Edify")
 
         response = self.client.post(
@@ -504,7 +504,7 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
                 "email": "grace@partner.test",
                 "expertise": "Literacy, Numeracy",
                 "notes": "Works in Wakiso",
-                "region_name": "Northern",
+                "region_names": ["Northern", "Eastern"],
                 "name": "Renamed By Partner",
             },
         )
@@ -513,6 +513,7 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.assertEqual(self.partner.contact_person, "Grace N")
         self.assertEqual(self.partner.expertise_areas, ["Literacy", "Numeracy"])
         self.assertEqual(self.partner.region_name, "Central")
+        self.assertEqual(self.partner.regions, ["Central"])
         self.assertEqual(self.partner.name, "Supporting Partner")
 
         # Another organisation's drawer is not theirs to open.
@@ -520,18 +521,19 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_the_country_director_edits_region_and_name(self):
-        # The intervention is ticked, not chosen from a dropdown, and more than
-        # one may be ticked (owner, 2026-09-22). `ssa_intervention` keeps
-        # holding the first, so every existing reader of it is unaffected.
+        # Regions and interventions are ticked, not chosen from a dropdown, and
+        # more than one of each may be ticked (owner, 2026-09-22, 2026-09-23).
+        # `region_name` and `ssa_intervention` keep holding the first, so every
+        # existing reader of them is unaffected.
         self.client.force_login(self.cd)
         response = self.client.get(f"/partners/{self.partner.id}/edit-drawer")
-        self.assertContains(response, 'name="region_name"')
+        self.assertContains(response, 'name="region_names"')
         self.assertContains(response, 'name="ssa_interventions"')
         response = self.client.post(
             f"/partners/{self.partner.id}/edit-drawer",
             {
                 "name": "Supporting Partner Ltd",
-                "region_name": "Northern",
+                "region_names": ["Northern", "Eastern"],
                 "ssa_interventions": ["christlike_behaviour", "financial_health"],
                 "contact_person": "Grace N",
                 "phone": "",
@@ -544,6 +546,7 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.partner.refresh_from_db()
         self.assertEqual(self.partner.name, "Supporting Partner Ltd")
         self.assertEqual(self.partner.region_name, "Northern")
+        self.assertEqual(self.partner.region_names, ["Northern", "Eastern"])
         self.assertEqual(self.partner.ssa_intervention, "christlike_behaviour")
         self.assertEqual(
             self.partner.ssa_interventions,

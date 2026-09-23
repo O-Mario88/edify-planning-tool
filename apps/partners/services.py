@@ -141,6 +141,7 @@ def _serialize(p: Partner) -> dict:
         "id": p.id,
         "name": p.name,
         "regionName": p.region_name,
+        "regionNames": p.regions,
         "trainsOn": p.trains_on,
         "notes": p.notes,
         "contactPerson": p.contact_person,
@@ -261,6 +262,7 @@ def onboard(data: dict, principal) -> dict:
         raise ConflictError(f"A partner organisation named '{name}' already exists.")
 
     email = (data.get("email") or "").strip().lower()
+    regions = region_list(data) or []
     actor_id = getattr(principal, "user_id", None) or str(getattr(principal, "id", ""))
     p = Partner.objects.create(
         name=name,
@@ -270,7 +272,10 @@ def onboard(data: dict, principal) -> dict:
         # school to; activation is the moment it becomes one, and it is a
         # separate, audited act rather than a side effect of saving a form.
         active_status=bool(data.get("activeStatus", False)),
-        region_name=data.get("regionName") or data.get("region_name"),
+        # Every region it works in (owner, 2026-09-23); `region_name` stays
+        # the first of them, as `ssa_intervention` does for interventions.
+        region_name=regions[0] if regions else None,
+        region_names=regions,
         trains_on=data.get("trainsOn", []),
         notes=data.get("notes"),
         contact_person=data.get("contactPerson") or data.get("contact_person"),
@@ -305,6 +310,7 @@ def onboard(data: dict, principal) -> dict:
                 "name": p.name,
                 "email": p.email,
                 "region": p.region_name,
+                "regions": p.regions,
                 "userSetupStatus": p.user_setup_status,
             },
         },
@@ -524,6 +530,27 @@ def _expertise_list(value) -> list[str]:
     return seen
 
 
+def region_list(data: dict) -> list[str] | None:
+    """The regions a payload names, or None when it names none at all.
+
+    Most partners work in more than one region (owner, 2026-09-23), so the
+    drawer posts `regionNames` as a list. A caller still sending the single
+    `regionName` gets a one-item list rather than being ignored. None, not an
+    empty list, means "not asked": an update that does not mention regions
+    must leave them alone, while an empty `regionNames` clears them.
+    """
+
+    if "regionNames" in data:
+        value = data.get("regionNames")
+    elif "regionName" in data or "region_name" in data:
+        value = data.get("regionName", data.get("region_name"))
+    else:
+        return None
+    if isinstance(value, str):
+        value = [value]
+    return _expertise_list([item for item in value or [] if item is not None])
+
+
 def set_partner_status(partner_id: str, active: bool, principal) -> dict:
     """Activate or deactivate a partner organisation (owner, 2026-09-07).
 
@@ -706,10 +733,10 @@ def update(partner_id: str, data: dict, principal) -> dict:
         "email": p.email,
         "phone": p.phone,
         "regionName": p.region_name,
+        "regionNames": p.regions,
     }
     for field_name in (
         "name",
-        "region_name",
         "notes",
         "contact_person",
         "email",
@@ -720,6 +747,12 @@ def update(partner_id: str, data: dict, principal) -> dict:
         camel = _camel(field_name)
         if camel in data:
             setattr(p, field_name, data[camel])
+    regions = region_list(data)
+    if regions is not None:
+        # Every region, and the first of them in the column the older readers
+        # use; unticking them all clears both.
+        p.region_names = regions
+        p.region_name = regions[0] if regions else None
     for arr_field in ("trains_on", "coverage_districts", "expertise_areas"):
         camel = _camel(arr_field)
         if camel in data:
@@ -748,6 +781,7 @@ def update(partner_id: str, data: dict, principal) -> dict:
                 "email": p.email,
                 "phone": p.phone,
                 "regionName": p.region_name,
+                "regionNames": p.regions,
             },
         },
     )
@@ -755,7 +789,6 @@ def update(partner_id: str, data: dict, principal) -> dict:
 
 
 _CAMEL_MAP = {
-    "region_name": "regionName",
     "contact_person": "contactPerson",
     "coverage_districts": "coverageDistricts",
     "contract_status": "contractStatus",

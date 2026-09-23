@@ -1235,7 +1235,7 @@ def _attach_partner_identity(groups: list[dict]) -> None:
             )
         group["contact_person"] = partner.contact_person or ""
         group["phone"] = partner.phone or ""
-        group["region_name"] = partner.region_name or ""
+        group["region_name"] = partner.region_label
         group["intervention_label"] = partner.ssa_intervention_label or ""
 
 

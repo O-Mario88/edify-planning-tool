@@ -25,19 +25,13 @@ submit re-renders with the reason, a saved one reloads the profile.
     <label for="partner-name" class="block edify-text-caption font-semibold text-slate-600">Organisation name <span class="text-rose-500">*</span></label>
     <input id="partner-name" type="text" name="name" required value="{{ partner.name }}" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
   </div>
-  <div class="space-y-1">
-    <label for="partner-region" class="block edify-text-caption font-semibold text-slate-600">Region</label>
-    <select id="partner-region" name="region_name" class="edify-surface min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
-      <option value="">Not assigned</option>
-      {% for r in regions %}<option value="{{ r.name }}" {% if r.name == partner.region_name %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
-    </select>
-  </div>
+  {% include "partials/partners/_region_picker.html" %}
   {% include "partials/partners/_capability_picker.html" %}
   {% else %}
   <dl class="grid gap-3">
     <div class="space-y-1">
-      <dt class="edify-text-caption font-semibold text-slate-600">Region</dt>
-      <dd class="text-slate-800">{{ partner.region_name|default:"Not assigned" }}</dd>
+      <dt class="edify-text-caption font-semibold text-slate-600">Regions</dt>
+      <dd class="text-slate-800">{{ partner.region_label|default:"Not assigned" }}</dd>
     </div>
     <div class="space-y-1">
       <dt class="edify-text-caption font-semibold text-slate-600">Interventions and activities</dt>
@@ -51,7 +45,7 @@ submit re-renders with the reason, a saved one reloads the profile.
       {% endif %}
     </div>
   </dl>
-  <p class="edify-text-caption text-slate-500">Region, interventions and activities are set by Edify. Ask your Country Director to change them.</p>
+  <p class="edify-text-caption text-slate-500">Regions, interventions and activities are set by Edify. Ask your Country Director to change them.</p>
   {% endif %}
 
   <div class="space-y-1">
