@@ -590,14 +590,23 @@ The two throttles key on `throttle_ident(request)`. That is the trusted
 address, else the raw `REMOTE_ADDR`, which the server sets and is safe to
 count against even when it does not parse.
 
+**Where the count lives.** A shared cache (Redis) holds a fixed one-minute
+window. Without one, each process holds a sliding window. The check that
+chooses between them, `_cache_is_shared()`, read the type of
+`django.core.cache.cache`. That object is a proxy, so the check reported
+"shared" for every backend, and a deployment without Redis counted in a
+per-process fixed window in local memory. It now reads the configured
+backend.
+
 **Tests.** `apps/core/tests/test_client_ip.py` covers:
 - a rotating spoofed leftmost entry does not reset the window, with and
   without a trusted proxy;
 - the proxy-appended entry, or the platform header, is the identity;
 - with no header the key is the peer;
 - the API throttle and the audit context use the same address;
-- end to end, a fourth `/login` attempt with a fresh fake `X-Forwarded-For`
-  gets 429.
+- end to end, `/login` attempts with a fresh fake `X-Forwarded-For` each
+  reach 429. The test sends seven against a limit of three, so a minute
+  boundary between two of them cannot hide the limit.
 
 **To confirm on deploy.** Sign in once and compare the new `LoginEvent.ip`
 with the address you are connecting from. If App Platform does not send
@@ -620,7 +629,8 @@ the limit coarse, so check it once.
 | Scheduler | `apps/realtime/tests.py` (+3) | A dropped connection does not fail the next job (fails on old code); 300 s misfire grace, coalesce, one instance; debrief jobs honour the gate |
 | Cache | `apps/core/tests/test_cache_utils.py` (+5) | Waiters outlast a slow rebuild; build when the owner published nothing; bounded wait; namespaced forget; To-Do forget reaches its snapshot |
 | Incident detection | `apps/admin_ops/tests.py` (+1) | Slow requests tallied per route pattern |
-| Client address | `apps/core/tests/test_client_ip.py` (14); `apps/accounts/test_presence.py` (2 updated) | Platform header and right-counted hops are trusted, the client-written leftmost entry never is; rotating a fake `X-Forwarded-For` on `/login` hits 429 on the 4th attempt; API throttle and audit context use the same address |
+| Client address | `apps/core/tests/test_client_ip.py` (14); `apps/accounts/test_presence.py` (2 updated) | Platform header and right-counted hops are trusted, the client-written leftmost entry never is; rotating a fake `X-Forwarded-For` on `/login` still reaches 429; API throttle and audit context use the same address |
+| Throttle backing | `apps/core/test_throttle_shared_backing.py` (+4) | Local-memory and dummy caches count in the in-process sliding window, Redis in the shared one (three fail on the old check) |
 | Prefetch contract | `test_client_responsiveness`, `test_design_system_contract` (updated) | No `eager`, no `moderate` (hover), no prerender; pointer-down only |
 | Browser | `e2e/htmx-swap-cost.spec.js` | An unrelated swap redraws no chart (fails on old code with 2); a theme switch still does |
 | Browser | `e2e/field-outbox-owner.spec.js` | Offline outbox replays only the saving account's (and legacy) entries |

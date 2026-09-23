@@ -89,10 +89,14 @@ def _cache_is_shared() -> bool:
     LocMemCache and DummyCache are per-process, so counting in them is no
     better than counting in a module-level dict — and worse, because it would
     look like it had been fixed. Anything else (Redis here) is shared.
-    """
-    from django.core.cache import cache
 
-    backend = type(cache).__module__.lower()
+    Ask the configured alias, not `django.core.cache.cache`: that is a
+    ConnectionProxy, whose type names `django.utils.connection` whatever the
+    backend, so the check answered "shared" for LocMemCache too.
+    """
+    from django.core.cache import DEFAULT_CACHE_ALIAS, caches
+
+    backend = type(caches[DEFAULT_CACHE_ALIAS]).__module__.lower()
     return "locmem" not in backend and "dummy" not in backend
 
 
