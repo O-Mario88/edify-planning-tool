@@ -16,7 +16,7 @@ modern workspace out of that compatibility layer.
 <div class="px-4 sm:px-6 pt-5 max-w-[1500px] mx-auto">
 
 <!-- Premium Header Pane -->
-<div class="edify-page-header platform-hero">
+<div class="edify-page-header platform-hero relative overflow-hidden">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
@@ -121,8 +121,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <div class="text-[12px] font-semibold {% if c.status == 'pass' %}text-emerald-800{% elif c.status == 'warn' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.label }}</div>
 <span class="shrink-0 edify-text-caption font-bold {% if c.status == 'pass' %}text-emerald-700{% elif c.status == 'warn' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.actual }}</span>
 </div>
-{% if c.detail %}<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.detail }}</div>{% endif %}
-{% if c.status != 'pass' %}<div class="edify-text-caption text-slate-400 mt-0.5">Expected {{ c.expected }} · {{ c.owner }}</div>{% endif %}
+{% if c.detail %}<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.detail }}</div>{% endif %}
+{% if c.status != 'pass' %}<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">Expected {{ c.expected }} · {{ c.owner }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -137,8 +137,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.backgroundAutomation.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -177,8 +177,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.interactionTelemetry.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% endfor %}
 </div>
@@ -198,8 +198,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.outbox.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">The event backbone is quiet and healthy.</div>
@@ -219,8 +219,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.integrations.checks %}
 <div class="p-3 rounded-surface bg-amber-50">
 <div class="text-[12px] font-semibold text-amber-800">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>
 </div>
 {% endfor %}
 </div>
@@ -243,8 +243,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
 <a href="{{ c.resolution_link }}" class="shrink-0 edify-text-caption font-bold edify-primary-text">Open queue</a>
 </div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }} · {{ c.owner }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }} · {{ c.owner }}</div>
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">All data-quality queues are clear.</div>
@@ -259,8 +259,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.authLockout.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -275,8 +275,8 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% for c in health.unmatchedSsa.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5 wrap-anywhere">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5 wrap-anywhere">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -301,12 +301,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <div class="divide-y divide-slate-100 space-y-3.5">
 
 <!-- Check 1: School without cluster -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">1. Schools without cluster assignments</span>
 <span class="text-[12px] text-slate-500 block">Schools that are standalone and not part of an operational region cluster.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.unclusteredSchools > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unclusteredSchools }} Schools</span>
 {% else %}
@@ -316,12 +316,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 2: Scheduled without budget lines -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">2. Scheduled activities missing budget lines</span>
 <span class="text-[12px] text-slate-500 block">Activity budget items must carry cost設定 references.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.scheduledActivitiesMissingCostLines > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.scheduledActivitiesMissingCostLines }} Items</span>
 {% else %}
@@ -331,12 +331,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 3: Stuck in planning -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">3. Activities stuck in Planning phase</span>
 <span class="text-[12px] text-slate-500 block">Activities marked as Planned that have not transitioned to execution.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.stuckInPlanning > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.stuckInPlanning }} Items</span>
 {% else %}
@@ -346,12 +346,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 4: Partner schedule lag -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">4. Partner work missing from My Plan</span>
 <span class="text-[12px] text-slate-500 block">Work assigned to partner that has not yet been scheduled by them.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerScheduledMissing > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissing }} Items</span>
 {% else %}
@@ -361,12 +361,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 5: Evidence missing -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">5. Completed activities with missing evidence</span>
 <span class="text-[12px] text-slate-500 block">Executed work lacking required visit confirmation attachments.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.completedActivitiesWithoutEvidence > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.completedActivitiesWithoutEvidence }} Items</span>
 {% else %}
@@ -376,12 +376,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 6: SF ID missing -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">6. Completed activities missing Salesforce ID</span>
 <span class="text-[12px] text-slate-500 block">Completed activities that have not been linked to Salesforce database logs.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.completedActivitiesWithoutActivityCode > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.completedActivitiesWithoutActivityCode }} Items</span>
 {% else %}
@@ -391,12 +391,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 7: IA Verification bypassed -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">7. Skipped IA verification</span>
 <span class="text-[12px] text-slate-500 block">Closed activities that bypassed the IA quality check step.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.iaSkipped > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.iaSkipped }} Alerts</span>
 {% else %}
@@ -406,12 +406,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 8: Clearance sequence breach -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">8. Accounts clearance processed before IA verification</span>
 <span class="text-[12px] text-slate-500 block">Activities where finance release or reimbursement claim was cleared before IA review.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.accountsClearanceBeforeIa > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.accountsClearanceBeforeIa }} Items</span>
 {% else %}
@@ -421,12 +421,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 9: NetSuite ID missing -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">9. Closed activities with NetSuite ID missing</span>
 <span class="text-[12px] text-slate-500 block">Closed activities missing a reconciled finance expense reference.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.netsuiteIdMissing > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.netsuiteIdMissing }} Items</span>
 {% else %}
@@ -438,12 +438,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 
 <!-- Check 10: Closed missing analytics -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">10. Closed activities missing from analytics</span>
 <span class="text-[12px] text-slate-500 block">Closed activities that have not been published to report targets database.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.closedMissingAnalytics > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.closedMissingAnalytics }} Items</span>
 {% else %}
@@ -453,12 +453,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Ecosystem seam checks (2026-07 remediation): broken relationships BETWEEN features. -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">11. Salesforce-complete activities missing from the IA queue</span>
 <span class="text-[12px] text-slate-500 block">Activity has a Salesforce ID but never reached IA verification.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.salesforceCompleteNotInIaQueue > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.salesforceCompleteNotInIaQueue }} Items</span>
 {% else %}
@@ -466,12 +466,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">12. IA-cleared money activities missing from the finance queue</span>
 <span class="text-[12px] text-slate-500 block">IA verified with money attached but no accountability/payment queue entry.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.iaClearedMissingFinance > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.iaClearedMissingFinance }} Items</span>
 {% else %}
@@ -479,12 +479,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">13. Over-spend accountability without a reimbursement</span>
 <span class="text-[12px] text-slate-500 block">Accepted spend exceeds the advance but no reimbursement was generated.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.overspendMissingReimbursement > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.overspendMissingReimbursement }} Items</span>
 {% else %}
@@ -492,12 +492,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">14. Finance-cleared activities not closed</span>
 <span class="text-[12px] text-slate-500 block">Accounting is terminal but the activity never passed the closure gate.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.financeClearedNotClosed > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.financeClearedNotClosed }} Items</span>
 {% else %}
@@ -505,12 +505,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">15. Special Project activities missing intervention context</span>
 <span class="text-[12px] text-slate-500 block">Project-linked activity types that require a focus intervention have none.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.projectActivitiesMissingIntervention > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.projectActivitiesMissingIntervention }} Items</span>
 {% else %}
@@ -518,12 +518,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">16. Leadership actions without an accountable owner</span>
 <span class="text-[12px] text-slate-500 block">Open field-debrief actions with no owner set.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.leadershipActionsMissingOwner > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.leadershipActionsMissingOwner }} Items</span>
 {% else %}
@@ -531,12 +531,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">17. Duplicate partner payments</span>
 <span class="text-[12px] text-slate-500 block">More than one PartnerPayment ledger row for a single activity.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.duplicatePartnerPayments > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.duplicatePartnerPayments }} Items</span>
 {% else %}
@@ -544,12 +544,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">18. Partner activities paid without a payment ledger row</span>
 <span class="text-[12px] text-slate-500 block">payment_status is paid but no PartnerPayment exists (legacy bypass).</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerPaidWithoutPayment > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.partnerPaidWithoutPayment }} Items</span>
 {% else %}
@@ -557,12 +557,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 </div>
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">19. Current-FY SSA readiness satisfied by a prior-FY record</span>
 <span class="text-[12px] text-slate-500 block">School reads done/partner_assigned with no current-FY SSA behind it.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.staleFyReadiness > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.staleFyReadiness }} Items</span>
 {% else %}
@@ -571,12 +571,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">20. Demo/seed data on production database</span>
 <span class="text-[12px] text-slate-500 block">The database is stamped production but carries the demo-seed marker or @edify.test accounts — local data must never reach the live system.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.demoDataOnProduction > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.demoDataOnProduction }} Items</span>
 {% else %}
@@ -585,12 +585,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">21. Environment stamp missing</span>
 <span class="text-[12px] text-slate-500 block">This database has no environment identity stamp — run migrate (or stamp_environment) so the local/production guard can protect it.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.environmentStampMissing > 0 %}
 <span class="text-amber-600 text-[12px] font-semibold uppercase font-semibold">Missing</span>
 {% else %}
@@ -600,12 +600,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 11: Clustered but out of Planning -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">11. Clustered schools excluded from Planning</span>
 <span class="text-[12px] text-slate-500 block">Clustered schools whose readiness state keeps them out of the Planning workspace.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.clusteredSchoolsNotInPlanning > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsNotInPlanning }} Schools</span>
 {% else %}
@@ -615,12 +615,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 12: Clustered without cluster link -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">12. Clustered schools missing a cluster link</span>
 <span class="text-[12px] text-slate-500 block">Schools marked clustered with no cluster reference or no cluster assignment row.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.clusteredSchoolsMissingAssignment > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsMissingAssignment }} Schools</span>
 {% else %}
@@ -630,12 +630,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 13: Partner-assigned still in Staff Planning -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">13. Partner-assigned schools still in Staff Planning</span>
 <span class="text-[12px] text-slate-500 block">Pending partner assignments whose school still renders actionable in Staff Planning.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerAssignedStillInStaffPlanning > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignedStillInStaffPlanning }} Items</span>
 {% else %}
@@ -645,12 +645,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 14: Partner work invisible to partner -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">14. Partner work invisible to any partner</span>
 <span class="text-[12px] text-slate-500 block">Active assignments whose partner has no user account, plus partner activities with no partner set.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerAssignmentsInvisibleToPartner > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignmentsInvisibleToPartner }} Items</span>
 {% else %}
@@ -660,12 +660,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 15: Partner scheduled missing from Partner Plan -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">15. Partner-scheduled work missing from Partner Plan</span>
 <span class="text-[12px] text-slate-500 block">Partner-scheduled activities whose assigned partner has no user link to view them.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerScheduledMissingFromPartnerPlan > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingFromPartnerPlan }} Items</span>
 {% else %}
@@ -675,12 +675,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 16: Partner work without staff monitor -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">16. Partner activities with no staff monitor</span>
 <span class="text-[12px] text-slate-500 block">Partner-delivered activities invisible to staff My Plan monitoring.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.partnerScheduledMissingMonitoring > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingMonitoring }} Items</span>
 {% else %}
@@ -690,12 +690,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 17: Staff scheduled without owner -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">17. Scheduled staff activities with no owner</span>
 <span class="text-[12px] text-slate-500 block">Scheduled staff-delivery activities with no responsible staff — in nobody's My Plan.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.staffScheduledMissingOwner > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.staffScheduledMissingOwner }} Items</span>
 {% else %}
@@ -705,12 +705,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 18: Cluster activity missing cluster -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">18. Cluster activities not linked to a cluster</span>
 <span class="text-[12px] text-slate-500 block">Cluster meetings/trainings that carry no cluster reference.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.clusterActivityMissingCluster > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusterActivityMissingCluster }} Items</span>
 {% else %}
@@ -720,12 +720,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 19: Project schools without project activity -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">19. Project schools with no project activity this FY</span>
 <span class="text-[12px] text-slate-500 block">Schools assigned to a project that have no project activity planned — missing from PC planning.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.projectSchoolsWithoutProjectActivity > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectSchoolsWithoutProjectActivity }} Schools</span>
 {% else %}
@@ -735,12 +735,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 20: Project activities unowned -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">20. Project activities with no responsible staff</span>
 <span class="text-[12px] text-slate-500 block">Project-linked activities that no staff member owns.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.projectActivitiesUnowned > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectActivitiesUnowned }} Items</span>
 {% else %}
@@ -750,12 +750,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 21: Budget lines missing catalogue -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">21. Budget lines missing a Cost Catalogue reference</span>
 <span class="text-[12px] text-slate-500 block">Cost lines with no catalogue id or version — pricing cannot be audited.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.budgetLinesMissingCatalogue > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetLinesMissingCatalogue }} Lines</span>
 {% else %}
@@ -765,12 +765,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 22: Active plan missing date -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">22. Active-plan activities with no planned date</span>
 <span class="text-[12px] text-slate-500 block">Scheduled, partner-scheduled or in-progress activities missing a planned date.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.activePlanMissingDate > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.activePlanMissingDate }} Items</span>
 {% else %}
@@ -780,12 +780,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 23: Terminal statuses still in My Plan feed -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">23. Terminal-status activities still in the My Plan feed</span>
 <span class="text-[12px] text-slate-500 block">Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.closedStillInMyPlanFeed > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.closedStillInMyPlanFeed }} Items</span>
 {% else %}
@@ -795,12 +795,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 24: Confirmed weekly fund requests drifted from their activities -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">24. Confirmed weekly requests drifted from their activities</span>
 <span class="text-[12px] text-slate-500 block">Weekly fund requests past the draft stage whose activity budget lines no longer sum to the confirmed total — a schedule change after approval needs reconciliation, not a silent rewrite.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.confirmedWeeklyRequestsDrifted > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.confirmedWeeklyRequestsDrifted }} Items</span>
 {% else %}
@@ -810,12 +810,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 25: School visits scheduled without a Daily Visit Batch -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">25. School visits missing a Daily Visit Batch</span>
 <span class="text-[12px] text-slate-500 block">Staff-conducted school visits should always be priced through a shared day's Daily Visit Batch, never in isolation.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.scheduledVisitsMissingBatch > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.scheduledVisitsMissingBatch }} Items</span>
 {% else %}
@@ -825,12 +825,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 26: Daily Visit Batch mixes primary and secondary districts -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">26. Daily Visit Batch mixing primary/secondary districts</span>
 <span class="text-[12px] text-slate-500 block">A single day's batch must never contain both primary and secondary district schools.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.mixedDistrictBatches > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.mixedDistrictBatches }} Items</span>
 {% else %}
@@ -840,12 +840,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 27: Secondary districts combined without an approved group -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">27. Secondary districts combined without CD approval</span>
 <span class="text-[12px] text-slate-500 block">A secondary-district batch spanning more than one district must be covered by a single CD/Admin-approved Secondary District Group.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.unapprovedSecondaryGroupBatches > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unapprovedSecondaryGroupBatches }} Items</span>
 {% else %}
@@ -855,12 +855,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 28: Batch-linked activity missing cost-line breakdown -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">28. Daily Visit Batch activity missing cost breakdown</span>
 <span class="text-[12px] text-slate-500 block">Every batch-linked school visit should carry its Transport/Lunch(/Accommodation/Dinner) component lines, not a lump total.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.batchActivitiesMissingCostLines > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchActivitiesMissingCostLines }} Items</span>
 {% else %}
@@ -870,12 +870,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 29: Daily Visit Batch school count drifted -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">29. Daily Visit Batch school count out of sync</span>
 <span class="text-[12px] text-slate-500 block">The batch's stored school count no longer matches its live active members — a recalculation was skipped.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.batchSchoolCountMismatch > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchSchoolCountMismatch }} Items</span>
 {% else %}
@@ -885,12 +885,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 30: Under-target batch missing a reason -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">30. Under-target Daily Visit Batch missing a reason</span>
 <span class="text-[12px] text-slate-500 block">A batch scheduled below the CD's daily school-visit target should always carry the staff member's reason.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.underTargetBatchesMissingReason > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.underTargetBatchesMissingReason }} Items</span>
 {% else %}
@@ -900,12 +900,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 31: Locked batch changed after approval -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">31. Daily Visit Batch changed after approval</span>
 <span class="text-[12px] text-slate-500 block">A batch whose weekly fund request has already left draft status should never have its member schools change — needs reconciliation.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.budgetChangedAfterApprovalBypass > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetChangedAfterApprovalBypass }} Items</span>
 {% else %}
@@ -915,12 +915,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 32: Cost Catalogue missing Daily Visit Batch rates -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">32. Cost Catalogue missing Daily Visit Batch rates</span>
 <span class="text-[12px] text-slate-500 block">The active catalogue must define every primary/secondary daily rate (transport, lunch, accommodation, overnight dinner) used for shared visit-day pricing.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.catalogueMissingDailyBatchKeys > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.catalogueMissingDailyBatchKeys }} Items</span>
 {% else %}
@@ -930,12 +930,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Check 33: Districts missing primary/secondary classification -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">33. Districts missing primary/secondary classification</span>
 <span class="text-[12px] text-slate-500 block">School visits cannot be scheduled in an unclassified district. Classify each district at <a href="/admin-panel/region-district-setup" class="underline hover:no-underline">Region &amp; District Setup</a>.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.districtsMissingClassification > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.districtsMissingClassification }} Items</span>
 {% else %}
@@ -946,12 +946,12 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 <!-- Route Intelligence checks (34–41): route batches vs cost batches, location
 data quality, district-rule violations, working-day overloads. -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">34. Planned visit days without a route batch</span>
 <span class="text-[12px] text-slate-500 block">Upcoming staff visit days whose cost batch has no Route Intelligence twin.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.plannedVisitNoRouteBatch > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.plannedVisitNoRouteBatch }} Days</span>
 {% else %}
@@ -960,12 +960,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">35. Schools missing coordinates with weak address data</span>
 <span class="text-[12px] text-slate-500 block">No coordinates, no structured sub-county/parish and no shipping address — route estimates for these schools need a location cleanup.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.schoolsWeakLocation > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.schoolsWeakLocation }} Schools</span>
 {% else %}
@@ -974,12 +974,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">36. Visit days mixing primary and secondary districts</span>
 <span class="text-[12px] text-slate-500 block">Strict rule: no crossing from a primary district to a secondary district on the same day.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.mixedDistrictRouteDays > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.mixedDistrictRouteDays }} Days</span>
 {% else %}
@@ -988,12 +988,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">37. Secondary districts grouped without an approved route group</span>
 <span class="text-[12px] text-slate-500 block">Multiple secondary districts on one day are only allowed inside a CD/Admin-approved Secondary Route Group.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.ungroupedSecondaryDays > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.ungroupedSecondaryDays }} Days</span>
 {% else %}
@@ -1002,12 +1002,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">38. Route load exceeds the working day</span>
 <span class="text-[12px] text-slate-500 block">Estimated travel + visit + buffer time is more than the 8h field day — reduce schools or split the day.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.routeLoadExceedsDay > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.routeLoadExceedsDay }} Days</span>
 {% else %}
@@ -1016,12 +1016,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">39. Days below the CD daily target without a reason</span>
 <span class="text-[12px] text-slate-500 block">Fewer schools than the CD's required visits per day and no recorded justification.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.belowTargetNoReason > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.belowTargetNoReason }} Days</span>
 {% else %}
@@ -1030,12 +1030,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">40. Cost batch and route batch school counts differ</span>
 <span class="text-[12px] text-slate-500 block">The costing twin and the route twin of the same visit day disagree on the school set.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.costRouteCountMismatch > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.costRouteCountMismatch }} Batches</span>
 {% else %}
@@ -1044,12 +1044,12 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">41. Scheduled visit days with low location confidence</span>
 <span class="text-[12px] text-slate-500 block">Route estimate may be inaccurate — verify sub-county / coordinates before route approval.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.routeIntelligence.lowConfidenceScheduledDays > 0 %}
 <span class="text-amber-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.lowConfidenceScheduledDays }} Days</span>
 {% else %}
@@ -1060,12 +1060,12 @@ data quality, district-rule violations, working-day overloads. -->
 
 <!-- Checks 42-43: portfolio membership invariants. Every write path refuses
 these now; these count the rows that predate the rule. -->
-<div class="flex items-center justify-between pt-3">
-<div>
+<div class="flex items-center justify-between gap-3 pt-3">
+<div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">42. Schools in another staff member's cluster</span>
 <span class="text-[12px] text-slate-500 block">A school belongs to a cluster owned by the person responsible for the school. Moving it across portfolios needs a transfer — run <span class="font-mono">audit_portfolio_ownership</span> for the affected rows.</span>
 </div>
-<div class="text-right">
+<div class="text-right shrink-0">
 {% if health.membershipOwnerMismatch > 0 %}
 <span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.membershipOwnerMismatch }} Schools</span>
 {% else %}

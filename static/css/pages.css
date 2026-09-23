@@ -6278,6 +6278,16 @@ a.hrd-figure:focus-visible {
   grid-template-columns: minmax(0, 1.3fr) minmax(3rem, 1fr) auto;
 }
 
+/* A phone card is narrower than the three column floors together (21rem):
+   the label gives way first, ending in an ellipsis with its full text as a
+   title, so the bar and its figure stay whole. */
+@media (max-width: 30rem) {
+  .hrd-bars__row {
+    grid-template-columns: minmax(0, 1.2fr) minmax(3rem, 1fr) auto;
+    gap: 0.5rem;
+  }
+}
+
 .hrd-bars__row:not(:last-child) {
   border-block-end: 1px solid var(--edify-divider);
 }

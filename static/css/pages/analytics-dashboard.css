@@ -866,9 +866,16 @@
   table-layout: auto;
 }
 
+/* The table scrolls inside its own region, like every platform table
+   (mobile-micro-ux.css sizes a "fit" table to its content, no wrapping): a
+   visible region inside the clipping panel cut the last columns off wherever
+   the card was narrower than the table — every phone and tablet, and a
+   laptop's side-by-side card. The region carries the 620px cap, so the
+   sticky header stays with the rows it heads while they scroll. */
 .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
-  overflow-x: visible !important;
-  overflow-y: visible !important;
+  overflow: auto !important;
+  max-block-size: 620px;
+  overscroll-behavior: contain;
 }
 
 /* The name column takes whatever the figure columns leave. */

@@ -137,7 +137,7 @@ Every card links to the register where the work is done.
         <div class="hrd-bars" role="list">
           {% for stage in performance.stages %}
           <div class="hrd-bars__row" role="listitem" data-stage="{{ stage.key }}">
-            <span class="hrd-bars__label">{{ stage.label }}</span>
+            <span class="hrd-bars__label" title="{{ stage.label }}">{{ stage.label }}</span>
             <span class="hrd-bars__track" role="img" aria-label="{{ stage.count }} of {{ performance.total }} reviews"><span class="hrd-bars__fill" data-tone="{% if stage.key == 'complete' %}success{% else %}primary{% endif %}" style="inline-size: {{ stage.pct }}%"></span></span>
             <span class="hrd-bars__value"><strong>{{ stage.count }}</strong> · {{ stage.pct }}%</span>
           </div>
