@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Reassign School Owner{% endblock %}
-{% block drawer_subtitle %}{{ school.name }} · {{ school.district.name|default:"No district" }}{% endblock %}
+{% block drawer_title %}Reassign owner of {{ school.name }}{% endblock %}
+{% block drawer_subtitle %}{{ school.school_id }} · {{ school.district.name|default:"No district" }}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -15,54 +15,50 @@ approved targets are flagged for reconciliation rather than rewritten.
       hx-post="/schools/{{ school.school_id }}/transfer-owner"
       hx-target="#drawer-container"
       hx-disabled-elt="find button[type=submit]"
-      class="space-y-4 text-[12px] font-semibold text-slate-600">
+      class="space-y-4 text-[12px] text-slate-600">
   {% csrf_token %}
   {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
 
-  <dl class="grid gap-3 sm:grid-cols-2 rounded-surface border border-[var(--border-card)] p-3">
-    <div><dt class="edify-text-caption text-slate-400">School</dt><dd class="text-slate-800">{{ school.name }} ({{ school.school_id }})</dd></div>
-    <div><dt class="edify-text-caption text-slate-400">District</dt><dd class="text-slate-800">{{ school.district.name|default:"—" }} <span class="edify-text-caption">unchanged by this transfer</span></dd></div>
-    <div><dt class="edify-text-caption text-slate-400">Current owner</dt><dd class="text-slate-800" data-current-owner>{{ current_owner.user.name|default:"Unassigned" }}</dd></div>
-    <div><dt class="edify-text-caption text-slate-400">Open activities</dt><dd class="text-slate-800">{{ preview.open_activities }} open · {{ preview.settled_activities }} settled</dd></div>
-  </dl>
+  <p class="text-[13px] text-slate-600">
+    Current owner: <span class="font-semibold text-slate-800" data-current-owner>{{ current_owner.user.name|default:"Unassigned" }}</span>.
+    <span class="edify-text-caption text-slate-500">District and location are unchanged by this transfer.</span>
+  </p>
 
-  <div>
-    <label for="ot-owner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">New owner <span class="text-rose-500">*</span></label>
-    <select id="ot-owner" name="new_owner_id" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-      <option value="">Choose a field officer or Programme Lead…</option>
+  <div class="space-y-1">
+    <label for="ot-owner" class="block edify-text-caption font-semibold text-slate-600">New owner <span class="text-rose-500">*</span></label>
+    <select id="ot-owner" name="new_owner_id" required class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <option value="">Select a field officer or Programme Lead</option>
       {% for staff in staff_options %}<option value="{{ staff.id }}"{% if posted.newOwnerId == staff.id %} selected{% endif %}>{{ staff.user.name }} · {{ staff.user.active_role }}</option>{% endfor %}
     </select>
   </div>
 
-  <div class="grid gap-3 sm:grid-cols-2">
-    <div>
-      <label for="ot-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date <span class="text-rose-500">*</span></label>
-      <input id="ot-date" type="date" name="effective_date" required value="{{ posted.effectiveDate|default:'' }}"
-             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-    </div>
-    <div>
-      <label for="ot-open" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Open activities</label>
-      <select id="ot-open" name="open_activity_decision" {% if not may_transfer_activities %}disabled{% endif %} class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-        <option value="keep"{% if posted.openActivityDecision == "keep" %} selected{% endif %}>Keep with their current owner</option>
-        {% if may_transfer_activities %}<option value="transfer"{% if posted.openActivityDecision == "transfer" %} selected{% endif %}>Transfer eligible open activities</option>{% endif %}
-      </select>
-      <p class="mt-1 edify-text-caption text-slate-400">Verified, confirmed and closed activities never move.</p>
-    </div>
+  <div class="space-y-1">
+    <label for="ot-date" class="block edify-text-caption font-semibold text-slate-600">Effective date <span class="text-rose-500">*</span></label>
+    <input id="ot-date" type="date" name="effective_date" required value="{{ posted.effectiveDate|default:'' }}"
+           class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
-  <div>
-    <label for="ot-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-500">*</span></label>
-    <textarea id="ot-reason" name="reason" rows="2" required class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ posted.reason|default:'' }}</textarea>
+  <div class="space-y-1">
+    <label for="ot-open" class="block edify-text-caption font-semibold text-slate-600">Open activities</label>
+    <select id="ot-open" name="open_activity_decision" aria-describedby="ot-open-help" {% if not may_transfer_activities %}disabled{% endif %} class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <option value="keep"{% if posted.openActivityDecision == "keep" %} selected{% endif %}>Keep with their current owner</option>
+      {% if may_transfer_activities %}<option value="transfer"{% if posted.openActivityDecision == "transfer" %} selected{% endif %}>Transfer eligible open activities</option>{% endif %}
+    </select>
+    <p id="ot-open-help" class="edify-text-caption text-slate-500">Verified, confirmed and closed activities never move.</p>
   </div>
 
-  <section class="rounded-surface border border-[var(--border-card)] p-3 space-y-1" aria-label="What this transfer touches" data-transfer-preview>
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What moves</p>
-    <ul class="text-[12px] text-slate-700 space-y-0.5">
-      <li>{{ preview.open_activities }} open activit{{ preview.open_activities|pluralize:"y,ies" }} ({{ preview.scheduled_activities }} scheduled)</li>
+  <div class="space-y-1">
+    <label for="ot-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+    <textarea id="ot-reason" name="reason" rows="2" required class="w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ posted.reason|default:'' }}</textarea>
+  </div>
+
+  <section class="space-y-1" aria-labelledby="ot-preview-heading" data-transfer-preview>
+    <h4 id="ot-preview-heading" class="edify-text-caption font-semibold text-slate-600">What moves</h4>
+    <ul class="text-[12px] text-slate-700 space-y-1">
+      <li>{{ preview.open_activities }} open activit{{ preview.open_activities|pluralize:"y,ies" }} ({{ preview.scheduled_activities }} scheduled) · {{ preview.settled_activities }} settled</li>
       <li>{{ preview.partner_assignments }} live partner assignment{{ preview.partner_assignments|pluralize }}</li>
       <li>{{ preview.project_memberships }} project membership{{ preview.project_memberships|pluralize }}</li>
       <li>{{ preview.open_team_actions }} open team action{{ preview.open_team_actions|pluralize }}</li>
-      <li>School geography: unchanged</li>
     </ul>
     {% for warning in preview.warnings %}<p class="edify-note" data-tone="warning">{{ warning }}</p>{% endfor %}
   </section>
@@ -74,7 +70,7 @@ approved targets are flagged for reconciliation rather than rewritten.
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">Reassign Owner</button>
+    <button type="submit" class="btn btn-primary h-8">Reassign owner</button>
   </div>
 </form>
 {% endblock %}

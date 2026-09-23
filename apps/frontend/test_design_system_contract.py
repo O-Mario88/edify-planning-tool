@@ -225,9 +225,12 @@ class DesignSystemContractTest(SimpleTestCase):
             "templates/partials/core_schools/strategy_playbook_drawer.html",
             "templates/partials/core_schools/champion_review_drawer.html",
         ):
+            # These were hand-rolled popups; they now extend the shared shell,
+            # which is the centred dialog asserted above.
             popup = (ROOT / source).read_text()
-            self.assertIn("edify-popup-dialog", popup, source)
-            self.assertIn("edify-popup-dialog__surface", popup, source)
+            self.assertIn(
+                '{% extends "components/drawers/base_drawer.html" %}', popup, source
+            )
             self.assertNotIn("translate-x-full", popup, source)
 
     def test_tailwind_aliases_resolve_to_the_semantic_token_layer(self):

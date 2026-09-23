@@ -236,7 +236,7 @@ class AClusteredSchoolIsNotClusteredAgainTest(TestCase):
 
     def test_the_drawer_opens_in_change_mode_and_needs_confirmation(self):
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
-        self.assertContains(response, "Change Cluster")
+        self.assertContains(response, "Change cluster")
         self.assertContains(response, "DC Cluster")
         refused = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",

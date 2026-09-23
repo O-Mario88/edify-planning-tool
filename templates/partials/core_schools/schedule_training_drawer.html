@@ -1,6 +1,13 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Schedule training for {{ school.name }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
 <div
+id="schedule-training-drawer-root"
+class="space-y-4"
 x-data="{
-open: true,
 delivery: 'staff',
 catalogueItemId: '',
 focusIntervention: '',
@@ -16,56 +23,13 @@ selectTraining(event) {
   this.recommendationReason = option ? option.dataset.reason || '' : '';
 }
 }"
-@close-drawer.window="open = false; setTimeout(() => $el.remove(), 300)"
-x-show="open"
-class="edify-popup-dialog fixed inset-0 z-50"
-id="schedule-training-drawer-root"
-role="dialog"
-aria-modal="true"
-aria-labelledby="schedule-core-training-title"
 >
-<!-- Backdrop Blur -->
-<div
-class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-></div>
+<div id="training-form-errors" aria-live="polite"></div>
 
-<!-- Drawer Body -->
-<div
-class="edify-popup-dialog__surface relative w-full max-w-lg edify-surface h-auto shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform"
-x-show="open"
-x-transition:enter="transition ease-out duration-300"
-x-transition:enter-start="opacity-0 scale-95"
-x-transition:enter-end="opacity-100 scale-100"
-x-transition:leave="transition ease-in duration-300"
-x-transition:leave-start="opacity-100 scale-100"
-x-transition:leave-end="opacity-0 scale-95"
->
-<div class="space-y-5 flex-1">
-<!-- Drawer Header -->
-<div class="flex items-start justify-between border-b border-slate-100 pb-4">
-<div>
-<h2 id="schedule-core-training-title" class="text-[18px] font-semibold text-slate-800 tracking-tight ">Schedule Core Training</h2>
-<p class="edify-text-caption text-slate-400 font-semibold mt-1 ">Configure annual support training details for this school.</p>
-</div>
-<button
-type="button"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
-aria-label="Close schedule Core Training dialog"
->
-&times;
-</button>
-</div>
-
-<!-- Form Error Container -->
-<div id="training-form-errors"></div>
-
-<!-- Action Form -->
 <form
 hx-post="/core-schools/schedule-training/action"
 hx-target="#training-form-errors"
-class="space-y-4 text-[12px] font-bold text-slate-700 "
+class="space-y-4 text-[13px] text-slate-700"
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
@@ -73,16 +37,10 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <input type="hidden" name="focus_intervention" :value="focusIntervention">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
-<!-- Core School Name (Read Only) -->
-<div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
-<input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
-</div>
-
-<div>
-  <label for="core_training_course" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
+<div class="space-y-1">
+  <label for="core_training_course" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
   <select id="core_training_course" required @change="selectTraining($event)" aria-describedby="core-training-help"
-    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+    class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
     <option value="">Select a training…</option>
     {% for item in catalogue_items %}
     <option value="{{ item.id }}"
@@ -92,248 +50,78 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
       data-reason="{% if item.priorityTitles %}Priority activity: {{ item.priorityTitles|join:', ' }}{% else %}Governed {{ item.category }} training.{% endif %}">{{ item.label }}</option>
     {% endfor %}
   </select>
-  <p id="core-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Every training in the Training Catalogue, whatever intervention it serves.</p>
-  {% if not catalogue_items %}<div class="mt-2 rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No training is active in the Training Catalogue.</div>{% endif %}
+  <p id="core-training-help" class="edify-text-caption text-slate-500">Any training in the Training Catalogue, whatever intervention it serves.</p>
+  <p x-show="catalogueItemId" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="trainingCategory"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="ssaIndicator"></span></p>
+  {% if not catalogue_items %}<p class="edify-note" data-tone="warning">No training is active in the Training Catalogue.</p>{% endif %}
 </div>
 
-<div x-show="catalogueItemId" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
-  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="trainingCategory"></strong></div>
-  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="ssaIndicator"></strong></div>
+<div class="space-y-1">
+  <label for="training_number" class="block edify-text-caption font-semibold text-slate-600">Training slot</label>
+  <select name="training_number" id="training_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    {% for slot in available_training_slots %}
+    <option value="{{ slot.sequence }}" {% if next_train_seq == slot.sequence %}selected{% endif %}>{{ slot.label }}</option>
+    {% empty %}
+    <option value="">No training slots available</option>
+    {% endfor %}
+  </select>
 </div>
 
-<div class="grid grid-cols-2 gap-4">
-<!-- Training Number -->
-<div>
-<label for="training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Slot</label>
-<select name="training_number" id="training_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-{% for slot in available_training_slots %}
-<option value="{{ slot.sequence }}" {% if next_train_seq == slot.sequence %}selected{% endif %}>{{ slot.label }}</option>
-{% empty %}
-<option value="">No training slots available</option>
-{% endfor %}
-</select>
+<div class="space-y-1">
+  <label for="core_training_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Planned date <span class="text-rose-500">*</span></label>
+  <input id="core_training_scheduled_date" type="date" name="scheduled_date" value="" required class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
-<!-- Planned Date -->
-<div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Planned Date</label>
-<div
-x-data="{
-open: false,
-selectedDate: '',
-currentYear: new Date().getFullYear(),
-currentMonth: new Date().getMonth(),
-months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-days: [],
-init() {
-if (this.selectedDate) {
-/* A saved date is a calendar day, not an instant: read its parts, so a reader west of UTC is not shown the previous month (controls audit F-07, 2026-09-14). */ let parts = String(this.selectedDate).slice(0, 10).split('-').map(Number); let d = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
-if (!isNaN(d.getTime())) {
-this.currentYear = d.getFullYear();
-this.currentMonth = d.getMonth();
-}
-}
-this.getDays();
-},
-getDays() {
-let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-this.days = [];
-for (let i = 0; i < firstDay; i++) {
-this.days.push(null);
-}
-for (let d = 1; d <= lastDate; d++) {
-this.days.push(d);
-}
-},
-prevMonth() {
-if (this.currentMonth === 0) {
-this.currentMonth = 11;
-this.currentYear--;
-} else {
-this.currentMonth--;
-}
-this.getDays();
-},
-nextMonth() {
-if (this.currentMonth === 11) {
-this.currentMonth = 0;
-this.currentYear++;
-} else {
-this.currentMonth++;
-}
-this.getDays();
-},
-selectDay(day) {
-if (day === null) return;
-let monthStr = String(this.currentMonth + 1).padStart(2, '0');
-let dayStr = String(day).padStart(2, '0');
-this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
-this.open = false;
-},
-formatDate(dateStr) {
-if (!dateStr) return 'Select Date';
-let parts = dateStr.split('-');
-if (parts.length !== 3) return dateStr;
-let d = new Date(parts[0], parts[1] - 1, parts[2]);
-return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-},
-isSelected(day) {
-if (!day || !this.selectedDate) return false;
-let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear &&
-(parseInt(parts[1]) - 1) === this.currentMonth &&
-parseInt(parts[2]) === day;
-}
-}"
-class="relative "
->
-<!-- Dropdown Trigger button -->
-<button
-type="button"
-@click="open = !open"
-class="w-full h-8 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
->
-<div class="flex items-center gap-2">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-</svg>
-<span x-text="formatDate(selectedDate)"></span>
-</div>
-<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-</svg>
-</button>
-
-<input type="hidden" name="scheduled_date" :value="selectedDate" required>
-
-<!-- Calendar Popover Card -->
-<div
-x-show="open"
-@click.outside="open = false"
-class="absolute right-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
-style="display: none;"
-x-transition:enter="transition ease-out duration-100"
-x-transition:enter-start="opacity-0 transform scale-95"
-x-transition:enter-end="opacity-100 transform scale-100"
-x-transition:leave="transition ease-in duration-75"
-x-transition:leave-start="opacity-100 transform scale-100"
-x-transition:leave-end="opacity-0 transform scale-95"
->
-<!-- Header -->
-<div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-</button>
-<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-</button>
-</div>
-
-<!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
-<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-</div>
-
-<!-- Days Grid -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
-<template x-for="(day, index) in days" :key="index">
-<div>
-<button
-type="button"
-x-show="day !== null"
-@click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
-x-text="day"
-></button>
-</div>
-</template>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<!-- SSA recommendation remains advisory; the selected Training owns the saved association. -->
-<div>
+{% comment %}The SSA recommendation stays advisory; the selected Training owns the saved association.{% endcomment %}
 {% if recommendations %}
-<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-bold space-y-1">
-<p class="font-semibold edify-text-caption">Recommended focus areas based on latest SSA:</p>
-{% for r in recommendations %}
-<p>&bull; {{ r.label }} (Score: {{ r.score }}/10)</p>
-{% endfor %}
+<div class="space-y-1">
+  <p class="edify-text-caption font-semibold text-slate-600">Recommended focus areas from the latest SSA</p>
+  <ul class="edify-text-caption text-slate-500 space-y-1">
+    {% for r in recommendations %}
+    <li>{{ r.label }} ({{ r.score }}/10)</li>
+    {% endfor %}
+  </ul>
 </div>
 {% endif %}
+
+<div class="space-y-1">
+  <label for="expected_participants" class="block edify-text-caption font-semibold text-slate-600">Expected participants</label>
+  <input type="number" name="expected_participants" id="expected_participants" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 
-<div class="grid grid-cols-2 gap-4">
-<!-- Expected Participants -->
-<div>
-<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Participants</label>
-<input type="number" name="expected_participants" id="expected_participants" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
+<div class="space-y-1">
+  <label for="duration_hours" class="block edify-text-caption font-semibold text-slate-600">Duration (hours)</label>
+  <input type="number" name="duration_hours" id="duration_hours" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 
-<!-- Total Duration -->
-<div>
-<label for="duration_hours" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Duration (Hours)</label>
-<input type="number" name="duration_hours" id="duration_hours" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
-</div>
-</div>
-
-<!-- Delivery Option -->
-<div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Delivery Type</label>
-<select aria-label="Delivery type" x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="staff">Internal Field Staff (CCEO)</option>
-<option value="partner">Partner Agency Assignment</option>
-</select>
+<div class="space-y-1">
+  <label for="core_training_delivery_type" class="block edify-text-caption font-semibold text-slate-600">Delivery</label>
+  <select id="core_training_delivery_type" aria-label="Delivery type" x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    <option value="staff">Internal field staff (CCEO)</option>
+    <option value="partner">Partner agency</option>
+  </select>
 </div>
 
-<!-- Partner Selection (Conditional) -->
 <div x-show="delivery === 'partner'" class="space-y-1" style="display: none;">
-<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Partner Agency</label>
-<select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="">Select Partner...</option>
-{% for p in partners %}
-<option value="{{ p.id }}">{{ p.name }}</option>
-{% endfor %}
-</select>
+  <label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">Partner</label>
+  <select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    <option value="">Select a partner…</option>
+    {% for p in partners %}
+    <option value="{{ p.id }}">{{ p.name }}</option>
+    {% endfor %}
+  </select>
 </div>
 
-<!-- Purpose text -->
-<div>
-<label for="training_purpose" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Purpose &amp; Meeting Description</label>
-<textarea name="training_purpose" id="training_purpose" rows="2.5" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this support training..."></textarea>
+<div class="space-y-1">
+  <label for="training_purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose and description</label>
+  <textarea name="training_purpose" id="training_purpose" rows="3" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Goal of this training"></textarea>
 </div>
 
-<!-- Cost Preview (Automated Catalogue rates) -->
-<div class="p-4 rounded-surface bg-slate-50  space-y-2">
-<div class="flex items-center justify-between text-[12px] text-slate-500 font-semibold">
-<span>Minimum Viable Cost</span>
-<span class="text-slate-800 font-semibold">Auto-costed</span>
-</div>
-<p class="edify-text-caption text-slate-400 leading-normal">Staff planning uses minimum viable rates. The same planned quantities are priced at country operational rates for funding approval.</p>
-</div>
+<p class="edify-text-caption text-slate-500">Costed automatically at minimum viable rates.</p>
 
-<!-- Actions -->
-<div class="flex items-center gap-3 pt-3 border-t border-slate-100">
-<button
-type="submit"
-class="flex-1 h-8 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
->
-<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Confirm &amp; Schedule
-</button>
-<button
-type="button"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-class="px-5 h-9 rounded-surface bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
->
-Cancel
-</button>
+<div class="drawer-footer">
+  <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+  <button type="submit" class="btn btn-primary h-8">Schedule training</button>
 </div>
 </form>
 </div>
-</div>
-</div>
+{% endblock %}

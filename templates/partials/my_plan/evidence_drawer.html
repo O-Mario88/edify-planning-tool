@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Upload Evidence{% endblock %}
-{% block drawer_subtitle %}{{ act.activity_type|title|replace_underscore }} — the platform asks only for what this activity requires{% endblock %}
+{% block drawer_title %}Upload evidence{% if act.school %} for {{ act.school.name }}{% elif act.cluster %} for {{ act.cluster.name }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -17,21 +17,10 @@ partner work at Confirm Salesforce Entry.
   <div id="evidence-errors" aria-live="polite"></div>
 
   {% if google_drive_folder_url %}
-  <div class="rounded-overlay border border-sky-200 bg-sky-50/70 p-3 flex items-center justify-between gap-3 shadow-xs">
-    <div class="flex items-center gap-2.5 min-w-0">
-      <div class="w-8 h-8 rounded-control bg-sky-100 flex items-center justify-center shrink-0 text-sky-600">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
-      </div>
-      <div class="min-w-0">
-        <p class="text-[12px] font-bold text-slate-800">Team Google Drive</p>
-        <p class="text-xs text-slate-500 truncate">Shared documentation folder</p>
-      </div>
-    </div>
-    <a href="{{ google_drive_folder_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shrink-0 transition-colors shadow-xs">
-      <span>Open Drive</span>
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-    </a>
-  </div>
+  <p class="edify-text-caption text-slate-500">
+    Shared documentation:
+    <a href="{{ google_drive_folder_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold edify-primary-text hover:underline">Open team Google Drive</a>
+  </p>
   {% endif %}
 
   {% for item in evidence_checklist %}
@@ -69,13 +58,13 @@ partner work at Confirm Salesforce Entry.
             if (this.$refs.storageInput) this.$refs.storageInput.value = '';
           }
         }"
-        class="edify-surface rounded-overlay border {% if item.uploaded %}border-emerald-200{% else %}border-[var(--border-card)]{% endif %} p-4 shadow-sm space-y-3">
+        class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
     {% csrf_token %}
     <input type="hidden" name="evidence_kind" value="{{ item.kind }}">
     <div class="flex items-center justify-between gap-3">
-      <div>
-        <p class="text-[13px] font-bold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
-        <p class="edify-text-caption font-medium text-slate-400">Snap a photo on mobile or upload a PDF/photo. Converted to paper A4 size.</p>
+      <div class="space-y-1">
+        <p class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
+        <p class="edify-text-caption text-slate-500">A PDF or a photo; a photo is converted to an A4 PDF.</p>
       </div>
       {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
     </div>
@@ -90,36 +79,36 @@ partner work at Confirm Salesforce Entry.
            class="hidden" @change="handleFileSelect($event)">
 
     <!-- Action Buttons for Mobile Photo vs Device Storage -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+    <div class="grid grid-cols-2 gap-2" data-keep-columns>
       <button type="button" @click="$refs.cameraInput.click()"
-              class="flex items-center justify-center gap-2 px-3 py-2 rounded-control bg-sky-50 text-sky-800 hover:bg-sky-100 active:bg-sky-200 border border-sky-200 text-[12px] font-bold transition-all shadow-2xs">
-        <svg class="w-4 h-4 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              class="btn btn-secondary min-h-11 w-full gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
           <circle cx="12" cy="13" r="3"/>
         </svg>
-        <span>Take Photo (Camera)</span>
+        <span>Take photo</span>
       </button>
       <button type="button" @click="$refs.storageInput.click()"
-              class="flex items-center justify-center gap-2 px-3 py-2 rounded-control bg-slate-50 text-slate-800 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 text-[12px] font-bold transition-all shadow-2xs">
-        <svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              class="btn btn-secondary min-h-11 w-full gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
-        <span>Upload from Files</span>
+        <span>Choose file</span>
       </button>
     </div>
 
     <!-- Selected file indicator -->
-    <div x-show="hasFile" x-cloak class="flex items-center justify-between gap-2 p-2.5 rounded-control bg-emerald-50 border border-emerald-200 text-emerald-900 text-[12px]">
+    <div x-show="hasFile" x-cloak class="flex items-center justify-between gap-2 px-3 py-2 rounded-control border border-emerald-200 text-emerald-700 text-[12px]">
       <div class="flex items-center gap-2 min-w-0">
-        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
         </svg>
         <div class="min-w-0">
-          <p class="font-bold truncate" x-text="fileName"></p>
-          <p class="text-xs text-emerald-700 font-medium">Selected (<span x-text="fileSize"></span>) — ready to upload</p>
+          <p class="font-semibold truncate" x-text="fileName"></p>
+          <p class="edify-text-caption font-medium">Selected (<span x-text="fileSize"></span>), ready to upload</p>
         </div>
       </div>
-      <button type="button" @click="clearFile()" class="text-emerald-700 hover:text-emerald-950 text-xs font-bold px-2 py-1 rounded-control hover:bg-emerald-100 shrink-0">
+      <button type="button" @click="clearFile()" class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
         Change
       </button>
     </div>
@@ -128,32 +117,32 @@ partner work at Confirm Salesforce Entry.
     {% comment %} Required for staff — their upload carries its Salesforce
     entry. Partners never see this field: IA records theirs at Confirm
     Salesforce Entry (§12). {% endcomment %}
-    <div>
-      <label for="ev-sf-{{ item.kind }}" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce ID <span class="text-rose-500">*</span></label>
+    <div class="space-y-1">
+      <label for="ev-sf-{{ item.kind }}" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>
       <input id="ev-sf-{{ item.kind }}" name="salesforce_id" type="text" maxlength="30" required
              {% if act.salesforce_activity_id %}value="{{ act.salesforce_activity_id }}"{% endif %}
              placeholder="The activity's Salesforce entry ID"
-             class="mt-1 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+             class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
     </div>
     {% endif %}
-    <button type="submit" class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold text-white transition-colors">
+    <button type="submit" class="btn btn-primary h-8">
       Upload {{ item.label }}
     </button>
   </form>
   {% empty %}
-  <p class="rounded-surface border border-slate-100 bg-slate-50 p-3 text-[13px] font-semibold text-slate-500">This activity type declares no required form — upload is optional.</p>
+  <p class="text-slate-500">This activity type declares no required form, so upload is optional.</p>
   {% endfor %}
 
   {% if evidence_list %}
-  <div class="space-y-1.5 pt-1">
-    <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded</p>
-    <div class="divide-y divide-slate-100 rounded-control border border-slate-100">
+  <div class="space-y-1">
+    <p class="edify-text-caption font-semibold text-slate-600">Already uploaded</p>
+    <div class="divide-y divide-slate-100 rounded-control border border-slate-200">
       {% for ev in evidence_list %}
       <div class="flex items-center justify-between gap-3 px-3 py-2">
-        <a href="/api/evidence/{{ ev.id }}/file" target="_blank" rel="noopener" class="font-bold text-slate-700 truncate hover:edify-primary-text">{{ ev.original_name }}</a>
+        <a href="/api/evidence/{{ ev.id }}/file" target="_blank" rel="noopener" class="font-semibold text-slate-700 truncate hover:edify-primary-text">{{ ev.original_name }}</a>
         <span class="flex items-center gap-2 shrink-0">
-          <span class="edify-text-caption text-slate-400 font-semibold">{{ ev.kind }}</span>
-          <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-bold edify-primary-text hover:underline">Download</a>
+          <span class="edify-text-caption text-slate-500 font-semibold">{{ ev.kind }}</span>
+          <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-semibold edify-primary-text hover:underline">Download</a>
         </span>
       </div>
       {% endfor %}
@@ -162,7 +151,7 @@ partner work at Confirm Salesforce Entry.
   {% endif %}
 
   <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="edify-surface px-4 h-8 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Done</button>
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Done</button>
   </div>
 </div>
 {% endblock %}

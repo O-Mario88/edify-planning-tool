@@ -1,14 +1,14 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Assign School Support{% endblock %}
-{% block drawer_subtitle %}{% if school %}{{ school.name }}{% else %}Cluster {{ cluster.name }}{% endif %}{% endblock %}
+{% block drawer_title %}Assign {% if school %}{{ school.name }}{% else %}{{ cluster.name }}{% endif %} to a partner{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form
   hx-post="/planning/assign-partner-action"
   hx-target="#assign-errors"
   hx-disabled-elt="find button[type=submit]"
-  class="space-y-4 text-[12px] font-bold text-slate-600"
+  class="space-y-4 text-[12px] font-medium text-slate-600"
   x-data="{
     purposeOfVisit: '',
     catalogueItemId: '{% if cluster and primary_catalogue_items %}{{ primary_catalogue_items.0.catalogueItemId }}{% endif %}',
@@ -49,103 +49,92 @@
 
   <div id="assign-errors" aria-live="polite"></div>
 
-  <div>
-    <label for="partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner name</label>
+  <div class="space-y-1">
+    <label for="partner_id" class="block edify-text-caption font-semibold text-slate-600">Partner <span class="text-rose-500">*</span></label>
     <select name="partner_id" id="partner_id" required
-      class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+      class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
       <option value="">Select partner…</option>
       {% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}
     </select>
   </div>
 
   {% if school %}
-  <div>
-    <label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for assigning</label>
+  <div class="space-y-1">
+    <label for="purpose_of_visit" class="block edify-text-caption font-semibold text-slate-600">Reason for assigning <span class="text-rose-500">*</span></label>
     <select name="purpose_of_visit" id="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()"
-      class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+      class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
       <option value="">Select a reason…</option>
       {% for value, label in partner_visit_purposes %}<option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% endif %}</option>{% endfor %}
     </select>
     {% if locked_visit_reason %}
-    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} An in-school training can still be assigned.</p>
+    <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} An in-school training can still be assigned.</p>
     {% endif %}
   </div>
 
   <template x-if="showTraining">
-    <div>
-      <label for="partner_training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training</label>
+    <div class="space-y-1">
+      <label for="partner_training_activity" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
       <select id="partner_training_activity" required @change="selectTraining($event.target.value)"
         aria-describedby="partner-training-help"
-        class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+        class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
         <option value="">Select a training…</option>
         <template x-for="activity in trainingActivities" :key="activity.id">
           <option :value="activity.id" x-text="activity.label"></option>
         </template>
       </select>
-      <p id="partner-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The category and SSA association come from the governed Training Catalogue.</p>
-      <div x-show="selectedTraining" style="display:none" class="mt-2 grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
-        <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTraining ? selectedTraining.category : ''"></strong></div>
-        <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTraining ? selectedTraining.ssaIndicator : ''"></strong></div>
-      </div>
-      <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Scheduling creates a School Training automatically. After delivery, it is confirmed with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
+      <p x-show="selectedTraining" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.ssaIndicator : ''"></span></p>
+      <p id="partner-training-help" class="edify-text-caption text-slate-500">After delivery, it is confirmed with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
     </div>
   </template>
 
   <template x-if="showFollowUp">
-    <div class="space-y-3">
-      <div>
-        <label for="partner_source_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training followed up <span x-show="followUpRequiresTraining" class="text-rose-500">*</span><span x-show="!followUpRequiresTraining" class="normal-case tracking-normal font-semibold"> (optional)</span></label>
+    <div class="space-y-4">
+      <div class="space-y-1">
+        <label for="partner_source_activity" class="block edify-text-caption font-semibold text-slate-600">Training followed up <span x-show="followUpRequiresTraining" class="text-rose-500">*</span><span x-show="!followUpRequiresTraining" class="font-normal text-slate-500"> (optional)</span></label>
         <select name="source_activity_id" id="partner_source_activity" :required="followUpRequiresTraining" x-model="sourceActivityId"
-          class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+          class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
           <option value="">Select a training this school did…</option>
           <template x-for="activity in followUpActivities" :key="activity.id">
             <option :value="activity.id" x-text="activity.label"></option>
           </template>
         </select>
-        <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Trainings this School completed in Fiscal Year {{ follow_up_fy }}: at the school, and cluster trainings or meetings it attended.</p>
-<p x-show="followUpActivities.length === 0 && followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No completed training is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
-    <p x-show="followUpActivities.length === 0 && !followUpRequiresTraining" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-slate-500" role="status" data-no-prior-training>No prior training recorded. The follow-up can still be planned; its focus comes from the school's SSA.</p>
+        <p x-show="followUpActivities.length > 0" class="edify-text-caption text-slate-500">Trainings this school completed in fiscal year {{ follow_up_fy }}, at the school or at cluster sessions.</p>
+        <p x-show="followUpActivities.length === 0 && followUpRequiresTraining" class="edify-text-caption text-amber-700" role="status">No completed training is recorded for this school in fiscal year {{ follow_up_fy }}.</p>
+        <p x-show="followUpActivities.length === 0 && !followUpRequiresTraining" class="edify-text-caption text-slate-500" role="status" data-no-prior-training>No prior training recorded. The follow-up can still be planned; its focus comes from the school's SSA.</p>
       </div>
-      <div x-show="selectedSource" style="display:none">
-        <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus intervention</span>
-        <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" x-text="selectedSource ? selectedSource.interventionLabel : ''"></div>
+      <div x-show="selectedSource" style="display:none" class="space-y-1">
+        <span class="block edify-text-caption font-semibold text-slate-600">Focus intervention</span>
+        <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" x-text="selectedSource ? selectedSource.interventionLabel : ''"></div>
       </div>
     </div>
   </template>
 
   <template x-if="purposeOfVisit === 'ssa_support'">
-    <div>
-      <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus intervention</span>
-      <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">Data Gathering</div>
+    <div class="space-y-1">
+      <span class="block edify-text-caption font-semibold text-slate-600">Focus intervention</span>
+      <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">Data Gathering</div>
     </div>
   </template>
   {% else %}
   {% if primary_catalogue_items %}
-  <div class="rounded-surface border border-slate-200 bg-slate-50 p-3">
-    <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved activity</span>
-    <p class="mt-1 text-[13px] font-semibold text-slate-800">{{ primary_catalogue_items.0.displayName }}</p>
-  </div>
+  <p>Approved activity: <span class="font-semibold text-slate-800">{{ primary_catalogue_items.0.displayName }}</span></p>
   {% else %}
-  <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">No partner-deliverable activity is eligible for this Cluster.</div>
+  <p class="edify-note" data-tone="danger" role="alert">No partner-deliverable activity is eligible for this cluster.</p>
   {% endif %}
   {% endif %}
 
   {% if prior_withdrawals %}
-  <div class="rounded-surface border border-amber-200 bg-amber-50 p-3">
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-800">Previous partner withdrawal</p>
-    <p class="mt-1 font-medium text-amber-900">{{ prior_withdrawals.0.partner }} · {{ prior_withdrawals.0.reason }}</p>
+  <div class="edify-note" data-tone="warning" role="status">
+    <p class="edify-note__title">Previous partner withdrawal</p>
+    <p class="edify-note__body">{{ prior_withdrawals.0.partner }} · {{ prior_withdrawals.0.reason }}</p>
   </div>
   {% endif %}
 
-  <div>
-    <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Monitored by</span>
-    <p class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 text-[13px] font-semibold text-slate-700">{{ monitoring_staff_name }}</p>
-    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The staff member assigning this support remains responsible for monitoring it.</p>
-  </div>
+  <p>Monitored by <span class="font-semibold text-slate-800">{{ monitoring_staff_name }}</span>, who stays responsible for this support.</p>
 
   <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="px-4 h-8 rounded-control btn-premium-secondary font-bold text-[12px]">Cancel</button>
-    <button type="submit" class="schedule-drawer-submit px-4 h-8 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm">Assign to partner</button>
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="schedule-drawer-submit btn btn-primary h-8">Assign to partner</button>
   </div>
 </form>
 {% endblock %}

@@ -148,7 +148,7 @@ class SchoolProfileEditTest(TestCase):
             reverse("frontend:add_to_cluster_drawer", args=[self.school.id])
         )
         self.assertEqual(drawer.status_code, 200)
-        self.assertContains(drawer, "Change Cluster")
+        self.assertContains(drawer, "Change cluster")
         self.assertContains(drawer, "Namagunga Cluster")
 
     def test_directory_school_name_links_to_its_profile(self):
@@ -201,7 +201,7 @@ class SchoolProfileEditTest(TestCase):
         response = self.client.get(self.edit_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Current Partner Type")
+        self.assertContains(response, "Current partner type")
         for value, label in SchoolType.choices:
             self.assertContains(response, f'value="{value}"')
             self.assertContains(response, label)

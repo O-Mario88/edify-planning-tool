@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Add to the roster{% endblock %}
-{% block drawer_subtitle %}{{ partner.name }} · staff or volunteer{% endblock %}
+{% block drawer_title %}Add to the {{ partner.name }} roster{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -18,33 +18,31 @@ somebody who already appears on the record is one confirmation, not a retype.
       class="space-y-4 text-[12px] font-semibold text-slate-600">
   {% csrf_token %}
   <div id="partner-member-errors" aria-live="polite"></div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <div class="sm:col-span-2">
-      <label for="member-name" class="block text-[12px] font-semibold text-slate-700 mb-1">Name <span class="text-rose-500">*</span></label>
-      <input id="member-name" type="text" name="name" required value="{{ request.GET.name|default:'' }}" placeholder="e.g. Grace Nakato" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
-    </div>
-    <div>
-      <label for="member-role" class="block text-[12px] font-semibold text-slate-700 mb-1">Role</label>
-      <select id="member-role" name="role" class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
-        {% for value, label in roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label for="member-title" class="block text-[12px] font-semibold text-slate-700 mb-1">Title</label>
-      <input id="member-title" type="text" name="title" placeholder="e.g. Literacy trainer" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
-    </div>
-    <div>
-      <label for="member-phone" class="block text-[12px] font-semibold text-slate-700 mb-1">Phone</label>
-      <input id="member-phone" type="text" name="phone" placeholder="+256 700 000 000" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
-    </div>
-    <div>
-      <label for="member-email" class="block text-[12px] font-semibold text-slate-700 mb-1">Email</label>
-      <input id="member-email" type="email" name="email" placeholder="name@partner.org" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
-    </div>
+  <div class="space-y-1">
+    <label for="member-name" class="block edify-text-caption font-semibold text-slate-600">Name <span class="text-rose-500">*</span></label>
+    <input id="member-name" type="text" name="name" required value="{{ request.GET.name|default:'' }}" placeholder="e.g. Grace Nakato" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
   </div>
-  <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-    <button type="button" @click="$dispatch('close-drawer')" class="btn btn-secondary min-h-9">Cancel</button>
-    <button type="submit" class="btn btn-primary min-h-9">Add to roster</button>
+  <div class="space-y-1">
+    <label for="member-role" class="block edify-text-caption font-semibold text-slate-600">Role</label>
+    <select id="member-role" name="role" class="edify-surface min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
+      {% for value, label in roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label for="member-title" class="block edify-text-caption font-semibold text-slate-600">Title</label>
+    <input id="member-title" type="text" name="title" placeholder="e.g. Literacy trainer" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
+  </div>
+  <div class="space-y-1">
+    <label for="member-phone" class="block edify-text-caption font-semibold text-slate-600">Phone</label>
+    <input id="member-phone" type="text" name="phone" placeholder="+256 700 000 000" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
+  </div>
+  <div class="space-y-1">
+    <label for="member-email" class="block edify-text-caption font-semibold text-slate-600">Email</label>
+    <input id="member-email" type="email" name="email" placeholder="name@partner.org" class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-medium">
+  </div>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Add to roster</button>
   </div>
 </form>
 {% endblock %}

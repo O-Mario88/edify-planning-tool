@@ -234,7 +234,7 @@ class SchoolOwnerTransferTest(OwnershipFixture):
         self.client.force_login(self.ia)
         url = f"/schools/{self.school.school_id}/transfer-owner"
         drawer = self.client.get(url, HTTP_HX_REQUEST="true")
-        self.assertContains(drawer, "Reassign School Owner")
+        self.assertContains(drawer, f"Reassign owner of {self.school.name}")
         self.assertContains(drawer, "unchanged by this transfer")
         # Without the confirmation nothing moves.
         unconfirmed = self.client.post(

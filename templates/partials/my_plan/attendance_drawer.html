@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Attendance Headcount{% endblock %}
-{% block drawer_subtitle %}Record attendance and headcount registers for {{ act.activity_type|title|replace_underscore }}{% endblock %}
+{% block drawer_title %}Record attendance{% if act.cluster %} for {{ act.cluster.name }}{% elif act.school %} for {{ act.school.name }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -10,75 +10,63 @@ hx-post="/activities/{{ act.id }}/attendance/action"
 hx-encoding="multipart/form-data"
 hx-request='{"timeout":120000}'
 hx-target="#attendance-errors"
-class="space-y-5 text-[12px] font-bold text-slate-600"
+class="space-y-4 text-[12px] font-semibold text-slate-600"
 >
 <div id="attendance-errors"></div>
 
-<div class="space-y-4">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
-Record Participant Headcount
-</h4>
-
-<!-- Counts Grid -->
-<div class="grid grid-cols-2 gap-4">
-<div>
-<label for="teachers_attended" class="block edify-text-caption font-bold text-slate-500 uppercase">Teachers Attended</label>
+<div class="space-y-1">
+<label for="teachers_attended" class="block edify-text-caption font-semibold text-slate-600">Teachers attended</label>
 <input
 type="number"
 name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachers_attended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus font-bold text-slate-700"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-<div>
-<label for="leaders_attended" class="block edify-text-caption font-bold text-slate-500 uppercase">Leaders/Proprietors</label>
+<div class="space-y-1">
+<label for="leaders_attended" class="block edify-text-caption font-semibold text-slate-600">Leaders and proprietors attended</label>
 <input
 type="number"
 name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leaders_attended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus font-bold text-slate-700"
+class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold text-slate-700 tabular-nums focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
-</div>
 
-<!-- File Upload -->
-<div class="pt-2">
-<label for="attendance_file" class="block edify-text-caption font-bold text-slate-500 uppercase">Upload Signed Attendance Sheet</label>
-<div class="mt-1.5 p-3 bg-slate-50 rounded-surface border border-slate-200/60">
+<div class="space-y-1">
+<label for="attendance_file" class="block edify-text-caption font-semibold text-slate-600">Signed attendance sheet</label>
 <input
+id="attendance_file"
 type="file"
 name="attendance_file"
 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" capture="environment"
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
+class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
-</div>
 </div>
 
 <!-- School Attendance Checklist -->
 {% if cluster_schools %}
-<div class="pt-2 space-y-2">
-<div class="flex items-center justify-between">
-<label class="block edify-text-caption font-bold text-slate-500 uppercase">School Attendance Checklist</label>
+<div class="space-y-2">
+<div class="flex items-center justify-between gap-3">
+<p id="attendance-schools-label" class="edify-text-caption font-semibold text-slate-600">Schools that attended</p>
 {% if can_add_school %}
 <button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.cluster.id }}"
 hx-target="#drawer-container"
-class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline flex items-center gap-0.5"
+class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline"
 >
-+ Onboard New School
++ Onboard new school
 </button>
 {% endif %}
 </div>
-<p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Check all schools that attended this training/meeting session:</p>
-<div class="border border-slate-200 rounded-surface divide-y divide-slate-100 bg-slate-50/50 max-h-48 overflow-y-auto">
+<div role="group" aria-labelledby="attendance-schools-label" class="rounded-control border border-slate-200 divide-y divide-slate-100 max-h-48 overflow-y-auto">
 {% for school in cluster_schools %}
-<label class="flex items-center gap-3 px-4 py-2 hover:bg-slate-100/50 cursor-pointer text-[12px] font-semibold text-slate-700">
+<label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
 <input
 type="checkbox"
 name="attended_schools"
@@ -87,8 +75,8 @@ value="{{ school.id }}"
 class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
 >
 <div class="flex-1">
-<span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>
-<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
+<span class="font-semibold text-slate-800 block leading-tight">{{ school.name }}</span>
+<span class="edify-text-caption text-slate-500 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 </label>
 {% endfor %}
@@ -101,9 +89,9 @@ against its own school, which is what makes it eligible for the follow-up the
 session earned — and it brings its own head counts, because the cluster's
 per-school figures describe the schools that were planned for.
 {% endcomment %}
-<div class="pt-1 space-y-2" x-data="{ adding: false }">
-  <div class="flex items-center justify-between">
-    <label class="block edify-text-caption font-bold text-slate-500 uppercase">From another cluster</label>
+<div class="space-y-2" x-data="{ adding: false }">
+  <div class="flex items-center justify-between gap-3">
+    <p class="edify-text-caption font-semibold text-slate-600">Schools from another cluster</p>
     <button type="button" @click="adding = !adding"
             class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline">
       <span x-text="adding ? 'Cancel' : '+ Add a school that attended'">+ Add a school that attended</span>
@@ -111,10 +99,10 @@ per-school figures describe the schools that were planned for.
   </div>
 
   {% for g in guest_rows %}
-  <div class="flex items-center gap-3 px-4 py-2 rounded-surface border border-slate-200 bg-slate-50/50">
+  <div class="flex items-center gap-3 px-3 py-2 rounded-control border border-slate-200">
     <span class="min-w-0 flex-1">
-      <span class="block text-[13px] font-bold text-slate-800 truncate">{{ g.name }}</span>
-      <span class="block edify-text-caption font-semibold text-slate-400">{{ g.school_id }} &middot; guest</span>
+      <span class="block text-[13px] font-semibold text-slate-800 truncate">{{ g.name }}</span>
+      <span class="block edify-text-caption font-semibold text-slate-500">{{ g.school_id }} &middot; guest</span>
     </span>
     <span class="edify-text-caption font-semibold text-slate-500 tabular-nums shrink-0">
       {{ g.teachers|default:0 }}T &middot; {{ g.leaders|default:0 }}L &middot; {{ g.other|default:0 }}O
@@ -122,64 +110,52 @@ per-school figures describe the schools that were planned for.
   </div>
   {% endfor %}
 
-  <div x-show="adding" x-cloak class="rounded-surface border border-slate-200 p-3 space-y-2">
-    <label for="guest_school_id" class="block edify-text-caption font-semibold text-slate-500">School ID</label>
-    <input type="text" name="guest_school_id" id="guest_school_id" maxlength="64"
-           placeholder="The school's official ID"
-           class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+  <div x-show="adding" x-cloak class="space-y-3">
+    <div class="space-y-1">
+      <label for="guest_school_id" class="block edify-text-caption font-semibold text-slate-600">School ID</label>
+      <input type="text" name="guest_school_id" id="guest_school_id" maxlength="64"
+             aria-describedby="guest-school-help"
+             placeholder="The school's official ID"
+             class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+      <p id="guest-school-help" class="edify-text-caption text-slate-500">Not in the directory? Add it first; work needs the school's Salesforce ID.</p>
+    </div>
+    {% comment %}The per-school counts are digits, so they stay three across,
+    as in the cluster planner.{% endcomment %}
     <div class="grid grid-cols-3 gap-2" data-keep-columns>
-      <div>
-        <label for="guest_teachers" class="block edify-text-caption font-semibold text-slate-500">Teachers</label>
+      <div class="space-y-1">
+        <label for="guest_teachers" class="block edify-text-caption font-semibold text-slate-600">Teachers</label>
         <input type="number" min="0" name="guest_teachers" id="guest_teachers"
                class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
       </div>
-      <div>
-        <label for="guest_leaders" class="block edify-text-caption font-semibold text-slate-500">Leaders</label>
+      <div class="space-y-1">
+        <label for="guest_leaders" class="block edify-text-caption font-semibold text-slate-600">Leaders</label>
         <input type="number" min="0" name="guest_leaders" id="guest_leaders"
                class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
       </div>
-      <div>
-        <label for="guest_other" class="block edify-text-caption font-semibold text-slate-500">Other</label>
+      <div class="space-y-1">
+        <label for="guest_other" class="block edify-text-caption font-semibold text-slate-600">Other</label>
         <input type="number" min="0" name="guest_other" id="guest_other"
                class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
       </div>
     </div>
-    <p class="edify-text-caption font-semibold text-slate-400">
-      Not in the directory? Add it first &mdash; a school needs its Salesforce ID before work can be recorded against it.
-    </p>
   </div>
 </div>
 </div>
 {% endif %}
 
-<!-- Notes -->
-<div>
-<label for="notes" class="block edify-text-caption font-bold text-slate-500 uppercase">Optional Notes</label>
+<div class="space-y-1">
+<label for="notes" class="block edify-text-caption font-semibold text-slate-600">Notes <span class="font-normal text-slate-500">(optional)</span></label>
 <textarea
 name="notes"
 id="notes"
 rows="2"
-placeholder="Any additional details on attendance registration..."
-class="w-full p-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus font-semibold text-slate-700"
+class="w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] sm:text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
 ></textarea>
 </div>
-</div>
 
-<!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="edify-action-button secondary h-9 transition-colors"
->
-Cancel
-</button>
-<button
-type="submit"
-class="edify-action-button primary h-9 transition-colors shadow-sm"
->
-Save Attendance
-</button>
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Save attendance</button>
 </div>
 </form>
 {% endblock %}

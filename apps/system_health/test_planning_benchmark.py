@@ -202,7 +202,7 @@ class DrawerLabelTests(SimpleTestCase):
             schedule,
             "The schedule drawer is missing its required classification question.",
         )
-        self.assertEqual(schedule["purpose_of_visit"], "Purpose of Visit *")
+        self.assertEqual(schedule["purpose_of_visit"], "Purpose of visit *")
         self.assertNotEqual(schedule["purpose_of_visit"], goal)
 
 

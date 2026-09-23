@@ -613,12 +613,14 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 "templates/pages/documents/canonical_document.html",
                 "agreement-masthead edify-inverse-surface",
             ),
-            (
-                "templates/partials/core_schools/champion_review_drawer.html",
-                "edify-inverse-surface px-6 py-5 bg-[var(--edify-text)]",
-            ),
         ):
             self.assertIn(fragment, _read(template), template)
+
+        # The champion review drawer had a dark custom header; it now uses the
+        # shared drawer shell's header, so it has no inverse surface to mark.
+        champion = _read("templates/partials/core_schools/champion_review_drawer.html")
+        self.assertIn('{% extends "components/drawers/base_drawer.html" %}', champion)
+        self.assertNotIn("bg-[var(--edify-text)]", champion)
 
     def test_bespoke_workspaces_use_the_shared_page_canvas(self):
         consistency = _read("static/css/consistency.css")

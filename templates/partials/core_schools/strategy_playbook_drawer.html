@@ -1,97 +1,35 @@
-<div
-x-data="{
-open: true
-}"
-x-show="open"
-class="edify-popup-dialog fixed inset-0 z-50"
-id="strategy-playbook-drawer-root"
-role="dialog"
-aria-modal="true"
-aria-labelledby="core-strategy-playbook-title"
->
-<!-- Backdrop Blur -->
-<div
-class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-></div>
+{% extends "components/drawers/base_drawer.html" %}
 
-<!-- Drawer Body -->
-<div
-class="edify-popup-dialog__surface relative w-full max-w-lg edify-surface h-auto shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform"
-x-show="open"
-x-transition:enter="transition ease-out duration-300"
-x-transition:enter-start="opacity-0 scale-95"
-x-transition:enter-end="opacity-100 scale-100"
-x-transition:leave="transition ease-in duration-300"
-x-transition:leave-start="opacity-100 scale-100"
-x-transition:leave-end="opacity-0 scale-95"
->
-<div class="space-y-5 flex-1">
-<!-- Drawer Header -->
-<div class="flex items-start justify-between border-b border-slate-100 pb-4">
-<div>
-<h2 id="core-strategy-playbook-title" class="text-[18px] font-semibold text-slate-800 tracking-tight ">Core Strategy Playbook</h2>
-<p class="edify-text-caption text-slate-400 font-semibold mt-1 ">Guidelines for executing the 4 Visits + 4 Trainings package.</p>
-</div>
-<button
-type="button"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
-aria-label="Close Core Strategy Playbook dialog"
->
-&times;
-</button>
-</div>
+{% block drawer_title %}Core strategy playbook{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
-<!-- Core Strategy details -->
-<div class="space-y-4 text-[12px] text-slate-600 font-medium leading-relaxed">
-<div class="p-4 rounded-surface edify-primary-soft-alpha-50 border  space-y-2">
-<h3 class="text-[12px] font-semibold edify-primary-text uppercase tracking-wider">The Core Program Rule</h3>
+{% block drawer_body %}
+<div id="strategy-playbook-drawer-root" class="space-y-4 text-[13px] text-slate-600">
+<section class="space-y-1" aria-labelledby="core-playbook-rule-heading">
+<h4 id="core-playbook-rule-heading" class="edify-text-caption font-semibold text-slate-600">The Core program rule</h4>
 <p class="text-slate-700">Every core school is assigned an annual support plan consisting of 4 on-site support visits (V1–V4) and 4 interactive training workshops (T1–T4).</p>
-</div>
+</section>
 
-<div class="space-y-3">
-<h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Operational Phase Guide</h3>
-
-<div class="space-y-2.5">
-<!-- Phase 1 -->
-<div class="border-l-2 edify-primary-border pl-3">
-<h4 class="font-semibold text-slate-800 text-[12px]">Phase 1: SSA Assessment &amp; V1</h4>
-<p class="edify-text-caption text-slate-500 mt-0.5">Complete the SSA assessment to isolate the two weakest focus areas. Schedule Visit 1 focusing on primary bottlenecks.</p>
+<section class="space-y-2" aria-labelledby="core-playbook-phases-heading">
+<h4 id="core-playbook-phases-heading" class="edify-text-caption font-semibold text-slate-600">Operational phase guide</h4>
+<ol class="space-y-3">
+<li class="border-l-2 border-slate-200 pl-3">
+<p class="font-semibold text-slate-800">Phase 1: SSA assessment and V1</p>
+<p class="edify-text-caption text-slate-500">Complete the SSA assessment to isolate the two weakest focus areas. Schedule Visit 1 focusing on primary bottlenecks.</p>
+</li>
+<li class="border-l-2 border-slate-200 pl-3">
+<p class="font-semibold text-slate-800">Phase 2: Training blocks (T1 and T2)</p>
+<p class="edify-text-caption text-slate-500">Assemble school teams for target development workshops. Facilitate group exercises for classroom and leadership coaching.</p>
+</li>
+<li class="border-l-2 border-slate-200 pl-3">
+<p class="font-semibold text-slate-800">Phase 3: Partner collaboration (V2 and V3)</p>
+<p class="edify-text-caption text-slate-500">Assign specialized interventions to verified partners to leverage specific expertise in Reading Fluency or EdTech setup.</p>
+</li>
+<li class="border-l-2 border-slate-200 pl-3">
+<p class="font-semibold text-slate-800">Phase 4: Impact assessment and graduation</p>
+<p class="edify-text-caption text-slate-500">Execute follow-up SSA. Verify evidence to clear accountability. Advance qualifying core schools to Champion status.</p>
+</li>
+</ol>
+</section>
 </div>
-
-<!-- Phase 2 -->
-<div class="border-l-2 border-amber-500 pl-3">
-<h4 class="font-semibold text-slate-800 text-[12px]">Phase 2: Training Blocks (T1 &amp; T2)</h4>
-<p class="edify-text-caption text-slate-500 mt-0.5">Assemble school teams for target development workshops. Facilitate group exercises for classroom and leadership coaching.</p>
-</div>
-
-<!-- Phase 3 -->
-<div class="border-l-2 edify-primary-border pl-3">
-<h4 class="font-semibold text-slate-800 text-[12px]">Phase 3: Partner Collaboration (V2 &amp; V3)</h4>
-<p class="edify-text-caption text-slate-500 mt-0.5">Assign specialized interventions to verified partners to leverage specific expertise in Reading Fluency or EdTech setup.</p>
-</div>
-
-<!-- Phase 4 -->
-<div class="border-l-2 border-emerald-500 pl-3">
-<h4 class="font-semibold text-slate-800 text-[12px]">Phase 4: Impact Assessment &amp; Graduation</h4>
-<p class="edify-text-caption text-slate-500 mt-0.5">Execute follow-up SSA. Verify evidence to clear accountability. Advance qualifying core schools to Champion status.</p>
-</div>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Close Button -->
-<div class="pt-4 border-t border-slate-100">
-<button
-type="button"
-@click="open = false; const closingRoot = $el.closest('[data-edify-drawer], .edify-popup-dialog'); setTimeout(() => closingRoot?.remove(), 300)"
-class="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-surface edify-text-caption font-semibold uppercase tracking-wider transition-colors"
->
-Close Playbook
-</button>
-</div>
-</div>
-</div>
+{% endblock %}

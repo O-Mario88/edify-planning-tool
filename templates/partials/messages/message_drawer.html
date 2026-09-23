@@ -1,21 +1,15 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Messages{% endblock %}
-{% block drawer_subtitle %}
-{% if unread_count > 0 %}
-You have {{ unread_count }} unread thread{{ unread_count|pluralize }}
-{% else %}
-All caught up!
-{% endif %}
-{% endblock %}
+{% block drawer_subtitle %}{% if unread_count > 0 %}{{ unread_count }} unread thread{{ unread_count|pluralize }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <div class="space-y-3 text-[12px] font-semibold text-slate-600">
 
 {% if threads %}
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-<span class="edify-text-caption text-slate-400 font-semibold tracking-wider">Recent Threads</span>
-<span class="edify-text-caption text-slate-400">{{ threads|length }}</span>
+<h4 class="edify-text-caption font-semibold text-slate-600">Recent threads</h4>
+<span class="edify-text-caption text-slate-500">{{ threads|length }}</span>
 </div>
 
 <div class="space-y-1 max-h-[380px] overflow-y-auto pr-1">
@@ -42,24 +36,16 @@ class="block px-2 py-2 rounded-control hover:bg-[var(--edify-surface-muted)] tra
 {% endfor %}
 </div>
 
-<div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-center">
-<a
-href="/messages"
-class="text-[12px] font-bold edify-primary-text edify-primary-text-hover transition-colors"
->
-View All Messages
-</a>
+<div class="drawer-footer">
+<a href="/messages" class="btn btn-secondary h-8 inline-flex items-center justify-center">View all messages</a>
 </div>
 {% else %}
-<div class="py-12 text-center space-y-3">
-<div class="text-[40px] text-slate-300">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+<div class="py-8 text-center space-y-2">
+<p class="text-slate-600 font-semibold text-[12px]">No messages yet</p>
+<p class="text-slate-500 edify-text-caption">Conversations with your team will appear here.</p>
 </div>
-<p class="text-slate-400 font-semibold text-[12px]">No messages yet</p>
-<p class="text-slate-400/80 edify-text-caption">Conversations with your team will appear here.</p>
-<a href="/messages/new" class="inline-flex items-center gap-1.5 mt-2 h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold shadow-sm">
-Start a conversation
-</a>
+<div class="drawer-footer">
+<a href="/messages/new" class="btn btn-primary h-8 inline-flex items-center justify-center">Start a conversation</a>
 </div>
 {% endif %}
 

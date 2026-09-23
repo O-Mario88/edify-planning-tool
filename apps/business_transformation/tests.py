@@ -902,7 +902,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Salesforce ID")
-        self.assertContains(response, "Confirm &amp; Complete", html=True)
+        self.assertContains(response, "Confirm &amp; complete", html=True)
         self.assertNotContains(response, "Return to MFI")
         self.assertNotContains(response, "returnReason")
         self.assertNotContains(response, "salesforceEntryDate")

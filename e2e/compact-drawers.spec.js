@@ -12,7 +12,7 @@ test('scheduling, assignment and cluster creation stay centred and contained',as
  ]){
   await page.goto(flow.url);await page.locator(flow.selector).first().click();
   let surface=page.locator('.drawer-surface.active');await expect(surface).toBeVisible();
-  if(flow.nested){await surface.locator(flow.nested).first().click();surface=page.locator('.edify-popup-dialog__surface');await expect(surface.locator('form')).toBeVisible();}
+  if(flow.nested){await surface.locator(flow.nested).first().click();surface=page.locator('.drawer-surface.active');await expect(surface.locator('form')).toBeVisible();}
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
    await page.setViewportSize({width,height});
@@ -32,7 +32,7 @@ test('scheduling, assignment and cluster creation stay centred and contained',as
   }
   await page.setViewportSize({width:1290,height:900});
   await page.screenshot({path:'/tmp/drawer-'+(flow.nested?'visit':flow.url.includes('clusters')?'cluster':flow.selector.includes('assign')?'assign':'schedule')+'.png'});
-  await surface.locator(flow.nested?'[aria-label="Close schedule Core Visit dialog"]':'.drawer-close-btn').click();
+  await surface.locator('.drawer-close-btn').click();
   await expect(surface).toHaveCount(0);
  }
 });

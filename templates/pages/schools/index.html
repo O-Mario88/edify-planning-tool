@@ -203,111 +203,105 @@ hx-include="#filters-form"
 <!-- Modals section -->
 
 <!-- Modal 1: Assign to Cluster Modal -->
-<div
-x-show="assignClusterOpen"
-class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-style="display: none;"
->
-<div @click.outside="assignClusterOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-semibold text-slate-800">Assign Cluster to Schools</h3>
-<button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+<div x-show="assignClusterOpen" x-cloak class="edify-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="assign-cluster-title"
+@keydown.escape.window="assignClusterOpen = false" style="display: none;">
+<div class="edify-popup-dialog__backdrop" @click="assignClusterOpen = false"></div>
+<div class="edify-popup-dialog__surface">
+<div class="drawer-header">
+<h3 id="assign-cluster-title" class="text-[15px] font-semibold text-slate-800">Assign cluster to selected schools</h3>
+<button type="button" @click="assignClusterOpen = false" aria-label="Close" class="h-8 w-8 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
 </div>
-
-<form action="/schools/bulk-assign-cluster" method="post" class="space-y-4">
+<form action="/schools/bulk-assign-cluster" method="post" class="drawer-body space-y-4">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
-<span class="edify-filter-label">Cluster ID</span>
-<select aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
-<option value="">-- Choose Cluster --</option>
+<label for="bulk-assign-cluster" class="block edify-text-caption font-semibold text-slate-600">Cluster <span class="text-rose-500">*</span></label>
+<select id="bulk-assign-cluster" aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">Select a cluster</option>
 {% for c in clusters %}
 <option value="{{ c.id }}">{{ c.name }}</option>
 {% endfor %}
 </select>
 </div>
 
-<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
+<p class="edify-text-caption text-slate-500">Assigns <span x-text="selectedSchools.length" class="font-semibold text-slate-800"></span> selected school(s) to this cluster and marks them Clustered.</p>
 
-<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="assignClusterOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Cluster</button>
+<div class="drawer-footer">
+<button type="button" @click="assignClusterOpen = false" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Assign cluster</button>
 </div>
 </form>
 </div>
 </div>
 
 <!-- Modal 1.5: Assign Project to Schools Modal -->
-<div
-x-show="bulkAssignProjectOpen"
-class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-style="display: none;"
->
-<div @click.outside="bulkAssignProjectOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-semibold text-slate-800">Assign Project to Schools</h3>
-<button @click="bulkAssignProjectOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+<div x-show="bulkAssignProjectOpen" x-cloak class="edify-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="bulk-assign-project-title"
+@keydown.escape.window="bulkAssignProjectOpen = false" style="display: none;">
+<div class="edify-popup-dialog__backdrop" @click="bulkAssignProjectOpen = false"></div>
+<div class="edify-popup-dialog__surface">
+<div class="drawer-header">
+<h3 id="bulk-assign-project-title" class="text-[15px] font-semibold text-slate-800">Assign project to selected schools</h3>
+<button type="button" @click="bulkAssignProjectOpen = false" aria-label="Close" class="h-8 w-8 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
 </div>
-
-<form action="/schools/bulk-assign-project" method="post" class="space-y-4">
+<form action="/schools/bulk-assign-project" method="post" class="drawer-body space-y-4">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project</label>
-<span class="edify-filter-label">Project ID</span>
-<select aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
-<option value="">-- Choose Project --</option>
+<label for="bulk-assign-project" class="block edify-text-caption font-semibold text-slate-600">Project <span class="text-rose-500">*</span></label>
+<select id="bulk-assign-project" aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">Select a project</option>
 {% for p in projects %}
 <option value="{{ p.id }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
 {% endfor %}
 </select>
 </div>
 
-<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
+<p class="edify-text-caption text-slate-500">Assigns <span x-text="selectedSchools.length" class="font-semibold text-slate-800"></span> selected school(s). Schools already in the project are skipped.</p>
 
-<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="bulkAssignProjectOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Project</button>
+<div class="drawer-footer">
+<button type="button" @click="bulkAssignProjectOpen = false" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Assign project</button>
 </div>
 </form>
 </div>
 </div>
 
 <!-- Modal 2: Match Staff Modal -->
-<div
-x-show="matchStaffOpen"
-class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-style="display: none;"
->
-<div @click.outside="matchStaffOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-semibold text-slate-800">Match Staff to Schools</h3>
-<button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+<div x-show="matchStaffOpen" x-cloak class="edify-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="match-staff-title"
+@keydown.escape.window="matchStaffOpen = false" style="display: none;">
+<div class="edify-popup-dialog__backdrop" @click="matchStaffOpen = false"></div>
+<div class="edify-popup-dialog__surface">
+<div class="drawer-header">
+<h3 id="match-staff-title" class="text-[15px] font-semibold text-slate-800">Match staff to selected schools</h3>
+<button type="button" @click="matchStaffOpen = false" aria-label="Close" class="h-8 w-8 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
 </div>
-
-<form action="/schools/bulk-match-staff" method="post" class="space-y-4">
+<form action="/schools/bulk-match-staff" method="post" class="drawer-body space-y-4">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
-<span class="edify-filter-label">Staff ID</span>
-<select aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
-<option value="">-- Choose CCEO --</option>
+<label for="bulk-match-staff" class="block edify-text-caption font-semibold text-slate-600">Staff (CCEO) <span class="text-rose-500">*</span></label>
+<select id="bulk-match-staff" aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">Select a CCEO</option>
 {% for sp in staff_profiles %}
 <option value="{{ sp.id }}">{{ sp.user.name }}</option>
 {% endfor %}
 </select>
 </div>
 
-<p class="edify-text-caption text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
+<p class="edify-text-caption text-slate-500">Matches <span x-text="selectedSchools.length" class="font-semibold text-slate-800"></span> selected school(s) to this staff member and updates their ownership state.</p>
 
-<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="matchStaffOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Match Staff</button>
+<div class="drawer-footer">
+<button type="button" @click="matchStaffOpen = false" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Match staff</button>
 </div>
 </form>
 </div>
@@ -327,25 +321,24 @@ decides what happens to open work, and flags approved targets that depended on
 the portfolio — so a bulk reassignment leaves the same trail as a single one.
 {% endcomment %}
 {% if may_transfer_school %}
-<div
-x-show="transferOwnerOpen"
-class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-style="display: none;"
->
-<div @click.outside="transferOwnerOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-semibold text-slate-800">Reassign school ownership</h3>
-<button @click="transferOwnerOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+<div x-show="transferOwnerOpen" x-cloak class="edify-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="transfer-owner-title"
+@keydown.escape.window="transferOwnerOpen = false" style="display: none;">
+<div class="edify-popup-dialog__backdrop" @click="transferOwnerOpen = false"></div>
+<div class="edify-popup-dialog__surface">
+<div class="drawer-header">
+<h3 id="transfer-owner-title" class="text-[15px] font-semibold text-slate-800">Reassign ownership of selected schools</h3>
+<button type="button" @click="transferOwnerOpen = false" aria-label="Close" class="h-8 w-8 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
 </div>
-
-<form action="/schools/bulk-transfer-owner" method="post" class="space-y-4">
+<form action="/schools/bulk-transfer-owner" method="post" class="drawer-body space-y-4">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label for="bulk-transfer-owner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">New owner</label>
+<label for="bulk-transfer-owner" class="block edify-text-caption font-semibold text-slate-600">New owner <span class="text-rose-500">*</span></label>
 <select id="bulk-transfer-owner" name="new_owner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
-<option value="">-- Choose the new owner --</option>
+<option value="">Select the new owner</option>
 {% for sp in portfolio_owner_options %}
 <option value="{{ sp.id }}">{{ sp.user.name }}</option>
 {% endfor %}
@@ -353,32 +346,32 @@ style="display: none;"
 </div>
 
 <div class="space-y-1">
-<label for="bulk-transfer-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason</label>
+<label for="bulk-transfer-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
 <input type="text" id="bulk-transfer-reason" name="reason" minlength="5" maxlength="500" required
 placeholder="Why these schools change hands"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
 </div>
 
 <div class="space-y-1">
-<label for="bulk-transfer-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date</label>
+<label for="bulk-transfer-date" class="block edify-text-caption font-semibold text-slate-600">Effective date</label>
 <input type="date" id="bulk-transfer-date" name="effective_date"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
+class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
 <div class="space-y-1">
-<label for="bulk-transfer-open-work" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Open activities</label>
-<select id="bulk-transfer-open-work" name="open_activity_decision" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
+<label for="bulk-transfer-open-work" class="block edify-text-caption font-semibold text-slate-600">Open activities</label>
+<select id="bulk-transfer-open-work" name="open_activity_decision" aria-describedby="bulk-transfer-open-work-help" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none">
 <option value="keep">Keep open work with its current owner</option>
 {% if may_transfer_open_activities %}<option value="transfer">Move open work to the new owner</option>{% endif %}
 </select>
-<p class="edify-text-caption text-slate-400 font-semibold">Verified, confirmed and closed work is never re-owned.</p>
+<p id="bulk-transfer-open-work-help" class="edify-text-caption text-slate-500">Verified, confirmed and closed work is never re-owned.</p>
 </div>
 
-<p class="edify-text-caption text-slate-400 font-semibold">This reassigns <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s). Geography is unchanged.</p>
+<p class="edify-text-caption text-slate-500">Reassigns <span x-text="selectedSchools.length" class="font-semibold text-slate-800"></span> selected school(s). Geography is unchanged.</p>
 
-<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="transferOwnerOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Reassign ownership</button>
+<div class="drawer-footer">
+<button type="button" @click="transferOwnerOpen = false" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Reassign ownership</button>
 </div>
 </form>
 </div>

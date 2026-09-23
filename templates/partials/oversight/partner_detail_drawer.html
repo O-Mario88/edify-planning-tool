@@ -12,8 +12,8 @@ risk names as responsible: a partner's delay is never sent to a CCEO as an
 accountability record, because the CCEO is not the one who is late.
 {% endcomment %}
 
-{% block drawer_title %}{% if item %}{{ item.school_name|default:item.cluster_name|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if item %}{{ item.partner_name|default:"Partner" }}{% if item.district %} · {{ item.district }}{% endif %}{% else %}This assignment is not in your scope, or no longer exists.{% endif %}{% endblock %}
+{% block drawer_title %}{% if item %}{% firstof item.school_name item.cluster_name "Partner assignment" %}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if item %}{{ item.partner_name|default:"Partner" }}{% if item.district %} · {{ item.district }}{% endif %}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 {% if item %}
@@ -68,17 +68,17 @@ accountability record, because the CCEO is not the one who is late.
   <section aria-labelledby="partner-handover">
     <h3 id="partner-handover" class="text-sm font-semibold mb-2">The handover</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Partner</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Partner</dt>
         <dd>{{ item.partner_name|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Managing CCEO</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Managing CCEO</dt>
         <dd>{{ item.responsible_cceo_name|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Supervising PL</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Supervising PL</dt>
         <dd>{{ item.supervising_pl_name|default:"Unassigned" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Support type</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Support type</dt>
         <dd>{{ item.support_slot|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Focus intervention</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Focus intervention</dt>
         <dd>{{ item.target_intervention|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Assigned on</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Assigned on</dt>
         <dd>{% if item.assignment_date %}{{ item.assignment_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
     </dl>
     {% if item.is_returned %}
@@ -93,9 +93,9 @@ accountability record, because the CCEO is not the one who is late.
     <h3 id="partner-schedule" class="text-sm font-semibold mb-2">Scheduling</h3>
     {% if item.is_scheduled %}
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Scheduled for</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Scheduled for</dt>
         <dd>{% if item.scheduled_date %}{{ item.scheduled_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Financial year</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Financial year</dt>
         <dd>FY {{ item.financial_year|default:"—" }}{% if item.quarter %} · {{ item.quarter }}{% endif %}</dd></div>
     </dl>
     {% else %}
@@ -118,7 +118,7 @@ accountability record, because the CCEO is not the one who is late.
     <table class="w-full text-left text-sm">
       <caption class="sr-only">Cost lines for this partner activity</caption>
       <thead>
-        <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+        <tr class="edify-text-caption edify-text-subtle">
           <th scope="col" class="py-1 font-semibold">Line</th>
           <th scope="col" class="py-1 font-semibold">Unit</th>
           <th scope="col" class="py-1 font-semibold">Qty</th>
@@ -159,15 +159,15 @@ accountability record, because the CCEO is not the one who is late.
   <section aria-labelledby="partner-workflow">
     <h3 id="partner-workflow" class="text-sm font-semibold mb-2">Delivery &amp; verification</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Activity</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Activity</dt>
         <dd>{{ item.activity_status|replace_underscore|title|default:"Not scheduled" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Evidence</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Evidence</dt>
         <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Salesforce</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Salesforce</dt>
         <dd>{{ item.salesforce_status|status_label|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Impact Assessment</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Impact Assessment</dt>
         <dd>{{ item.ia_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Payment</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Payment</dt>
         <dd>{{ item.payment_status|replace_underscore|title|default:"—" }}</dd></div>
     </dl>
   </section>
@@ -176,9 +176,8 @@ accountability record, because the CCEO is not the one who is late.
   <section aria-labelledby="partner-escalate" class="border-t edify-border pt-3">
     <h3 id="partner-escalate" class="text-sm font-semibold mb-1">Escalate</h3>
     <p class="edify-text-caption edify-text-muted mb-2">
-      For when asking has not moved it. A Program Lead cannot replace a partner
-      or reprice the work; the Country Director can. The escalation goes to
-      {{ escalate_to }} and is decided on Escalations.
+      Goes to {{ escalate_to }}, decided on Escalations. Only the Country
+      Director can replace a partner or reprice the work.
     </p>
     <form hx-post="/partner-oversight/send"
           hx-target="#partner-send-result-escalate"
@@ -191,7 +190,7 @@ accountability record, because the CCEO is not the one who is late.
       <input id="escalation-note" name="note" type="text" required
              class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
              placeholder="What have you already tried?">
-      <button type="submit" class="btn h-8">Escalate</button>
+      <button type="submit" class="btn btn-secondary h-8">Escalate</button>
     </form>
     <div id="partner-send-result-escalate" class="mt-2"></div>
   </section>

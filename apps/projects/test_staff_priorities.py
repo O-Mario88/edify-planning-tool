@@ -161,7 +161,7 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
 
         drawer = client.get("/projects/create", HTTP_HX_REQUEST="true")
         self.assertEqual(drawer.status_code, 200)
-        self.assertContains(drawer, "Create Special Project")
+        self.assertContains(drawer, "Create special project")
         self.assertContains(drawer, 'hx-post="/projects/create/action"')
 
         response = client.post(

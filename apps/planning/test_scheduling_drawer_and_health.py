@@ -330,7 +330,7 @@ class ScheduleDrawerFieldsTest(TestCase):
 
     def test_responsible_person_is_the_portfolio_owner_not_a_delivery_picker(self):
         html = self._drawer()
-        self.assertIn("Responsible Person", html)
+        self.assertIn("Responsible person", html)
         self.assertIn("Portfolio Owner", html)
         self.assertNotIn('id="executor_type"', html)
         self.assertNotIn('id="assigned_partner_id"', html)
@@ -576,7 +576,7 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn("SSA intervention association", html)
         self.assertIn("selectedActivity.ssaIntervention", html)
         self.assertNotIn("Select an intervention first", html)
-        self.assertNotIn("Activity Goal / Purpose", html)
+        self.assertNotIn("Meeting goal", html)
 
     def test_cluster_card_drawer_uses_the_same_activity_training_contract(self):
         client = Client()
@@ -615,7 +615,7 @@ class ClusterDrawerDeliveryTest(TestCase):
         date_at = html.index('name="scheduled_date"')
         list_at = html.index("data-cluster-training-attendance-row")
         self.assertTrue(per_school_end < date_at < list_at)
-        self.assertNotIn("Purpose for Meeting / Training", html)
+        self.assertNotIn("Meeting purpose", html)
         self.assertNotIn("Session Goal", html)
 
     def test_cluster_planner_radios_align_and_only_schedule(self):

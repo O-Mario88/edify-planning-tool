@@ -123,7 +123,7 @@ class PartnerSsaCompletionTest(TestCase):
         response = self.client.get(f"/my-plan/{activity.id}/complete-drawer")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Update SSA Scores &amp; Complete")
+        self.assertContains(response, "Update SSA scores for")
         self.assertContains(response, 'name="enrollment"')
         self.assertContains(response, "Pupil enrolment")
         self.assertContains(response, ">CB</span>")
@@ -190,7 +190,7 @@ class PartnerSsaCompletionTest(TestCase):
         )
 
         self.assertEqual(drawer.status_code, 200)
-        self.assertContains(drawer, "Update SSA Scores &amp; Complete")
+        self.assertContains(drawer, "Update SSA scores for")
         self.assertEqual(response.status_code, 200)
         record = SsaRecord.objects.get(school=self.school)
         self.assertEqual(record.collector_type, "ia")
@@ -244,7 +244,7 @@ class PartnerSsaCompletionTest(TestCase):
         # "Record Salesforce Reference", because nothing here contacts
         # Salesforce. The title is this test's proxy for "the reference drawer
         # was served, not the SSA one", so it tracks the rename.
-        self.assertContains(response, "Record Salesforce Reference")
+        self.assertContains(response, "Record Salesforce reference")
         # And the claim itself, so a future tidy-up of the copy cannot quietly
         # put back the promise that the system checked Salesforce.
         self.assertContains(response, "does not contact Salesforce")
