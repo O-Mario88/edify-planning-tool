@@ -497,8 +497,8 @@ class TeamTargetsPageTest(TestCase):
         self.assertEqual(payload["selected_area_label"], "School Visits")
         self.assertTrue(payload["rows"])
         self.assertEqual({row["area"] for row in payload["rows"]}, {"School Visits"})
-        self.assertIn("School Visits · Team Progress", html)
-        self.assertNotIn("Cluster Meetings · Team Progress", html)
+        self.assertIn("Team progress for School Visits", html)
+        self.assertNotIn("Team progress for Cluster Meetings", html)
 
     def test_target_area_progress_uses_the_wide_workspace_drawer_only(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)

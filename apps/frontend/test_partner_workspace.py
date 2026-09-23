@@ -122,9 +122,14 @@ class PartnerWorkspaceTests(TestCase):
         # Since 2026-09-23 the page lists work in three tables rather than
         # per-partner groups: activities, assigned schools, assigned clusters.
         self.assertContains(response, "In School Training")
+        # The per-partner "Scheduled & Delivering" / "Yet to Schedule" lists
+        # became team tables (2026-09-23); the counts they carried are the
+        # KPI strip's, asserted here as the numbers they are.
         self.assertContains(response, "Partner activities (1)")
+        self.assertContains(response, "Partner Work Scheduled: 1.")
         # The handover, from the live PartnerAssignment row.
         self.assertContains(response, "School Visit Ssa Collection")
+        self.assertContains(response, "Handovers Yet To Schedule: 1.")
         self.assertContains(response, "Schools assigned (1)")
         # Partner Monitoring counts the same two rows by stage in its status
         # filter, where the workflow-group headings used to count them.
@@ -252,7 +257,7 @@ class PartnerWorkspaceTests(TestCase):
         self.assertIn('name="scheduled_date"', html)
         self.assertIn('name="delivery_contact_name"', html)
         self.assertIn("Grace Visitor", html)
-        self.assertIn(">Submit</button>", html)
+        self.assertIn(">Schedule delivery</button>", html)
         self.assertNotIn('name="catalogue_item_id"', html)
         self.assertNotIn('name="project_id"', html)
         self.assertNotIn("Cost calculation happens", html)

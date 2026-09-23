@@ -12,7 +12,7 @@ activity budget in the country — it deserves the same considered surface as
 every other decision on the platform, not a cell.
 {% endcomment %}
 
-{% block drawer_title %}{{ c.label }}{% endblock %}
+{% block drawer_title %}Edit {{ c.label }}{% endblock %}
 {% block drawer_subtitle %}{{ c.unit }}{% if c.catalogue_item_id %} · linked to {{ c.catalogue_item.display_name }}{% endif %} · version {{ c.version }}{% endblock %}
 
 {% block drawer_body %}
@@ -31,72 +31,68 @@ every other decision on the platform, not a cell.
   {% endcomment %}
   <div id="cost-edit-errors" role="alert" aria-live="polite" class="empty:hidden rounded-control border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-700"></div>
 
-  <div class="grid gap-3 sm:grid-cols-2">
-    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-      Country operational cost (UGX)
-      {% comment %}The currency belongs in the label, not floated inside the
-      field: it used to sit over the left edge of the input and was painted
-      under the figure being typed.{% endcomment %}
-      <input
-        aria-label="Country operational cost"
-        type="text"
-        inputmode="numeric"
-        name="unit_cost"
-        value="{{ c.unit_cost }}"
-        required
-        class="h-9 px-3 text-[13px] font-semibold"
-      >
-    </label>
-
-    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-      Minimum viable cost (UGX)
-      <input
-        aria-label="Minimum viable cost"
-        type="number"
-        min="0"
-        step="1"
-        name="approved_minimum"
-        value="{{ c.approved_minimum|default_if_none:'' }}"
-        placeholder="Not set"
-        class="h-9 px-3 text-[13px] font-semibold"
-      >
-    </label>
+  <div class="space-y-1">
+    {% comment %}The currency belongs in the label, not floated inside the
+    field: it used to sit over the left edge of the input and was painted
+    under the figure being typed.{% endcomment %}
+    <label for="cost-edit-unit-cost" class="block edify-text-caption font-semibold text-slate-600">Country operational cost (UGX) <span class="text-rose-500">*</span></label>
+    <input
+      id="cost-edit-unit-cost"
+      aria-label="Country operational cost"
+      type="text"
+      inputmode="numeric"
+      name="unit_cost"
+      value="{{ c.unit_cost }}"
+      required
+      class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold"
+    >
+    {% if c.reference_unit_cost is not None %}
+    <p class="edify-text-caption text-slate-500">
+      Regional reference for this rate: <span class="tabular-nums text-slate-700">UGX {{ c.reference_unit_cost|currency }}</span>
+    </p>
+    {% endif %}
   </div>
 
-  {% if c.reference_unit_cost is not None %}
-  <p class="rounded-control border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] px-3 py-2 text-[12px] font-semibold text-[var(--edify-text-muted)]">
-    Regional reference for this rate: <span class="tabular-nums text-[var(--edify-text)]">UGX {{ c.reference_unit_cost|currency }}</span>
-  </p>
-  {% endif %}
+  <div class="space-y-1">
+    <label for="cost-edit-minimum" class="block edify-text-caption font-semibold text-slate-600">Minimum viable cost (UGX) <span class="font-normal text-slate-400">(optional)</span></label>
+    <input
+      id="cost-edit-minimum"
+      aria-label="Minimum viable cost"
+      type="number"
+      min="0"
+      step="1"
+      name="approved_minimum"
+      value="{{ c.approved_minimum|default_if_none:'' }}"
+      placeholder="Not set"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold"
+    >
+  </div>
 
-  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
-    Why is this rate changing?
+  <div class="space-y-1">
+    <label for="cost-edit-reason" class="block edify-text-caption font-semibold text-slate-600">Why is this rate changing? <span class="text-rose-500">*</span></label>
     {% comment %}Required, and deliberately so. Without it the history recorded
     the reason as the literal string "Updated via CD Dashboard" for every change
     ever made.{% endcomment %}
     <input
+      id="cost-edit-reason"
       aria-label="Reason for this rate change"
       type="text"
       name="reason"
       required
       minlength="5"
       maxlength="512"
-      placeholder="The reason is kept on the rate's record"
-      class="h-9 px-3 text-[13px] font-medium"
+      placeholder="Kept on the rate's record"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-medium"
     >
-  </label>
-
-  <p class="text-[12px] font-medium text-[var(--edify-text-muted)]">
-    Saving publishes a new version of the country cost catalogue. Every activity
-    budget priced from this rate uses the new figure from then on.
-  </p>
+    <p class="edify-text-caption text-slate-500">Saving publishes a new catalogue version; every budget priced from this rate uses the new figure.</p>
+  </div>
 
   {% comment %}The change history, with the form rather than behind another
   click. `cost_setting_history` existed since this register was built and was
   never rendered anywhere — so "what was it before, and why did it move" had no
   answer in the interface.{% endcomment %}
-  <details class="rounded-control border border-[var(--edify-border)]" {% if history %}open{% endif %}>
-    <summary class="cursor-pointer px-3 py-2 text-[12px] font-bold text-[var(--edify-text-muted)]">
+  <details class="rounded-control border border-slate-200" {% if history %}open{% endif %}>
+    <summary class="cursor-pointer px-3 py-2 edify-text-caption font-semibold text-slate-600">
       Change history{% if history %} · {{ history|length }}{% endif %}
     </summary>
     {% if history %}
@@ -104,11 +100,11 @@ every other decision on the platform, not a cell.
       {% paginate history "history_page" as history_pager %}
       <table class="w-full text-[12px]">
         <thead>
-          <tr class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-subtle)] text-left">
-            <th class="py-1 pr-2 font-bold">When</th>
-            <th class="py-1 pr-2 font-bold">Change</th>
-            <th class="py-1 pr-2 font-bold">By</th>
-            <th class="py-1 font-bold">Reason</th>
+          <tr class="edify-text-caption font-semibold text-slate-600 text-left">
+            <th class="py-1 pr-2 font-semibold">When</th>
+            <th class="py-1 pr-2 font-semibold">Change</th>
+            <th class="py-1 pr-2 font-semibold">By</th>
+            <th class="py-1 font-semibold">Reason</th>
           </tr>
         </thead>
         <tbody class="align-top">
@@ -129,7 +125,7 @@ every other decision on the platform, not a cell.
       {% include "components/table_pager.html" with pager=history_pager param="history_page" %}
     </div>
     {% else %}
-    <p class="px-3 pb-3 text-[12px] font-medium text-[var(--edify-text-subtle)]">No recorded change yet — this rate is at its original value.</p>
+    <p class="px-3 pb-3 edify-text-caption text-slate-500">No recorded change yet — this rate is at its original value.</p>
     {% endif %}
   </details>
 

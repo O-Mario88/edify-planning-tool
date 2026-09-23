@@ -1,25 +1,25 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}My PD Allocation History{% endblock %}
-{% block drawer_subtitle %}Annual allocation and usage across financial years{% endblock %}
+{% block drawer_title %}PD allocation history{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <div class="space-y-3">
   {% if history %}
   {% for h in history %}
-  <div class="rounded-surface border border-slate-100 p-3.5">
-    <div class="flex items-center justify-between">
-      <p class="text-[13px] font-bold text-slate-800">FY {{ h.fy }}</p>
-      <span class="edify-text-caption font-bold text-slate-400">{{ h.request_count }} request{{ h.request_count|pluralize }} · {{ h.completed_count }} completed</span>
+  <section class="rounded-surface border border-slate-200 p-3 space-y-2" aria-labelledby="pd-history-fy-{{ forloop.counter }}">
+    <div class="flex items-center justify-between gap-3">
+      <h4 id="pd-history-fy-{{ forloop.counter }}" class="text-[13px] font-semibold text-slate-800">FY {{ h.fy }}</h4>
+      <span class="edify-text-caption text-slate-500">{{ h.request_count }} request{{ h.request_count|pluralize }} · {{ h.completed_count }} completed</span>
     </div>
-    <div class="grid grid-cols-4 gap-2 mt-2 edify-text-caption">
-      <div><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Allocation</p><p class="font-bold text-slate-700 tabular-nums">{{ h.currency }} {{ h.annual_allocation|divide:100|currency }}</p></div>
-      <div><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Committed</p><p class="font-bold text-slate-700 tabular-nums">{{ h.currency }} {{ h.committed|divide:100|currency }}</p></div>
-      <div><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Accounted</p><p class="font-bold text-slate-700 tabular-nums">{{ h.currency }} {{ h.accounted|divide:100|currency }}</p></div>
-      <div><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Remaining</p><p class="font-bold text-emerald-600 tabular-nums">{{ h.currency }} {{ h.remaining|divide:100|currency }}</p></div>
-    </div>
-  </div>
+    <dl class="grid grid-cols-2 gap-2 text-[12px]" data-keep-columns>
+      <div><dt class="edify-text-caption text-slate-500">Allocation</dt><dd class="font-semibold text-slate-700 tabular-nums">{{ h.currency }} {{ h.annual_allocation|divide:100|currency }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-500">Committed</dt><dd class="font-semibold text-slate-700 tabular-nums">{{ h.currency }} {{ h.committed|divide:100|currency }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-500">Accounted</dt><dd class="font-semibold text-slate-700 tabular-nums">{{ h.currency }} {{ h.accounted|divide:100|currency }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-500">Remaining</dt><dd class="font-semibold text-emerald-600 tabular-nums">{{ h.currency }} {{ h.remaining|divide:100|currency }}</dd></div>
+    </dl>
+  </section>
   {% endfor %}
   {% else %}
   {% include "components/empty_state.html" with title="No allocation history yet" message="Your Professional Development allocation history will appear here once your first financial year's allocation is set." compact="true" %}

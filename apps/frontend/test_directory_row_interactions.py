@@ -30,6 +30,12 @@ class DirectoryRowInteractionContractTests(SimpleTestCase):
         self.assertNotIn('href="/clusters/{{ cluster.id }}"', summary)
         self.assertIn('href="/clusters/{{ cluster.id }}"', details)
         self.assertEqual(card.count('href="/clusters/{{ cluster.id }}"'), 1)
+        # Since ffa2431 the name is the disclosure button and the profile link
+        # opens the details panel, outside the summary's empty-space toggle,
+        # so a click on the link can never be taken as a toggle.
+        summary, details = card.split("<!-- Expanded details block -->", 1)
+        self.assertNotIn('href="/clusters/{{ cluster.id }}"', summary)
+        self.assertIn('<a href="/clusters/{{ cluster.id }}"', details)
 
     def test_cluster_summary_keeps_details_visible_before_expansion(self):
         card = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()

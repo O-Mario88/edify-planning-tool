@@ -55,7 +55,7 @@ test('finance queues and coloured approval status',async({page})=>{
 test('inserted table content stays plain while buttons and focus remain usable',async({page})=>{
  const root=path.resolve(__dirname,'..'),server=await snapshotServer(root);
  try{
-  server.setHtml('<!doctype html><html class="theme-light"><head><link rel="stylesheet" href="/static/css/design-system.css"><link rel="stylesheet" href="/static/css/components.css"><link rel="stylesheet" href="/static/css/consistency.css"><script defer src="/static/js/micro-ux.js"></script></head><body><main id="main-content"><table><tbody id="rows"><tr><td>Initial</td></tr></tbody></table></main></body></html>');
+  server.setHtml('<!doctype html><html class="theme-light"><head><link rel="stylesheet" href="/static/css/design-system.css"><link rel="stylesheet" href="/static/css/components.css"><link rel="stylesheet" href="/static/css/consistency.css"><link rel="stylesheet" href="/static/css/form-refinement.css"><script defer src="/static/js/micro-ux.js"></script></head><body><main id="main-content"><table><tbody id="rows"><tr><td>Initial</td></tr></tbody></table></main></body></html>');
   await page.goto(server.origin+'/page');
   await expect(page.locator('table')).toHaveClass(/edify-plain-table/);
   await page.evaluate(()=>{

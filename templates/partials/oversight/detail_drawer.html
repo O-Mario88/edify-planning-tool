@@ -7,8 +7,8 @@ a piece of work and to decide whom to ask, never to change it. The only form
 here sends a corrective action, which writes a TeamAction and nothing else.
 {% endcomment %}
 
-{% block drawer_title %}{% if item %}{{ item.activity_type|replace_underscore|title|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if item %}{{ item.context_label }}{% else %}This record is not in your scope, or no longer exists.{% endif %}{% endblock %}
+{% block drawer_title %}{% if item %}{{ item.activity_type|replace_underscore|capfirst|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if item %}{{ item.context_label }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 {% if item %}
@@ -60,17 +60,17 @@ here sends a corrective action, which writes a TeamAction and nothing else.
   <section aria-labelledby="detail-ownership">
     <h3 id="detail-ownership" class="text-sm font-semibold mb-2">Ownership</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Planned by</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Planned by</dt>
         <dd>{{ item.planned_by_name|default:"—" }}{% if item.planned_by_role %} <span class="edify-text-muted">({{ item.planned_by_role }})</span>{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Operational owner</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Operational owner</dt>
         <dd>{{ item.operational_owner_name|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Executor</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Executor</dt>
         <dd>{{ item.executor_name|default:"—" }} <span class="edify-text-muted">({{ item.executor_type }})</span></dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Managing staff</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Managing staff</dt>
         <dd>{{ item.managing_staff_name|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Supervising PL</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Supervising PL</dt>
         <dd>{{ item.supervising_pl_name|default:"Unassigned" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Partner</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Partner</dt>
         <dd>{{ item.partner_name|default:"—" }}</dd></div>
     </dl>
   </section>
@@ -78,17 +78,17 @@ here sends a corrective action, which writes a TeamAction and nothing else.
   <section aria-labelledby="detail-planning">
     <h3 id="detail-planning" class="text-sm font-semibold mb-2">Planning</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Planned date</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Planned date</dt>
         <dd>{% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Financial year</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Financial year</dt>
         <dd>FY {{ item.fy|default:"—" }} {% if item.quarter %}· {{ item.quarter }}{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Assigned</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Assigned</dt>
         <dd>{% if item.assigned_date %}{{ item.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Schedule by</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Schedule by</dt>
         <dd>{% if item.schedule_by_date %}{{ item.schedule_by_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Intervention</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Intervention</dt>
         <dd>{{ item.target_intervention|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Rationale</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Rationale</dt>
         <dd>{{ item.operational_rationale|default:"—" }}</dd></div>
     </dl>
   </section>
@@ -105,7 +105,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
     <table class="w-full text-left text-sm">
       <caption class="sr-only">Cost lines for this activity</caption>
       <thead>
-        <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+        <tr class="edify-text-caption edify-text-subtle">
           <th scope="col" class="py-1 font-semibold">Line</th>
           <th scope="col" class="py-1 font-semibold">Unit</th>
           <th scope="col" class="py-1 font-semibold">Qty</th>
@@ -152,17 +152,17 @@ here sends a corrective action, which writes a TeamAction and nothing else.
   <section aria-labelledby="detail-workflow">
     <h3 id="detail-workflow" class="text-sm font-semibold mb-2">Workflow state</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Activity</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Activity</dt>
         <dd>{{ item.activity_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Evidence</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Evidence</dt>
         <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Salesforce</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Salesforce</dt>
         <dd>{{ item.salesforce_status|status_label }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Impact Assessment</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Impact Assessment</dt>
         <dd>{{ item.ia_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Finance</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Finance</dt>
         <dd>{{ item.finance_status|replace_underscore|title|default:"—" }}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle uppercase">Reschedules</dt>
+      <div><dt class="edify-text-caption edify-text-subtle">Reschedules</dt>
         <dd>{{ item.reschedule_count }}</dd></div>
     </dl>
   </section>

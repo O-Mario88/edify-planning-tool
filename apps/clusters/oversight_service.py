@@ -585,15 +585,18 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         return tab.setdefault(key, [])
 
     def worker_key(worker):
-        return str(worker.id) if worker else "__unassigned__"
+        return str(worker.id) if worker else UNASSIGNED
 
     def worker_name(item, worker):
         return (
             _label(worker) if worker else (item.operational_owner_name or "Unassigned")
         )
 
+    # Every Lead's roster in two queries, not two per Lead.
+    rosters = planning.program_lead_rosters([lead["id"] for lead in leads_data])
+
     for lead in leads_data:
-        roster = planning.program_lead_members(lead["id"])
+        roster = rosters.get(str(lead["id"]), [])
         existing = {tab["id"]: tab for tab in lead["cceo_tabs"]}
         ordered = [existing.pop(member["id"], member_tab(member)) for member in roster]
         lead["cceo_tabs"] = ordered + list(existing.values())

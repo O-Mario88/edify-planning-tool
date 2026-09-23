@@ -4,6 +4,7 @@ from apps.accounts.models import StaffSchoolAssignment
 from apps.clusters.services import update_cluster
 from apps.clusters.test_eligibility import EligibilityFixture
 from apps.core.exceptions import Forbidden
+from apps.core.rbac import EdifyRole
 
 
 class ClusterOwnerAccessTest(EligibilityFixture):
@@ -78,3 +79,130 @@ class ClusterOwnerAccessTest(EligibilityFixture):
         self.assertFalse(response.context["can_edit_cluster"])
         response = self.client.get(f"/clusters/{self.chegere_north.id}/edit-drawer")
         self.assertEqual(response.status_code, 403)
+
+
+class UnownedClusterClaimTest(EligibilityFixture):
+    """An unowned cluster can be picked up only from inside your portfolio.
+
+    The owner carve-out in `may_edit_cluster_profile` must not become a
+    back door: without a district check, any planner anywhere could post an
+    edit for an unowned cluster naming themselves as responsible staff.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from apps.clusters.models import Cluster
+        from apps.core.enums import ClusterRecordStatus
+        from apps.geography.models import District, Region
+
+        self.unowned = Cluster.objects.create(
+            name="Unowned Apac Cluster",
+            region=self.region,
+            district=self.apac,
+            sub_county=self.chegere,
+            cluster_type="mixed",
+            status=ClusterRecordStatus.ACTIVE,
+            responsible_staff_id=None,
+        )
+        west = Region.objects.create(name="West")
+        kabale = District.objects.create(name="Kabale", region=west)
+        self.outsider, self.outsider_profile = self._staff("outsider@edify.test")
+        from apps.schools.models import School
+
+        school = School.objects.create(
+            school_id="WEST-1",
+            name="Kabale Primary",
+            region=west,
+            district=kabale,
+            school_type="client",
+            account_owner_id=self.outsider_profile.id,
+            account_owner_status="matched",
+        )
+        StaffSchoolAssignment.objects.create(
+            staff=self.outsider_profile, school_id=school.id
+        )
+
+    def _claim(self, user):
+        return update_cluster(
+            self.unowned.id,
+            {
+                "name": "Claimed",
+                "districtId": self.apac.id,
+                "responsibleStaffId": user.id,
+            },
+            user,
+        )
+
+    def test_out_of_scope_cceo_cannot_claim_an_unowned_cluster(self):
+        with self.assertRaises(Forbidden):
+            self._claim(self.outsider)
+        self.unowned.refresh_from_db()
+        self.assertEqual(self.unowned.name, "Unowned Apac Cluster")
+        self.assertFalse(self.unowned.responsible_staff_id)
+
+    def test_out_of_scope_cceo_cannot_claim_through_the_edit_form(self):
+        self.client.force_login(self.outsider)
+        response = self.client.get(f"/clusters/{self.unowned.id}/edit-drawer")
+        self.assertIn(response.status_code, (403, 404))
+        self.client.post(
+            f"/clusters/{self.unowned.id}/edit",
+            {
+                "name": "Claimed",
+                "district_id": self.apac.id,
+                "responsible_staff_id": self.outsider.id,
+            },
+        )
+        self.unowned.refresh_from_db()
+        self.assertEqual(self.unowned.name, "Unowned Apac Cluster")
+        self.assertFalse(self.unowned.responsible_staff_id)
+
+    def test_cceo_in_the_district_can_still_pick_it_up(self):
+        self._claim(self.james)
+        self.unowned.refresh_from_db()
+        self.assertEqual(self.unowned.name, "Claimed")
+        self.assertEqual(self.unowned.responsible_staff_id, self.james.id)
+
+
+class CountryScopeOwnerBulkAssignTest(EligibilityFixture):
+    """The owner's cross-district pool is for a field owner's own schools.
+
+    A country-scope owner's pool is every unclustered school, so clearing the
+    served-district filter for them listed schools from anywhere at all.
+    """
+
+    def test_country_scope_owner_sees_only_the_served_districts(self):
+        from apps.geography.models import District, Region
+        from apps.schools.models import School
+
+        admin, _ = self._staff("country-owner@edify.test")
+        admin.roles = [EdifyRole.ADMIN.value]
+        admin.active_role = EdifyRole.ADMIN.value
+        admin.save()
+        self.chegere_north.responsible_staff_id = admin.id
+        self.chegere_north.save(update_fields=["responsible_staff_id"])
+        near = School.objects.create(
+            school_id="APAC-UNCL",
+            name="Apac Unclustered Primary",
+            region=self.region,
+            district=self.apac,
+            school_type="client",
+            cluster_status="unclustered",
+        )
+        elsewhere = Region.objects.create(name="Elsewhere")
+        far_district = District.objects.create(name="Faraway", region=elsewhere)
+        far = School.objects.create(
+            school_id="FAR-UNCL",
+            name="Faraway Unclustered Primary",
+            region=elsewhere,
+            district=far_district,
+            school_type="client",
+            cluster_status="unclustered",
+        )
+        self.client.force_login(admin)
+        response = self.client.get(
+            f"/clusters/{self.chegere_north.id}/bulk-assign-drawer"
+        )
+        self.assertEqual(response.status_code, 200)
+        listed = {s.id for s in response.context["schools"]}
+        self.assertIn(near.id, listed)
+        self.assertNotIn(far.id, listed)

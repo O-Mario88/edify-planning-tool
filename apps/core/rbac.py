@@ -955,6 +955,11 @@ _PARTNER_SUPPORT_GRANTS: dict[EdifyRole, tuple[Permission, ...]] = {
         P.PARTNER_MONITORING_VIEW,
         P.PARTNER_MONITORING_COUNTRY,
     ),
+    # The Regional Programme Lead holds Partner Oversight (PAGE_PERMISSIONS)
+    # and partner_oversight_service._resolve_scope reads their regions, so they
+    # monitor too; without this the sidebar entry answered 403. Their regional
+    # scope comes from that resolver, not from PARTNER_MONITORING_COUNTRY.
+    EdifyRole.REGIONAL_PROGRAM_LEAD: (P.PARTNER_MONITORING_VIEW,),
     EdifyRole.PROGRAM_ACCOUNTANT: (
         P.PARTNER_SUPPORT_VIEW,
         P.PARTNER_MONITORING_VIEW,

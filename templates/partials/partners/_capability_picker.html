@@ -34,12 +34,11 @@ coverIntervention(key) {
   });
 }
 }">
-  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+  <legend class="block edify-text-caption font-semibold text-slate-600">
     Interventions and activities
   </legend>
-  <p class="edify-text-caption font-medium text-slate-400 leading-normal mt-1">
-    Tick everything this organisation delivers. An intervention on its own is
-    enough; tick its activities where you know them.
+  <p class="edify-text-caption text-slate-500 mt-1">
+    Tick everything it delivers. An intervention on its own is enough.
   </p>
 
   <div class="partner-capabilities__list mt-2 max-h-[38vh] overflow-y-auto pr-1 space-y-1.5">
@@ -54,9 +53,9 @@ coverIntervention(key) {
                {% if group.key in selected_interventions %}checked{% endif %}
                @change="if (!$event.target.checked) clearActivities('{{ group.key }}')"
                class="h-4 w-4 rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]">
-        <span class="text-[13px] font-bold text-slate-800">{{ group.label }}</span>
+        <span class="text-[13px] font-semibold text-slate-800">{{ group.label }}</span>
         {% if group.activities %}
-        <span class="edify-text-caption font-semibold text-slate-400">{{ group.activities|length }} activit{{ group.activities|length|pluralize:"y,ies" }}</span>
+        <span class="edify-text-caption font-semibold text-slate-500">{{ group.activities|length }} activit{{ group.activities|length|pluralize:"y,ies" }}</span>
         {% endif %}
       </label>
 

@@ -1,6 +1,7 @@
 from datetime import date
 
-from django.test import TestCase
+from django.template.loader import render_to_string
+from django.test import RequestFactory, SimpleTestCase, TestCase
 
 from apps.accounts.models import StaffSupervisorAssignment
 from apps.activities.models import Activity
@@ -159,6 +160,117 @@ class DedicatedClusterOversightTest(TestCase):
         outsider = _create_user("outside@dedicated.test", EdifyRole.CCEO)
         data = cluster_oversight_table_data(outsider, fy=self.fy)
         self.assertEqual((data["meetings_planned"], data["trainings_planned"]), (0, 0))
+
+    def test_an_officer_with_no_lead_has_one_tab_for_clusters_and_work(self):
+        """Under "Unassigned", work was grouped by the raw owner id. A cluster
+        keyed its tab by StaffProfile id while the officer's meeting named
+        their User id, so one person became two tabs — one holding their
+        clusters, the other their work."""
+        lone = _create_user("lone@dedicated.test", EdifyRole.CCEO)
+        held = Cluster.objects.create(
+            district=self.cluster.district,
+            region=self.cluster.region,
+            name="Lone cluster",
+            responsible_staff_id=lone.staff_profile.id,
+        )
+        meeting = Activity.objects.create(
+            activity_type="cluster_meeting",
+            cluster=held,
+            responsible_staff_id=lone.id,
+            fy=self.fy,
+            planned_date=date.today(),
+            status="scheduled",
+        )
+
+        data = cluster_oversight_table_data(self.ia, fy=self.fy)
+
+        unassigned = next(
+            lead for lead in data["leads"] if lead["id"] == "__unassigned__"
+        )
+        tabs = [tab for tab in unassigned["cceo_tabs"] if tab["name"] == "Lone"]
+        self.assertEqual(len(tabs), 1, [t["id"] for t in unassigned["cceo_tabs"]])
+        self.assertEqual(tabs[0]["id"], lone.staff_profile.id)
+        self.assertEqual(tabs[0]["count"], 1)
+        self.assertEqual([i.activity_id for i in tabs[0]["meetings"]], [meeting.id])
+
+    def test_every_leads_roster_loads_in_two_queries(self):
+        from apps.planning import oversight_service as planning
+
+        other = _create_user(
+            "other-lead@dedicated.test", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        lead_ids = [self.pl.staff_profile.id, other.id, "__unassigned__"]
+
+        with self.assertNumQueries(2):
+            rosters = planning.program_lead_rosters(lead_ids)
+
+        self.assertNotIn("__unassigned__", rosters)
+        for lead_id in lead_ids[:2]:
+            with self.subTest(lead=lead_id):
+                self.assertEqual(
+                    rosters[lead_id], planning.program_lead_members(lead_id)
+                )
+        self.assertEqual(
+            [m["id"] for m in rosters[self.pl.staff_profile.id]],
+            [
+                self.pl.staff_profile.id,
+                self.idle.staff_profile.id,
+                self.cceo.staff_profile.id,
+            ],
+        )
+
+    def test_the_page_reads_the_team_as_people_on_a_chart(self):
+        """Cluster Oversight carries the per-person chart
+        (docs/chart-inventory-and-standard-2026-09-20.md, 21 September), and
+        e2e/chart-standard.spec.js draws it: one series per officer for a
+        Programme Lead, one per Lead for a country reader."""
+        for user, title in (
+            (self.pl, "Cluster activity by person"),
+            (self.ia, "Cluster activity by Programme Lead"),
+        ):
+            with self.subTest(role=user.active_role):
+                self.client.force_login(user)
+                response = self.client.get("/cluster-oversight/", {"fy": self.fy})
+                self.assertContains(response, title)
+                self.assertContains(response, 'class="card edify-data-chart"')
+
+
+class ClusterActivityTablePagesPerOfficerTest(SimpleTestCase):
+    """Each officer's two activity tables turn their own pages.
+
+    Cluster Oversight lists every officer's group trainings and cluster
+    meetings in tabs on one page, so a shared page parameter would move every
+    table at once. Each table is keyed by the officer and the kind of work.
+    """
+
+    def _render(self, query=""):
+        rows = [
+            {
+                "cluster_id": f"c{i}",
+                "cluster_name": f"Cluster {i}",
+                "activity_type": "cluster_training",
+                "planned_date": date(2026, 9, 1),
+            }
+            for i in range(12)
+        ]
+        member = {"id": "O1", "name": "Officer", "trainings": rows, "meetings": []}
+        request = RequestFactory().get("/cluster-oversight/" + query)
+        return render_to_string(
+            "partials/oversight/cluster_member_work.html",
+            {"member": member, "request": request},
+        )
+
+    def test_the_trainings_table_pages_under_its_own_parameter(self):
+        html = self._render()
+        self.assertIn("ct_page-O1=2", html)
+        self.assertNotIn("cm_page-O1=2", html)
+        self.assertIn("Cluster 0<", html)
+        self.assertNotIn("Cluster 11<", html)
+
+    def test_the_second_page_shows_the_remaining_rows(self):
+        html = self._render("?ct_page-O1=2")
+        self.assertIn("Cluster 11<", html)
+        self.assertNotIn("Cluster 0<", html)
 
 
 class ClusterSessionsReadTheWorkPlannedTest(TestCase):

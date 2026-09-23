@@ -1,9 +1,10 @@
 {% comment %}
-  The Visit and Training planning badges (owner, 2026-09-22). Rendered on two
-  lists only — the Planning page school list and the Cluster School List — and
-  from one server-side calculation, apps.planning.school_planning_badges, so
-  both show the same counts for the same school and year. The browser renders
-  what the server counted and decides nothing.
+  The Visit and Training planning badges (owner, 2026-09-22). Rendered on the
+  Planning page school list and the Cluster School List (plus the core-schools
+  lifecycle table's plan-status columns), and from one server-side
+  calculation, apps.planning.school_planning_badges, so every list shows the
+  same counts for the same school and year. The browser renders what the
+  server counted and decides nothing.
 
   Informational only: the row stays selectable and its Schedule button stays
   where it is, whatever the counts say.

@@ -41,7 +41,7 @@ one column, as every platform drawer is.
   </label>
   {% else %}
   <div class="hr-drawer-form__field">
-    <label for="hr-field-{{ field.name }}">{{ field.label }}{% if field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+    <label for="hr-field-{{ field.name }}" class="block edify-text-caption font-semibold text-slate-600">{{ field.label }}{% if field.required %} <span class="text-rose-500">*</span>{% endif %}</label>
     {% if field.type == "textarea" %}
     <textarea id="hr-field-{{ field.name }}" name="{{ field.name }}" rows="{{ field.rows|default:4 }}"{% if field.required %} required{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %}{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}>{{ field.value|default:"" }}</textarea>
     {% elif field.type == "multiselect" %}

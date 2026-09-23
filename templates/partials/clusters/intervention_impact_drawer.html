@@ -1,17 +1,15 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load kpi_metrics %}
 
 {% load frontend_filters %}
 
-{% block drawer_title %}Intervention Impact Report{% endblock %}
-{% block drawer_subtitle %}Detailed comparison of SSA score shifts pre- and post-activity completion.{% endblock %}
+{% block drawer_title %}Intervention impact{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-5 text-[12px] font-bold text-slate-600" id="impact-drawer-body">
-<!-- Selection block -->
-<div>
-<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1.5">Intervention Area</label>
-<select aria-label="Focus intervention"
+<div class="space-y-4 text-[12px] text-slate-600" id="impact-drawer-body">
+<div class="space-y-1">
+<label for="impact-focus-intervention" class="block edify-text-caption font-semibold text-slate-600">Intervention area</label>
+<select id="impact-focus-intervention" aria-label="Focus intervention"
 name="focus_intervention"
 hx-get="/clusters/impact-drawer/{{ cluster_id }}"
 hx-target="#drawer-container"
@@ -24,52 +22,35 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </select>
 </div>
 
-<!-- Data Display -->
 {% if impact_data %}
-<div class="space-y-4">
-{% kpi_strip %}
-{% kpi_metric %}
-{% kpi_label %}Before Average{% endkpi_label %}
-{{ impact_data.before_avg|floatformat:1 }}
-{% endkpi_metric %}
-{% kpi_metric %}
-{% kpi_label %}After Average{% endkpi_label %}
-{{ impact_data.after_avg|floatformat:1 }}
-{% endkpi_metric %}
-{% kpi_metric %}
-{% kpi_label %}Score Delta{% endkpi_label %}
-
-{% if impact_data.delta >= 0 %}+{% endif %}{{ impact_data.delta|floatformat:1 }}
-
-{% endkpi_metric %}
-{% endkpi_strip %}
-
-{% kpi_strip %}
-{% kpi_metric %}
-{% kpi_label %}Schools Improved{% endkpi_label %}
-{{ impact_data.improved }}
-{% endkpi_metric %}
-{% kpi_metric %}
-{% kpi_label %}Schools Declined{% endkpi_label %}
-{{ impact_data.declined }}
-{% endkpi_metric %}
-{% endkpi_strip %}
+<dl class="grid grid-cols-2 gap-3">
+<div class="space-y-1">
+<dt class="edify-text-caption font-semibold text-slate-500">SSA average before</dt>
+<dd class="text-[13px] font-semibold text-slate-800 tabular-nums">{{ impact_data.before_avg|floatformat:1 }}</dd>
 </div>
+<div class="space-y-1">
+<dt class="edify-text-caption font-semibold text-slate-500">SSA average after</dt>
+<dd class="text-[13px] font-semibold text-slate-800 tabular-nums">{{ impact_data.after_avg|floatformat:1 }}</dd>
+</div>
+<div class="space-y-1">
+<dt class="edify-text-caption font-semibold text-slate-500">Score change</dt>
+<dd class="text-[13px] font-semibold text-slate-800 tabular-nums">{% if impact_data.delta >= 0 %}+{% endif %}{{ impact_data.delta|floatformat:1 }}</dd>
+</div>
+<div class="space-y-1">
+<dt class="edify-text-caption font-semibold text-slate-500">Schools improved</dt>
+<dd class="text-[13px] font-semibold text-slate-800 tabular-nums">{{ impact_data.improved }}</dd>
+</div>
+<div class="space-y-1">
+<dt class="edify-text-caption font-semibold text-slate-500">Schools declined</dt>
+<dd class="text-[13px] font-semibold text-slate-800 tabular-nums">{{ impact_data.declined }}</dd>
+</div>
+</dl>
 {% else %}
-<p class="text-center text-slate-400 edify-text-caption font-semibold py-12 bg-slate-50/30 rounded-surface border border-dashed border-slate-200">
-Impact will appear once activities here are completed and a follow-up SSA is uploaded.
-</p>
+<p class="edify-text-caption text-slate-500">Impact appears once activities here are completed and a follow-up SSA is uploaded.</p>
 {% endif %}
 
-<!-- Drawer Footer Actions -->
-<div class="drawer-footer mt-6">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="px-4 h-8 rounded-control btn-premium-secondary font-bold text-[12px]"
->
-Close Report
-</button>
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
 </div>
 </div>
 {% endblock %}

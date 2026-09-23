@@ -271,4 +271,4 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIn('name="visit_evidence_file"', html)
         self.assertIn('name="feedback_finding"', html)
         self.assertIn('name="school_improvements"', html)
-        self.assertIn("Submit Training + Visit", html)
+        self.assertIn("Submit training + visit", html)

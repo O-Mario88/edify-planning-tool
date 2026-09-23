@@ -141,7 +141,7 @@ class AnalyticsDashboardTest(TestCase):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(reverse("frontend:analytics_schedule_report"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Send Analytics to Inbox")
+        self.assertContains(response, "Send analytics to inbox")
         self.assertContains(response, "Delivered privately to your Edify inbox")
         self.assertContains(response, "No scheduler worker or email provider")
 
@@ -149,7 +149,7 @@ class AnalyticsDashboardTest(TestCase):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(reverse("frontend:analytics_customize_dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Customize Dashboard")
+        self.assertContains(response, "Customize dashboard")
 
     def test_analytics_snapshot_is_delivered_to_messages_immediately(self):
         from apps.messaging.models import MessageThread

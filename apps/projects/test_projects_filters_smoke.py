@@ -57,8 +57,8 @@ class ProjectsFiltersSmokeTests(TestCase):
     def test_drawer_view_renders(self):
         r = self.c.get("/projects/filters-drawer")
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, "Filter Projects")
-        self.assertContains(r, "Project Type")
+        self.assertContains(r, "Filter projects")
+        self.assertContains(r, "Project type")
 
     def test_htmx_partial_branch(self):
         r = self.c.get(

@@ -1,12 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Submit Invoice{% endblock %}
-{% block drawer_subtitle %}
-One invoice covers all your planned work for the period, grouped by
-category. Your invoice total must equal the fetched period total; the
-payable instalment is calculated for you and routed to your Program Lead.
-{% endblock %}
+{% block drawer_title %}Submit invoice{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -15,77 +11,86 @@ payable instalment is calculated for you and routed to your Program Lead.
   hx-encoding="multipart/form-data"
   hx-request='{"timeout":120000}'
   hx-disabled-elt="find button[type=submit]"
-  class="space-y-4 text-[12px] font-bold text-slate-600"
+  class="space-y-4 text-[12px] font-semibold text-slate-600"
 >
   {% csrf_token %}
   <div id="partner-invoice-errors"></div>
 
-  <div class="grid gap-3 sm:grid-cols-3">
-    <label class="block">Invoice for
-      <select name="instalment"
-              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-        <option value="advance" {% if instalment == "advance" %}selected{% endif %}>50% advance — planned work</option>
-        <option value="clearance" {% if instalment == "clearance" %}selected{% endif %}>Balance — IA-cleared work</option>
-      </select>
-    </label>
-    <label class="block">Period
-      <select name="period_kind"
-              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-        <option value="week" {% if kind == "week" %}selected{% endif %}>Week</option>
-        <option value="month" {% if kind == "month" %}selected{% endif %}>Month</option>
-        <option value="quarter" {% if kind == "quarter" %}selected{% endif %}>Quarter</option>
-      </select>
-    </label>
-    <label class="block">Date in the period
-      <input type="date" name="anchor" value="{{ anchor }}"
-             hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-             class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-    </label>
+  <p class="edify-text-caption text-slate-500">One invoice covers all your planned work for the period. The payable instalment is calculated for you and sent to your Program Lead.</p>
+
+  <div class="space-y-1">
+    <label for="inv-instalment" class="block edify-text-caption font-semibold text-slate-600">Invoice for</label>
+    <select id="inv-instalment" name="instalment"
+            hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+            class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+      <option value="advance" {% if instalment == "advance" %}selected{% endif %}>50% advance — planned work</option>
+      <option value="clearance" {% if instalment == "clearance" %}selected{% endif %}>Balance — IA-cleared work</option>
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label for="inv-period" class="block edify-text-caption font-semibold text-slate-600">Period</label>
+    <select id="inv-period" name="period_kind"
+            hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+            class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+      <option value="week" {% if kind == "week" %}selected{% endif %}>Week</option>
+      <option value="month" {% if kind == "month" %}selected{% endif %}>Month</option>
+      <option value="quarter" {% if kind == "quarter" %}selected{% endif %}>Quarter</option>
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label for="inv-anchor" class="block edify-text-caption font-semibold text-slate-600">Date in the period</label>
+    <input id="inv-anchor" type="date" name="anchor" value="{{ anchor }}"
+           hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+           class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
   </div>
 
   {% if basis_error %}
-  <div class="p-3 rounded-surface bg-rose-50 text-rose-700 text-[12px] font-bold" role="alert">{{ basis_error }}</div>
+  <p class="edify-note" data-tone="danger" role="alert">{{ basis_error }}</p>
   {% elif basis and basis.items %}
-  <div class="rounded-control border border-[var(--border-card)] bg-slate-50 p-3 space-y-2" aria-live="polite">
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ basis.label }} · fetched from your plan</p>
+  <div class="space-y-2" aria-live="polite">
+    <p class="edify-text-caption font-semibold text-slate-600">{{ basis.label }} · from your plan</p>
     {% for category, g in basis.groups.items %}
     <div class="flex items-center justify-between gap-3">
-      <span class="text-slate-600">{{ category }} <span class="text-slate-400">× {{ g.count }}</span></span>
-      <b class="tabular-nums text-slate-800">{{ g.planned|ugx_amount }}</b>
+      <span class="text-slate-600">{{ category }} <span class="text-slate-500">× {{ g.count }}</span></span>
+      <span class="font-semibold tabular-nums text-slate-800">{{ g.planned|ugx_amount }}</span>
     </div>
     {% endfor %}
     <div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
-      <span class="font-extrabold text-slate-700">Total planned cost</span>
-      <b class="tabular-nums text-slate-900">{{ basis.system_total|ugx_amount }}</b>
+      <span class="font-semibold text-slate-700">Total planned cost</span>
+      <span class="font-semibold tabular-nums text-slate-800">{{ basis.system_total|ugx_amount }}</span>
     </div>
     <div class="flex items-center justify-between gap-3">
-      <span class="font-extrabold edify-primary-text">{% if instalment == "advance" %}Payable now (50%){% else %}Payable balance{% endif %}</span>
-      <b class="tabular-nums edify-primary-text">{{ basis.payable|ugx_amount }}</b>
+      <span class="font-semibold edify-primary-text">{% if instalment == "advance" %}Payable now (50%){% else %}Payable balance{% endif %}</span>
+      <span class="font-semibold tabular-nums edify-primary-text">{{ basis.payable|ugx_amount }}</span>
     </div>
   </div>
 
-  <label class="block">Your invoice total (UGX)
-    <input type="number" name="entered_total" required min="1"
-           class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"
+  <div class="space-y-1">
+    <label for="inv-total" class="block edify-text-caption font-semibold text-slate-600">Your invoice total (UGX) <span class="text-rose-500">*</span></label>
+    <input id="inv-total" type="number" name="entered_total" required min="1"
+           aria-describedby="inv-total-help"
+           class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] tabular-nums"
            placeholder="Must equal {{ basis.system_total }}">
-    <span class="mt-1 block edify-text-caption font-medium text-slate-400">Must equal the total planned cost — that is how the system links your invoice to the plan.</span>
-  </label>
+    <p id="inv-total-help" class="edify-text-caption text-slate-500">Must equal the total planned cost; that links your invoice to the plan.</p>
+  </div>
 
-  <label class="block">Invoice document
-    <input type="file" name="invoice_file" required accept=".pdf,.png,.jpg,.jpeg"
-           class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-  </label>
-
-  <button type="submit" class="btn btn-primary">Send to my Program Lead</button>
+  <div class="space-y-1">
+    <label for="inv-file" class="block edify-text-caption font-semibold text-slate-600">Invoice document <span class="text-rose-500">*</span></label>
+    <input id="inv-file" type="file" name="invoice_file" required accept=".pdf,.png,.jpg,.jpeg"
+           class="edify-surface block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
+  </div>
   {% else %}
-  <div class="rounded-control border border-dashed border-slate-300 p-6 text-center">
-    <p class="text-[13px] font-bold text-slate-700">Nothing invoiceable in this period</p>
-    <p class="mt-1 text-[12px] font-medium text-slate-500">
-      {% if instalment == "advance" %}All planned work here is already invoiced or paid — try another period.{% else %}The balance opens once IA has cleared your completed work and the 50% advance has been paid.{% endif %}
+  <div class="space-y-1">
+    <p class="text-[13px] font-semibold text-slate-700">Nothing invoiceable in this period</p>
+    <p class="edify-text-caption text-slate-500">
+      {% if instalment == "advance" %}All planned work here is already invoiced or paid. Try another period.{% else %}The balance opens once IA has cleared your completed work and the 50% advance has been paid.{% endif %}
     </p>
   </div>
   {% endif %}
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if not basis_error and basis and basis.items %}<button type="submit" class="btn btn-primary h-8">Send to my Program Lead</button>{% endif %}
+  </div>
 </form>
 {% endblock %}

@@ -1,10 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Plan Field Event{% endblock %}
-{% block drawer_subtitle %}
-Meetings, boot camps, workshops and other approved non-school work. Pick the
-activity and dates — the cost comes from the CD Cost Catalogue automatically.
-{% endblock %}
+{% block drawer_title %}Plan field event{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}Simplified 2026-08-19 (owner: "simple is professional").
@@ -17,11 +14,11 @@ stays but only appears for the few items that require one.{% endcomment %}
   hx-post="/work-plan/add/action"
   hx-target="#non-school-errors"
   hx-disabled-elt="find button[type=submit]"
-  class="space-y-4 text-[12px] font-bold text-slate-600"
+  class="space-y-4 text-[12px] text-slate-600"
   x-data="{ selected: {} }"
 >
   {% csrf_token %}
-  <div id="non-school-errors"></div>
+  <div id="non-school-errors" aria-live="polite"></div>
 
   {% comment %}
     Every control below that previews its own cost states
@@ -39,12 +36,13 @@ stays but only appears for the few items that require one.{% endcomment %}
     it. Overriding the inherited value per control is what makes the preview
     reachable.
   {% endcomment %}
-  <label class="block">Activity
-    <select name="catalogue_item_id" required
-            class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"
+  <div class="space-y-1">
+    <label for="non-school-activity" class="block edify-text-caption font-semibold text-slate-600">Activity <span class="text-rose-500">*</span></label>
+    <select id="non-school-activity" name="catalogue_item_id" required
+            class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2"
             @change="selected = { ...$event.target.options[$event.target.selectedIndex].dataset }"
             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change">
-      <option value="">Choose an approved activity…</option>
+      <option value="">Select an approved activity</option>
       {% regroup items by programme_category as categories %}
       {% for category in categories %}
       <optgroup label="{{ category.grouper|default:'Programme' }}">
@@ -66,52 +64,54 @@ stays but only appears for the few items that require one.{% endcomment %}
       </optgroup>
       {% endfor %}
     </select>
-  </label>
-
-  <div x-cloak x-show="selected.trainingCourse === 'true'" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
-    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selected.trainingCategory || ''"></strong></div>
-    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selected.ssaIndicator || ''"></strong></div>
+    <p x-cloak x-show="selected.trainingCourse === 'true'" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">
+      Training category: <span class="font-semibold text-slate-800" x-text="selected.trainingCategory || ''"></span>
+      · SSA intervention: <span class="font-semibold text-slate-800" x-text="selected.ssaIndicator || ''"></span>
+    </p>
   </div>
 
-  <label class="block" x-cloak x-show="selected.requiresIntervention === 'true'">Follow-up intervention
-    <select name="focus_intervention"
+  <div class="space-y-1" x-cloak x-show="selected.requiresIntervention === 'true'">
+    <label for="non-school-focus-intervention" class="block edify-text-caption font-semibold text-slate-600">Follow-up intervention <span class="text-rose-500">*</span></label>
+    <select id="non-school-focus-intervention" name="focus_intervention"
             x-bind:required="selected.requiresIntervention === 'true'"
             x-bind:disabled="selected.requiresIntervention !== 'true'"
-            class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-      <option value="">Choose the training/support intervention being followed up…</option>
+            class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+      <option value="">Select the intervention being followed up</option>
       {% for value, label in ssa_interventions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
     </select>
-  </label>
-
-  <div class="grid gap-3 sm:grid-cols-2">
-    <label class="block">Start date
-      <input type="date" name="scheduled_date" required
-             {% if date_prefill %}value="{{ date_prefill }}"{% endif %}
-             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
-             class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-    </label>
-    <label class="block">End date <span class="font-medium text-slate-400">(only for multi-day events)</span>
-      <input type="date" name="end_date"
-             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
-             class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-    </label>
   </div>
 
-  <div class="grid gap-3 sm:grid-cols-2">
-    <label class="block">District
-      <select name="district_id"
-              hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
-              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-        <option value="">My own district</option>
-        {% for district in districts %}
-        <option value="{{ district.id }}">{{ district.name }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="block">Venue <span class="font-medium text-slate-400">(optional)</span>
-      <input name="venue" maxlength="255" placeholder="e.g. Kampala Serena"
-             class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-    </label>
+  <div class="space-y-1">
+    <label for="non-school-start-date" class="block edify-text-caption font-semibold text-slate-600">Start date <span class="text-rose-500">*</span></label>
+    <input id="non-school-start-date" type="date" name="scheduled_date" required
+           {% if date_prefill %}value="{{ date_prefill }}"{% endif %}
+           hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
+           class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+  </div>
+
+  <div class="space-y-1">
+    <label for="non-school-end-date" class="block edify-text-caption font-semibold text-slate-600">End date <span class="font-normal text-slate-400">(multi-day events only)</span></label>
+    <input id="non-school-end-date" type="date" name="end_date"
+           hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
+           class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+  </div>
+
+  <div class="space-y-1">
+    <label for="non-school-district" class="block edify-text-caption font-semibold text-slate-600">District</label>
+    <select id="non-school-district" name="district_id"
+            hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
+            class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+      <option value="">My own district</option>
+      {% for district in districts %}
+      <option value="{{ district.id }}">{{ district.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="space-y-1">
+    <label for="non-school-venue" class="block edify-text-caption font-semibold text-slate-600">Venue</label>
+    <input id="non-school-venue" name="venue" maxlength="255" placeholder="e.g. Kampala Serena"
+           class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
   </div>
 
   {% comment %}
@@ -135,32 +135,35 @@ stays but only appears for the few items that require one.{% endcomment %}
      `expected_participants` would post the field twice and leave the view
      reading whichever came last, so the requirement is bound instead of
      duplicated.{% endcomment %}
-  <label class="block" x-cloak x-show="selected.fieldEvent === 'false'">Schools reached
-    <input type="number" name="planned_school_count" min="1" max="10000"
+  <div class="space-y-1" x-cloak x-show="selected.fieldEvent === 'false'">
+    <label for="non-school-schools-reached" class="block edify-text-caption font-semibold text-slate-600">Schools reached <span class="text-rose-500">*</span></label>
+    <input id="non-school-schools-reached" type="number" name="planned_school_count" min="1" max="10000"
            x-bind:required="selected.fieldEvent === 'false'"
            x-bind:disabled="selected.fieldEvent !== 'false'"
            hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change delay:300ms"
-           class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-  </label>
+           class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+  </div>
 
-  <label class="block">Participants
-    <span class="font-medium text-slate-400" x-show="selected.fieldEvent !== 'false'">(only when the activity feeds or hosts people)</span>
-    <input type="number" name="expected_participants" min="1" max="100000"
+  <div class="space-y-1">
+    <label for="non-school-participants" class="block edify-text-caption font-semibold text-slate-600">Participants
+      <span class="text-rose-500" x-show="selected.fieldEvent === 'false'">*</span>
+      <span class="font-normal text-slate-400" x-show="selected.fieldEvent !== 'false'">(if the activity feeds or hosts people)</span>
+    </label>
+    <input id="non-school-participants" type="number" name="expected_participants" min="1" max="100000"
            x-bind:required="selected.fieldEvent === 'false'"
            hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change delay:300ms"
-           class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
-  </label>
+           class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2">
+  </div>
 
   <div id="non-school-cost-preview">
     {% include "partials/work_plan/non_school_cost_preview.html" with preview=None days=1 %}
   </div>
 
-  <p class="text-[12px] font-medium text-[var(--edify-text-muted)]">
-    Saving schedules this for you: it appears in your My Plan, the Work Plan
-    and the Calendar, and its catalogue cost enters your weekly fund request
-    and monthly budget for its dates.
-  </p>
+  <p class="edify-text-caption text-slate-500">It appears in My Plan, the Work Plan and the Calendar, and its catalogue cost enters your fund request and budget.</p>
 
-  <button type="submit" class="btn btn-primary">Add to my plan</button>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Add to my plan</button>
+  </div>
 </form>
 {% endblock %}

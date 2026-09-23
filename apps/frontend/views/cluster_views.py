@@ -1440,9 +1440,17 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
     served_district_q = Q(district_id__in=served_ids)
     from apps.core.scoping import owner_ids
 
-    if cluster.responsible_staff_id in owner_ids(request.user):
+    scope = resolve_user_scope(request.user)
+    if (
+        not scope.country_scope
+        and not scope.can_view_summary_only
+        and cluster.responsible_staff_id in owner_ids(request.user)
+    ):
         # Owners may group their own schools across districts; the membership
         # service still enforces portfolio ownership and country boundaries.
+        # Only for a field owner, whose pool below is their direct portfolio:
+        # a country-scope pool is every unclustered school, and the served
+        # districts are what keep it to this cluster's area (and country).
         served_district_q = Q()
     if request.method == "POST":
         school_ids = request.POST.getlist("school_ids")
@@ -1494,7 +1502,6 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         return response
 
     # GET method — bring out all unclustered schools in the district where the cluster is.
-    scope = resolve_user_scope(request.user)
     if scope.country_scope or scope.can_view_summary_only:
         unassigned_schools = School.objects.filter(
             served_district_q,

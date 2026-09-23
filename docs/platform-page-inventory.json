@@ -207,14 +207,14 @@
       "bytes": 5825,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/activities/<str:activity_id>",
         "/activities/<str:activity_id>/attendance",
         "/activities/<str:activity_id>/complete",
         "/activities/<str:activity_id>/evidence",
         "/activities/<str:activity_id>/partner-ssa-complete",
         "/activities/<str:activity_id>/salesforce-id",
         "/activities/<str:activity_id>/ssa-upload",
-        "/activities/<str:activity_id>/start",
-        "/activities/<str:activity_id>/submit"
+        "/activities/<str:activity_id>/start"
       ],
       "findings": [],
       "forms": 0,
@@ -574,7 +574,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2217,
+      "bytes": 2266,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -1008,7 +1008,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13971,
+      "bytes": 11718,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director/drilldown"
@@ -1026,7 +1026,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/cd/drilldown.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -1305,7 +1307,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3195,
+      "bytes": 3164,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/customize-dashboard"
@@ -1323,7 +1325,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/customize_dashboard_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -1372,7 +1376,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2498,
+      "bytes": 2276,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/drilldown"
@@ -2100,7 +2104,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4339,
+      "bytes": 3734,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown"
@@ -2117,7 +2121,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/pl/drilldown.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -2281,7 +2287,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3506,
+      "bytes": 2860,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/schedule-report"
@@ -2292,14 +2298,16 @@
       "kind": "application-partial",
       "name": "Schedule Report Drawer",
       "purpose": "Reusable schedule report drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error"
       ],
       "tables": 0,
       "template": "partials/analytics/schedule_report_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -2518,10 +2526,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 7341,
+      "bytes": 6342,
       "deprecated_alternatives": [],
       "example_pages": [
         "/loans/<str:loan_id>/drawer"
@@ -2532,10 +2539,9 @@
       "kind": "application-partial",
       "name": "Loan Drawer",
       "purpose": "Reusable loan drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/business_transformation/loan_drawer.html",
@@ -2726,7 +2732,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4414,
+      "bytes": 5364,
       "deprecated_alternatives": [],
       "example_pages": [
         "/settings/activity-catalogue/new"
@@ -2737,7 +2743,7 @@
       "kind": "application-partial",
       "name": "New Activity Drawer",
       "purpose": "Reusable new activity drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -2751,7 +2757,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8085,
+      "bytes": 6244,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2770,7 +2776,9 @@
       ],
       "tables": 0,
       "template": "partials/clusters/bulk_assign_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -2778,7 +2786,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9317,
+      "bytes": 8238,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-schedule-drawer"
@@ -2789,7 +2797,7 @@
       "kind": "application-partial",
       "name": "Bulk Schedule Drawer",
       "purpose": "Reusable bulk schedule drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error",
@@ -2800,6 +2808,7 @@
       "template": "partials/clusters/bulk_schedule_drawer.html",
       "variants": [
         "danger",
+        "info",
         "warning"
       ]
     },
@@ -2809,7 +2818,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3597,
+      "bytes": 3449,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/catchment-drawer"
@@ -2838,7 +2847,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 1581,
+      "bytes": 1517,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/catchment/<str:catchment_id>/end"
@@ -2868,7 +2877,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25339,
+      "bytes": 23927,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2878,7 +2887,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 13,
+      "htmx_controls": 15,
       "kind": "application-partial",
       "name": "Cluster Action Planner Drawer",
       "purpose": "Reusable cluster action planner drawer interface primitive",
@@ -2886,12 +2895,15 @@
       "states": [
         "default",
         "empty",
+        "error",
         "disabled",
         "open"
       ],
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -2921,7 +2933,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2037,
+      "bytes": 1335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/detail-drawer/<str:cluster_id>"
@@ -2967,7 +2979,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11282,
+      "bytes": 11445,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -2997,7 +3009,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9528,
+      "bytes": 8401,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/create-drawer"
@@ -3023,7 +3035,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10444,
+      "bytes": 8971,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -3118,7 +3130,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 2327,
+      "bytes": 2450,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/impact-drawer/<str:cluster_id>"
@@ -3178,34 +3190,6 @@
       ],
       "tables": 0,
       "template": "partials/clusters/oversight_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 5902,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/clusters/planner-drawer",
-        "/clusters/schedule-activity",
-        "/clusters/schedule-meeting-drawer",
-        "/clusters/schedule-training-drawer"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Planned Date Field",
-      "purpose": "Reusable planned date field interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/clusters/planned_date_field.html",
       "variants": []
     },
     {
@@ -3388,7 +3372,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10295,
+      "bytes": 7851,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3399,21 +3383,22 @@
       "kind": "application-partial",
       "name": "Assign Partner Drawer",
       "purpose": "Reusable assign partner drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "error",
         "open"
       ],
       "tables": 0,
       "template": "partials/core_schools/assign_partner_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9976,
+      "bytes": 7590,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/<str:school_id>/champion-review"
@@ -3427,18 +3412,19 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "disabled",
-        "open"
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/core_schools/champion_review_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4095,
+      "bytes": 1555,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assessment"
@@ -3452,12 +3438,13 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty",
-        "open"
+        "empty"
       ],
       "tables": 0,
       "template": "partials/core_schools/core_assessment_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -3671,8 +3658,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 4897,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4123,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-activity"
@@ -3683,7 +3672,7 @@
       "kind": "application-partial",
       "name": "Schedule Activity Drawer",
       "purpose": "Reusable schedule activity drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "disabled"
@@ -3698,7 +3687,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15673,
+      "bytes": 6796,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -3709,16 +3698,17 @@
       "kind": "application-partial",
       "name": "Schedule Training Drawer",
       "purpose": "Reusable schedule training drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "empty",
-        "error",
         "open"
       ],
       "tables": 0,
       "template": "partials/core_schools/schedule_training_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -3726,7 +3716,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23420,
+      "bytes": 12730,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3737,17 +3727,19 @@
       "kind": "application-partial",
       "name": "Schedule Visit Drawer",
       "purpose": "Reusable schedule visit drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "empty",
-        "error",
         "disabled",
         "open"
       ],
       "tables": 0,
       "template": "partials/core_schools/schedule_visit_drawer.html",
-      "variants": []
+      "variants": [
+        "info",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -3778,7 +3770,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4247,
+      "bytes": 2121,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/strategy-playbook"
@@ -3791,8 +3783,7 @@
       "purpose": "Reusable strategy playbook drawer interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/core_schools/strategy_playbook_drawer.html",
@@ -3851,7 +3842,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2569,
+      "bytes": 3240,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings/add"
@@ -3862,7 +3853,7 @@
       "kind": "application-partial",
       "name": "Add Drawer",
       "purpose": "Reusable add drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -3897,7 +3888,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6625,
+      "bytes": 6730,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings/row/<str:key>"
@@ -3908,7 +3899,7 @@
       "kind": "application-partial",
       "name": "Edit Drawer",
       "purpose": "Reusable edit drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error",
@@ -4583,7 +4574,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4020,
+      "bytes": 3840,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/pl-drilldown"
@@ -5128,8 +5119,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 6260,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6091,
       "deprecated_alternatives": [],
       "example_pages": [
         "/rvp/approvals"
@@ -5532,7 +5525,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4971,
+      "bytes": 2870,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5544,19 +5537,20 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "loading",
-        "open"
+        "loading"
       ],
       "tables": 0,
       "template": "partials/disbursements/disburse_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3837,
+      "bytes": 2071,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5567,8 +5561,7 @@
       "purpose": "Reusable hold drawer interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/disbursements/hold_drawer.html",
@@ -5579,7 +5572,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3843,
+      "bytes": 2112,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5590,8 +5583,7 @@
       "purpose": "Reusable return drawer interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/disbursements/return_drawer.html",
@@ -5802,7 +5794,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4551,
+      "bytes": 3347,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -5823,7 +5815,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3846,
+      "bytes": 2925,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/drilldown"
@@ -5887,10 +5879,8 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4196,
+      "accessibility_requirements": [],
+      "bytes": 2774,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/plan-sources"
@@ -5904,8 +5894,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty",
-        "open"
+        "empty"
       ],
       "tables": 1,
       "template": "partials/finance/country_budget/plan_sources_drawer.html",
@@ -5916,7 +5905,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3779,
+      "bytes": 2063,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/return"
@@ -5929,8 +5918,7 @@
       "purpose": "Reusable return drawer interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/finance/country_budget/return_drawer.html",
@@ -5974,7 +5962,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1843,
+      "bytes": 1415,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/export-drawer"
@@ -5998,7 +5986,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8043,
+      "bytes": 8300,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/actions/drawer"
@@ -6202,7 +6190,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3807,
+      "bytes": 2085,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals/return"
@@ -6215,8 +6203,7 @@
       "purpose": "Reusable return drawer interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/fund_approvals/return_drawer.html",
@@ -6398,7 +6385,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 1271,
+      "bytes": 1352,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/weekly/<str:request_id>/return-drawer"
@@ -6416,7 +6403,9 @@
       ],
       "tables": 0,
       "template": "partials/fund_requests/return_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -6635,7 +6624,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6777,
+      "bytes": 6163,
       "deprecated_alternatives": [],
       "example_pages": [
         "/extra-work/assign-drawer"
@@ -6646,7 +6635,7 @@
       "kind": "application-partial",
       "name": "Extra Work Assign Drawer",
       "purpose": "Reusable extra work assign drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "disabled"
@@ -6661,7 +6650,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3103,
+      "bytes": 2900,
       "deprecated_alternatives": [],
       "example_pages": [
         "/extra-work/<str:assignment_id>/submit-drawer"
@@ -6679,13 +6668,15 @@
       ],
       "tables": 0,
       "template": "partials/hr/extra_work_submit_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4154,
+      "bytes": 4219,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline/<str:application_id>",
@@ -6751,7 +6742,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2769,
+      "bytes": 2440,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning/adjust-allocation"
@@ -6768,7 +6759,9 @@
       ],
       "tables": 0,
       "template": "partials/hr/pd_dashboard/adjust_allocation_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -6925,7 +6918,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9716,
+      "bytes": 10294,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/ssa-mapping/<str:item_id>/drawer"
@@ -7230,7 +7223,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4428,
+      "bytes": 3537,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -7241,7 +7234,7 @@
       "kind": "application-partial",
       "name": "Partner Complete Drawer",
       "purpose": "Reusable partner complete drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "disabled"
@@ -7256,7 +7249,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3087,
+      "bytes": 2938,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/return-drawer"
@@ -7267,7 +7260,7 @@
       "kind": "application-partial",
       "name": "Partner Return Drawer",
       "purpose": "Reusable partner return drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "disabled"
@@ -7380,7 +7373,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13585,
+      "bytes": 13170,
       "deprecated_alternatives": [],
       "example_pages": [
         "/personal-time-off/request",
@@ -7409,7 +7402,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16393,
+      "bytes": 12266,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -7421,7 +7414,7 @@
       "kind": "application-partial",
       "name": "Compose Modal",
       "purpose": "Reusable compose modal interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "disabled",
@@ -7429,7 +7422,9 @@
       ],
       "tables": 0,
       "template": "partials/messages/compose_modal.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -7560,7 +7555,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2738,
+      "bytes": 2159,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages/drawer"
@@ -7677,7 +7672,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5197,
+      "bytes": 3688,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/accountability"
@@ -7688,7 +7683,7 @@
       "kind": "application-partial",
       "name": "Accountability Drawer",
       "purpose": "Reusable accountability drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -7701,7 +7696,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13372,
+      "bytes": 9507,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -7773,7 +7768,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8207,
+      "bytes": 7754,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -7820,7 +7815,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2515,
+      "bytes": 1801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/cancel-drawer"
@@ -7831,13 +7826,15 @@
       "kind": "application-partial",
       "name": "Cancel Drawer",
       "purpose": "Reusable cancel drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
       "tables": 0,
       "template": "partials/my_plan/cancel_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -7887,7 +7884,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 26130,
+      "bytes": 23514,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -7916,7 +7913,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 2129,
+      "bytes": 1723,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/confirm-reimbursement-receipt"
@@ -7927,7 +7924,7 @@
       "kind": "application-partial",
       "name": "Confirm Reimbursement Receipt Drawer",
       "purpose": "Reusable confirm reimbursement receipt drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -7983,7 +7980,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10162,
+      "bytes": 8174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -8061,7 +8058,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5760,
+      "bytes": 4830,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/partner-ssa-complete"
@@ -8195,7 +8192,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 2029,
+      "bytes": 1613,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -8206,7 +8203,7 @@
       "kind": "application-partial",
       "name": "Salesforce Id Drawer",
       "purpose": "Reusable salesforce id drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -8241,7 +8238,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2391,
+      "bytes": 1856,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/ssa-upload"
@@ -8252,7 +8249,7 @@
       "kind": "application-partial",
       "name": "Ssa Upload Drawer",
       "purpose": "Reusable ssa upload drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -8265,7 +8262,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1798,
+      "bytes": 1335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/start"
@@ -8276,7 +8273,7 @@
       "kind": "application-partial",
       "name": "Start Drawer",
       "purpose": "Reusable start drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -8286,7 +8283,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4098,
+      "bytes": 3139,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/submit"
@@ -8304,11 +8301,13 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/submit_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2075,
+      "bytes": 1765,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/timeline"
@@ -8350,7 +8349,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2142,
+      "bytes": 1582,
       "deprecated_alternatives": [],
       "example_pages": [
         "/notifications/drawer"
@@ -8516,7 +8515,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4303,
+      "bytes": 4005,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/allowance-drawer"
@@ -8540,7 +8539,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 34302,
+      "bytes": 34368,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8595,7 +8594,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1401,
+      "bytes": 1664,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8617,7 +8616,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 446,
+      "bytes": 587,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8640,7 +8639,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7684,
+      "bytes": 8540,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8739,7 +8738,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10291,
+      "bytes": 10025,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -8762,7 +8761,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5355,
+      "bytes": 5958,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -8811,7 +8810,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11380,
+      "bytes": 11160,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -8906,7 +8905,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11188,
+      "bytes": 11696,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9021,7 +9020,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3312,
+      "bytes": 3577,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/resolve"
@@ -9075,7 +9074,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10025,
+      "bytes": 10018,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/withdraw"
@@ -9086,21 +9085,23 @@
       "kind": "application-partial",
       "name": "Withdrawal Drawer",
       "purpose": "Reusable withdrawal drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "open"
       ],
       "tables": 0,
       "template": "partials/oversight/withdrawal_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5166,
+      "bytes": 5879,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/invoices/new"
@@ -9119,14 +9120,16 @@
       ],
       "tables": 0,
       "template": "partials/partner/invoice_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4355,
+      "bytes": 4251,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer",
@@ -9155,7 +9158,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5142,
+      "bytes": 4974,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -9184,7 +9187,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5183,
+      "bytes": 5129,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer"
@@ -9244,7 +9247,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 2999,
+      "bytes": 2970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/members/drawer"
@@ -9270,7 +9273,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4012,
+      "bytes": 3377,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/return-drawer"
@@ -9281,7 +9284,7 @@
       "kind": "application-partial",
       "name": "Return Assignment Drawer",
       "purpose": "Reusable return assignment drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "disabled"
@@ -9296,7 +9299,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3672,
+      "bytes": 3314,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
@@ -9307,7 +9310,7 @@
       "kind": "application-partial",
       "name": "Schedule Assignment Drawer",
       "purpose": "Reusable schedule assignment drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "error",
@@ -9315,7 +9318,9 @@
       ],
       "tables": 0,
       "template": "partials/partners/schedule_assignment_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9323,7 +9328,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3239,
+      "bytes": 2961,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/user-setup"
@@ -9353,7 +9358,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10440,
+      "bytes": 8915,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -9364,7 +9369,7 @@
       "kind": "application-partial",
       "name": "Assign Partner Drawer",
       "purpose": "Reusable assign partner drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error",
@@ -9373,7 +9378,10 @@
       ],
       "tables": 0,
       "template": "partials/planning/assign_partner_drawer.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9426,7 +9434,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32781,
+      "bytes": 25200,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -9437,7 +9445,7 @@
       "kind": "application-partial",
       "name": "Schedule Cluster Drawer",
       "purpose": "Reusable schedule cluster drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "empty",
@@ -9447,7 +9455,10 @@
       ],
       "tables": 0,
       "template": "partials/planning/schedule_cluster_drawer.html",
-      "variants": []
+      "variants": [
+        "info",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9455,7 +9466,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 41407,
+      "bytes": 32008,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -9467,7 +9478,7 @@
       "kind": "application-partial",
       "name": "Schedule Drawer",
       "purpose": "Reusable schedule drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error",
@@ -9477,6 +9488,8 @@
       "tables": 0,
       "template": "partials/planning/schedule_drawer.html",
       "variants": [
+        "info",
+        "warning",
         "{{ plan.tone }}"
       ]
     },
@@ -9506,7 +9519,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7565,
+      "bytes": 7743,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9946,8 +9959,10 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1955,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1911,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development/allocation-history"
@@ -10022,7 +10037,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36490,
+      "bytes": 38883,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development/request"
@@ -10044,7 +10059,8 @@
       "template": "partials/professional_development/request_form.html",
       "variants": [
         "danger",
-        "warning"
+        "warning",
+        "{% if conflict.status == "
       ]
     },
     {
@@ -10053,7 +10069,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2490,
+      "bytes": 2505,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10235,7 +10251,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7438,
+      "bytes": 5505,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/schools/bulk-assign-drawer"
@@ -10246,7 +10262,7 @@
       "kind": "application-partial",
       "name": "Bulk Assign Drawer",
       "purpose": "Reusable bulk assign drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "disabled",
@@ -10254,13 +10270,15 @@
       ],
       "tables": 0,
       "template": "partials/projects/bulk_assign_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4005,
+      "bytes": 3806,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -10279,13 +10297,15 @@
       ],
       "tables": 0,
       "template": "partials/projects/bulk_partner_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3611,
+      "bytes": 3254,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-schedule"
@@ -10296,7 +10316,7 @@
       "kind": "application-partial",
       "name": "Bulk Schedule Drawer",
       "purpose": "Reusable bulk schedule drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "empty",
@@ -10305,14 +10325,16 @@
       ],
       "tables": 0,
       "template": "partials/projects/bulk_schedule_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3602,
+      "bytes": 4449,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -10323,7 +10345,7 @@
       "kind": "application-partial",
       "name": "Create Project Drawer",
       "purpose": "Reusable create project drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "disabled"
@@ -10356,7 +10378,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3707,
+      "bytes": 4645,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"
@@ -10367,7 +10389,7 @@
       "kind": "application-partial",
       "name": "Edit Project Drawer",
       "purpose": "Reusable edit project drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "disabled"
@@ -10380,7 +10402,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3360,
+      "bytes": 2835,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/filters-drawer"
@@ -10391,7 +10413,7 @@
       "kind": "application-partial",
       "name": "Filters Drawer",
       "purpose": "Reusable filters drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -10757,7 +10779,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6558,
+      "bytes": 6641,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
@@ -10787,9 +10809,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 5454,
+      "bytes": 4551,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"
@@ -10807,7 +10830,10 @@
       ],
       "tables": 0,
       "template": "partials/schools/assign_to_project_drawer.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10837,9 +10863,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 8029,
+      "bytes": 7566,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/close-drawer"
@@ -10856,7 +10883,9 @@
       ],
       "tables": 0,
       "template": "partials/schools/close_drawer.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10938,8 +10967,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 846,
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 640,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer",
@@ -10962,7 +10993,9 @@
       ],
       "tables": 0,
       "template": "partials/schools/drawer_error.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10970,7 +11003,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15246,
+      "bytes": 11907,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
@@ -10981,7 +11014,7 @@
       "kind": "application-partial",
       "name": "Edit Drawer",
       "purpose": "Reusable edit drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "error",
@@ -10989,7 +11022,9 @@
       ],
       "tables": 0,
       "template": "partials/schools/edit_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -11040,7 +11075,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8218,
+      "bytes": 6871,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
@@ -11058,7 +11093,9 @@
       ],
       "tables": 0,
       "template": "partials/schools/onboard_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -11066,7 +11103,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5977,
+      "bytes": 5325,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/transfer-owner"
@@ -11410,7 +11447,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6377,
+      "bytes": 5895,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets/area-drawer"
@@ -11421,7 +11458,7 @@
       "kind": "application-partial",
       "name": "Area Drawer",
       "purpose": "Reusable area drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -11574,7 +11611,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2674,
+      "bytes": 2474,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/day"
@@ -11595,7 +11632,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3688,
+      "bytes": 3335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/matrix"
@@ -11616,8 +11653,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3906,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/recovery"
@@ -11638,7 +11677,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1459,
+      "bytes": 1209,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/sfid-backlog"
@@ -11659,7 +11698,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4995,
+      "bytes": 4378,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/staff-drawer"
@@ -11670,7 +11709,7 @@
       "kind": "application-partial",
       "name": "Staff Drawer",
       "purpose": "Reusable staff drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -11680,7 +11719,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1168,
+      "bytes": 1022,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/validation-backlog"
@@ -12090,7 +12129,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9833,
+      "bytes": 10303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add"
@@ -12101,7 +12140,7 @@
       "kind": "application-partial",
       "name": "Non School Activity Drawer",
       "purpose": "Reusable non school activity drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "disabled",
@@ -12115,7 +12154,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 1591,
+      "bytes": 1555,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add",
@@ -16137,7 +16176,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-4CDAC86216",
@@ -16145,7 +16184,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Update SSA &amp; Complete",
+      "primary_action": "Update SSA &amp; complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "School: Cluster:",
       "remediation": "No automated remediation outstanding",
@@ -16182,6 +16221,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
+        "components/drawers/base_drawer.html",
         "layouts/shell.html"
       ],
       "state_coverage": {
@@ -16208,8 +16248,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
-        "text-[18px]"
+        "text-[13px]"
       ]
     },
     {
@@ -16249,7 +16288,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Attendance Upload Drawer",
+      "primary_action": "Save attendance",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate attendance upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -16314,7 +16353,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -16707,7 +16745,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Complete Activity Drawer",
+      "primary_action": "Submit training + visit Submit completion",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate complete activity drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -16772,7 +16810,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]"
+        "text-[16px]"
       ]
     },
     {
@@ -16972,7 +17010,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]"
+        "text-[16px]"
       ]
     },
     {
@@ -17211,7 +17249,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Partner Ssa Completion Drawer",
+      "primary_action": "Save SSA and complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Dedicated completion drawer for partner-delivered school SSA Support.",
       "remediation": "No automated remediation outstanding",
@@ -17275,7 +17313,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[13px]",
-        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -17487,7 +17524,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Salesforce Id Drawer",
+      "primary_action": "Save Salesforce ID",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate salesforce id drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -17551,7 +17588,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -17683,7 +17721,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Ssa Evidence Upload Drawer",
+      "primary_action": "Upload SSA",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate ssa evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -17747,7 +17785,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -17879,7 +17918,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Start Activity Drawer",
+      "primary_action": "Start activity",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate start activity drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -17943,7 +17982,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -18075,7 +18115,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Submit For Review Drawer",
+      "primary_action": "Submit for review",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate submit for review drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -18138,8 +18178,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -18331,7 +18370,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[32px]"
+        "text-[13px]"
       ]
     },
     {
@@ -21893,7 +21932,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "analytics",
-      "primary_action": "Analytics Customize Dashboard",
+      "primary_action": "Save preferences",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Persist the caller's KPI visibility and density preferences.",
       "remediation": "No automated remediation outstanding",
@@ -22712,7 +22751,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "analytics",
-      "primary_action": "Analytics Schedule Report",
+      "primary_action": "Send to inbox",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Send a permission-scoped analytics snapshot to Messages immediately.",
       "remediation": "No automated remediation outstanding",
@@ -26841,7 +26880,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Cluster Bulk Assign Drawer",
+      "primary_action": "0 ? `Save ${selectedCount} school${selectedCount === 1 ? '' : 's'} to cluster` : 'Save schools to cluster'\">Save schools to cluster",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate cluster bulk assign drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -26897,8 +26936,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -26938,7 +26976,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cluster_detail",
-      "primary_action": "Cluster Bulk Schedule Drawer",
+      "primary_action": "0 ? `Untick ${overflow} to schedule` : `Schedule ${selected.length} visit${selected.length === 1 ? '' : 's'}`)\">Schedule the day",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "A day of visits across one to five of a cluster's schools.",
       "remediation": "No automated remediation outstanding",
@@ -26992,7 +27030,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]"
       ]
     },
     {
@@ -27031,7 +27069,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cluster_detail",
-      "primary_action": "Approve District",
+      "primary_action": "Approve district",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Approve a neighbouring district for a cluster (CD, Admin).",
       "remediation": "No automated remediation outstanding",
@@ -27125,7 +27163,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cluster_detail",
-      "primary_action": "End Approval",
+      "primary_action": "Cluster Catchment End",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "End an approved neighbouring district (CD, Admin).",
       "remediation": "No automated remediation outstanding",
@@ -27389,7 +27427,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Edit Cluster Drawer",
+      "primary_action": "Save changes",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate edit cluster drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -27444,8 +27482,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -27750,7 +27787,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Create Cluster Drawer",
+      "primary_action": "Create cluster",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate create cluster drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -27842,7 +27879,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Cluster Detail Drawer",
+      "primary_action": "Open planner",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate cluster detail drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -27896,7 +27933,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]"
       ]
     },
     {
@@ -28073,7 +28110,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -28200,7 +28238,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-2ED83EFD47",
@@ -28208,7 +28246,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Cluster Planner Drawer",
+      "primary_action": "Schedule training Schedule meeting",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate cluster planner drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -28298,7 +28336,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-DE58BA1934",
@@ -28306,7 +28344,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Cluster Schedule Activity",
+      "primary_action": "Schedule training Schedule meeting",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate cluster schedule activity within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -28396,7 +28434,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-3EB2E7F348",
@@ -28404,7 +28442,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Schedule Meeting Drawer",
+      "primary_action": "Schedule training Schedule meeting",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate schedule meeting drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -28494,7 +28532,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-65C7CBA4DB",
@@ -28502,7 +28540,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Schedule Training Drawer",
+      "primary_action": "Schedule training Schedule meeting",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate schedule training drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -30206,7 +30244,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-948C353E74",
@@ -30214,7 +30252,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "core_schools",
-      "primary_action": "Champion Review Drawer",
+      "primary_action": "Graduate school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer to review details of a Potential Champion candidate.",
       "remediation": "No automated remediation outstanding",
@@ -30250,7 +30288,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": true,
@@ -30275,9 +30313,9 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]",
-        "text-[15px]",
-        "text-[18px]"
+        "text-[15px]"
       ]
     },
     {
@@ -30306,7 +30344,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-79BBB2B7DD",
@@ -30348,7 +30386,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -30372,9 +30410,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[18px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {
@@ -30413,7 +30449,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "core_schools",
-      "primary_action": "Core Assign Partner Drawer",
+      "primary_action": "Assign to partner",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Renders partner assignment drawer.",
       "remediation": "No automated remediation outstanding",
@@ -30473,7 +30509,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
         "text-[13px]"
       ]
     },
@@ -30947,9 +30982,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
+        "text-[13px]"
       ]
     },
     {
@@ -30980,7 +31013,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-21C12E11BA",
@@ -30988,7 +31021,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "core_schools",
-      "primary_action": "Core Schedule Training Drawer",
+      "primary_action": "Schedule training",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Renders schedule core training drawer.",
       "remediation": "No automated remediation outstanding",
@@ -31024,7 +31057,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -31048,10 +31081,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[18px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {
@@ -31172,7 +31202,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-0B247C98CF",
@@ -31180,7 +31210,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "core_schools",
-      "primary_action": "Core Schedule Visit Drawer",
+      "primary_action": "Schedule visit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Renders schedule core visit drawer.",
       "remediation": "No automated remediation outstanding",
@@ -31216,7 +31246,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": true,
@@ -31240,10 +31270,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[18px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {
@@ -31362,7 +31389,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-E1FE532B4B",
@@ -31404,7 +31431,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -31428,9 +31455,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[18px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {
@@ -32428,7 +32453,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-6C0C6DD33B",
@@ -32464,7 +32489,7 @@
         "apps.partners.models"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -32488,8 +32513,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[15px]"
+        "text-[12px]"
       ]
     },
     {
@@ -32518,7 +32542,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-EFEA0EEA3D",
@@ -32526,7 +32550,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "country_budget",
-      "primary_action": "Country Budget Return Drawer",
+      "primary_action": "Return for correction",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The RVP return-for-correction drawer.",
       "remediation": "No automated remediation outstanding",
@@ -32556,7 +32580,7 @@
         "apps.partners.models"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -32580,9 +32604,7 @@
       "theme_status": "pass-automated-contract",
       "todos": true,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
+        "text-[13px]"
       ]
     },
     {
@@ -33250,7 +33272,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cpd_learning",
-      "primary_action": "Save Allocation",
+      "primary_action": "Save allocation",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "GET: the \"Adjust Allocation\" drawer for one role. POST: save it, optionally bulk-applying to every current staff member in that role.",
       "remediation": "No automated remediation outstanding",
@@ -33301,7 +33323,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[13px]"
       ]
     },
     {
@@ -37567,7 +37589,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "extra_work",
-      "primary_action": "Extra Work Submit Drawer",
+      "primary_action": "Submit for verification",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate extra work submit drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -37730,7 +37752,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "extra_work",
-      "primary_action": "Extra Work Assign Drawer",
+      "primary_action": "Assign work",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate extra work assign drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -38061,7 +38083,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "disbursements",
-      "primary_action": "Finance Action Drawer",
+      "primary_action": "Disburse advance Clear payment Process reimbursement Confirm clearance Return for correction Confirm action",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "GET to render the floating drawer for various finance actions.",
       "remediation": "No automated remediation outstanding",
@@ -38497,7 +38519,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "consolidated_fund_allocation",
-      "primary_action": "View CD Monthly Plan",
+      "primary_action": "View CD monthly plan",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "GET to render the admin budget breakdown floating drawer.",
       "remediation": "No automated remediation outstanding",
@@ -38729,7 +38751,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -39298,7 +39321,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-D2A71FB89F",
@@ -39306,7 +39329,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_approvals",
-      "primary_action": "Fund Approvals Return",
+      "primary_action": "Return for review",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Return-for-review drawer (reason + comment).",
       "remediation": "No automated remediation outstanding",
@@ -39352,7 +39375,7 @@
         "apps.targets.models"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -39376,9 +39399,7 @@
       "theme_status": "pass-automated-contract",
       "todos": true,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
+        "text-[13px]"
       ]
     },
     {
@@ -40597,7 +40618,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_requests",
-      "primary_action": "Weekly Fund Request Return Drawer",
+      "primary_action": "Return request",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate weekly fund request return drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -40649,7 +40670,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -49545,7 +49568,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "ia_partner_evidence",
-      "primary_action": "Ia Partner Complete Drawer",
+      "primary_action": "Record ID and complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "\u00a712 Confirm Salesforce Entry \u2014 read-only summary + the required ID.",
       "remediation": "No automated remediation outstanding",
@@ -49599,7 +49622,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
+        "text-[13px]",
         "text-[16px]"
       ]
     },
@@ -49776,7 +49799,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
+        "text-[13px]",
         "text-[16px]"
       ]
     },
@@ -54453,7 +54476,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "business_transformation",
       "notifications": false,
       "page_id": "UI-PAGE-63286BCEAE",
@@ -54461,7 +54484,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "loans",
-      "primary_action": "Confirm &amp; Complete",
+      "primary_action": "Confirm &amp; complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate loan drawer within the business transformation workflow.",
       "remediation": "No automated remediation outstanding",
@@ -54484,7 +54507,7 @@
       ],
       "services_and_models": [],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -54507,7 +54530,10 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -55843,8 +55869,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[40px]"
+        "text-[12px]"
       ]
     },
     {
@@ -57597,7 +57622,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-1028B8B6D6",
@@ -57605,7 +57630,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Update SSA &amp; Complete",
+      "primary_action": "Update SSA &amp; complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "School: Cluster:",
       "remediation": "No automated remediation outstanding",
@@ -57642,6 +57667,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
+        "components/drawers/base_drawer.html",
         "layouts/shell.html"
       ],
       "state_coverage": {
@@ -57668,8 +57694,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
-        "text-[18px]"
+        "text-[13px]"
       ]
     },
     {
@@ -57708,7 +57733,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Accountability Action",
+      "primary_action": "Submit for finance review",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Submit accountability for a disbursed activity (GET drawer / POST submit).",
       "remediation": "No automated remediation outstanding",
@@ -57772,8 +57797,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
-        "text-[18px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -57969,7 +57994,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -58102,7 +58128,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Complete Drawer",
+      "primary_action": "Submit training + visit Submit completion",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate complete drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -58167,7 +58193,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]"
+        "text-[16px]"
       ]
     },
     {
@@ -58206,7 +58232,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Confirm Reimbursement Receipt Action",
+      "primary_action": "Confirm receipt",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The responsible employee confirms a disbursed reimbursement actually arrived \u2014 required before the reimbursement (and the accountability it settles) reaches its terminal financially-cleared state (mandate: no accountability closes without the employee's own receipt confirmation).",
       "remediation": "No automated remediation outstanding",
@@ -58270,7 +58296,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[18px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -58662,7 +58689,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Reschedule Drawer",
+      "primary_action": "Save new date Schedule visit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate reschedule drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -58725,8 +58752,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]"
+        "text-[12px]"
       ]
     },
     {
@@ -59108,6 +59134,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[12px]",
         "text-[13px]"
       ]
     },
@@ -59473,7 +59500,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_professional_development",
-      "primary_action": "Pd Request",
+      "primary_action": "Approve &amp; send to HR",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "GET: new/edit draft form drawer. POST: save draft or submit.",
       "remediation": "No automated remediation outstanding",
@@ -59495,8 +59522,8 @@
       "secondary_actions": [
         "/my-professional-development/request/{{ instance.id }}/action",
         "/my-professional-development/fund/{{ instance.fund_request.id }}/action",
-        "/my-professional-development/request",
         "/my-professional-development/request/{{ instance.id }}/evidence",
+        "/my-professional-development/request",
         "/my-professional-development/request/{{ instance.id }}/certificate"
       ],
       "services_and_models": [
@@ -59529,7 +59556,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -60638,8 +60666,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[40px]"
+        "text-[12px]"
       ]
     },
     {
@@ -62775,7 +62802,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partner_oversight",
-      "primary_action": "Partner Allowance Drawer",
+      "primary_action": "Grant allowance",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "\u00a7F grant drawer \u2014 more partner work at one school, with a reason.",
       "remediation": "No automated remediation outstanding",
@@ -62833,7 +62860,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
+        "text-[13px]",
         "text-[16px]"
       ]
     },
@@ -63197,7 +63224,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -63465,7 +63494,10 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]",
+        "text-[16px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -64509,7 +64541,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partner_activities",
-      "primary_action": "Partner Return Assignment Drawer",
+      "primary_action": "Return to staff",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Return form. Scoped and state-checked here as well as in the service.",
       "remediation": "No automated remediation outstanding",
@@ -64566,7 +64598,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
+        "text-[13px]",
         "text-[16px]"
       ]
     },
@@ -64693,7 +64725,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partner_activities",
-      "primary_action": "Partner Schedule Assignment Drawer",
+      "primary_action": "Schedule delivery",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate partner schedule assignment drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -64752,7 +64784,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -65122,7 +65153,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -65706,7 +65738,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -65912,7 +65945,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -66049,7 +66083,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partners",
-      "primary_action": "Save Login Setup",
+      "primary_action": "Save login setup",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Set up a partner organisation's login: link, invite, or not yet.",
       "remediation": "No automated remediation outstanding",
@@ -66158,7 +66192,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "partners",
-      "primary_action": "Add Partner Organisation",
+      "primary_action": "Add organisation",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Add a partner organisation \u2014 the organisation record only.",
       "remediation": "No automated remediation outstanding",
@@ -67328,7 +67362,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "personal_time_off",
-      "primary_action": "Submit Request",
+      "primary_action": "Submit request",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer partial for creating a leave request.",
       "remediation": "No automated remediation outstanding",
@@ -67388,7 +67422,7 @@
         "text-[12px]",
         "text-[13px]",
         "text-[14px]",
-        "text-[18px]"
+        "text-[15px]"
       ]
     },
     {
@@ -67425,7 +67459,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "personal_time_off",
-      "primary_action": "Submit Request",
+      "primary_action": "Submit request",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Drawer partial for creating a leave request.",
       "remediation": "No automated remediation outstanding",
@@ -67485,7 +67519,7 @@
         "text-[12px]",
         "text-[13px]",
         "text-[14px]",
-        "text-[18px]"
+        "text-[15px]"
       ]
     },
     {
@@ -68182,7 +68216,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Planning Assign Partner Modal",
+      "primary_action": "Assign to partner",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate planning assign partner modal within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -68245,9 +68279,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -68850,7 +68882,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "planning",
-      "primary_action": "Planning Schedule Modal",
+      "primary_action": "Schedule meeting Schedule training",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate planning schedule modal within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -72318,7 +72350,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -72461,7 +72495,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Project Bulk Assign Drawer",
+      "primary_action": "Add selected schools",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Add several schools to a Project in one pass.",
       "remediation": "No automated remediation outstanding",
@@ -72476,7 +72510,7 @@
       ],
       "route": "/projects/<str:project_id>/schools/bulk-assign-drawer",
       "route_name": "project_bulk_assign_drawer",
-      "search": "shared topbar search or none",
+      "search": "page search",
       "secondary_actions": [
         "/projects/{{ project.id }}/schools/bulk-assign-drawer"
       ],
@@ -72537,7 +72571,8 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -72794,7 +72829,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Create proposed Project",
+      "primary_action": "Create proposed project",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate project create drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -72866,7 +72901,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -73126,7 +73163,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Projects Filters Drawer",
+      "primary_action": "Apply filters",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Render the advanced-filters drawer for the Projects page.",
       "remediation": "No automated remediation outstanding",
@@ -73197,7 +73234,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -73583,7 +73621,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Special Projects Bulk Partner",
+      "primary_action": "Assign activit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Create traceable partner activities for selected project-school pairs.",
       "remediation": "No automated remediation outstanding",
@@ -73644,7 +73682,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -73683,7 +73722,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Special Projects Bulk Schedule",
+      "primary_action": "Schedule activit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Schedule the same dated visit for selected project-school pairs.",
       "remediation": "No automated remediation outstanding",
@@ -73744,7 +73783,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[13px]"
       ]
     },
     {
@@ -76330,8 +76369,7 @@
         "text-[12px]",
         "text-[13px]",
         "text-[14px]",
-        "text-[15px]",
-        "text-[18px]"
+        "text-[15px]"
       ]
     },
     {
@@ -76546,7 +76584,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -76588,7 +76625,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Assign To Project Drawer",
+      "primary_action": "Create project",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate assign to project drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -76651,8 +76688,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -76873,7 +76909,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_profile",
-      "primary_action": "Close",
+      "primary_action": "School Close Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "What closing this school would do, before anybody confirms it.",
       "remediation": "No automated remediation outstanding",
@@ -76933,7 +76969,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -77064,7 +77102,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Save School Profile",
+      "primary_action": "Save school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate school edit drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -77255,7 +77293,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Reassign Owner",
+      "primary_action": "Reassign owner",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Reassign one school's owner.",
       "remediation": "No automated remediation outstanding",
@@ -77883,7 +77921,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "School Onboard Drawer",
+      "primary_action": "Create school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate school onboard drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -82707,7 +82745,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "team_targets",
-      "primary_action": "Team Targets Staff Drawer",
+      "primary_action": "Create catch-up plan",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate team targets staff drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -85008,8 +85046,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]"
+        "text-[12px]"
       ]
     },
     {
@@ -105235,7 +105272,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 491,
+    "component_templates": 490,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

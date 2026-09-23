@@ -10,7 +10,7 @@ chosen when it serves the school's district: its own district, or a
 neighbouring district approved for it (apps.clusters.catchment). Joining never
 changes the school's district, sub-county, parish or village.
 {% endcomment %}
-<div class="cluster-assignment-drawer space-y-5" data-add-to-cluster-drawer>
+<div class="cluster-assignment-drawer space-y-4" data-add-to-cluster-drawer>
   {% if validation_error %}
   <p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>
   {% endif %}
@@ -21,7 +21,7 @@ changes the school's district, sub-county, parish or village.
     hx-disabled-elt="find button[type=submit]"
     action="/schools/{{ school.id }}/add-to-cluster"
     method="post"
-    class="space-y-5 text-[12px] text-slate-600"
+    class="space-y-4 text-[12px] text-slate-600"
     x-data="{
       actionType: '{% if has_selectable_cluster or is_change %}existing{% else %}new{% endif %}',
       selectedClusterId: '{{ preselected_cluster_id|default:""|escapejs }}',
@@ -45,8 +45,8 @@ changes the school's district, sub-county, parish or village.
       </button>
     </div>
 
-    <div x-show="actionType === 'existing'" class="space-y-2" data-owner-clusters>
-      <label for="owner_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster <span class="text-rose-500">*</span></label>
+    <div x-show="actionType === 'existing'" class="space-y-1" data-owner-clusters>
+      <label for="owner_cluster_id" class="block edify-text-caption font-semibold text-slate-600">Cluster <span class="text-rose-500">*</span></label>
       {% if owner_clusters %}
       <select id="owner_cluster_id" name="existing_cluster_id" x-model="selectedClusterId" :required="actionType === 'existing'"
         class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]">
@@ -55,6 +55,7 @@ changes the school's district, sub-county, parish or village.
         <option value="{{ cluster.id }}"{% if cluster.is_current %} disabled{% endif %} data-relationship="{{ cluster.catchment_relationship|default:'none' }}">{{ cluster.name }} · {{ cluster.district.name }}{% if cluster.is_current %} (current){% elif cluster.is_cross_district %} · Cross-District Cluster{% if cluster.serves_school %} (approved neighbouring district){% endif %}{% endif %} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
         {% endfor %}
       </select>
+      {% if responsible_staff %}<p class="edify-text-caption text-slate-500">Clusters of {{ responsible_staff.user.name }} (the school's owner).</p>{% endif %}
       {% if not has_selectable_cluster %}
       <p class="edify-note" data-tone="warning" data-empty-state>This school's owner has no active cluster to add it to.</p>
       {% endif %}
@@ -67,19 +68,19 @@ changes the school's district, sub-county, parish or village.
       {% endif %}
     </div>
 
-    <div x-show="actionType === 'new'" x-cloak class="space-y-4">
-      <div class="space-y-2">
-        <label for="new_cluster_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster name <span class="text-rose-500">*</span></label>
+    <div x-show="actionType === 'new'" x-cloak class="space-y-1">
+      <div class="space-y-1">
+        <label for="new_cluster_name" class="block edify-text-caption font-semibold text-slate-600">Cluster name <span class="text-rose-500">*</span></label>
         <input type="text" name="new_cluster_name" id="new_cluster_name"
           placeholder="e.g. {% firstof school.sub_county.name school.district.name %} Cluster"
           :required="actionType === 'new'"
           class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]">
       </div>
-      <p class="edify-text-caption font-semibold text-slate-400">A new cluster is created in {{ school.district.name|default:"the school's district" }}, covering {{ school.sub_county.name|default:"the district" }}.</p>
+      <p class="edify-text-caption text-slate-500">A new cluster is created in {{ school.district.name|default:"the school's district" }}, covering {{ school.sub_county.name|default:"the district" }}.</p>
     </div>
 
-    <div x-show="needsReason" x-cloak class="space-y-2">
-      <label for="cluster_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-500">*</span></label>
+    <div x-show="needsReason" x-cloak class="space-y-1">
+      <label for="cluster_reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
       <textarea id="cluster_reason" name="reason" rows="2" :required="needsReason"
         placeholder="{% if is_change %}Why this school moves to another cluster{% else %}Why this school joins a cluster across the district border{% endif %}"
         class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[16px] font-semibold text-slate-700 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]">{{ posted_reason }}</textarea>
@@ -94,7 +95,7 @@ changes the school's district, sub-county, parish or village.
 
     <div class="drawer-footer">
       <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-      <button type="submit" class="btn btn-primary h-8" data-cluster-submit>{% if is_change %}Change Cluster{% else %}Add to Cluster{% endif %}</button>
+      <button type="submit" class="btn btn-primary h-8" data-cluster-submit>{% if is_change %}Change cluster{% else %}Add to cluster{% endif %}</button>
     </div>
   </form>
 </div>

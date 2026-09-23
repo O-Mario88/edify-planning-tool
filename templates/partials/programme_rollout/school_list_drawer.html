@@ -16,8 +16,8 @@ with the reason (apps.analytics.programme_rollout_service.school_list).
 {% if refusal %}
 <div class="edify-note" data-tone="warning" role="alert" data-rollout-refusal>{{ refusal }}</div>
 {% else %}
-<div class="space-y-3" data-rollout-school-list>
-  <p class="rpl-card__subtitle">{{ total }} school{{ total|pluralize }}{% if truncated %}, the first {{ rows|length }} shown{% endif %}</p>
+<div class="space-y-2" data-rollout-school-list>
+  <p class="edify-text-caption text-slate-500">{{ total }} school{{ total|pluralize }}{% if truncated %}, the first {{ rows|length }} shown{% endif %}</p>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ title }}; scroll sideways for more columns">
     {% paginate rows "school_list_drawer_rows_page" as school_list_drawer_rows_pager %}
     <table class="rpl-table" data-mobile-table="scroll">

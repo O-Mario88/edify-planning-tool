@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Approve Neighbouring District{% endblock %}
-{% block drawer_subtitle %}{{ cluster.name }} · serves {{ cluster.district.name }}{% endblock %}
+{% block drawer_title %}Approve neighbouring district for {{ cluster.name }}{% endblock %}
+{% block drawer_subtitle %}Serves {{ cluster.district.name }}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -14,41 +14,40 @@ cluster. It never edits a district, sub-county or school's geography.
       hx-post="/clusters/{{ cluster.id }}/catchment-drawer"
       hx-target="#drawer-container"
       hx-disabled-elt="find button[type=submit]"
-      class="space-y-4 text-[12px] font-semibold text-slate-600">
+      class="space-y-4 text-[12px] text-slate-600">
   {% csrf_token %}
   {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
 
-  <div>
-    <label for="ct-district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Neighbouring district <span class="text-rose-500">*</span></label>
-    <select id="ct-district" name="district_id" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-      <option value="">Choose a district…</option>
+  <div class="space-y-1">
+    <label for="ct-district" class="block edify-text-caption font-semibold text-slate-600">Neighbouring district <span class="text-rose-500">*</span></label>
+    <select id="ct-district" name="district_id" required aria-describedby="ct-district-help" class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <option value="">Select a district</option>
       {% for d in districts %}<option value="{{ d.id }}"{% if posted.district_id == d.id %} selected{% endif %}>{{ d.name }}{% if d.region %} · {{ d.region.name }}{% endif %}</option>{% endfor %}
     </select>
-    <p class="mt-1 edify-text-caption text-slate-400">Districts in the same country the cluster does not already serve.</p>
+    <p id="ct-district-help" class="edify-text-caption text-slate-500">Districts in the same country the cluster does not already serve.</p>
   </div>
 
-  <div>
-    <label for="ct-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-500">*</span></label>
-    <textarea id="ct-reason" name="reason" rows="3" required minlength="10" placeholder="Which border communities this cluster serves and why"
-              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ posted.reason|default:"" }}</textarea>
+  <div class="space-y-1">
+    <label for="ct-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+    <textarea id="ct-reason" name="reason" rows="3" required minlength="10" placeholder="Which border communities it serves, and why"
+              class="w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ posted.reason|default:"" }}</textarea>
   </div>
 
-  <div class="grid gap-3 sm:grid-cols-2">
-    <div>
-      <label for="ct-from" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective from <span class="text-rose-500">*</span></label>
-      <input id="ct-from" type="date" name="effective_from" required value="{% firstof posted.effective_from today %}"
-             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-    </div>
-    <div>
-      <label for="ct-to" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">End date <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
-      <input id="ct-to" type="date" name="effective_to" value="{{ posted.effective_to|default:'' }}"
-             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-    </div>
+  <div class="space-y-1">
+    <label for="ct-from" class="block edify-text-caption font-semibold text-slate-600">Effective from <span class="text-rose-500">*</span></label>
+    <input id="ct-from" type="date" name="effective_from" required value="{% firstof posted.effective_from today %}"
+           class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div class="space-y-1">
+    <label for="ct-to" class="block edify-text-caption font-semibold text-slate-600">End date</label>
+    <input id="ct-to" type="date" name="effective_to" value="{{ posted.effective_to|default:'' }}"
+           class="h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">Approve District</button>
+    <button type="submit" class="btn btn-primary h-8">Approve district</button>
   </div>
 </form>
 {% endblock %}
