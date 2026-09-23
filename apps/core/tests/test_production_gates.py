@@ -574,6 +574,34 @@ class EntitlementGateTest(TestCase):
         for i in SsaIntervention:
             SsaScore.objects.create(ssa_record=record, intervention=i.value, score=4.0)
 
+    def _schedulable_date(self, nth):
+        """The nth schedulable day from now, counting only days REG-02 allows.
+
+        These fixtures date their work relative to the real today, and the
+        calendar gate is back (owner decision, 2026-09-22: "keep the calendar
+        and leave blocks, drop the frequency caps"), so a run of consecutive
+        offsets walks onto a Sunday about once every seven runs and the suite
+        goes red on a date, not on a defect.
+
+        Skipping the blocked days rather than nudging past them keeps every
+        offset on a distinct date: nudging a Sunday forward one day lands it on
+        the next offset's date, and the duplicate-activity check would refuse
+        that — swapping a calendar failure for a subtler one.
+
+        The policy is asked rather than `weekday() != 6` hard-coded, so this
+        stays correct if the fixture ever grows a public holiday or a blackout.
+        """
+        from apps.core.calendar_policy import SchedulingPolicyService
+
+        day = timezone.now().date()
+        allowed = 0
+        while True:
+            day += timedelta(days=1)
+            if SchedulingPolicyService.check(None, day)["status"] != "blocked":
+                allowed += 1
+                if allowed == nth:
+                    return day.strftime("%Y-%m-%d")
+
     def _schedule_visit(self, days):
         from apps.activities.services import create
 
@@ -581,9 +609,7 @@ class EntitlementGateTest(TestCase):
             {
                 "activityType": "school_visit",
                 "schoolId": self.school.school_id,
-                "scheduledDate": (timezone.now() + timedelta(days=days)).strftime(
-                    "%Y-%m-%d"
-                ),
+                "scheduledDate": self._schedulable_date(days),
                 "focusIntervention": "leadership",
                 "strict_validation": True,
                 "activityPurposeText": "Entitlement gate test visit",
@@ -598,9 +624,7 @@ class EntitlementGateTest(TestCase):
             {
                 "activityType": "school_improvement_training",
                 "schoolId": self.school.school_id,
-                "scheduledDate": (timezone.now() + timedelta(days=days)).strftime(
-                    "%Y-%m-%d"
-                ),
+                "scheduledDate": self._schedulable_date(days),
                 "expectedParticipants": 12,
                 "focusIntervention": "leadership",
                 "strict_validation": True,

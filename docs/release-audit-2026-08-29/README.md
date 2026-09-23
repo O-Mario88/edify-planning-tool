@@ -5,10 +5,12 @@
 | | |
 | --- | --- |
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
+| Base moved mid-audit | `main` advanced repeatedly while this audit was open — `e2a0b64c` (PR #80, which removed the scheduling governance behind CONFLICT-004), `f79918f8` (PR #81), `f5999e00` (PR #82), `6366fa18` (#116), then `8b0e8c80` (#118), the last of which arrived while the verification suite was running and was merged in. The audit's earlier fixes were carried onto `main` by those routes. **Every figure below is true of the commit it names and no later one** — that is the cost of auditing a branch that keeps moving. |
+| CONFLICT-004 | **Decided by the owner, 2026-09-22, and implemented** — see §3a |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
-| Final local suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
-| CI on the audit head | all six checks green at `2248cdf5` — see §5a |
+| Final local suite | **8,375 tests, `OK`**, at `4bc714bf0749d45c6f2f010d5eccdf0be723de22` — the merged tree, this branch on top of `8b0e8c80` (2026-09-22, PostgreSQL 16 / Python 3.13, `--parallel 4`, 1,287s). Before it: 8,315 `OK` at `e9058ba1`, and **red** at `84d75841` with 1 failure and 2 errors, which §3a accounts for. The 6,228 figure belongs to the 2026-08-29 pass at `68ed46c2` and is kept in §5b. |
+| CI on the audit head | **all seven checks green at `8f99da76`** — Django suite (8,353 + 22 tests, both `OK`), both Browser Journeys shards, Security Scans, CodeQL and the two CodeQL analyses. Green at `4bc714bf` and `993f656d` before it, so the branch is green with and without the CI Postgres fix. The browser shards matter here: they are the only gate in this audit that drives a real browser against a seeded application, and cannot be run in the audit environment. See §5a and §3b. |
 
 Every claim below is either a command whose output is quoted, or is marked
 **Not Tested**. Not Tested is not Green. Where a prior audit's finding is
@@ -150,10 +152,229 @@ SEC-A4 was proven against the guard rather than inferred:
 
 | ID | Finding | Why not |
 | --- | --- | --- |
+| CONFLICT-004 | **Answered and closed — no longer in this table.** It was registered here rather than reverted, because `23e3bfba` removed the scheduling governance deliberately and an audit has no standing to overrule a product decision. The owner answered it on 2026-09-22. | See **§3a**: the calendar and leave blocks are restored, the frequency caps are not. |
 | CONFLICT-003 | RVP also holds `milestones.define`. Mandate §18.1 says "RVP and Admin remain read-only for business values"; `apps/hr/priority_cascade.py` has the RVP authoring strategy. Two sources genuinely disagree. | §3 requires a conflict be registered and decided by the product owner, not resolved silently inside an audit fix. The Admin half had three sources agreeing and was fixed. |
 | OBS-1 | `Permission.STRATEGIC_PRIORITIES_EDIT` is granted to four roles and checked nowhere — it appears only in `rbac.py`. The real gate is `milestones.define`. | Gates nothing today. Latent: adding one decorator would hand RVP and Admin an authority nobody re-reviewed. Removing it deletes the scaffold for an approved extension (§4). Needs a decision, not a patch. |
 | OBS-3 | The mandate requires dashboard cards to equal their drill-down totals (§28). Target percentages are pinned hard — `test_target_formula_unification.py` reconciles the CD and PL surfaces with 1,000-case property tests — but `/analytics/drilldown` is covered for *rendering* correctness, not for numeric agreement with the card that links to it. | A general card↔drill-down reconciliation harness is a piece of work, not a patch: it needs a card-to-query mapping that does not exist yet. Recorded rather than half-built. |
 | OBS-2 | `permission_matrix` recognises only `page_permission` / `required_permissions`, so it reports 21 routes as "unguarded" that are in fact guarded by `_permission`, `_catalogue_permission`, `_require_permission`, `_manual_activity_permission` and `_require_export`. | **This is how SEC-A1 hid** — four genuinely open routes sat undistinguished among 184 false positives. The fix is small (have those five decorators also set `required_permissions`, the contract the matrix already reads) but it changes four checked-in artifacts, so under the §5 scope freeze it is recommended as the first post-release change rather than folded in here. |
+
+### 3a. CONFLICT-004 — decided and closed
+
+`main` commit `23e3bfba` removed the scheduling governance §20.2 requires, in one
+sweep: recommendation override reasons, applicable SSAs, calendar-policy dates
+(Sundays, holidays, blackouts, **leave**), catalogue eligibility and delivery
+approvals, frequency caps, and client/partner annual entitlements. The audit
+registered it rather than reverting it, because it was a deliberate product
+decision and the mandate had no standing to overrule one.
+
+**The owner's answer (2026-09-22): "keep the calendar and leave blocks, drop the
+frequency caps."** So only the calendar half is restored. The frequency caps and
+the client/partner annual entitlements stay removed, as do the recommendation
+override reasons, SSA applicability and catalogue eligibility gates — none of
+those were named, and an audit does not widen a decision it was given.
+
+One predicate does the work — `apps.core.calendar_policy.SchedulingPolicyService`
+— and it was never deleted; only its call sites were. It blocks Sundays, public
+holidays (from both `PublicHoliday` and `CalendarBlock`), organisational
+blackouts, staff conferences, country events and a staff member's **approved**
+leave, and warns without blocking on pending leave. It contains no frequency or
+entitlement logic at all, which is why restoring its call sites restores exactly
+what was asked and nothing more.
+
+Fifteen call sites across five modules:
+
+| Module | Sites | Surface |
+| --- | --- | --- |
+| `apps/activities/services.py` | 4 | create (incl. the end date), reschedule, partner intake, partner reschedule |
+| `apps/budget/amendment_service.py` | 2 | amendment **request** and **apply** — policy can change between them |
+| `apps/core_schools/services.py` | 2 | core slot scheduling, follow-up scheduling |
+| `apps/daily_visit_batches/services.py` | 1 | batch reschedule |
+| `apps/routes/engine.py` | 1 | route feasibility scoring |
+
+The breadth is the point, and it is not defensive over-reach: the deleted comment
+recorded that `b4fc9570` had once removed this gate from a single module and left
+a blocked date reachable by going in through another door. A partial restore
+rebuilds that asymmetry.
+
+`apps/core/tests/test_reg02_calendar_policy.py` had been rewritten to assert the
+opposite of all this — `test_sunday_scheduling_is_allowed`,
+`test_approved_leave_does_not_block_employee_scheduling`,
+`test_calendar_blackout_is_advisory`. Those assertions are now flipped back, and
+the file asserts through the real API and HTMX doors as well as the service, so a
+gate that only one entry point honours would fail. The six tests that remain true
+under the new decision — Saturday allowed, pending leave warns only, Monday
+scheduling, FY derivation — are unchanged.
+
+#### Is fifteen the whole set?
+
+Restoring most of a gate is worse than restoring none of it: it reads as
+governed while leaving a door open. So the call sites were not chosen from the
+old diff — every write of a scheduling date in the codebase was swept, and each
+one traced to where it comes from.
+
+| Writer | Verdict |
+| --- | --- |
+| `frontend/views/core_schools_views.py` (5 sites), `core_schools/visit_routing.py`, `planning/services.schedule_in_school_training_pair` | all call `activities.services.create` — **gated** |
+| `frontend/views/planning_views.py` (4 sites) | `partners.create_assignment`, which opens a `PartnerAssignment` at `pending_scheduling`. The date is a proposal; the Activity is minted later by `_partner_schedule_from_assignment` — **gated there** |
+| `partners.services.schedule_activity` | delegates to `activities.services.partner_schedule` — **gated** |
+| `partners.mark_assignment_scheduled`, `planning/partner_oversight_service.py` (2), `core_schools/cluster_credit.py`, `activities/models.py` save-sync, `activities/services.py:2858` | all copy a date off an Activity that already exists — **downstream bookkeeping, not an entry point** |
+| `admin_ops/services.py` (5 sites), `admin_ops/repair.py` | `AdminOperationsWorkItem` — the internal IT/support backlog, not field work. **Deliberately not gated**: REG-02 governs where staff are sent, and blocking a support ticket because a CCEO is on leave is not what was decided. Named here so the boundary is a decision rather than an omission |
+| `core/management/commands/seed.py` | demo seeding, behind the environment stamp — **not a user door** |
+
+Two placement details were checked rather than assumed. In `create()` the gate
+sits at line ~1954: there is no database write between the function's start and
+that point, and its `transaction.atomic()` block does not open until ~2422, so a
+refusal happens before any state exists to roll back. And every core-package
+path that locks a slot with `assert_can_schedule` before calling `create` does so
+inside `transaction.atomic()`, so a newly-refused Sunday releases the slot
+instead of leaking it — which is the regression a restored gate could plausibly
+have introduced and does not.
+
+#### What the first full run caught
+
+The restore passed its own module and the four affected apps. It was still
+wrong, and only the full suite said so: **8,314 tests, one failure and two
+errors** at `84d75841`. None of the three was visible from the five modules the
+change touched, which is the argument for running the whole thing.
+
+| Failure | What it really was |
+| --- | --- |
+| `test_activity_can_be_scheduled_during_leave` | A **behaviour disagreement**, and the one that mattered. `64ac5323` had renamed `test_prevent_activity_during_leave` and inverted it to assert that `create()` *succeeds* on a day the assignee is on approved leave. That is precisely what the owner reversed, so the original name and assertion are restored. |
+| `test_a_visit_past_the_client_allowance_is_scheduled_and_counted` | A **fixture artefact**, not a disagreement. It is about the client entitlement allowance — which stays removed — but it dates its visits `now() + N days` for a run of consecutive `N`, so it walks onto a Sunday about one run in seven. |
+| `test_the_code_has_not_moved_under_it` | The traceability artefact's **source fingerprint**. Regenerated with `python manage.py build_traceability_matrix`, never by editing the value: the failure message asks for exactly that, and editing it only makes a stale matrix look fresh. `payload` is unchanged — the code moved, what the journeys touch did not. |
+
+The leave test is worth dwelling on. Its fixture date, 2026-10-09, is *also* a
+public holiday, so a bare `assertRaises(BadRequest)` would have stayed green if
+the leave check were dropped and only the holiday check remained — a test about
+holidays still calling itself a test about leave. It now asserts on the phrase
+"approved leave" specifically, and additionally that the refusal leaves the
+`Leave` row intact and no `Activity` behind.
+
+#### Why 8,000 tests passed over a removed gate
+
+Worth naming, because it is the same shape as SEC-A1 and it will happen again.
+`apps/core/tests/test_leave_scheduling_rule.py` — "Nothing is planned onto a
+person's leave — except by whoever is covering" — was green the whole time the
+gate was gone, and is green now, unchanged. It tests
+`SchedulingPolicyService.check` **directly**.
+
+`23e3bfba` did not touch the policy. It removed the *call sites*. So the
+predicate kept its tests and kept passing, while nothing asked whether anybody
+still called it — exactly as `audience_matches` was correct in isolation while
+no test held the production audience shape. A predicate proven in isolation says
+nothing about whether it is wired in.
+
+The tests that did cover the wiring were rewritten in the same sweep to assert
+the new behaviour, which is honest — and is why the suite went quiet rather than
+red. The defence against the next one is the door-level assertion: REG-02 now
+posts to `/api/activities` and `/planning/schedule-action` and checks that no
+Activity exists afterwards, which no amount of correct policy can satisfy on its
+own.
+
+#### Proven by mutation, not by assertion
+
+A regression test that cannot fail proves nothing, so the gate was deleted and
+the contract re-run. With `SchedulingPolicyService.check` neutered in `create()`
+and `reschedule()`, **7 of 17 REG-02 tests failed** — Sunday, public holiday,
+blackout, country event, approved leave, project scheduling, and the API/HTMX
+door test. That last one matters: it confirms the door test is not passing
+merely because a route exists.
+
+The mutation also found something the suite could not. Deleting the gate from
+`reschedule()` did **not** turn `test_reschedule_to_sunday_is_blocked` red. The
+reason is benign — a staff school visit is routed through
+`daily_visit_batches.reschedule_within_batch`, whose own deliberately redundant
+copy caught it, which is the defence-in-depth this design is for. But it meant
+nothing actually covered `reschedule()`'s own gate, and that branch is entered
+only for `DAILY_BATCH_ELIGIBLE_TYPES` **and** `delivery_type == "staff"` **and**
+a school. A partner-delivered visit, a cluster meeting or a training reaches
+`reschedule()` alone, with no second net beneath it. That path is now pinned by
+`test_reschedule_is_gated_by_reschedule_itself_not_only_the_batch_path`, which
+was proven to fail — *"BadRequest not raised"* — against the mutant before it
+was kept.
+
+**Planning and scheduling therefore moves from Red to Green** for the calendar
+and leave half. §20.2's other clauses — the five-activity warning, conflicts —
+are not reinstated and are not claimed.
+
+### 3b. The CI failure that was not this change's
+
+Recorded because the mandate forbids calling something green that was not
+proven green, and equally forbids calling a failure a flake to get past it.
+
+CI's `Django Lint & Test Suite` **failed at `70664490`** — a commit whose local
+suite was green. Five errors, and not one of them a failed assertion. All five
+were the same exception:
+
+```
+psycopg.errors.OutOfMemory: out of shared memory
+HINT:  You might need to increase max_locks_per_transaction.
+```
+
+raised from `django/core/management/commands/flush.py` → `execute_sql_flush`:
+the `TRUNCATE` of every table that `TransactionTestCase` runs at **teardown**.
+The five tests are exactly the ones that open real concurrent connections —
+`ConcurrentWeeklyApprovalTest`, `ConcurrentLedgerRebuildTest`,
+`ConcurrentCertificationTest` (two), and the audit-chain `CommitTimeSealTest`.
+The Postgres service log agreed: `out of shared memory` on the TRUNCATE,
+`could not obtain lock on row in relation "advance_request"`, and duplicate
+keys on `region_name_key` (`Key (name)=(Race Region)`) as the flushes collided.
+
+None of those five touches scheduling, calendars or leave. Lock-table pressure
+is table count × concurrent transactions, and this change adds no models, no
+tables and no migrations (`makemigrations --check` reports none); the gate also
+raises *before* `create()`'s `transaction.atomic()` opens, so it holds fewer
+locks, not more. What it plausibly did was **redistribute** tests across the
+four parallel workers — it adds one test — changing which `TransactionTestCase`s
+flush at the same instant. That surfaces a limit; it does not create one. The
+CI `postgres:16` service runs stock, so `max_locks_per_transaction` is the
+default **64**.
+
+**It did not reproduce.** The next run, at `4bc714bf`, passed all seven checks,
+as did `993f656d` after it. The fix was therefore left **unpushed** at first and
+recorded on the PR instead: a one-off, diagnosed, non-repeating infrastructure
+failure does not justify changing CI configuration inside a scheduling PR.
+
+**The owner then asked for it, so it is pushed** (`8f99da76`), and measuring it
+properly made the case much stronger than the original estimate. Counted on a
+freshly migrated database, one `TRUNCATE` of the schema locks **3,787
+relations**:
+
+| Relation kind | Count |
+| --- | --- |
+| Tables | 346 |
+| Indexes | 2,823 |
+| TOAST tables | 309 |
+| TOAST indexes | 309 |
+| **Locked by one flush** | **3,787** |
+
+Against `64 × (100 + 0)` = **6,400** slots, **one flush fits and two do not**;
+`--parallel 4` asks for roughly 15,100. The suite has only ever passed because
+four workers rarely reach teardown at the same instant, and which tests die when
+they do is incidental — it reshuffles whenever a test is added. That is why
+adding a single test to this branch was enough to surface a limit that predates
+it. `512 × 100 = 51,200` leaves 3.4× headroom. No test is skipped, disabled or
+quarantined, and no assertion is touched.
+
+Verified on the first CI run carrying it (`8f99da76`): the step went green, and
+its exit status is the evidence rather than its log. Its last command is
+`test "${applied}" = "512"`, where `applied` is read back over the mapped port
+the way Django connects — a shell script exits with the status of its last
+command, so the step can only pass if the restarted container really reports
+512. The audit environment has no Docker daemon, so that path could not be
+rehearsed locally; what *was* rehearsed locally is the mechanism —
+`ALTER SYSTEM` writes `postgresql.auto.conf`, the running value stays 64 until
+the postmaster restarts, and reads back 512 afterwards with the lock table at
+51,200 slots.
+
+Two honesty notes. First, this could **not** be dismissed as "red on the base
+too": `main` was also red at `ceee7e3f`, but on four different tests, so the
+precedent does not transfer and the argument above rests on mechanism alone.
+Second, `Browser Journeys shard 2/2` failed at `167ccfb2` and passed at
+`70664490` on **identical application code** — the commits between them changed
+only test files and a generated JSON, neither of which that job reads — and both
+shards have since passed twice. That one is **not root-caused**. It is recorded
+as unexplained rather than resolved.
 
 ---
 
@@ -289,6 +510,7 @@ which the mandate says must never be read as Green.
 | Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
 | Backup / restore / rollback | **Not Tested** | no production access |
 | Performance and scale at 50k | **Not Tested** | not runnable here |
+| Planning and scheduling | **Green** (calendar/leave half) | CONFLICT-004 decided by the owner and implemented across 15 call sites in 5 modules; REG-02 contract tests flipped back and passing. The frequency caps and annual entitlements remain deliberately removed, so §20.2 is met in part and not in whole |
 | All remaining domains | **Not Tested** | not reached in this pass |
 
 ---
@@ -300,7 +522,8 @@ which the mandate says must never be read as Green.
    writing — manual Salesforce reconciliation stated plainly in the release notes,
    offline field operation deferred with "field staff need connectivity" said out
    loud — and they become disclosed limitations rather than blockers.
-3. The rest is ops, and one item is now closed: CI built and scanned the image on the
+3. **CONFLICT-004 is answered.** The owner's decision — keep the calendar and leave blocks, drop the frequency caps — is implemented and tested in this branch (§3a). Planning and scheduling moves from Red to Green for the half that was restored. §20.2's remaining clauses (the five-activity warning, conflict detection) are not reinstated and are not claimed as passing.
+4. The rest is ops, and one item is now closed: CI built and scanned the image on the
    audit head and it carries no fixable CRITICAL or HIGH, so **CVE-2026-14456 is no
    longer an open blocker**. What remains is to restore from a production backup
    once, rehearse the rollback, run the production smoke, and name an incident owner.

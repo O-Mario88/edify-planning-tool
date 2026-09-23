@@ -463,6 +463,21 @@ def reschedule_within_batch(
         raise BadRequest(
             "This activity has no school/district on file — cannot batch-price it."
         )
+    # REG-02 (restored by owner decision, 2026-09-22) — self-defending: do not
+    # rely solely on the caller (activities.services.reschedule) having already
+    # validated the date; no future call site may silently skip this gate.
+    from apps.core.calendar_policy import (
+        SchedulingPolicyService,
+        resolve_scheduling_user,
+    )
+
+    staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+    avail = SchedulingPolicyService.check(
+        resolve_scheduling_user(staff_id) if staff_id else None, new_date
+    )
+    if avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     from apps.activities.services import _funding_owner_id
 
     responsible_user_id = _funding_owner_id(activity, principal)

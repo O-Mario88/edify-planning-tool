@@ -256,15 +256,21 @@ class ProgrammeActivityValidationTest(_ProgrammeFixture):
                 _payload(catalogueItemId="NOT_A_REAL_STABLE_CODE"), self.cceo
             )
 
-    def test_sunday_start_date_is_allowed(self):
-        activity = _schedule(self.cceo, scheduledDate=SUN_AUG_30)
-        self.assertEqual(activity.status, "scheduled")
-        self.assertEqual(activity.planned_date, date(2026, 8, 30))
+    def test_sunday_start_date_is_blocked(self):
+        with self.assertRaisesMessage(BadRequest, "Sunday"):
+            psvc.schedule_programme_activity(
+                _payload(scheduledDate=SUN_AUG_30), self.cceo
+            )
 
-    def test_sunday_end_date_is_allowed(self):
-        activity = _schedule(self.cceo, scheduledDate=FRI_SEP_4, endDate="2026-09-06")
-        self.assertEqual(activity.status, "scheduled")
-        self.assertEqual(activity.end_date, date(2026, 9, 6))
+    def test_sunday_end_date_is_blocked(self):
+        # Fri 4 Sep → Sun 6 Sep 2026: the end-date REG-02 check must fire. This
+        # is the one that proves the gate looks at BOTH ends of a multi-day
+        # programme activity, not just the start.
+        with self.assertRaisesMessage(BadRequest, "Sunday"):
+            psvc.schedule_programme_activity(
+                _payload(scheduledDate=FRI_SEP_4, endDate="2026-09-06"),
+                self.cceo,
+            )
 
 
 # ── Permission gate ──────────────────────────────────────────────────────────

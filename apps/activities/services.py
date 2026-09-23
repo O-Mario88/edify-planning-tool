@@ -39,9 +39,13 @@ from apps.core.scoping import (
 )
 from apps.schools.models import School
 
-# Calendar-policy identity helpers. The REG-02 date gate itself no longer
-# blocks scheduling anywhere: planning may place work on any date.
+# The canonical REG-02 scheduling-calendar policy, plus its identity helpers.
+# 23e3bfba removed this module's whole scheduling governance at once; the owner's
+# decision of 2026-09-22 — "keep the calendar and leave blocks, drop the
+# frequency caps" — restores the calendar half only. Frequency caps and
+# client/partner annual entitlements stay removed by that same decision.
 from apps.core.calendar_policy import (
+    SchedulingPolicyService as _SchedulingPolicyService,
     canonical_staff_identity as _canonical_staff_identity,
     resolve_scheduling_user as _user_for_staff_identity,
 )
@@ -1949,6 +1953,38 @@ def create(
         }
 
     monitored_by_staff_id = principal_owner_id if is_partner else None
+
+    # REG-02 calendar gate. Restored by owner decision (2026-09-22): "keep the
+    # calendar and leave blocks, drop the frequency caps". 23e3bfba removed the
+    # whole of this module's scheduling governance at once; only the calendar
+    # half comes back. The frequency caps and the client/partner annual
+    # entitlement gates stay removed.
+    #
+    # This module must run the gate rather than merely borrow the identity
+    # helper. b4fc9570 deleted it once before and left scheduling free to place
+    # field work on Sundays, public holidays, blackout dates and on top of an
+    # assignee's approved leave; apps/core/calendar_policy.py exists so one
+    # policy answers for every call site instead of each growing its own.
+    #
+    # The responsible-or-monitor fallback matters: partner-delivered activities
+    # carry responsible_staff_id=None, and without it the partner path skips
+    # the leave check entirely.
+    if scheduled_date:
+        check_staff_id = responsible_staff_id or monitored_by_staff_id
+        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
+        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        # `check` coerces a plain date itself, so pass end_date straight in:
+        # wrapping it in an aware datetime first only adds a timezone in which
+        # a midnight boundary could shift the day being checked.
+        if end_date and end_date != scheduled_date.date():
+            end_check = _SchedulingPolicyService.check(resp_user, end_date)
+            if end_check["status"] == "blocked":
+                raise BadRequest(
+                    "Scheduling blocked on the end date: "
+                    + " · ".join(end_check["blockers"])
+                )
 
     # A paused or closed Special Project must stop absorbing new commitments —
     # that is what the RVP's pause/close decision means. Gating only the
@@ -4029,6 +4065,16 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # 2026-09-15): the budget line, fund request and target credit are FY's.
     assert_same_fiscal_year(old_date, new_date)
 
+    # REG-02 gate. Without it a blocked date is reachable by rescheduling even
+    # when create() refused it — the asymmetry calendar_policy.py exists to
+    # prevent.
+    _staff = a.responsible_staff_id or a.monitored_by_staff_id
+    _avail = _SchedulingPolicyService.check(
+        _user_for_staff_identity(_staff) if _staff else None, new_date
+    )
+    if _avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
@@ -4334,6 +4380,18 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             raise BadRequest("Enter the name of the person visiting the School.")
         if len(delivery_contact_name) > 255:
             raise BadRequest("Visitor name must be 255 characters or fewer.")
+
+        # REG-02 gate on the partner intake, keyed to the assigning staff
+        # member — the partner has no leave record here, the assigner does.
+        avail = _SchedulingPolicyService.check(
+            _user_for_staff_identity(pa.assigning_staff_id)
+            if pa.assigning_staff_id
+            else None,
+            scheduled_date,
+        )
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
         catalogue_item = pa.catalogue_item
         selected_catalogue_id = data.get("catalogueItemId")
         if selected_catalogue_id:
@@ -4716,6 +4774,15 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         from apps.planning.fy_policy import assert_date_plannable
 
         assert_date_plannable(new_date)
+
+        # REG-02 gate, same reason as reschedule(): the partner reschedule must
+        # not reach a date the partner intake refused.
+        _staff = a.responsible_staff_id or a.monitored_by_staff_id
+        _avail = _SchedulingPolicyService.check(
+            _user_for_staff_identity(_staff) if _staff else None, new_date
+        )
+        if _avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
 
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)
