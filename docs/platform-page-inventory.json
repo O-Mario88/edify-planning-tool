@@ -551,6 +551,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 2207,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/partials/clusters/<str:cluster_id>/schools",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "School Planning Badges",
+      "purpose": "Reusable school planning badges interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/school_planning_badges.html",
+      "variants": [
+        "{{ chip.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -2923,7 +2948,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9053,
+      "bytes": 9153,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -9186,7 +9211,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 38837,
+      "bytes": 41086,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -9207,7 +9232,9 @@
       ],
       "tables": 0,
       "template": "partials/planning/schedule_drawer.html",
-      "variants": []
+      "variants": [
+        "{{ plan.tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9235,7 +9262,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7785,
+      "bytes": 7616,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9254,9 +9281,7 @@
       ],
       "tables": 0,
       "template": "partials/planning/school_row.html",
-      "variants": [
-        "{{ school.visitPlanStatusTone }}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -104658,7 +104683,7 @@
     "activity_states": 24,
     "all_routes": 1294,
     "api_routes": 360,
-    "component_templates": 475,
+    "component_templates": 476,
     "full_pages": 260,
     "mobile_contract_pass": 532,
     "nonvisual_actions": 265,

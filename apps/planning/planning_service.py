@@ -437,6 +437,16 @@ class PlanningDashboardService:
             from apps.schools.school_status import visit_statuses
 
             visit_state_by_school = visit_statuses(school_ids, fy=fy)
+            # The count-based Visit and Training badges (owner, 2026-09-22):
+            # the same batched, read-only calculation the Cluster School List
+            # reads, so the two lists cannot disagree about a school.
+            from apps.planning.school_planning_badges import (
+                SchoolPlanningBadgeService,
+            )
+
+            badges_by_school = SchoolPlanningBadgeService.get_for_schools(
+                school_ids, financial_year=fy
+            )
             ssa_records = (
                 SsaRecord.objects.filter(
                     school_id__in=school_ids,
@@ -681,6 +691,7 @@ class PlanningDashboardService:
                         "visitPlanStatusTone": visit_state_by_school[s.id].tone,
                         "nextVisitDate": visit_state_by_school[s.id].next_date,
                         "trainingCount": completed_trainings_by_school.get(s.id, 0),
+                        "planningBadges": badges_by_school[s.id],
                         "data_quality_score": s.data_quality_score,
                         "data_quality_status": s.data_quality_status,
                         "currentPartnerType": partner_assignment.partner.name

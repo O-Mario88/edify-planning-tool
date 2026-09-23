@@ -41,7 +41,15 @@ from apps.partners.engagement_todos import partner_engagement_todos
 from apps.partners.models import Partner, PartnerAssignment, PartnerEngagement
 from apps.schools.models import School
 
-TODAY = timezone.localdate()
+
+def _today():
+    """The platform's date, read when a test runs rather than when the module
+    is imported. A module-level constant went stale when the suite ran across
+    midnight in Africa/Nairobi, and the scheduling rules then refused every
+    "today" as a day that had passed."""
+    return timezone.localdate()
+
+
 LOCMEM = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -69,7 +77,7 @@ def _person(uid, name, role, country="Uganda"):
 class EngagementFixture(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.fy = services.get_operational_fy(TODAY)
+        cls.fy = services.get_operational_fy(_today())
         cls.region = Region.objects.create(name="PE Region", country="Uganda")
         cls.kenya_region = Region.objects.create(name="PE Kenya", country="Kenya")
         cls.district = District.objects.create(
@@ -132,12 +140,12 @@ class EngagementFixture(TestCase):
             delivery_type="partner",
             assigned_partner_id=cls.partner.id,
             status="completed",
-            planned_date=TODAY - timedelta(days=12),
+            planned_date=_today() - timedelta(days=12),
         )
         cls.observation = RegionalEngagement.objects.create(
             author_id=cls.rpl.id,
             kind=EngagementKind.TRAINING_OBSERVATION,
-            held_on=TODAY - timedelta(days=10),
+            held_on=_today() - timedelta(days=10),
             fy=cls.fy,
             country="Uganda",
             program_lead_ids=[cls.pl_sp.id],
@@ -152,7 +160,7 @@ class EngagementFixture(TestCase):
         data = {
             "partner_id": self.partner.id,
             "kind": "review_meeting",
-            "held_on": TODAY.isoformat(),
+            "held_on": _today().isoformat(),
             "subject": "Quarterly review",
             "notes": "Reviewed the term's trainings.",
             "agreed_improvements": "Model each practice before teachers try it.",
@@ -164,7 +172,7 @@ class EngagementFixture(TestCase):
 # ── Engagement rules ─────────────────────────────────────────────────────────
 class EngagementRulesTest(EngagementFixture):
     def test_the_programme_lead_and_the_director_record_with_their_country(self):
-        mine = self._record(follow_up_due=(TODAY + timedelta(days=7)).isoformat())
+        mine = self._record(follow_up_due=(_today() + timedelta(days=7)).isoformat())
         self.assertEqual(mine.author_id, self.pl.id)
         self.assertEqual(mine.author_role, "Program Lead")
         self.assertEqual(mine.country, "Uganda")
@@ -181,17 +189,17 @@ class EngagementRulesTest(EngagementFixture):
     def test_it_refuses_incomplete_or_impossible_records(self):
         cases = [
             (
-                {"held_on": (TODAY + timedelta(days=1)).isoformat()},
+                {"held_on": (_today() + timedelta(days=1)).isoformat()},
                 "once it has happened",
             ),
             (
-                {"follow_up_due": (TODAY - timedelta(days=1)).isoformat()},
+                {"follow_up_due": (_today() - timedelta(days=1)).isoformat()},
                 "cannot be before",
             ),
             (
                 {
                     "agreed_improvements": "",
-                    "follow_up_due": (TODAY + timedelta(days=3)).isoformat(),
+                    "follow_up_due": (_today() + timedelta(days=3)).isoformat(),
                 },
                 "improvements were agreed",
             ),
@@ -232,7 +240,7 @@ class EngagementRulesTest(EngagementFixture):
             engagement.id,
             {
                 "kind": "joint_planning",
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "subject": "Joint planning for Term 3",
             },
         )
@@ -247,13 +255,13 @@ class EngagementRulesTest(EngagementFixture):
                 engagement.id,
                 {
                     "kind": "joint_planning",
-                    "held_on": TODAY.isoformat(),
+                    "held_on": _today().isoformat(),
                     "subject": "y",
                 },
             )
 
     def test_closing_a_follow_up_takes_a_finding_from_the_author(self):
-        engagement = self._record(follow_up_due=TODAY.isoformat())
+        engagement = self._record(follow_up_due=_today().isoformat())
         with self.assertRaises(NotFoundError):
             services.complete_follow_up(self.other_pl, engagement.id, "Done")
         with self.assertRaisesMessage(BadRequest, "follow-up found"):
@@ -312,7 +320,7 @@ class EngagementVisibilityTest(EngagementFixture):
 # ── Summary and the Regional Lead's observations ─────────────────────────────
 class EngagementSummaryTest(EngagementFixture):
     def test_the_dashboard_summary_counts_the_readers_engagements(self):
-        self._record(follow_up_due=TODAY.isoformat())
+        self._record(follow_up_due=_today().isoformat())
         self._record(partner_id=self.no_login_partner.id)
         self._record(self.other_pl)
         summary = services.engagement_summary(self.pl, self.fy)
@@ -352,7 +360,7 @@ class EngagementSummaryTest(EngagementFixture):
         self.assertEqual(services.open_observation_follow_ups(self.cd), [])
 
         # An engagement held before the observation does not answer it.
-        self._record(held_on=(TODAY - timedelta(days=20)).isoformat())
+        self._record(held_on=(_today() - timedelta(days=20)).isoformat())
         self.assertEqual(len(services.open_observation_follow_ups(self.pl)), 1)
         # One held since does, whoever recorded it.
         self._record(self.cd, kind="quality_follow_up")
@@ -368,13 +376,15 @@ class EngagementSummaryTest(EngagementFixture):
 # ── To-Dos ───────────────────────────────────────────────────────────────────
 class EngagementTodoTest(EngagementFixture):
     def _ids(self, user, role):
-        return {row["id"]: row for row in partner_engagement_todos(user, role, TODAY)}
+        return {
+            row["id"]: row for row in partner_engagement_todos(user, role, _today())
+        }
 
     def test_follow_ups_come_due_and_leave_when_closed(self):
-        later = self._record(follow_up_due=(TODAY + timedelta(days=3)).isoformat())
+        later = self._record(follow_up_due=(_today() + timedelta(days=3)).isoformat())
         due = self._record(
-            held_on=(TODAY - timedelta(days=5)).isoformat(),
-            follow_up_due=(TODAY - timedelta(days=1)).isoformat(),
+            held_on=(_today() - timedelta(days=5)).isoformat(),
+            follow_up_due=(_today() - timedelta(days=1)).isoformat(),
         )
         rows = self._ids(self.pl, "Program Lead")
         self.assertNotIn(f"pengage-followup-{later.id}", rows)
@@ -394,8 +404,8 @@ class EngagementTodoTest(EngagementFixture):
         )
 
     def test_the_director_gets_their_own_follow_ups_only(self):
-        self._record(follow_up_due=TODAY.isoformat())
-        mine = self._record(self.cd, follow_up_due=TODAY.isoformat())
+        self._record(follow_up_due=_today().isoformat())
+        mine = self._record(self.cd, follow_up_due=_today().isoformat())
         rows = self._ids(self.cd, "CountryDirector")
         self.assertEqual(set(rows), {f"pengage-followup-{mine.id}"})
 
@@ -434,9 +444,9 @@ class EngagementTodoTest(EngagementFixture):
         )
 
     def test_other_roles_get_nothing(self):
-        self._record(follow_up_due=TODAY.isoformat())
+        self._record(follow_up_due=_today().isoformat())
         for user, role in ((self.cceo, "CCEO"), (self.rpl, "RegionalProgramLead")):
-            self.assertEqual(partner_engagement_todos(user, role, TODAY), [])
+            self.assertEqual(partner_engagement_todos(user, role, _today()), [])
 
 
 # ── Pages and drawers ────────────────────────────────────────────────────────
@@ -444,7 +454,7 @@ class EngagementTodoTest(EngagementFixture):
 class EngagementPagesTest(EngagementFixture):
     def test_partner_oversight_carries_the_log_for_the_programme_lead(self):
         # Held before the Regional Lead's observation, so it does not answer it.
-        engagement = self._record(held_on=(TODAY - timedelta(days=20)).isoformat())
+        engagement = self._record(held_on=(_today() - timedelta(days=20)).isoformat())
         self.client.force_login(self.pl)
         response = self.client.get("/partner-oversight/")
         self.assertEqual(response.status_code, 200)
@@ -494,10 +504,10 @@ class EngagementPagesTest(EngagementFixture):
             {
                 "partner_id": self.partner.id,
                 "kind": "quality_follow_up",
-                "held_on": TODAY.isoformat(),
+                "held_on": _today().isoformat(),
                 "subject": "Follow-up on the observation",
                 "agreed_improvements": "Model the practice.",
-                "follow_up_due": (TODAY + timedelta(days=14)).isoformat(),
+                "follow_up_due": (_today() + timedelta(days=14)).isoformat(),
                 "source_engagement_id": self.observation.id,
                 "next": f"/partners/{self.partner.id}?record=1&source={self.observation.id}",
             },
@@ -518,7 +528,7 @@ class EngagementPagesTest(EngagementFixture):
             {
                 "partner_id": self.partner.id,
                 "kind": "review_meeting",
-                "held_on": (TODAY + timedelta(days=2)).isoformat(),
+                "held_on": (_today() + timedelta(days=2)).isoformat(),
                 "subject": "Tomorrow",
                 "next": "/partner-oversight/",
             },
@@ -528,7 +538,7 @@ class EngagementPagesTest(EngagementFixture):
         self.assertFalse(PartnerEngagement.objects.exists())
 
     def test_drawers_refuse_readers_who_may_not_act(self):
-        engagement = self._record(follow_up_due=TODAY.isoformat())
+        engagement = self._record(follow_up_due=_today().isoformat())
         self.client.force_login(self.cceo)
         self.assertContains(
             self.client.get("/partner-engagements/new"), "Only a Programme Lead"
@@ -554,7 +564,7 @@ class EngagementPagesTest(EngagementFixture):
         self.assertIsNone(engagement.follow_up_done_at)
 
     def test_a_todo_link_opens_the_follow_up_drawer_on_the_profile(self):
-        engagement = self._record(follow_up_due=TODAY.isoformat())
+        engagement = self._record(follow_up_due=_today().isoformat())
         self.client.force_login(self.pl)
         response = self.client.get(
             f"/partners/{self.partner.id}?engagement={engagement.id}&step=follow-up"
@@ -881,7 +891,7 @@ class EngagementQueryBudgetTest(EngagementFixture):
         for index in range(count):
             engagement = self._record(
                 subject=f"Review {index}",
-                follow_up_due=TODAY.isoformat(),
+                follow_up_due=_today().isoformat(),
             )
             self._record(self.cd, subject=f"Director review {index}")
             if index % 2:
@@ -956,9 +966,9 @@ class EngagementQueryBudgetTest(EngagementFixture):
 
     def test_the_todos_do_not_grow_with_records(self):
         def measure():
-            partner_engagement_todos(self.pl, "Program Lead", TODAY)
+            partner_engagement_todos(self.pl, "Program Lead", _today())
             with CaptureQueriesContext(connection) as ctx:
-                rows = partner_engagement_todos(self.pl, "Program Lead", TODAY)
+                rows = partner_engagement_todos(self.pl, "Program Lead", _today())
             return len(ctx), rows
 
         self._grow(2)

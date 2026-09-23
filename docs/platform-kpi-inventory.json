@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1168,
+   "line": 1182,
    "label": null,
    "keys": [
     "label",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 613,
+   "line": 626,
    "label": null,
    "keys": [
     "label",
@@ -40674,7 +40674,7 @@
   {
    "audit_id": "KPI-PAYLOAD-023",
    "module": "apps/planning/planning_service.py",
-   "line": 879,
+   "line": 890,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 9,

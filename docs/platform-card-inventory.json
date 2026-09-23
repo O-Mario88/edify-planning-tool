@@ -4,10 +4,10 @@
   "templates": 267,
   "distinct_titles": 669,
   "with_card_key": 13,
-  "untitled_surfaces": 781,
+  "untitled_surfaces": 782,
   "untitled_chrome": 176,
   "untitled_nested": 253,
-  "untitled_headless": 352,
+  "untitled_headless": 353,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -928,7 +928,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 315,
+   "line": 318,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -937,7 +937,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 350,
+   "line": 353,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -946,7 +946,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 373,
+   "line": 376,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -6830,7 +6830,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 173,
+   "line": 208,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
@@ -6841,11 +6841,11 @@
      0
     ],
     [
-     10,
+     12,
      1
     ],
     [
-     11,
+     13,
      0
     ]
    ]

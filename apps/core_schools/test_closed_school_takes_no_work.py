@@ -10,7 +10,7 @@ was saved to, not the current week, where it looked unsaved.
 
 from __future__ import annotations
 
-from datetime import date
+from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
 from apps.core.navigation import build_sidebar_for_user
@@ -19,7 +19,13 @@ from apps.core_schools import test_core_visit_purposes as _purposes
 from apps.schools import lifecycle_service
 from apps.schools.models import School
 
-TODAY = date.today()
+
+def _today():
+    """The platform's date, read when a test runs rather than when the module
+    is imported. A module-level constant went stale when the suite ran across
+    midnight in Africa/Nairobi, and the scheduling rules then refused every
+    "today" as a day that had passed."""
+    return timezone.localdate()
 
 
 class ClosedSchoolTakesNoWorkTest(_purposes._CoreFixture):
@@ -75,7 +81,7 @@ class ClosedSchoolTakesNoWorkTest(_purposes._CoreFixture):
                 {
                     "schoolId": self.school.school_id,
                     "activityType": "school_visit",
-                    "scheduledDate": TODAY.isoformat(),
+                    "scheduledDate": _today().isoformat(),
                 },
                 self.cceo,
             )
@@ -123,7 +129,7 @@ class CoreScheduledOpensItsMonthTest(_purposes._CoreFixture):
         """
         response = self._post_visit(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
-        self.assertContains(response, f"month={TODAY.month}")
+        self.assertContains(response, f"month={_today().month}")
         self.assertContains(response, "period=month")
         self.assertNotContains(response, "week=")
         self.assertNotContains(response, 'href = "/my-plan";')

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **475**
+Components and application partials: **476**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -27,6 +27,7 @@ Components and application partials: **475**
 | `components/registered_card.html` | shared-component | Reusable registered card interface primitive | neutral; default, error | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
 | `components/registered_card_attrs.html` | shared-component | Reusable registered card attrs interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/registered_card_header.html` | shared-component | Reusable registered card header interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
+| `components/school_planning_badges.html` | shared-component | Reusable school planning badges interface primitive | {{ chip.tone }}; default | inherits containing page contract | inherits semantic parent contract | /clusters/<str:cluster_id><br>/partials/clusters/<str:cluster_id>/schools<br>/planning | 0 |
 | `components/sidebar.html` | shared-component | Reusable sidebar interface primitive | canonical; default, open | explicit responsive contract | accessible name and label | /accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id><br>/accounts/advances | 0 |
 | `components/ssa_score.html` | shared-component | Reusable ssa score interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /cluster-oversight/<br>/core-schools-oversight/<br>/country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `components/table_pager.html` | shared-component | Reusable table pager interface primitive | canonical; default | inherits containing page contract | accessible name and label | /accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/advances<br>/accounts/advances/ | 0 |
@@ -379,9 +380,9 @@ Components and application partials: **475**
 | `partials/planning/route_preview.html` | application-partial | Reusable route preview interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /planning/route-preview | 0 |
 | `partials/planning/saved_toast.html` | application-partial | Reusable saved toast interface primitive | canonical; default, error, open | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/planning/schedule_cluster_drawer.html` | application-partial | Reusable schedule cluster drawer interface primitive | canonical; default, empty, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /planning/schedule-modal | 0 |
-| `partials/planning/schedule_drawer.html` | application-partial | Reusable schedule drawer interface primitive | canonical; default, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/reschedule-drawer<br>/planning/schedule-modal | 0 |
+| `partials/planning/schedule_drawer.html` | application-partial | Reusable schedule drawer interface primitive | {{ plan.tone }}; default, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/reschedule-drawer<br>/planning/schedule-modal | 0 |
 | `partials/planning/schedule_school_options.html` | application-partial | Reusable schedule school options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /planning/schedule<br>/planning/schedule/schools | 0 |
-| `partials/planning/school_row.html` | application-partial | Reusable school row interface primitive | {{ school.visitPlanStatusTone }}; default, disabled, open | inherits containing page contract | accessible name and label | /planning | 0 |
+| `partials/planning/school_row.html` | application-partial | Reusable school row interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/planning/school_table.html` | application-partial | Reusable school table interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
 | `partials/planning/tabs.html` | application-partial | Reusable tabs interface primitive | canonical; default, selected | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
 | `partials/planning/view_controls.html` | application-partial | Reusable view controls interface primitive | canonical; default | inherits containing page contract | accessible name and label | /planning | 0 |

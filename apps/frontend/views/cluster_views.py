@@ -382,9 +382,22 @@ def cluster_list_view(request):
     return render(request, "pages/clusters/index.html", context)
 
 
+def _attach_planning_badges(request, schools) -> str:
+    """The Visit and Training badges on a Cluster School List (owner,
+    2026-09-22), from the one calculation the Planning page reads, for the
+    same financial year Planning defaults to. Returns that year."""
+    from apps.core.fy import get_operational_fy
+    from apps.planning.school_planning_badges import SchoolPlanningBadgeService
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    SchoolPlanningBadgeService.attach(schools, financial_year=fy)
+    return fy
+
+
 @require_page_permission("planning")
 def cluster_schools_partial(request, cluster_id):
     schools = ClusterPlanningService.get_cluster_schools(cluster_id, request.user)
+    _attach_planning_badges(request, schools)
     context = {
         "schools": schools,
         "cluster_id": cluster_id,
@@ -855,6 +868,7 @@ def cluster_detail_view(request, cluster_id):
     _cluster_row = _Cluster.objects.filter(
         id=cluster_id, deleted_at__isnull=True
     ).first()
+    _attach_planning_badges(request, schools)
     context = {
         "cluster": detail,
         # The reason the Delete control is inert, shown beside it — a cluster
