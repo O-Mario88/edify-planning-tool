@@ -1,7 +1,7 @@
 {
  "summary": {
   "titled_cards": 703,
-  "templates": 266,
+  "templates": 267,
   "distinct_titles": 670,
   "with_card_key": 13,
   "untitled_surfaces": 781,
@@ -4425,6 +4425,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/core_schools/programme_table.html",
+   "line": 3,
+   "title": "Schools ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden my-4",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/core_schools/right_panel.html",
    "line": 4,
    "title": "Core Planning Rules",
@@ -6583,7 +6592,7 @@
   },
   {
    "template": "templates/partials/my_plan/core_school_trainings.html",
-   "line": 15,
+   "line": 14,
    "title": "Core School Trainings Planned for This WeekThis MonthThis QuarterThis FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6592,7 +6601,7 @@
   },
   {
    "template": "templates/partials/my_plan/core_school_visits.html",
-   "line": 15,
+   "line": 13,
    "title": "Core School Visits Planned for This WeekThis MonthThis QuarterThis FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6626,6 +6635,15 @@
    "template": "templates/partials/my_plan/programme_activities.html",
    "line": 3,
    "title": "Programme Activities Planned for This WeekThis MonthThis QuarterThis FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/my_plan/programme_school_work.html",
+   "line": 3,
+   "title": "School Visits and Trainings Planned ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
@@ -6698,32 +6716,32 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 53,
+   "line": 25,
    "title": "'s Clusters",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     3,
+     0,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 113,
+   "line": 86,
    "title": "'s Clusters clusters ( member schools)",
    "heading_level": 4,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": [
     [
-     3,
+     0,
      1
     ],
     [
-     5,
+     2,
      0
     ]
    ]
@@ -6748,7 +6766,7 @@
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 115,
+   "line": 116,
    "title": "'s Core Schools schools completed packages",
    "heading_level": 4,
    "has_card_key": false,
@@ -7434,24 +7452,6 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 19,
-   "title": "School",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 124,
-   "title": "Responsible field staff",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] p-4",
    "branch_path": []
   },
   {
