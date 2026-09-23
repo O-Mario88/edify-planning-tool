@@ -13,11 +13,19 @@ RUN pip install --prefix=/install -r requirements/prod.txt \
 
 FROM python:3.13-slim AS runtime
 WORKDIR /app
+# MALLOC_ARENA_MAX: each Uvicorn worker serves sync views on a pool of threads,
+# and glibc gives busy threads their own malloc arenas, which it rarely hands
+# back. Under the role-weighted load test two workers grew from 1.04 GB to
+# 1.66 GB RSS across the 25/50/100-user stages; with two arenas they held at
+# 1.08-1.13 GB with the same latency (performance rescue, 2026-09-23). On the
+# 1 GiB web instance that growth is the difference between a slow minute and
+# an OOM restart.
 ENV NODE_ENV=production \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=config.settings.prod \
-    PORT=4000
+    PORT=4000 \
+    MALLOC_ARENA_MAX=2
 # Runtime deps: libpq (psycopg), libexpat (ASGI), and headless LibreOffice for
 # the evidence DOCX→PDF rendition pipeline (optional; skipped if absent).
 #

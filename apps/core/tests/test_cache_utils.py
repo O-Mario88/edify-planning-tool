@@ -6,6 +6,8 @@ from django.test import SimpleTestCase
 from apps.core.cache_utils import (
     _MISSING,
     build_namespace,
+    forget_snapshot,
+    snapshot_key,
     stampede_safe_get_or_compute,
 )
 
@@ -169,3 +171,88 @@ class BuildNamespacedCacheTest(SimpleTestCase):
             )
 
         self.assertEqual(value, 7)
+
+
+class StampedeWaitTest(SimpleTestCase):
+    """Performance rescue, 2026-09-23: a waiter used to give up after three
+    seconds and rebuild the snapshot itself, so every snapshot slower than
+    that was built once per waiter at the same time."""
+
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.clock = 0.0
+
+    def _tick(self):
+        self.clock += 1.0
+        return self.clock
+
+    def _owner_is_rebuilding(self, key):
+        cache.add(f"{snapshot_key(key)}:rebuild", 1, timeout=30)
+
+    def test_a_waiter_outlasts_a_slow_rebuild_instead_of_duplicating_it(self):
+        self._owner_is_rebuilding("slow")
+        polls = []
+
+        def sleep(_seconds):
+            polls.append(1)
+            if len(polls) == 6:  # six seconds in, the owner publishes
+                cache.set(snapshot_key("slow"), "owner's answer", timeout=30)
+
+        compute = MagicMock(return_value="duplicate")
+        with (
+            patch("apps.core.cache_utils.time.sleep", side_effect=sleep),
+            patch("apps.core.cache_utils.time.monotonic", side_effect=self._tick),
+        ):
+            result = stampede_safe_get_or_compute("slow", compute, timeout=30)
+        self.assertEqual(result, "owner's answer")
+        compute.assert_not_called()
+
+    def test_a_waiter_builds_it_when_the_owner_finishes_without_publishing(self):
+        self._owner_is_rebuilding("lost")
+
+        def sleep(_seconds):
+            cache.delete(f"{snapshot_key('lost')}:rebuild")
+
+        with patch("apps.core.cache_utils.time.sleep", side_effect=sleep):
+            result = stampede_safe_get_or_compute("lost", lambda: "mine", timeout=30)
+        self.assertEqual(result, "mine")
+
+    def test_the_wait_is_still_bounded(self):
+        self._owner_is_rebuilding("stuck")
+        with (
+            patch("apps.core.cache_utils.time.sleep"),
+            patch("apps.core.cache_utils.time.monotonic", side_effect=self._tick),
+        ):
+            result = stampede_safe_get_or_compute(
+                "stuck", lambda: "fallback", timeout=30
+            )
+        self.assertEqual(result, "fallback")
+        self.assertLessEqual(self.clock, 32)
+
+
+class ForgetSnapshotTest(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    def test_forget_drops_the_namespaced_snapshot(self):
+        compute = MagicMock(side_effect=["before", "after"])
+        stampede_safe_get_or_compute("queue", compute, timeout=30)
+        forget_snapshot("queue")
+        self.assertEqual(
+            stampede_safe_get_or_compute("queue", compute, timeout=30), "after"
+        )
+
+    def test_the_todo_queue_forget_reaches_its_snapshot(self):
+        from types import SimpleNamespace
+
+        from apps.command_center.today_actions import forget_queue
+        from apps.command_center.todo_service import todo_snapshot_key
+
+        principal = SimpleNamespace(id="u-1", active_role="CCEO")
+        compute = MagicMock(side_effect=[["old item"], []])
+        key = todo_snapshot_key(principal)
+        stampede_safe_get_or_compute(key, compute, timeout=30)
+        forget_queue(principal)
+        self.assertEqual(stampede_safe_get_or_compute(key, compute, timeout=30), [])

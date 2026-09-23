@@ -9,6 +9,8 @@ derived and explicitly ignored if sent inbound). Response arrays must never be
 null/undefined — the frontend surfaces a DATA_CONTRACT_VIOLATION otherwise.
 """
 
+from collections.abc import Sequence
+
 from rest_framework.pagination import BasePagination
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -188,7 +190,11 @@ def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -
     that has since emptied should show the last real page, not a 404 in the
     middle of a working list.
     """
-    rows = list(rows)
+    # A sized sequence that is not already in memory (a lazily built table,
+    # such as apps.my_plan.past_due_service.PastDueRows) is sliced rather
+    # than materialised, so only the page on show is built.
+    if not (isinstance(rows, Sequence) and not isinstance(rows, (list, tuple, str))):
+        rows = list(rows)
     total = len(rows)
     page_size = max(1, int(page_size or TABLE_PAGE_SIZE))
     page_count = max(1, -(-total // page_size))  # ceiling division

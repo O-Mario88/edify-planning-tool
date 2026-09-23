@@ -57,7 +57,14 @@
           this.pendingSeconds += 1;
           this.activeSeconds += 1;
         }, 1000);
-        this.beatTimer = window.setInterval(() => this.beat(), 15000);
+        // Only when there is reading to report. Seconds accrue only while the
+        // page is visible, focused and in use, so a document left open in a
+        // background tab used to POST an empty heartbeat every 15 seconds all
+        // day (frontend audit, 2026-09-23). Visibility, blur and pagehide
+        // still flush whatever is pending.
+        this.beatTimer = window.setInterval(() => {
+          if (this.pendingSeconds > 0) this.beat();
+        }, 15000);
         this.beat();
       },
 

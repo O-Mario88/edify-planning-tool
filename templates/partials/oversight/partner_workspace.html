@@ -122,6 +122,35 @@ schedule, and none edits a CCEO's record.
   {% endif %}
 
   {% include "partials/oversight/partner_work_tables.html" %}
+  {% comment %}
+  Who to call, carried over when the Partners directory merged into this
+  page. Every control here asks somebody to act, and for a partner that
+  somebody is a person with a phone number — a page that says "waiting on
+  Partner X" without saying who X is makes you open another page to finish
+  the thought.
+  {% endcomment %}
+  {% if partner_contacts %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="partner-contacts">
+    <header class="px-4 py-3 border-b edify-border">
+      <h2 id="partner-contacts" class="text-sm font-semibold">Partner contacts ({{ partner_contacts|length }})</h2>
+    </header>
+    <ul class="divide-y edify-border">
+      {% for contact in partner_contacts %}
+      <li class="px-4 py-3">
+        <p class="text-sm font-semibold">{% if contact.profile_url %}<a href="{{ contact.profile_url }}" class="hover:underline">{{ contact.name }}</a>{% else %}{{ contact.name }}{% endif %}</p>
+        {% if contact.contact_person or contact.phone or contact.region_name or contact.intervention_label %}
+        <p class="edify-text-caption edify-text-muted">
+          {% if contact.contact_person %}{{ contact.contact_person }}{% endif %}
+          {% if contact.phone %} · {{ contact.phone }}{% endif %}
+          {% if contact.region_name %} · {{ contact.region_name }}{% endif %}
+          {% if contact.intervention_label %} · {{ contact.intervention_label }}{% endif %}
+        </p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 
   {% if engagement %}
   {% include "partials/partners/engagement_register.html" with engagement_title="Partner engagements this FY" %}

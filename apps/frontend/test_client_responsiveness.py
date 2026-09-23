@@ -48,5 +48,8 @@ class ClientResponsivenessContractTest(SimpleTestCase):
         base = _read("templates/base.html")
 
         self.assertNotIn('"eagerness": "eager"', base)
-        self.assertIn('"eagerness": "moderate"', base)
+        # Not on hover either: the view links point at the heaviest reports,
+        # and a 200 ms hover down the View menu started full renders nobody
+        # opened on a one-CPU instance (performance rescue, 2026-09-23).
+        self.assertNotIn('"eagerness": "moderate"', base)
         self.assertIn('"eagerness": "conservative"', base)

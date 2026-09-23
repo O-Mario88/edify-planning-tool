@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 702,
+  "titled_cards": 704,
   "templates": 267,
-  "distinct_titles": 669,
+  "distinct_titles": 671,
   "with_card_key": 13,
-  "untitled_surfaces": 782,
-  "untitled_chrome": 176,
-  "untitled_nested": 253,
-  "untitled_headless": 353,
+  "untitled_surfaces": 781,
+  "untitled_chrome": 175,
+  "untitled_nested": 254,
+  "untitled_headless": 352,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -3390,7 +3390,16 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 189,
+   "line": 190,
+   "title": "Route Performance",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 225,
    "title": "Durable Outbox",
    "heading_level": 3,
    "has_card_key": false,
@@ -3399,7 +3408,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 211,
+   "line": 247,
    "title": "External Integrations",
    "heading_level": 3,
    "has_card_key": false,
@@ -3408,7 +3417,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 231,
+   "line": 267,
    "title": "Data Quality Queues",
    "heading_level": 3,
    "has_card_key": false,
@@ -3417,7 +3426,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 256,
+   "line": 292,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3426,7 +3435,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 272,
+   "line": 308,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3435,7 +3444,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 293,
+   "line": 329,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3444,7 +3453,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1083,
+   "line": 1119,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3453,7 +3462,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1116,
+   "line": 1152,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -4416,6 +4425,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/core_schools/programme_table.html",
+   "line": 3,
+   "title": "Schools ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden my-4",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/core_schools/right_panel.html",
    "line": 4,
    "title": "Core Planning Rules",
@@ -5178,7 +5196,16 @@
   },
   {
    "template": "templates/partials/dashboards/pl/programmes_view.html",
-   "line": 103,
+   "line": 84,
+   "title": "Monthly completion by team member",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/pl/programmes_view.html",
+   "line": 128,
    "title": "Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -6565,7 +6592,7 @@
   },
   {
    "template": "templates/partials/my_plan/core_school_trainings.html",
-   "line": 15,
+   "line": 14,
    "title": "Core School Trainings Planned for This WeekThis MonthThis QuarterThis FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6574,7 +6601,7 @@
   },
   {
    "template": "templates/partials/my_plan/core_school_visits.html",
-   "line": 15,
+   "line": 13,
    "title": "Core School Visits Planned for This WeekThis MonthThis QuarterThis FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6608,6 +6635,15 @@
    "template": "templates/partials/my_plan/programme_activities.html",
    "line": 3,
    "title": "Programme Activities Planned for This WeekThis MonthThis QuarterThis FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/my_plan/programme_school_work.html",
+   "line": 3,
+   "title": "School Visits and Trainings Planned ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
@@ -6680,32 +6716,32 @@
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 53,
+   "line": 29,
    "title": "'s Clusters",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     3,
+     0,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/oversight/cluster_oversight_workspace.html",
-   "line": 113,
+   "line": 90,
    "title": "'s Clusters clusters ( member schools)",
    "heading_level": 4,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden shadow-xs border edify-border",
    "branch_path": [
     [
-     3,
+     0,
      1
     ],
     [
-     5,
+     2,
      0
     ]
    ]
@@ -6730,7 +6766,7 @@
   },
   {
    "template": "templates/partials/oversight/core_schools_oversight_workspace.html",
-   "line": 115,
+   "line": 116,
    "title": "'s Core Schools schools completed packages",
    "heading_level": 4,
    "has_card_key": false,
@@ -6788,14 +6824,28 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 66,
+   "line": 72,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     9,
+     10,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/oversight/partner_workspace.html",
+   "line": 133,
+   "title": "Partner contacts ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     15,
      0
     ]
    ]
@@ -6830,11 +6880,11 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 208,
-   "title": "Top SSA recommendation:",
+   "line": 202,
+   "title": "Recommended interventions",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-risk-card",
+   "classes": "p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm",
    "branch_path": [
     [
      9,
@@ -7416,33 +7466,6 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 19,
-   "title": "School",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 124,
-   "title": "Responsible field staff",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/schools/assign_to_project_drawer.html",
-   "line": 10,
-   "title": "School Details",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-surface text-[12px] font-bold",
    "branch_path": []
   },
   {

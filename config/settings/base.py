@@ -147,6 +147,11 @@ MIDDLEWARE = [
     # correlationId) so the singleton audit logger stamps provenance without
     # threading it through every service. Mirrors NestJS requestContextMiddleware.
     "apps.core.middleware.RequestContextMiddleware",
+    # Directly inside RequestContext, so its clock covers the whole stack —
+    # including the wait for a database slot below — and the correlation id is
+    # already set for its slow-request log line. Server-Timing header plus
+    # `edify.perf` log (apps/core/request_timing.py).
+    "apps.core.request_timing.RequestTimingMiddleware",
     # Before SecurityMiddleware and CommonMiddleware: both resolve the Host
     # header, and an orchestrator's probe arrives on the container's own IP,
     # which no ALLOWED_HOSTS entry can name in advance. Not a short circuit —
@@ -351,6 +356,11 @@ WEB_MAX_CONCURRENT_REQUESTS = _as_int(os.environ.get("WEB_MAX_CONCURRENT_REQUEST
 WEB_MAX_QUEUED_REQUESTS = _as_int(os.environ.get("WEB_MAX_QUEUED_REQUESTS"), 24)
 WEB_QUEUE_TIMEOUT_SECONDS = _as_int(os.environ.get("WEB_QUEUE_TIMEOUT_SECONDS"), 20)
 
+# apps.core.request_timing logs one structured `edify.perf` line for a request
+# slower than this, or issuing at least this many SQL statements.
+SLOW_REQUEST_MS = _as_int(os.environ.get("SLOW_REQUEST_MS"), 1500)
+SLOW_REQUEST_QUERIES = _as_int(os.environ.get("SLOW_REQUEST_QUERIES"), 150)
+
 # ── Database timeouts ────────────────────────────────────────────────────────
 # Postgres defaults all three of these to "wait forever", which is the wrong
 # answer for every one of them:
@@ -388,10 +398,23 @@ _idle_tx_timeout_ms = _as_int(
     os.environ.get("DB_IDLE_IN_TRANSACTION_TIMEOUT_MS"), 0 if _is_testing else 60_000
 )
 
+# Just-in-time compilation off. Postgres JIT-compiles any query whose planner
+# estimate passes jit_above_cost (100,000 by default). The scoped ORM queries
+# here nest the country/portfolio scope as several subqueries, which inflates
+# those estimates far past the threshold on queries that then read a handful
+# of rows: the lending portfolio KPI took 4,797 ms with JIT and 76 ms without,
+# every one of those milliseconds compile time on the database's single vCPU
+# (performance rescue, 2026-09-23). JIT pays off for long analytical scans,
+# which this web tier does not run; DB_JIT=on restores it for a session that
+# does. Pooled sessions cannot take startup options, so the runtime role
+# carries the same default (scripts/configure_runtime_database_role.sql) and
+# readiness reports it.
+DB_JIT = "on" if _truthy(os.environ.get("DB_JIT"), fallback=False) else "off"
 _pg_options = [
     f"-c statement_timeout={_statement_timeout_ms}",
     f"-c lock_timeout={_lock_timeout_ms}",
     f"-c idle_in_transaction_session_timeout={_idle_tx_timeout_ms}",
+    f"-c jit={DB_JIT}",
 ]
 _existing_options = DATABASES["default"].setdefault("OPTIONS", {}).get("options", "")
 # Appended, never assigned: a DATABASE_URL carrying ?schema= already put a
@@ -725,6 +748,14 @@ AUTH_REQUIRE_ADMIN_UNLOCK_AFTER_ESCALATION = _truthy(
 AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES = _as_int(
     os.environ.get("AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES"), 30
 )
+
+# Where the client's address comes from (apps.core.client_ip). A header the
+# platform edge sets and a count of proxies we operate, never the leftmost
+# X-Forwarded-For entry, which the client writes. Unset here: local and test
+# servers have no proxy in front, so REMOTE_ADDR is the client. Production sets
+# the App Platform header (config/settings/prod.py).
+CLIENT_IP_HEADER = os.environ.get("CLIENT_IP_HEADER", "")
+TRUSTED_PROXY_HOPS = _as_int(os.environ.get("TRUSTED_PROXY_HOPS"), 0)
 
 # Rate limits.
 RATE_LIMIT_LOGIN_PER_MIN = _as_int(os.environ.get("RATE_LIMIT_LOGIN_PER_MIN"), 10)

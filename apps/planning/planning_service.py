@@ -178,11 +178,15 @@ class PlanningDashboardService:
         # Programme Lead planned across their CCEOs' schools and clusters from
         # the page whose whole purpose is to place work. Their team's plan is
         # on Team Planning Oversight, read-only.
-        from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+        from apps.core.scoping import (
+            direct_portfolio_schools,
+            or_empty,
+            resolve_user_scope,
+        )
         from apps.schools.models import School as _School
 
         scope = resolve_user_scope(principal)
-        schools_qs = direct_portfolio_schools(scope) or _School.objects.none()
+        schools_qs = or_empty(direct_portfolio_schools(scope), _School)
         # Held before the filters below are applied: the KPI strip counts the
         # whole portfolio, the list counts what the filters matched.
         schools_qs_base = schools_qs
@@ -232,36 +236,47 @@ class PlanningDashboardService:
                 | Q(account_owner_name_raw__icontains=search_q)
             )
 
-        # Get active/scheduled school IDs in this FY
+        # Get active/scheduled school IDs in this FY.
+        #
+        # As subqueries. These were read into one Python set — the school of
+        # every activity in the organisation this year — and bound back as a
+        # literal NOT IN of ~15,000 ids on every planning load (performance
+        # rescue, 2026-09-23). A cluster activity has no school, and a NULL in
+        # a NOT IN subquery would exclude every row, so NULLs are filtered out
+        # here exactly as Django dropped None from the old literal list.
         active_activities_school_ids = (
-            Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+            Activity.objects.filter(
+                deleted_at__isnull=True, fy=fy, school_id__isnull=False
+            )
             .exclude(status__in=["cancelled", "deferred", "not_planned", "planned"])
             .values_list("school_id", flat=True)
         )
 
         active_partner_school_ids = PartnerAssignment.objects.filter(
+            school_id__isnull=False,
             status__in=[
                 "assigned",
                 "pending_scheduling",
                 "partner_pending_schedule",
                 "assigned_to_partner_pending_scheduling",
                 "partner_scheduled",
-            ]
+            ],
         ).values_list("school_id", flat=True)
 
-        exclude_school_ids = set(active_activities_school_ids).union(
-            set(active_partner_school_ids)
-        )
+        def _without_active_work(qs):
+            return qs.exclude(id__in=active_activities_school_ids).exclude(
+                id__in=active_partner_school_ids
+            )
 
         # Tab-specific filters for the table view
         if active_tab == "client":
-            table_schools_qs = schools_qs.filter(school_type="client").exclude(
-                id__in=exclude_school_ids
+            table_schools_qs = _without_active_work(
+                schools_qs.filter(school_type="client")
             )
         elif active_tab == "core":
-            table_schools_qs = schools_qs.filter(
-                school_type__in=["core", "champion"]
-            ).exclude(id__in=exclude_school_ids)
+            table_schools_qs = _without_active_work(
+                schools_qs.filter(school_type__in=["core", "champion"])
+            )
         elif active_tab == "partner":
             partner_school_ids = PartnerAssignment.objects.filter(
                 status__in=[
@@ -726,7 +741,11 @@ class PlanningDashboardService:
         # disagree about how many schools this person plans for.
         base_schools_qs = schools_qs_base
 
-        all_school_ids = list(base_schools_qs.values_list("id", flat=True))
+        # The portfolio as a subquery, not a literal id list: every filter
+        # below reads it, and a Country Director's portfolio is every school
+        # in the country — ~16,000 bound parameters per statement, five
+        # statements a page (performance rescue, 2026-09-23). Same rows.
+        all_school_ids = base_schools_qs.values("id")
         cost_blocked_count = (
             0
             if has_catalogue
@@ -785,10 +804,16 @@ class PlanningDashboardService:
             ).values_list("school_id", flat=True)
         )
 
-        for s in clean_schools_qs:
-            if s.id in scheduled_schools_ids_fy or s.id in partner_pending_ids:
+        # Ids only: the loop tests membership and nothing else, and reading
+        # every clean school as a full model was a 60-column row per school
+        # of the portfolio on every planning load.
+        for school_id in clean_schools_qs.values_list("id", flat=True):
+            if (
+                school_id in scheduled_schools_ids_fy
+                or school_id in partner_pending_ids
+            ):
                 continue
-            if s.id in schools_with_ssa_ids:
+            if school_id in schools_with_ssa_ids:
                 ready_for_support_count += 1
             else:
                 baseline_required_count += 1

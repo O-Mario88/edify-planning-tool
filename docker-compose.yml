@@ -51,6 +51,10 @@ services:
       SECURE_SSL_REDIRECT: "false"
       SESSION_COOKIE_SECURE: "false"
       CSRF_COOKIE_SECURE: "false"
+      # No App Platform edge in front of this port, so nothing sets or strips
+      # DO-Connecting-IP: a client could send its own. The connecting peer is
+      # the client here (apps.core.client_ip).
+      CLIENT_IP_HEADER: ""
       DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=50 chars)}

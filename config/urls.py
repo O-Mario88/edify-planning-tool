@@ -133,6 +133,7 @@ def _readiness(request: HttpRequest) -> JsonResponse:
     from django.db.utils import DatabaseError
 
     db = "up"
+    jit = "off"
     try:
         with connections["default"].cursor() as cursor:
             cursor.execute("SELECT 1")
@@ -141,15 +142,23 @@ def _readiness(request: HttpRequest) -> JsonResponse:
                 cursor.execute(
                     "SELECT current_setting('statement_timeout'), "
                     "current_setting('lock_timeout'), "
-                    "current_setting('idle_in_transaction_session_timeout')"
+                    "current_setting('idle_in_transaction_session_timeout'), "
+                    "current_setting('jit')"
                 )
-                timeout_values = cursor.fetchone()
+                row = tuple(cursor.fetchone())
+                timeout_values = row[:3]
+                jit = row[3] if len(row) > 3 else "off"
                 if len(timeout_values) != 3 or any(
                     _postgres_timeout_is_zero(value) for value in timeout_values
                 ):
                     db = "misconfigured"
     except DatabaseError:
         db = "down"
+    # JIT left on is a performance defect, not an outage: queries still answer,
+    # seconds slower. Like the cache it is named in the body and never decides
+    # the status code, so a role default not yet applied cannot pull a working
+    # instance out of rotation (config/settings/base.py, DB_JIT).
+    jit_degraded = str(jit).strip().lower() not in ("off", "false", "0")
 
     cache_state = _cache_state()
     # An unshared cache is only a defect in production — locally LocMemCache is
@@ -159,12 +168,13 @@ def _readiness(request: HttpRequest) -> JsonResponse:
     degraded_cache = cache_state == "down" or (
         cache_state == "unshared" and getattr(settings, "IS_PRODUCTION", False)
     )
-    healthy = db == "up" and not degraded_cache
+    healthy = db == "up" and not degraded_cache and not jit_degraded
     return JsonResponse(
         {
             "status": "ok" if healthy else "degraded",
             "db": db,
             "cache": cache_state,
+            "db_jit": "on" if jit_degraded else "off",
         },
         status=200 if db == "up" else 503,
     )

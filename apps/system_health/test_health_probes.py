@@ -75,7 +75,7 @@ class PooledReadinessTest(TestCase):
     def test_it_rejects_a_runtime_role_with_disabled_timeouts(self):
         cursor = mock.MagicMock()
         cursor.__enter__.return_value = cursor
-        cursor.fetchone.side_effect = [(1,), ("0", "10s", "1min")]
+        cursor.fetchone.side_effect = [(1,), ("0", "10s", "1min", "off")]
         with mock.patch(
             "django.db.backends.base.base.BaseDatabaseWrapper.cursor",
             return_value=cursor,
@@ -88,7 +88,7 @@ class PooledReadinessTest(TestCase):
     def test_it_accepts_a_runtime_role_with_all_timeout_ceilings(self):
         cursor = mock.MagicMock()
         cursor.__enter__.return_value = cursor
-        cursor.fetchone.side_effect = [(1,), ("30s", "10s", "1min")]
+        cursor.fetchone.side_effect = [(1,), ("30s", "10s", "1min", "off")]
         with mock.patch(
             "django.db.backends.base.base.BaseDatabaseWrapper.cursor",
             return_value=cursor,
@@ -96,6 +96,26 @@ class PooledReadinessTest(TestCase):
             response = self.client.get("/api/health/ready")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["db"], "up")
+        self.assertEqual(response.json()["db_jit"], "off")
+
+    @mock.patch.object(settings, "DB_USE_PGBOUNCER", True, create=True)
+    def test_a_pooled_role_with_jit_on_is_degraded_but_stays_in_rotation(self):
+        """JIT compilation cost 4.7 s on one lending KPI that executes in 76 ms
+        (performance rescue, 2026-09-23). A pooled session cannot take the
+        `-c jit=off` startup option, so the runtime role must carry it; a role
+        without it is reported, never failed, because it is slow rather than
+        broken."""
+        cursor = mock.MagicMock()
+        cursor.__enter__.return_value = cursor
+        cursor.fetchone.side_effect = [(1,), ("30s", "10s", "1min", "on")]
+        with mock.patch(
+            "django.db.backends.base.base.BaseDatabaseWrapper.cursor",
+            return_value=cursor,
+        ):
+            response = self.client.get("/api/health/ready")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["db_jit"], "on")
+        self.assertEqual(response.json()["status"], "degraded")
 
 
 class ReadinessNamesADegradedCacheTest(TestCase):

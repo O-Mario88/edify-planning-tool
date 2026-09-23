@@ -68,6 +68,8 @@ class DatabaseConcurrencyGuardMiddleware:
     def __call__(self, request):
         if self.semaphore is None or request.path.startswith(self.exempt):
             return self.get_response(request)
+        if _is_speculative(request):
+            return self._serve_speculative(request)
         started = time.monotonic()
         with self._lock:
             if self._waiting >= self.queue_limit:
@@ -79,6 +81,9 @@ class DatabaseConcurrencyGuardMiddleware:
             with self._lock:
                 self._waiting -= 1
         waited = time.monotonic() - started
+        # Read by apps.core.request_timing, which reports queueing apart from
+        # work so a saturated worker is not mistaken for a slow page.
+        request.edify_queue_wait_ms = waited * 1000
         if not acquired:
             logger.warning(
                 "request refused after waiting %.1fs for one of %s slots: %s %s",
@@ -103,6 +108,31 @@ class DatabaseConcurrencyGuardMiddleware:
             )
             response["X-Edify-Queue-Wait"] = f"{waited:.1f}"
         return response
+
+    def _serve_speculative(self, request):
+        """A browser prefetch runs only if a slot is free right now.
+
+        Nobody is waiting on a speculative fetch, and a full page render it
+        queues competes with the people who are (performance rescue,
+        2026-09-23). Refused, the browser discards it and navigates normally
+        when — if — the link is actually clicked.
+        """
+        if not self.semaphore.acquire(blocking=False):
+            return busy_response(request, retry_after=5)
+        request.edify_queue_wait_ms = 0.0
+        try:
+            return self.get_response(request)
+        finally:
+            self.semaphore.release()
+
+
+def _is_speculative(request) -> bool:
+    """Speculation-rules prefetch/prerender (``Sec-Purpose``), or the legacy
+    ``Purpose: prefetch`` header older browsers send for link prefetch."""
+    purpose = (
+        request.headers.get("Sec-Purpose") or request.headers.get("Purpose") or ""
+    ).lower()
+    return "prefetch" in purpose or "prerender" in purpose
 
 
 def busy_response(request, *, retry_after: int) -> HttpResponse:

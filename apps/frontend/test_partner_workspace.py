@@ -119,11 +119,14 @@ class PartnerWorkspaceTests(TestCase):
         # added partner-delivered activities with no PartnerAssignment row as a
         # second source — `activity_services.create` writes them, the old
         # directory listed them, and oversight alone would have lost them.
+        # Since 2026-09-23 the page lists work in three tables rather than
+        # per-partner groups: activities, assigned schools, assigned clusters.
         self.assertContains(response, "In School Training")
-        self.assertContains(response, "Scheduled &amp; Delivering (1)")
+        self.assertContains(response, "Partner activities (1)")
         # The handover, from the live PartnerAssignment row.
         self.assertContains(response, "School Visit Ssa Collection")
-        self.assertContains(response, "Yet to Schedule (1)")
+        self.assertContains(response, "Schools assigned (1)")
+        # The scheduled activity's agreed cost line, in the budget figure.
         self.assertContains(response, "120,000")
 
     def test_the_merge_kept_the_partners_contact_details(self):

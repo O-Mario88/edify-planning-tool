@@ -1,10 +1,15 @@
 from django.core.cache import cache
 from django.test import TestCase
 
+from apps.core.throttling import reset_throttle_state
+
 
 class LoginPageDesignTest(TestCase):
     def setUp(self):
+        # The page caches its figures. The sign-in throttle counts outside the
+        # cache when the cache is per-process, so clearing it is not a reset.
         cache.clear()
+        reset_throttle_state(["auth.login:127.0.0.1"])
 
     def test_login_uses_the_supplied_design_language(self):
         response = self.client.get("/login")

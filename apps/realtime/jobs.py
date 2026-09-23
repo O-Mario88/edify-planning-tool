@@ -522,6 +522,8 @@ def daily_debrief_reminders_job():
             reminded += 1
         return {"reminded": reminded, "for_date": str(target)}
 
+    if not _enabled():
+        return None
     return run_tracked_job("daily_debrief_reminders", _run)
 
 
@@ -544,6 +546,8 @@ def weekly_debrief_reports_job():
             generated += 1
         return {"pl_reports_generated": generated}
 
+    if not _enabled():
+        return None
     return run_tracked_job("weekly_debrief_reports", _run)
 
 

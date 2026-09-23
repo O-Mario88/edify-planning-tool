@@ -193,6 +193,14 @@ class TimeoutsReachThePostgresSessionTest(TestCase):
     def test_a_lock_wait_cannot_last_forever(self):
         self.assertNotEqual(_setting("lock_timeout"), "0")
 
+    def test_jit_compilation_is_off_in_the_live_session(self):
+        """JIT compiled the lending portfolio KPI for 4.7 s before running it
+        in 76 ms: the scoped ORM queries carry planner estimates far above
+        jit_above_cost while reading a handful of rows (performance rescue,
+        2026-09-23). Asserted on the session, like the ceilings above, so an
+        options string that is overwritten rather than appended fails here."""
+        self.assertEqual(_setting("jit"), "off")
+
     def test_the_search_path_survived(self):
         """The regression this guards: `OPTIONS["options"]` is where a
         `?schema=` in DATABASE_URL puts the search_path. Assigning the timeouts

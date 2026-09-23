@@ -8,6 +8,7 @@ queue, heatmap, trend, and decision recommendations internally consistent.
 from __future__ import annotations
 
 from collections import defaultdict
+from django.db.models.expressions import RawSQL
 from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService
@@ -132,11 +133,32 @@ def _scoped_schools(principal):
     return scoped_school_queryset(scope, schools), scope
 
 
+class _ScopedSchoolIds(list):
+    """The scoped school ids, remembering the queryset they were read from.
+
+    Code here treats the scope as a plain list (membership, emptiness). SQL
+    filters use ``_in_scope`` instead, which hands the ORM the originating
+    queryset as a subquery: a Country Director's scope is every school, and
+    each of the page's five SSA reads used to bind all ~16,000 ids as a literal
+    ``IN`` list — ~0.45 s apiece of parameter adaptation and planning on a
+    16,000-school estate (performance rescue, 2026-09-23).
+    """
+
+    def __init__(self, ids, subquery):
+        super().__init__(ids)
+        self.subquery = subquery
+
+
+def _in_scope(school_ids):
+    subquery = getattr(school_ids, "subquery", None)
+    return subquery if subquery is not None else school_ids
+
+
 def _record_rows(school_ids: list[str], fy: str, quarter: str | None) -> list[dict]:
     if not school_ids:
         return []
     records = SsaRecord.objects.filter(
-        school_id__in=school_ids,
+        school_id__in=_in_scope(school_ids),
         fy=fy,
         deleted_at__isnull=True,
         verification_status=VerificationStatus.CONFIRMED.value,
@@ -161,7 +183,12 @@ def _scores_by_record(record_ids: list[str]) -> dict[str, dict[str, float]]:
     scores: dict[str, dict[str, float]] = defaultdict(dict)
     if not record_ids:
         return scores
-    for row in SsaScore.objects.filter(ssa_record_id__in=record_ids).values(
+    # One array parameter rather than one bind per id: these lists are the
+    # latest record per school, so ~16,000 ids for a country reader, and a
+    # literal IN of that size was ~0.2 s of adaptation and planning per call,
+    # five calls a page (performance rescue, 2026-09-23). Same rows.
+    ids = RawSQL("SELECT unnest(%s::varchar[])", [list(record_ids)])
+    for row in SsaScore.objects.filter(ssa_record_id__in=ids).values(
         "ssa_record_id", "intervention", "score"
     ):
         scores[row["ssa_record_id"]][row["intervention"]] = float(row["score"])
@@ -185,7 +212,7 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
     else:
         raw = list(
             SsaRecord.objects.filter(
-                school_id__in=school_ids,
+                school_id__in=_in_scope(school_ids),
                 fy__in=years,
                 deleted_at__isnull=True,
                 verification_status=VerificationStatus.CONFIRMED.value,
@@ -405,8 +432,16 @@ def _breakdown_rows(assessed, schools, *, key, names, count_schools=True) -> lis
                 "completion_rate": round(len(items) / total * 100, 1) if total else 0,
             }
         )
+    # The id breaks ties between same-named groups (two clusters named for one
+    # sub-county): without it their order followed set iteration, which
+    # differs between worker processes, so a refresh could reorder the table.
     rows.sort(
-        key=lambda row: (row["average"] is None, -(row["average"] or 0), row["name"])
+        key=lambda row: (
+            row["average"] is None,
+            -(row["average"] or 0),
+            row["name"],
+            str(row["id"]),
+        )
     )
     return rows
 
@@ -574,7 +609,7 @@ def build_dashboard(principal, query: dict) -> dict:
         ).order_by("district__name", "name")
     )
     schools_by_id = {row["id"]: row for row in schools}
-    school_ids = list(schools_by_id)
+    school_ids = _ScopedSchoolIds(schools_by_id, filtered_schools.values("id"))
 
     latest_records = _record_rows(school_ids, selected_fy, record_quarter)
     record_ids = [row["id"] for row in latest_records]
