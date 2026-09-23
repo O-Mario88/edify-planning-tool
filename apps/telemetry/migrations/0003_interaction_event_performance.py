@@ -12,21 +12,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="interactionevent",
             name="db_ms",
-            field=models.PositiveIntegerField(default=0),
+            field=models.PositiveIntegerField(default=0, db_default=0),
         ),
         migrations.AddField(
             model_name="interactionevent",
             name="query_count",
-            field=models.PositiveIntegerField(default=0),
+            field=models.PositiveIntegerField(default=0, db_default=0),
         ),
         migrations.AddField(
             model_name="interactionevent",
             name="queue_ms",
-            field=models.PositiveIntegerField(default=0),
+            field=models.PositiveIntegerField(default=0, db_default=0),
         ),
         migrations.AddField(
             model_name="interactionevent",
             name="status_code",
-            field=models.PositiveSmallIntegerField(default=0),
+            field=models.PositiveSmallIntegerField(default=0, db_default=0),
         ),
     ]
