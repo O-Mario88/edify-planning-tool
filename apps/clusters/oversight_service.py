@@ -257,21 +257,11 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     clusters = list(
         cluster_queryset(
             scope,
-            base=Cluster.objects.filter(deleted_at__isnull=True, status="active"),
+            base=Cluster.objects.filter(deleted_at__isnull=True),
         )
         .select_related("district")
         .order_by("name")
     )
-    if not clusters and not is_programme_lead:
-        return {
-            "is_programme_lead": is_programme_lead,
-            "leads": [],
-            "cceo_tabs": [],
-            "total_clusters": 0,
-            "total_schools": 0,
-            "perf_totals": {},
-        }
-
     cluster_ids = [c.id for c in clusters]
     owners = _staff_directory({c.responsible_staff_id for c in clusters})
 
@@ -375,6 +365,15 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             }
         )
 
+    from apps.planning import oversight_service as planning
+    from apps.core.fy import get_operational_fy
+
+    cluster_work = [
+        item for item in planning.build_items(principal, fy=str(fy or get_operational_fy()))
+        if item.cluster_id and not item.is_in_school_training
+        and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
+    ]
+
     # 6. Build hierarchy tabs
     # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
     sys_pls = system_program_leads()
@@ -385,6 +384,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             for identifier in (row["lead_id"], row["lead_user_id"])
             if identifier
         }
+        visible_lead_ids.update(str(item.supervising_pl_id) for item in cluster_work if item.supervising_pl_id)
         sys_pls = [
             pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))
         ]
@@ -442,7 +442,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
         )
 
-    if unassigned_pl["count"] > 0:
+    if unassigned_pl["count"] > 0 or any(not item.supervising_pl_id for item in cluster_work):
         unassigned_pl["cceo_tabs"] = sorted(
             unassigned_pl["cceos"].values(),
             key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
@@ -494,16 +494,14 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         # or not: an officer with none is a zero row, never a missing one, so
         # the chart reads as the team and nobody's colour shifts when a
         # colleague has nothing to show.
-        from apps.hr.team_roster import team_members
-
         listed = {str(tab["id"]) for tab in officer_tabs}
-        for member in team_members(principal):
-            if str(member.id) in listed:
+        for member in planning.program_lead_members(principal.id):
+            if str(member["id"]) in listed or member["ids"].intersection(user_staff_ids):
                 continue
             officer_tabs.append(
                 {
-                    "id": member.id,
-                    "name": _label(member),
+                    "id": member["id"],
+                    "name": member["name"],
                     "clusters": [],
                     "count": 0,
                     "schools": 0,
@@ -513,6 +511,44 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             key=lambda tab: (tab["id"] == "__unassigned__", tab["name"].casefold())
         )
         cceo_tabs.extend(officer_tabs)
+
+    # Populate each person's single tab with their clusters and the work they
+    # are responsible for, even if a different team member holds the cluster.
+    def member_tab(member):
+        return {"id": member["id"], "name": member["name"], "clusters": [], "count": 0, "schools": 0}
+
+    for lead in leads_data:
+        roster = planning.program_lead_members(lead["id"])
+        existing = {tab["id"]: tab for tab in lead["cceo_tabs"]}
+        ordered = [existing.pop(member["id"], member_tab(member)) for member in roster]
+        lead["cceo_tabs"] = ordered + list(existing.values())
+        groups = planning.group_by_owner(
+            [item for item in cluster_work if str(item.supervising_pl_id or "__unassigned__") == str(lead["id"])],
+            owners=roster,
+        )
+        tabs = {tab["id"]: tab for tab in lead["cceo_tabs"]}
+        for group in groups:
+            tab = tabs.get(group["id"])
+            if tab is None:
+                tab = member_tab(group)
+                lead["cceo_tabs"].append(tab)
+            tab["meetings"] = [item for item in group["items"] if item.activity_type in CLUSTER_MEETING_TYPES]
+            tab["trainings"] = [item for item in group["items"] if item.activity_type in TRAINING_TYPES]
+
+    if is_programme_lead:
+        directory = _staff_directory({item.operational_owner_id for item in cluster_work})
+        tabs = {str(tab["id"]): tab for tab in cceo_tabs}
+        for tab in cceo_tabs:
+            tab["meetings"], tab["trainings"] = [], []
+        for item in cluster_work:
+            owner = directory.get(item.operational_owner_id)
+            key = "my-clusters" if item.operational_owner_id in user_staff_ids else str(getattr(owner, "id", None) or "__unassigned__")
+            if key not in tabs:
+                tab = member_tab({"id": key, "name": _label(owner)})
+                cceo_tabs.append(tab)
+                tabs[key] = tab
+            tab = tabs[key]
+            tab.setdefault("meetings" if item.activity_type in CLUSTER_MEETING_TYPES else "trainings", []).append(item)
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import (

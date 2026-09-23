@@ -3,7 +3,7 @@
 <div class="core-schools-oversight-content space-y-6">
 
   {% kpi_strip %}
-    {% kpi_metric %}{% kpi_label %}Core Schools{% endkpi_label %}{{ total_schools }}{% kpi_helper %}In FY {{ fy }} cohort{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Schools in Core Oversight{% endkpi_label %}{{ total_schools }}{% kpi_helper %}In FY {{ fy }} cohort{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Completed Packages{% endkpi_label %}{{ completed_packages }}{% kpi_helper %}4 visits + 4 trainings{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}In Progress{% endkpi_label %}{{ in_progress }}{% kpi_helper %}Delivery ongoing{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Average SSA Score{% endkpi_label %}{{ avg_ssa }}{% kpi_helper %}Verified baseline / follow-up{% endkpi_helper %}{% endkpi_metric %}
@@ -47,7 +47,8 @@
               <span class="pill pill-success text-xs font-semibold">{{ cceo.completed }} completed packages</span>
             </h3>
           </div>
-          {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools page_param="cs-"|add:cceo.id %}
+          {% include "partials/oversight/_core_schools_table.html" with schools=cceo.core_schools page_param="cs-"|add:cceo.id %}
+          {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
         </div>
       </div>
       {% endfor %}
@@ -120,7 +121,8 @@
                   <span class="pill pill-success text-xs font-semibold">{{ cceo.completed }} completed packages</span>
                 </h4>
               </div>
-              {% include "partials/oversight/_core_schools_table.html" with schools=cceo.schools page_param="cs-"|add:lead.id|add:"-"|add:cceo.id %}
+          {% include "partials/oversight/_core_schools_table.html" with schools=cceo.core_schools page_param="cs-"|add:lead.id|add:"-"|add:cceo.id %}
+              {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
             </div>
           </div>
           {% endfor %}
