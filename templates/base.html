@@ -1,4 +1,4 @@
-{% load static %}
+{% load static frontend_filters %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -160,8 +160,8 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/chart-standard.js' %}?v=20260921people1"></script>
-    <script src="{% static 'js/alpine-components.js' %}?v=20260923alignment3"></script>
+    <script src="{% static 'js/chart-standard.js' %}?v=20260923sweep1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260923swap1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -170,7 +170,7 @@ other page was relying on them.
 {% comment %}Field outbox: a CCEO's start/complete/evidence actions survive a
 dead signal -- stored on the phone, replayed when it reconnects. Loaded after
 csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
-<script defer src="{% static 'js/field-outbox.js' %}?v=20260920perf2"></script>
+<script defer src="{% static 'js/field-outbox.js' %}?v=20260923owner1"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
@@ -180,10 +180,13 @@ document-level lifecycle handlers, so no template needs hx-disabled-elt.
 Workspace switches are real document navigations, not in-page tabs. Ask the
 browser to fetch likely sibling views after user intent so the next document
 is ready without turning the application into a fragile global HTMX shell.
-The active analytics group waits for pointer/keyboard intent; wider workspace
-rails and mobile navigation wait until intent is stronger. This keeps expensive
-reports from competing with the current interaction. Unsupported browsers
-ignore this progressive enhancement.
+Every rule waits for a pointer-down or touch — the start of a click. The
+analytics and IA view links used "moderate" (a 200 ms hover), and they point
+at the heaviest reports in the product: moving the pointer down the View menu
+started several full renders nobody opened (performance rescue, 2026-09-23).
+The server also refuses a prefetch outright when no slot is free
+(apps.core.concurrency). Unsupported browsers ignore this progressive
+enhancement.
 {% endcomment %}
 <script type="speculationrules">
 {
@@ -193,7 +196,7 @@ ignore this progressive enhancement.
       "where": {
         "selector_matches": ".edify-section-nav__view-link[href]:not([aria-current])"
       },
-      "eagerness": "moderate"
+      "eagerness": "conservative"
     },
     {
       "source": "document",
@@ -220,7 +223,7 @@ controller exists by the time a drawer's x-init runs.
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->
-<script defer src="{% static 'js/svg-typography.js' %}?v=20260920svgunits1"></script>
+<script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
 <script defer src="{% static 'js/micro-ux.js' %}?v=20260923schooltable1"></script>
@@ -721,9 +724,19 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
       if (!options._edifyStandard) {
-        return window.EdifyBarStandard.render(el, options, function (slot, normalized) {
+        var standard = window.EdifyBarStandard.render(el, options, function (slot, normalized) {
           return window.EdifyChartSystem.renderDetached(slot, normalized);
         });
+        /* The wrapper holds a window listener whose closure holds its slot,
+           and many callers drop the handle. Swept like a chart, it is torn
+           down with the panel it sat in; unswept, every HTMX tab visit kept
+           the whole previous panel alive — ~930 listeners and ~7,500 nodes
+           per Map/Operations round trip on the HR dashboard (frontend audit,
+           2026-09-23). */
+        if (standard && typeof standard.destroy === 'function') {
+          this._live.push({ el: el, chart: standard });
+        }
+        return standard;
       }
       /* Below the fold, a chart waits until it is about to scroll into view,
          and charts that become visible together are drawn one per idle
@@ -1076,6 +1089,7 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
 <body
 class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+data-edify-outbox-owner="{{ request.user|outbox_owner }}"
 >
 {% include "partials/pwa_launch.html" %}
 {% include "partials/connectivity_status.html" %}
