@@ -469,11 +469,11 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
                 )["schools"]
             }
 
-        # The client tab lists only the schools still to be planned; the
-        # visited school sits on the Scheduled tab and the handed-over one on
-        # the Partner tab. Which tab a school sits on is a description of
-        # where its visiting has reached, and that much has not changed.
-        self.assertEqual(sorted(rows_on("client")), ["VG-S6"])
+        # Every portfolio school stays on the client tab (owner, 2026-09-23):
+        # a school with work already planned, or with support handed to a
+        # Partner, is still the owner's to plan. Where its work has reached is
+        # what the Visit and Training indicators say, not which tab hides it.
+        self.assertEqual(sorted(rows_on("client")), ["VG-S4", "VG-S5", "VG-S6"])
         rows = {**rows_on("scheduled"), **rows_on("partner"), **rows_on("client")}
         self.assertIn("VG-S4", rows, sorted(rows))
         for code in ("VG-S4", "VG-S5", "VG-S6"):

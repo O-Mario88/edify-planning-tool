@@ -1,7 +1,13 @@
 /* Shared outlined forms: quiet surfaces, clear boundaries and visible states. */
 :root { --form-outline: #858e98; --form-placeholder: #707b87; }
 html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #798796; --form-placeholder: #a4afbd; }
-:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+/* Content inside a plain table (micro-ux.js marks it .edify-table-plain-content)
+   reads as table text, as consistency.css's field rules already allow: this
+   selector's #drawer-container gives it ID weight, which would otherwise put
+   the outline back on an inline cell field. The exclusion sits in :where() so
+   it adds no weight: a heavier rule here would outrank the 16px phone field
+   size that keeps iOS from zooming. */
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"], input[type="week"], select, textarea):not(:where(.edify-table-plain-content)) {
   min-height: 44px !important;
   max-width: 100%;
   border: 1px solid var(--form-outline) !important;

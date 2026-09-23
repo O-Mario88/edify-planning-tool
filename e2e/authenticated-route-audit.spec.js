@@ -191,7 +191,13 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
         return {
           unindexed: [...unindexed],
           emptyIconText: [...document.querySelectorAll('.edify-empty-state__mark')].map(e=>e.textContent.trim()).filter(Boolean),
-          overflowingBadges: [...document.querySelectorAll('.edify-badge')].filter(e=>e.getBoundingClientRect().width>0 && e.scrollWidth>e.clientWidth+2).map(e=>e.textContent.trim()),
+          // Text escaping its pill. A label cut to an ellipsis stays inside
+          // it, and micro-ux.js gives it its full text as a title.
+          overflowingBadges: [...document.querySelectorAll('.edify-badge')].filter(e=>{
+            if (!(e.getBoundingClientRect().width>0 && e.scrollWidth>e.clientWidth+2)) return false;
+            const style=getComputedStyle(e);
+            return style.textOverflow!=='ellipsis' || style.overflowX==='visible';
+          }).map(e=>e.textContent.trim()),
           title: document.title,
           domNodes: document.querySelectorAll('*').length,
           horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,

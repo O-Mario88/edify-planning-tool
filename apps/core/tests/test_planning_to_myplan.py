@@ -13,7 +13,7 @@ monitored_by_staff_id = scheduling staff, so it surfaces on their My Plan.
 from datetime import datetime, time
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import User, StaffProfile, StaffSchoolAssignment
@@ -370,9 +370,10 @@ class PlanningToMyPlanFlowTest(TestCase):
             "User without StaffProfile must still see their scheduled activity in My Plan",
         )
 
-    def test_partner_activity_appears_in_monitoring_staff_my_plan(self):
-        """A staff member schedules on behalf of a partner. The activity must
-        surface on the STAFF member's My Plan via monitored_by_staff_id."""
+    def test_partner_activity_stays_off_the_monitoring_staff_my_plan(self):
+        """Partner delivery is the Partner's plan, not the monitor's (owner,
+        2026-09-23): the monitoring staff member follows it on Partner
+        Monitoring, and it never reads as their own work on My Plan."""
         user, profile = self._cceo_with_profile(email="monitor@plan.test")
         fy = get_operational_fy()
         activity = Activity.objects.create(
@@ -389,11 +390,35 @@ class PlanningToMyPlanFlowTest(TestCase):
             planned_date=timezone.now().date(),
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
-        self.assertIn(
+        self.assertNotIn(
             str(activity.id),
             _activity_ids(ctx),
-            "Partner-delivered activity must appear in the monitoring staff's My Plan",
+            "Partner-delivered work must not appear on the monitor's My Plan",
         )
+
+    @override_settings(PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED=False)
+    def test_partner_activity_appears_in_monitoring_staff_my_plan_when_flag_off(
+        self,
+    ):
+        """With the Partner-supported schools rule switched off, the previous
+        behaviour returns: the monitor sees the work via monitored_by_staff_id."""
+        user, profile = self._cceo_with_profile(email="monitor-off@plan.test")
+        fy = get_operational_fy()
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=fy,
+            quarter="Q1",
+            responsible_staff_id=None,
+            monitored_by_staff_id=profile.id,
+            assigned_partner_id="PARTNER-1",
+            delivery_type="partner",
+            status="assigned_to_partner",
+            scheduled_date=timezone.now(),
+            planned_date=timezone.now().date(),
+        )
+        ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
+        self.assertIn(str(activity.id), _activity_ids(ctx))
 
     def test_partner_delivery_attribution_logic(self):
         """The attribution logic in create() must:

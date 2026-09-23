@@ -91,7 +91,7 @@
   block-size: 19px;
   border-radius: var(--edify-radius-pill);
   background: var(--edify-surface-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
 }
 
 .analytics-more-filters[open] > summary {
@@ -227,7 +227,7 @@
   min-inline-size: 0 !important;
   border-collapse: collapse;
   border-spacing: 0;
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.25;
   table-layout: fixed;
 }
@@ -615,7 +615,7 @@
   min-block-size: 20px;
   padding-inline: 7px;
   border-radius: var(--edify-radius-pill);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
 }
 
@@ -866,9 +866,16 @@
   table-layout: auto;
 }
 
+/* The table scrolls inside its own region, like every platform table
+   (mobile-micro-ux.css sizes a "fit" table to its content, no wrapping): a
+   visible region inside the clipping panel cut the last columns off wherever
+   the card was narrower than the table — every phone and tablet, and a
+   laptop's side-by-side card. The region carries the 620px cap, so the
+   sticky header stays with the rows it heads while they scroll. */
 .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
-  overflow-x: visible !important;
-  overflow-y: visible !important;
+  overflow: auto !important;
+  max-block-size: 620px;
+  overscroll-behavior: contain;
 }
 
 /* The name column takes whatever the figure columns leave. */
@@ -899,7 +906,7 @@
   }
 
   .analytics-geo-card .sr-distribution-table {
-    font-size: .625rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .analytics-geo-card .sr-distribution-table :is(th, td) {
@@ -1047,7 +1054,7 @@
   min-inline-size: 0;
   margin: .18rem 0 0;
   color: var(--edify-text-muted);
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -1153,7 +1160,7 @@
 
 .analytics-evidence-disclosure[data-analytics-disclosure] > summary small {
   color: var(--edify-text-muted);
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 550;
 }
 
@@ -1178,7 +1185,7 @@
 }
 
 [data-analytics-enterprise] :where(table) {
-  font-size: .71875rem;
+  font-size: var(--edify-text-micro-size);
 }
 
 [data-analytics-enterprise] :where(th) {
@@ -1243,7 +1250,7 @@
   [data-analytics-enterprise] :where(.edify-page-header__controls, .hcos-hero__actions) > :where(a, button) {
     min-block-size: 2.125rem;
     padding-inline: .65rem;
-    font-size: .6875rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .analytics-decision-frame {
@@ -1263,7 +1270,7 @@
   }
 
   .analytics-decision-frame__meta dt {
-    font-size: .5625rem;
+    font-size: var(--edify-text-micro-size);
     letter-spacing: 0;
   }
 
@@ -1287,7 +1294,7 @@
 
   [data-analytics-enterprise] :where(.edify-filter-bar, .analytics-filter-bar) :where(select, input[type="date"], input[type="search"]) {
     min-block-size: 2.125rem;
-    font-size: .6875rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .analytics-section-heading {
@@ -1309,7 +1316,7 @@
   }
 
   [data-analytics-enterprise] :where(table) {
-    font-size: .6875rem;
+    font-size: var(--edify-text-micro-size);
   }
 }
 
@@ -1335,7 +1342,7 @@
 .impact-scroll-hint {
   margin: 0;
   color: var(--edify-text-subtle, #64748b);
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
 }
 
@@ -1365,7 +1372,7 @@
   border-collapse: separate;
   border-spacing: 0;
   color: var(--edify-text-muted, #475569);
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.35;
 }
 
@@ -1389,7 +1396,7 @@
 .impact-analysis-table thead th {
   background: var(--edify-surface-soft, #f8fafc);
   color: var(--edify-text-subtle, #64748b);
-  font-size: .625rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .045em;
   text-transform: uppercase;
@@ -1426,7 +1433,7 @@
 .impact-analysis-table tbody th small {
   margin-block-start: .2rem;
   color: var(--edify-text-subtle, #64748b);
-  font-size: .625rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 500;
   line-height: 1.4;
 }

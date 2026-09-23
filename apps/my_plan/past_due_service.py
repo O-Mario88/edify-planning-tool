@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from typing import Any
 
 from django.db.models import Q
+
+from apps.my_plan.services import staff_my_plan_q
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
@@ -120,10 +122,10 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             Q(planned_date__lt=today)
             | Q(planned_date__isnull=True, scheduled_date__date__lt=today)
         )
-        .filter(
-            Q(responsible_staff_id__in=all_scoped_ids)
-            | Q(monitored_by_staff_id__in=all_scoped_ids, delivery_type="partner")
-        )
+        # The same membership as My Plan itself: work the reader (or their
+        # team) owns and delivers. Overdue Partner work is followed on Partner
+        # Monitoring's Overdue filter, not offered here as staff work.
+        .filter(staff_my_plan_q(all_scoped_ids, user))
         # The id settles ties between plans due the same day. Without it the
         # order among them was whatever the plan chose, so page two of a table
         # could repeat a row from page one or skip one.

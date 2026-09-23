@@ -1,19 +1,39 @@
 {% load frontend_filters table_pagination %}
 {% comment %}
-Partner-delivered work, grouped by partner — the unit a supervisor chases.
-"Has Partner X scheduled the four schools we gave them" is one question, and
-four school-shaped rows scattered across a list is four.
+Partner Monitoring (owner, 2026-09-23): one Partner at a time — the unit a
+supervisor chases. "Has Partner X scheduled the four schools we gave them" is
+one question, and four school-shaped rows scattered across a list is four. The
+Partner tabs choose the organisation; the team workspace under them (team
+members, filters, KPIs and the school, cluster and activity tables) reads that
+Partner's work alone, so no table mixes two Partners.
 
 The Yet-to-Schedule list has no cost column at all. That is the point, not an
 omission: an unscheduled handover has no activity, so no cost lines, so no
 price anyone has agreed. Printing UGX 0 there would invite a Program Lead to
 plan around a number nobody set.
 
-Every control here asks somebody to act. None of them edits a partner's
-schedule, and none edits a CCEO's record.
+Every control here views or asks. None edits a Partner's schedule, evidence,
+IA verification, Salesforce entry or payment, and none edits a CCEO's record;
+resolving a hand-back opens its own governed drawer.
 {% endcomment %}
 
 <section class="space-y-4">
+
+  {% comment %}One filter row, as on Planning: the period, then this Partner's
+  activity and status, each applying on change. Export sits at the row's end
+  because it exports what the row selects.{% endcomment %}
+  <div class="partner-plan-toolbar">
+    {% include "partials/oversight/period_filter_bar.html" with filter_label="Partner monitoring filters" target_url="/partner-oversight/" target_id="#partner-workspace" extra_filters="partials/oversight/partner_filter_fields.html" %}
+    {% if can_export %}
+    {% comment %}The export route refuses a role without data export; so does
+    the button, rather than offering a download that lands on a refusal.{% endcomment %}
+    <a class="edify-action-button secondary h-9 partner-plan-toolbar__export"
+       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
+      <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export CSV
+    </a>
+    {% endif %}
+  </div>
 
   {% if program_lead_tabs %}
   <div>
@@ -31,36 +51,51 @@ schedule, and none edits a CCEO's record.
   </div>
   {% endif %}
 
+  {% if partner_tabs %}
+  {% comment %}A native select is the Partner search: it types ahead, it is
+  the phone's own picker, and it is not a second search box on a page whose one
+  search is the top bar. Used whenever the tab row would run off the page —
+  many Partners, or a phone.{% endcomment %}
+  <div>
+    <p class="edify-page-eyebrow">Partners</p>
+    <div class="{% if not partner_search %}md:hidden{% endif %}">
+      <label class="sr-only" for="partner-picker">Choose a Partner</label>
+      <select id="partner-picker" aria-label="Choose a Partner"
+              @change="window.location.href = $event.target.selectedOptions[0].dataset.href"
+              class="h-9 w-full max-w-md px-3 rounded-control border edify-border text-sm">
+        {% for entry in partner_tabs %}
+        <option value="{{ entry.key }}" data-href="?partner={{ entry.key }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}" {% if entry.is_active %}selected{% endif %}>{{ entry.label }} ({{ entry.count }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if not partner_search %}
+    <div class="hidden md:block">
+    <nav class="oversight-entity-tabs" aria-label="Partners">
+      {% for entry in partner_tabs %}
+      <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         href="?partner={{ entry.key }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
+         {% if entry.is_active %}aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <nav class="oversight-entity-tabs" aria-label="Team members">
     {% for entry in member_tabs %}
     <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
-       href="?program_lead={{ program_lead }}&member={{ entry.key }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}"{% if entry.is_active %} aria-current="page"{% endif %}>
+       href="?program_lead={{ program_lead }}&partner={{ partner }}&member={{ entry.key }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}"{% if entry.is_active %} aria-current="page"{% endif %}>
       {{ entry.label }} <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
     </a>
     {% endfor %}
   </nav>
-  <form method="get" class="flex flex-wrap items-end gap-3">
-    <input type="hidden" name="program_lead" value="{{ program_lead }}">
-    <input type="hidden" name="member" value="{{ member }}">
-    <input type="hidden" name="period" value="{{ period }}">
-    <input type="hidden" name="fy" value="{{ fy }}">
-    <input type="hidden" name="month" value="{{ selected_month }}">
-    <input type="hidden" name="quarter" value="{{ selected_quarter }}">
-    <input type="hidden" name="week" value="{{ week }}">
-    <label>Partner<select name="partner" class="input"><option value="all">All partners</option>{% for id, name in partners %}<option value="{{ id }}"{% if partner == id %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
-    <label>Activity<select name="activity_type" class="input"><option value="">All activities</option>{% for value in activity_types %}<option value="{{ value }}"{% if activity_type == value %} selected{% endif %}>{{ value|replace_underscore|title }}</option>{% endfor %}</select></label>
-    <label>Status<select name="status" class="input"><option value="">All statuses</option>{% for value in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ value|replace_underscore|title }}</option>{% endfor %}</select></label>
-    <button class="btn" type="submit">Apply</button>
-  </form>
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Partner planning context" %}
 
-  <div class="flex flex-wrap items-center justify-end gap-2">
-    <a class="btn h-8 inline-flex items-center"
-       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
-      Export CSV
-    </a>
-  </div>
 
   {% comment %}
   Withdrawal requests. A CCEO noticed a problem with work a partner had
@@ -121,35 +156,30 @@ schedule, and none edits a CCEO's record.
   </section>
   {% endif %}
 
-  {% include "partials/oversight/partner_work_tables.html" %}
-  {% comment %}
-  Who to call, carried over when the Partners directory merged into this
-  page. Every control here asks somebody to act, and for a partner that
-  somebody is a person with a phone number — a page that says "waiting on
-  Partner X" without saying who X is makes you open another page to finish
-  the thought.
-  {% endcomment %}
-  {% if partner_contacts %}
-  <section class="card p-0 overflow-hidden" aria-labelledby="partner-contacts">
-    <header class="px-4 py-3 border-b edify-border">
-      <h2 id="partner-contacts" class="text-sm font-semibold">Partner contacts ({{ partner_contacts|length }})</h2>
-    </header>
-    <ul class="divide-y edify-border">
-      {% for contact in partner_contacts %}
-      <li class="px-4 py-3">
-        <p class="text-sm font-semibold">{% if contact.profile_url %}<a href="{{ contact.profile_url }}" class="hover:underline">{{ contact.name }}</a>{% else %}{{ contact.name }}{% endif %}</p>
-        {% if contact.contact_person or contact.phone or contact.region_name or contact.intervention_label %}
-        <p class="edify-text-caption edify-text-muted">
-          {% if contact.contact_person %}{{ contact.contact_person }}{% endif %}
-          {% if contact.phone %} · {{ contact.phone }}{% endif %}
-          {% if contact.region_name %} · {{ contact.region_name }}{% endif %}
-          {% if contact.intervention_label %} · {{ contact.intervention_label }}{% endif %}
-        </p>
+  {% if active_partner %}
+  <section class="card p-0 partner-plan" data-partner-table="{{ active_partner.id }}" aria-labelledby="partner-plan-name">
+    <header class="partner-plan__head" data-card-header>
+      <div class="partner-plan__identity">
+        <h2 id="partner-plan-name" class="partner-plan__name">{% if active_partner.profile_url %}<a href="{{ active_partner.profile_url }}">{{ active_partner.name }}</a>{% else %}{{ active_partner.name }}{% endif %}</h2>
+        {% if active_partner.contact_person or active_partner.phone %}
+        <p class="partner-plan__contact">{% if active_partner.contact_person %}{{ active_partner.contact_person }}{% endif %}{% if active_partner.phone %} · {{ active_partner.phone }}{% endif %}{% if active_partner.region_name %} · {{ active_partner.region_name }}{% endif %}</p>
         {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+      </div>
+      {% comment %}Where this Partner's work stands, in the tones its rows
+      use: blue waiting on the Partner, amber scheduled, red overdue.{% endcomment %}
+      <ul class="partner-plan__summary" aria-label="Where {{ active_partner.name }}'s work stands">
+        <li><span class="partner-status-chip" data-tone="info">{{ summary.awaiting_schedule }} awaiting scheduling</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_visits }} visits scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_trainings }} trainings scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="warning">{{ summary.scheduled_meetings }} meetings scheduled</span></li>
+        <li><span class="partner-status-chip" data-tone="{% if summary.overdue %}danger{% else %}neutral{% endif %}">{{ summary.overdue }} overdue</span></li>
+        <li><span class="partner-status-chip" data-tone="info">{{ summary.completed }} completed</span></li>
+      </ul>
+    </header>
+    {% include "partials/oversight/partner_work_tables.html" %}
   </section>
+  {% else %}
+  {% include "components/empty_state.html" with title="No partner work in this period" message="When a school's support is handed to a Partner it appears here — first waiting on the Partner's date, then through delivery, IA verification and payment." %}
   {% endif %}
 
   {% if engagement %}

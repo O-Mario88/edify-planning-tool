@@ -98,7 +98,7 @@
       <!-- Recipients -->
       <div class="space-y-1">
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Recipients <span class="text-rose-500">*</span></label>
-        <div class="min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-surface">
+        <div class="min-w-0 min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-surface">
           <template x-for="r in to" :key="r.id">
             <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-pill edify-primary-soft border edify-primary-border edify-text-caption font-bold edify-primary-text">
               <span class="h-5 w-5 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()"></span>

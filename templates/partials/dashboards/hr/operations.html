@@ -97,13 +97,13 @@ Every card links to the register where the work is done.
         <div class="hrd-figures">
           {% comment %}A figure links to its register only for someone that register lets in; otherwise it stays a plain figure.{% endcomment %}
           {% if request.user|can_open:"/recruitment" %}
-          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></a>
-          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></a>
+          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label" title="Open roles">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></a>
+          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label" title="Awaiting approval">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></a>
           {% else %}
-          <div class="hrd-figure"><span class="hrd-figure__label">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Open roles">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Awaiting approval">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></div>
           {% endif %}
-          <div class="hrd-figure"><span class="hrd-figure__label">Hired this FY</span><strong class="hrd-figure__value">{{ recruitment.hired }}</strong><span class="hrd-figure__meta">{% if recruitment.median_days_to_hire is not None %}median {{ recruitment.median_days_to_hire }} day{{ recruitment.median_days_to_hire|pluralize }} to hire{% else %}no hires yet{% endif %}</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Hired this FY">Hired this FY</span><strong class="hrd-figure__value">{{ recruitment.hired }}</strong><span class="hrd-figure__meta">{% if recruitment.median_days_to_hire is not None %}median {{ recruitment.median_days_to_hire }} day{{ recruitment.median_days_to_hire|pluralize }} to hire{% else %}no hires yet{% endif %}</span></div>
         </div>
         {% if recruitment.in_pipeline or recruitment.hired %}
         <div id="chart-recruitment-funnel" class="hrd-chart" role="img" aria-label="Candidates at each recruitment stage"></div>
@@ -137,7 +137,7 @@ Every card links to the register where the work is done.
         <div class="hrd-bars" role="list">
           {% for stage in performance.stages %}
           <div class="hrd-bars__row" role="listitem" data-stage="{{ stage.key }}">
-            <span class="hrd-bars__label">{{ stage.label }}</span>
+            <span class="hrd-bars__label" title="{{ stage.label }}">{{ stage.label }}</span>
             <span class="hrd-bars__track" role="img" aria-label="{{ stage.count }} of {{ performance.total }} reviews"><span class="hrd-bars__fill" data-tone="{% if stage.key == 'complete' %}success{% else %}primary{% endif %}" style="inline-size: {{ stage.pct }}%"></span></span>
             <span class="hrd-bars__value"><strong>{{ stage.count }}</strong> · {{ stage.pct }}%</span>
           </div>
@@ -179,9 +179,9 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/recovery-plans">Recovery plans <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures">
-          <div class="hrd-figure"><span class="hrd-figure__label">Active</span><strong class="hrd-figure__value">{{ performance.recovery_active }}</strong><span class="hrd-figure__meta">{{ performance.recovery_formal }} formal · {{ performance.recovery_informal }} informal</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Ending in 30 days</span><strong class="hrd-figure__value" {% if performance.recovery_ending_soon %}data-tone="warning"{% endif %}>{{ performance.recovery_ending_soon }}</strong><span class="hrd-figure__meta">outcome to decide</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Past end date</span><strong class="hrd-figure__value" {% if performance.recovery_past_end %}data-tone="danger"{% endif %}>{{ performance.recovery_past_end }}</strong><span class="hrd-figure__meta">still open</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Active">Active</span><strong class="hrd-figure__value">{{ performance.recovery_active }}</strong><span class="hrd-figure__meta">{{ performance.recovery_formal }} formal · {{ performance.recovery_informal }} informal</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Ending in 30 days">Ending in 30 days</span><strong class="hrd-figure__value" {% if performance.recovery_ending_soon %}data-tone="warning"{% endif %}>{{ performance.recovery_ending_soon }}</strong><span class="hrd-figure__meta">outcome to decide</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Past end date">Past end date</span><strong class="hrd-figure__value" {% if performance.recovery_past_end %}data-tone="danger"{% endif %}>{{ performance.recovery_past_end }}</strong><span class="hrd-figure__meta">still open</span></div>
         </div>
       </section>
 
@@ -194,9 +194,9 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/cpd-learning">CPD &amp; Learning <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures">
-          <a class="hrd-figure" href="/cpd-learning"><span class="hrd-figure__label">Awaiting HR</span><strong class="hrd-figure__value" {% if development.awaiting_hr or development.awaiting_signoff %}data-tone="warning"{% endif %}>{{ development.awaiting_hr|add:development.awaiting_signoff }}</strong><span class="hrd-figure__meta">{{ development.awaiting_hr }} to approve · {{ development.awaiting_signoff }} to sign off</span></a>
-          <div class="hrd-figure"><span class="hrd-figure__label">In progress</span><strong class="hrd-figure__value">{{ development.in_progress }}</strong><span class="hrd-figure__meta">courses under way</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Completed</span><strong class="hrd-figure__value" {% if development.completed %}data-tone="success"{% endif %}>{{ development.completed }}</strong><span class="hrd-figure__meta">of {{ development.requests }} request{{ development.requests|pluralize }}</span></div>
+          <a class="hrd-figure" href="/cpd-learning"><span class="hrd-figure__label" title="Awaiting HR">Awaiting HR</span><strong class="hrd-figure__value" {% if development.awaiting_hr or development.awaiting_signoff %}data-tone="warning"{% endif %}>{{ development.awaiting_hr|add:development.awaiting_signoff }}</strong><span class="hrd-figure__meta">{{ development.awaiting_hr }} to approve · {{ development.awaiting_signoff }} to sign off</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="In progress">In progress</span><strong class="hrd-figure__value">{{ development.in_progress }}</strong><span class="hrd-figure__meta">courses under way</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Completed">Completed</span><strong class="hrd-figure__value" {% if development.completed %}data-tone="success"{% endif %}>{{ development.completed }}</strong><span class="hrd-figure__meta">of {{ development.requests }} request{{ development.requests|pluralize }}</span></div>
         </div>
       </section>
     </div>
@@ -273,10 +273,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/employee-relations">Cases <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <div class="hrd-figure"><span class="hrd-figure__label">Awaiting triage</span><strong class="hrd-figure__value" {% if relations.awaiting_triage %}data-tone="danger"{% endif %}>{{ relations.awaiting_triage }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Investigating</span><strong class="hrd-figure__value">{{ relations.investigating }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Action or appeal</span><strong class="hrd-figure__value">{{ relations.deciding }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Resolved this FY</span><strong class="hrd-figure__value">{{ relations.closed_fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Awaiting triage">Awaiting triage</span><strong class="hrd-figure__value" {% if relations.awaiting_triage %}data-tone="danger"{% endif %}>{{ relations.awaiting_triage }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Investigating">Investigating</span><strong class="hrd-figure__value">{{ relations.investigating }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Action or appeal">Action or appeal</span><strong class="hrd-figure__value">{{ relations.deciding }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Resolved this FY">Resolved this FY</span><strong class="hrd-figure__value">{{ relations.closed_fy }}</strong></div>
         </div>
         <span class="hrd-card__footnote">{{ relations.disciplinary }} disciplinary · {{ relations.grievances }} grievance{{ relations.grievances|pluralize }} or dispute{{ relations.grievances|pluralize }} · {{ relations.serious }} high or critical. Confidential cases are counted, never named.</span>
       </section>
@@ -290,10 +290,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/health-safety">Incidents <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <div class="hrd-figure"><span class="hrd-figure__label">Open</span><strong class="hrd-figure__value" {% if safety.open %}data-tone="warning"{% endif %}>{{ safety.open }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Serious open</span><strong class="hrd-figure__value" {% if safety.serious %}data-tone="danger"{% endif %}>{{ safety.serious }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Reported this FY</span><strong class="hrd-figure__value">{{ safety.reported_fy }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Days lost this FY</span><strong class="hrd-figure__value">{{ safety.days_lost_fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Open">Open</span><strong class="hrd-figure__value" {% if safety.open %}data-tone="warning"{% endif %}>{{ safety.open }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Serious open">Serious open</span><strong class="hrd-figure__value" {% if safety.serious %}data-tone="danger"{% endif %}>{{ safety.serious }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Reported this FY">Reported this FY</span><strong class="hrd-figure__value">{{ safety.reported_fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Days lost this FY">Days lost this FY</span><strong class="hrd-figure__value">{{ safety.days_lost_fy }}</strong></div>
         </div>
         <span class="hrd-card__footnote">{{ safety.near_misses_fy }} near miss{{ safety.near_misses_fy|pluralize:"es" }} reported this FY. A near miss reported is an injury prevented.</span>
       </section>
@@ -307,10 +307,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/recognition">Recognition <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label">Morale</span><strong class="hrd-figure__value" {% if morale.overall %}data-tone="{{ morale.overall.tone }}"{% endif %}>{% if morale.overall %}{{ morale.overall.score|floatformat:1 }}<span class="hrd-figure__unit"> of 5</span>{% else %}—{% endif %}</strong></a>
-          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label">Open surveys</span><strong class="hrd-figure__value">{{ morale.open_surveys }}</strong><span class="hrd-figure__meta">{{ morale.open_answers }} answer{{ morale.open_answers|pluralize }} so far</span></a>
-          <div class="hrd-figure"><span class="hrd-figure__label">Recognitions this FY</span><strong class="hrd-figure__value" {% if recognition.fy %}data-tone="success"{% endif %}>{{ recognition.fy }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">People recognised</span><strong class="hrd-figure__value">{{ recognition.people }}</strong></div>
+          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label" title="Morale">Morale</span><strong class="hrd-figure__value" {% if morale.overall %}data-tone="{{ morale.overall.tone }}"{% endif %}>{% if morale.overall %}{{ morale.overall.score|floatformat:1 }}<span class="hrd-figure__unit"> of 5</span>{% else %}—{% endif %}</strong></a>
+          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label" title="Open surveys">Open surveys</span><strong class="hrd-figure__value">{{ morale.open_surveys }}</strong><span class="hrd-figure__meta">{{ morale.open_answers }} answer{{ morale.open_answers|pluralize }} so far</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Recognitions this FY">Recognitions this FY</span><strong class="hrd-figure__value" {% if recognition.fy %}data-tone="success"{% endif %}>{{ recognition.fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="People recognised">People recognised</span><strong class="hrd-figure__value">{{ recognition.people }}</strong></div>
         </div>
         {% if morale.overall.statements %}
         <div class="hrd-statements" role="list" aria-label="Average score for each pulse statement">
@@ -330,10 +330,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/debriefs">Field Debrief <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <div class="hrd-figure"><span class="hrd-figure__label">Debriefs filed</span><strong class="hrd-figure__value">{{ field_debrief_intel.total }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Critical risk</span><strong class="hrd-figure__value" {% if field_debrief_intel.critical %}data-tone="danger"{% endif %}>{{ field_debrief_intel.critical }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Action required</span><strong class="hrd-figure__value" {% if field_debrief_intel.action_required %}data-tone="warning"{% endif %}>{{ field_debrief_intel.action_required }}</strong></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Escalated</span><strong class="hrd-figure__value" {% if field_debrief_intel.escalated %}data-tone="danger"{% endif %}>{{ field_debrief_intel.escalated }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Debriefs filed">Debriefs filed</span><strong class="hrd-figure__value">{{ field_debrief_intel.total }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Critical risk">Critical risk</span><strong class="hrd-figure__value" {% if field_debrief_intel.critical %}data-tone="danger"{% endif %}>{{ field_debrief_intel.critical }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Action required">Action required</span><strong class="hrd-figure__value" {% if field_debrief_intel.action_required %}data-tone="warning"{% endif %}>{{ field_debrief_intel.action_required }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Escalated">Escalated</span><strong class="hrd-figure__value" {% if field_debrief_intel.escalated %}data-tone="danger"{% endif %}>{{ field_debrief_intel.escalated }}</strong></div>
         </div>
         <span class="hrd-card__footnote">{% if field_debrief_intel.top_challenge %}Most reported challenge: {{ field_debrief_intel.top_challenge }} ({{ field_debrief_intel.top_challenge_count }} debrief{{ field_debrief_intel.top_challenge_count|pluralize }}).{% else %}No field debriefs filed in this window.{% endif %}</span>
       </section>
@@ -406,10 +406,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/policies">Policies <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <div class="hrd-figure"><span class="hrd-figure__label">Published</span><strong class="hrd-figure__value">{{ policies.published }}</strong><span class="hrd-figure__meta">{{ policies.in_review }} in review</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Acknowledged</span><strong class="hrd-figure__value" {% if policies.acknowledgement_rate is not None %}data-tone="{% if policies.acknowledgement_rate >= 90 %}success{% elif policies.acknowledgement_rate >= 70 %}warning{% else %}danger{% endif %}"{% endif %}>{% if policies.acknowledgement_rate is not None %}{{ policies.acknowledgement_rate }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">{{ policies.acknowledged }} of {{ policies.asked }}</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Reviews due</span><strong class="hrd-figure__value" {% if policies.reviews_due %}data-tone="warning"{% endif %}>{{ policies.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Disagreements</span><strong class="hrd-figure__value" {% if policies.disagreed %}data-tone="danger"{% endif %}>{{ policies.disagreed }}</strong><span class="hrd-figure__meta">staff who did not agree</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Published">Published</span><strong class="hrd-figure__value">{{ policies.published }}</strong><span class="hrd-figure__meta">{{ policies.in_review }} in review</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Acknowledged">Acknowledged</span><strong class="hrd-figure__value" {% if policies.acknowledgement_rate is not None %}data-tone="{% if policies.acknowledgement_rate >= 90 %}success{% elif policies.acknowledgement_rate >= 70 %}warning{% else %}danger{% endif %}"{% endif %}>{% if policies.acknowledgement_rate is not None %}{{ policies.acknowledgement_rate }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">{{ policies.acknowledged }} of {{ policies.asked }}</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Reviews due">Reviews due</span><strong class="hrd-figure__value" {% if policies.reviews_due %}data-tone="warning"{% endif %}>{{ policies.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Disagreements">Disagreements</span><strong class="hrd-figure__value" {% if policies.disagreed %}data-tone="danger"{% endif %}>{{ policies.disagreed }}</strong><span class="hrd-figure__meta">staff who did not agree</span></div>
         </div>
       </section>
     </div>
@@ -435,10 +435,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/leave/tracker">Leave tracker <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <a class="hrd-figure" href="/leave/approvals"><span class="hrd-figure__label">Awaiting decision</span><strong class="hrd-figure__value" {% if leave.pending %}data-tone="warning"{% endif %}>{{ leave.pending }}</strong></a>
-          <a class="hrd-figure" href="/leave/tracker"><span class="hrd-figure__label">Out today</span><strong class="hrd-figure__value">{{ leave.on_leave_today }}</strong></a>
-          <a class="hrd-figure" href="/leave/coverage"><span class="hrd-figure__label">Coverage clashes</span><strong class="hrd-figure__value" {% if leave.coverage_clashes %}data-tone="danger"{% endif %}>{{ leave.coverage_clashes }}</strong><span class="hrd-figure__meta">in the next 7 days</span></a>
-          <div class="hrd-figure"><span class="hrd-figure__label">Sick days this FY</span><strong class="hrd-figure__value">{{ leave.sick_days_fy }}</strong><span class="hrd-figure__meta">approved sick leave</span></div>
+          <a class="hrd-figure" href="/leave/approvals"><span class="hrd-figure__label" title="Awaiting decision">Awaiting decision</span><strong class="hrd-figure__value" {% if leave.pending %}data-tone="warning"{% endif %}>{{ leave.pending }}</strong></a>
+          <a class="hrd-figure" href="/leave/tracker"><span class="hrd-figure__label" title="Out today">Out today</span><strong class="hrd-figure__value">{{ leave.on_leave_today }}</strong></a>
+          <a class="hrd-figure" href="/leave/coverage"><span class="hrd-figure__label" title="Coverage clashes">Coverage clashes</span><strong class="hrd-figure__value" {% if leave.coverage_clashes %}data-tone="danger"{% endif %}>{{ leave.coverage_clashes }}</strong><span class="hrd-figure__meta">in the next 7 days</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Sick days this FY">Sick days this FY</span><strong class="hrd-figure__value">{{ leave.sick_days_fy }}</strong><span class="hrd-figure__meta">approved sick leave</span></div>
         </div>
         {% if leave.by_type.counts %}
         <div id="chart-leave-overview" class="hrd-chart" role="img" aria-label="Days of approved leave by type this FY"></div>
@@ -457,10 +457,10 @@ Every card links to the register where the work is done.
           <a class="hrd-card__link" href="/compensation-benefits">Register <span aria-hidden="true">&rarr;</span></a>
         </header>
         <div class="hrd-figures hrd-figures--two">
-          <div class="hrd-figure"><span class="hrd-figure__label">Pay reviews due</span><strong class="hrd-figure__value" {% if compensation.reviews_due %}data-tone="warning"{% endif %}>{{ compensation.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Reviews overdue</span><strong class="hrd-figure__value" {% if compensation.reviews_overdue %}data-tone="danger"{% endif %}>{{ compensation.reviews_overdue }}</strong><span class="hrd-figure__meta">past the review date</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">Medical cover</span><strong class="hrd-figure__value">{% if compensation.medical_cover is not None %}{{ compensation.medical_cover }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">of active staff</span></div>
-          <div class="hrd-figure"><span class="hrd-figure__label">No record yet</span><strong class="hrd-figure__value" {% if compensation.without_record %}data-tone="warning"{% endif %}>{{ compensation.without_record }}</strong><span class="hrd-figure__meta">{{ compensation.in_review }} in HR review</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Pay reviews due">Pay reviews due</span><strong class="hrd-figure__value" {% if compensation.reviews_due %}data-tone="warning"{% endif %}>{{ compensation.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Reviews overdue">Reviews overdue</span><strong class="hrd-figure__value" {% if compensation.reviews_overdue %}data-tone="danger"{% endif %}>{{ compensation.reviews_overdue }}</strong><span class="hrd-figure__meta">past the review date</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="Medical cover">Medical cover</span><strong class="hrd-figure__value">{% if compensation.medical_cover is not None %}{{ compensation.medical_cover }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">of active staff</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label" title="No record yet">No record yet</span><strong class="hrd-figure__value" {% if compensation.without_record %}data-tone="warning"{% endif %}>{{ compensation.without_record }}</strong><span class="hrd-figure__meta">{{ compensation.in_review }} in HR review</span></div>
         </div>
       </section>
 
@@ -550,12 +550,12 @@ Every card links to the register where the work is done.
         {% if action.drawer %}
         <button type="button" class="hrd-action" hx-get="{{ action.url }}" hx-target="#drawer-container" hx-swap="innerHTML">
           <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
-          <span class="hrd-action__label">{{ action.label }}</span>
+          <span class="hrd-action__label" title="{{ action.label }}">{{ action.label }}</span>
         </button>
         {% else %}
         <a class="hrd-action" href="{{ action.url }}">
           <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
-          <span class="hrd-action__label">{{ action.label }}</span>
+          <span class="hrd-action__label" title="{{ action.label }}">{{ action.label }}</span>
         </a>
         {% endif %}
         {% endfor %}

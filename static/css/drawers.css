@@ -2256,21 +2256,32 @@
 
 @media (max-width: 47.99rem) {
   :root {
-    /* Tighter on a phone, so the card still clears the edges without giving
-       the content away — but it stays a floating, centred card rather than
-       becoming a full-screen page. */
     --edify-drawer-inset: 0.75rem;
     --edify-drawer-radius: 1.125rem;
   }
 
+  /* A phone gets a sheet, not a card (owner, 2026-09-23: "full-height or
+     near-full-height sheets … avoid narrow desktop drawers squeezed onto the
+     screen"). It rises from the bottom edge at the full width of the screen
+     and grows with its content up to nearly the full height, leaving a strip
+     of the receded page above it; its title and action shelf stay pinned
+     while the body scrolls, and the shelf clears the home indicator (below).
+     Tablets and wider keep the centred card. */
   .drawer-surface,
   .drawer-surface.type-center,
   .drawer-surface.type-right_top {
+    inset: auto 0 0 0 !important;
+    margin: 0 !important;
+    inline-size: 100% !important;
     max-inline-size: none !important;
     /* svh, not dvh: the mobile browser's chrome reappearing on scroll must
-       not resize the card out from under a form. */
-    max-block-size: calc(100svh - (var(--edify-drawer-inset) * 2)) !important;
-    transform: translateY(1rem) scale(0.985) !important;
+       not resize the sheet out from under a form. */
+    max-block-size: calc(100svh - var(--edify-sheet-top-gap) - env(safe-area-inset-top)) !important;
+    border-inline: 0 !important;
+    border-block-end: 0 !important;
+    border-end-start-radius: 0 !important;
+    border-end-end-radius: 0 !important;
+    transform: translateY(1.5rem) !important;
   }
 
   .drawer-surface.active,
@@ -2458,7 +2469,9 @@
 
   .drawer-surface .drawer-footer {
     margin: 1rem -1.25rem 0 !important;
-    padding: 0.9rem 1.25rem !important;
+    padding: 0.9rem 1.25rem calc(0.9rem + env(safe-area-inset-bottom)) !important;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
   }
 
   /* No grab handle. The little pill at the top belonged to the sheet this

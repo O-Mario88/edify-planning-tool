@@ -17,9 +17,11 @@ from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
+from apps.core.rbac import Permission
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from apps.core.permissions import (
     RolePermissionService,
+    has_permission,
     require_any_page_permission,
     require_export_permission,
     require_page_permission,
@@ -1873,9 +1875,19 @@ def country_planning_team_view(request, staff_id: str):
 # four schools we gave them" is one question, not four.
 @require_page_permission("partner_oversight")
 def partner_oversight_view(request):
-    """Which schools are with partners, who has scheduled, and what it costs."""
+    """Partner Monitoring: one Partner's assigned schools and where each is.
+
+    The staff-facing place to follow Partner execution (owner, 2026-09-23).
+    It reads and asks; it never edits a Partner's schedule, evidence, IA
+    verification, Salesforce entry or payment.
+    """
+    from django.http import HttpResponseForbidden
+
     from apps.partners.services import may_create_partner_organisation
     from apps.planning import partner_oversight_service as partner_oversight
+
+    if not has_permission(request.user, Permission.PARTNER_MONITORING_VIEW.value):
+        return HttpResponseForbidden("You do not monitor Partner work.")
 
     period = _period_filters(request)
     requested_partner = (request.GET.get("partner") or "all").strip() or "all"
@@ -1902,49 +1914,94 @@ def partner_oversight_view(request):
     roster = oversight.program_lead_members(
         requested_pl if country_lens else request.user.id
     )
+    # Partner Monitoring (owner, 2026-09-23): one Partner at a time, never an
+    # undifferentiated table of every organisation's work. The Partner tabs
+    # choose the organisation (the first opens when none is chosen); the team
+    # workspace below — team-member tabs, filters, KPIs and the school, cluster
+    # and activity tables — reads that Partner's work alone.
+    partner_pairs = sorted(
+        {(i.partner_id, i.partner_name) for i in team_items if i.partner_id},
+        key=lambda pair: pair[1],
+    )
+    partner_tabs = [
+        {
+            "key": partner_key,
+            "label": partner_name,
+            "count": sum(1 for i in team_items if i.partner_id == partner_key),
+        }
+        for partner_key, partner_name in partner_pairs
+    ]
+    active_partner = next(
+        (entry for entry in partner_tabs if entry["key"] == requested_partner),
+        partner_tabs[0] if partner_tabs else None,
+    )
+    for entry in partner_tabs:
+        entry["is_active"] = entry is active_partner
+    partner_id = active_partner["key"] if active_partner else ""
+    partner_items = [i for i in team_items if partner_id and i.partner_id == partner_id]
+
     member_names = {p["id"]: p["name"] for p in roster}
     member_names.update(
         {
             i.responsible_cceo_id or "unassigned": i.responsible_cceo_name
             or "Unassigned"
-            for i in team_items
+            for i in partner_items
         }
     )
     member = (request.GET.get("member") or "all").strip()
     if member not in member_names:
         member = "all"
     member_tabs = [
-        {"key": "all", "label": "All team members", "count": len(team_items)}
+        {"key": "all", "label": "All team members", "count": len(partner_items)}
     ] + [
         {
             "key": key,
             "label": name,
             "count": sum(
-                (i.responsible_cceo_id or "unassigned") == key for i in team_items
+                (i.responsible_cceo_id or "unassigned") == key for i in partner_items
             ),
         }
         for key, name in member_names.items()
     ]
     for entry in member_tabs:
         entry["is_active"] = entry["key"] == member
-    member_items = partner_oversight.filter_workspace(team_items, member=member)
-    partner_pairs = sorted(
-        {(i.partner_id, i.partner_name) for i in member_items if i.partner_id},
-        key=lambda p: p[1],
-    )
-    partner_id = (
-        requested_partner if requested_partner in dict(partner_pairs) else "all"
-    )
+    member_items = partner_oversight.filter_workspace(partner_items, member=member)
     activity_type = request.GET.get("activity_type", "")
     status = request.GET.get("status", "")
-    items = partner_oversight.filter_workspace(
-        member_items,
-        activity_type=activity_type,
-        status=status,
+    typed_items = partner_oversight.filter_workspace(
+        member_items, activity_type=activity_type
     )
-    if partner_id != "all":
-        items = [i for i in items if i.partner_id == partner_id]
+    items = partner_oversight.filter_workspace(typed_items, status=status)
+    # Waiting-on-staff first: a hand-back nobody has decided on is the one row
+    # somebody here has to act on.
+    items.sort(
+        key=lambda i: (not i.awaits_staff_decision, not i.is_overdue, i.school_name)
+    )
+    # The approved Salesforce authority is unchanged (owner, 2026-09-12): the
+    # activity's named monitor records the entry that completes Partner work.
+    # Partner work no longer sits on that person's My Plan (owner,
+    # 2026-09-23), so the door is offered here, on the row, to exactly them.
+    from apps.core.scoping import owner_ids
+
+    mine = set(owner_ids(request.user))
+    monitors = request.user.active_role in (
+        "CCEO",
+        "Program Lead",
+        "ProjectCoordinator",
+    )
+    for item in items:
+        item.can_enter_salesforce = bool(
+            monitors
+            and item.partner_activity_id
+            and item.monitor_id in mine
+            and item.activity_status == "awaiting_ia_verification"
+            and item.salesforce_status != "recorded"
+        )
     summary = partner_oversight.summarize(items)
+    partner_group = None
+    if active_partner:
+        partner_group = {"id": partner_id, "name": active_partner["label"]}
+        partner_oversight._attach_partner_identity([partner_group])
 
     context = {
         **period,
@@ -1952,6 +2009,11 @@ def partner_oversight_view(request):
         "program_lead": requested_pl,
         "program_lead_tabs": program_lead_tabs,
         "partner": partner_id,
+        "partner_tabs": partner_tabs,
+        # Many Partners get a picker over the tabs rather than a tab row that
+        # runs off the page.
+        "partner_search": len(partner_tabs) > 6,
+        "active_partner": partner_group,
         "member_tabs": member_tabs,
         "member": member,
         "activity_type": activity_type,
@@ -1959,26 +2021,39 @@ def partner_oversight_view(request):
             {i.activity_type for i in member_items if i.activity_type}
         ),
         "status": status,
+        # Each status with how many of this Partner's rows it would show, so
+        # the filter says what it returns before it is chosen.
         "statuses": [
-            "awaiting_schedule",
-            "scheduled",
-            "in_progress",
-            "verification",
-            "completed",
-            "returned",
+            {
+                "key": key,
+                "count": sum(1 for i in typed_items if i.delivery_phase == key),
+            }
+            for key in (
+                "awaiting_schedule",
+                "scheduled",
+                "in_progress",
+                "verification",
+                "completed",
+                "returned",
+            )
         ],
         "workspace_tables": partner_oversight.workspace_tables(items),
-        "partner_contacts": partner_oversight.partner_contacts(items),
         "summary": summary,
         "kpis": _partner_kpis(summary),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
-        # above the partner groups because a decision somebody is waiting on
+        # above the partner table because a decision somebody is waiting on
         # outranks routine monitoring.
         "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
         "partners": partner_pairs,
         "fy_options": fy_options(),
         "can_grant_allowance": request.user.active_role
         in ("CountryDirector", "Program Lead", "Admin"),
+        "can_resolve_returns": has_permission(
+            request.user, Permission.PARTNER_RETURN_RESOLVE.value
+        ),
+        # The export route refuses a role without data export; so does the
+        # button, rather than offering a download that lands on a refusal.
+        "can_export": has_permission(request.user, Permission.EXPORT.value),
         # Impact Assessment's door to adding a partner organisation: it cannot
         # open the Users page where Admin and the CD add theirs (2026-09-15).
         "can_create_partner": may_create_partner_organisation(request.user),
@@ -2001,7 +2076,7 @@ def partner_oversight_view(request):
         context["engagement"] = partner_engagement_views.engagement_register(
             request,
             fy=period["fy"],
-            partner_id=None if partner_id == "all" else partner_id,
+            partner_id=partner_id or None,
             rows_in_fy=True,
         )
         context["engagement_show_metrics"] = True
@@ -2535,4 +2610,87 @@ def core_schools_oversight_view(request):
         request,
         "pages/oversight/core_schools_oversight.html",
         context,
+    )
+
+
+# ── Resolving work a Partner handed back ─────────────────────────────────────
+@require_page_permission("partner_oversight")
+def partner_return_resolve_drawer_view(request):
+    """The governed decision on a returned assignment (owner, 2026-09-23).
+
+    Reassign it to another Partner, have staff deliver it, or close the
+    support. Scope is checked on the record exactly as the monitoring list
+    checks it, and the decision itself is made — and checked again — by
+    ``apps.partners.services.resolve_returned_assignment``.
+    """
+    from apps.partners.models import PartnerAssignment
+    from apps.partners.services import assignable_partners
+
+    item = _partner_item_in_scope(
+        request.user, (request.GET.get("assignment_id") or "").strip()
+    )
+    allowed = has_permission(request.user, Permission.PARTNER_RETURN_RESOLVE.value)
+    if item is None or not item.is_returned or not allowed:
+        return render(
+            request,
+            "partials/oversight/resolve_return_drawer.html",
+            {"item": None},
+            status=404 if item is None else 403,
+        )
+    can_reassign = has_permission(
+        request.user, Permission.PARTNER_ASSIGNMENT_REASSIGN.value
+    )
+    return render(
+        request,
+        "partials/oversight/resolve_return_drawer.html",
+        {
+            "item": item,
+            "drawer_size": "md",
+            "can_reassign": can_reassign,
+            "partners": (
+                assignable_partners().exclude(id=item.partner_id)
+                if can_reassign
+                else []
+            ),
+            "resolutions": PartnerAssignment.RESOLUTION_CHOICES,
+        },
+    )
+
+
+@require_POST
+@require_page_permission("partner_oversight")
+def partner_return_resolve_submit_view(request):
+    from django.http import HttpResponse
+
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.core.htmx_errors import error_fragment
+    from apps.partners.services import resolve_returned_assignment
+
+    try:
+        result = resolve_returned_assignment(
+            (request.POST.get("assignment_id") or "").strip(),
+            {
+                "resolution": request.POST.get("resolution"),
+                "partner_id": request.POST.get("partner_id"),
+                "note": request.POST.get("note"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        # The service's refusal, in its own words.
+        return error_fragment(exc, status=400)
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(
+            '<p class="pill pill-success" role="status">Decision recorded.</p>'
+        )
+        # The row, the Planning label and the To-Do all read the decision on
+        # their next render; refresh this page so the row moves now.
+        response["HX-Trigger"] = "close-drawer"
+        response["HX-Refresh"] = "true"
+        return response
+    return _action_response(
+        request,
+        "Decision recorded"
+        + (" — reassigned." if result.get("replacementAssignmentId") else "."),
+        fallback=PARTNER_OVERSIGHT_PATH,
     )

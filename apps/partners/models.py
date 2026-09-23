@@ -282,6 +282,28 @@ class PartnerAssignment(TimeStampedModel):
     # convention already used by assigning_staff_id rather than a FK.
     returned_by = models.CharField(max_length=30, null=True, blank=True)
 
+    # ── Staff decision on a return ───────────────────────────────────────────
+    # `returned_to_staff` is terminal for the assignment, which is right — the
+    # Partner let the work go — but it left nowhere to record that staff had
+    # DECIDED what happens next, so the Planning row and the To-Do asking for
+    # that decision could never close. The decision is recorded here, on the
+    # returned row, and is written only by
+    # apps.partners.services.resolve_returned_assignment.
+    RESOLUTION_REASSIGNED = "reassigned"
+    RESOLUTION_STAFF_DELIVERY = "staff_delivery"
+    RESOLUTION_SUPPORT_CLOSED = "support_closed"
+    RESOLUTION_CHOICES = [
+        (RESOLUTION_REASSIGNED, "Reassigned to another Partner"),
+        (RESOLUTION_STAFF_DELIVERY, "Staff will deliver the support"),
+        (RESOLUTION_SUPPORT_CLOSED, "Support no longer required"),
+    ]
+    resolution = models.CharField(
+        max_length=24, choices=RESOLUTION_CHOICES, blank=True, default=""
+    )
+    resolution_note = models.TextField(blank=True, default="")
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.CharField(max_length=30, null=True, blank=True)
+
     # Core Schools tracking fields
     visit_number = models.CharField(max_length=16, null=True, blank=True)
     training_number = models.CharField(max_length=16, null=True, blank=True)
@@ -334,11 +356,31 @@ class PartnerAssignment(TimeStampedModel):
             )
 
             assert_partner_accepts_new_work(self.partner_id)
+            if self.school_id and self.status != self.STATUS_RETURNED_TO_STAFF:
+                # A school already supported by two Partners at once takes no
+                # third until a manager resolves which one supports it. Here
+                # for the same reason as the hold check: every creation path.
+                from apps.partners.support_responsibility import (
+                    assert_school_accepts_another_partner,
+                )
+
+                assert_school_accepts_another_partner(self.school, self.partner_id)
         return super().save(*args, **kwargs)
 
     class Meta:
         db_table = "partner_assignment"
         ordering = ["-created_at"]
+        # The Planning resolver reads live support per page of schools, and
+        # Partner Monitoring reads one Partner's work at a time; both filter on
+        # status, so both lead with the column they select by.
+        indexes = [
+            models.Index(
+                fields=["school", "status"], name="idx_partner_assign_school_st"
+            ),
+            models.Index(
+                fields=["partner", "status"], name="idx_partner_assign_partner_st"
+            ),
+        ]
         constraints = [
             # ── INT-02: one live assignment per partner per support slot ──
             # The rule is already written twice in code and enforced by

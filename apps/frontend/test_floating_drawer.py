@@ -1,8 +1,11 @@
-"""One drawer shape for the whole platform: a floating, always-centred card.
+"""One drawer shape for the whole platform: a floating, centred card — and,
+on a phone, a sheet from the bottom edge.
 
 The owner gave a reference screenshot on 2026-09-06 — a white card floating
 clear of every edge over a page that visibly steps back — and asked for that
-shape everywhere, always centred, taking the design and not the contents.
+shape everywhere, always centred, taking the design and not the contents. The
+responsive standard (2026-09-23) replaced the phone shape with a full-width
+sheet; from 48rem up the card is unchanged.
 
 Four earlier passes each re-declared `.drawer-surface` with `!important`
 (a right-edge slide-over, a centred modal, a "reference-aligned floating
@@ -161,11 +164,18 @@ class DrawerMotionTest(SimpleTestCase):
         css = _read("static/css/drawers.css")
         self.final = css[css.index("THE FLOATING DRAWER") :]
 
-    def test_a_phone_gets_the_same_card_not_a_full_screen_page(self):
-        self.assertIn("@media (max-width: 47.99rem)", self.final)
-        self.assertIn("--edify-drawer-inset: 0.75rem;", self.final)
-        # svh, so browser chrome reappearing does not resize a card mid-form.
-        self.assertIn("100svh", self.final)
+    def test_a_phone_gets_a_sheet_from_the_bottom_edge(self):
+        """A sheet on a phone, the card from 48rem up (owner, 2026-09-23:
+        "Mobile: full-height or near-full-height sheet")."""
+        phone = self.final[self.final.index("@media (max-width: 47.99rem)") :]
+        self.assertIn("inset: auto 0 0 0 !important;", phone)
+        self.assertIn("inline-size: 100% !important;", phone)
+        self.assertIn("border-end-start-radius: 0 !important;", phone)
+        # svh, so browser chrome reappearing does not resize a sheet mid-form,
+        # and a strip of the page stays visible above it.
+        self.assertIn("max-block-size: calc(100svh - var(--edify-sheet-top-gap)", phone)
+        # The action shelf clears the home indicator.
+        self.assertIn("env(safe-area-inset-bottom)", phone)
 
     def test_reduced_motion_removes_the_movement_not_the_drawer(self):
         block = self.final[

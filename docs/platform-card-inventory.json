@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 704,
+  "titled_cards": 703,
   "templates": 267,
-  "distinct_titles": 671,
+  "distinct_titles": 670,
   "with_card_key": 13,
-  "untitled_surfaces": 781,
-  "untitled_chrome": 175,
+  "untitled_surfaces": 784,
+  "untitled_chrome": 174,
   "untitled_nested": 254,
-  "untitled_headless": 352,
+  "untitled_headless": 356,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -928,7 +928,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 318,
+   "line": 338,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -937,7 +937,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 353,
+   "line": 373,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -946,7 +946,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 376,
+   "line": 396,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2575,7 +2575,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 285,
+   "line": 305,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -6824,28 +6824,14 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 72,
+   "line": 107,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     10,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 133,
-   "title": "Partner contacts ()",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-0 overflow-hidden",
-   "branch_path": [
-    [
-     15,
+     16,
      0
     ]
    ]
@@ -6880,22 +6866,22 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 202,
+   "line": 223,
    "title": "Recommended interventions",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm",
    "branch_path": [
     [
-     9,
+     12,
      0
     ],
     [
-     12,
+     15,
      1
     ],
     [
-     13,
+     16,
      0
     ]
    ]

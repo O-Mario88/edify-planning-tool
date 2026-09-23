@@ -105,7 +105,7 @@
 .edify-session-dialog__eyebrow {
   margin: 0 0 0.25rem;
   color: var(--edify-warning-text);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;

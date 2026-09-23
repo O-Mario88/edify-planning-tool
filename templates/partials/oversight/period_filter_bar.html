@@ -9,8 +9,10 @@
   {% if owner %}<input type="hidden" name="owner" value="{{ owner }}">{% endif %}
   {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
   {% if member %}<input type="hidden" name="member" value="{{ member }}">{% endif %}
+  {% if not extra_filters %}
   {% if activity_type %}<input type="hidden" name="activity_type" value="{{ activity_type }}">{% endif %}
   {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  {% endif %}
   {% if partner %}<input type="hidden" name="partner" value="{{ partner }}">{% endif %}
 
   {% if annual_only %}<input type="hidden" name="period" value="fy">{% else %}
@@ -68,4 +70,8 @@
     </select>
   </label>
   {% endif %}
+  {% comment %}A page's own filters join the period in one row and apply on
+  change like it (Partner Monitoring's activity and status, 2026-09-23); the
+  include renders labelled fields and owns their values.{% endcomment %}
+  {% if extra_filters %}{% include extra_filters %}{% endif %}
 </form>

@@ -67,3 +67,40 @@ def on_partner_assignment_created(sender, instance, created, **kwargs):
             )
     except Exception:  # pragma: no cover
         logger.warning("partner.assigned notification failed", exc_info=True)
+
+
+@receiver(
+    post_save,
+    sender=PartnerAssignment,
+    dispatch_uid="partner_assignment_multiple_partner_exception",
+)
+def on_partner_assignment_support_changed(sender, instance, created, **kwargs):
+    """Keep the school's multiple-Partner exception in step with its live rows.
+
+    Any write that can change how many Partners hold a school's support — a
+    new handover, a return, a withdrawal, a resolution — lands here. Deferred
+    to commit so the exception describes committed rows, and so a rolled-back
+    handover never opens one.
+    """
+    update_fields = kwargs.get("update_fields")
+    if not instance.school_id or not (
+        created or update_fields is None or "status" in update_fields
+    ):
+        return
+    from django.db import transaction
+
+    from apps.partners.support_responsibility import (
+        sync_multiple_partner_exception,
+        visibility_enabled,
+    )
+
+    if not visibility_enabled():
+        return
+
+    def _sync(school_id=instance.school_id):
+        try:
+            sync_multiple_partner_exception(school_id)
+        except Exception:  # pragma: no cover — bookkeeping never breaks the flow
+            logger.warning("multiple-partner exception sync failed", exc_info=True)
+
+    transaction.on_commit(_sync)

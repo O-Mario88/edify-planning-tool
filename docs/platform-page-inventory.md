@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **822**
-- All registered routes: **1294**
+- Routed product surfaces: **824**
+- All registered routes: **1296**
 - API routes: **360**
 - Roles: **15**
-- Permission keys: **120**
+- Permission keys: **127**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **484**
+- Shared component templates: **490**
 - Full pages: **260**
-- Partials and drawers: **269**
-- Permission-gated surfaces: **807**
-- Referenced by automated tests: **715**
+- Partials and drawers: **270**
+- Permission-gated surfaces: **809**
+- Referenced by automated tests: **717**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -604,6 +604,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-619586CF5E | /partner-oversight/allowance-grant | Partner Allowance Grant | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D3C1BC6314 | /partner-oversight/detail | Partner Oversight Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-43F04DB2BD | /partner-oversight/export | Partner Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-B9AC68C949 | /partner-oversight/resolve | Partner Return Resolve Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-041F0272FC | /partner-oversight/resolve/submit | Partner Return Resolve Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7D18F54818 | /partner-oversight/send | Partner Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2E9357EB4A | /partner-oversight/withdraw | Partner Withdrawal Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F82160D685 | /partner-oversight/withdraw/review | Partner Withdrawal Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
