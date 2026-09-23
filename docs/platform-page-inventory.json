@@ -803,7 +803,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75584,
+      "bytes": 76773,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4594,7 +4594,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12975,
+      "bytes": 13152,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
