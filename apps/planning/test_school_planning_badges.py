@@ -460,6 +460,9 @@ class PagesTest(BadgeFixture):
             self.assertNotIn(b"planningBadges", api.content)
 
     def test_only_the_two_lists_include_the_component(self):
+        # The two planning lists, plus the core-schools lifecycle table
+        # (7586e32), whose Visit/Training plan status columns are the same
+        # server-side badges for programme schools.
         root = Path(settings.BASE_DIR) / "templates"
         including = sorted(
             str(path.relative_to(root))
@@ -472,6 +475,7 @@ class PagesTest(BadgeFixture):
             [
                 "pages/clusters/detail.html",
                 "partials/clusters/cluster_schools_table.html",
+                "partials/core_schools/programme_table.html",
                 "partials/planning/school_row.html",
             ],
         )
@@ -485,6 +489,7 @@ class PagesTest(BadgeFixture):
         self.assertEqual(
             callers,
             [
+                "apps/core_schools/lifecycle.py",
                 "apps/frontend/views/cluster_views.py",
                 "apps/planning/planning_service.py",
             ],

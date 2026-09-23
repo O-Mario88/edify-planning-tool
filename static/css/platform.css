@@ -5327,3 +5327,17 @@ main table.core-lifecycle-table.edify-record-table :is(th, td) * {
   white-space: normal;
   max-width: 100%;
 }
+/* On a phone the seven fixed columns would squeeze to ~50px each and break
+   words mid-letter; keep a readable width and scroll inside the table's
+   overflow-x wrapper instead, wrapping at word boundaries (a word breaks only
+   when it cannot fit its column at all). */
+@media (max-width: 47.99rem) {
+  main table.core-lifecycle-table.edify-record-table {
+    min-inline-size: 48rem !important;
+  }
+  main table.core-lifecycle-table.edify-record-table :is(th, td),
+  main table.core-lifecycle-table.edify-record-table :is(th, td) * {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+}

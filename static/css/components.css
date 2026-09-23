@@ -5556,7 +5556,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .school-plan-table thead th {
   color: var(--edify-text-muted);
   background: var(--edify-surface-muted, var(--edify-surface));
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: var(--edify-text-label-weight);
   white-space: nowrap;
 }

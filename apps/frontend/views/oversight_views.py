@@ -658,6 +658,20 @@ def _resolve_user_scope(user):
     return resolve_user_scope(user)
 
 
+def _default_officer(owner_groups) -> str:
+    """The officer tab the page opens on: the first one holding work.
+
+    A roster lists every member in order, the Programme Lead first, whether or
+    not they hold work this period (2026-09-23). Opening on an empty panel
+    would put nothing under the tabs on first load, so the strip keeps the
+    roster's order but lands on the first person with something to read.
+    """
+    for group in owner_groups or []:
+        if group.get("items"):
+            return str(group["id"])
+    return str(owner_groups[0]["id"]) if owner_groups else ""
+
+
 def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     """Partition items in each owner group into the 4 canonical streams:
     - client_school_visits
@@ -1040,10 +1054,7 @@ def team_planning_oversight_view(request):
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
-    if (
-        active_view in ("planning", "coverage", "portfolio")
-        and not can_view_planning
-    ):
+    if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
 
     available_lenses = {
@@ -1186,7 +1197,8 @@ def team_planning_oversight_view(request):
 
     summary = oversight.summarize(visible)
     owner_groups = oversight.group_by_owner(
-        visible, owners=oversight.program_lead_members(selected) if country_lens else None
+        visible,
+        owners=oversight.program_lead_members(selected) if country_lens else None,
     )
     _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
@@ -1213,6 +1225,7 @@ def team_planning_oversight_view(request):
         and not _resolve_user_scope(request.user).region_assigned,
         "visible_summary": summary,
         "groups": owner_groups,
+        "default_officer": _default_officer(owner_groups),
         "activity_tabs": activity_tabs,
         "activity_family": activity_family,
         "advanced": advanced,
@@ -1310,15 +1323,15 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    active_view = (
-        requested_view if requested_view in {"portfolio"} else "planning"
-    )
+    active_view = requested_view if requested_view in {"portfolio"} else "planning"
     lens_tabs = _lens_tabs(
         COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio"}
     )
 
     if active_view == "portfolio":
-        context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+        context_data = _portfolio_context(
+            request, period, base_url=COUNTRY_OVERSIGHT_PATH
+        )
         template = "partials/oversight/portfolio_workspace.html"
 
         context = {
@@ -1865,6 +1878,7 @@ def country_planning_team_view(request, staff_id: str):
             "program_lead_name": program_lead_name,
             "summary": oversight.summarize(items),
             "owner_groups": owner_groups,
+            "default_officer": _default_officer(owner_groups),
         },
     )
 
@@ -1876,6 +1890,8 @@ def country_planning_team_view(request, staff_id: str):
 @require_page_permission("partner_oversight")
 def partner_oversight_view(request):
     """Which schools are with partners, who has scheduled, and what it costs."""
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
     from apps.partners.services import may_create_partner_organisation
     from apps.planning import partner_oversight_service as partner_oversight
 
@@ -1976,6 +1992,17 @@ def partner_oversight_view(request):
         # above the partner groups because a decision somebody is waiting on
         # outranks routine monitoring.
         "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
+        # Every reader of the queue sees it, but only the roles
+        # `withdrawal_service.review_request` accepts are offered the decision:
+        # a Regional Programme Lead, IA or the Accountant would otherwise get
+        # Approve/Reject buttons that can only answer 403.
+        "can_review_withdrawals": has_permission(
+            request.user, Permission.PARTNER_WITHDRAWAL_REVIEW.value
+        ),
+        # Who to call at each partner in view, with its own counts — the
+        # directory's contact details survived the merge into this page and
+        # must survive the table redesign too.
+        "partner_groups": partner_oversight.group_by_partner(items),
         "partners": partner_pairs,
         "fy_options": fy_options(),
         "can_grant_allowance": request.user.active_role
@@ -2013,6 +2040,7 @@ def partner_oversight_view(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/oversight/partner_workspace.html", context)
     return render(request, "pages/oversight/partner_oversight.html", context)
+
 
 def _partner_kpis(summary) -> list[dict]:
     """Headline tiles, each a field of the same fold the lists are built from.
@@ -2244,8 +2272,10 @@ def partner_oversight_export_view(request):
     )
 
     items = partner_oversight.filter_workspace(
-        items, member=request.GET.get("member", ""),
-        activity_type=request.GET.get("activity_type", ""), status=request.GET.get("status", ""),
+        items,
+        member=request.GET.get("member", ""),
+        activity_type=request.GET.get("activity_type", ""),
+        status=request.GET.get("status", ""),
     )
 
     class _Echo:

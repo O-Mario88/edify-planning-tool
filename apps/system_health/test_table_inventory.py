@@ -48,7 +48,21 @@ class TableBoundsTest(SimpleTestCase):
     #: * `partials/today/workbench.html` — `waiting` is capped at WAITING_LIMIT
     #:   (8) in today_views and the card's header discloses the whole queue
     #:   ("View all N"): bounded in Python, and the reader is told there is more.
-    UNBOUNDED_CEILING = 8
+    #: * `partials/planning/school_table.html` (two tables: partner-assigned and
+    #:   client/core) — already one page: planning_service slices `schools` by
+    #:   page/per_page, and the page strip at the foot of the template says
+    #:   "Showing a–b of N" and turns it. The scanner cannot see a pager that
+    #:   far below the table (they became tables, from lists, on 2026-09-23).
+    #: * `partials/dashboards/pl/programmes_view.html` — the monthly completion
+    #:   chart's data table: one row per supervised officer (bounded by the
+    #:   team) and six month columns. It is the chart's text equivalent, so it
+    #:   has to hold exactly what the chart draws.
+    #: * `partials/clusters/cluster_schools_table.html` — one cluster's member
+    #:   schools, bounded by the cluster (a group of neighbouring schools). The
+    #:   rows are ticked for a day of visits, and a pager would split that
+    #:   selection; its host card also has no query of its own for a page link
+    #:   to carry without dropping the Planning page's tab and filters.
+    UNBOUNDED_CEILING = 12
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

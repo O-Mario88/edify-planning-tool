@@ -81,7 +81,7 @@
           </div></td>
       </tr>
       <tr id="cluster-school-details-{{ s.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ s.id }}'" x-cloak>
-        <td colspan="5"><dl class="school-record-row__metadata">
+        <td colspan="5">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
                 <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
                 <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
                 <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>

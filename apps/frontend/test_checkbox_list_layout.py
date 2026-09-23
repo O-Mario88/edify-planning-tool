@@ -10,21 +10,33 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
     def test_shared_selectable_school_rows_use_checkbox_first_layout(self):
         directory = (ROOT / "templates/partials/schools/directory_row.html").read_text()
         planning = (ROOT / "templates/partials/planning/school_row.html").read_text()
+        head = (ROOT / "templates/components/school_plan_table_head.html").read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        for row in (directory, planning):
-            self.assertIn("school-record-row__summary--selectable", row)
+        self.assertIn("school-record-row__summary--selectable", directory)
+        # The planning list is a table row since 8bb11a1 (the shared
+        # school-plan-table); the same checkbox-first order holds in its cells
+        # and in the shared header.
+        self.assertIn('class="school-plan-table__select"', planning)
+        self.assertIn(
+            '{% if selectable %}<th scope="col" class="school-plan-table__select">',
+            head,
+        )
+        self.assertLess(
+            head.index("school-plan-table__select"), head.index("School ID")
+        )
+        self.assertLess(head.index("School ID"), head.index("School Name"))
+        for row, school_id, title in (
+            (directory, "school-record-row__school-id", "school-record-row__title"),
+            (planning, "school-plan-table__id", "school-plan-table__name"),
+        ):
             # The decorative building glyph is gone: the row leads with the
             # operational school ID, which is what staff actually quote.
             self.assertNotIn("school-record-row__icon", row)
             self.assertLess(
-                row.index("school-record-row__select"),
-                row.index("school-record-row__school-id"),
+                row.index("school-record-row__select"), row.index(school_id)
             )
-            self.assertLess(
-                row.index("school-record-row__school-id"),
-                row.index("school-record-row__title"),
-            )
+            self.assertLess(row.index(school_id), row.index(title))
 
         self.assertIn("grid-template-columns: 2rem minmax(0, 1fr) auto", css)
         self.assertIn("grid-column: 1;", css)

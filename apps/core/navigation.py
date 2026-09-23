@@ -208,7 +208,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
-    "cluster_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
+    # The Accountant read Cluster Oversight as a section of the team page
+    # (owner, 2026-09-16: "IA, the Accountant and the RVP were given those
+    # pages to reach it"). The section became this dedicated page, so the
+    # Accountant follows it here; the page is read-only.
+    "cluster_oversight": {PL, IA, CD, RVP, RPL, ACCOUNTANT, ADMIN},
     "core_schools_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
@@ -1729,7 +1733,7 @@ SIDEBAR_ITEMS = [
                 "label": "Cluster Oversight",
                 "url": "/cluster-oversight/",
                 "page_key": "cluster_oversight",
-                "visible_to": {PL, IA, CD, RPL, RVP, ADMIN},
+                "visible_to": {PL, IA, CD, RPL, RVP, ACCOUNTANT, ADMIN},
             },
             {
                 "label": "Planning Oversight",
@@ -3077,7 +3081,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
         for item in sec["items"]:
             # Staff have one direct Partner Oversight entry; the Partners
             # directory remains available to its other audiences.
-            if item["page_key"] == "partners" and role in PAGE_PERMISSIONS["partner_oversight"]:
+            if (
+                item["page_key"] == "partners"
+                and role in PAGE_PERMISSIONS["partner_oversight"]
+            ):
                 continue
             # The Analytics hub stands for a whole workspace, so it is resolved
             # from the sections the role can open rather than from one key: it
@@ -3269,27 +3276,37 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     ]
 
     oversight_keys = (
-        "team_planning_oversight", "country_planning_oversight",
-        "cluster_oversight", "core_schools_oversight", "partner_oversight",
+        "team_planning_oversight",
+        "country_planning_oversight",
+        "cluster_oversight",
+        "core_schools_oversight",
+        "partner_oversight",
         "project_monitoring",
     )
     oversight_items = [
-        item for group in result for item in group["items"]
+        item
+        for group in result
+        for item in group["items"]
         if item["page_key"] in oversight_keys
     ]
     for group in result:
-        group["items"] = [i for i in group["items"] if i["page_key"] not in oversight_keys]
+        group["items"] = [
+            i for i in group["items"] if i["page_key"] not in oversight_keys
+        ]
         group["standalone"] = len(group["items"]) == 1
     result = [group for group in result if group["items"]]
     if oversight_items:
         oversight_items.sort(key=lambda i: oversight_keys.index(i["page_key"]))
-        result.insert(1 if result and result[0]["label"] == "DAILY" else 0, {
-            "label": "OVERSIGHT",
-            "items": oversight_items,
-            "active": any(i["active"] for i in oversight_items),
-            "standalone": False,
-            "expanded": False,
-        })
+        result.insert(
+            1 if result and result[0]["label"] == "DAILY" else 0,
+            {
+                "label": "OVERSIGHT",
+                "items": oversight_items,
+                "active": any(i["active"] for i in oversight_items),
+                "standalone": False,
+                "expanded": False,
+            },
+        )
     return result
 
 

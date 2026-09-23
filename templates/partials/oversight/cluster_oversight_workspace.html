@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load kpi_metrics frontend_filters table_pagination %}
 
 <div class="cluster-oversight-content space-y-6">
@@ -11,6 +12,17 @@
     {% kpi_metric %}{% kpi_label %}Schools Reached{% endkpi_label %}{{ perf_totals.unique_schools_reached|default_if_none:0 }}{% kpi_helper %}Participating schools{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Cluster Budget{% endkpi_label %}UGX {{ perf_totals.total_spend|default:0|intcomma }}{% kpi_helper %}Planned activity budget{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
+  {% comment %}
+  The team read as people (docs/chart-inventory-and-standard-2026-09-20.md,
+  21 September 2026): one series per person on the member-tab lens, one per
+  Programme Lead on the country lens, the whole roster with zeros included.
+  {% endcomment %}
+  {% if uses_member_tabs %}
+  {% team_chart officer_activity "name" "clusters,active_clusters,dormant_clusters,sessions_held,schools_reached" "Clusters held,Active,Dormant,Sessions held,Schools reached" "Cluster activity by person" "Your clusters and each officer's, this financial year" %}
+  {% else %}
+  {% team_chart lead_activity "name" "clusters,active_clusters,dormant_clusters,sessions_held,schools_reached" "Clusters held,Active,Dormant,Sessions held,Schools reached" "Cluster activity by Programme Lead" "Each Lead's team, this financial year" %}
+  {% endif %}
+
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
   {% if uses_member_tabs %}
   <div x-data="tabState('activeOfficer', 'officer', {% tab_values cceo_tabs %}, 'my-clusters')" class="space-y-4">

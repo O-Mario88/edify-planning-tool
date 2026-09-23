@@ -859,3 +859,76 @@ class CceoVisibilityIsNotAuthorityTest(PageFixture):
         response = self.client.get("/partner-oversight/export")
 
         self.assertIn("attachment", response.headers.get("Content-Disposition", ""))
+
+
+class WithdrawalDecisionIsOfferedOnlyToReviewersTest(PageFixture):
+    """The queue's Approve/Reject posts to `review_request`, which requires
+    PARTNER_WITHDRAWAL_REVIEW. A reader of the queue without it sees the
+    request and no buttons that could only answer 403."""
+
+    def setUp(self):
+        from apps.partners.withdrawal_models import (
+            PartnerAssignmentWithdrawal,
+            WithdrawalAttribution,
+            WithdrawalDisposition,
+            WithdrawalKind,
+            WithdrawalReason,
+        )
+
+        assignment = self.assign()
+        self.schedule(assignment)
+        PartnerAssignmentWithdrawal.objects.create(
+            assignment=assignment,
+            school=self.school,
+            partner=self.partner,
+            requested_by=self.cceo.id,
+            supervising_pl_id=self.pl.id,
+            kind=WithdrawalKind.RECALL_SCHEDULED,
+            reason_category=WithdrawalReason.NOT_SCHEDULED,
+            partner_facing_reason="The partner has not confirmed the date.",
+            attribution=WithdrawalAttribution.PARTNER,
+            disposition=WithdrawalDisposition.RETURN_TO_PLANNING,
+        )
+
+    def test_the_supervising_pl_is_offered_the_decision(self):
+        self.sign_in(self.pl_user)
+
+        body = self.client.get("/partner-oversight/").content.decode()
+
+        self.assertIn("Withdrawal requests (1)", body)
+        self.assertIn('name="decision" value="approve"', body)
+
+    def test_a_country_reader_without_review_authority_sees_no_decision(self):
+        ia = self._staff("ia-queue@p.test", "IA", EdifyRole.IMPACT_ASSESSMENT)[0]
+        self.sign_in(ia)
+
+        body = self.client.get("/partner-oversight/").content.decode()
+
+        self.assertIn("Withdrawal requests (1)", body)
+        self.assertNotIn('name="decision"', body)
+        self.assertNotIn("/partner-oversight/withdraw/review", body)
+
+    def test_a_regional_lead_reads_their_regions_queue_without_deciding(self):
+        """The regional filter once named a `cluster` field the withdrawal
+        does not have, and the page answered 500."""
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        regional = self._staff(
+            "rpl-queue@p.test", "Regional", EdifyRole.REGIONAL_PROGRAM_LEAD
+        )[0]
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[]),
+        ):
+            self.assertEqual(svc.withdrawal_requests(regional), [])
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[self.region.id]),
+        ):
+            self.assertEqual(len(svc.withdrawal_requests(regional)), 1)
+
+        self.sign_in(regional)
+        response = self.client.get("/partner-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('name="decision"', response.content.decode())

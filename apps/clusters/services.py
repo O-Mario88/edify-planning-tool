@@ -357,11 +357,27 @@ def create_cluster(data: dict, principal) -> dict:
 
 
 def may_edit_cluster_profile(cluster, principal) -> bool:
-    """Use the same ownership rule for the edit control, drawer and save."""
-    from apps.core.scoping import cluster_owner_ids
+    """Use the same ownership rule for the edit control, drawer and save.
+
+    An owned cluster is editable by its owner (and country roles). An unowned
+    cluster can be picked up, but only from inside the editor's own portfolio
+    — the same carve-out `cluster_in_scope(..., direct_only=True)` makes.
+    Without that bound, anyone with planning access could post an edit for an
+    unowned cluster in any district and name themselves responsible for it,
+    because `update_cluster` skips its district check when the district is
+    unchanged.
+    """
+    from apps.core.scoping import cluster_in_scope, cluster_owner_ids
+
     scope = resolve_user_scope(principal)
+    if scope.country_scope:
+        return True
     owner = (cluster.responsible_staff_id or "").strip()
-    return not owner or scope.country_scope or owner in cluster_owner_ids(scope, direct_only=True)
+    if owner:
+        return owner in cluster_owner_ids(scope, direct_only=True)
+    return not scope.can_view_summary_only and cluster_in_scope(
+        scope, cluster, direct_only=True
+    )
 
 
 def update_cluster(cluster_id: str, data: dict, principal) -> dict:

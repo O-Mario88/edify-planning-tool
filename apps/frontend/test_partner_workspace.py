@@ -120,10 +120,14 @@ class PartnerWorkspaceTests(TestCase):
         # second source — `activity_services.create` writes them, the old
         # directory listed them, and oversight alone would have lost them.
         self.assertContains(response, "In School Training")
-        self.assertContains(response, "Scheduled &amp; Delivering (1)")
+        # The per-partner "Scheduled & Delivering" / "Yet to Schedule" lists
+        # became team tables (2026-09-23); the counts they carried are the
+        # KPI strip's, asserted here as the numbers they are.
+        self.assertContains(response, "Partner activities (1)")
+        self.assertContains(response, "Partner Work Scheduled: 1.")
         # The handover, from the live PartnerAssignment row.
         self.assertContains(response, "School Visit Ssa Collection")
-        self.assertContains(response, "Yet to Schedule (1)")
+        self.assertContains(response, "Handovers Yet To Schedule: 1.")
         self.assertContains(response, "120,000")
 
     def test_the_merge_kept_the_partners_contact_details(self):
@@ -244,7 +248,7 @@ class PartnerWorkspaceTests(TestCase):
         self.assertIn('name="scheduled_date"', html)
         self.assertIn('name="delivery_contact_name"', html)
         self.assertIn("Grace Visitor", html)
-        self.assertIn(">Submit</button>", html)
+        self.assertIn(">Schedule delivery</button>", html)
         self.assertNotIn('name="catalogue_item_id"', html)
         self.assertNotIn('name="project_id"', html)
         self.assertNotIn("Cost calculation happens", html)

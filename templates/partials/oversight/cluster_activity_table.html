@@ -1,20 +1,22 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
+{% paginate activities page_param|default:"cluster_activities_page" as activity_pager %}
 <section>
   <h3 class="edify-section-heading">{{ heading }} <span class="edify-text-caption">({{ activities|length }})</span></h3>
   <div class="overflow-x-auto">
     <table class="edify-record-table w-full text-left" aria-label="{{ heading }}">
       <thead><tr><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Delivery</th></tr></thead>
       <tbody>
-        {% for item in activities %}
+        {% for item in activity_pager.rows %}
         <tr>
-          <td><a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{{ item.cluster_name|default:item.context_label }}</a></td>
+          <td><a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a></td>
           <td>{% if item.training_name and item.training_name != "—" %}{{ item.training_name }}{% else %}{{ item.activity_type|replace_underscore|title }}{% endif %}</td>
           <td>{{ item.planned_date|date:"d M Y"|default:"Awaiting schedule" }}</td>
-          <td>{{ item.activity_status|default:item.assignment_status|replace_underscore|title }}</td>
-          <td>{{ item.executor_name|default:member.name }}</td>
+          <td>{% if item.activity_status %}{{ item.activity_status|replace_underscore|title }}{% else %}{{ item.assignment_status|replace_underscore|title }}{% endif %}</td>
+          <td>{% firstof item.executor_name member.name %}</td>
         </tr>
         {% empty %}<tr><td colspan="5">No {{ heading|lower }} in this financial year.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>
+  {% include "components/table_pager.html" with pager=activity_pager param=page_param|default:"cluster_activities_page" pagination_label=heading %}
 </section>

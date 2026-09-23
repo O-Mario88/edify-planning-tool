@@ -66,6 +66,7 @@
 <tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
   <td aria-hidden="true"></td>
   <td colspan="5">
+    {% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ school.id }}" class="edify-text-caption hover:underline">Open {{ school.name }} school profile</a>{% endif %}
     <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shippingAddress }}</dd></div>

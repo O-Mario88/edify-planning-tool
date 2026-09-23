@@ -47,7 +47,9 @@ class DrawerAsksForPurposeTest(TestCase):
 
     def test_recommended_interventions_are_a_coloured_hyphen_list(self):
         source = _drawer_source()
-        recommendations = source.split('<section class="planning-recommendations"', 1)[1].split('</section>', 1)[0]
+        recommendations = source.split('<section class="planning-recommendations"', 1)[
+            1
+        ].split("</section>", 1)[0]
         self.assertIn("Recommended interventions", recommendations)
         self.assertIn("{% for r in recommendations %}", recommendations)
         self.assertIn('<span aria-hidden="true">-</span>', recommendations)

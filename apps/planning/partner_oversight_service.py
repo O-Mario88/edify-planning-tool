@@ -1056,9 +1056,11 @@ def withdrawal_requests(principal) -> list[dict]:
     ).select_related("school", "partner", "assignment")
 
     if scope.get("region_ids") is not None:
+        # A withdrawal records its school but not its cluster; cluster work
+        # reaches its region through the assignment it withdraws.
         qs = qs.filter(
             Q(school__region_id__in=scope["region_ids"])
-            | Q(cluster__region_id__in=scope["region_ids"])
+            | Q(assignment__cluster__region_id__in=scope["region_ids"])
         )
     elif not scope["is_country"]:
         ids = scope["staff_ids"]

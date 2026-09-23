@@ -165,6 +165,10 @@ class StripsAreAddressableTests(SimpleTestCase):
             {
                 "request": _request("/team-planning-oversight/?view=clusters"),
                 "is_programme_lead": True,
+                # The member strip is keyed on `uses_member_tabs` since it
+                # also serves a cluster-holding CCEO (2026-09-23); the service
+                # sets it for every Programme Lead.
+                "uses_member_tabs": True,
                 "cceo_tabs": [
                     {
                         "id": "my-clusters",

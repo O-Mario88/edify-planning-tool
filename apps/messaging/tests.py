@@ -253,6 +253,34 @@ class ContextPermissionTest(MessagingBaseTest):
         with self.assertRaises(Forbidden):
             services.thread_detail(msg["threadId"], self.partner)
 
+    def test_partner_handover_scope_is_the_partner_oversight_rule(self):
+        """A cluster's responsible officer reads its partner handover on
+        Partner Oversight, so they may message about it; an officer the
+        handover does not reach may not. One rule, two surfaces."""
+        from apps.clusters.models import Cluster
+        from apps.partners.models import PartnerAssignment
+        from apps.planning import partner_oversight_service
+
+        cluster = Cluster.objects.create(
+            name="Held Cluster",
+            region=self.school1.region,
+            district=self.school1.district,
+            responsible_staff_id=self.sp1.id,
+        )
+        handover = PartnerAssignment.objects.create(
+            partner=self.partner_org, cluster=cluster, status="assigned"
+        )
+
+        self.assertTrue(
+            partner_oversight_service.assignment_in_scope(self.cceo1, handover.id)
+        )
+        self.assertTrue(
+            services.can_access_context(self.cceo1, "partner_assignment", handover.id)
+        )
+        self.assertFalse(
+            services.can_access_context(self.cceo2, "partner_assignment", handover.id)
+        )
+
     def test_accountant_blocked_from_non_finance_context(self):
         self.assertFalse(
             services.can_access_context(

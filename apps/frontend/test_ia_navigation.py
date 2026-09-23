@@ -5,7 +5,9 @@ the shared analytics pages IA reads; the grants and doors that had nothing to
 do with the role are gone; and the phone leads with the day's queue. Since
 2026-09-14 the sidebar is grouped by how often each page is visited
 (apps.core.nav_cadence): the verification queues IA works every day first, the
-five responsibilities after them in the rhythm they are worked.
+five responsibilities after them in the rhythm they are worked. Since
+2026-09-23 the dedicated oversight pages share one OVERSIGHT group, placed
+straight after DAILY (apps.core.navigation._regroup_by_visit).
 """
 
 from __future__ import annotations
@@ -59,12 +61,8 @@ IA_SIDEBAR = [
             ("Dashboard", "/ia/dashboard/"),
             ("Planning", "/planning"),
             ("School Directory", "/schools"),
-            ("Cluster Oversight", "/cluster-oversight/"),
-            ("Planning Oversight", "/team-planning-oversight/"),
             ("Calendar", "/calendar"),
-            ("Core School Oversight", "/core-schools-oversight/"),
             ("Programme Schools", "/programme-schools"),
-            ("Country Oversight", "/country-planning-oversight/"),
             ("Verification Queue", "/ia/verification/"),
             ("SSA Verification", "/ssa/verification/"),
             ("Partner Evidence", "/ia/partner-evidence/"),
@@ -72,10 +70,23 @@ IA_SIDEBAR = [
         ],
     ),
     (
+        # Every oversight door IA holds, in one group (2026-09-23): the pages
+        # that sat in DAILY and WEEKLY, plus the Partner Oversight page IA
+        # already had permission to open.
+        "OVERSIGHT",
+        [
+            ("Planning Oversight", "/team-planning-oversight/"),
+            ("Country Oversight", "/country-planning-oversight/"),
+            ("Cluster Oversight", "/cluster-oversight/"),
+            ("Core School Oversight", "/core-schools-oversight/"),
+            ("Partner Oversight", "/partner-oversight/"),
+            ("Project Monitoring", "/projects/monitoring"),
+        ],
+    ),
+    (
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
-            ("Project Monitoring", "/projects/monitoring"),
             ("Field Debrief", "/debriefs"),
             ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),

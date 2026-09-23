@@ -548,21 +548,61 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             "schools": 0,
         }
 
+    # Every Lead's roster in two queries, not two per Lead.
+    rosters = planning.program_lead_rosters([lead["id"] for lead in leads_data])
+    # Work reaches a tab by its owner, and `operational_owner_id` is a User id
+    # or a StaffProfile id depending on the path that wrote it, while the tabs
+    # are keyed by profile. Grouped by the raw id, an officer with no Lead got
+    # two "Unassigned" tabs — one holding their clusters, one their work — so
+    # every owner is resolved to one identity, in both id spaces, first.
+    people = _staff_directory(
+        {item.operational_owner_id for item in cluster_work}
+        | {str(tab["id"]) for lead in leads_data for tab in lead["cceo_tabs"]}
+    )
+
+    def owner_entry(key):
+        if not key or key == UNASSIGNED:
+            return {
+                "id": UNASSIGNED,
+                "name": "Unassigned",
+                "ids": {UNASSIGNED, "", None},
+            }
+        profile = people.get(key)
+        if profile is None:
+            return {"id": key, "name": "Unassigned", "ids": {key}}
+        return {
+            "id": profile.id,
+            "name": _label(profile),
+            "ids": {profile.id, profile.user_id} - {None},
+        }
+
     for lead in leads_data:
-        roster = planning.program_lead_members(lead["id"])
+        roster = rosters.get(str(lead["id"]), [])
         existing = {tab["id"]: tab for tab in lead["cceo_tabs"]}
         ordered = [existing.pop(member["id"], member_tab(member)) for member in roster]
         lead["cceo_tabs"] = ordered + list(existing.values())
-        groups = planning.group_by_owner(
-            [
-                item
-                for item in cluster_work
-                if str(item.supervising_pl_id or "__unassigned__") == str(lead["id"])
-            ],
-            owners=roster,
-        )
+        lead_work = [
+            item
+            for item in cluster_work
+            if str(item.supervising_pl_id or UNASSIGNED) == str(lead["id"])
+        ]
+        # The roster, then everyone else this Lead's tabs or work name — each
+        # once, so their clusters and their work share one tab.
+        owners = list(roster)
+        known = {owner_id for member in roster for owner_id in member["ids"]}
+        for key in [str(tab["id"]) for tab in lead["cceo_tabs"]] + [
+            item.operational_owner_id for item in lead_work
+        ]:
+            if key in known:
+                continue
+            entry = owner_entry(key)
+            owners.append(entry)
+            known.update(entry["ids"] | {key})
+        groups = planning.group_by_owner(lead_work, owners=owners)
         tabs = {tab["id"]: tab for tab in lead["cceo_tabs"]}
         for group in groups:
+            if not group["items"] and group["id"] not in tabs:
+                continue
             tab = tabs.get(group["id"])
             if tab is None:
                 tab = member_tab(group)
