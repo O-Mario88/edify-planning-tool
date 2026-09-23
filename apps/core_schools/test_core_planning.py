@@ -1121,10 +1121,13 @@ class CoreSchoolsPlanningTest(TestCase):
         with CaptureQueriesContext(connection) as queries:
             CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY})
 
+        # Statements that READ the SSA table. The candidate query also names
+        # it, inside an EXISTS that skips schools with no confirmed SSA (so
+        # they cannot starve the batch), but its top-level FROM is the school.
         ssa_reads = [
             query["sql"]
             for query in queries.captured_queries
-            if 'FROM "ssa_record"' in query["sql"]
+            if query["sql"].split(" FROM ", 1)[-1].startswith('"ssa_record"')
         ]
         self.assertEqual(
             len(ssa_reads),

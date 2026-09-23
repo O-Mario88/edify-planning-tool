@@ -584,5 +584,7 @@ class ClusterPerformanceTest(PortfolioFixture):
             )
             self._activity(cluster=cluster, day=_fy_day(1, 8), kind="cluster_meeting")
 
-        with self.assertNumQueries(15):
+        # 14: the cluster scope is no longer read once just to test it for
+        # truth before being read again (apps.core.scoping.or_empty).
+        with self.assertNumQueries(14):
             cluster_performance(self.ia.user, fy=FY)

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
-from apps.core.scoping import cluster_queryset, resolve_user_scope
+from apps.core.scoping import cluster_queryset, or_empty, resolve_user_scope
 
 #: A cluster with no responsible staff is unassigned, not unowned-by-accident.
 #: It groups under its own heading rather than being dropped, because a cluster
@@ -94,7 +94,7 @@ def grouped_clusters(principal) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     clusters = list(
-        (cluster_queryset(scope) or Cluster.objects.none())
+        or_empty(cluster_queryset(scope), Cluster)
         .select_related("district", "sub_county")
         .order_by("name")
     )

@@ -43,6 +43,13 @@ class InteractionEvent(models.Model):
     # telemetry must never be able to say WHICH school was opened.
     route = models.CharField(max_length=255)
     duration_ms = models.PositiveIntegerField(default=0)
+    # Where the time went (apps.core.request_timing), so the route performance
+    # report can tell a slow page from one that waited for a database slot.
+    # Counts and milliseconds only: nothing here identifies a record.
+    status_code = models.PositiveSmallIntegerField(default=0)
+    query_count = models.PositiveIntegerField(default=0)
+    db_ms = models.PositiveIntegerField(default=0)
+    queue_ms = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = "interaction_event"

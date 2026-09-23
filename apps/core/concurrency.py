@@ -79,6 +79,9 @@ class DatabaseConcurrencyGuardMiddleware:
             with self._lock:
                 self._waiting -= 1
         waited = time.monotonic() - started
+        # Read by apps.core.request_timing, which reports queueing apart from
+        # work so a saturated worker is not mistaken for a slow page.
+        request.edify_queue_wait_ms = waited * 1000
         if not acquired:
             logger.warning(
                 "request refused after waiting %.1fs for one of %s slots: %s %s",

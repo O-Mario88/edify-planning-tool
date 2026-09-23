@@ -23,6 +23,7 @@ from apps.accounts.models import StaffProfile
 from apps.core.scoping import (
     cluster_queryset,
     direct_portfolio_schools,
+    or_empty,
     resolve_user_scope,
 )
 from apps.core.enums import SsaIntervention
@@ -1399,9 +1400,8 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # Direct portfolio only. Adding a school to a cluster edits the
             # school record, so a supervisor may not do it for a CCEO's school
             # — the same rule `assign_school` and the picker apply.
-            writable = (
-                direct_portfolio_schools(resolve_user_scope(user))
-                or School.objects.none()
+            writable = or_empty(
+                direct_portfolio_schools(resolve_user_scope(user)), School
             )
             school = writable.filter(
                 served_district_q, id=sid, deleted_at__isnull=True
@@ -1445,7 +1445,7 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             deleted_at__isnull=True,
         )
     else:
-        writable = direct_portfolio_schools(scope) or School.objects.none()
+        writable = or_empty(direct_portfolio_schools(scope), School)
         unassigned_schools = writable.filter(
             served_district_q,
             cluster_status="unclustered",

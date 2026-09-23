@@ -1117,6 +1117,22 @@ def get_frontend_context(principal, query: dict) -> dict:
                 f"{len(done.get(plan, ()))}/{len(taken.get(plan, ()))} Completed"
             )
 
+    # How many live schools each listed cluster holds — one grouped count for
+    # the whole page. This was a COUNT per row inside the loop below: 404 of
+    # the 430 queries on a CCEO's My Plan with a production-sized portfolio
+    # (performance rescue, 2026-09-23). Same filter, same default manager.
+    cluster_ids = {a.cluster.id for a in activities if a.cluster_id and a.cluster}
+    cluster_school_counts = (
+        dict(
+            School.objects.filter(cluster_id__in=cluster_ids)
+            .values_list("cluster_id")
+            .annotate(n=Count("id"))
+            .values_list("cluster_id", "n")
+        )
+        if cluster_ids
+        else {}
+    )
+
     for a in activities:
         status_label, status_class = get_activity_status_label_and_class(a, today)
         next_act = compute_next_action(a, today)
@@ -1372,9 +1388,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             ),
             "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_district": cluster_district_name or "—",
-            "cluster_school_count": School.objects.filter(
-                cluster_id=a.cluster.id
-            ).count()
+            "cluster_school_count": cluster_school_counts.get(a.cluster.id, 0)
             if a.cluster
             else 0,
             # Who turned up if the activity has been delivered, otherwise who

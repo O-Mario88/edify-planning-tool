@@ -494,92 +494,7 @@ class CoreSchoolsService:
         # is idempotent, so a large backlog drains over successive loads
         # instead of making one load pay for all of it.
         fy = filters.get("fy") or get_operational_fy()
-        uninitialized_schools = list(
-            core_schools_qs.exclude(
-                school_id__in=CorePlan.objects.filter(fy=fy).values_list(
-                    "school_id", flat=True
-                )
-            )[:SELF_HEAL_BATCH]
-        )
-        if uninitialized_schools:
-            from django.db import transaction
-
-            interventions = [i.value for i in SsaIntervention]
-            # One bounded query for the cohort, rather than one reverse-FK
-            # lookup per school.  Keep this portable across PostgreSQL and the
-            # SQLite test database by selecting the first row per school in
-            # Python from an explicitly ordered result set.
-            latest_ssa_by_school = {}
-            confirmed_records = SsaRecord.objects.filter(
-                school_id__in=[school.id for school in uninitialized_schools],
-                deleted_at__isnull=True,
-                verification_status="confirmed",
-            ).order_by("school_id", "-date_of_ssa", "-created_at")
-            for record in confirmed_records:
-                latest_ssa_by_school.setdefault(record.school_id, record)
-
-            # Provenance for auto-created plans/slots — same shape as the
-            # audited onboard() path (created_by_id/created_by_name), so a
-            # self-healed record is never indistinguishable from a hand-made
-            # one with no author on file.
-            actor_id = getattr(user, "user_id", None) or getattr(user, "id", None)
-            actor_name = getattr(user, "name", None) or "System (auto-heal)"
-            for s in uninitialized_schools:
-                latest = latest_ssa_by_school.get(s.id)
-                if not latest:
-                    # SSA gate: mirrors the official onboard() path, which
-                    # only ever runs after IA has verified an SSA-backed
-                    # candidate (services.verify_candidate). Without a real
-                    # SSA record there is no legitimate baseline to onboard
-                    # against, so skip rather than silently fabricating a
-                    # 0.0 baseline for this FY.
-                    logger.warning(
-                        "Skipping self-heal for core school %s: no SSA record "
-                        "on file to gate onboarding against.",
-                        escape_control_characters(str(s.school_id)),
-                    )
-                    continue
-                baseline_avg = latest.average_score
-                plan_id = cplan_id(s.school_id, fy=fy)
-                try:
-                    with transaction.atomic():
-                        plan, _ = CorePlan.objects.update_or_create(
-                            id=plan_id,
-                            defaults={
-                                "school_id": s.school_id,
-                                "fy": fy,
-                                "status": "Active",
-                                "baseline_average": baseline_avg,
-                                "baseline_ssa_record_id": latest.id,
-                                "created_by_id": actor_id,
-                                "created_by_name": actor_name,
-                            },
-                        )
-                        CoreSchoolProfile.objects.update_or_create(
-                            id=cprof_id(s.school_id),
-                            defaults={
-                                "school_id": s.school_id,
-                                "core_plan": plan,
-                                "core_start_fy": fy,
-                            },
-                        )
-                        # Canonical 9-slot package (assessment + 4v + 4t) via
-                        # the shared helper so this self-heal path can never
-                        # drift from the onboard path.
-                        from apps.core_schools.services import create_package_slots
-
-                        create_package_slots(
-                            plan, s.school_id, interventions, actor_id, actor_name
-                        )
-                except Exception as e:
-                    # Lazy %-args rather than an f-string: the filter that
-                    # escapes line breaks works on the record's arguments, and
-                    # a message already formatted has nothing left to clean.
-                    logger.error(
-                        "Error auto-onboarding core school %s: %s",
-                        escape_control_characters(str(s.school_id)),
-                        escape_control_characters(str(e)),
-                    )
+        CoreSchoolsService.self_heal_plans(core_schools_qs, fy, user)
 
         # 2. Apply filters
         #
@@ -637,6 +552,223 @@ class CoreSchoolsService:
                 core_schools_qs = core_schools_qs.exclude(id__in=assigned_ids)
 
         return core_schools_qs
+
+    @staticmethod
+    def self_heal_plans(core_schools_qs, fy: str, user) -> int:
+        """Give every core school in the reader's scope its package for ``fy``.
+
+        This still runs on the page load (the page needs the plans to exist),
+        so it has to be cheap when there is nothing to do and bounded when
+        there is. Two production defects shaped it (performance rescue,
+        2026-09-23):
+
+        * The SSA gate used to be applied in Python, after the batch was cut.
+          A school with no confirmed SSA can never be healed, so once 50 such
+          schools existed they were re-selected on every load, logged 50
+          warnings, and no school after them was ever reached.
+        * Each healed school cost ~11 statements (plan, profile and nine
+          ``get_or_create`` slots), so a country-scope load wrote ~550 rows
+          one at a time — 3 of the 6 seconds of a Country Director request on
+          a 16,000-school estate.
+
+        The gate is now part of the query, and a batch is written with three
+        conflict-tolerant bulk statements. The ids are deterministic, so two
+        readers healing the same school at once converge on the same rows
+        instead of racing. If a batch conflicts in a way ids cannot resolve
+        (a hand-made profile under another id), it falls back to the original
+        audited per-school path so one odd row cannot block the rest.
+        """
+        from django.db import IntegrityError, transaction
+        from django.db.models import Exists, OuterRef
+
+        has_confirmed_ssa = SsaRecord.objects.filter(
+            school_id=OuterRef("pk"),
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        uninitialized_schools = list(
+            core_schools_qs.exclude(
+                school_id__in=CorePlan.objects.filter(fy=fy).values_list(
+                    "school_id", flat=True
+                )
+            )
+            .filter(Exists(has_confirmed_ssa))
+            .order_by("pk")[:SELF_HEAL_BATCH]
+        )
+        if not uninitialized_schools:
+            return 0
+        interventions = [i.value for i in SsaIntervention]
+        # One bounded query for the cohort, rather than one reverse-FK
+        # lookup per school.  Keep this portable across PostgreSQL and the
+        # SQLite test database by selecting the first row per school in
+        # Python from an explicitly ordered result set.
+        latest_ssa_by_school = {}
+        confirmed_records = SsaRecord.objects.filter(
+            school_id__in=[school.id for school in uninitialized_schools],
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        ).order_by("school_id", "-date_of_ssa", "-created_at")
+        for record in confirmed_records:
+            latest_ssa_by_school.setdefault(record.school_id, record)
+
+        # Provenance for auto-created plans/slots — same shape as the
+        # audited onboard() path (created_by_id/created_by_name), so a
+        # self-healed record is never indistinguishable from a hand-made
+        # one with no author on file.
+        actor_id = getattr(user, "user_id", None) or getattr(user, "id", None)
+        actor_name = getattr(user, "name", None) or "System (auto-heal)"
+        healable = [s for s in uninitialized_schools if s.id in latest_ssa_by_school]
+        try:
+            with transaction.atomic():
+                CoreSchoolsService._bulk_heal(
+                    healable,
+                    latest_ssa_by_school,
+                    fy,
+                    interventions,
+                    actor_id,
+                    actor_name,
+                )
+            return len(healable)
+        except IntegrityError:
+            logger.warning(
+                "Bulk core-plan self-heal conflicted for FY %s; healing the "
+                "batch one school at a time.",
+                escape_control_characters(str(fy)),
+            )
+        CoreSchoolsService._heal_one_by_one(
+            healable, latest_ssa_by_school, fy, interventions, actor_id, actor_name
+        )
+        return len(healable)
+
+    @staticmethod
+    def _bulk_heal(
+        schools, latest_ssa_by_school, fy, interventions, actor_id, actor_name
+    ):
+        from apps.core_schools.models import CoreActivitySlot, cslot_id
+        from apps.core_schools.services import (
+            CORE_PACKAGE_SPEC,
+            CORE_SLOT_KIND_TO_TYPE,
+        )
+
+        interventions = interventions or ["christlike_behaviour"]
+        plans = [
+            CorePlan(
+                id=cplan_id(s.school_id, fy=fy),
+                school_id=s.school_id,
+                fy=fy,
+                status="Active",
+                baseline_average=latest_ssa_by_school[s.id].average_score,
+                baseline_ssa_record_id=latest_ssa_by_school[s.id].id,
+                created_by_id=actor_id,
+                created_by_name=actor_name,
+            )
+            for s in schools
+        ]
+        # A concurrent reader healing the same school writes the same
+        # deterministic id, so a conflict here means the row already exists.
+        CorePlan.objects.bulk_create(plans, ignore_conflicts=True)
+        # update_or_create semantics: an existing profile (a prior FY's) is
+        # re-pointed at this FY's plan, exactly as the per-school path does.
+        CoreSchoolProfile.objects.bulk_create(
+            [
+                CoreSchoolProfile(
+                    id=cprof_id(plan.school_id),
+                    school_id=plan.school_id,
+                    core_plan_id=plan.id,
+                    core_start_fy=fy,
+                )
+                for plan in plans
+            ],
+            update_conflicts=True,
+            unique_fields=["id"],
+            update_fields=["school_id", "core_plan", "core_start_fy", "updated_at"],
+        )
+        # get_or_create semantics on the deterministic slot id: never
+        # overwrite a slot that already carries scheduling state.
+        CoreActivitySlot.objects.bulk_create(
+            [
+                CoreActivitySlot(
+                    id=cslot_id(plan.school_id, kind, seq, fy=plan.fy),
+                    core_plan_id=plan.id,
+                    school_id=plan.school_id,
+                    intervention=interventions[(seq - 1) % len(interventions)],
+                    activity_type=CORE_SLOT_KIND_TO_TYPE[kind],
+                    sequence_number=seq,
+                )
+                for plan in plans
+                for kind, count in CORE_PACKAGE_SPEC
+                for seq in range(1, count + 1)
+            ],
+            ignore_conflicts=True,
+        )
+
+    @staticmethod
+    def _heal_one_by_one(
+        uninitialized_schools,
+        latest_ssa_by_school,
+        fy,
+        interventions,
+        actor_id,
+        actor_name,
+    ):
+        from django.db import transaction
+
+        for s in uninitialized_schools:
+            latest = latest_ssa_by_school.get(s.id)
+            if not latest:
+                # SSA gate: mirrors the official onboard() path, which
+                # only ever runs after IA has verified an SSA-backed
+                # candidate (services.verify_candidate). Without a real
+                # SSA record there is no legitimate baseline to onboard
+                # against, so skip rather than silently fabricating a
+                # 0.0 baseline for this FY.
+                logger.warning(
+                    "Skipping self-heal for core school %s: no SSA record "
+                    "on file to gate onboarding against.",
+                    escape_control_characters(str(s.school_id)),
+                )
+                continue
+            baseline_avg = latest.average_score
+            plan_id = cplan_id(s.school_id, fy=fy)
+            try:
+                with transaction.atomic():
+                    plan, _ = CorePlan.objects.update_or_create(
+                        id=plan_id,
+                        defaults={
+                            "school_id": s.school_id,
+                            "fy": fy,
+                            "status": "Active",
+                            "baseline_average": baseline_avg,
+                            "baseline_ssa_record_id": latest.id,
+                            "created_by_id": actor_id,
+                            "created_by_name": actor_name,
+                        },
+                    )
+                    CoreSchoolProfile.objects.update_or_create(
+                        id=cprof_id(s.school_id),
+                        defaults={
+                            "school_id": s.school_id,
+                            "core_plan": plan,
+                            "core_start_fy": fy,
+                        },
+                    )
+                    # Canonical 9-slot package (assessment + 4v + 4t) via
+                    # the shared helper so this self-heal path can never
+                    # drift from the onboard path.
+                    from apps.core_schools.services import create_package_slots
+
+                    create_package_slots(
+                        plan, s.school_id, interventions, actor_id, actor_name
+                    )
+            except Exception as e:
+                # Lazy %-args rather than an f-string: the filter that
+                # escapes line breaks works on the record's arguments, and
+                # a message already formatted has nothing left to clean.
+                logger.error(
+                    "Error auto-onboarding core school %s: %s",
+                    escape_control_characters(str(s.school_id)),
+                    escape_control_characters(str(e)),
+                )
 
 
 class CorePackageProgressService:
@@ -1238,6 +1370,71 @@ class CoreAssessmentService:
 
 class CoreInterventionImpactService:
     @staticmethod
+    def staff_partner_splits(core_schools_qs, fy: str) -> dict[str, tuple]:
+        """Staff-vs-partner average scores for every intervention at once.
+
+        The same comparison as ``_staff_partner_split_for_intervention``, which
+        stays as the readable single-intervention definition: a school counts
+        as partner-led for an intervention when one of its ``fy`` slots for it
+        is partner-owned, staff-led when one is not (a school can be both),
+        and each side averages every live SSA score for that intervention
+        across its schools. An intervention maps to ``(None, None)`` unless
+        both sides have a score.
+
+        That helper ran four queries per intervention, each carrying the whole
+        scoped school list as a literal ``IN`` — for a country reader, every
+        core school, sixteen times over (584 ms of a Country Director load on
+        a 16,000-school estate). This is two grouped queries with the scope
+        as a subquery, joined per (school, intervention) in memory. A single
+        correlated ``EXISTS`` aggregate was measured first and was slower
+        (1.3 s): it probes the slot table twice per score row.
+        """
+        school_codes = core_schools_qs.values("school_id")
+        # Which side(s) lead each (school, intervention) this FY — at most
+        # nine slot rows per school, grouped to one row per pair.
+        sides: dict[tuple[str, str], set[str]] = {}
+        for school_id, intervention, owner in (
+            CoreActivitySlot.objects.filter(
+                core_plan__fy=fy, school_id__in=school_codes
+            )
+            .values_list("school_id", "intervention", "owner")
+            .distinct()
+        ):
+            sides.setdefault((school_id, intervention), set()).add(
+                "partner" if owner == "partner" else "staff"
+            )
+        # Every live score, summed per (school, intervention): the averages
+        # below are over score rows, exactly as a SQL AVG over the union.
+        totals = {"staff": {}, "partner": {}}
+        for school_id, intervention, total, count in (
+            SsaScore.objects.filter(
+                ssa_record__deleted_at__isnull=True,
+                ssa_record__school__school_id__in=school_codes,
+            )
+            .values_list("ssa_record__school__school_id", "intervention")
+            .annotate(total=Sum("score"), count=Count("id"))
+            .values_list(
+                "ssa_record__school__school_id", "intervention", "total", "count"
+            )
+        ):
+            for side in sides.get((school_id, intervention), ()):
+                running = totals[side].setdefault(intervention, [0.0, 0])
+                running[0] += total
+                running[1] += count
+        splits = {}
+        for code in {*totals["staff"], *totals["partner"]}:
+            staff = totals["staff"].get(code)
+            partner = totals["partner"].get(code)
+            if not staff or not partner or not staff[1] or not partner[1]:
+                splits[code] = (None, None)
+            else:
+                splits[code] = (
+                    round(staff[0] / staff[1], 1),
+                    round(partner[0] / partner[1], 1),
+                )
+        return splits
+
+    @staticmethod
     def _staff_partner_split_for_intervention(
         core_schools_qs, fy: str, code: str, school_ids: list
     ) -> tuple:
@@ -1689,14 +1886,10 @@ class CoreStaffPartnerPerformanceService:
         staff-led ones with real SsaScore data) — otherwise the intervention is
         omitted rather than showing a fabricated comparison.
         """
-        school_ids = list(core_schools_qs.values_list("school_id", flat=True))
+        splits = CoreInterventionImpactService.staff_partner_splits(core_schools_qs, fy)
         rows = []
         for code, label in SsaIntervention.choices:
-            staff_pct, partner_pct = (
-                CoreInterventionImpactService._staff_partner_split_for_intervention(
-                    core_schools_qs, fy, code, school_ids
-                )
-            )
+            staff_pct, partner_pct = splits.get(code, (None, None))
             if staff_pct is None or partner_pct is None:
                 continue
             rows.append(
