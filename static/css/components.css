@@ -83,8 +83,14 @@
   white-space: nowrap;
 }
 
+.school-planning-badge[data-planning-tone="none"] {
+  background-color: var(--edify-danger-light);
+  border-color: var(--edify-danger-border);
+  color: var(--edify-danger-text);
+}
+
 .school-planning-badge[data-planning-tone="planned"] {
-  background-color: color-mix(in oklab, var(--edify-chart-orange) 12%, transparent);
+  background-color: color-mix(in oklab, var(--edify-chart-orange) 18%, transparent);
   border-color: color-mix(in oklab, var(--edify-chart-orange) 45%, transparent);
   color: color-mix(in oklab, var(--edify-chart-orange) 60%, var(--edify-text));
 }
