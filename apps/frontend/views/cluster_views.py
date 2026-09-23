@@ -1560,17 +1560,17 @@ def get_eligible_staff(district_id):
         if profiles.exists():
             return profiles
 
-    # 3. Ultimate fallback: all active CCEOs and PLs
-    profiles = (
-        StaffProfile.objects.filter(user__is_active=True)
+    # 3. Ultimate fallback: all active CCEOs and PLs. A QuerySet like the
+    # branches above: the edit drawer unions it with the recorded owner as a
+    # `.values("id")` subquery, which a filtered Python list cannot answer.
+    return (
+        StaffProfile.objects.filter(
+            user__is_active=True,
+            user__roles__overlap=["CCEO", "Program Lead", "ProgramLead"],
+        )
         .select_related("user")
         .order_by("user__name")
     )
-    return [
-        p
-        for p in profiles
-        if any(r in ["CCEO", "Program Lead", "ProgramLead"] for r in p.user.roles)
-    ]
 
 
 @require_page_permission("planning")
@@ -1654,10 +1654,9 @@ def edit_cluster_drawer_view(request, cluster_id):
     staff = get_eligible_staff(cluster.district_id)
     # Keep a recorded owner selectable even when they have no school or
     # geography assignment in the cluster's district.
-    # `get_eligible_staff` falls back to a list, so take the ids in Python.
     staff = (
         StaffProfile.objects.filter(
-            Q(id__in=[profile.id for profile in staff])
+            Q(id__in=staff.values("id"))
             | Q(id=cluster.responsible_staff_id)
             | Q(user_id=cluster.responsible_staff_id)
         )
