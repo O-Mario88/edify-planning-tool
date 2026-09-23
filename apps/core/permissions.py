@@ -10,7 +10,9 @@ the seeded RolePermission table (source of truth: apps.core.rbac.ROLE_PERMISSION
 from __future__ import annotations
 
 from typing import Iterable
+import functools
 from functools import wraps
+from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.contrib import messages
@@ -785,18 +787,32 @@ def render_access_denied(request, message: str):
     return redirect("/dashboard")
 
 
+@functools.lru_cache(maxsize=4096)
+def _resolve_view(urlconf: str, path: str):
+    """The view a path resolves to under one URLconf — which never changes
+    while a process runs, so the answer can be kept.
+
+    Link gating resolves every link a page draws, and a resolution walks up to
+    ~1,300 patterns: the School Directory resolved three per row, twice each
+    (performance rescue, 2026-09-23). Keyed on the URLconf too, so a test that
+    overrides ROOT_URLCONF never reads another configuration's answer."""
+    from django.urls import Resolver404, resolve
+
+    try:
+        return resolve(path, urlconf).func
+    except Resolver404:
+        return None
+
+
 def _view_for_url(url: str):
     from urllib.parse import urlsplit
 
-    from django.urls import Resolver404, resolve
+    from django.urls import get_urlconf
 
     path = urlsplit(url or "").path
     if not path.startswith("/"):
         return None
-    try:
-        return resolve(path).func
-    except Resolver404:
-        return None
+    return _resolve_view(get_urlconf() or settings.ROOT_URLCONF, path)
 
 
 def page_permission_for_url(url: str) -> str | None:
@@ -809,7 +825,10 @@ def page_permission_for_url(url: str) -> str | None:
 def page_permissions_for_url(url: str) -> tuple[str, ...]:
     """Every page permission that opens the view a URL resolves to: one for
     require_page_permission, several for require_any_page_permission."""
-    func = _view_for_url(url)
+    return _page_permissions_of(_view_for_url(url))
+
+
+def _page_permissions_of(func) -> tuple[str, ...]:
     while func is not None:
         pages = getattr(func, "page_permissions", None)
         if pages:
@@ -821,12 +840,14 @@ def page_permissions_for_url(url: str) -> tuple[str, ...]:
     return ()
 
 
-def _is_export_request(url: str) -> bool:
+def _is_export_request(url: str, func=None) -> bool:
     """Whether following `url` asks an export-gated view for an export —
-    require_export_permission's own test."""
+    require_export_permission's own test. `func` is the resolved view when
+    the caller already has it."""
     from urllib.parse import parse_qs, urlsplit
 
-    func = _view_for_url(url)
+    if func is None:
+        func = _view_for_url(url)
     gated = False
     while func is not None:
         if getattr(func, "export_permission", False):
@@ -855,12 +876,13 @@ def can_open_url(user, url: str) -> bool:
     """
     if not url:
         return False
-    if _is_export_request(url):
+    view = _view_for_url(url)
+    if _is_export_request(url, view):
         from urllib.parse import urlsplit
 
         if not RolePermissionService.can_export(user, urlsplit(url).path):
             return False
-    pages = page_permissions_for_url(url)
+    pages = _page_permissions_of(view)
     if not pages:
         return True
     return any(RolePermissionService.can_view_page(user, page) for page in pages)
