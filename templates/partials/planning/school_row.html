@@ -37,13 +37,16 @@
           <div><dt>Primary Contact:</dt><dd>{{ school.schoolContact }}</dd></div>
           <div><dt>Staff Name:</dt><dd>{% if school.ownerId %}<a href="/staff/{{ school.ownerId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.ownerName }}</a>{% else %}{{ school.ownerName }}{% endif %}</dd></div>
           <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssaAverage is not None %} style="color: {{ school.ssaAverage|ssa_score_colour }}" title="{{ school.ssaAverage|ssa_score_band_label }}"{% endif %}>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          {% if not school.supportRule %}
           <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
           {% comment %}Derived from the canonical activities, never stored and
           never editable (owner, 2026-09-15): the same phrase the Directory,
           School 360 and Team Oversight show.{% endcomment %}
           <div data-visit-status><dt>Visit status:</dt><dd><span class="edify-badge" data-tone="{{ school.visitPlanStatusTone }}">{{ school.visitPlanStatus }}</span>{% if school.nextVisitDate %} <span class="edify-text-caption">{{ school.nextVisitDate|date:"j M Y" }}</span>{% endif %}</dd></div>
           <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
+          {% endif %}
         </dl>
+        {% if school.supportRule %}{% include "partials/planning/support_fields.html" %}{% endif %}
       </div>
     </div>
 

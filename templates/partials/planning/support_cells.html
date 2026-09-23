@@ -1,0 +1,29 @@
+{% comment %}
+The Cluster School List's table cells for the same four facts the Planning
+row shows in its strip (partials/planning/support_fields.html): Visit,
+Training / Cluster, Responsible and Partner Workflow. Same server values —
+SchoolSupportResponsibilityService and SchoolPlanningBadgeService — laid out
+as table columns because this list is a table. Informational only.
+{% endcomment %}
+{% with r=school.responsible v=school.visitIndicator t=school.trainingIndicator %}
+<td class="px-4 py-3 whitespace-nowrap" data-label="Visit" data-visit-indicator>
+  <span class="planning-indicator" data-state="{{ v.state }}" title="Visits: {{ v.label }}">{{ v.label }}</span>
+</td>
+<td class="px-4 py-3 whitespace-nowrap" data-label="Training / Cluster" data-training-indicator>
+  <span class="planning-indicator" data-state="{{ t.state }}" title="Training and cluster engagement: {{ t.label }}">{{ t.label }}</span>
+</td>
+<td class="px-4 py-3 whitespace-nowrap" data-label="Responsible" data-responsible="{{ r.responsibility_type }}">
+  <span class="planning-responsible" data-responsible="{{ r.responsibility_type }}" title="{{ r.label }}: {{ r.responsible_name }}">
+    <span class="planning-responsible__kind">{% if r.needs_review %}Multiple Partners{% elif r.is_partner %}Partner{% else %}Staff{% endif %}</span>
+    <span aria-hidden="true">·</span>
+    <span class="planning-responsible__name">{% if r.needs_review %}Review Required{% else %}{{ r.responsible_name }}{% endif %}</span>
+  </span>
+</td>
+<td class="px-4 py-3 whitespace-nowrap" data-label="Partner Workflow" data-partner-workflow="{% if r.staff_action_required %}returned{% elif r.is_partner %}{{ r.partner_status|default:'review' }}{% else %}none{% endif %}">
+  {% if r.staff_action_required %}
+  <span class="planning-indicator" data-state="action_required" title="{{ r.returned_partner_name }} returned this work{% if r.returned_reason %}: {{ r.returned_reason }}{% endif %}">{{ r.workflow_label }}</span>
+  {% elif r.is_partner %}
+  <span class="planning-indicator" data-state="{% if r.needs_review %}action_required{% else %}in_progress{% endif %}">{{ r.workflow_label }}</span>
+  {% else %}—{% endif %}
+</td>
+{% endwith %}

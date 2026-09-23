@@ -1153,3 +1153,155 @@ def _assert_school_takes_partner_work(school) -> None:
                 getattr(school, "name", "This school"), school_type
             )
         )
+
+
+# ── Deciding what happens to work a Partner handed back ─────────────────────
+def resolve_returned_assignment(assignment_id: str, data: dict, principal) -> dict:
+    """Record the staff decision on a returned assignment — exactly once.
+
+    The three governed outcomes (owner, 2026-09-23):
+
+    * ``reassigned`` — the same support requirement goes to another Partner.
+      A new assignment is opened through ``create_assignment`` carrying the
+      returned one's slot identifiers and ``replaces_assignment``, so the
+      school gains no second entitlement and no cost exists until the new
+      Partner schedules.
+    * ``staff_delivery`` — the owner's team delivers the support. Nothing is
+      created here: the school is Staff Managed again on the next read and is
+      planned from the normal Planning page, through the normal staff costing
+      and fund-request workflow.
+    * ``support_closed`` — the support is no longer required.
+
+    The school's ownership never moves. Idempotent: a second submission (a
+    double click, a retried request) returns the first decision and creates
+    nothing, because the row is locked and its ``resolved_at`` is checked
+    before anything is written.
+    """
+    from django.utils import timezone
+
+    from apps.audit.services import log as audit_log
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+    from apps.planning.partner_oversight_service import assignment_in_scope
+
+    resolution = str((data or {}).get("resolution") or "").strip()
+    note = str((data or {}).get("note") or "").strip()
+    valid = {value for value, _label in PartnerAssignment.RESOLUTION_CHOICES}
+    if resolution not in valid:
+        raise BadRequest("Choose what happens to this returned work.")
+    if not has_permission(principal, Permission.PARTNER_RETURN_RESOLVE.value):
+        raise Forbidden("You do not have permission to resolve returned work.")
+    if resolution == PartnerAssignment.RESOLUTION_REASSIGNED and not has_permission(
+        principal, Permission.PARTNER_ASSIGNMENT_REASSIGN.value
+    ):
+        raise Forbidden("You do not have permission to reassign Partner work.")
+    if not assignment_in_scope(principal, assignment_id):
+        raise NotFoundError("Assignment not found.")
+
+    replacement = None
+    with transaction.atomic():
+        assignment = (
+            PartnerAssignment.objects.select_for_update(of=("self",))
+            .select_related("school", "partner")
+            .filter(id=assignment_id)
+            .first()
+        )
+        if assignment is None:
+            raise NotFoundError("Assignment not found.")
+        if assignment.status != PartnerAssignment.STATUS_RETURNED_TO_STAFF:
+            raise ConflictError(
+                "Only work a Partner has returned can be resolved here."
+            )
+        if assignment.resolved_at is not None:
+            # Already decided: report the decision rather than make another.
+            return _serialize_resolution(assignment, None)
+
+        if resolution == PartnerAssignment.RESOLUTION_REASSIGNED:
+            partner_id = str((data or {}).get("partner_id") or "").strip()
+            partner = assignable_partners().filter(id=partner_id).first()
+            if partner is None:
+                raise BadRequest("Choose an active Partner to take this work.")
+            if partner.id == assignment.partner_id:
+                raise BadRequest(
+                    f"{partner.name} returned this work. Choose another Partner."
+                )
+            replacement = create_assignment(
+                school=assignment.school,
+                cluster=assignment.cluster,
+                partner=partner,
+                assigning_staff_id=getattr(principal, "staff_profile_id", None)
+                or getattr(principal, "id", None),
+                monitoring_staff_id=assignment.monitoring_staff_id
+                or assignment.assigning_staff_id,
+                assignment_mode=assignment.assignment_mode,
+                catalogue_item=assignment.catalogue_item,
+                training_course=assignment.training_course,
+                source_ssa=assignment.source_ssa,
+                source_activity=assignment.source_activity,
+                project=assignment.project,
+                purpose=assignment.purpose,
+                focus_intervention=assignment.focus_intervention,
+                purpose_of_visit=assignment.purpose_of_visit,
+                expected_activity_type=assignment.expected_activity_type,
+                support_type=assignment.support_type,
+                visit_number=assignment.visit_number,
+                training_number=assignment.training_number,
+                catalogue_snapshot=assignment.catalogue_snapshot,
+                replaces_assignment=assignment,
+                reassignment_sequence=(assignment.reassignment_sequence or 0) + 1,
+            )
+
+        assignment.resolution = resolution
+        assignment.resolution_note = note
+        assignment.resolved_at = timezone.now()
+        assignment.resolved_by = getattr(principal, "id", None)
+        assignment.save(
+            update_fields=[
+                "resolution",
+                "resolution_note",
+                "resolved_at",
+                "resolved_by",
+                "updated_at",
+            ]
+        )
+
+    audit_log(
+        action="partner.assignment_return_resolved",
+        subject_kind="PartnerAssignment",
+        subject_id=assignment.id,
+        actor_id=getattr(principal, "id", None) or "unknown",
+        actor_role=getattr(principal, "active_role", "") or "",
+        success=True,
+        payload={
+            "school_id": assignment.school_id,
+            "partner_id": assignment.partner_id,
+            "resolution": resolution,
+            "replacement_assignment_id": getattr(replacement, "id", None),
+        },
+    )
+    try:
+        from apps.notifications.services import resolve_condition
+
+        # The "a partner returned an assignment" notice is answered.
+        resolve_condition(
+            "partner_assignment_returned", "partner_assignment", assignment.id
+        )
+    except Exception:  # pragma: no cover — bookkeeping never breaks the decision
+        pass
+    return _serialize_resolution(assignment, replacement)
+
+
+def _serialize_resolution(assignment, replacement) -> dict:
+    return {
+        **_serialize_assignment(assignment),
+        "resolution": assignment.resolution,
+        "resolutionNote": assignment.resolution_note,
+        "resolvedAt": (
+            assignment.resolved_at.isoformat() if assignment.resolved_at else None
+        ),
+        "replacementAssignmentId": getattr(replacement, "id", None)
+        or next(
+            iter(assignment.replaced_by.values_list("id", flat=True)[:1]),
+            None,
+        ),
+    }

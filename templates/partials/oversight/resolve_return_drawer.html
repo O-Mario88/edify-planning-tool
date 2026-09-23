@@ -1,0 +1,62 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+{% comment %}
+Deciding what happens to work a Partner handed back (owner, 2026-09-23).
+Three governed outcomes and nothing else: another Partner takes the same
+support (a replacement assignment, no cost until they schedule), staff deliver
+it (the school is Staff Managed again and is planned from Planning), or the
+support is closed. The school's ownership never moves, and a second submit
+records nothing new.
+{% endcomment %}
+{% block drawer_title %}{% if item %}Resolve returned work{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if item %}{{ item.school_name }} · returned by {{ item.partner_name }}{% else %}This assignment is not in your scope, or is not waiting on a decision.{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if not item %}
+<p class="text-sm edify-text-muted">This assignment is not in your scope, or is not waiting on a decision.</p>
+{% else %}
+<form hx-post="/partner-oversight/resolve/submit" hx-target="#resolve-result" hx-swap="innerHTML"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4" x-data="{ resolution: '' }">
+  {% csrf_token %}
+  <input type="hidden" name="assignment_id" value="{{ item.partner_assignment_id }}">
+
+  <section class="rounded-surface border p-3 edify-border text-sm">
+    <p class="font-semibold">{{ item.return_reason_category|default:"returned"|replace_underscore|title }}</p>
+    {% if item.return_reason %}<p class="mt-1 edify-text-muted">{{ item.return_reason }}</p>{% endif %}
+    <p class="mt-1 edify-text-caption edify-text-muted">Staff owner: {{ item.staff_owner_name|default:"Unassigned" }} — unchanged by this decision.</p>
+  </section>
+
+  <fieldset class="space-y-2">
+    <legend class="text-sm font-semibold">What happens next</legend>
+    {% for value, label in resolutions %}
+    {% if value != "reassigned" or can_reassign %}
+    <label class="flex items-center gap-2 text-sm">
+      <input type="radio" name="resolution" value="{{ value }}" x-model="resolution" required>
+      <span>{{ label }}</span>
+    </label>
+    {% endif %}
+    {% endfor %}
+  </fieldset>
+
+  {% if can_reassign %}
+  <div x-show="resolution === 'reassigned'" x-cloak>
+    <label for="resolve-partner" class="block text-sm font-semibold">Partner</label>
+    <select id="resolve-partner" name="partner_id" class="mt-1 h-9 w-full px-3 rounded-control border edify-border text-sm" :required="resolution === 'reassigned'">
+      <option value="">Choose a Partner…</option>
+      {% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}
+    </select>
+    <p class="mt-1 edify-text-caption edify-text-muted">The same support, slot and school. No cost exists until the new Partner schedules.</p>
+  </div>
+  {% endif %}
+
+  <div>
+    <label for="resolve-note" class="block text-sm font-semibold">Note <span class="edify-text-muted font-normal">(optional)</span></label>
+    <textarea id="resolve-note" name="note" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border edify-border text-sm"></textarea>
+  </div>
+
+  <div id="resolve-result"></div>
+  <button type="submit" class="btn btn-primary h-9 w-full whitespace-nowrap">Record decision</button>
+</form>
+{% endif %}
+{% endblock %}

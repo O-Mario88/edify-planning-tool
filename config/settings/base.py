@@ -269,6 +269,31 @@ INTERACTION_TELEMETRY_ENABLED = (
 # nothing enqueues and the manual SF/NetSuite reference entry remains the law.
 SALESFORCE_SYNC_ENABLED = os.environ.get("SALESFORCE_SYNC_ENABLED", "0") == "1"
 NETSUITE_SYNC_ENABLED = os.environ.get("NETSUITE_SYNC_ENABLED", "0") == "1"
+# Partner-supported schools stay on staff Planning (owner, 2026-09-23): a
+# Partner assignment changes who delivers, never who owns the school. On by
+# default because it is the approved rule; "0" restores the previous display
+# (Partner-assigned schools leave the Client/Core lists, no Responsible
+# column, no direct-planning whitelist) without touching a single record. The
+# pilot lists enable it for named roles or sign-in emails while the global
+# switch is off, for the staged rollout (IA and selected Programme Leads).
+PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED = _truthy(
+    os.environ.get("PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED"),
+    fallback=True,
+)
+PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_ROLES = [
+    r.strip()
+    for r in os.environ.get("PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_ROLES", "").split(
+        ","
+    )
+    if r.strip()
+]
+PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_USERS = [
+    u.strip().lower()
+    for u in os.environ.get("PARTNER_SUPPORTED_SCHOOL_PLANNING_PILOT_USERS", "").split(
+        ","
+    )
+    if u.strip()
+]
 
 # Parse DigitalOcean DATABASE_URL values, including managed-Postgres
 # query parameters such as sslmode=require. The settings below layer the

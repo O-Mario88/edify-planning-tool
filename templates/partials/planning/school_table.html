@@ -86,7 +86,7 @@
       <div class="flex items-center gap-1">
         {% if page > 1 %}
           <button
-            hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
+            hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
             class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
@@ -100,7 +100,7 @@
             <span class="w-7 text-center text-slate-400 font-bold">...</span>
           {% else %}
             <button
-              hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
+              hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
               hx-target="#schools-table-container"
               hx-swap="outerHTML"
               class="h-7 w-7 rounded-control border flex items-center justify-center cursor-pointer {% if page == p %}edify-primary-border edify-primary-soft edify-primary-text font-bold{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
@@ -112,7 +112,7 @@
 
         {% if page < total_pages %}
           <button
-            hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
+            hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
             class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
@@ -125,7 +125,7 @@
       <div class="flex items-center gap-1.5">
         <select aria-label="Per page"
           name="per_page"
-          hx-get="/planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
+          hx-get="/planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
           hx-target="#schools-table-container"
           hx-swap="outerHTML"
           class="h-7 px-2 edify-surface border border-slate-200 rounded-control font-bold cursor-pointer focus:outline-none"

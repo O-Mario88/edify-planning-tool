@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block title %}Partner Oversight · Edify{% endblock %}
+{% block title %}Partner Monitoring · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260920oversight2">{% endblock %}
 
 {% block shell_content %}
@@ -9,9 +9,9 @@
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Supervision</p>
-      <h1 class="edify-page-title edify-page-header__title">Partner Oversight</h1>
-      <p class="edify-page-header__description">Move between partner portfolios, see the responsible CCEO and Programme Lead, and manage delivery without duplicating workflow-status tabs.</p>
+      <p class="edify-page-eyebrow">Partner Oversight</p>
+      <h1 class="edify-page-title edify-page-header__title">Partner Monitoring</h1>
+      <p class="edify-page-header__description">One Partner at a time: the schools it supports, their staff owners, and where each piece of work stands — schedule, delivery, IA verification and payment.</p>
     </div>
     {% if can_grant_allowance or can_create_partner %}
     <div class="edify-page-header__controls">
@@ -38,7 +38,5 @@
   <div id="partner-workspace">
     {% include "partials/oversight/partner_workspace.html" %}
   </div>
-
-  <div id="drawer-container"></div>
 </div>
 {% endblock %}

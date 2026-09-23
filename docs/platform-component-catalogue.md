@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **475**
+Components and application partials: **478**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -360,10 +360,11 @@ Components and application partials: **475**
 | `partials/oversight/filter_drawer.html` | application-partial | Reusable filter drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/flagged_schools.html` | application-partial | Reusable flagged schools interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/partner_detail_drawer.html` | application-partial | Reusable partner detail drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/detail | 0 |
-| `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive; default | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
+| `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | canonical; default | explicit responsive contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/period_filter_bar.html` | application-partial | Reusable period filter bar interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /cluster-oversight/<br>/core-schools-oversight/<br>/country-planning-oversight/<br>/partner-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/pl_workspace.html` | application-partial | Reusable pl workspace interface primitive | executive; default | explicit responsive contract | accessible name and label | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/portfolio_workspace.html` | application-partial | Reusable portfolio workspace interface primitive | danger, executive, {% if lead.coverage is None %}neutral{% elif lead.coverage >= 80 %}success{% elif lead.coverage >= 50 %}warning{% else %}danger{% endif %}; default | explicit responsive contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/oversight/resolve_return_drawer.html` | application-partial | Reusable resolve return drawer interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label | /partner-oversight/resolve | 0 |
 | `partials/oversight/team_country_workspace.html` | application-partial | Reusable team country workspace interface primitive | executive, info; default | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/withdrawal_drawer.html` | application-partial | Reusable withdrawal drawer interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /partner-oversight/withdraw | 0 |
 | `partials/partner/invoice_drawer.html` | application-partial | Reusable invoice drawer interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/invoices/new | 0 |
@@ -383,6 +384,8 @@ Components and application partials: **475**
 | `partials/planning/schedule_school_options.html` | application-partial | Reusable schedule school options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /planning/schedule<br>/planning/schedule/schools | 0 |
 | `partials/planning/school_row.html` | application-partial | Reusable school row interface primitive | {{ school.visitPlanStatusTone }}; default, disabled, open | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/planning/school_table.html` | application-partial | Reusable school table interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
+| `partials/planning/support_cells.html` | application-partial | Reusable support cells interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /clusters/<str:cluster_id> | 0 |
+| `partials/planning/support_fields.html` | application-partial | Reusable support fields interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partials/clusters/<str:cluster_id>/schools<br>/planning | 0 |
 | `partials/planning/tabs.html` | application-partial | Reusable tabs interface primitive | canonical; default, selected | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
 | `partials/planning/view_controls.html` | application-partial | Reusable view controls interface primitive | canonical; default | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/planning/view_toggle_and_calendar.html` | application-partial | Reusable view toggle and calendar interface primitive | canonical; default, loading, open | inherits containing page contract | inherits semantic parent contract | /planning | 0 |

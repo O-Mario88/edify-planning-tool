@@ -129,6 +129,14 @@
   --edify-warning-border: #fde68a;
   --edify-warning-text: #92400e;
 
+  /* Planned-but-not-done (the Planning page's orange indicator). Kept apart
+     from warning/amber, which the indicators reserve for Needs Replanning:
+     "arranged" and "slipped" must not read as the same colour. */
+  --edify-planned: #ea580c;
+  --edify-planned-light: #fff7ed;
+  --edify-planned-border: #fed7aa;
+  --edify-planned-text: #9a3412;
+
   --edify-danger: #ef4444;
   /* A filled destructive control is a fill plus its ink, and both have to
      be tokens. --edify-danger itself is the semantic red for borders,
@@ -603,6 +611,10 @@
   --edify-warning-light: rgba(248, 197, 107, 0.12);
   --edify-warning-border: rgba(248, 197, 107, 0.28);
   --edify-warning-text: var(--edify-warning);
+  --edify-planned: #fdba74;
+  --edify-planned-light: rgba(253, 186, 116, 0.12);
+  --edify-planned-border: rgba(253, 186, 116, 0.3);
+  --edify-planned-text: var(--edify-planned);
   --edify-danger: #ff8796;
   --edify-danger-solid: #ff8796;
   --edify-danger-on-solid: #2a0f14;
@@ -781,6 +793,10 @@ html.theme-blue body {
   --edify-warning-light: rgba(137, 92, 24, 0.28);
   --edify-warning-border: rgba(231, 180, 90, 0.34);
   --edify-warning-text: var(--edify-warning);
+  --edify-planned: #f3a86b;
+  --edify-planned-light: rgba(154, 72, 20, 0.28);
+  --edify-planned-border: rgba(243, 168, 107, 0.34);
+  --edify-planned-text: var(--edify-planned);
   --edify-danger: #f18f8a;
   --edify-danger-solid: #f18f8a;
   --edify-danger-on-solid: #241012;

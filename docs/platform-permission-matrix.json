@@ -14236,6 +14236,40 @@
     "Accountant",
     "Admin"
    ],
+   "route": "/partner-oversight/resolve",
+   "route_name": "partner_return_resolve_drawer",
+   "view": "apps.frontend.views.oversight_views.partner_return_resolve_drawer_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/partner-oversight/resolve/submit",
+   "route_name": "partner_return_resolve_submit",
+   "view": "apps.frontend.views.oversight_views.partner_return_resolve_submit_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
    "route": "/partner-oversight/send",
    "route_name": "partner_oversight_send",
    "view": "apps.frontend.views.oversight_views.partner_oversight_send_action_view"
@@ -17950,27 +17984,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 405,
-  "Admin": 1004,
+  "Accountant": 407,
+  "Admin": 1006,
   "BusinessTransformationOfficer": 232,
-  "CCEO": 530,
-  "CountryDirector": 760,
+  "CCEO": 532,
+  "CountryDirector": 762,
   "HumanResources": 330,
-  "ImpactAssessment": 624,
+  "ImpactAssessment": 626,
   "MfiLoanOfficer": 128,
   "MfiPartnerAdmin": 131,
   "PartnerAdmin": 219,
   "PartnerFieldOfficer": 219,
-  "Program Lead": 615,
+  "Program Lead": 617,
   "ProjectCoordinator": 446,
   "RegionalProgramLead": 306,
-  "RegionalVicePresident": 367
+  "RegionalVicePresident": 369
  },
  "summary": {
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
-  "routes_guarded": 1101,
-  "routes_total": 1294,
+  "routes_guarded": 1103,
+  "routes_total": 1296,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

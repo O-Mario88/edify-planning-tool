@@ -183,6 +183,29 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     return "Scheduled", "edify-primary-soft edify-primary-text edify-primary-border"
 
 
+def staff_my_plan_q(staff_ids, principal=None) -> Q:
+    """Which activities are this staff member's own executable work.
+
+    My Plan is the detailed execution list of the activities the reader OWNS
+    AND DELIVERS (owner, 2026-09-23): the activity owner, the delivery channel
+    and the workflow state decide membership — never a school-level "Partner
+    Support" label. A Partner-delivered activity is the Partner's to execute:
+    it appears on the Partner's My Plan once scheduled and is monitored by
+    staff on Partner Monitoring, so it is not put on the monitoring staff
+    member's list as work they could start, complete or reschedule.
+
+    While the Partner-supported school rule is off for the reader, the
+    previous membership (owned work plus monitored Partner work) is restored
+    unchanged.
+    """
+    from apps.partners.support_responsibility import visibility_enabled
+
+    owned = Q(responsible_staff_id__in=staff_ids)
+    if visibility_enabled(principal):
+        return owned & ~Q(delivery_type="partner")
+    return owned | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
+
+
 def get(principal, query: dict) -> dict:
     """The caller's own plan feed. Legacy REST API schema:
     • week    → planned_week (and optional month) in the FY
@@ -211,10 +234,7 @@ def get(principal, query: dict) -> dict:
         # scope.staff_ids alone reproduced that bug on the field officer's
         # primary daily surface (2026-08 audit).
         staff_ids = [s for s in owner_ids(principal) if s]
-        qs = qs.filter(
-            Q(responsible_staff_id__in=staff_ids)
-            | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
-        )
+        qs = qs.filter(staff_my_plan_q(staff_ids, principal))
 
     # Period narrowing
     if period == "week":
@@ -695,10 +715,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         # here offered Complete and Reschedule the lead could not use
         # (Programme Lead walk, 2026-09-14). Team work lives on Team Oversight.
         staff_ids = [s for s in owner_ids(principal) if s]
-        qs = qs.filter(
-            Q(responsible_staff_id__in=staff_ids)
-            | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
-        )
+        qs = qs.filter(staff_my_plan_q(staff_ids, principal))
 
     # 4. Filter options collections for UI
     districts = [

@@ -5257,6 +5257,133 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-column-chart__track > span { position: relative; }
 .edify-column-chart__track > span > strong { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 500; }
 
+/* ── Planning support & planning indicators ───────────────────────────────
+   Owner, 2026-09-23. Rendered ONLY on the Planning page and the Cluster
+   School List (partials/planning/support_fields.html). Five states, one
+   colour each — gray not planned, orange planned, blue in progress or
+   awaiting verification, green IA-verified, amber needs replanning — and a
+   word in every one, so the colour is never the only signal. One line, never
+   wrapped: the label is a count summary, and a wrapped badge doubles the row
+   height of every school beside it. */
+.planning-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-inline-size: 100%;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--edify-border);
+  background-color: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  line-height: var(--edify-text-micro-leading);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.planning-indicator[data-state="planned"] {
+  background-color: var(--edify-planned-light);
+  border-color: var(--edify-planned-border);
+  color: var(--edify-planned-text);
+}
+.planning-indicator[data-state="in_progress"] {
+  background-color: var(--edify-info-light);
+  border-color: var(--edify-info-border);
+  color: var(--edify-info-text);
+}
+.planning-indicator[data-state="verified"] {
+  background-color: var(--edify-success-light);
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
+.planning-indicator[data-state="needs_replanning"],
+.planning-indicator[data-state="action_required"] {
+  background-color: var(--edify-warning-light);
+  border-color: var(--edify-warning-border);
+  color: var(--edify-warning-text);
+}
+.planning-responsible {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+.planning-responsible__kind {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--edify-text-muted);
+}
+.planning-responsible[data-responsible="partner"] .planning-responsible__kind {
+  color: var(--edify-planned-text);
+}
+.planning-responsible[data-responsible="multiple_partners"] .planning-responsible__kind {
+  color: var(--edify-warning-text);
+}
+.planning-responsible__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--edify-text);
+}
+/* The strip the fields above sit in — outside the collapsible row metadata,
+   so the Responsible, Visit, Training / Cluster, Next Activity and Partner
+   Workflow columns are read without opening a row. Narrow screens wrap whole
+   label-and-value pairs; from 64rem the strip is a five-column grid, so the
+   values line up down the list the way table columns would. */
+.planning-support {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  min-inline-size: 0;
+  margin: 0.5rem 0 0;
+}
+.planning-support > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.planning-support dt {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  white-space: nowrap;
+}
+.planning-support dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.planning-support .planning-indicator { min-inline-size: 0; }
+@media (min-width: 64rem) {
+  .planning-support {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)) minmax(0, 1.1fr);
+    gap: 0.25rem 1rem;
+  }
+  .planning-support > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+}
+
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */
 .context-metrics {
   --kpi-surface: #fff;
@@ -5482,3 +5609,4 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   caret-color: var(--edify-text);
 }
+

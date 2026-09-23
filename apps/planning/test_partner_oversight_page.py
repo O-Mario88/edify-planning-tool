@@ -31,7 +31,9 @@ class PageFixture(PartnerOversightFixture):
 
 
 class PageRendersTest(PageFixture):
-    def test_the_program_lead_sees_the_page_grouped_by_partner(self):
+    def test_the_program_lead_sees_one_partner_table_at_a_time(self):
+        """Every Partner is a tab; the table is the selected Partner's alone
+        (owner, 2026-09-23: no undifferentiated table of all Partners)."""
         self.assign()
         self.schedule(self.assign(partner=self.other_partner), cost=180_000)
         self.sign_in(self.pl_user)
@@ -42,7 +44,8 @@ class PageRendersTest(PageFixture):
         body = response.content.decode()
         self.assertIn("Partner X", body)
         self.assertIn("Partner Y", body)
-        self.assertIn("Yet to Schedule", body)
+        self.assertIn("Awaiting Schedule", body)
+        self.assertEqual(body.count("data-partner-monitoring-table"), 1)
 
     def test_a_cceo_sees_the_page_for_their_own_schools(self):
         """The CCEO helps the PL monitor. They were previously refused the
@@ -69,13 +72,13 @@ class PageRendersTest(PageFixture):
 
 
 class NoCostBeforeSchedulingOnThePageTest(PageFixture):
-    def test_the_yet_to_schedule_table_has_no_cost_column(self):
+    def test_the_monitoring_table_has_no_cost_column(self):
         self.assign()
         self.sign_in(self.pl_user)
 
         body = self.client.get("/partner-oversight/").content.decode()
 
-        table = body.split("Yet to Schedule")[1].split("Scheduled &amp; Delivering")[0]
+        table = body.split("data-partner-monitoring-table")[1].split("</table>")[0]
         self.assertNotIn("UGX", table)
         self.assertNotIn("Pending Calculation", table)
         self.assertNotIn("Not Available", table)

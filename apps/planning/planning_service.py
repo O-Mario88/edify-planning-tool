@@ -253,6 +253,29 @@ class PlanningDashboardService:
             set(active_partner_school_ids)
         )
 
+        # Partner-supported schools stay on Planning (owner, 2026-09-23): a
+        # Partner assignment changes who delivers, not who owns the school,
+        # and a school with work already planned may legitimately take more.
+        # With the rule live nothing is excluded from the lists; the Visit and
+        # Training indicators and the Responsible column say what is already
+        # arranged instead of the row disappearing. Off, the lists read
+        # exactly as before.
+        from apps.partners.support_responsibility import (
+            active_assignment_q,
+            visibility_enabled,
+        )
+
+        support_rule = visibility_enabled(principal)
+        if support_rule:
+            exclude_school_ids = set()
+            support_filter = filters.get("support") or "all"
+            if support_filter != "all":
+                from apps.planning.planning_badges import SchoolPlanningBadgeService
+
+                schools_qs = SchoolPlanningBadgeService.filter_queryset(
+                    schools_qs, support_filter, fy=fy, principal=principal
+                )
+
         # Tab-specific filters for the table view
         if active_tab == "client":
             table_schools_qs = schools_qs.filter(school_type="client").exclude(
@@ -262,6 +285,19 @@ class PlanningDashboardService:
             table_schools_qs = schools_qs.filter(
                 school_type__in=["core", "champion"]
             ).exclude(id__in=exclude_school_ids)
+        elif active_tab == "partner" and support_rule:
+            # The same live-support rule the Responsible column reads, so the
+            # tab and the column cannot disagree about which schools a
+            # Partner supports.
+            from django.db.models import Exists, OuterRef
+
+            table_schools_qs = schools_qs.filter(
+                Exists(
+                    PartnerAssignment.objects.filter(school=OuterRef("pk")).filter(
+                        active_assignment_q(fy)
+                    )
+                )
+            )
         elif active_tab == "partner":
             partner_school_ids = PartnerAssignment.objects.filter(
                 status__in=[
@@ -586,6 +622,25 @@ class PlanningDashboardService:
                             completed_trainings_by_school.get(attended_school_id, 0) + 1
                         )
 
+            # Who supports each school and what is already planned there, from
+            # the two shared read services the Cluster School List also reads,
+            # so the same school gives the same answer on both pages.
+            responsibility_map = {}
+            indicator_map = {}
+            if support_rule:
+                from apps.partners.support_responsibility import (
+                    SchoolSupportResponsibilityService,
+                )
+                from apps.planning.planning_badges import (
+                    SchoolPlanningBadgeService,
+                    next_activity,
+                )
+
+                responsibility_map = SchoolSupportResponsibilityService.resolve(
+                    paginated_schools, fy=fy
+                )
+                indicator_map = SchoolPlanningBadgeService.badges(school_ids, fy=fy)
+
             # Serialize Schools
             for s in paginated_schools:
                 weak = weakest_map.get(s.id, [])
@@ -686,6 +741,19 @@ class PlanningDashboardService:
                         "currentPartnerType": partner_assignment.partner.name
                         if partner_assignment and partner_assignment.partner
                         else "None",
+                        "supportRule": support_rule,
+                        "responsible": responsibility_map[s.id].as_dict()
+                        if support_rule
+                        else None,
+                        "visitIndicator": indicator_map[s.id]["visit"].as_dict()
+                        if support_rule
+                        else None,
+                        "trainingIndicator": indicator_map[s.id]["training"].as_dict()
+                        if support_rule
+                        else None,
+                        "nextActivity": next_activity(indicator_map[s.id])
+                        if support_rule
+                        else None,
                     }
                 )
 

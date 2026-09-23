@@ -1879,6 +1879,42 @@ def create(
             principal=principal,
             owner_id=data.get("responsibleStaffId"),
         )
+    if school is not None and not cluster_id:
+        # A Partner-supported school keeps its staff owner and stays plannable,
+        # but the support handed to the Partner is the Partner's to deliver:
+        # staff may directly plan Data Gathering, Content Gathering and Donor
+        # Visits there (owner, 2026-09-23). Checked here, in the one funnel
+        # every staff school activity passes through, so the drawer, the bulk
+        # paths and a crafted API request all meet the same rule. Schools with
+        # no live Partner support return before the catalogue is read.
+        from apps.planning.partner_school_policy import (
+            ORIGIN_CORE,
+            ORIGIN_SCHOOL,
+            PartnerSupportedSchoolPlanningPolicy,
+        )
+
+        PartnerSupportedSchoolPlanningPolicy.assert_direct_staff_activity_allowed(
+            school,
+            catalogue_item,
+            activity_type=activity_type,
+            planning_origin=ORIGIN_CORE if core_slot_verified else ORIGIN_SCHOOL,
+            delivery_channel=(
+                "partner"
+                if _resolved_executor_type(data) in PARTNER_EXECUTOR_TYPES
+                else "staff"
+            ),
+            fy=fy,
+            project_id=data.get("projectId"),
+            principal=principal,
+        )
+    elif cluster_id and data.get("invitedSchoolIds"):
+        # Cluster Planning stays open to Partner-supported schools; each is
+        # there because it was ticked by name, never by membership alone.
+        from apps.planning.partner_school_policy import (
+            assert_cluster_invitations_allowed,
+        )
+
+        assert_cluster_invitations_allowed(data["invitedSchoolIds"], principal)
     # Whose approval this needs, if anyone's. Set only for a request-only role
     # at a school somebody else owns; everything below that reads it is the
     # request path (apps.planning.visit_requests).

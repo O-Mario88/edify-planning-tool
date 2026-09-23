@@ -5,9 +5,11 @@ moment a supervised CCEO's activity or a partner's delivery appears in it, the
 list stops being a plan and becomes a monitoring dashboard the PL cannot act
 on — and team oversight already has its own page.
 
-The one carve-out is deliberate: a partner activity the PL is personally the
-managing staff for is the PL's own work, because they are the person who has
-to review the evidence and enter the Salesforce id.
+Partner delivery is never on a staff member's My Plan (owner, 2026-09-23), not
+even for the managing staff: the Partner executes it, and staff follow it on
+Partner Monitoring — where the managing staff's one task on it, entering the
+Salesforce id, is offered on the row. The earlier carve-out that put it on the
+manager's list returns only while the Partner-supported school rule is off.
 """
 
 from __future__ import annotations
@@ -116,12 +118,8 @@ class PlMyPlanTest(TestCase):
 
         self.assertNotIn(partner_work.id, self.plan_ids(self.pl_user))
 
-    def test_partner_work_the_program_lead_personally_manages_is_in_their_plan(self):
-        """The one carve-out: the PL is the managing staff, so it is their work.
-
-        They are the person who reviews the evidence and enters the Salesforce
-        id, and that is a task, not oversight.
-        """
+    def test_partner_work_the_program_lead_manages_is_not_in_their_plan(self):
+        """Managing a Partner's delivery is monitoring, not executing it."""
         mine_to_manage = self._activity(
             responsible_staff_id=None,
             monitored_by_staff_id=self.pl.id,
@@ -130,7 +128,24 @@ class PlMyPlanTest(TestCase):
             status="partner_scheduled",
         )
 
-        self.assertIn(mine_to_manage.id, self.plan_ids(self.pl_user))
+        self.assertNotIn(mine_to_manage.id, self.plan_ids(self.pl_user))
+
+    def test_the_carve_out_returns_with_the_rule_switched_off(self):
+        """Disabling the flag restores the previous display, records untouched."""
+        from django.test import override_settings
+
+        mine_to_manage = self._activity(
+            responsible_staff_id=None,
+            monitored_by_staff_id=self.pl.id,
+            assigned_partner_id=self.partner.id,
+            delivery_type="partner",
+            status="partner_scheduled",
+        )
+
+        with override_settings(
+            PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED=False
+        ):
+            self.assertIn(mine_to_manage.id, self.plan_ids(self.pl_user))
 
     def test_an_unscheduled_partner_assignment_is_never_in_any_plan(self):
         """It has no activity, so there is nothing anyone can do on a day."""

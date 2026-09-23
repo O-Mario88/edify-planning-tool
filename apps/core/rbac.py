@@ -193,6 +193,27 @@ class Permission(str, Enum):
     # that also cancelled live work is how a school loses support nobody
     # decided to remove.
     PARTNER_HOLD = "partner.hold"
+    # Partner-supported schools (owner, 2026-09-23). A Partner assignment
+    # changes who delivers, never who owns the school, so each authority below
+    # is deliberately narrow: seeing that a Partner supports a school is not
+    # managing Partners, and monitoring their work is not editing it.
+    #   SUPPORT_VIEW       the Responsible column on Planning / Cluster lists
+    #   MONITORING_VIEW    Partner Monitoring, in the reader's own scope
+    #   MONITORING_COUNTRY Partner Monitoring for the whole country
+    #   RETURN_RESOLVE     decide what happens to work a Partner handed back
+    #   REASSIGN           give handed-back work to another Partner
+    #   SCHOOL_DIRECT_PLAN plan the whitelisted direct staff activities
+    #                      (Data Gathering, Content Gathering, Donor Visit)
+    #                      at a Partner-supported school
+    #   SCHOOL_CLUSTER_PLAN invite a Partner-supported school, by name, to a
+    #                      Cluster Meeting or Group Training
+    PARTNER_SUPPORT_VIEW = "partnerSupport.view"
+    PARTNER_MONITORING_VIEW = "partnerMonitoring.view"
+    PARTNER_MONITORING_COUNTRY = "partnerMonitoring.country"
+    PARTNER_RETURN_RESOLVE = "partnerAssignment.resolveReturn"
+    PARTNER_ASSIGNMENT_REASSIGN = "partnerAssignment.reassign"
+    PARTNER_SCHOOL_DIRECT_PLAN = "partnerSchool.planDirect"
+    PARTNER_SCHOOL_CLUSTER_PLAN = "partnerSchool.planCluster"
     PROJECT_MANAGE = "project.manage"
     PROJECT_CONFIGURE_PRIORITIES = "project.configurePriorities"
     # Assign a school to a project. Distinct from PROJECT_MANAGE (which gates
@@ -883,6 +904,69 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_PURPOSE_REQUEST,
     ],
 }
+
+
+# ── Partner-supported schools (owner, 2026-09-23) ───────────────────────────
+# Granted to exactly the roles that already reach each surface, so the new keys
+# name an authority rather than widen one: the Planning and Cluster pages'
+# readers see the Responsible column; the Partner Oversight roles monitor; the
+# roles that hand work to a Partner resolve and reassign what comes back; the
+# roles that schedule a school visit plan the whitelisted direct activities;
+# the roles that plan a cluster's programme invite a Partner-supported school
+# to it. Admin inherits every key through the matrix above.
+_PARTNER_SUPPORT_GRANTS: dict[EdifyRole, tuple[Permission, ...]] = {
+    EdifyRole.CCEO: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_RETURN_RESOLVE,
+        P.PARTNER_ASSIGNMENT_REASSIGN,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+        P.PARTNER_SCHOOL_CLUSTER_PLAN,
+    ),
+    EdifyRole.COUNTRY_PROGRAM_LEAD: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_RETURN_RESOLVE,
+        P.PARTNER_ASSIGNMENT_REASSIGN,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+        P.PARTNER_SCHOOL_CLUSTER_PLAN,
+    ),
+    EdifyRole.PROJECT_COORDINATOR: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_RETURN_RESOLVE,
+        P.PARTNER_ASSIGNMENT_REASSIGN,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+        P.PARTNER_SCHOOL_CLUSTER_PLAN,
+    ),
+    EdifyRole.COUNTRY_DIRECTOR: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_MONITORING_COUNTRY,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+    ),
+    EdifyRole.IMPACT_ASSESSMENT: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_MONITORING_COUNTRY,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+    ),
+    EdifyRole.REGIONAL_VICE_PRESIDENT: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_MONITORING_COUNTRY,
+    ),
+    EdifyRole.PROGRAM_ACCOUNTANT: (
+        P.PARTNER_SUPPORT_VIEW,
+        P.PARTNER_MONITORING_VIEW,
+        P.PARTNER_MONITORING_COUNTRY,
+        P.PARTNER_SCHOOL_DIRECT_PLAN,
+    ),
+}
+for _role, _grants in _PARTNER_SUPPORT_GRANTS.items():
+    ROLE_PERMISSIONS[_role] = [
+        *ROLE_PERMISSIONS[_role],
+        *(p for p in _grants if p not in ROLE_PERMISSIONS[_role]),
+    ]
 
 
 def permissions_for_role(role: EdifyRole | str) -> list[str]:

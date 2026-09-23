@@ -176,6 +176,19 @@ starts from (2026-09-06 filter audit).{% endcomment %}
 {% endfor %}
 </select>
 </div>
+{% if support_rule %}
+{% comment %}Who supports the school and what is already planned there (owner,
+2026-09-23). Partner-supported schools stay in the same list; this narrows to
+them, or to the staff-managed ones, without either disappearing by default.{% endcomment %}
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">Show</span>
+<select aria-label="Support and planning status" name="support" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[160px]">
+{% for val, label in support_filters %}
+<option value="{{ val }}" {% if selected_support == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
 <!-- SSA status -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">SSA</span>

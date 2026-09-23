@@ -119,7 +119,19 @@ onPurposeChange() {
   if (!this.showFollowUpPicker) { this.sourceActivityId = ''; }
   if (this.showSsaDataGathering || (this.showFollowUpPicker && this.followUpRequiresTraining)) { this.focusIntervention = ''; }
 },
-plannedParticipants: ''
+plannedParticipants: '',
+{% comment %}Soft duplicate protection (owner, 2026-09-23). A school may be
+planned more than once, so an existing plan of the same kind is a notice with
+four ways forward, never a refusal. The list and the purpose → kind map are the
+server's; this only matches them.{% endcomment %}
+existingPlans: {{ existing_plans_json|default:'[]' }},
+purposeTypes: {{ purpose_activity_types_json|default:'{}' }},
+lockedPurposes: {{ partner_locked_purposes_json|default:'[]' }},
+duplicateAcknowledged: false,
+get overlapPlan() {
+  const kind = this.purposeTypes[this.purposeOfVisit];
+  return kind ? (this.existingPlans.find(plan => plan.activityType === kind) || null) : null;
+}
 }"
 x-init="ensureTrainingActivity()"
 >
@@ -135,6 +147,36 @@ x-init="ensureTrainingActivity()"
   <p class="font-bold">Links to priority: {{ planning_priority.milestone.title }}</p>
   <p class="mt-1 font-medium">The scheduled activity will be traceable to this approved allocation.</p>
 </div>
+{% endif %}
+
+{% if partner_support.responsible.is_partner and not reschedule_mode %}
+{% comment %}The school stays in the planner's portfolio and on this drawer;
+what changes is who delivers the support a Partner has taken on (owner,
+2026-09-23). Named, with the Partner's plans, so nobody schedules on top of
+them without seeing them first.{% endcomment %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-partner-support-notice>
+  <p class="font-bold">This school is supported by {% if partner_support.responsible.needs_review %}more than one Partner ({{ partner_support.responsible.responsible_name }}){% else %}{{ partner_support.responsible.responsible_name }}{% endif %}.</p>
+  {% for plan in existing_plans %}{% if plan.by_partner %}
+  <p class="mt-1 font-medium">Existing Partner activity: {{ plan.label }} {{ plan.status_label|lower }} for {{ plan.date_label }}.</p>
+  {% endif %}{% endfor %}
+  {% if partner_support.locked_purposes %}
+  <p class="mt-1 font-medium" data-partner-lock-reason>{{ partner_support.lock_reason }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if existing_plans and not reschedule_mode %}
+<details class="rounded-surface border border-slate-200 bg-slate-50 p-3" data-existing-plans>
+  <summary class="cursor-pointer font-bold text-slate-700">Already planned at this school ({{ existing_plans|length }})</summary>
+  <ul class="mt-2 space-y-1">
+    {% for plan in existing_plans %}
+    <li class="flex items-center justify-between gap-3">
+      <span class="min-w-0 truncate">{{ plan.label }} · {{ plan.who }}</span>
+      <span class="shrink-0 whitespace-nowrap font-medium text-slate-500">{{ plan.date_label }} · {{ plan.status_label }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
 {% endif %}
 
 {% if visit_request_owner_name and not reschedule_mode %}
@@ -267,7 +309,7 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select the purpose of this visit…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
+    <option value="{{ value }}" {% if value in partner_locked_purposes %}disabled data-purpose-locked="partner"{% elif value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in partner_locked_purposes %} — delivered by the Partner{% elif value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
     {% endfor %}
   </select>
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The purpose determines which activity and evidence workflow is created.</p>
@@ -287,6 +329,18 @@ its costing on, so the costing link is derived server-side and never asked for.
     names the person who can fix it. It never tells anyone to create a
     Project they do not need.
   {% endcomment %}
+  <template x-if="overlapPlan && !duplicateAcknowledged">
+    <div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-duplicate-warning>
+      <p class="font-bold">A plan like this already exists at this school.</p>
+      <p class="mt-1 font-medium normal-case tracking-normal"><span x-text="overlapPlan.label"></span> · <span x-text="overlapPlan.date"></span>. A school may be planned more than once — continue if this is separate work.</p>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <a :href="overlapPlan.url" class="btn h-8 whitespace-nowrap">View Existing Plan</a>
+        <button type="button" class="btn h-8 whitespace-nowrap" @click="duplicateAcknowledged = true">Continue Planning</button>
+        <button type="button" class="btn h-8 whitespace-nowrap" x-show="!lockedPurposes.includes('training_follow_up')" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); duplicateAcknowledged = true">Plan as Follow-Up</button>
+        <button type="button" class="btn h-8 whitespace-nowrap" @click="$dispatch('close-drawer')">Cancel</button>
+      </div>
+    </div>
+  </template>
   <p x-show="purposeOfVisit && profile.schedulable === false" style="display:none"
      class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-rose-600"
      x-text="profile.unavailableReason" role="alert"></p>

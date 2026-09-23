@@ -222,6 +222,12 @@ rather than vanishing without a reason.{% endcomment %}
 <th scope="col" class="px-4 py-2.5">Last Visit</th>
 <th scope="col" class="px-4 py-2.5">Last Training</th>
 <th scope="col" class="px-4 py-2.5">Readiness</th>
+{% if support_rule %}
+<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Visit</th>
+<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Training / Cluster</th>
+<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Responsible</th>
+<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Partner Workflow</th>
+{% endif %}
 {% if can_schedule %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Plan</th>{% endif %}
 {% if can_edit_cluster %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Remove</th>{% endif %}
 </tr>
@@ -242,8 +248,24 @@ rather than vanishing without a reason.{% endcomment %}
 {{ s.planningStatusLabel }}
 </span>
 </td>
+{% if support_rule %}{% include "partials/planning/support_cells.html" with school=s %}{% endif %}
 {% if can_schedule %}
 <td class="px-4 py-3 text-right whitespace-nowrap w-px" data-label="Plan">
+{% if can_plan_clusters and support_rule and s.responsible.is_partner %}
+{% comment %}Cluster Planning stays open to a Partner-supported school (owner,
+2026-09-23): the drawer opens with this school ticked and the cluster's other
+Partner-supported schools not, so each joins because somebody chose it.{% endcomment %}
+<div class="inline-flex items-center gap-2">
+<button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Add {{ s.name }} to a Cluster Meeting" data-add-to-cluster="meeting">
+<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="9" r="2.5"/><circle cx="16" cy="9" r="2.5"/><path d="M3.5 18c.4-2.7 2-4 4.5-4s4.1 1.3 4.5 4M11.5 18c.4-2.7 2-4 4.5-4s4.1 1.3 4.5 4"/></svg>
+<span>Add to Meeting</span>
+</button>
+<button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training&amp;school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Add {{ s.name }} to a Group Training" data-add-to-cluster="training">
+<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5h16v10H4zM9 20h6M12 16.5V20"/></svg>
+<span>Add to Training</span>
+</button>
+</div>
+{% endif %}
 {% if s.staffCanSchedule %}
 <button
 type="button"
@@ -288,7 +310,7 @@ aria-label="Remove {{ s.name }} from this cluster"
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if can_schedule and can_edit_cluster %}8{% elif can_schedule or can_edit_cluster %}7{% else %}6{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if support_rule %}{% if can_schedule and can_edit_cluster %}12{% elif can_schedule or can_edit_cluster %}11{% else %}10{% endif %}{% else %}{% if can_schedule and can_edit_cluster %}8{% elif can_schedule or can_edit_cluster %}7{% else %}6{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button
