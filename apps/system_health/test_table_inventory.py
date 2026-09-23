@@ -48,7 +48,20 @@ class TableBoundsTest(SimpleTestCase):
     #: * `partials/today/workbench.html` — `waiting` is capped at WAITING_LIMIT
     #:   (8) in today_views and the card's header discloses the whole queue
     #:   ("View all N"): bounded in Python, and the reader is told there is more.
-    UNBOUNDED_CEILING = 8
+    #: * `partials/clusters/cluster_schools_table.html` — the schools of one
+    #:   cluster, drawn inside that cluster's card (a card list until the table
+    #:   redesign, 8bb11a1, so the scanner never saw it). Bounded by cluster
+    #:   size: clusters group a few neighbouring schools (the largest in the
+    #:   16,000-school scaled estate has six).
+    #: * `partials/dashboards/pl/programmes_view.html` — the monthly
+    #:   completion table behind the Program Lead's chart (8bb11a1): one row
+    #:   per supervised officer, twelve month columns. Bounded by the team,
+    #:   like the team targets matrix, and read side by side with the chart.
+    #: * `partials/oversight/cluster_activity_table.html` — one officer's group
+    #:   trainings and cluster meetings for the year on the cluster oversight
+    #:   page (7586e32). Bounded by what one officer can deliver in twelve
+    #:   months, the same reasoning as the My Plan cards above.
+    UNBOUNDED_CEILING = 11
 
     def test_no_new_unbounded_tables(self):
         report = table_report()
@@ -114,6 +127,27 @@ class TableBoundsTest(SimpleTestCase):
                 table_inventory.TEMPLATES = original
         self.assertEqual(states.get("capped.html"), "sliced")
         self.assertEqual(states.get("whole.html"), "unbounded")
+
+    def test_a_server_pagination_strip_after_a_table_pages_it(self):
+        """Planning pages its school tables in the view and draws the
+        "Showing 1-25 of N" strip under them, beyond the pager neighbourhood:
+        that is paginated, but a strip that only precedes a table is not."""
+        from django.conf import settings
+
+        rows = "<table><tbody>{% for row in rows %}<tr><td>{{ row }}</td></tr>{% endfor %}</tbody></table>"
+        strip = '<div class="edify-pagination-scope">Showing 1-25 of 300</div>'
+        with tempfile.TemporaryDirectory(dir=settings.BASE_DIR) as directory:
+            root = pathlib.Path(directory)
+            (root / "paged.html").write_text(rows + "x" * 2000 + strip)
+            (root / "before.html").write_text(strip + rows)
+            original = table_inventory.TEMPLATES
+            table_inventory.TEMPLATES = root
+            try:
+                states = {f.template.split("/")[-1]: f.state for f in scan_tables()}
+            finally:
+                table_inventory.TEMPLATES = original
+        self.assertEqual(states.get("paged.html"), "paginated")
+        self.assertEqual(states.get("before.html"), "unbounded")
 
     def test_the_three_states_stay_separate(self):
         # Sliced is reported beside paginated, never folded into it.
