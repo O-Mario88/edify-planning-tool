@@ -806,6 +806,20 @@ def planning_dashboard_view(request):
         "selected_cluster_status": filters["cluster_status"],
         "selected_partner": filters["partner"],
         "selected_support": filters["support"],
+        # How many narrowing filters are set, for the phone disclosure that
+        # folds the filter row away ("Filters · 2 active"). Year, quarter and
+        # grouping always carry a value, so they are the view, not a filter.
+        "active_filter_count": sum(
+            1
+            for key, idle in (
+                ("district", "All"),
+                ("staff", "All"),
+                ("planning_readiness", "All"),
+                ("ssa_status", "All"),
+                ("support", "all"),
+            )
+            if (filters.get(key) or idle) != idle
+        ),
         "support_filters": PLANNING_SUPPORT_FILTERS,
         "support_rule": support_visibility_enabled(request.user),
         "can_monitor_partners": _has_permission(

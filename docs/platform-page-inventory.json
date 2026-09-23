@@ -1491,7 +1491,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8063,
+      "bytes": 8135,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7300,7 +7300,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16385,
+      "bytes": 16393,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -9258,7 +9258,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7949,
+      "bytes": 8190,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9421,7 +9421,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 515,
+      "bytes": 531,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -11725,7 +11725,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 584,
+      "bytes": 586,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",

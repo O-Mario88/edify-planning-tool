@@ -290,7 +290,7 @@
 }
 
 .edify-bottom-nav__label {
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.1;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -314,7 +314,7 @@
 
   background: var(--edify-danger);
   color: var(--edify-danger-ink, #fff);
-  font-size: 0.625rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.125rem;
   text-align: center;

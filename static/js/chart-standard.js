@@ -133,7 +133,7 @@
     const wholeNumbers = values.every(v => Number.isInteger(v));
     const colors = panel.series.map(s => colorFor(s.colorIndex ?? 0));
     const axis = {...panel.axis, opposite: false, show: true, seriesName: undefined, forceNiceScale: true, tickAmount: 4,
-      min: Math.min(0, ...values), labels: {style: {colors: axisInk, fontSize: '11px'},
+      min: Math.min(0, ...values), labels: {style: {colors: axisInk, fontSize: '12px'},
         formatter: horizontal ? value => String(value) : value => (wholeNumbers && !Number.isInteger(value) ? '' : formatter(value))}};
     if (axis.max != null && Math.max(0, ...values) > axis.max) delete axis.max;
     const perBar = horizontal ? panel.series.length * 16 + 12 : 0;
@@ -165,15 +165,15 @@
       dataLabels: {enabled: !trend, offsetY: horizontal ? 0 : -16, offsetX: horizontal ? 6 : 0,
         textAnchor: horizontal ? 'start' : 'middle',
         formatter: (value, opts) => labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
-        style: {fontSize: '11px', fontWeight: 500, colors: [ink]}, background: {enabled: false}},
+        style: {fontSize: '12px', fontWeight: 500, colors: [ink]}, background: {enabled: false}},
       xaxis: {crosshairs: {show: trend, stroke: {color: colors[0], width: 1, dashArray: 0}}, categories: panel.categories, type: 'category',
         title: horizontal ? (panel.axis?.title || {}) : {},
         labels: {trim: false, maxHeight: 72, rotate: -30, rotateAlways: false, hideOverlappingLabels: true, ...(horizontal ? {formatter} : {}),
-          style: {colors: axisInk, fontSize: '11px'}},
+          style: {colors: axisInk, fontSize: '12px'}},
         axisBorder: {show: true, color: gridInk}, axisTicks: {show: false}},
       // A panel already named by its title does not repeat it down the axis.
       yaxis: horizontal ? {...axis, title: {}} : (panel.title ? {...axis, title: {}} : axis),
-      legend: {show: panel.series.length > 1, position: 'top', horizontalAlign: 'left', fontSize: '11px', fontWeight: 500,
+      legend: {show: panel.series.length > 1, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 500,
         offsetY: -2, itemMargin: {horizontal: 8, vertical: 2}, labels: {colors: ink},
         markers: {width: 8, height: 8, radius: trend ? 8 : 1, offsetX: -3}},
       grid: {show: true, borderColor: gridInk, strokeDashArray: 0,

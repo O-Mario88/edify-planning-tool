@@ -94,6 +94,12 @@ Scheduling used to navigate to My Plan, so a planner walked back here after
 every single activity (owner, 2026-09-18). Staying put only works if the list
 keeps up: a row still offering to schedule work that is already scheduled is
 how the same visit gets planned twice.{% endcomment %}
+{% comment %}On a phone or tablet the filter row folds behind one disclosure —
+the shared mobile filter pattern (mobile-ux.js opens it from 64rem and
+collapses it below), so the first screen is the school list, not seven
+selects (owner, 2026-09-23).{% endcomment %}
+<details class="mobile-family-filter" open data-planning-filters>
+<summary><span>Filters{% if active_filter_count %} · {{ active_filter_count }} active{% endif %}</span><small>Year, quarter, district, staff and planning status</small><span aria-hidden="true">⌄</span></summary>
 <form
 id="filters-form"
 hx-get="/planning"
@@ -210,6 +216,7 @@ class="edify-primary-text edify-primary-text-hover edify-text-caption font-semib
 Clear Filters
 </a>
 </form>
+</details>
 
 <!-- KPI cards Row -->
 {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Planning context" %}

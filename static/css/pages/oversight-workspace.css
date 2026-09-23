@@ -83,7 +83,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-edify-primary) 10%, transparent);
   color: inherit;
-  font-size: .625rem;
+  font-size: var(--edify-text-micro-size);
   font-variant-numeric: tabular-nums;
 }
 
@@ -112,7 +112,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 .edify-training-group-title { display: inline-flex; align-items: center; gap: .55rem; }
 .edify-training-chevron { display: inline-block; transition: transform .16s ease; }
 .edify-training-group-toggle[aria-expanded="true"] .edify-training-chevron { transform: rotate(180deg); }
-.edify-training-group-meta { color: var(--edify-text-muted); font-size: .72rem; font-weight: 600; white-space: normal; }
+.edify-training-group-meta { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; white-space: normal; }
 @media (max-width: 47.99rem) {
   main [data-oversight-workspace] .edify-training-group-toggle { flex-wrap: wrap; }
 }
@@ -153,7 +153,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 
   [data-oversight-workspace] .oversight-entity-tabs__link {
     min-block-size: 2.25rem;
-    font-size: .6875rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   [data-oversight-workspace] .kpi-strip__value {

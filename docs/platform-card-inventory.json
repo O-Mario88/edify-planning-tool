@@ -2575,7 +2575,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 298,
+   "line": 305,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,

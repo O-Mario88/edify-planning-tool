@@ -21,7 +21,8 @@ const files = [
   'drawers.css',
   'components/mobile-micro-ux.css',
   'components/interactions.css',
-  'components/mobile-patterns.css'
+  'components/mobile-patterns.css',
+  'components/responsive-system.css'
 ];
 
 const candidates = new Set();

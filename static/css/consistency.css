@@ -4372,6 +4372,14 @@ main textarea,
   inline-size: calc(100% - 2 * var(--edify-drawer-inset)) !important;
   min-inline-size: 0 !important;
 }
+/* Except on a phone, where the drawer is a full-width sheet from the bottom
+   edge (drawers.css, 2026-09-23); at this specificity the card width above
+   would otherwise hold it clear of both edges. */
+@media (max-width: 47.99rem) {
+  .drawer-surface.drawer-surface.drawer-surface {
+    inline-size: 100% !important;
+  }
+}
 /* Choice cards retain their title/description hierarchy in a narrow dialog. */
 .drawer-surface .drawer-body button.edify-stacked-label-button {
   display: flex !important;

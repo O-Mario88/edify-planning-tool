@@ -29,9 +29,13 @@
   font-weight: var(--edify-text-micro-weight);
   line-height: var(--edify-text-micro-leading);
   letter-spacing: var(--edify-text-micro-tracking);
-  white-space: normal;
+  /* One line, like every status label (responsive-system.css): a label that
+     runs out of room ends in an ellipsis and carries its full text as a
+     title, instead of wrapping into a taller pill than its neighbours. */
+  white-space: nowrap;
   max-inline-size: 100%;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .edify-badge[data-tone="success"] {
@@ -5371,6 +5375,14 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   text-overflow: ellipsis;
 }
 .planning-support .planning-indicator { min-inline-size: 0; }
+/* On a Planning row the strip is its own grid row, under the school's name
+   and actions, so a phone gives its values the row's width rather than what
+   the action buttons leave of the name column. */
+.school-record-row__summary > .planning-support {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  margin: 0;
+}
 @media (min-width: 64rem) {
   .planning-support {
     display: grid;

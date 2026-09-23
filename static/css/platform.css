@@ -18,7 +18,7 @@
 [x-cloak] { display: none !important; }
 
 :root {
-  --edify-page-max-size: 112rem;
+  --edify-page-max-size: var(--edify-content-max-standard);
   --edify-control-block-size: 2.5rem;
   --edify-action-button-block-size: 2.75rem;
   --edify-action-button-padding-inline: 1.125rem;
@@ -4320,7 +4320,11 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .edify-report-timeline {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  /* Four periods side by side where they fit, fewer where they do not. The
+     container queries below refine this inside a report workspace; /reports
+     renders the timeline outside one, where four 80px columns on a phone
+     pushed the page sideways (2026-09-23). */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)) !important;
   gap: 0.625rem !important;
   min-inline-size: 0 !important;
   margin-block-end: 0 !important;
@@ -4339,8 +4343,11 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .edify-report-period__heading {
   display: flex;
+  /* The period and its kind are two labels: each stays on one line, and the
+     kind drops below the period when a narrow card cannot hold both. */
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0 0.5rem;
   max-inline-size: 100%;
   white-space: nowrap;
 }

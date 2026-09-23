@@ -79,12 +79,12 @@ inset themselves — see components/mobile-shell.css.
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260920background3">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260921people1">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260923responsive1">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260923responsive1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260914header2">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260923responsive1">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260914hierarchy1">
-<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260920bars2">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260923responsive1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,21 +98,26 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260920bars2">
+<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260923responsive1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260920oversight2">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260923responsive1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260920bars2">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260921railmore1">
-<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260914states2">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923responsive1">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260923responsive1">
+<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
 <link rel="stylesheet" href="{% static 'css/form-refinement.css' %}?v=20260920forms2">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260920bars2">
+<!-- The responsive system: one-line controls, scrolling tables with a sticky
+     identity column, the workspace overflow guard and the phone page header.
+     After every layout layer, so none of them can re-open what it closes;
+     only the pointer-response layer below comes later. -->
+<link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923responsive1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260923responsive1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -160,7 +165,7 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/chart-standard.js' %}?v=20260921people1"></script>
+    <script src="{% static 'js/chart-standard.js' %}?v=20260923responsive1"></script>
     <script src="{% static 'js/alpine-components.js' %}?v=20260920bars2"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
@@ -223,7 +228,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260920svgunits1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260921railmore1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260923responsive1"></script>
 
 {% comment %}
 A paginated link keeps the tab the reader chose. Oversight puts one person's

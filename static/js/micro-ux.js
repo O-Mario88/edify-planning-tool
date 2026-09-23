@@ -562,7 +562,7 @@
     var label = ensureTableCaption(table);
     var columnCount = tableColumnCount(table);
     table.dataset.edifyTableColumns = String(columnCount);
-    table.dataset.edifyTableWidth = columnCount > 8 ? 'xwide' : (columnCount > 5 ? 'wide' : 'standard');
+    table.dataset.edifyTableWidth = columnCount <= 3 ? 'compact' : (columnCount > 8 ? 'xwide' : (columnCount > 5 ? 'wide' : 'standard'));
     var headerCells = Array.from(table.querySelectorAll('thead tr:last-child th'));
     headerCells.forEach(function (header) {
       if (!header.hasAttribute('scope')) header.setAttribute('scope', 'col');
@@ -583,6 +583,124 @@
        horizontally whenever its content is wider than the region. */
     table.classList.add('edify-mobile-table--scroll');
     makeScrollRegion(table, label);
+  }
+
+  /* ── Scroll state, fade and first-use hint ───────────────────────────────
+     A table wider than its region says so. The region reports
+     `data-scroll-state` — none (the table fits), start, middle or end — and
+     responsive-system.css turns that into a sticky identity column and a
+     trailing fade. The first overflowing table on a narrow or touch screen
+     also carries a one-time hint until any table has been scrolled in this
+     session. Layout geometry only: nothing here is a quantity the server
+     owns. */
+  var SWIPE_LEARNED_KEY = 'edify-table-swipe-learned';
+  var hintScreen = window.matchMedia('(max-width: 63.99rem), (pointer: coarse)');
+
+  function swipeLearned() {
+    try { return window.sessionStorage.getItem(SWIPE_LEARNED_KEY) === '1'; } catch (error) { return false; }
+  }
+
+  function learnSwipe() {
+    try { window.sessionStorage.setItem(SWIPE_LEARNED_KEY, '1'); } catch (error) { /* storage blocked: the hint simply returns next page */ }
+    document.querySelectorAll('.edify-table-scroll-hint').forEach(function (hint) { hint.remove(); });
+  }
+
+  function updateScrollState(region) {
+    if (!region.isConnected) return;
+    var reach = region.scrollWidth - region.clientWidth;
+    var state = reach <= 1 ? 'none'
+      : (region.scrollLeft <= 1 ? 'start' : (region.scrollLeft >= reach - 1 ? 'end' : 'middle'));
+    if (region.dataset.scrollState !== state) {
+      var pinned = (region.dataset.scrollState || 'none') === 'none' || state === 'none';
+      region.dataset.scrollState = state;
+      /* Pinning the identity starts or stops capping its name. */
+      if (pinned) titleTruncatedLabels(region);
+    }
+    if (state === 'start' && hintScreen.matches && !swipeLearned() &&
+        !document.querySelector('.edify-table-scroll-hint')) {
+      var hint = document.createElement('span');
+      hint.className = 'edify-table-scroll-hint';
+      hint.setAttribute('aria-hidden', 'true');
+      hint.textContent = window.matchMedia('(pointer: coarse)').matches
+        ? 'Swipe to view more columns'
+        : 'Scroll sideways to view more columns';
+      region.appendChild(hint);
+    }
+  }
+
+  var regionResizeObserver = typeof ResizeObserver === 'function'
+    ? new ResizeObserver(function (entries) {
+        entries.forEach(function (entry) {
+          var region = entry.target.closest('.edify-table-scroll-region');
+          if (!region || !region.isConnected) {
+            regionResizeObserver.unobserve(entry.target);
+            return;
+          }
+          updateScrollState(region);
+        });
+      })
+    : null;
+
+  function watchScrollRegion(region) {
+    if (region.dataset.scrollWatch === 'true') {
+      updateScrollState(region);
+      return;
+    }
+    region.dataset.scrollWatch = 'true';
+    var queued = false;
+    region.addEventListener('scroll', function () {
+      if (region.scrollLeft > 8) learnSwipe();
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(function () {
+        queued = false;
+        updateScrollState(region);
+      });
+    }, { passive: true });
+    if (regionResizeObserver) {
+      regionResizeObserver.observe(region);
+      var table = region.querySelector(':scope > table');
+      if (table) regionResizeObserver.observe(table);
+    }
+    updateScrollState(region);
+  }
+
+  function watchScrollRegions(root) {
+    if (root.matches && root.matches('.edify-table-scroll-region')) watchScrollRegion(root);
+    if (root.querySelectorAll) root.querySelectorAll('.edify-table-scroll-region').forEach(watchScrollRegion);
+  }
+
+  /* ── A full-text path for every cut label ────────────────────────────────
+     Status labels, list titles and `truncate` utilities end in an ellipsis
+     when their space runs out. Each one that is actually cut gets its full
+     text as a title — a tooltip for a pointer, and a name a screen reader
+     already had from the text itself — and loses it again when a wider
+     screen shows it whole. */
+  var TRUNCATABLE = [
+    '.truncate', '.text-ellipsis', '.edify-badge', '.badge', '.status-pill',
+    '.edify-status-badge', '.pill', '.planning-indicator', '.planning-responsible',
+    '[data-record-title] > *',
+    '.edify-table-scroll-region > table > tbody > tr > :is(:first-child, :nth-child(2)) > :first-child'
+  ].join(', ');
+
+  function titleTruncatedLabels(root) {
+    runWhenIdle(function () {
+      if (root !== document && !root.isConnected) return;
+      var labels = Array.from((root.querySelectorAll ? root : document).querySelectorAll(TRUNCATABLE));
+      /* Read every width first, then write: one layout for the pass. */
+      var cut = labels.map(function (element) { return element.scrollWidth > element.clientWidth + 1; });
+      labels.forEach(function (element, index) {
+        if (cut[index]) {
+          if (!element.hasAttribute('title') && !element.hasAttribute('aria-label')) {
+            element.title = visibleText(element);
+            element.dataset.edifyTitle = 'cut';
+          }
+        } else if (element.dataset.edifyTitle === 'cut') {
+          element.removeAttribute('title');
+          delete element.dataset.edifyTitle;
+        }
+      });
+    });
   }
 
   var desktopShell = window.matchMedia('(min-width: 64rem)');
@@ -1291,7 +1409,11 @@
   var fitTimer = null;
   window.addEventListener('resize', function () {
     window.clearTimeout(fitTimer);
-    fitTimer = window.setTimeout(function () { fitRails(document); fitTables(document); }, 150);
+    fitTimer = window.setTimeout(function () {
+      fitRails(document);
+      fitTables(document);
+      titleTruncatedLabels(document);
+    }, 150);
   }, { passive: true });
 
   function enhanceTables(root) {
@@ -1798,6 +1920,8 @@
       enhanceCustomDialogs(root);
       fitRails(root);
       fitTables(root);
+      watchScrollRegions(root);
+      titleTruncatedLabels(root);
     });
   }
 

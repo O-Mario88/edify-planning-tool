@@ -25,7 +25,10 @@ class MobileDensityContractTests(SimpleTestCase):
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
 
         self.assertIn("@media (min-width: 64rem)", css)
-        self.assertIn("--edify-desktop-list-title-size: 0.9375rem", css)
+        # List titles are the title step of the one fluid scale (2026-09-23).
+        self.assertIn(
+            "--edify-desktop-list-title-size: var(--edify-text-title-size)", css
+        )
         self.assertIn("--edify-desktop-list-icon-size: 2rem", css)
         self.assertIn("--edify-action-button-block-size: 2.5rem", css)
         self.assertIn("--edify-action-button-icon-size: 0.875rem", css)
@@ -64,12 +67,12 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertIn("font-size: var(--edify-text-micro-size) !important", css)
 
     def test_platform_typography_uses_one_responsive_semantic_scale(self):
+        """One fluid scale in design-system.css (owner, 2026-09-23); this layer
+        maps legacy utilities onto it and no longer re-declares a step per
+        breakpoint — the per-breakpoint copies inverted the ladder on phones."""
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
 
-        self.assertIn("--edify-text-display-size: 1.125rem", css)
-        self.assertIn("--edify-text-display-size: 1rem", css)
-        self.assertIn("--edify-text-display-size: 1.25rem", css)
-        self.assertIn("--edify-text-body-size: 0.8125rem", css)
+        self.assertNotRegex(css, r"--edify-text-[a-z-]+-size\s*:")
         self.assertIn('[class~="text-[18px]"]', css)
         self.assertIn(":not(input, select, textarea)", css)
         self.assertIn("font-size: var(--edify-text-body-size) !important", css)
@@ -78,7 +81,9 @@ class MobileDensityContractTests(SimpleTestCase):
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
         cluster = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()
 
-        self.assertIn("--edify-mobile-list-title-size: 0.8125rem", css)
+        self.assertIn(
+            "--edify-mobile-list-title-size: var(--edify-text-title-size)", css
+        )
         self.assertIn("-webkit-line-clamp: 2", css)
         self.assertIn("line-clamp: 2", css)
         self.assertIn("[data-record-title]", css)

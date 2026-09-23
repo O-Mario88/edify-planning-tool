@@ -418,7 +418,7 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-padding-inline: 0.625rem;
     --edify-action-button-icon-size: 0.875rem;
     --edify-action-button-radius: var(--radius-control);
-    --edify-desktop-list-title-size: 0.9375rem;
+    --edify-desktop-list-title-size: var(--edify-text-title-size);
     --edify-desktop-list-icon-size: 2rem;
   }
 
@@ -438,7 +438,7 @@ main #filters-form .school-filter-grid > * {
     padding-block: 0 !important;
     padding-inline: var(--edify-action-button-padding-inline) !important;
     border-radius: var(--edify-action-button-radius) !important;
-    font-size: 0.8125rem !important;
+    font-size: var(--edify-text-label-size) !important;
     line-height: 1.15 !important;
   }
 
@@ -532,18 +532,7 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-padding-inline: 0.75rem;
     --edify-action-button-icon-size: 0.9375rem;
     --edify-action-button-radius: var(--radius-control);
-    --edify-mobile-list-title-size: 0.9375rem;
-    --edify-text-display-size: 1.25rem;
-    --edify-text-heading-size: 1rem;
-    --edify-text-title-size: 0.9375rem;
-    --edify-text-body-size: 0.8125rem;
-    --edify-text-label-size: 0.8125rem;
-    --edify-text-card-heading-size: 1rem;
-    --edify-text-card-title-size: 0.9375rem;
-    --edify-text-tile-value-size: 1.125rem;
-    --edify-text-tile-label-size: 0.75rem;
-    --edify-text-tile-helper-size: 0.75rem;
-    --edify-text-table-size: 0.8125rem;
+    --edify-mobile-list-title-size: var(--edify-text-title-size);
   }
 
   /* Bring legacy fixed-size utilities onto the same responsive type scale.
@@ -628,7 +617,7 @@ main #filters-form .school-filter-grid > * {
     padding-block: 0 !important;
     padding-inline: var(--edify-action-button-padding-inline) !important;
     border-radius: var(--edify-action-button-radius) !important;
-    font-size: 0.8125rem !important;
+    font-size: var(--edify-text-label-size) !important;
     line-height: 1.15 !important;
   }
 
@@ -715,28 +704,7 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-padding-inline: 0.5rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
-    --edify-mobile-list-title-size: 0.875rem;
-    --edify-text-display-size: 1.125rem;
-    --edify-text-heading-size: 0.9375rem;
-    --edify-text-title-size: 0.875rem;
-    --edify-text-body-size: 0.875rem;
-    --edify-text-label-size: 0.8125rem;
-    --edify-text-card-heading-size: 0.9375rem;
-    --edify-text-card-title-size: 0.875rem;
-    --edify-text-tile-value-size: 1rem;
-    --edify-text-table-size: 0.8125rem;
-  }
-
-  .edify-shell :is(a, button, summary):is(
-    .btn,
-    .edify-action-button,
-    .btn-premium-primary,
-    .btn-premium-secondary,
-    .school-record-action,
-    .edify-primary-solid,
-    [role="button"]
-  ) {
-    font-size: var(--edify-text-micro-size) !important;
+    --edify-mobile-list-title-size: var(--edify-text-title-size);
   }
 
   [data-mobile-family="directory"] [data-row-disclosure-summary],
@@ -767,31 +735,11 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-padding-inline: 0.45rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
-    --edify-mobile-list-title-size: 0.8125rem;
-    --edify-text-display-size: 1rem;
-    --edify-text-heading-size: 0.875rem;
-    --edify-text-title-size: 0.75rem;
-    --edify-text-body-size: 0.875rem;
-    --edify-text-label-size: 0.8125rem;
-    --edify-text-card-heading-size: 0.875rem;
-    --edify-text-card-title-size: 0.8125rem;
-    --edify-text-tile-value-size: 0.9375rem;
+    --edify-mobile-list-title-size: var(--edify-text-title-size);
   }
 
   main > [data-mobile-family] {
     padding-inline: 0.75rem !important;
-  }
-
-  .edify-shell :is(a, button, summary):is(
-    .btn,
-    .edify-action-button,
-    .btn-premium-primary,
-    .btn-premium-secondary,
-    .school-record-action,
-    .edify-primary-solid,
-    [role="button"]
-  ) {
-    font-size: var(--edify-text-micro-size) !important;
   }
 
   .school-record-row__content {

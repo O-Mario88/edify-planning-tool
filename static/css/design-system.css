@@ -335,52 +335,59 @@
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
      Geist Sans — the platform typeface for data-dense premium dashboards.
-     Type uses stable semantic steps instead of viewport/container arithmetic.
-     Layout may reflow responsively; a label, table cell or KPI does not change
-     size merely because its card or browser happens to be a few pixels wider.
-       hero    → the one number a card exists to show (24px semibold)
-       display → page titles (20px bold)
-       heading → section titles (16px semibold)
-       title   → card/panel titles (15px semibold)
-       body    → default text and long-form copy (13px regular)
-       label   → controls, table cells and secondary copy (13px medium)
-       micro   → short overlines and compact badges only (12px) */
+     ONE fluid scale (owner, 2026-09-23: "one fluid type system with approved
+     minimum and maximum sizes"). Every step is a clamp between an approved
+     phone size and an approved wide-screen size, interpolated between a
+     360px and a 1920px viewport, so a phone never gets desktop-sized
+     headings and a wide monitor never gets phone-sized copy. The steps keep
+     their order at every width — title above body, body above caption —
+     which the old per-breakpoint re-declarations did not (a card title fell
+     to 12px under 14px body copy on a 320px phone). Nothing else may
+     re-declare these per breakpoint; a component that must be smaller picks
+     a smaller step.
+                     360px   1440px   1920px+
+       display  →    20px    24.2px   26px     page titles
+       hero     →    20px    22.8px   24px     the one number a card shows
+       heading  →    16px    18.8px   20px     section titles
+       title    →    15px    16.4px   17px     card/panel titles
+       body     →    14px    14.7px   15px     default and long-form copy
+       label    →    13px    13.7px   14px     controls, table cells
+       micro    →    12px    12.7px   13px     captions, overlines, badges
+     The micro step never goes below --edify-text-floor. */
   --edify-font-sans: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: var(--edify-font-sans);
 
-  --edify-text-display-size: 1.25rem;
-  /* The rung above display, for the one number a card exists to show.
-     24px semibold: the numeral still leads its tile, but stays calm enough
-     that a long UGX figure fits the card instead of overflowing it. The
-     reference tiles carry their number with restraint — weight 600 and a
-     modest step above the title tier, never a shouting bold block. The
-     executive strip scales fluidly up to this ceiling — declared here so the
-     ladder owns the value instead of it living as an arbitrary clamp. */
-  --edify-text-hero-size: 1.5rem;
-  --edify-text-heading-size: 1rem;
-  --edify-text-title-size:   0.9375rem;
-  --edify-text-body-size:    0.8125rem;
-  --edify-text-label-size:   0.8125rem;
+  --edify-text-display-size: clamp(1.25rem, 1.163rem + 0.385vw, 1.625rem);
+  /* The rung above display, for the one number a card exists to show. The
+     numeral still leads its tile, but stays calm enough that a long UGX
+     figure fits the card instead of overflowing it — and never above 24px,
+     the ceiling the executive strip was built to. */
+  --edify-text-hero-size: clamp(1.25rem, 1.19rem + 0.256vw, 1.5rem);
+  --edify-text-heading-size: clamp(1rem, 0.942rem + 0.256vw, 1.25rem);
+  --edify-text-title-size: clamp(0.9375rem, 0.909rem + 0.128vw, 1.0625rem);
+  --edify-text-body-size: clamp(0.875rem, 0.861rem + 0.064vw, 0.9375rem);
+  --edify-text-label-size: clamp(0.8125rem, 0.798rem + 0.064vw, 0.875rem);
   /* No rendered interface text may fall below this floor. Keep the micro tier
      semantic so charts and compact controls share the same 12px contract. */
-  --edify-text-floor:        0.75rem;
-  --edify-text-micro-size:   var(--edify-text-floor);
+  --edify-text-floor: 0.75rem;
+  --edify-text-micro-size: clamp(var(--edify-text-floor), 0.736rem + 0.064vw, 0.8125rem);
 
-  /* Component roles share stable steps as well. Container queries still own
-     layout changes (columns, icon visibility and stacking), never font size. */
-  --edify-text-card-heading-size: 1rem;
-  --edify-text-card-title-size: 0.9375rem;
-  --edify-text-tile-value-size: 1.25rem;
-  --edify-text-tile-label-size: 0.8125rem;
-  --edify-text-tile-helper-size: 0.75rem;
-  --edify-text-table-size: 0.8125rem;
-  /* Headers sit one step below cells — 12px semibold and muted against 13px
+  /* Component roles are aliases of the scale, so a card, a tile and a table
+     can never drift onto a private size of their own. Container queries still
+     own layout changes (columns, icon visibility and stacking). */
+  --edify-text-card-heading-size: var(--edify-text-heading-size);
+  --edify-text-card-title-size: var(--edify-text-title-size);
+  --edify-text-tile-value-size: clamp(1.125rem, 1.038rem + 0.385vw, 1.5rem);
+  --edify-text-tile-label-size: var(--edify-text-label-size);
+  --edify-text-tile-helper-size: var(--edify-text-micro-size);
+  --edify-text-table-size: var(--edify-text-label-size);
+  /* Headers sit one step below cells — micro semibold and muted against label
      data. The stronger weight gives dense grids a dependable scanning rail
      without falling back to shouty all-caps labels. */
-  --edify-text-table-heading-size: 0.75rem;
+  --edify-text-table-heading-size: var(--edify-text-micro-size);
 
   /* ── OPERATIONAL TABLE CONTRACT ─────────────────────────────────────────
      Record grids are compact enough for sustained work, but every row and
@@ -553,6 +560,39 @@
   --edify-scrollbar-track: transparent;
   --edify-scrollbar-thumb: var(--edify-sky-100);
   --edify-page-gutter: clamp(1rem, 0.7rem + 1.1vw, 1.75rem);
+
+  /* ── RESPONSIVE LAYOUT (owner, 2026-09-23) ───────────────────────────────
+     Fluid rhythm, canvas widths, shell dimensions and layers, named once so
+     no page repeats a clamp or invents a z-index. Tuned for phone 320–767,
+     tablet 768–1023 (portrait, landscape and square), laptop 1024–1599 and
+     wide 1600+. The shell changes with media queries at 48rem and 64rem;
+     cards, toolbars and table controls use container queries. */
+  --edify-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.75rem);
+  --edify-card-padding: clamp(0.875rem, 0.7rem + 0.5vw, 1.5rem);
+  --edify-content-gap: clamp(0.75rem, 0.65rem + 0.35vw, 1.25rem);
+  /* Operational pages stop at 1600px; analytics and wide tables may use the
+     dense canvas; a record form keeps a readable measure. */
+  --edify-content-max-standard: 100rem;
+  --edify-content-max-dense: 120rem;
+  --edify-content-max-form: 48rem;
+  --edify-touch-target: 2.75rem;
+  --edify-app-bar-height: 3.5rem;
+  --edify-bottom-nav-height: 3.5rem;
+  /* The fade that says a table has more columns, and the strip of page left
+     visible above a phone sheet. */
+  --edify-table-fade-size: 2.5rem;
+  /* The widest a pinned identity (a school or person's name) may be while
+     the rest of its table scrolls behind it. */
+  --edify-table-identity-measure: min(32vw, 14rem);
+  --edify-sheet-top-gap: 0.75rem;
+  /* Stacking, lowest to highest. Sticky table cells sit inside their scroll
+     region; everything else is page-level. */
+  --edify-layer-sticky-cell: 1;
+  --edify-layer-sticky-header: 2;
+  --edify-layer-app-bar: 20;
+  --edify-layer-bottom-nav: 30;
+  --edify-layer-overlay: 50;
+  --edify-layer-toast: 60;
 }
 
 :root.light {
