@@ -101,9 +101,8 @@ class PlanningClusterDisclosureTest(SimpleTestCase):
     """F-04: the cluster card opens from one named control that says whether
     it is open and which panel it controls. Since 2026-09-19 the planning
     clusters tab draws the canonical cluster card shared with /clusters. Since
-    ffa2431 the name itself is the one toggle button that carries the
-    disclosure state and names the details panel, and the details panel opens
-    with a link to the profile that names the cluster."""
+    ffa2431 the cluster name itself is that toggle button, and the profile
+    link sits in the details panel it opens."""
 
     def test_the_cluster_card_has_one_named_disclosure_control(self):
         html = render_to_string(
@@ -131,6 +130,7 @@ class PlanningClusterDisclosureTest(SimpleTestCase):
             details,
             r'<a href="/clusters/cl-1"[^>]*>Open Mukono North cluster profile</a>',
         )
+        self.assertEqual(html.count('href="/clusters/cl-1"'), 1)
         self.assertNotIn(
             "focus:outline-none", html.split('id="cluster-details-cl-1"')[0]
         )

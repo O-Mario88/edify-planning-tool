@@ -61,7 +61,17 @@
   const observer = typeof ResizeObserver === 'function'
     ? new ResizeObserver(entries => {
         const pixels = typographyPixels();
-        entries.forEach(entry => sync(entry.target, pixels));
+        entries.forEach(entry => {
+          // A ResizeObserver holds its targets strongly. Removal is itself a
+          // size change, so this is where a swapped-out SVG is let go of;
+          // otherwise every chart and map ever shown stayed in memory.
+          if (!entry.target.isConnected) {
+            observer.unobserve(entry.target);
+            observed.delete(entry.target);
+            return;
+          }
+          sync(entry.target, pixels);
+        });
       })
     : null;
 

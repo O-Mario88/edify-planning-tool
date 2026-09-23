@@ -8,10 +8,10 @@
       <tbody>
         {% for item in activity_pager.rows %}
         <tr>
-          <td><a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a></td>
+          <td>{% if can_open_cluster == False %}{% firstof item.cluster_name item.context_label %}{% else %}<a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a>{% endif %}</td>
           <td>{% if item.training_name and item.training_name != "—" %}{{ item.training_name }}{% else %}{{ item.activity_type|replace_underscore|title }}{% endif %}</td>
           <td>{{ item.planned_date|date:"d M Y"|default:"Awaiting schedule" }}</td>
-          <td>{% if item.activity_status %}{{ item.activity_status|replace_underscore|title }}{% else %}{{ item.assignment_status|replace_underscore|title }}{% endif %}</td>
+          <td>{% firstof item.activity_status item.assignment_status as status %}{{ status|replace_underscore|title }}</td>
           <td>{% firstof item.executor_name member.name %}</td>
         </tr>
         {% empty %}<tr><td colspan="5">No {{ heading|lower }} in this financial year.</td></tr>{% endfor %}

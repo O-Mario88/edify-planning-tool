@@ -24,6 +24,8 @@ from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger("edify.jobs")
 
+MISFIRE_GRACE_SECONDS = 300
+
 
 class Command(BaseCommand):
     help = "Run the dedicated background-job scheduler process (one per deployment, never per web worker)."
@@ -88,7 +90,21 @@ class Command(BaseCommand):
         # so a change to settings.TIME_ZONE would silently leave every cron
         # trigger on the old zone — the schedule and the application disagreeing
         # with nothing to catch it.
-        scheduler = BackgroundScheduler(timezone=settings.TIME_ZONE)
+        #
+        # APScheduler's default misfire grace is ONE second: a trigger picked
+        # up later than that is dropped with only a log line, so a busy
+        # moment or a deploy that restarts this process at 07:00 silently
+        # skips a daily job for the day. Five minutes absorbs both; coalescing
+        # keeps a backlog of the every-minute jobs to one run, and one
+        # instance per job keeps a slow run from overlapping its successor.
+        scheduler = BackgroundScheduler(
+            timezone=settings.TIME_ZONE,
+            job_defaults={
+                "misfire_grace_time": MISFIRE_GRACE_SECONDS,
+                "coalesce": True,
+                "max_instances": 1,
+            },
+        )
         scheduler.add_jobstore(DjangoJobStore(), "default")
         for spec in JOB_REGISTRY:
             func = job_funcs.get(spec.name)

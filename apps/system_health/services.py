@@ -75,6 +75,7 @@ def report() -> dict:
     data["planningOversight"] = _planning_oversight()
     data["portfolioAccess"] = _portfolio_access()
     data["interactionTelemetry"] = _interaction_telemetry()
+    data["routePerformance"] = _route_performance()
     data["dataQuality"] = _data_quality()
     data["outbox"] = _outbox()
     data["integrations"] = _integrations()
@@ -310,6 +311,18 @@ def _interaction_telemetry() -> dict:
         return interaction_telemetry_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": [], "report": None, "enabled": False}
+
+
+def _route_performance() -> dict:
+    """Which pages are slow, and whether they are slow or queued: per-route
+    percentiles from the interaction telemetry (apps.telemetry.performance).
+    Aggregate only — routes and roles, never people."""
+    try:
+        from apps.telemetry.performance import route_performance_health
+
+        return route_performance_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": [], "report": None}
 
 
 def _data_quality() -> dict:

@@ -184,6 +184,42 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
+<!-- Route performance (performance rescue, 2026-09-23): per-route p50/p95/p99
+     from the interaction telemetry, with database and admission-queue time,
+     so a slow page can be told apart from a saturated worker. Routes only. -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[22px] font-extrabold tracking-tight">Route Performance</h3>
+{% with perf=health.routePerformance.report %}
+{% if perf and perf.requests %}
+<div class="flex flex-wrap items-center gap-2">
+<span class="edify-badge" {% if perf.p95_ms >= 1500 %}data-tone="warning"{% else %}data-tone="success"{% endif %}>p95 {{ perf.p95_ms }} ms</span>
+<span class="edify-badge" {% if perf.queue_p95_ms >= 1000 %}data-tone="warning"{% else %}data-tone="success"{% endif %}>queue p95 {{ perf.queue_p95_ms }} ms</span>
+<span class="edify-badge" {% if perf.server_error_rate_pct >= 1 %}data-tone="danger"{% else %}data-tone="success"{% endif %}>{{ perf.server_error_rate_pct }}% 5xx</span>
+<span class="edify-text-caption text-slate-500 tabular-nums">{{ perf.requests }} signed-in requests · last {{ perf.window_hours }} h · {{ perf.busy_503 }} refused as busy</span>
+</div>
+<div class="space-y-2">
+{% for r in perf.routes %}
+<div class="p-3 rounded-surface bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+<div class="text-[12px] font-semibold text-slate-700">{{ r.method }} /{{ r.route }}</div>
+<div class="edify-text-caption text-slate-500 tabular-nums">{{ r.requests }} req · p50 {{ r.p50_ms }} · p95 {{ r.p95_ms }} · p99 {{ r.p99_ms }} ms · db p95 {{ r.db_p95_ms }} · queue p95 {{ r.queue_p95_ms }} ms · {{ r.mean_queries }} queries{% if r.server_errors %} · {{ r.server_errors }} 5xx{% endif %}</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="text-[12px] text-slate-400 font-medium">No signed-in requests measured in the window yet.</div>
+{% endif %}
+{% endwith %}
+<div class="space-y-2">
+{% for c in health.routePerformance.checks %}
+<div class="p-3 rounded-surface {% if c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
 <!-- Durable outbox (roadmap Phase 2): the event backbone's liveness —
      depth, oldest pending age, dead letters, each with its replay path. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">

@@ -228,14 +228,13 @@ class FrontendViewsTestCase(TestCase):
         # the purpose and the focus intervention from the school's weakest
         # confirmed SSA score, and shows the interventions behind that choice.
         self.assertIn('name="purpose_of_visit"', html)
-        self.assertIn("Recommended interventions", html)
-        # The weak SSA intervention behind the recommendation is listed under
-        # that heading (it replaced "SSA interventions performing poorly").
-        recommendations = html.split(
-            'aria-labelledby="top-ssa-recommendation-title"', 1
-        )[1].split("</section>", 1)[0]
+        # Named in the "Recommended interventions" list (compact drawer,
+        # 8bb11a1), with the weakest score first.
+        recommendations = html.split('class="planning-recommendations"', 1)[1]
+        recommendations = recommendations.split("</section>", 1)[0]
+        self.assertIn("Recommended interventions", recommendations)
+        self.assertIn("1.0/10", recommendations)
         self.assertIn("Learning Environment", recommendations)
-        self.assertIn("(1.0/10", recommendations)
         # Prefilled by selecting the option, not by checking a radio in a list
         # of engine-chosen activities.
         self.assertIn("selected", html)
@@ -842,7 +841,9 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
 
         self.assertEqual(response.status_code, 200)
-        # The same shared school-plan table as the planning list (8bb11a1).
+        # The same shared school-plan table as the planning list (8bb11a1): the
+        # named toggle opens a row's details, Escape closes them, and the
+        # details link to the school profile.
         self.assertTemplateUsed(response, "components/school_plan_table_head.html")
         self.assertContains(response, 'class="school-plan-table"')
         self.assertContains(response, 'class="school-plan-table__name-toggle"')
@@ -850,6 +851,8 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
         self.assertContains(response, f'href="/schools/{self.school.id}"')
         self.assertContains(response, f"Open {self.school.name} school profile")
+        self.assertContains(response, 'aria-label="Schools in cluster"')
+        self.assertContains(response, 'class="cluster-school-row"')
         self.assertContains(response, "Plot 12, Kampala Road")
         self.assertContains(response, "School Type:")
         self.assertContains(response, "Schedule")
@@ -986,10 +989,13 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "data-owner-clusters")
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, 'name="existing_cluster_id"')
+        # The simplified drawer (7586e32) names the school in its title and has
+        # no owner card; the owner is still automatic, still named in one
+        # caption, and the clusters offered are still only the owner's.
+        self.assertContains(response, f"Add {self.school.name} to cluster")
         self.assertContains(response, self.cceo_user.name)
-        # The drawer says whose it is in its own words now: the owner is
-        # still automatic, and still named.
         self.assertContains(response, "(the school's owner)")
+        self.assertNotContains(response, "Responsible field staff")
         self.assertContains(response, "cluster-assignment-drawer")
         self.assertNotContains(response, "Cluster selected automatically")
         self.assertNotContains(response, "Assignment Notes")

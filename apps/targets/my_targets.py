@@ -585,6 +585,13 @@ class _RebuildSources:
             if stype == "activity" and types
             for t in types
         ]
+        # Only the columns _rebuild reads, as named tuples: it only reads
+        # attributes, never saves a source row. Activity carries ~120 columns
+        # and a country roster is every CCEO's year of work — instantiating
+        # full models was 1.3-2.1 s of CPU per rebuild on a 16,000-school
+        # estate, paid on every Country Director / RVP dashboard rebuild
+        # (performance rescue, 2026-09-23). A new attribute read in _rebuild
+        # fails loudly (AttributeError) rather than silently re-querying.
         activities: dict = {}
         for a in (
             Activity.objects.filter(
@@ -595,6 +602,7 @@ class _RebuildSources:
             )
             .exclude(planned_date__isnull=True)
             .exclude(delivery_type="partner")
+            .values_list(*_REBUILD_ACTIVITY_FIELDS, named=True)
         ):
             activities.setdefault(a.responsible_staff_id, []).append(a)
 
@@ -604,7 +612,7 @@ class _RebuildSources:
             deleted_at__isnull=True,
             date_of_ssa__gte=fy_start,
             date_of_ssa__lt=fy_end,
-        ):
+        ).values_list(*_REBUILD_SSA_FIELDS, named=True):
             ssa.setdefault(r.collected_by_user_id, []).append(r)
 
         mscs: dict = {}
@@ -614,10 +622,46 @@ class _RebuildSources:
         # The whole ledger, every FY — see the note on `existing` in _rebuild
         # for why the read is deliberately not scoped to `fy`.
         ledger: dict = {}
-        for row in TargetAchievementLedger.objects.filter(user_id__in=user_ids):
+        for row in TargetAchievementLedger.objects.filter(user_id__in=user_ids).only(
+            *_REBUILD_LEDGER_FIELDS
+        ):
             ledger.setdefault(row.user_id, {})[(row.source_type, row.source_id)] = row
 
         return cls(activities, ssa, mscs, ledger)
+
+
+# The attributes TargetAchievementService._rebuild reads from each source, and
+# every ledger column it compares or writes back through bulk_update. Sources
+# are read as named tuples, so a new attribute read raises AttributeError in
+# the rebuild tests; the ledger is read with .only(), and
+# test_rebuild_reads_no_deferred_ledger_field guards it.
+_REBUILD_ACTIVITY_FIELDS = (
+    "id",
+    "responsible_staff_id",
+    "activity_type",
+    "status",
+    "planned_date",
+    "salesforce_activity_id",
+)
+_REBUILD_SSA_FIELDS = (
+    "id",
+    "collected_by_user_id",
+    "date_of_ssa",
+    "verification_status",
+)
+_REBUILD_LEDGER_FIELDS = (
+    "id",
+    "user_id",
+    "source_type",
+    "source_id",
+    "fy",
+    "activity_date",
+    "credited_month",
+    "credited_quarter",
+    "validation_status",
+    "validated_at",
+    "updated_at",
+)
 
 
 class TargetAchievementService:

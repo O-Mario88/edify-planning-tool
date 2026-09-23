@@ -1,7 +1,8 @@
 """Visit and Training planning badges (owner brief, 2026-09-22).
 
-The Planning page school list and the Cluster School List — and only those —
-show per school how many visits and trainings are planned, awaiting
+The Planning page school list and the Cluster School List — and, since
+2026-09-23, the Core Schools programme tables for schools outside the core
+package — show per school how many visits and trainings are planned, awaiting
 verification and IA-verified. Both read one server-side calculation, the
 counts are derived from the canonical activities every time, and the badge
 never stops a school being planned again.
@@ -459,10 +460,7 @@ class PagesTest(BadgeFixture):
         if api.status_code == 200:
             self.assertNotIn(b"planningBadges", api.content)
 
-    def test_only_the_two_lists_include_the_component(self):
-        # The two planning lists, plus the core-schools lifecycle table
-        # (7586e32), whose Visit/Training plan status columns are the same
-        # server-side badges for programme schools.
+    def test_only_the_planning_lists_include_the_component(self):
         root = Path(settings.BASE_DIR) / "templates"
         including = sorted(
             str(path.relative_to(root))

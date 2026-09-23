@@ -52,20 +52,13 @@ PRESENCE_LIST_LIMIT = 50
 
 
 def client_address(request) -> str | None:
-    """The caller's address when it is one. A proxy header or REMOTE_ADDR that
-    is not a valid IP is recorded as unknown, never raised: the first sign-in
-    behind a malformed X-Forwarded-For would otherwise have failed on the
+    """The caller's address when it is one (apps.core.client_ip). An address
+    that is not a valid IP is recorded as unknown, never raised: the first
+    sign-in behind a malformed proxy header would otherwise have failed on the
     address column's validation (found by the change-password flow's test)."""
-    import ipaddress
+    from apps.core.client_ip import client_ip
 
-    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
-    candidate = forwarded or (request.META.get("REMOTE_ADDR") or "").strip()
-    if not candidate:
-        return None
-    try:
-        return str(ipaddress.ip_address(candidate))
-    except ValueError:
-        return None
+    return client_ip(request)
 
 
 def record_login(request, user) -> None:

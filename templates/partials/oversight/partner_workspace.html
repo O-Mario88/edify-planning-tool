@@ -131,50 +131,36 @@ schedule, and none edits a CCEO's record.
   </section>
   {% endif %}
 
+  {% include "partials/oversight/partner_work_tables.html" %}
   {% comment %}
-  Who to call, carried over when the Partners directory merged into this page
-  and kept when the lists became team tables. Every control here asks
-  somebody to act, and for a partner that somebody is a person with a phone
-  number — a page that says "waiting on Partner X" without saying who X is
-  makes you open another page to finish the thought. The organisation's name
-  opens its profile (owner, 2026-09-07), the way a school's name does.
+  Who to call, carried over when the Partners directory merged into this
+  page. Every control here asks somebody to act, and for a partner that
+  somebody is a person with a phone number — a page that says "waiting on
+  Partner X" without saying who X is makes you open another page to finish
+  the thought.
   {% endcomment %}
-  {% if partner_groups %}
+  {% if partner_contacts %}
   <section class="card p-0 overflow-hidden" aria-labelledby="partner-contacts">
     <header class="px-4 py-3 border-b edify-border">
-      <h2 id="partner-contacts" class="text-sm font-semibold">Partners in view ({{ partner_groups|length }})</h2>
+      <h2 id="partner-contacts" class="text-sm font-semibold">Partner contacts ({{ partner_contacts|length }})</h2>
     </header>
     <ul class="divide-y edify-border">
-      {% for group in partner_groups %}
-      <li class="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
-        <div class="min-w-0">
-          <p class="text-sm font-semibold">{% if group.profile_url %}<a href="{{ group.profile_url }}" class="hover:underline">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}</p>
-          {% if group.contact_person or group.phone or group.region_name or group.intervention_label %}
-          <p class="edify-text-caption edify-text-muted">
-            {% if group.contact_person %}{{ group.contact_person }}{% endif %}
-            {% if group.phone %} · {{ group.phone }}{% endif %}
-            {% if group.region_name %} · {{ group.region_name }}{% endif %}
-            {% if group.intervention_label %} · {{ group.intervention_label }}{% endif %}
-          </p>
-          {% endif %}
-          <p class="edify-text-caption edify-text-muted">
-            {{ group.summary.schools_assigned }} school{{ group.summary.schools_assigned|pluralize }} ·
-            {{ group.summary.awaiting_schedule }} yet to schedule ·
-            {{ group.summary.scheduled }} scheduled
-            {% if group.summary.returned %} · {{ group.summary.returned }} returned{% endif %}
-          </p>
-        </div>
-        <p class="edify-text-caption font-semibold whitespace-nowrap tabular-nums">
-          UGX {{ group.summary.scheduled_budget|intcomma }}
-          <span class="block edify-text-caption font-normal edify-text-muted">Scheduled work only</span>
+      {% for contact in partner_contacts %}
+      <li class="px-4 py-3">
+        <p class="text-sm font-semibold">{% if contact.profile_url %}<a href="{{ contact.profile_url }}" class="hover:underline">{{ contact.name }}</a>{% else %}{{ contact.name }}{% endif %}</p>
+        {% if contact.contact_person or contact.phone or contact.region_name or contact.intervention_label %}
+        <p class="edify-text-caption edify-text-muted">
+          {% if contact.contact_person %}{{ contact.contact_person }}{% endif %}
+          {% if contact.phone %} · {{ contact.phone }}{% endif %}
+          {% if contact.region_name %} · {{ contact.region_name }}{% endif %}
+          {% if contact.intervention_label %} · {{ contact.intervention_label }}{% endif %}
         </p>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>
   </section>
   {% endif %}
-
-  {% include "partials/oversight/partner_work_tables.html" %}
 
   {% if engagement %}
   {% include "partials/partners/engagement_register.html" with engagement_title="Partner engagements this FY" %}

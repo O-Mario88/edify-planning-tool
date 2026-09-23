@@ -1,7 +1,9 @@
 """Reading a supervision page is not permission to delegate from it.
 
-Cluster Oversight lives as a section on Team and Country Planning Oversight, so
-IA, the Accountant and the RVP were given those pages to reach it. Widening a
+Cluster Oversight lived as a section on Team and Country Planning Oversight, so
+IA, the Accountant and the RVP were given those pages to reach it. Since
+2026-09-23 it is its own page, /cluster-oversight/, which IA and the Accountant
+open too, and they keep these pages for the plan itself. Widening a
 page permission widens every route behind it, and these pages carry a "Send to
 …" endpoint that opens a TeamAction against a named person.
 
@@ -143,6 +145,12 @@ class TheReadingRolesStillReachThePagesTest(TestCase):
         for user in (self.ia, self.accountant):
             with self.subTest(role=user.active_role):
                 response = self._get(user, "/team-planning-oversight/")
+                self.assertEqual(response.status_code, 200)
+
+    def test_ia_and_the_accountant_reach_cluster_oversight_on_its_own_page(self):
+        for user in (self.ia, self.accountant):
+            with self.subTest(role=user.active_role):
+                response = self._get(user, "/cluster-oversight/")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn("Cluster Oversight", response.content.decode())
 

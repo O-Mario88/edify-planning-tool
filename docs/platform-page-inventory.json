@@ -801,7 +801,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75584,
+      "bytes": 76773,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4646,7 +4646,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12975,
+      "bytes": 13152,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8593,7 +8593,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1575,
+      "bytes": 1630,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8638,7 +8638,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8289,
+      "bytes": 8474,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8809,7 +8809,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11092,
+      "bytes": 11160,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -8854,7 +8854,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10069,
+      "bytes": 9201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"

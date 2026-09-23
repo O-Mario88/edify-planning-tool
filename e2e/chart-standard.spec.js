@@ -38,14 +38,15 @@ test('bar charts preserve units, palette, data and layout through range changes 
   await expect(card.locator('[data-edify-chart-stage]')).toHaveCount(1);
   await page.evaluate(()=>window.chartFixture.destroy());
   await expect(card.locator('[data-standard-charts]')).toHaveCount(0);
-  for (const route of ['/team-planning-oversight/', '/cluster-oversight/', '/core-schools-oversight/']) {
+  // Cluster Oversight dropped its chart on 2026-09-23 for the member-by-member
+  // clusters, trainings and meetings; the chart-bearing oversight pages remain.
+  for (const route of ['/team-planning-oversight/', '/core-schools-oversight/']) {
     const response = await page.goto(route);
     expect(response.status()).toBe(200);
     const plot = page.locator('[data-standard-charts]:visible').first();
     await plot.scrollIntoViewIfNeeded();
     await expect(plot.locator('.apexcharts-bar-series').first()).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
-    if (route === '/cluster-oversight/') await page.screenshot({path:'/tmp/cluster-chart-verified.png'});
   }
   expect(errors).toEqual([]);
 });

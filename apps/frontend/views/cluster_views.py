@@ -23,6 +23,7 @@ from apps.accounts.models import StaffProfile
 from apps.core.scoping import (
     cluster_queryset,
     direct_portfolio_schools,
+    or_empty,
     resolve_user_scope,
 )
 from apps.core.enums import SsaIntervention
@@ -1414,9 +1415,8 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # Direct portfolio only. Adding a school to a cluster edits the
             # school record, so a supervisor may not do it for a CCEO's school
             # — the same rule `assign_school` and the picker apply.
-            writable = (
-                direct_portfolio_schools(resolve_user_scope(user))
-                or School.objects.none()
+            writable = or_empty(
+                direct_portfolio_schools(resolve_user_scope(user)), School
             )
             school = writable.filter(
                 served_district_q, id=sid, deleted_at__isnull=True
@@ -1459,7 +1459,7 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             deleted_at__isnull=True,
         )
     else:
-        writable = direct_portfolio_schools(scope) or School.objects.none()
+        writable = or_empty(direct_portfolio_schools(scope), School)
         unassigned_schools = writable.filter(
             served_district_q,
             cluster_status="unclustered",
@@ -1522,17 +1522,17 @@ def get_eligible_staff(district_id):
         if profiles.exists():
             return profiles
 
-    # 3. Ultimate fallback: all active CCEOs and PLs
-    profiles = (
-        StaffProfile.objects.filter(user__is_active=True)
+    # 3. Ultimate fallback: all active CCEOs and PLs. A QuerySet like the
+    # branches above: the edit drawer unions it with the recorded owner as a
+    # `.values("id")` subquery, which a filtered Python list cannot answer.
+    return (
+        StaffProfile.objects.filter(
+            user__is_active=True,
+            user__roles__overlap=["CCEO", "Program Lead", "ProgramLead"],
+        )
         .select_related("user")
         .order_by("user__name")
     )
-    return [
-        p
-        for p in profiles
-        if any(r in ["CCEO", "Program Lead", "ProgramLead"] for r in p.user.roles)
-    ]
 
 
 @require_page_permission("planning")
@@ -1615,12 +1615,10 @@ def edit_cluster_drawer_view(request, cluster_id):
 
     staff = get_eligible_staff(cluster.district_id)
     # Keep a recorded owner selectable even when they have no school or
-    # geography assignment in the cluster's district. `get_eligible_staff`
-    # returns a queryset, a sliced queryset or (its last fallback) a plain
-    # list, so collect the ids in a way that works for all three.
+    # geography assignment in the cluster's district.
     staff = (
         StaffProfile.objects.filter(
-            Q(id__in=[p.id for p in staff])
+            Q(id__in=staff.values("id"))
             | Q(id=cluster.responsible_staff_id)
             | Q(user_id=cluster.responsible_staff_id)
         )

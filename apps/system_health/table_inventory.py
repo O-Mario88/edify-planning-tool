@@ -29,6 +29,11 @@ TEMPLATES = Path(settings.BASE_DIR) / "templates"
 _FOR = re.compile(r"{%\s*for\s+\w+\s+in\s+([\w.]+)")
 _SLICE = re.compile(r"\|slice:")
 _PAGER = re.compile(r"pager\.|paginator|page_obj|has_next|has_previous")
+#: The server-side pagination strip ("Showing 1–25 of 312" plus page buttons)
+#: a view renders under its own paged list, e.g. Planning's school tables. It
+#: sits after every table it pages, often further than the neighbourhood
+#: below reaches, so it is looked for anywhere after the table.
+_SERVER_PAGER = re.compile(r"edify-pagination-scope")
 
 
 @dataclass(frozen=True)
@@ -70,7 +75,7 @@ def scan_tables() -> list[TableFinding]:
             # A pager may sit just outside the table it drives, so look at the
             # surrounding block rather than only between the tags.
             neighbourhood = text[start : min(len(text), end + 1200)]
-            if _PAGER.search(neighbourhood):
+            if _PAGER.search(neighbourhood) or _SERVER_PAGER.search(text, end):
                 state = "paginated"
             elif _SLICE.search(body):
                 state = "sliced"

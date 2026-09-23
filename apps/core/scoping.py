@@ -1122,6 +1122,19 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     return qs.none()
 
 
+def or_empty(queryset, model):
+    """``queryset``, or an empty queryset of ``model`` when the scope gives none.
+
+    The scope helpers return ``None`` for "no rows at all". Callers wrote
+    ``direct_portfolio_schools(scope) or School.objects.none()``, but ``or``
+    asks the QuerySet for its truth value, and Django answers that by fetching
+    every row: a Country Director's planning page read all ~16,000 schools,
+    60 columns each, only to decide the queryset was not empty before
+    filtering it (performance rescue, 2026-09-23). This tests for ``None``.
+    """
+    return queryset if queryset is not None else model.objects.none()
+
+
 def direct_portfolio_schools(scope: UserScope, base=None):
     """The schools this person may operate on — the direct portfolio.
 

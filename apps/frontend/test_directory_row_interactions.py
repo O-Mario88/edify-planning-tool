@@ -23,7 +23,12 @@ class DirectoryRowInteractionContractTests(SimpleTestCase):
         self.assertIn("data-row-disclosure-summary", card)
         self.assertIn(f"closest('{INTERACTIVE_GUARD}')", card)
         self.assertIn("cardExpanded = !cardExpanded", card)
-        self.assertIn('href="/clusters/{{ cluster.id }}"', card)
+        # The name is the toggle (ffa2431); the one profile link lives in the
+        # expanded details, outside the summary whose empty space toggles.
+        summary, details = card.split("<!-- Expanded details block -->", 1)
+        self.assertIn('class="cluster-card__name-toggle"', summary)
+        self.assertNotIn('href="/clusters/{{ cluster.id }}"', summary)
+        self.assertIn('href="/clusters/{{ cluster.id }}"', details)
         self.assertEqual(card.count('href="/clusters/{{ cluster.id }}"'), 1)
         # Since ffa2431 the name is the disclosure button and the profile link
         # opens the details panel, outside the summary's empty-space toggle,

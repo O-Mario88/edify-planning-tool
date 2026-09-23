@@ -15,6 +15,7 @@ import os
 import socket
 import time
 
+from django.db import connections
 from django.db.models import Q
 from django.utils import timezone
 
@@ -57,11 +58,35 @@ def run_tracked_job(job_name: str, func, retry_backoff_seconds: float = 0.0):
     lock, with retry-on-failure per the registry spec, recording a
     ScheduledJobExecution row. Returns func()'s result, or None if the job
     was skipped (already locked) or failed after exhausting retries."""
-    from .models import ScheduledJobExecution
-
     spec = get_spec(job_name)
     ttl = (spec.expected_runtime_seconds * 4) if spec else 600
     max_retries = spec.max_retries if (spec and spec.retryable) else 0
+
+    # Scheduler threads are not requests, so Django never retires their
+    # connections: one the database dropped (a restart, a failover, an idle
+    # cut) stayed broken in its pool thread and failed every later job that
+    # thread ran until the process restarted. Drop an unusable connection
+    # before starting, and hand the connection back when done so ten pool
+    # threads do not each hold one open between runs.
+    _retire_stale_connections()
+    try:
+        return _run_locked(job_name, func, ttl, max_retries, retry_backoff_seconds)
+    finally:
+        _retire_stale_connections()
+
+
+def _retire_stale_connections() -> None:
+    """close_old_connections() for a thread that serves no requests — except
+    a connection inside a transaction is left alone, since closing it would
+    doom the caller's transaction (a test case, or a caller that already
+    holds one)."""
+    for conn in connections.all(initialized_only=True):
+        if not conn.in_atomic_block:
+            conn.close_if_unusable_or_obsolete()
+
+
+def _run_locked(job_name, func, ttl, max_retries, retry_backoff_seconds):
+    from .models import ScheduledJobExecution
 
     if not acquire_lock(job_name, ttl_seconds=ttl):
         logger.warning(

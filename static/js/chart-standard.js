@@ -258,7 +258,14 @@
     let timer = null;
     const onTheme = () => { clearTimeout(timer); timer = setTimeout(() => { if (wrap.isConnected) redraws.forEach(fn => fn()); }, 50); };
     window.addEventListener('edify-theme-change', onTheme);
-    return {destroy() { window.removeEventListener('edify-theme-change', onTheme); clearTimeout(timer); charts.forEach(chart => chart?.destroy()); wrap.remove(); }};
+    // Safe to call twice: the page's chart sweep may reach a handle its
+    // caller already destroyed.
+    return {destroy() {
+      window.removeEventListener('edify-theme-change', onTheme);
+      clearTimeout(timer);
+      charts.splice(0).forEach(chart => { try { chart?.destroy(); } catch (e) { /* already gone */ } });
+      wrap.remove();
+    }};
   }
   /* A paged time series opens on the latest page that holds any work, so a
    * lead sees this quarter rather than an empty first quarter; rankings and

@@ -1986,6 +1986,7 @@ def partner_oversight_view(request):
             "returned",
         ],
         "workspace_tables": partner_oversight.workspace_tables(items),
+        "partner_contacts": partner_oversight.partner_contacts(items),
         "summary": summary,
         "kpis": _partner_kpis(summary),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
@@ -1999,10 +2000,6 @@ def partner_oversight_view(request):
         "can_review_withdrawals": has_permission(
             request.user, Permission.PARTNER_WITHDRAWAL_REVIEW.value
         ),
-        # Who to call at each partner in view, with its own counts — the
-        # directory's contact details survived the merge into this page and
-        # must survive the table redesign too.
-        "partner_groups": partner_oversight.group_by_partner(items),
         "partners": partner_pairs,
         "fy_options": fy_options(),
         "can_grant_allowance": request.user.active_role

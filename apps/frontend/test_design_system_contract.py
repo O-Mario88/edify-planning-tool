@@ -79,7 +79,9 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".edify-section-nav__link[href]:not([aria-current])", base)
         self.assertIn(".app-sidebar__item[href]:not([aria-current])", base)
         self.assertIn(".edify-bottom-nav__item[href]:not([aria-current])", base)
-        self.assertIn('"eagerness": "moderate"', base)
+        # Pointer-down only, never on hover: see
+        # test_client_responsiveness.test_prefetch_never_competes_eagerly_with_active_page.
+        self.assertNotIn('"eagerness": "moderate"', base)
         self.assertIn('"eagerness": "conservative"', base)
         self.assertNotIn('"eagerness": "eager"', base)
         self.assertNotIn('"prerender"', base)

@@ -69,6 +69,9 @@ class InteractionTelemetryMiddleware:
         route = getattr(resolver_match, "route", "") or "unresolved"
         from .models import InteractionEvent
 
+        # The request-timing probe has seen every statement the view ran by
+        # now; the INSERT below is not in it, which is what the report wants.
+        probe = getattr(request, "edify_query_probe", None)
         InteractionEvent.objects.create(
             user_id=str(user.id),
             role=getattr(user, "active_role", "") or "",
@@ -76,4 +79,8 @@ class InteractionTelemetryMiddleware:
             method=request.method,
             route=route[:255],
             duration_ms=int((time.monotonic() - started) * 1000),
+            status_code=min(int(getattr(response, "status_code", 0) or 0), 32767),
+            query_count=int(getattr(probe, "count", 0) or 0),
+            db_ms=int(getattr(probe, "ms", 0) or 0),
+            queue_ms=int(getattr(request, "edify_queue_wait_ms", 0) or 0),
         )

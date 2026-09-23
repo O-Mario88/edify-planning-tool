@@ -48,21 +48,16 @@ class TableBoundsTest(SimpleTestCase):
     #: * `partials/today/workbench.html` — `waiting` is capped at WAITING_LIMIT
     #:   (8) in today_views and the card's header discloses the whole queue
     #:   ("View all N"): bounded in Python, and the reader is told there is more.
-    #: * `partials/planning/school_table.html` (two tables: partner-assigned and
-    #:   client/core) — already one page: planning_service slices `schools` by
-    #:   page/per_page, and the page strip at the foot of the template says
-    #:   "Showing a–b of N" and turns it. The scanner cannot see a pager that
-    #:   far below the table (they became tables, from lists, on 2026-09-23).
-    #: * `partials/dashboards/pl/programmes_view.html` — the monthly completion
-    #:   chart's data table: one row per supervised officer (bounded by the
-    #:   team) and six month columns. It is the chart's text equivalent, so it
-    #:   has to hold exactly what the chart draws.
-    #: * `partials/clusters/cluster_schools_table.html` — one cluster's member
-    #:   schools, bounded by the cluster (a group of neighbouring schools). The
-    #:   rows are ticked for a day of visits, and a pager would split that
-    #:   selection; its host card also has no query of its own for a page link
-    #:   to carry without dropping the Planning page's tab and filters.
-    UNBOUNDED_CEILING = 12
+    #: * `partials/clusters/cluster_schools_table.html` — the schools of one
+    #:   cluster, drawn inside that cluster's card (a card list until the table
+    #:   redesign, 8bb11a1, so the scanner never saw it). Bounded by cluster
+    #:   size: clusters group a few neighbouring schools (the largest in the
+    #:   16,000-school scaled estate has six).
+    #: * `partials/dashboards/pl/programmes_view.html` — the monthly
+    #:   completion table behind the Program Lead's chart (8bb11a1): one row
+    #:   per supervised officer, one column per month charted. Bounded by the team,
+    #:   like the team targets matrix, and read side by side with the chart.
+    UNBOUNDED_CEILING = 10
 
     def test_no_new_unbounded_tables(self):
         report = table_report()
@@ -128,6 +123,27 @@ class TableBoundsTest(SimpleTestCase):
                 table_inventory.TEMPLATES = original
         self.assertEqual(states.get("capped.html"), "sliced")
         self.assertEqual(states.get("whole.html"), "unbounded")
+
+    def test_a_server_pagination_strip_after_a_table_pages_it(self):
+        """Planning pages its school tables in the view and draws the
+        "Showing 1-25 of N" strip under them, beyond the pager neighbourhood:
+        that is paginated, but a strip that only precedes a table is not."""
+        from django.conf import settings
+
+        rows = "<table><tbody>{% for row in rows %}<tr><td>{{ row }}</td></tr>{% endfor %}</tbody></table>"
+        strip = '<div class="edify-pagination-scope">Showing 1-25 of 300</div>'
+        with tempfile.TemporaryDirectory(dir=settings.BASE_DIR) as directory:
+            root = pathlib.Path(directory)
+            (root / "paged.html").write_text(rows + "x" * 2000 + strip)
+            (root / "before.html").write_text(strip + rows)
+            original = table_inventory.TEMPLATES
+            table_inventory.TEMPLATES = root
+            try:
+                states = {f.template.split("/")[-1]: f.state for f in scan_tables()}
+            finally:
+                table_inventory.TEMPLATES = original
+        self.assertEqual(states.get("paged.html"), "paginated")
+        self.assertEqual(states.get("before.html"), "unbounded")
 
     def test_the_three_states_stay_separate(self):
         # Sliced is reported beside paginated, never folded into it.

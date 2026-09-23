@@ -69,10 +69,9 @@ IA_SIDEBAR = [
             ("To-Do", "/todos"),
         ],
     ),
+    # Since 2026-09-23 the oversight pages share one group after the day's
+    # work, in a fixed order rather than by visit rank.
     (
-        # Every oversight door IA holds, in one group (2026-09-23): the pages
-        # that sat in DAILY and WEEKLY, plus the Partner Oversight page IA
-        # already had permission to open.
         "OVERSIGHT",
         [
             ("Planning Oversight", "/team-planning-oversight/"),

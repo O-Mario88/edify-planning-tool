@@ -20,7 +20,7 @@ from __future__ import annotations
 from datetime import timedelta
 from unittest.mock import patch
 
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
 from apps.notifications.models import Notification
@@ -459,3 +459,67 @@ class SchedulerArchitectureTests(TestCase):
         self.assertEqual(
             first_count, second_count, "re-running must not duplicate the open insight"
         )
+
+
+class SchedulerResilienceTests(TransactionTestCase):
+    """Performance rescue, 2026-09-23: a job must not be lost to a dropped
+    database connection or to a trigger picked up a second late.
+
+    Transactional, because the connection handling under test only applies
+    outside a transaction, as it is in a scheduler thread."""
+
+    def test_a_dropped_connection_does_not_fail_the_next_job(self):
+        from django.db import OperationalError, connection
+
+        from apps.realtime.execution import run_tracked_job
+        from apps.realtime.models import ScheduledJobExecution
+
+        # What a database restart or failover leaves in a pool thread: a
+        # connection object whose server side is gone.
+        with self.assertRaises(OperationalError):
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_terminate_backend(pg_backend_pid())")
+
+        self.assertEqual(run_tracked_job("daily_digest", lambda: 3), 3)
+        self.assertEqual(
+            ScheduledJobExecution.objects.get(job_name="daily_digest").status,
+            "success",
+        )
+
+    def test_triggers_tolerate_a_late_pickup_and_never_overlap(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        from apps.realtime.management.commands.runscheduler import (
+            MISFIRE_GRACE_SECONDS,
+        )
+
+        with (
+            override_settings(ENABLE_BACKGROUND_JOBS=True),
+            patch("apscheduler.schedulers.background.BackgroundScheduler") as cls,
+            patch("apps.realtime.management.commands.runscheduler.signal.signal"),
+            patch(
+                "apps.realtime.management.commands.runscheduler.time.sleep",
+                side_effect=KeyboardInterrupt,
+            ),
+        ):
+            try:
+                call_command("runscheduler", stdout=StringIO())
+            except KeyboardInterrupt:
+                pass
+        defaults = cls.call_args.kwargs["job_defaults"]
+        # APScheduler's own default is one second.
+        self.assertGreaterEqual(MISFIRE_GRACE_SECONDS, 60)
+        self.assertEqual(defaults["misfire_grace_time"], MISFIRE_GRACE_SECONDS)
+        self.assertTrue(defaults["coalesce"])
+        self.assertEqual(defaults["max_instances"], 1)
+
+    @override_settings(ENABLE_BACKGROUND_JOBS=False)
+    def test_debrief_jobs_honour_the_background_jobs_gate(self):
+        from apps.realtime import jobs
+
+        with patch("apps.realtime.jobs.run_tracked_job") as tracked:
+            jobs.daily_debrief_reminders_job()
+            jobs.weekly_debrief_reports_job()
+        tracked.assert_not_called()
