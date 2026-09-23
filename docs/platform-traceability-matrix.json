@@ -181,6 +181,7 @@
         "payment.act"
       ],
       "pages": [
+        "my_performance",
         "my_target",
         "performance_conversations",
         "priorities_master"
@@ -558,6 +559,7 @@
         "audit.AuditLog",
         "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
+        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1458,6 +1460,7 @@
         "audit.AuditLog",
         "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
+        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1694,6 +1697,7 @@
         "activities.Activity",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
+        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "fund_requests.AdvanceRequest",
@@ -3747,8 +3751,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "a904c115a849d47f5f09aee09789279fec7c03ae69ea988082d969d77e08895c",
-    "sources": "6801483f2f77e530ae302c09afe3252a56834baa4492ddef9716d7600d67a39b",
+    "payload": "3dded0eb3e7813a99a15dc7149e5fcf34cc8f31a3020cfe1799a8a47319a39dc",
+    "sources": "669d543f865bdadb16d432c1ff212c0fcbf6a364e12efbb76762ba61298e3c61",
     "sourceCount": 214,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
