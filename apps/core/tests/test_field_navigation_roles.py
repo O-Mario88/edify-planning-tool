@@ -142,5 +142,8 @@ class FieldNavigationRoleTest(SimpleTestCase):
         for role in (ADMIN, CCEO, CD, PL, IA, HR, ACCOUNTANT, PARTNER):
             with self.subTest(role=role):
                 labels = [g["label"] for g in build_sidebar_for_user(_user(role), "/")]
-                self.assertEqual(labels, [t for t in TIERS if t in labels])
+                self.assertEqual(
+                    labels,
+                    [t for t in (TIERS[0], "OVERSIGHT", *TIERS[1:]) if t in labels],
+                )
                 self.assertEqual(labels[0], "DAILY")

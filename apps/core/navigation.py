@@ -186,9 +186,8 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # page resolves a team only for a Program Lead, and the country page is a
     # leadership review surface, not a field-planning one. Neither grants any
     # write access to the work it shows.
-    # Cluster Oversight is a section on these two pages rather than a page of
-    # its own, so the roles that need it are here. IA and the Accountant read
-    # the team lens; the RVP reads the country one.
+    # Dedicated oversight pages share a sidebar group. Field officers only
+    # oversee partner work; team and country oversight belong to leadership.
     #
     # Widening a page permission widens every route behind it, which is how the
     # partner-oversight export hole opened earlier in this branch. The two
@@ -226,7 +225,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # person who knows the school is the first to notice a partner who has
     # gone quiet. The PL's decision queue is filtered by `supervising_pl_id`
     # and so stays empty for them: shared visibility, unchanged authority.
-    "partner_oversight": {CCEO, PL, CD, RVP, IA, ACCOUNTANT, ADMIN},
+    "partner_oversight": {CCEO, PL, CD, RPL, RVP, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -574,7 +573,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # and already see all of it from Project Planning, where the scheduling
     # and partner-assignment controls are; a read-only copy for them would be
     # a second answer to a question their own surface already answers.
-    "project_monitoring": {CCEO, PL, IA, CD, ADMIN},
+    "project_monitoring": {PL, IA, CD, ADMIN},
     "analytics_publishing": {CD, IA, ADMIN},
     # IA owns evidence assurance before records can enter finance and
     # leadership analytics, so the role must be able to open the shared
@@ -1719,6 +1718,12 @@ SIDEBAR_ITEMS = [
                 "url": "/clusters",
                 "page_key": "clusters",
                 "visible_to": {CCEO, PL, CD},
+            },
+            {
+                "label": "Partner Oversight",
+                "url": "/partner-oversight/",
+                "page_key": "partner_oversight",
+                "extra_active_paths": ("/partners",),
             },
             {
                 "label": "Cluster Oversight",
@@ -3070,6 +3075,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
         visible_items = []
         for item in sec["items"]:
+            # Staff have one direct Partner Oversight entry; the Partners
+            # directory remains available to its other audiences.
+            if item["page_key"] == "partners" and role in PAGE_PERMISSIONS["partner_oversight"]:
+                continue
             # The Analytics hub stands for a whole workspace, so it is resolved
             # from the sections the role can open rather than from one key: it
             # disappears when none are available, and it borrows the section's
@@ -3248,7 +3257,7 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     grouped: dict[int, list[dict]] = {}
     for tier, _weight, _order, item in sorted(ranked, key=lambda r: r[:3]):
         grouped.setdefault(tier, []).append(item)
-    return [
+    result = [
         {
             "label": TIERS[tier],
             "items": items,
@@ -3258,6 +3267,30 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
         }
         for tier, items in sorted(grouped.items())
     ]
+
+    oversight_keys = (
+        "team_planning_oversight", "country_planning_oversight",
+        "cluster_oversight", "core_schools_oversight", "partner_oversight",
+        "project_monitoring",
+    )
+    oversight_items = [
+        item for group in result for item in group["items"]
+        if item["page_key"] in oversight_keys
+    ]
+    for group in result:
+        group["items"] = [i for i in group["items"] if i["page_key"] not in oversight_keys]
+        group["standalone"] = len(group["items"]) == 1
+    result = [group for group in result if group["items"]]
+    if oversight_items:
+        oversight_items.sort(key=lambda i: oversight_keys.index(i["page_key"]))
+        result.insert(1 if result and result[0]["label"] == "DAILY" else 0, {
+            "label": "OVERSIGHT",
+            "items": oversight_items,
+            "active": any(i["active"] for i in oversight_items),
+            "standalone": False,
+            "expanded": False,
+        })
+    return result
 
 
 # ── Mobile bottom navigation ─────────────────────────────────────────────────

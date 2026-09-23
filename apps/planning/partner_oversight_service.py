@@ -32,6 +32,9 @@ from datetime import date
 from django.db.models import Q
 from django.urls import reverse
 
+from apps.core.activity_types import VISIT_TYPES, TRAINING_TYPES, CLUSTER_MEETING_TYPES
+from apps.planning.school_planning_badges import PLANNED_STATUSES
+
 # Where an assignment is in its life. The partner's scheduling decision is the
 # hinge: everything before it is a handover, everything after is delivery.
 STAGE_AWAITING_SCHEDULE = "awaiting_schedule"
@@ -64,6 +67,7 @@ class PartnerOversightItem:
     school_name: str = ""
     school_type: str = ""
     district: str = ""
+    cluster_id: str | None = None
     cluster_name: str = ""
     project_id: str | None = None
     partner_id: str | None = None
@@ -160,6 +164,10 @@ def _assignment_team_q(scope):
     responsible officer and the supervising lead only, and returned 404 for
     handovers at team schools monitored by someone else).
     """
+    if scope.get("region_ids") is not None:
+        return Q(school__region_id__in=scope["region_ids"]) | Q(
+            cluster__region_id__in=scope["region_ids"]
+        )
     if scope["is_country"]:
         return None
     ids = scope["staff_ids"]
@@ -174,6 +182,7 @@ def _assignment_team_q(scope):
         Q(monitoring_staff_id__in=ids)
         | Q(assigning_staff_id__in=ids)
         | Q(school__account_owner_id__in=ids)
+        | Q(cluster__responsible_staff_id__in=ids)
     )
 
 
@@ -290,7 +299,15 @@ def build_items(
         from apps.planning.oversight_service import _both_id_spaces
 
         wanted = _both_id_spaces({program_lead_id})
-        items = [i for i in items if i.supervising_pl_id in wanted]
+        items = [
+            i
+            for i in items
+            if (
+                not i.supervising_pl_id
+                if program_lead_id == "unassigned"
+                else i.supervising_pl_id in wanted
+            )
+        ]
 
     from apps.planning import partner_risk_service
 
@@ -335,12 +352,18 @@ def _unassigned_partner_activities(
         qs = qs.filter(assigned_partner_id=partner_id)
     if already:
         qs = qs.exclude(id__in=already)
-    if not scope["is_country"]:
+    if scope.get("region_ids") is not None:
+        qs = qs.filter(
+            Q(school__region_id__in=scope["region_ids"])
+            | Q(cluster__region_id__in=scope["region_ids"])
+        )
+    elif not scope["is_country"]:
         ids = scope["staff_ids"]
         qs = qs.filter(
             Q(monitored_by_staff_id__in=ids)
             | Q(responsible_staff_id__in=ids)
             | Q(school__account_owner_id__in=ids)
+            | Q(cluster__responsible_staff_id__in=ids)
         )
 
     activities = list(qs)
@@ -356,12 +379,35 @@ def _unassigned_partner_activities(
     )
     costs = _cost_by_activity([a.id for a in activities])
 
+    from types import SimpleNamespace
+
+    directory = _staff_directory(
+        [
+            SimpleNamespace(
+                monitoring_staff_id=a.monitored_by_staff_id,
+                assigning_staff_id=a.responsible_staff_id,
+                school=a.school,
+                cluster=a.cluster,
+            )
+            for a in activities
+        ]
+    )
     items = []
     for activity in activities:
+        owner = (
+            activity.monitored_by_staff_id
+            or activity.responsible_staff_id
+            or getattr(activity.school, "account_owner_id", None)
+            or getattr(activity.cluster, "responsible_staff_id", None)
+        )
+        canonical = directory["canonical"].get(owner, owner)
+        pl_id, pl_name = directory["supervisor"].get(canonical, (None, ""))
         entry = costs.get(activity.id)
         cost, catalogue_id, catalogue_version = entry if entry else (0, None, None)
         item = PartnerOversightItem(
-            stage=STAGE_SCHEDULED if activity.planned_date else STAGE_AWAITING_SCHEDULE,
+            stage=STAGE_SCHEDULED
+            if (activity.planned_date or activity.scheduled_date)
+            else STAGE_AWAITING_SCHEDULE,
             partner_assignment_id="",
             partner_activity_id=activity.id,
             school_id=activity.school_id,
@@ -370,14 +416,18 @@ def _unassigned_partner_activities(
             school_type=getattr(activity.school, "school_type", "") or "",
             district=getattr(getattr(activity.school, "district", None), "name", "")
             or "",
+            cluster_id=activity.cluster_id,
             cluster_name=getattr(activity.cluster, "name", "") or "",
             partner_id=activity.assigned_partner_id,
             partner_name=names.get(activity.assigned_partner_id, ""),
-            responsible_cceo_id=activity.monitored_by_staff_id
-            or activity.responsible_staff_id,
+            responsible_cceo_id=canonical,
+            responsible_cceo_name=directory["names"].get(owner, ""),
+            supervising_pl_id=pl_id,
+            supervising_pl_name=pl_name,
             activity_type=activity.activity_type or "",
             target_intervention=activity.focus_intervention or "",
-            scheduled_date=activity.planned_date,
+            scheduled_date=activity.planned_date
+            or (activity.scheduled_date.date() if activity.scheduled_date else None),
             month=activity.planned_month,
             quarter=activity.quarter or "",
             financial_year=activity.fy or "",
@@ -420,6 +470,14 @@ def _resolve_scope(principal) -> dict:
     from apps.core.scoping import owner_ids, resolve_user_scope
 
     role = getattr(principal, "active_role", "") or ""
+    if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
+        scope = resolve_user_scope(principal)
+        return {
+            "kind": "region",
+            "is_country": True,
+            "staff_ids": set(),
+            "region_ids": scope.region_ids,
+        }
     # Country lens for the roles whose remit genuinely is the whole country.
     # Impact Assessment and the Accountant are included because their queues
     # already are country-wide — IA verifies every submission and the
@@ -439,7 +497,11 @@ def _resolve_scope(principal) -> dict:
 
     scope = resolve_user_scope(principal)
     own = _both_id_spaces(set(owner_ids(principal)))
-    supervised = _both_id_spaces(set(scope.supervised_staff_ids or []))
+    supervised = (
+        _both_id_spaces(set(scope.supervised_staff_ids or []))
+        if role != EdifyRole.CCEO.value
+        else set()
+    )
     return {
         "kind": "team",
         "is_country": False,
@@ -482,6 +544,8 @@ def _staff_directory(assignments) -> dict:
     ids = {a.monitoring_staff_id for a in assignments} | {
         a.assigning_staff_id for a in assignments
     }
+    ids.update(getattr(a.school, "account_owner_id", None) for a in assignments)
+    ids.update(getattr(a.cluster, "responsible_staff_id", None) for a in assignments)
     ids.discard(None)
     ids.discard("")
     if not ids:
@@ -524,7 +588,12 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
     from apps.partners.models import PartnerAssignment
 
     activity = assignment.scheduled_activity
-    cceo_id = assignment.monitoring_staff_id or assignment.assigning_staff_id
+    cceo_id = (
+        assignment.monitoring_staff_id
+        or assignment.assigning_staff_id
+        or getattr(assignment.school, "account_owner_id", None)
+        or getattr(assignment.cluster, "responsible_staff_id", None)
+    )
     canonical_cceo = directory["canonical"].get(cceo_id, cceo_id)
     pl_id, pl_name = directory["supervisor"].get(canonical_cceo, (None, ""))
 
@@ -556,11 +625,12 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         school_type=getattr(assignment.school, "school_type", "") or "",
         district=getattr(getattr(assignment.school, "district", None), "name", "")
         or "",
+        cluster_id=assignment.cluster_id,
         cluster_name=getattr(assignment.cluster, "name", "") or "",
         project_id=assignment.project_id,
         partner_id=assignment.partner_id,
         partner_name=getattr(assignment.partner, "name", "") or "",
-        responsible_cceo_id=cceo_id,
+        responsible_cceo_id=canonical_cceo,
         responsible_cceo_name=directory["names"].get(cceo_id, ""),
         supervising_pl_id=pl_id,
         supervising_pl_name=pl_name,
@@ -778,6 +848,37 @@ def summarize(items) -> dict:
         by_phase.setdefault(item.delivery_phase, []).append(item)
 
     return {
+        "scheduled_visits": len(
+            {
+                i.partner_activity_id
+                for i in scheduled
+                if i.activity_type in VISIT_TYPES
+                and i.activity_status in PLANNED_STATUSES
+            }
+        ),
+        "scheduled_trainings": len(
+            {
+                i.partner_activity_id
+                for i in scheduled
+                if i.activity_type in TRAINING_TYPES
+                and i.activity_status in PLANNED_STATUSES
+            }
+        ),
+        "scheduled_meetings": len(
+            {
+                i.partner_activity_id
+                for i in scheduled
+                if i.activity_type in CLUSTER_MEETING_TYPES
+                and i.activity_status in PLANNED_STATUSES
+            }
+        ),
+        "overdue": sum(
+            any(
+                risk["key"] in {"partner_schedule_overdue", "partner_delivery_overdue"}
+                for risk in i.risks
+            )
+            for i in items
+        ),
         "active_partners": len({i.partner_id for i in items if i.partner_id}),
         "schools_assigned": len({i.school_id for i in items if i.school_id}),
         "awaiting_schedule": len(awaiting),
@@ -954,7 +1055,12 @@ def withdrawal_requests(principal) -> list[dict]:
         state=WithdrawalState.REQUESTED
     ).select_related("school", "partner", "assignment")
 
-    if not scope["is_country"]:
+    if scope.get("region_ids") is not None:
+        qs = qs.filter(
+            Q(school__region_id__in=scope["region_ids"])
+            | Q(cluster__region_id__in=scope["region_ids"])
+        )
+    elif not scope["is_country"]:
         ids = scope["staff_ids"]
         if not ids:
             return []
@@ -1007,4 +1113,43 @@ def withdrawal_history(assignment_id: str) -> list[dict]:
         for w in PartnerAssignmentWithdrawal.objects.filter(
             assignment_id=assignment_id
         ).order_by("requested_at")
+    ]
+
+
+def filter_workspace(items, *, member="", activity_type="", status=""):
+    """Shared table/export filters; items have already passed access scoping."""
+    return [
+        item
+        for item in items
+        if (
+            not member
+            or member == "all"
+            or (item.responsible_cceo_id or "unassigned") == member
+        )
+        and (not activity_type or item.activity_type == activity_type)
+        and (not status or item.delivery_phase == status)
+    ]
+
+
+def workspace_tables(items):
+    items = list(items)
+    return [
+        {
+            "page_param": "partner_schools_page",
+            "title": "Schools assigned",
+            "items": [i for i in items if i.partner_assignment_id and i.school_id],
+            "kind": "assignment",
+        },
+        {
+            "page_param": "partner_clusters_page",
+            "title": "Cluster work assigned",
+            "items": [i for i in items if i.partner_assignment_id and i.cluster_id],
+            "kind": "assignment",
+        },
+        {
+            "page_param": "partner_activities_page",
+            "title": "Partner activities",
+            "items": [i for i in items if i.partner_activity_id],
+            "kind": "activity",
+        },
     ]

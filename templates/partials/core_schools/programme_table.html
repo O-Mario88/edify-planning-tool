@@ -4,7 +4,7 @@
   <h2 class="edify-section-heading px-4 py-3">{{ section.label }} Schools <span class="edify-text-caption">({% if section.page %}{{ section.page.paginator.count }}{% else %}{{ section.rows|length }}{% endif %})</span></h2>
   <p class="edify-text-caption edify-text-muted px-4 pb-3">Visits and trainings planned as needed. No 4-visit / 4-training package.</p>
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} schools">
+    <table class="edify-record-table core-lifecycle-table w-full text-left" aria-label="{{ section.label }} schools">
       <thead><tr><th>School ID</th><th>School name</th><th>District</th><th>Visit plan status</th><th>Training plan status</th><th>Planned activities</th><th>Actions</th></tr></thead>
       <tbody>
       {% for row in lifecycle_pager.rows %}

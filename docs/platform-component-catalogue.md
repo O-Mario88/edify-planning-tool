@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **482**
+Components and application partials: **484**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -150,6 +150,7 @@ Components and application partials: **482**
 | `partials/core_schools/core_assessment_drawer.html` | application-partial | Reusable core assessment drawer interface primitive | canonical; default, empty, open | inherits containing page contract | accessible name and label | /core-schools/assessment | 0 |
 | `partials/core_schools/filters.html` | application-partial | Reusable filters interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /core-schools | 0 |
 | `partials/core_schools/intervention_impact.html` | application-partial | Reusable intervention impact interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /core-schools | 0 |
+| `partials/core_schools/matrix_response.html` | application-partial | Reusable matrix response interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /core-schools | 0 |
 | `partials/core_schools/matrix_table.html` | application-partial | Reusable matrix table interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /core-schools | 0 |
 | `partials/core_schools/performance_insights.html` | application-partial | Reusable performance insights interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /core-schools | 0 |
 | `partials/core_schools/planning_queue.html` | application-partial | Reusable planning queue interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /core-schools | 0 |
@@ -367,6 +368,7 @@ Components and application partials: **482**
 | `partials/oversight/filter_drawer.html` | application-partial | Reusable filter drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/flagged_schools.html` | application-partial | Reusable flagged schools interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/partner_detail_drawer.html` | application-partial | Reusable partner detail drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/detail | 0 |
+| `partials/oversight/partner_work_tables.html` | application-partial | Reusable partner work tables interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive; default | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/period_filter_bar.html` | application-partial | Reusable period filter bar interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /cluster-oversight/<br>/core-schools-oversight/<br>/country-planning-oversight/<br>/partner-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/pl_workspace.html` | application-partial | Reusable pl workspace interface primitive | executive; default | explicit responsive contract | accessible name and label | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |

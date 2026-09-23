@@ -356,6 +356,14 @@ def create_cluster(data: dict, principal) -> dict:
     return _cluster_card(cluster)
 
 
+def may_edit_cluster_profile(cluster, principal) -> bool:
+    """Use the same ownership rule for the edit control, drawer and save."""
+    from apps.core.scoping import cluster_owner_ids
+    scope = resolve_user_scope(principal)
+    owner = (cluster.responsible_staff_id or "").strip()
+    return not owner or scope.country_scope or owner in cluster_owner_ids(scope, direct_only=True)
+
+
 def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     """Update an existing cluster details and covered sub-counties."""
     from apps.core.exceptions import NotFoundError, BadRequest, Forbidden
@@ -364,29 +372,13 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     if not cluster:
         raise NotFoundError("Cluster not found")
 
-    # Editing a cluster follows the person responsible for it. The only check
-    # here was on the *district* of an incoming change, so a CCEO could rename,
-    # retype and re-cover another CCEO's cluster in the same district — and
-    # doing nothing to the district skipped even that. Sharing a district is
-    # not sharing a portfolio.
-    #
-    # An unowned cluster stays editable so it can be picked up and given an
-    # owner; that is the same carve-out `cluster_in_scope` makes, and without
-    # it the 16 clusters that have never had an owner would be frozen.
-    from apps.core.scoping import cluster_owner_ids
-
-    current_owner = (cluster.responsible_staff_id or "").strip()
-    editor_scope = resolve_user_scope(principal)
-    if (
-        current_owner
-        and not editor_scope.country_scope
-        and current_owner not in cluster_owner_ids(editor_scope, direct_only=True)
-    ):
+    if not may_edit_cluster_profile(cluster, principal):
         raise Forbidden(
             "That cluster belongs to another staff member. Ask them, or "
             "transfer it through the cluster-transfer workflow."
         )
 
+    previous_district_id = cluster.district_id
     region_id = data.get("regionId")
     district_id = data.get("districtId")
     if district_id:
@@ -403,6 +395,7 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     scope = resolve_user_scope(principal)
     if (
         district_id
+        and district_id != previous_district_id
         and not scope.country_scope
         and district_id not in scope.district_ids
     ):

@@ -12,7 +12,7 @@ risk names as responsible: a partner's delay is never sent to a CCEO as an
 accountability record, because the CCEO is not the one who is late.
 {% endcomment %}
 
-{% block drawer_title %}{% if item %}{{ item.school_name|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_title %}{% if item %}{{ item.school_name|default:item.cluster_name|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% if item %}{{ item.partner_name|default:"Partner" }}{% if item.district %} · {{ item.district }}{% endif %}{% else %}This assignment is not in your scope, or no longer exists.{% endif %}{% endblock %}
 
 {% block drawer_body %}

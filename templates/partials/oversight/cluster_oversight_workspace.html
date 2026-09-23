@@ -4,15 +4,17 @@
 
   {% kpi_strip %}
     {% kpi_metric %}{% kpi_label %}Total Clusters{% endkpi_label %}{{ total_clusters }}{% kpi_helper %}{{ total_schools }} member schools{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Cluster Meetings Planned{% endkpi_label %}{{ meetings_planned }}{% kpi_helper %}Open plans in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Group Trainings Planned{% endkpi_label %}{{ trainings_planned }}{% kpi_helper %}Open plans in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Active Clusters{% endkpi_label %}{{ perf_totals.active_clusters|default_if_none:0 }}{% kpi_helper %}{{ perf_totals.dormant_clusters|default:0 }} dormant{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Sessions Held{% endkpi_label %}{{ perf_totals.sessions_held|default:0 }}{% kpi_helper %}Meetings &amp; trainings{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Schools Reached{% endkpi_label %}{{ perf_totals.unique_schools_reached|default_if_none:0 }}{% kpi_helper %}Participating schools{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Cluster Budget{% endkpi_label %}UGX {{ perf_totals.total_spend|default:0|intcomma }}{% kpi_helper %}Planned activity budget{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
-  {% if is_programme_lead %}
+  {% if uses_member_tabs %}
   <div x-data="tabState('activeOfficer', 'officer', {% tab_values cceo_tabs %}, 'my-clusters')" class="space-y-4">
-    <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="My clusters and CCEOs under me">
+    <nav class="oversight-team-selector flex items-center gap-1.5" role="tablist" aria-label="Clusters and activity owners">
       {% for officer in cceo_tabs %}
       <button type="button" role="tab" :aria-selected="activeOfficer === '{{ officer.id }}'"
               aria-controls="cluster-officer-panel-{{ officer.id }}"

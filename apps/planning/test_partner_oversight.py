@@ -12,6 +12,7 @@ from datetime import date, timedelta
 
 from django.db import connection
 from django.test import TestCase
+from django.utils import timezone
 from django.test.utils import CaptureQueriesContext
 
 from apps.accounts.models import (
@@ -446,3 +447,123 @@ class PaymentPendingMeansIAVerifiedTest(PartnerOversightFixture):
         summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
 
         self.assertEqual(summary["payment_pending"], 0)
+
+
+class PartnerTeamWorkspaceTest(PartnerOversightFixture):
+    def test_standalone_activity_retains_staff_and_supervisor_using_user_id(self):
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            planned_date=date.today(),
+            status="partner_scheduled",
+            delivery_type="partner",
+            assigned_partner_id=self.partner.id,
+            monitored_by_staff_id=self.cceo_user.id,
+        )
+        item = svc.build_items(self.pl_user, fy=self.fy)[0]
+        self.assertEqual(item.partner_activity_id, activity.id)
+        self.assertEqual(item.responsible_cceo_id, self.cceo.id)
+        self.assertEqual(item.responsible_cceo_name, "James")
+        self.assertEqual(item.supervising_pl_id, self.pl.id)
+
+    def test_cluster_owner_sees_assignment_and_standalone_training(self):
+        from apps.clusters.models import Cluster
+
+        cluster = Cluster.objects.create(
+            name="Team cluster",
+            region=self.region,
+            district=self.district,
+            responsible_staff_id=self.cceo.id,
+        )
+        assignment = PartnerAssignment.objects.create(
+            cluster=cluster,
+            partner=self.partner,
+            expected_activity_type="cluster_meeting",
+            status="assigned",
+        )
+        Activity.objects.create(
+            cluster=cluster,
+            activity_type="cluster_training",
+            fy=self.fy,
+            planned_date=date.today(),
+            status="partner_scheduled",
+            delivery_type="partner",
+            assigned_partner_id=self.partner.id,
+        )
+        items = svc.build_items(self.cceo_user, fy=self.fy)
+        self.assertEqual(len(items), 2)
+        self.assertTrue(svc.assignment_in_scope(self.cceo_user, assignment.id))
+        self.assertTrue(all(i.supervising_pl_id == self.pl.id for i in items))
+        self.assertEqual(svc.summarize(items)["scheduled_trainings"], 1)
+        self.assertEqual(len(svc.workspace_tables(items)[1]["items"]), 1)
+
+    def test_shared_partner_does_not_expose_another_team(self):
+        own = self.assign()
+        self.assign(cceo=self.rival_cceo, school=self.rival_school)
+        items = svc.build_items(self.pl_user, fy=self.fy)
+        self.assertEqual([i.partner_assignment_id for i in items], [own.id])
+
+    def test_ia_member_filter_and_export_match_and_include_empty_roster(self):
+        ia = self._staff("hierarchy@p.test", "IA", EdifyRole.IMPACT_ASSESSMENT)[0]
+        empty_user, empty = self._staff("empty@p.test", "Empty member", EdifyRole.CCEO)
+        StaffSupervisorAssignment.objects.create(supervisee=empty, supervisor=self.pl)
+        self.schedule(self.assign())
+        self.assign(cceo=self.pl, school=self.rival_school)
+        self.client.force_login(ia)
+        params = {
+            "fy": self.fy,
+            "period": "fy",
+            "program_lead": self.pl.id,
+            "member": self.cceo.id,
+        }
+        response = self.client.get("/partner-oversight/", params)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Empty member")
+        self.assertEqual(len(response.context["workspace_tables"][0]["items"]), 1)
+        export = self.client.get("/partner-oversight/export", params)
+        body = b"".join(export.streaming_content).decode()
+        self.assertIn("School A", body)
+        self.assertNotIn("Rival School", body)
+
+    def test_regional_scope_blocks_other_region_and_drawer(self):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+
+        regional = self._staff(
+            "regional@p.test", "Regional", EdifyRole.REGIONAL_PROGRAM_LEAD
+        )[0]
+        assignment = self.assign()
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[]),
+        ):
+            self.assertEqual(svc.build_items(regional, fy=self.fy), [])
+            self.assertFalse(svc.assignment_in_scope(regional, assignment.id))
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(region_ids=[self.region.id]),
+        ):
+            self.assertEqual(len(svc.build_items(regional, fy=self.fy)), 1)
+            self.assertTrue(svc.assignment_in_scope(regional, assignment.id))
+
+    def test_overdue_count_uses_the_same_deadline_as_assignment_details(self):
+        assignment = self.assign()
+        PartnerAssignment.objects.filter(id=assignment.id).update(
+            created_at=timezone.now() - timedelta(days=12)
+        )
+        items = svc.build_items(self.pl_user, fy=self.fy)
+        self.assertEqual(svc.summarize(items)["overdue"], 1)
+
+    def test_cceo_partner_scope_does_not_expand_to_supervised_staff(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        own = self.assign()
+        self.assign(cceo=self.rival_cceo, school=self.rival_school)
+        with patch(
+            "apps.core.scoping.resolve_user_scope",
+            return_value=SimpleNamespace(supervised_staff_ids=[self.rival_cceo.id]),
+        ):
+            items = svc.build_items(self.cceo_user, fy=self.fy)
+        self.assertEqual([i.partner_assignment_id for i in items], [own.id])
