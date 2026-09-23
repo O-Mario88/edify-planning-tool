@@ -104,7 +104,10 @@ test.describe('Partner-supported schools — journeys', () => {
     const responsible = row.locator('[data-responsible="partner"] .planning-responsible');
     await expect(responsible).toContainText('Partner');
     await expect(responsible).toContainText(hope.partner);
-    await expect(row).toContainText(data.cceo_name);
+    // The owner is unchanged; like every school's, it sits in the row's
+    // details, which the name opens.
+    await row.locator('.school-plan-table__name-toggle').click();
+    await expect(page.locator(`#planning-school-details-${hope.school_pk}`)).toContainText(data.cceo_name);
     await expect(row.getByRole('button', { name: `Schedule activity for ${hope.name}` })).toBeEnabled();
     // The shared Visit and Training Status badges, beside the school's name.
     await expect(row.locator('[data-planning-badges="visits"] .school-planning-badge').first()).toBeVisible();
