@@ -17,9 +17,10 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
   for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
    await page.setViewportSize({width,height});
    const r=await surface.boundingBox();
-   // A phone gets a sheet from the bottom edge (2026-09-23); the nested
-   // popup dialog and every wider screen keep the centred card.
-   const sheet=width<768 && !flow.nested;
+   // A phone gets a sheet from the bottom edge (2026-09-23); every wider
+   // screen keeps the centred card. The nested Core visit drawer is a
+   // base_drawer now too, so it is a sheet on a phone like the rest.
+   const sheet=width<768;
    if(sheet){
     // Edge to edge and flush with the bottom, within emulation rounding.
     expect(Math.abs(r.x)).toBeLessThan(1);expect(Math.abs(r.width-width)).toBeLessThan(2);
