@@ -45,9 +45,11 @@ class TableBoundsTest(SimpleTestCase):
     #:   column loop. Its rows are the team (bounded by supervisees) and its
     #:   companion trend is exactly twelve financial-year months; both exist to
     #:   be compared side by side, which is what a pager would break.
-    #: * `partials/today/workbench.html` — `waiting` is capped at WAITING_LIMIT
-    #:   (8) in today_views and the card's header discloses the whole queue
-    #:   ("View all N"): bounded in Python, and the reader is told there is more.
+    #: * `partials/today/waiting_table.html` — `waiting` is capped at
+    #:   WAITING_LIMIT (8) in today_views and the card's header discloses the
+    #:   whole queue ("View all N"): bounded in Python, and the reader is told
+    #:   there is more. (Moved out of workbench.html, 2026-09-23, when the
+    #:   field worker's queue became the same table.)
     #: * `partials/clusters/cluster_schools_table.html` — the schools of one
     #:   cluster, drawn inside that cluster's card (a card list until the table
     #:   redesign, 8bb11a1, so the scanner never saw it). Bounded by cluster

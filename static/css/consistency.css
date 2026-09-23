@@ -4710,6 +4710,28 @@ main .edify-avatar-neutral {
     flex-direction: row !important; align-items: center !important; gap: .35rem !important;
   }
 }
+/* "Waiting on you" tables (owner, 2026-09-23: "turn Waiting on you into a
+   proper professional table with Action button at the end of each row").
+   Marked with data-waiting-table: Today's queue (partials/today/
+   waiting_table.html), the Programme Lead's Regional Lead and Country
+   Director items, and Admin Ops triage. The first column reads "Title ·
+   context" on the one line the platform gives every row; unbounded, that
+   line set the table's width and pushed the other columns and the Action
+   buttons off the card. It now takes the width the other columns leave and
+   ends in an ellipsis, with its full text as the title; the other columns
+   keep their own width, and the action closes every row at the right edge. */
+:root main table[data-waiting-table] { table-layout: auto !important; inline-size: 100% !important; }
+:root main table[data-waiting-table] :is(thead th, tbody td) { white-space: nowrap !important; }
+:root main table[data-waiting-table] :is(thead th:first-child, tbody > tr > :first-child:not([colspan])) {
+  inline-size: 100% !important; max-inline-size: 0 !important; min-inline-size: 14rem !important;
+}
+:root main table[data-waiting-table] tbody > tr > :first-child:not([colspan]) {
+  overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+}
+:root main table[data-waiting-table] :is(thead th:last-child, tbody > tr > td:last-child:not([colspan])) {
+  inline-size: 1% !important; text-align: end !important;
+}
+:root main table[data-waiting-table] tbody [data-today-actions] { flex-wrap: nowrap !important; }
 .drawer-header__subtitle:empty { display: none; }
 
 :root main table.school-plan-table .school-plan-table__name-toggle.school-plan-table__name-toggle {

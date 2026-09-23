@@ -25,7 +25,7 @@ at its content width instead of shortening it like prose.
   hidden, until a decision is refused): the table enhancer injects a hidden
   column label as the first child, and a title span straight after it
   would inherit the "·" separator meant for a caption.{% endcomment %}
-  <th scope="row" class="ps-5 pe-3 py-2.5 align-top" data-record-title>
+  <th scope="row" class="ps-5 pe-3 py-2.5 align-top" data-record-title title="{{ todo.title }}{% if todo.linked %} · {{ todo.linked }}{% endif %}{% if todo.description %} · {{ todo.description }}{% endif %}">
     <output class="mr-1.5 edify-text-caption font-semibold text-rose-700 empty:hidden" role="alert" data-today-error>{{ error|default:"" }}</output>
     <span class="block text-[12px] font-semibold text-slate-800">{{ todo.title }}{% if todo.today.amount %} <span class="tabular-nums font-medium text-slate-600">· UGX {{ todo.today.amount|intcomma }}</span>{% endif %}</span>
     {% if todo.linked or todo.description %}<span class="block edify-text-caption edify-text-subtle mt-0.5">{% if todo.linked %}{{ todo.linked }}{% endif %}{% if todo.description %}{% if todo.linked %} · {% endif %}{{ todo.description }}{% endif %}</span>{% endif %}

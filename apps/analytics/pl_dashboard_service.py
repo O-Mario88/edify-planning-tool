@@ -981,7 +981,76 @@ class ProgramLeadDashboardService:
 
         cd_open = len(flags)
         cd_overdue = sum(1 for row in flag_rows if row["overdue"])
+
+        # One row list per Collaboration table, the action at the end of each
+        # row (owner, 2026-09-23), so each table pages as one list.
+        regional_rows = [
+            {
+                "subject": e.subject,
+                "detail": e.get_recommendation_display() if e.recommendation else "",
+                "kind": "Training feedback",
+                "when_label": "Observed",
+                "when": e.held_on,
+                "action_label": "Review",
+                "drawer": f"{TRAINING_FEEDBACK_URL}/{e.id}",
+            }
+            for e in feedback
+        ] + [
+            {
+                "subject": e.subject,
+                "detail": "",
+                "kind": "Coaching conversation",
+                "when_label": "Held",
+                "when": e.held_on,
+                "action_label": "Acknowledge",
+                "drawer": f"{REGIONAL_COACHING_URL}/{e.id}",
+            }
+            for e in coaching
+        ]
+        cd_rows = (
+            [
+                {
+                    "subject": row["scope"],
+                    "detail": row["note"],
+                    "kind": "Quality flag",
+                    "due": row["due"],
+                    "status": row["status"],
+                    "danger": row["overdue"],
+                    "action_label": "Answer",
+                    "href": QUALITY_FLAGS_URL,
+                }
+                for row in flag_rows
+            ]
+            + [
+                {
+                    "subject": e.subject,
+                    "detail": "",
+                    "kind": "Escalation",
+                    "due": None,
+                    "status": f"{e.get_status_display()} · {e.age_days}d open",
+                    "danger": _is_overdue(e),
+                    "action_label": "View",
+                    "href": f"{ESCALATIONS_URL}#esc-raised",
+                }
+                for e in raised_open[:LIST_ROWS]
+            ]
+            + [
+                {
+                    "subject": e.subject,
+                    "detail": (getattr(e, "decision_note", "") or "")[:160],
+                    "kind": "Delegated back",
+                    "due": None,
+                    "status": "Yours to act on",
+                    "danger": True,
+                    "action_label": "Act",
+                    "href": f"{ESCALATIONS_URL}#esc-raised",
+                }
+                for e in delegated
+            ]
+        )
         return {
+            "regional_rows": regional_rows,
+            "cd_rows": cd_rows,
             "cd_flags": {"open": cd_open, "overdue": cd_overdue, "rows": flag_rows},
             "regional_feedback": {
                 "count": feedback_count,
