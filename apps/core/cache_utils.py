@@ -92,26 +92,48 @@ def cached_role_dashboard(kind: str, user, parts, build):
     )
 
 
+def snapshot_key(key: str) -> str:
+    """The key a snapshot is actually stored under: every snapshot belongs to
+    the build that computed it — see `build_namespace`."""
+    return f"{build_namespace()}:{key}"
+
+
+def forget_snapshot(key: str) -> None:
+    """Drop the snapshot `stampede_safe_get_or_compute(key, ...)` stored.
+
+    A bare ``cache.delete(key)`` misses it, because the stored key carries the
+    build namespace: the To-Do queue's "forget" did exactly that and deleted
+    nothing, so a decision stayed on the queue until the snapshot expired."""
+    try:
+        cache.delete(snapshot_key(key))
+    except Exception:  # noqa: BLE001 - the cache is an optimisation only
+        logger.warning("Cache delete failed for %s", key, exc_info=True)
+
+
 def stampede_safe_get_or_compute(
     key: str,
     compute: Callable[[], T],
     *,
     timeout: int,
-    wait_seconds: float = 3.0,
+    wait_seconds: float | None = None,
 ) -> T:
     """Return a cached snapshot while allowing only one concurrent rebuild.
 
     The lock and every wait are bounded. Cache loss is fail-open because these
     snapshots are an optimization over authoritative database reads, never the
     source of truth.
+
+    A request that finds another one rebuilding waits for that answer while
+    the rebuild lock is held — at most `wait_seconds`, which defaults to the
+    lock's own lifetime — and computes itself only if the owner finished
+    without publishing (its write failed) or the wait ran out.
     """
     if timeout <= 0:
         return compute()
 
-    # Every snapshot belongs to the build that computed it — see
-    # `build_namespace`. Applied here rather than at each call site so a new
-    # cached surface cannot forget it.
-    key = f"{build_namespace()}:{key}"
+    # Applied here rather than at each call site so a new cached surface
+    # cannot forget the build namespace.
+    key = snapshot_key(key)
 
     backend_ok, value = _read(key)
     if not backend_ok:
@@ -143,6 +165,14 @@ def stampede_safe_get_or_compute(
             except Exception:  # noqa: BLE001 - lock TTL bounds recovery
                 logger.warning("Cache lock cleanup failed for %s", key, exc_info=True)
 
+    # Waiters used to give up after a flat three seconds and compute
+    # themselves. Any snapshot slower than that to build — System Health cold
+    # (~6 s), the impact dashboard — then ran once per waiter, all at the same
+    # time on one CPU, which is the stampede the lock exists to prevent
+    # (performance rescue, 2026-09-23). Waiting for the owner costs nothing
+    # and answers sooner than a duplicate build would.
+    if wait_seconds is None:
+        wait_seconds = lock_timeout
     deadline = time.monotonic() + max(wait_seconds, 0)
     while time.monotonic() < deadline:
         time.sleep(0.05)
@@ -151,7 +181,22 @@ def stampede_safe_get_or_compute(
             break
         if value is not _MISSING:
             return value  # type: ignore[return-value]
+        if not _lock_held(lock_key):
+            # The owner is done but published nothing (its write failed or
+            # the value was evicted), or it died and the lock expired: one
+            # last look, then build it here.
+            backend_ok, value = _read(key)
+            if backend_ok and value is not _MISSING:
+                return value  # type: ignore[return-value]
+            break
 
     # Availability beats an indefinite wait if the rebuilding process died or
     # the backend lost the value. Duplicate work remains bounded by the wait.
     return compute()
+
+
+def _lock_held(lock_key: str) -> bool:
+    try:
+        return cache.get(lock_key) is not None
+    except Exception:  # noqa: BLE001 - treat an unreadable lock as released
+        return False

@@ -1017,6 +1017,32 @@ class DetectionMiddlewareTests(TestCase):
 
         self.assertTrue(_is_application_route("/dashboard"))
 
+    def test_slow_requests_are_tallied_per_route_not_per_record(self):
+        """Three slow opens of three schools are one repeatedly slow route,
+        and the tally holds one entry for it rather than one per school
+        (performance rescue, 2026-09-23)."""
+        from unittest import mock
+
+        from django.http import HttpResponse
+        from django.test import RequestFactory
+        from django.urls import resolve
+
+        from apps.admin_ops import detection
+
+        middleware = detection.PlatformFailureDetectionMiddleware(lambda r: None)
+        with (
+            mock.patch.dict(detection._slow_counts, clear=True),
+            mock.patch.object(detection.SystemIncidentService, "report") as report,
+        ):
+            for school in ("S-1", "S-2", "S-3"):
+                request = RequestFactory().get(f"/schools/{school}")
+                request.resolver_match = resolve(f"/schools/{school}")
+                middleware._inspect(request, HttpResponse(), elapsed_ms=10_000)
+            self.assertEqual(
+                list(detection._slow_counts), ["GET:schools/<str:school_id>"]
+            )
+        report.assert_called_once()
+
 
 # ── Data Repair Center (§26) ─────────────────────────────────────────────────
 
