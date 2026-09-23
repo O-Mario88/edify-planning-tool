@@ -50,7 +50,7 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities.models import Activity
-from apps.budget.models import CostCatalogue, CostSetting
+from apps.budget.models import CostSetting
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
@@ -138,15 +138,19 @@ class SpecialProjectJourneyTest(TestCase):
 
         cls.day = _schedulable_date()
         cls.fy = get_operational_fy(cls.day)
-        cls.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy=cls.fy, is_active=True, defaults={"version": 1}
-        )
+        # The rate card pricing reads, whatever year the day falls in (pricing
+        # no longer asks the year). A catalogue made for the day's own year
+        # held only this transport rate: from 24 September "today + 7" is in
+        # the next fiscal year, and scheduling was refused for want of Lunch.
+        from apps.budget.reference import ensure_active_catalogue
+
+        cls.catalogue = ensure_active_catalogue()
         CostSetting.objects.update_or_create(
             key="primary_transport_per_day",
             defaults={
                 "label": "Primary Transport Per Day",
                 "unit_cost": TRANSPORT,
-                "fy": cls.fy,
+                "fy": cls.catalogue.fy,
                 "catalogue": cls.catalogue,
             },
         )
