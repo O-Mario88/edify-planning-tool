@@ -8,7 +8,8 @@
  *   2. a table wider than its region scrolls sideways, keeps its identity
  *      column in view, and says so — a trailing fade and a first-use hint;
  *   3. the workspace itself never scrolls sideways;
- *   4. the page header reflows instead of wrapping its actions.
+ *   4. the page header reflows instead of wrapping its actions;
+ *   5. filters are as wide as what they hold, and share a row.
  *
  * A drawer on a phone is a sheet from the bottom edge; that shape decision
  * lives with every other drawer-shape decision, in the last block of
@@ -249,4 +250,89 @@
     flex: 1 1 auto;
     justify-content: center;
   }
+}
+
+/* ── 5. Filters size to what they hold ─────────────────────────────────────
+   Every shared filter field was a fixed 13rem slab (consistency.css), so a
+   two-character FY took the same 208px as a district list, and on a phone no
+   two filters fitted beside each other: View, FY, Quarter and District each
+   took a row of their own (owner, 2026-09-23: "filters should not be on a new
+   line if their contents are not long … reduce the filter sizes so they can
+   fit one row"). A field is now as wide as its label and the value it shows;
+   the row wraps only when it is genuinely full. The same selector list as the
+   rule it overrides, so it carries the same weight and wins by coming later.
+
+   The select sizes to its chosen option where the browser can (field-sizing),
+   and otherwise to its longest option, held between a thumb-sized minimum and
+   a cap that stops a long district list dominating the row. The open list
+   still shows every option in full. */
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > .edify-filter-field {
+  flex: 0 1 auto !important;
+  inline-size: auto !important;
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
+}
+
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > .edify-filter-field > :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])) {
+  field-sizing: content;
+  inline-size: auto !important;
+  min-inline-size: 5.5rem !important;
+  max-inline-size: min(14rem, 100%) !important;
+  /* A tighter lane for the shared 16px chevron: it sits 0.5rem from the
+     edge and the text stops 0.375rem short of it, which lets three filters
+     share a phone row where 2.5rem of padding allowed two. */
+  padding-inline: 0.625rem 1.875rem !important;
+  background-position: right 0.5rem center !important;
 }

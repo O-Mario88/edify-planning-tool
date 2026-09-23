@@ -177,3 +177,31 @@ class ResponsiveLayerTest(SimpleTestCase):
     def test_buttons_take_their_size_from_the_label_token(self):
         micro = MICRO_UX_CSS.read_text()
         self.assertNotIn("font-size: 0.8125rem !important;", micro)
+
+    def test_filters_size_to_what_they_hold(self):
+        """A filter is as wide as its label and value, so short ones share a
+        row (owner, 2026-09-23: "fy filter should be on the same row as view
+        filter"). The override must name exactly the filter bars the fixed
+        13rem rule names, or it would lose to it on specificity."""
+        block = self.css[self.css.index("5. Filters size to what they hold") :]
+        self.assertIn("flex: 0 1 auto !important;", block)
+        self.assertIn("field-sizing: content;", block)
+        self.assertIn("inline-size: auto !important;", block)
+
+        consistency = (ROOT / "static/css/consistency.css").read_text()
+        fixed = re.search(
+            r"main :is\(([^)]*)\) > \.edify-filter-field \{\s*display: flex;\s*"
+            r"flex: 0 1 13rem !important;",
+            consistency,
+        )
+        self.assertIsNotNone(fixed)
+        override = re.search(
+            r"main :is\(([^)]*)\) > \.edify-filter-field \{\s*flex: 0 1 auto !important;",
+            block,
+        )
+        self.assertIsNotNone(override)
+
+        def bars(listing):
+            return sorted(" ".join(part.split()) for part in listing.split(","))
+
+        self.assertEqual(bars(override.group(1)), bars(fixed.group(1)))

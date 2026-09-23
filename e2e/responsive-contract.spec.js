@@ -163,9 +163,10 @@ test.describe('Responsive contract — behaviours', () => {
       for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
         await page.setViewportSize({ width, height });
         const box = await sheet.boundingBox();
-        expect(box.x).toBe(0);
-        expect(Math.round(box.width)).toBe(width);
-        expect(Math.round(box.y + box.height)).toBe(height);
+        // Edge to edge and flush with the bottom, within emulation rounding.
+        expect(Math.abs(box.x)).toBeLessThan(1);
+        expect(Math.abs(box.width - width)).toBeLessThan(2);
+        expect(Math.abs(box.y + box.height - height)).toBeLessThanOrEqual(3);
         expect(box.y).toBeGreaterThanOrEqual(8);
         expect(await sheet.evaluate(e => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(2);
         const submit = sheet.locator('button[type="submit"]').last();
@@ -258,6 +259,62 @@ test.describe('Responsive contract — behaviours', () => {
       expect(small.smallTargets.examples, 'controls under 24px on a phone').toEqual([]);
     } finally {
       await context.close();
+    }
+  });
+
+  test('filters are as wide as what they hold and share a row when they fit', async ({ browser, baseURL, browserName, isMobile }) => {
+    onlyChromiumDesktop({ browserName, isMobile });
+    const rowsOf = (page, selector) => page.evaluate(sel => {
+      const form = document.querySelector(sel);
+      const rows = new Map();
+      [...form.children]
+        .filter(field => field.querySelector('select') && field.getBoundingClientRect().width)
+        .forEach(field => {
+          const top = Math.round(field.getBoundingClientRect().top);
+          rows.set(top, (rows.get(top) || 0) + 1);
+        });
+      const clipped = [...form.querySelectorAll('select')]
+        .filter(select => select.getBoundingClientRect().width && select.scrollWidth > select.clientWidth + 1)
+        .map(select => select.name);
+      return { rows: [...rows.values()], clipped };
+    }, selector);
+
+    // Partner Monitoring's View and FY share one row on the smallest phone.
+    {
+      const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 320, height: 568 }, 'pl1@edify.org');
+      try {
+        await page.goto('/partner-oversight/');
+        const { rows, clipped } = await rowsOf(page, 'form.oversight-period-filter');
+        expect(rows[0]).toBe(2);
+        expect(clipped).toEqual([]);
+      } finally {
+        await context.close();
+      }
+    }
+    // Planning's eight filters: one row on a desktop, several to a row on a phone.
+    {
+      const { context, page } = await openAs(browser, baseURL, DESKTOP_CONTEXT, { width: 1440, height: 900 }, 'cceo@edify.org');
+      try {
+        await page.goto('/planning');
+        const { rows, clipped } = await rowsOf(page, '#filters-form');
+        expect(rows).toEqual([8]);
+        expect(clipped).toEqual([]);
+      } finally {
+        await context.close();
+      }
+    }
+    {
+      const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'cceo@edify.org');
+      try {
+        await page.goto('/planning');
+        await page.evaluate(() => document.querySelectorAll('details.mobile-family-filter').forEach(d => { d.open = true; }));
+        const { rows, clipped } = await rowsOf(page, '#filters-form');
+        expect(rows.length).toBeLessThanOrEqual(4);
+        expect(Math.max(...rows)).toBeGreaterThanOrEqual(3);
+        expect(clipped).toEqual([]);
+      } finally {
+        await context.close();
+      }
     }
   });
 

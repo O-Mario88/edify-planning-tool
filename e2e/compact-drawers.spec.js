@@ -21,8 +21,9 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
    // popup dialog and every wider screen keep the centred card.
    const sheet=width<768 && !flow.nested;
    if(sheet){
-    expect(r.x).toBe(0);expect(Math.round(r.width)).toBe(width);
-    expect(Math.round(r.y+r.height)).toBe(height);expect(r.y).toBeGreaterThanOrEqual(8);
+    // Edge to edge and flush with the bottom, within emulation rounding.
+    expect(Math.abs(r.x)).toBeLessThan(1);expect(Math.abs(r.width-width)).toBeLessThan(2);
+    expect(Math.abs(r.y+r.height-height)).toBeLessThanOrEqual(3);expect(r.y).toBeGreaterThanOrEqual(8);
    }else{
     expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
     expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);

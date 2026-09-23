@@ -1048,6 +1048,15 @@
   line-height: 1.45;
 }
 
+/* The scope note is a sentence, not a filter label: it takes its own line in
+   the filter bar and wraps at every width. Held to one line by the bar's
+   compact-label rule, it ran 880px wide and pushed a tablet's page sideways. */
+#ssa-performance-workspace .sp-scope-note {
+  flex: 1 1 100%;
+  min-inline-size: 0;
+  white-space: normal !important;
+}
+
 .sp-dashboard-grid {
   display: grid;
   grid-template-columns: minmax(280px, .9fr) minmax(450px, 1.35fr) minmax(300px, .9fr);
@@ -1214,9 +1223,11 @@
   /* The workspace's own three-plus-actions row (above) is ID-specific, so it
      outranked the line before and held four 184px columns on a 390px phone,
      pushing the whole page sideways. */
-  #ssa-performance-workspace .sp-filter-grid { grid-template-columns: minmax(0, 1fr); }
-  /* The scope note is a sentence, not a filter label: it wraps. */
-  #ssa-performance-workspace .sp-scope-note { flex: 1 1 100%; min-inline-size: 0; white-space: normal !important; }
+  /* Filters as wide as what they hold, sharing a row (2026-09-23): three
+     one-per-row 190px slabs became a single row of compact fields. */
+  #ssa-performance-workspace .sp-filter-grid { display: flex !important; flex: 1 1 100% !important; flex-wrap: wrap !important; align-items: end; min-inline-size: 0 !important; max-inline-size: 100% !important; }
+  #ssa-performance-workspace .sp-filter-grid > .sp-field { flex: 0 1 auto; }
+  #ssa-performance-workspace .sp-field select { field-sizing: content; inline-size: auto; min-inline-size: 5.5rem; max-inline-size: min(14rem, 100%); }
   .sp-filter-actions { justify-content: stretch; }
   .sp-reset, .sp-export { flex: 1; min-height: 48px; }
   .sp-field select { min-height: 48px; font-size: 1rem; }
