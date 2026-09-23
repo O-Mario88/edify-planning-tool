@@ -66,9 +66,7 @@ class LensStripTest(SimpleTestCase):
             self.assertTrue(tab["href"].startswith(TEAM_OVERSIGHT_PATH), tab)
 
     def test_the_active_lens_is_the_only_one_marked(self):
-        tabs = _lens_tabs(
-            TEAM_OVERSIGHT_PATH, "portfolio", {"planning", "portfolio"}
-        )
+        tabs = _lens_tabs(TEAM_OVERSIGHT_PATH, "portfolio", {"planning", "portfolio"})
 
         self.assertEqual([t["key"] for t in tabs if t["is_active"]], ["portfolio"])
 
@@ -220,9 +218,7 @@ class LensAccessTest(TestCase):
     def test_the_country_director_reads_the_same_two_lenses(self):
         self._sign_in("lens-cd@edify.org", "CountryDirector")
 
-        for view, marker in (
-            ("portfolio", "Country portfolio"),
-        ):
+        for view, marker in (("portfolio", "Country portfolio"),):
             with self.subTest(view=view):
                 response = self.client.get(f"/country-planning-oversight/?view={view}")
                 self.assertEqual(response.status_code, 200)
@@ -237,9 +233,7 @@ class LensAccessTest(TestCase):
         portfolio = self.client.get(
             "/country-planning-oversight/?view=portfolio"
         ).content.decode()
-        clusters = self.client.get(
-            "/cluster-oversight/"
-        ).content.decode()
+        clusters = self.client.get("/cluster-oversight/").content.decode()
 
         self.assertIn("Portfolio Planned Budget", portfolio)
         self.assertIn("Cluster Budget", clusters)
@@ -251,9 +245,7 @@ class LensAccessTest(TestCase):
         self._sign_in("lens-ia-rank@edify.org", "ImpactAssessment")
         self._a_cluster()
 
-        body = self.client.get(
-            "/cluster-oversight/"
-        ).content.decode()
+        body = self.client.get("/cluster-oversight/").content.decode()
 
         for column in (
             "Cluster Name",
@@ -275,9 +267,7 @@ class LensAccessTest(TestCase):
         self._sign_in("lens-ia-by-lead@edify.org", "ImpactAssessment")
         self._a_cluster()
 
-        body = self.client.get(
-            "/cluster-oversight/"
-        ).content.decode()
+        body = self.client.get("/cluster-oversight/").content.decode()
 
         self.assertIn('role="tablist"', body)
         self.assertIn(">District</th>", body)

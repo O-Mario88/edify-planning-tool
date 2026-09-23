@@ -1040,10 +1040,7 @@ def team_planning_oversight_view(request):
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
-    if (
-        active_view in ("planning", "coverage", "portfolio")
-        and not can_view_planning
-    ):
+    if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
 
     available_lenses = {
@@ -1186,7 +1183,8 @@ def team_planning_oversight_view(request):
 
     summary = oversight.summarize(visible)
     owner_groups = oversight.group_by_owner(
-        visible, owners=oversight.program_lead_members(selected) if country_lens else None
+        visible,
+        owners=oversight.program_lead_members(selected) if country_lens else None,
     )
     _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
@@ -1310,15 +1308,15 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    active_view = (
-        requested_view if requested_view in {"portfolio"} else "planning"
-    )
+    active_view = requested_view if requested_view in {"portfolio"} else "planning"
     lens_tabs = _lens_tabs(
         COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio"}
     )
 
     if active_view == "portfolio":
-        context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+        context_data = _portfolio_context(
+            request, period, base_url=COUNTRY_OVERSIGHT_PATH
+        )
         template = "partials/oversight/portfolio_workspace.html"
 
         context = {

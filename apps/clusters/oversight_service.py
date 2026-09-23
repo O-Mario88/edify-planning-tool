@@ -369,8 +369,10 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     from apps.core.fy import get_operational_fy
 
     cluster_work = [
-        item for item in planning.build_items(principal, fy=str(fy or get_operational_fy()))
-        if item.cluster_id and not item.is_in_school_training
+        item
+        for item in planning.build_items(principal, fy=str(fy or get_operational_fy()))
+        if item.cluster_id
+        and not item.is_in_school_training
         and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
     ]
 
@@ -384,7 +386,11 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             for identifier in (row["lead_id"], row["lead_user_id"])
             if identifier
         }
-        visible_lead_ids.update(str(item.supervising_pl_id) for item in cluster_work if item.supervising_pl_id)
+        visible_lead_ids.update(
+            str(item.supervising_pl_id)
+            for item in cluster_work
+            if item.supervising_pl_id
+        )
         sys_pls = [
             pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))
         ]
@@ -442,7 +448,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
         )
 
-    if unassigned_pl["count"] > 0 or any(not item.supervising_pl_id for item in cluster_work):
+    if unassigned_pl["count"] > 0 or any(
+        not item.supervising_pl_id for item in cluster_work
+    ):
         unassigned_pl["cceo_tabs"] = sorted(
             unassigned_pl["cceos"].values(),
             key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
@@ -496,7 +504,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         # colleague has nothing to show.
         listed = {str(tab["id"]) for tab in officer_tabs}
         for member in planning.program_lead_members(principal.id):
-            if str(member["id"]) in listed or member["ids"].intersection(user_staff_ids):
+            if str(member["id"]) in listed or member["ids"].intersection(
+                user_staff_ids
+            ):
                 continue
             officer_tabs.append(
                 {
@@ -515,7 +525,13 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     # Populate each person's single tab with their clusters and the work they
     # are responsible for, even if a different team member holds the cluster.
     def member_tab(member):
-        return {"id": member["id"], "name": member["name"], "clusters": [], "count": 0, "schools": 0}
+        return {
+            "id": member["id"],
+            "name": member["name"],
+            "clusters": [],
+            "count": 0,
+            "schools": 0,
+        }
 
     for lead in leads_data:
         roster = planning.program_lead_members(lead["id"])
@@ -523,7 +539,11 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         ordered = [existing.pop(member["id"], member_tab(member)) for member in roster]
         lead["cceo_tabs"] = ordered + list(existing.values())
         groups = planning.group_by_owner(
-            [item for item in cluster_work if str(item.supervising_pl_id or "__unassigned__") == str(lead["id"])],
+            [
+                item
+                for item in cluster_work
+                if str(item.supervising_pl_id or "__unassigned__") == str(lead["id"])
+            ],
             owners=roster,
         )
         tabs = {tab["id"]: tab for tab in lead["cceo_tabs"]}
@@ -532,23 +552,40 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             if tab is None:
                 tab = member_tab(group)
                 lead["cceo_tabs"].append(tab)
-            tab["meetings"] = [item for item in group["items"] if item.activity_type in CLUSTER_MEETING_TYPES]
-            tab["trainings"] = [item for item in group["items"] if item.activity_type in TRAINING_TYPES]
+            tab["meetings"] = [
+                item
+                for item in group["items"]
+                if item.activity_type in CLUSTER_MEETING_TYPES
+            ]
+            tab["trainings"] = [
+                item for item in group["items"] if item.activity_type in TRAINING_TYPES
+            ]
 
     if is_programme_lead:
-        directory = _staff_directory({item.operational_owner_id for item in cluster_work})
+        directory = _staff_directory(
+            {item.operational_owner_id for item in cluster_work}
+        )
         tabs = {str(tab["id"]): tab for tab in cceo_tabs}
         for tab in cceo_tabs:
             tab["meetings"], tab["trainings"] = [], []
         for item in cluster_work:
             owner = directory.get(item.operational_owner_id)
-            key = "my-clusters" if item.operational_owner_id in user_staff_ids else str(getattr(owner, "id", None) or "__unassigned__")
+            key = (
+                "my-clusters"
+                if item.operational_owner_id in user_staff_ids
+                else str(getattr(owner, "id", None) or "__unassigned__")
+            )
             if key not in tabs:
                 tab = member_tab({"id": key, "name": _label(owner)})
                 cceo_tabs.append(tab)
                 tabs[key] = tab
             tab = tabs[key]
-            tab.setdefault("meetings" if item.activity_type in CLUSTER_MEETING_TYPES else "trainings", []).append(item)
+            tab.setdefault(
+                "meetings"
+                if item.activity_type in CLUSTER_MEETING_TYPES
+                else "trainings",
+                [],
+            ).append(item)
 
     # 7. Cluster performance executive overview
     from apps.planning.cluster_performance_service import (
