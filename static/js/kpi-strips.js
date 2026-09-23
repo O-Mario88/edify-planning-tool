@@ -51,6 +51,10 @@
       rail.addEventListener('scroll', schedule, { passive: true });
       const resize = new ResizeObserver(schedule);
       resize.observe(rail);
+      // The range counts facts in first-fact widths, so it must also follow a
+      // fact that resizes while the rail does not (web fonts arriving, a theme
+      // or type-scale change); otherwise it keeps the count from before.
+      resize.observe(facts[0]);
       section.setAttribute('data-kpi-ready', '');
       instances.set(section, () => { resize.disconnect(); cancelAnimationFrame(frame); rail.removeEventListener('scroll', schedule); next.removeEventListener('click', advance); instances.delete(section); });
       update();

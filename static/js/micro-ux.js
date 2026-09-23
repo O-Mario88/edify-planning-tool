@@ -1082,6 +1082,7 @@
        and every pixel taken is given in the same step — this moves width, it
        does not add any (owner, 2026-09-17). */
     var headingRow = head.filter(plain)[0];
+    var headingsShown = true;
     if (headingRow && remaining <= 0.5) {
       /* What each column is short of showing its own heading — or, where the
          whole cell is one control, of showing that control. +1 because the
@@ -1121,9 +1122,23 @@
           widths = widths.map(function (width, i) { return width - pay * (spare[i] / pool); });
           widths[index] += pay;
         });
+      /* A plan that still cannot show a heading, or a row's one control,
+         does not fit: an ellipsis there costs the reader what the column
+         means. The table scrolls instead, its identity column pinned and its
+         scroll announced (responsive standard, 2026-09-23). */
+      headingsShown = widths.every(function (width, index) {
+        return showsItself[index] - width <= 0.5;
+      });
     }
     var shrunk = widths.map(function (width, index) { return width < natural[index] - TRUNCATE_PADDING - 0.5; });
-    return { widths: widths, rigid: rigid, shrunk: shrunk, mixed: mixed, floor: hardFloor, fits: remaining <= 0.5 };
+    return {
+      widths: widths,
+      rigid: rigid,
+      shrunk: shrunk,
+      mixed: mixed,
+      floor: hardFloor,
+      fits: remaining <= 0.5 && headingsShown,
+    };
   }
 
   function applyPlan(table, plan) {

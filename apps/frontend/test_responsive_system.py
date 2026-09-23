@@ -159,6 +159,13 @@ class ResponsiveLayerTest(SimpleTestCase):
         self.assertIn("function watchScrollRegions", js)
         self.assertIn("learnSwipe", js)
 
+    def test_a_column_plan_that_clips_a_heading_scrolls_instead(self):
+        """The fluid scale makes headings a little larger on wide screens; a
+        dense table whose plan cannot pay for every heading scrolls with its
+        identity column pinned rather than ending a heading in an ellipsis."""
+        js = MICRO_UX_JS.read_text()
+        self.assertIn("fits: remaining <= 0.5 && headingsShown", js)
+
     def test_the_hint_respects_reduced_motion(self):
         block = self.css[self.css.index("@media (prefers-reduced-motion: reduce)") :]
         self.assertIn(".edify-table-scroll-hint", block)
