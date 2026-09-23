@@ -48,7 +48,7 @@ class LensStripTest(SimpleTestCase):
 
         self.assertEqual(
             [tab["key"] for tab in team],
-            ["planning", "portfolio", "clusters", "coverage", "targets"],
+            ["planning", "portfolio", "coverage", "targets"],
         )
         self.assertEqual([t["key"] for t in team], [c["key"] for c in country])
         # Only the first differs, because "Team Plan" and "Country Plan" are
@@ -67,10 +67,10 @@ class LensStripTest(SimpleTestCase):
 
     def test_the_active_lens_is_the_only_one_marked(self):
         tabs = _lens_tabs(
-            TEAM_OVERSIGHT_PATH, "clusters", {"planning", "portfolio", "clusters"}
+            TEAM_OVERSIGHT_PATH, "portfolio", {"planning", "portfolio"}
         )
 
-        self.assertEqual([t["key"] for t in tabs if t["is_active"]], ["clusters"])
+        self.assertEqual([t["key"] for t in tabs if t["is_active"]], ["portfolio"])
 
     def test_a_reader_with_one_lens_gets_no_strip(self):
         """A tab bar of one is furniture, and it costs the first table row its
@@ -222,7 +222,6 @@ class LensAccessTest(TestCase):
 
         for view, marker in (
             ("portfolio", "Country portfolio"),
-            ("clusters", "Cluster Performance"),
         ):
             with self.subTest(view=view):
                 response = self.client.get(f"/country-planning-oversight/?view={view}")
@@ -239,7 +238,7 @@ class LensAccessTest(TestCase):
             "/country-planning-oversight/?view=portfolio"
         ).content.decode()
         clusters = self.client.get(
-            "/country-planning-oversight/?view=clusters"
+            "/cluster-oversight/"
         ).content.decode()
 
         self.assertIn("Portfolio Planned Budget", portfolio)
@@ -253,7 +252,7 @@ class LensAccessTest(TestCase):
         self._a_cluster()
 
         body = self.client.get(
-            "/team-planning-oversight/?view=clusters"
+            "/cluster-oversight/"
         ).content.decode()
 
         for column in (
@@ -277,7 +276,7 @@ class LensAccessTest(TestCase):
         self._a_cluster()
 
         body = self.client.get(
-            "/team-planning-oversight/?view=clusters"
+            "/cluster-oversight/"
         ).content.decode()
 
         self.assertIn('role="tablist"', body)

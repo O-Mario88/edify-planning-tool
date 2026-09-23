@@ -13,6 +13,8 @@ from apps.core.rbac import EdifyRole
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import owner_ids, resolve_user_scope
 from apps.core_schools.models import CorePlan
+from apps.core_schools.lifecycle import CORE_LIFECYCLE_TYPES, programme_rows
+from apps.schools.programme_schools import type_options
 from apps.planning.oversight_service import system_program_leads
 from apps.schools.models import School
 from django.db.models import Avg, Q
@@ -43,7 +45,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
 
     # 1. Query scoped core schools
     base = School.objects.filter(
-        deleted_at__isnull=True, school_type="core"
+        deleted_at__isnull=True, school_type__in=CORE_LIFECYCLE_TYPES
     ).select_related("district", "region")
 
     own_ids: set[str] = set()
@@ -67,13 +69,11 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 Q(account_owner_id__in=people) | Q(cluster_id__in=cluster_ids)
             )
     else:
-        # Country or Regional scope
-        from apps.core.scoping import school_country_q
+        from apps.core.scoping import scoped_school_queryset
 
-        if scope.country:
-            core_qs = base.filter(school_country_q(scope))
-        else:
-            core_qs = base.all()
+        core_qs = scoped_school_queryset(scope, base=base)
+        if core_qs is None:
+            core_qs = base.none()
 
     schools = list(core_qs.order_by("name"))
     if not schools:
@@ -131,12 +131,18 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     for s in schools:
         owner = directory.get(s.account_owner_id)
         lead = _supervisor_of(owner)
-        plan = plans.get(s.school_id) or plans.get(s.id)
+        plan = (
+            (plans.get(s.school_id) or plans.get(s.id))
+            if s.school_type == "core"
+            else None
+        )
 
         v_done = plan.visits_completed if plan else 0
-        v_target = plan.visits_target if plan else 4
+        v_target = (plan.visits_target if plan else 4) if s.school_type == "core" else 0
         t_done = plan.trainings_completed if plan else 0
-        t_target = plan.trainings_target if plan else 4
+        t_target = (
+            (plan.trainings_target if plan else 4) if s.school_type == "core" else 0
+        )
         total_done = v_done + t_done
         total_target = v_target + t_target
 
@@ -153,6 +159,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
 
         formatted_schools.append(
             {
+                "school_type": s.school_type,
                 "id": s.id,
                 "school_id": s.school_id or s.id,
                 "name": s.name,
@@ -296,6 +303,37 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             leads_data.append(unassigned_pl)
 
         cceo_tabs = []
+
+    # Each member has separate lifecycle tables; package totals remain core-only.
+    programme_by_id = {
+        row["id"]: row
+        for row in programme_rows(
+            [s for s in schools if s.school_type != "core"],
+            fy,
+        )
+    }
+    groups = (
+        cceo_tabs
+        if is_programme_lead
+        else [tab for lead in leads_data for tab in lead["cceo_tabs"]]
+    )
+    for group in groups:
+        group["core_schools"] = [
+            row for row in group["schools"] if row["school_type"] == "core"
+        ]
+        group["programme_sections"] = [
+            {
+                "kind": kind,
+                "label": label,
+                "param": f"{kind}-{group['id']}",
+                "rows": [
+                    programme_by_id[row["id"]]
+                    for row in group["schools"]
+                    if row["school_type"] == kind
+                ],
+            }
+            for kind, label in type_options()
+        ]
 
     valid_ssas = [float(s["ssa_avg"]) for s in formatted_schools if s["ssa_avg"] != "—"]
     overall_avg = round(sum(valid_ssas) / len(valid_ssas), 1) if valid_ssas else "—"

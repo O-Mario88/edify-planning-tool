@@ -1,21 +1,4 @@
-"""Core package work gets its own two cards on My Plan.
-
-Owner, 2026-09-17: "on my plan page, core planned activities should have a
-separate core school visits planned table and a separate table for core school
-[trainings]. on each table show the count of how many visits based on the
-completed planned activities."
-
-What decides a row belongs here is the CoreActivitySlot it was booked into —
-the package's own record — not the school's type. Two consequences worth
-pinning:
-
-* A Core TRAINING is delivered by the standard In-school Training workflow, so
-  there is no activity of type "core_training" to look for. Reading the slot is
-  what makes the training visible at all; the type-based query that preceded it
-  matched nothing and the card would have been permanently empty.
-* A core school's NON-package work — a social visit, a donor visit — is not
-  part of the 4 + 4 and stays on the cards it shares with every other school.
-"""
+"""Core school work has dedicated My Plan cards, with slot metadata when available."""
 
 from __future__ import annotations
 
@@ -143,11 +126,11 @@ class CorePackageCardsTest(TestCase):
 
         self.assertIn("1 completed", self._cards()["core_visits"])
 
-    def test_non_package_work_at_a_core_school_stays_on_the_shared_cards(self):
+    def test_non_package_work_at_a_core_school_moves_to_the_core_cards(self):
         social = Activity.objects.create(
             activity_type="social_visit", status="scheduled", **self.common
         )
         html = self.client.get("/my-plan").content.decode()
-        # No slot, so no core card at all — and the visit is still listed.
-        self.assertNotIn("Core School Visits Planned", html)
+        # Classification follows the school, even without a package slot.
+        self.assertIn("Core School Visits Planned", html)
         self.assertIn(social.id, html)

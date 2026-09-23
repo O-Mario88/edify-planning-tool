@@ -79,6 +79,8 @@ style="display: none;"
 <select aria-label="School type" name="school_type_filter" class="w-full h-8 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none">
 <option value="All" {% if selected_school_type == "All" %}selected{% endif %}>All Types</option>
 <option value="core" {% if selected_school_type == "core" %}selected{% endif %}>Core</option>
+<option value="core_trained" {% if selected_school_type == "core_trained" %}selected{% endif %}>Core Trained</option>
+<option value="core_graduate" {% if selected_school_type == "core_graduate" %}selected{% endif %}>Core Graduate</option>
 <option value="champion" {% if selected_school_type == "champion" %}selected{% endif %}>Champion</option>
 </select>
 </div>

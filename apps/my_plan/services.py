@@ -5,6 +5,8 @@ from __future__ import annotations
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
     PROGRAMME_EVENT_TYPES,
+    VISIT_TYPES,
+    TRAINING_TYPES,
 )
 import calendar
 from datetime import date, timedelta
@@ -1000,6 +1002,10 @@ def get_frontend_context(principal, query: dict) -> dict:
     school_visits_list = []
     cluster_trainings_list = []
     cluster_meetings_list = []
+    from apps.planning.visit_gate import PROGRAMME_SCHOOL_TYPES
+    from apps.core.enums import SchoolType
+
+    programme_school_work = {kind: [] for kind in PROGRAMME_SCHOOL_TYPES}
     core_school_visits_list = []
     core_school_trainings_list = []
     # Dated non-school programme work (conferences, camps, exhibitions) has no
@@ -1443,16 +1449,17 @@ def get_frontend_context(principal, query: dict) -> dict:
             a.activity_type in PROGRAMME_EVENT_TYPES
         ):
             programme_activities_list.append(activity_data)
-        elif core_slot_kind == "visit":
-            # Core package work gets its own two tables (owner, 2026-09-17:
-            # "core planned activities should have a separate core school
-            # visits planned table and a separate table for core school
-            # [trainings]"). The test is the SLOT, not the school: a core
-            # school's ordinary work — a social visit, a donor visit — is not
-            # part of the 4 + 4 package and stays in the tables it shares with
-            # every other school.
+        elif (
+            a.school
+            and a.school.school_type in PROGRAMME_SCHOOL_TYPES
+            and a.activity_type in VISIT_TYPES + TRAINING_TYPES
+        ):
+            programme_school_work[a.school.school_type].append(activity_data)
+        elif is_core and (core_slot_kind == "visit" or a.activity_type in VISIT_TYPES):
             core_school_visits_list.append(activity_data)
-        elif core_slot_kind == "training":
+        elif is_core and (
+            core_slot_kind == "training" or a.activity_type in TRAINING_TYPES
+        ):
             core_school_trainings_list.append(activity_data)
         elif a.activity_type in [
             "school_visit",
@@ -1563,6 +1570,11 @@ def get_frontend_context(principal, query: dict) -> dict:
         )
 
         # 1. Fetch explicitly invited/attended schools from ClusterActivityAttendance
+        _recorded_act_ids = set(
+            ClusterActivityAttendance.objects.filter(
+                activity_id__in=_cluster_act_ids,
+            ).values_list("activity_id", flat=True)
+        )
         _att_records = list(
             ClusterActivityAttendance.objects.filter(activity_id__in=_cluster_act_ids)
             .filter(Q(invited=True) | Q(attended=True))
@@ -1659,7 +1671,11 @@ def get_frontend_context(principal, query: dict) -> dict:
                     for _sid in _att_by_act[_act_id]
                     if _sid in _school_lookup
                 ]
-            if not _target_schools and row.get("cluster_id"):
+            if (
+                not _target_schools
+                and row.get("cluster_id")
+                and _act_id not in _recorded_act_ids
+            ):
                 _cid = row["cluster_id"]
                 _target_schools = (
                     _schools_by_cluster_confirmed.get(_cid)
@@ -1700,11 +1716,17 @@ def get_frontend_context(principal, query: dict) -> dict:
                     _school_row["expected_participants"] = pps
                     _school_row["budget_total"] = per_school_meal_cost
                     _slot_seq = _cluster_core_slot.get((_act_id, _school.school_id))
-                    if _slot_seq:
+                    if _school.school_type in PROGRAMME_SCHOOL_TYPES:
+                        _school_row["core_progress"] = ""
+                        _school_row["training_number"] = ""
+                        programme_school_work[_school.school_type].append(_school_row)
+                    elif _school.school_type == "core":
                         # The package's own record of this session. It leaves
                         # the cluster table entirely: counting it in both
                         # would show one training twice.
-                        _school_row["training_number"] = f"T{_slot_seq}"
+                        _school_row["training_number"] = (
+                            f"T{_slot_seq}" if _slot_seq else ""
+                        )
                         _school_row["core_progress"] = _cluster_core_progress.get(
                             _school.school_id, ""
                         )
@@ -1937,6 +1959,11 @@ def get_frontend_context(principal, query: dict) -> dict:
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.
+        "programme_school_work": [
+            {"kind": kind, "label": dict(SchoolType.choices)[kind], "rows": rows}
+            for kind, rows in programme_school_work.items()
+            if rows
+        ],
         "core_school_visits": core_school_visits_list,
         "core_school_visits_all": core_school_visits_list,
         "core_school_visits_completed": sum(

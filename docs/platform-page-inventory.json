@@ -578,6 +578,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/core-schools",
+        "/core-schools-oversight/",
         "/partials/clusters/<str:cluster_id>/schools",
         "/planning"
       ],
@@ -634,11 +636,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
-        "/core-schools-oversight/",
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
+        "/core-schools-oversight/"
       ],
       "findings": [],
       "forms": 0,
@@ -3166,12 +3164,7 @@
       "accessibility_requirements": [],
       "bytes": 4113,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3471,7 +3464,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5841,
+      "bytes": 6080,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3519,7 +3512,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8171,
+      "bytes": 8233,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3585,6 +3578,53 @@
       ],
       "tables": 1,
       "template": "partials/core_schools/planning_queue.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 114,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools",
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Programme Sections",
+      "purpose": "Reusable programme sections interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/core_schools/programme_sections.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2754,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools",
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Programme Table",
+      "purpose": "Reusable programme table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/core_schools/programme_table.html",
       "variants": []
     },
     {
@@ -3742,7 +3782,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11184,
+      "bytes": 11246,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -7875,7 +7915,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5613,
+      "bytes": 5661,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7896,7 +7936,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5625,
+      "bytes": 5632,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8085,6 +8125,29 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1125,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Programme School Work",
+      "purpose": "Reusable programme school work interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/programme_school_work.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 743,
       "deprecated_alternatives": [],
@@ -8244,7 +8307,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1840,
+      "bytes": 1901,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8314,11 +8377,7 @@
       "bytes": 5201,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
+        "/cluster-oversight/"
       ],
       "findings": [],
       "forms": 0,
@@ -8514,18 +8573,59 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8311,
+      "bytes": 1240,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/cluster-oversight/",
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
+        "/cluster-oversight/"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Cluster Activity Table",
+      "purpose": "Reusable cluster activity table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/cluster_activity_table.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 283,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cluster-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Cluster Member Work",
+      "purpose": "Reusable cluster member work interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/cluster_member_work.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 7078,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cluster-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Cluster Oversight Workspace",
       "purpose": "Reusable cluster oversight workspace interface primitive",
@@ -8562,7 +8662,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8895,
+      "bytes": 9158,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -10470,7 +10570,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9467,
+      "bytes": 6558,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
@@ -26221,14 +26321,12 @@
         "test:referenced-by-automated-test",
         "permission:cluster_oversight"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ lens_base_url|default:"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -75982,7 +76080,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Change Cluster Add to Cluster",
+      "primary_action": "Owner&rsquo;s clusters",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Add a school to one of its owner's clusters, or change its cluster.",
       "remediation": "No automated remediation outstanding",
@@ -104703,7 +104801,7 @@
     "activity_states": 24,
     "all_routes": 1294,
     "api_routes": 360,
-    "component_templates": 477,
+    "component_templates": 482,
     "full_pages": 260,
     "mobile_contract_pass": 532,
     "nonvisual_actions": 265,

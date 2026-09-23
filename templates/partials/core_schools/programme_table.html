@@ -1,0 +1,33 @@
+{% load table_pagination %}
+{% paginate section.rows section.param section.page.paginator.per_page|default:15 as lifecycle_pager %}
+<section class="card overflow-hidden my-4">
+  <h2 class="edify-section-heading px-4 py-3">{{ section.label }} Schools <span class="edify-text-caption">({% if section.page %}{{ section.page.paginator.count }}{% else %}{{ section.rows|length }}{% endif %})</span></h2>
+  <p class="edify-text-caption edify-text-muted px-4 pb-3">Visits and trainings planned as needed. No 4-visit / 4-training package.</p>
+  <div class="overflow-x-auto">
+    <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} schools">
+      <thead><tr><th>School ID</th><th>School name</th><th>District</th><th>Visit plan status</th><th>Training plan status</th><th>Planned activities</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for row in lifecycle_pager.rows %}
+        <tr>
+          <td>{{ row.school_id }}</td>
+          <td><a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline">{{ row.name }}</a></td>
+          <td>{{ row.district|default:"—" }}</td>
+          {% include "components/school_planning_badges.html" with badges=row.planning_badges layout="cells" %}
+          <td>{% for activity in row.work %}<p class="edify-text-caption">{{ activity.name }} · {{ activity.date|date:"j M Y"|default:"Awaiting schedule" }} · {{ activity.status }}</p>{% empty %}<span class="edify-text-muted">None planned</span>{% endfor %}</td>
+          <td>{% if row.can_schedule %}<button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ row.school_id|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML">Schedule</button>{% else %}<a href="/schools/{{ row.school_id }}" class="hover:underline">View</a>{% endif %}</td>
+        </tr>
+      {% empty %}<tr><td colspan="7">No {{ section.label|lower }} schools in this portfolio.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if section.page.has_other_pages %}
+  {% load table_pagination %}{% pager_query section.param as base %}
+  <nav class="edify-pagination px-4 py-3" aria-label="{{ section.label }} school pages">
+    {% if section.page.has_previous %}<a class="btn" href="?{{ base }}{{ section.param }}={{ section.page.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ section.page.number }} of {{ section.page.paginator.num_pages }}</span>
+    {% if section.page.has_next %}<a class="btn" href="?{{ base }}{{ section.param }}={{ section.page.next_page_number }}">Next</a>{% endif %}
+  </nav>
+  {% else %}
+  {% include "components/table_pager.html" with pager=lifecycle_pager param=section.param %}
+  {% endif %}
+</section>

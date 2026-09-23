@@ -1,8 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}{% if is_change %}Change Cluster{% else %}Add to Cluster{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if is_change %}Move this school to another of its owner's clusters.{% else %}Choose one of the owner's clusters, in any district.{% endif %}{% endblock %}
-{% block drawer_badge %}{% if current_is_cross_district %}<span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}{% endblock %}
+{% block drawer_title %}{% if is_change %}Change cluster for {{ school.name }}{% else %}Add {{ school.name }} to cluster{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
@@ -15,31 +14,6 @@ changes the school's district, sub-county, parish or village.
   {% if validation_error %}
   <p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>
   {% endif %}
-
-  <section class="rounded-surface border border-[var(--border-card)] p-4" aria-labelledby="cluster-school-heading">
-    <h3 id="cluster-school-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">School</h3>
-    <p class="mt-1 text-[14px] font-extrabold text-slate-800">{{ school.name }}</p>
-    <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-[12px]">
-      <div>
-        <dt class="font-semibold text-slate-400">School ID</dt>
-        <dd class="mt-0.5 font-bold text-slate-700">{{ school.school_id }}</dd>
-      </div>
-      <div>
-        <dt class="font-semibold text-slate-400">District</dt>
-        <dd class="mt-0.5 font-bold text-slate-700" data-school-district>{{ school.district.name }}</dd>
-      </div>
-      <div>
-        <dt class="font-semibold text-slate-400">Sub-county</dt>
-        <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"Not assigned" }}</dd>
-      </div>
-      <div>
-        <dt class="font-semibold text-slate-400">Current cluster</dt>
-        <dd class="mt-0.5 font-bold text-slate-700" data-current-cluster>
-          {% if current_cluster %}{{ current_cluster.name }} · {{ current_cluster.district.name }}{% if current_is_cross_district %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}{% else %}Not in a cluster{% endif %}
-        </dd>
-      </div>
-    </dl>
-  </section>
 
   <form
     hx-post="/schools/{{ school.id }}/add-to-cluster"
@@ -60,14 +34,14 @@ changes the school's district, sub-county, parish or village.
 
     <div class="grid grid-cols-2 gap-1 rounded-surface border border-[var(--border-card)] p-1" role="group" aria-label="Cluster assignment method" data-keep-columns>
       <button type="button" @click="actionType = 'existing'" :aria-pressed="actionType === 'existing'"
-        :class="actionType === 'existing' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-        class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all">
+        :class="actionType === 'existing' ? 'btn-primary' : 'btn-secondary'"
+        class="btn min-h-11 w-full px-3 font-semibold">
         Owner&rsquo;s clusters
       </button>
       <button type="button" @click="actionType = 'new'" :aria-pressed="actionType === 'new'"
-        :class="actionType === 'new' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-        class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all">
-        Create new
+        :class="actionType === 'new' ? 'btn-primary' : 'btn-secondary'"
+        class="btn min-h-11 w-full px-3 font-semibold">
+        Create new cluster
       </button>
     </div>
 
@@ -81,9 +55,6 @@ changes the school's district, sub-county, parish or village.
         <option value="{{ cluster.id }}"{% if cluster.is_current %} disabled{% endif %} data-relationship="{{ cluster.catchment_relationship|default:'none' }}">{{ cluster.name }} · {{ cluster.district.name }}{% if cluster.is_current %} (current){% elif cluster.is_cross_district %} · Cross-District Cluster{% if cluster.serves_school %} (approved neighbouring district){% endif %}{% endif %} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
         {% endfor %}
       </select>
-      <p class="edify-text-caption font-semibold text-slate-400">
-        Clusters belonging to {% firstof responsible_staff.user.name "this school's owner" %}, in any district. One outside {{ school.district.name }} is marked as cross-district and asks for a reason.
-      </p>
       {% if not has_selectable_cluster %}
       <p class="edify-note" data-tone="warning" data-empty-state>This school's owner has no active cluster to add it to.</p>
       {% endif %}
@@ -117,19 +88,9 @@ changes the school's district, sub-county, parish or village.
     {% if is_change %}
     <label class="flex items-start gap-2 rounded-surface border border-amber-200 p-3 text-[12px] font-semibold text-amber-800">
       <input type="checkbox" name="confirm_change" value="yes" required class="mt-0.5">
-      <span>I confirm {{ school.name }} leaves {% firstof current_cluster.name "its current cluster" %}. Its membership history is kept and it stays in {{ school.district.name }}.</span>
+      <span>Move this school out of {% firstof current_cluster.name "its current cluster" %}.</span>
     </label>
     {% endif %}
-
-    <section class="rounded-surface border border-[var(--border-card)] p-4" aria-labelledby="responsible-staff-heading">
-      <h3 id="responsible-staff-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible field staff</h3>
-      {% if responsible_staff %}
-      <p class="mt-2 text-[13px] font-extrabold text-slate-800">{{ responsible_staff.user.name }}</p>
-      <p class="mt-0.5 edify-text-caption font-semibold text-slate-400">The school's owner.</p>
-      {% else %}
-      <p class="mt-2 text-[12px] font-bold text-amber-700">No school owner is assigned. Update the School Profile to set one.</p>
-      {% endif %}
-    </section>
 
     <div class="drawer-footer">
       <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>

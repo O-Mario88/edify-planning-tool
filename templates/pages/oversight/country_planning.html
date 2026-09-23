@@ -13,7 +13,7 @@
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Leadership</p>
       <h1 class="edify-page-title edify-page-header__title">Country Planning Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% elif active_oversight_view == "clusters" %}What every cluster planned, delivered, assessed and reached this year, most active first.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
     </div>
   </header>
 
@@ -37,29 +37,10 @@
   <div id="country-workspace"><div id="oversight-workspace">
     {% if active_oversight_view == "portfolio" %}
       {% include "partials/oversight/portfolio_workspace.html" %}
-    {% elif active_oversight_view == "clusters" %}
-      {% include "partials/oversight/cluster_oversight_workspace.html" %}
     {% else %}
       {% include "partials/oversight/cd_workspace.html" %}
     {% endif %}
   </div></div>
 
-  {% if active_oversight_view == "planning" %}
-  {% comment %}
-  Cluster Oversight — who is carrying which clusters.
-
-  A section here rather than a page of its own: the roles that need it already
-  come to planning oversight, and a second page would split "what is planned"
-  from "who holds the ground it is planned on".
-
-  It stays on the country plan only: the Cluster Performance lens above is the
-  same clusters measured, and drawing both under one tab would be two answers to
-  one question on one screen.
-  {% endcomment %}
-  <section aria-labelledby="cluster-oversight-heading" class="pt-2">
-    <h2 id="cluster-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">Cluster Oversight</h2>
-    {% include "partials/clusters/oversight_workspace.html" with groups=cluster_oversight.groups total_clusters=cluster_oversight.total_clusters total_schools=cluster_oversight.total_schools unassigned=cluster_oversight.unassigned is_team_lens=False %}
-  </section>
-  {% endif %}
 </div>
 {% endblock %}

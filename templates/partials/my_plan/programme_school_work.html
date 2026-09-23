@@ -1,0 +1,18 @@
+{% load table_pagination %}
+{% for section in programme_school_work %}
+<section class="card overflow-hidden">
+  <h2 class="edify-section-heading px-4 py-3">{{ section.label }} School Visits and Trainings Planned ({{ section.rows|length }})</h2>
+  {% paginate section.rows section.kind 10 as pager %}
+  <div class="overflow-x-auto">
+    <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} school plans">
+      <thead><tr><th>School ID</th><th>School name</th><th>Activity</th><th>Planned date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>{% for row in pager.rows %}<tr>
+        <td>{{ row.school_id }}</td><td><a href="{{ row.place_url }}" class="font-semibold hover:underline">{{ row.school_name }}</a></td>
+        <td>{{ row.activity_type_label }}</td><td>{{ row.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
+        <td>{{ row.status_label }}</td>{% include "partials/my_plan/activity_row.html" %}
+      </tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=pager param=section.kind %}
+</section>
+{% endfor %}

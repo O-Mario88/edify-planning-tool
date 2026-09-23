@@ -1244,11 +1244,45 @@ def activity_tabs(items, active: str) -> list[dict]:
     return tabs
 
 
-def group_by_owner(items) -> list[dict]:
-    """Items folded per operational owner — the PL page's default lens."""
-    return _group(
-        items, key=lambda i: (i.operational_owner_id, i.operational_owner_name)
-    )
+def program_lead_members(program_lead_id) -> list[dict]:
+    """The lead and their complete reporting roster, independent of activity dates."""
+    from apps.accounts.models import StaffProfile
+    from apps.core.rbac import EdifyRole
+
+    lead = StaffProfile.objects.filter(
+        Q(id=program_lead_id) | Q(user_id=program_lead_id),
+        user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    ).select_related("user").first()
+    if lead is None:
+        return []
+    members = StaffProfile.objects.filter(
+        supervisor_links__supervisor_id=lead.id,
+    ).exclude(id=lead.id).select_related("user").distinct().order_by("user__name", "id")
+    return [
+        {"id": p.id, "name": p.user.name or p.user.email, "ids": {p.id, p.user_id}}
+        for p in [lead, *members]
+    ]
+
+
+def group_by_owner(items, *, owners=None) -> list[dict]:
+    """Group work by owner; a supplied roster also shows members with no work."""
+    if owners is None:
+        return _group(items, key=lambda i: (i.operational_owner_id, i.operational_owner_name))
+    groups = [{"id": p["id"], "name": p["name"], "items": []} for p in owners]
+    lookup = {owner_id: group for p, group in zip(owners, groups) for owner_id in p["ids"]}
+    remaining = []
+    for item in items:
+        group = lookup.get(item.operational_owner_id)
+        if group is None:
+            remaining.append(item)
+        else:
+            group["items"].append(item)
+    # Preserve historical or unassigned owners whose scoped work is still visible.
+    groups.extend(_group(remaining, key=lambda i: (i.operational_owner_id, i.operational_owner_name)))
+    for index, group in enumerate(groups, start=1):
+        group["summary"] = summarize(group["items"])
+        group["page_param"] = f"g{index}_page"
+    return groups
 
 
 def system_program_leads() -> list[dict]:

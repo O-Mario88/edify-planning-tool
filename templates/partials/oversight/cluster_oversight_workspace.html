@@ -1,28 +1,6 @@
-{% load chart_tags %}
 {% load kpi_metrics frontend_filters table_pagination %}
 
 <div class="cluster-oversight-content space-y-6">
-
-  {% if fy_options and not standalone_portfolio %}
-  <form class="edify-filter-bar oversight-portfolio-filters flex items-center gap-3"
-        aria-label="Cluster filters"
-        hx-get="{{ lens_base_url|default:'/team-planning-oversight/' }}"
-        hx-target="#oversight-workspace"
-        hx-swap="innerHTML"
-        hx-trigger="change"
-        hx-push-url="true">
-    <input type="hidden" name="view" value="clusters">
-
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
-      <select name="fy" aria-label="Financial year">
-        {% for option in fy_options %}
-        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
-        {% endfor %}
-      </select>
-    </label>
-  </form>
-  {% endif %}
 
   {% kpi_strip %}
     {% kpi_metric %}{% kpi_label %}Total Clusters{% endkpi_label %}{{ total_clusters }}{% kpi_helper %}{{ total_schools }} member schools{% endkpi_helper %}{% endkpi_metric %}
@@ -31,12 +9,6 @@
     {% kpi_metric %}{% kpi_label %}Schools Reached{% endkpi_label %}{{ perf_totals.unique_schools_reached|default_if_none:0 }}{% kpi_helper %}Participating schools{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Cluster Budget{% endkpi_label %}UGX {{ perf_totals.total_spend|default:0|intcomma }}{% kpi_helper %}Planned activity budget{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
-  {% if is_programme_lead %}
-  {% team_chart officer_activity "name" "clusters,active_clusters,dormant_clusters,sessions_held,schools_reached" "Clusters held,Active,Dormant,Sessions held,Schools reached" "Cluster activity by person" "Your clusters and each officer's, this financial year" %}
-  {% else %}
-  {% team_chart lead_activity "name" "clusters,active_clusters,dormant_clusters,sessions_held,schools_reached" "Clusters held,Active,Dormant,Sessions held,Schools reached" "Cluster activity by Programme Lead" "Each Lead's team, this financial year" %}
-  {% endif %}
-
   {# ── Hierarchy Tabs & Tables (Unified across PL, IA, CD, RPL) ──────── #}
   {% if is_programme_lead %}
   <div x-data="tabState('activeOfficer', 'officer', {% tab_values cceo_tabs %}, 'my-clusters')" class="space-y-4">
@@ -56,6 +28,7 @@
         <span>{{ officer.count }} clusters · {{ officer.schools }} member schools</span>
       </header>
       {% include "partials/oversight/_cluster_table.html" with clusters=officer.clusters page_param="cl-"|add:officer.id %}
+      {% include "partials/oversight/cluster_member_work.html" with member=officer %}
     </section>
     {% endfor %}
   </div>
@@ -85,13 +58,13 @@
     {% for lead in leads %}
     <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
       {% if lead.cceo_tabs %}
-      <div x-data="tabState('activeOfficer', 'officer', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
+      <div x-data="tabState('activeOfficer', 'officer-{{ lead.id }}', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
         <div class="oversight-team-selector">
           <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              CCEOs under {{ lead.name }} ({{ lead.cceo_tabs|length }})
+              Team members under {{ lead.name }} ({{ lead.cceo_tabs|length }})
             </span>
-            <span class="edify-text-caption edify-text-muted">Select an officer to view clusters in their portfolio</span>
+            <span class="edify-text-caption edify-text-muted">Clusters, group trainings and meetings by team member</span>
           </div>
           <nav class="flex items-center gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Team officers">
             {% for cceo in lead.cceo_tabs %}
@@ -99,7 +72,7 @@
                     role="tab"
                     :aria-selected="activeOfficer === '{{ cceo.id }}'"
                     aria-controls="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}"
-                    @click="pick('officer', '{{ cceo.id }}')"
+                    @click="pick('officer-{{ lead.id }}', '{{ cceo.id }}')"
                     class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
               <span>{{ cceo.name }}</span>
               <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
@@ -119,6 +92,7 @@
               </h4>
             </div>
             {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters page_param="cl-"|add:cceo.id %}
+            {% include "partials/oversight/cluster_member_work.html" with member=cceo %}
           </div>
         </div>
         {% endfor %}
