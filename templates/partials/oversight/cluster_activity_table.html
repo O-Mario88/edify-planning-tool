@@ -7,11 +7,11 @@
       <tbody>
         {% for item in activities %}
         <tr>
-          <td><a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{{ item.cluster_name|default:item.context_label }}</a></td>
+          <td><a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a></td>
           <td>{% if item.training_name and item.training_name != "—" %}{{ item.training_name }}{% else %}{{ item.activity_type|replace_underscore|title }}{% endif %}</td>
           <td>{{ item.planned_date|date:"d M Y"|default:"Awaiting schedule" }}</td>
-          <td>{{ item.activity_status|default:item.assignment_status|replace_underscore|title }}</td>
-          <td>{{ item.executor_name|default:member.name }}</td>
+          <td>{% firstof item.activity_status item.assignment_status as status %}{{ status|replace_underscore|title }}</td>
+          <td>{% firstof item.executor_name member.name %}</td>
         </tr>
         {% empty %}<tr><td colspan="5">No {{ heading|lower }} in this financial year.</td></tr>{% endfor %}
       </tbody>
