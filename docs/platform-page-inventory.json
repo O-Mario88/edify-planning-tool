@@ -2967,7 +2967,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11261,
+      "bytes": 11282,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -4559,22 +4559,23 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "keyboard focus visibility"
       ],
-      "bytes": 10076,
+      "bytes": 10909,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Collaboration View",
       "purpose": "Reusable collaboration view interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
-      "tables": 0,
+      "tables": 2,
       "template": "partials/dashboards/pl/collaboration_view.html",
       "variants": [
         "danger"
@@ -8594,7 +8595,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1367,
+      "bytes": 1401,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8639,7 +8640,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7618,
+      "bytes": 7684,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -9505,7 +9506,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7539,
+      "bytes": 7565,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9552,7 +9553,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2201,
+      "bytes": 1121,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -9570,14 +9571,11 @@
       ],
       "tables": 0,
       "template": "partials/planning/support_cell.html",
-      "variants": [
-        "replan",
-        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1772,
+      "bytes": 893,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>"
@@ -9594,10 +9592,7 @@
       ],
       "tables": 0,
       "template": "partials/planning/support_cells.html",
-      "variants": [
-        "replan",
-        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -11868,7 +11863,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8385,
+      "bytes": 8524,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -11899,7 +11894,33 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13846,
+      "bytes": 2327,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/today",
+        "/today/panel",
+        "/today/unsnooze"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Waiting Table",
+      "purpose": "Reusable waiting table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/today/waiting_table.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 11468,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -11914,10 +11935,9 @@
       "purpose": "Reusable workbench interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/today/workbench.html",
       "variants": [
         "info",
@@ -19362,8 +19382,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -19378,7 +19398,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -105216,7 +105235,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 490,
+    "component_templates": 491,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

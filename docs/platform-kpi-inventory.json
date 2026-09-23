@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1218,
+   "line": 1223,
    "label": null,
    "keys": [
     "label",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 658,
+   "line": 663,
    "label": null,
    "keys": [
     "label",
@@ -10772,7 +10772,7 @@
    "audit_id": "KPI-SOURCE-594",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1228,
+   "line": 1241,
    "label": "All Activities",
    "keys": [
     "count",
@@ -10791,7 +10791,7 @@
    "audit_id": "KPI-SOURCE-595",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1237,
+   "line": 1250,
    "label": null,
    "keys": [
     "count",
@@ -15027,7 +15027,7 @@
   {
    "audit_id": "KPI-SURFACE-108",
    "template": "templates/partials/dashboards/pl/collaboration_view.html",
-   "line": 108,
+   "line": 111,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -40689,7 +40689,7 @@
   {
    "audit_id": "KPI-PAYLOAD-023",
    "module": "apps/planning/planning_service.py",
-   "line": 977,
+   "line": 983,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 9,
