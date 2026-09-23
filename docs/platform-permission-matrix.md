@@ -13,13 +13,13 @@ hand-maintained copy of an authority is how SEC-01 happened.
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 530 |
+| CCEO | 529 |
 | Program Lead | 615 |
 | CountryDirector | 760 |
 | RegionalVicePresident | 367 |
-| RegionalProgramLead | 306 |
+| RegionalProgramLead | 315 |
 | ImpactAssessment | 624 |
-| Accountant | 405 |
+| Accountant | 406 |
 | HumanResources | 330 |
 | ProjectCoordinator | 446 |
 | PartnerAdmin | 219 |
@@ -489,7 +489,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/cce-leadership/reports/<str:report_id>/save` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
 | `/cce-leadership/reports/new` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
 | `/cce-leadership/reports/start` | cce_reports |  |  |  | Y | Y |  |  |  |  |  |  |  |  |  | Y |
-| `/cluster-oversight/` | cluster_oversight |  | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
+| `/cluster-oversight/` | cluster_oversight |  | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
 | `/clusters` | clusters | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/clusters/<str:cluster_id>` | cluster_detail | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/clusters/<str:cluster_id>/bulk-assign-drawer` | planning | Y | Y | Y |  |  | Y | Y |  | Y |  |  |  |  |  | Y |
@@ -897,15 +897,15 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/partner-engagements/<str:engagement_id>/update` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/partner-engagements/new` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/partner-engagements/record` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| `/partner-oversight/` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/allowance-drawer` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/allowance-grant` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/detail` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/export` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/send` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw/review` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw/submit` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/allowance-drawer` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/allowance-grant` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/detail` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/export` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/send` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw/review` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw/submit` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
 | `/partner/activities` | partner_activities |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
 | `/partner/activities/<str:activity_id>/evidence` | partner_evidence |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
 | `/partner/activities/<str:activity_id>/start-action` | partner_evidence |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
@@ -1008,7 +1008,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/projects/create/action` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filter` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filters-drawer` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
-| `/projects/monitoring` | project_monitoring | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
+| `/projects/monitoring` | project_monitoring |  | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/projects/my-plan` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning/bulk-partner` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |

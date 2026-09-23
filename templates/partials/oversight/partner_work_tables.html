@@ -16,7 +16,7 @@
       <thead><tr><th>School / cluster</th><th>Partner</th><th>Staff member</th><th>Activity / purpose</th><th>{% if table.kind == 'activity' %}Scheduled{% else %}Assigned{% endif %}</th><th>Status</th><th>{% if table.kind == 'activity' %}Verification{% else %}Activity date{% endif %}</th><th>Actions</th></tr></thead>
       <tbody>{% for item in page.rows %}
         <tr>
-          <td>{{ item.school_code }} {{ item.school_name|default:item.cluster_name }}</td>
+          <td>{{ item.school_code }} {% firstof item.school_name item.cluster_name %}</td>
           <td>{{ item.partner_name }}</td><td>{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
           <td>{{ item.activity_type|replace_underscore|title }}{% if item.target_intervention %}<br><span class="edify-text-caption edify-text-muted">{{ item.target_intervention }}</span>{% endif %}</td>
           <td>{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.assignment_date|date:"j M Y" }}{% endif %}</td>

@@ -59,23 +59,31 @@ IA_SIDEBAR = [
             ("Dashboard", "/ia/dashboard/"),
             ("Planning", "/planning"),
             ("School Directory", "/schools"),
-            ("Cluster Oversight", "/cluster-oversight/"),
-            ("Planning Oversight", "/team-planning-oversight/"),
             ("Calendar", "/calendar"),
-            ("Core School Oversight", "/core-schools-oversight/"),
             ("Programme Schools", "/programme-schools"),
-            ("Country Oversight", "/country-planning-oversight/"),
             ("Verification Queue", "/ia/verification/"),
             ("SSA Verification", "/ssa/verification/"),
             ("Partner Evidence", "/ia/partner-evidence/"),
             ("To-Do", "/todos"),
         ],
     ),
+    # Since 2026-09-23 the oversight pages share one group after the day's
+    # work, in a fixed order rather than by visit rank.
+    (
+        "OVERSIGHT",
+        [
+            ("Planning Oversight", "/team-planning-oversight/"),
+            ("Country Oversight", "/country-planning-oversight/"),
+            ("Cluster Oversight", "/cluster-oversight/"),
+            ("Core School Oversight", "/core-schools-oversight/"),
+            ("Partner Oversight", "/partner-oversight/"),
+            ("Project Monitoring", "/projects/monitoring"),
+        ],
+    ),
     (
         "WEEKLY",
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
-            ("Project Monitoring", "/projects/monitoring"),
             ("Field Debrief", "/debriefs"),
             ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),
