@@ -118,7 +118,7 @@ test.describe('Responsive contract — behaviours', () => {
     try {
       await page.evaluate(() => sessionStorage.removeItem('edify-table-swipe-learned'));
       await page.goto('/partner-oversight/');
-      const region = page.locator('[data-partner-monitoring-table]').locator('xpath=ancestor::*[contains(@class,"edify-table-scroll-region")][1]');
+      const region = page.locator('[data-partner-monitoring-table]').first().locator('xpath=ancestor::*[contains(@class,"edify-table-scroll-region")][1]');
       await expect(region).toHaveAttribute('data-scroll-state', 'start');
       await expect(page.locator('.edify-table-scroll-hint')).toHaveText('Swipe to view more columns');
       const identity = region.locator('tbody tr').first().locator('> :first-child');

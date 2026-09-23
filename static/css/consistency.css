@@ -3363,10 +3363,13 @@ main table tbody > tr:only-child > td[colspan] > :is(
    text, wherever it sits, so it reads inline. Badges, pills and chips are
    excluded (they are boxes with padding), `div` is excluded (an empty div is
    usually a bar or a rule, and inline would collapse it), and `[x-show]` is
-   excluded because display on those belongs to the script. */
+   excluded because display on those belongs to the script. So is the name
+   a scrolling table pins (responsive-system.css): an inline box ignores the
+   identity measure, and a plain-text name then pinned the whole width of a
+   phone. `:where()` keeps this rule's weight unchanged. */
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
-  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]) {
+  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]):not(:where(.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody > tr > :first-child > :first-child)) {
   display: inline !important;
   margin-block: 0 !important;
 }

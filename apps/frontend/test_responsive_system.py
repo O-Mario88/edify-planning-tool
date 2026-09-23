@@ -159,6 +159,25 @@ class ResponsiveLayerTest(SimpleTestCase):
         self.assertIn("function watchScrollRegions", js)
         self.assertIn("learnSwipe", js)
 
+    def test_a_plain_text_pinned_name_is_capped_like_a_linked_one(self):
+        """micro-ux marks a text-only span `.edify-cell-text`, which
+        consistency.css holds inline; an inline box ignores the identity
+        measure, so a pinned plain-text name covered the whole phone. The
+        pinned name is left out of that rule, and without adding weight."""
+        self.assertIn("max-inline-size: var(--edify-table-identity-measure)", self.css)
+        consistency = (ROOT / "static/css/consistency.css").read_text()
+        start = consistency.index(
+            "(p, span, small).edify-cell-text:not(.edify-cell-row)"
+        )
+        rule = consistency[start : consistency.index("}", start)]
+        self.assertIn("display: inline !important;", rule)
+        self.assertIn(
+            ':not(:where(.edify-table-scroll-region:is([data-scroll-state="start"], '
+            '[data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody '
+            "> tr > :first-child > :first-child))",
+            rule,
+        )
+
     def test_a_column_plan_that_clips_a_heading_scrolls_instead(self):
         """The fluid scale makes headings a little larger on wide screens; a
         dense table whose plan cannot pay for every heading scrolls with its
