@@ -181,11 +181,10 @@ class OversightViewsAccessTest(TestCase):
                 f"{user.active_role} should have access to /cluster-oversight/",
             )
 
-    def test_cluster_oversight_denied_for_cceo(self):
+    def test_cluster_oversight_denied_to_cceo(self):
         url = reverse("frontend:cluster_oversight")
         self.client.force_login(self.cceo)
         resp = self.client.get(url)
-        # Should be forbidden (403) or redirect (302)
         self.assertIn(resp.status_code, [302, 403])
 
     def test_core_schools_oversight_accessible_by_permitted_roles(self):

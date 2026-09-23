@@ -11,7 +11,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **486**
+- Shared component templates: **488**
 - Full pages: **260**
 - Partials and drawers: **270**
 - Permission-gated surfaces: **809**
@@ -599,7 +599,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-634CC67BF6 | /partner-engagements/<str:engagement_id>/update | Partner Engagement Update | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-DB77CF9E76 | /partner-engagements/new | Partner Engagement New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-55A0B1C6EA | /partner-engagements/record | Partner Engagement Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-A14F031C98 | /partner-oversight/ | Partner Monitoring · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A14F031C98 | /partner-oversight/ | Partner Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-48931D8B35 | /partner-oversight/allowance-drawer | Partner Allowance Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-619586CF5E | /partner-oversight/allowance-grant | Partner Allowance Grant | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D3C1BC6314 | /partner-oversight/detail | Partner Oversight Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

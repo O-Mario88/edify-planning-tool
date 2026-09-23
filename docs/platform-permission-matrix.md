@@ -13,11 +13,11 @@ hand-maintained copy of an authority is how SEC-01 happened.
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 532 |
+| CCEO | 531 |
 | Program Lead | 617 |
 | CountryDirector | 762 |
 | RegionalVicePresident | 369 |
-| RegionalProgramLead | 306 |
+| RegionalProgramLead | 317 |
 | ImpactAssessment | 626 |
 | Accountant | 407 |
 | HumanResources | 330 |
@@ -897,17 +897,17 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/partner-engagements/<str:engagement_id>/update` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/partner-engagements/new` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/partner-engagements/record` | partner_detail | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| `/partner-oversight/` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/allowance-drawer` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/allowance-grant` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/detail` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/export` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/resolve` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/resolve/submit` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/send` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw/review` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/partner-oversight/withdraw/submit` | partner_oversight | Y | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/allowance-drawer` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/allowance-grant` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/detail` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/export` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/resolve` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/resolve/submit` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/send` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw/review` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/partner-oversight/withdraw/submit` | partner_oversight | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
 | `/partner/activities` | partner_activities |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
 | `/partner/activities/<str:activity_id>/evidence` | partner_evidence |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
 | `/partner/activities/<str:activity_id>/start-action` | partner_evidence |  |  |  |  |  |  |  |  |  | Y | Y |  |  |  | Y |
@@ -1010,7 +1010,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/projects/create/action` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filter` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filters-drawer` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
-| `/projects/monitoring` | project_monitoring | Y | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
+| `/projects/monitoring` | project_monitoring |  | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/projects/my-plan` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning/bulk-partner` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |

@@ -14147,6 +14147,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14164,6 +14165,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14181,6 +14183,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14198,6 +14201,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14215,6 +14219,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14232,6 +14237,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14249,6 +14255,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14266,6 +14273,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14283,6 +14291,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14300,6 +14309,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -14317,6 +14327,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "Admin"
@@ -15980,7 +15991,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
     "CountryDirector",
     "ImpactAssessment",
@@ -17987,7 +17997,7 @@
   "Accountant": 407,
   "Admin": 1006,
   "BusinessTransformationOfficer": 232,
-  "CCEO": 532,
+  "CCEO": 531,
   "CountryDirector": 762,
   "HumanResources": 330,
   "ImpactAssessment": 626,
@@ -17997,7 +18007,7 @@
   "PartnerFieldOfficer": 219,
   "Program Lead": 617,
   "ProjectCoordinator": 446,
-  "RegionalProgramLead": 306,
+  "RegionalProgramLead": 317,
   "RegionalVicePresident": 369
  },
  "summary": {

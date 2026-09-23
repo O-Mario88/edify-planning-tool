@@ -157,6 +157,12 @@ theme tokens and is what every other list on the platform uses.
 
 {% endif %}
 
+{% if not is_oversight_lens %}
+<div id="core-lifecycle-tables" class="w-full min-w-0 space-y-4">
+{% include "partials/core_schools/programme_sections.html" %}
+</div>
+{% endif %}
+
 </div>
 
 {% endblock %}

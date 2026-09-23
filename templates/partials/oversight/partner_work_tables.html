@@ -1,0 +1,51 @@
+{% load frontend_filters table_pagination %}
+<dl class="flex flex-wrap gap-6 px-4 py-3 card">
+  <div><dt class="edify-text-caption edify-text-muted">Awaiting scheduling</dt><dd class="font-semibold">{{ summary.awaiting_schedule }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled visits</dt><dd class="font-semibold">{{ summary.scheduled_visits }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled trainings</dt><dd class="font-semibold">{{ summary.scheduled_trainings }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Scheduled meetings</dt><dd class="font-semibold">{{ summary.scheduled_meetings }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Overdue</dt><dd class="font-semibold">{{ summary.overdue }}</dd></div>
+  <div><dt class="edify-text-caption edify-text-muted">Completed</dt><dd class="font-semibold">{{ summary.completed }}</dd></div>
+</dl>
+{% for table in workspace_tables %}
+{% paginate table.items table.page_param as page %}
+<section class="card p-0 overflow-hidden">
+  <header class="px-4 py-3 border-b edify-border"><h3 class="text-sm font-semibold">{{ table.title }} ({{ table.items|length }})</h3></header>
+  <div class="overflow-x-auto">
+    <table class="w-full edify-record-table partner-work-table" data-partner-monitoring-table="{{ table.kind }}">
+      <thead><tr><th>School / cluster</th><th>Partner</th><th>Staff member</th><th>Activity / purpose</th><th>{% if table.kind == 'activity' %}Scheduled{% else %}Assigned{% endif %}</th><th>Status</th><th>{% if table.kind == 'activity' %}Verification{% else %}Activity date{% endif %}</th><th>Actions</th></tr></thead>
+      <tbody>{% for item in page.rows %}
+        <tr {% if table.kind == 'activity' %}data-partner-activity="{{ item.partner_activity_id }}"{% else %}data-assignment="{{ item.partner_assignment_id }}"{% endif %}{% if item.awaits_staff_decision %} data-returned{% endif %}>
+          <td>{{ item.school_code }} {{ item.school_name|default:item.cluster_name }}</td>
+          <td>{{ item.partner_name }}</td>
+          <td>{{ item.responsible_cceo_name|default:"Unassigned" }}{% if item.field_officer %}<br><span class="edify-text-caption edify-text-muted">Partner officer: {{ item.field_officer }}</span>{% endif %}</td>
+          <td>{{ item.activity_type|replace_underscore|title }}{% if item.target_intervention %}<br><span class="edify-text-caption edify-text-muted">{{ item.target_intervention }}</span>{% endif %}</td>
+          <td>{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.assignment_date|date:"j M Y" }}{% endif %}</td>
+          <td>
+            <span class="pill{% if item.awaits_staff_decision %} pill-warn{% endif %}" {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{% if item.awaits_staff_decision %}{{ item.schedule_status }}{% else %}{{ item.delivery_phase|replace_underscore|title }}{% endif %}</span>
+            {% if item.is_overdue %}<span class="pill pill-danger">Overdue</span>{% endif %}
+            {% comment %}Where the Partner's work stands past its schedule
+            (owner, 2026-09-23): execution, IA, Salesforce and payment, read
+            only — staff never edit them here.{% endcomment %}
+            {% if item.partner_activity_id %}<span class="block edify-text-caption edify-text-muted">{{ item.execution_status }} · IA {{ item.ia_status_label }} · {{ item.salesforce_label }} · {{ item.payment_label }}</span>{% elif item.is_returned and item.resolution_label %}<span class="block edify-text-caption edify-text-muted">{{ item.resolution_label }}</span>{% endif %}
+          </td>
+          <td>{% if table.kind == 'activity' %}{{ item.ia_status|default:"Pending"|replace_underscore|title }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
+          <td class="whitespace-nowrap">
+            {% if item.awaits_staff_decision and can_resolve_returns %}
+            <button type="button" class="text-sm font-semibold hover:underline edify-primary-text"
+                    hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
+                    hx-target="#drawer-container" hx-swap="innerHTML">Resolve Exception</button>
+            {% elif item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" %}{% else %}<a class="edify-primary-text" href="/activities/{{ item.partner_activity_id }}">View activity</a>{% endif %}
+            {% if item.can_enter_salesforce %}
+            <button type="button" class="ml-3 text-sm font-semibold hover:underline edify-primary-text"
+                    hx-get="/activities/{{ item.partner_activity_id }}/salesforce-id"
+                    hx-target="#drawer-container" hx-swap="innerHTML">Enter Salesforce ID</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}<tr><td colspan="8" class="p-4 edify-text-muted">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=page param=table.page_param pagination_label=table.title %}
+</section>
+{% endfor %}

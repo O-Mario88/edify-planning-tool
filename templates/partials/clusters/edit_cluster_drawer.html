@@ -88,7 +88,7 @@
       >
         <option value="">-- No Assigned Staff --</option>
         {% for sp in staff %}
-          <option value="{{ sp.user.user_id }}" {% if cluster.responsible_staff_id == sp.user.user_id %}selected{% endif %}>
+          <option value="{{ sp.user.user_id }}" {% if cluster.responsible_staff_id == sp.user.user_id or cluster.responsible_staff_id == sp.id %}selected{% endif %}>
             {{ sp.user.name }} ({{ sp.user.active_role }})
           </option>
         {% endfor %}

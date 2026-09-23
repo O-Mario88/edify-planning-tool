@@ -498,3 +498,41 @@ main [data-oversight-workspace] .edify-training-group-toggle {
   max-inline-size: 100%;
   white-space: normal;
 }
+
+/* Partner registers keep every column visible on desktop. */
+main table.partner-work-table.edify-record-table {
+  table-layout: fixed !important;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+}
+main table.partner-work-table.edify-record-table :is(th, td),
+main table.partner-work-table.edify-record-table :is(th, td) * {
+  min-width: 0;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+.partner-work-table th:nth-child(1) { width: 22%; }
+.partner-work-table th:nth-child(2) { width: 13%; }
+.partner-work-table th:nth-child(3) { width: 10%; }
+.partner-work-table th:nth-child(4) { width: 15%; }
+.partner-work-table th:nth-child(5) { width: 9%; }
+.partner-work-table th:nth-child(6) { width: 10%; }
+.partner-work-table th:nth-child(7) { width: 10%; }
+.partner-work-table th:nth-child(8) { width: 11%; }
+.partner-work-table td:last-child > div { flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 640px) {
+  main table.partner-work-table.edify-record-table { min-inline-size: 850px !important; }
+}
+main table.partner-work-table.edify-record-table td :is(button, a, .inline-flex) {
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
+}
+#partner-workspace table.partner-work-table td :is(button, a) {
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
+  white-space: normal !important;
+  block-size: auto !important;
+  max-block-size: none !important;
+  height: auto !important;
+  padding-block: .35rem !important;
+}

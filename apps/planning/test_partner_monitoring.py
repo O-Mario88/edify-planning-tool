@@ -76,7 +76,9 @@ class SeparatePartnerTablesTest(MonitoringFixture):
         for response in (first, second):
             body = response.content.decode()
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(body.count("data-partner-monitoring-table"), 1)
+            # One Partner's school, cluster and activity tables — never two
+            # Partners in one workspace.
+            self.assertEqual(body.count("data-partner-monitoring-table"), 3)
             self.assertIn("Partner X", body)
             self.assertIn("Partner Y", body)
         self.assertIn(f'data-assignment="{mine.id}"', first.content.decode())
@@ -89,7 +91,7 @@ class SeparatePartnerTablesTest(MonitoringFixture):
 
         body = self.page(self.pl_user).content.decode()
 
-        self.assertIn("Staff Owner", body)
+        self.assertIn("Staff member", body)
         self.assertIn("James", body)
 
     def test_many_partners_get_a_picker_not_an_overflowing_row(self):
@@ -109,7 +111,7 @@ class SeparatePartnerTablesTest(MonitoringFixture):
         body = self.page(self.pl_user).content.decode()
 
         self.assertIn('aria-label="Choose a Partner"', body)
-        self.assertNotIn('class="oversight-entity-tabs', body)
+        self.assertNotIn('aria-label="Partners"', body)
 
 
 class RoleScopeTest(MonitoringFixture):
@@ -432,7 +434,14 @@ class ProtectedPartnerFieldsTest(MonitoringFixture):
             "/partner-oversight/", headers={"HX-Request": "true"}
         ).content.decode()
 
-        for forbidden in ("hx-post", "hx-put", "hx-patch", "hx-delete", "<form"):
+        # The workspace's filters are a GET form; nothing on it writes.
+        for forbidden in (
+            "hx-post",
+            "hx-put",
+            "hx-patch",
+            "hx-delete",
+            'method="post"',
+        ):
             with self.subTest(control=forbidden):
                 self.assertNotIn(forbidden, body)
 

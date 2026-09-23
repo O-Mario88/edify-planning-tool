@@ -3023,7 +3023,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10403,
+      "bytes": 10444,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -3509,10 +3509,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 215,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Matrix Response",
+      "purpose": "Reusable matrix response interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/core_schools/matrix_response.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8233,
+      "bytes": 8171,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3606,7 +3627,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2754,
+      "bytes": 2775,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools",
@@ -8595,7 +8616,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 283,
+      "bytes": 446,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8618,7 +8639,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7078,
+      "bytes": 7433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8789,7 +8810,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11362,
+      "bytes": 11388,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -8809,17 +8830,39 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 16751,
+      "accessibility_requirements": [],
+      "bytes": 5302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 4,
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Partner Work Tables",
+      "purpose": "Reusable partner work tables interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/partner_work_tables.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 10451,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Partner Workspace",
       "purpose": "Reusable partner workspace interface primitive",
@@ -8827,15 +8870,17 @@
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/partner_workspace.html",
-      "variants": []
+      "variants": [
+        "executive"
+      ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3757,
+      "bytes": 4033,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -29589,14 +29634,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_schools_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:partials/core_schools/matrix_table.html",
+        "template:partials/core_schools/matrix_response.html",
         "template:pages/core_schools/index.html",
         "test:referenced-by-automated-test",
         "permission:core_schools"
@@ -29657,7 +29702,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
@@ -29670,16 +29715,14 @@
         "type": "in-page-tabs"
       },
       "templates": [
-        "partials/core_schools/matrix_table.html",
+        "partials/core_schools/matrix_response.html",
         "pages/core_schools/index.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -62547,21 +62590,18 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /partner-oversight/withdraw/review",
-        "GET /partner-oversight/",
-        "GET /partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}",
-        "GET /activities/{{ item.partner_activity_id }}/salesforce-id",
         "GET /partners/create",
         "GET /partner-oversight/allowance-drawer"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A14F031C98",
-      "page_title": "Partner Monitoring \u00b7 Edify",
+      "page_title": "Partner Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
@@ -62579,6 +62619,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/",
@@ -62608,8 +62649,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -62675,6 +62716,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/allowance-drawer",
@@ -62769,6 +62811,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/allowance-grant",
@@ -62858,6 +62901,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/detail",
@@ -62948,6 +62992,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/export",
@@ -63037,6 +63082,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/resolve",
@@ -63127,6 +63173,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/resolve/submit",
@@ -63213,6 +63260,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/send",
@@ -63302,6 +63350,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/withdraw",
@@ -63392,6 +63441,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/withdraw/review",
@@ -63478,6 +63528,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/partner-oversight/withdraw/submit",
@@ -73119,7 +73170,6 @@
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
-        "CCEO",
         "CD",
         "IA",
         "PL"
@@ -96381,7 +96431,7 @@
       "route": "/core-schools",
       "route_name": "core_schools",
       "templates": [
-        "partials/core_schools/matrix_table.html",
+        "partials/core_schools/matrix_response.html",
         "pages/core_schools/index.html"
       ]
     },
@@ -105114,7 +105164,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 486,
+    "component_templates": 488,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

@@ -43,3 +43,51 @@ class SidebarNavigationContractTests(TestCase):
             template,
         )
         self.assertIn("{{ item.label }}", template)
+
+
+class OversightSidebarTests(TestCase):
+    def test_oversight_pages_share_one_group_without_duplicate_partner_entry(self):
+        from types import SimpleNamespace
+        from apps.core.navigation import build_sidebar_for_user, PL, IA, CD, RPL, ADMIN
+
+        for role in (PL, IA, CD, RPL, ADMIN):
+            groups = build_sidebar_for_user(
+                SimpleNamespace(is_authenticated=True, active_role=role),
+                "/partner-oversight/",
+            )
+            oversight = next(g for g in groups if g["label"] == "OVERSIGHT")
+            self.assertTrue(oversight["active"])
+            self.assertIn(
+                "partner_oversight", [i["page_key"] for i in oversight["items"]]
+            )
+            links = [i for g in groups for i in g["items"]]
+            self.assertEqual(sum(i["url"] == "/partner-oversight/" for i in links), 1)
+            self.assertFalse(any(i["url"] == "/partners" for i in links))
+            self.assertTrue(
+                all(
+                    g["label"] == "OVERSIGHT"
+                    for g in groups
+                    if any(i["page_key"].endswith("_oversight") for i in g["items"])
+                )
+            )
+
+    def test_cceo_has_only_partner_oversight(self):
+        from types import SimpleNamespace
+        from apps.core.navigation import build_sidebar_for_user, PAGE_PERMISSIONS, CCEO
+
+        groups = build_sidebar_for_user(
+            SimpleNamespace(is_authenticated=True, active_role=CCEO),
+            "/partner-oversight/",
+        )
+        oversight = next(g for g in groups if g["label"] == "OVERSIGHT")
+        self.assertEqual(
+            [i["page_key"] for i in oversight["items"]], ["partner_oversight"]
+        )
+        self.assertEqual(
+            {
+                key
+                for key, roles in PAGE_PERMISSIONS.items()
+                if key.endswith("_oversight") and CCEO in roles
+            },
+            {"partner_oversight"},
+        )

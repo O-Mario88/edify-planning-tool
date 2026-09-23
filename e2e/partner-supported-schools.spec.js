@@ -288,17 +288,19 @@ test.describe('Partner-supported schools — journeys', () => {
     await signIn(page, data.pl_email, PASSWORD);
     for (const handover of data.handovers.slice(0, 3)) {
       await page.goto(`/partner-oversight/?partner=${handover.partner_id}`);
-      const table = page.locator('[data-partner-monitoring-table]');
-      await expect(table).toHaveCount(1);
-      await expect(table).toContainText(handover.name);
-      await expect(table).toContainText(data.cceo_name);
+      // One Partner's workspace: its school, cluster and activity tables.
+      await expect(page.locator('[data-partner-table]')).toHaveAttribute('data-partner-table', handover.partner_id);
+      await expect(page.locator('[data-partner-monitoring-table]')).toHaveCount(3);
+      const schools = page.locator('[data-partner-monitoring-table="assignment"]').first();
+      await expect(schools).toContainText(handover.name);
+      await expect(schools).toContainText(data.cceo_name);
       for (const other of data.handovers.filter(h => h.partner_id !== handover.partner_id)) {
-        await expect(table.locator(`tr[data-assignment="${other.assignment_id}"]`)).toHaveCount(0);
+        await expect(page.locator(`tr[data-assignment="${other.assignment_id}"]`)).toHaveCount(0);
       }
-      const tab = page.locator('.oversight-entity-tabs__link.is-active .oversight-entity-tabs__count');
-      const summary = page.locator('[data-monitoring-summary]');
-      const assigned = parseInt((await summary.textContent()).trim(), 10);
-      expect(parseInt((await tab.textContent()).trim(), 10)).toBe(assigned);
+      // The Partner tab counts exactly the rows its workspace holds.
+      const tab = page.locator('nav[aria-label="Partners"] .oversight-entity-tabs__link.is-active .oversight-entity-tabs__count');
+      const allMembers = page.locator('nav[aria-label="Team members"] .oversight-entity-tabs__link.is-active .oversight-entity-tabs__count');
+      expect(parseInt((await tab.textContent()).trim(), 10)).toBe(parseInt((await allMembers.textContent()).trim(), 10));
       await shoot(page, `j7-${handover.partner.replace(/\s+/g, '-').toLowerCase()}`, testInfo);
     }
   });
@@ -313,7 +315,7 @@ test.describe('Partner-supported schools — journeys', () => {
     await expect(row.locator('[data-partner-workflow="returned"]')).toContainText('Partner Returned — Staff Action Required');
     await shoot(page, 'j8-planning-returned', testInfo);
 
-    await page.goto(`/partner-oversight/?partner=${returned.partner_id}&status=returned`);
+    await page.goto(`/partner-oversight/?partner=${returned.partner_id}`);
     const monitored = page.locator(`tr[data-assignment="${returned.assignment_id}"]`);
     await expect(monitored.locator('[title*="national examinations"]')).toHaveCount(1);
     await monitored.getByRole('button', { name: 'Resolve Exception' }).click();
@@ -349,7 +351,7 @@ test.describe('Partner-supported schools — layout on every screen', () => {
     await shoot(page, 'layout-planning', testInfo);
 
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}`);
-    const table = page.locator('[data-partner-monitoring-table]');
+    const table = page.locator('[data-partner-monitoring-table]').first();
     await expect(table).toBeVisible();
     const headers = await table.locator('thead th').evaluateAll(cells =>
       cells.map(cell => cell.getBoundingClientRect().height),

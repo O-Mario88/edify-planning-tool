@@ -44,8 +44,9 @@ class PageRendersTest(PageFixture):
         body = response.content.decode()
         self.assertIn("Partner X", body)
         self.assertIn("Partner Y", body)
-        self.assertIn("Awaiting Schedule", body)
-        self.assertEqual(body.count("data-partner-monitoring-table"), 1)
+        self.assertIn("Schools assigned", body)
+        # One Partner's workspace: its three tables, never another Partner's.
+        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
 
     def test_a_cceo_sees_the_page_for_their_own_schools(self):
         """The CCEO helps the PL monitor. They were previously refused the
@@ -78,7 +79,7 @@ class NoCostBeforeSchedulingOnThePageTest(PageFixture):
 
         body = self.client.get("/partner-oversight/").content.decode()
 
-        table = body.split("data-partner-monitoring-table")[1].split("</table>")[0]
+        table = body.split("Schools assigned")[1].split("Partner activities")[0]
         self.assertNotIn("UGX", table)
         self.assertNotIn("Pending Calculation", table)
         self.assertNotIn("Not Available", table)
@@ -115,7 +116,13 @@ class ReadOnlyTest(PageFixture):
             "/partner-oversight/", headers={"HX-Request": "true"}
         ).content.decode()
 
-        for forbidden in ("hx-post", "hx-put", "hx-patch", "hx-delete", "<form"):
+        for forbidden in (
+            "hx-post",
+            "hx-put",
+            "hx-patch",
+            "hx-delete",
+            'method="post"',
+        ):
             with self.subTest(control=forbidden):
                 self.assertNotIn(forbidden, body)
 
@@ -453,7 +460,7 @@ class PartnerFilterTest(PageFixture):
         ).content.decode()
 
         self.assertIn("Partner Y", body, "the other partner left the tabs")
-        self.assertIn(f"?partner={self.other_partner.id}", body)
+        self.assertIn(f'value="{self.other_partner.id}"', body)
 
     def test_choosing_a_partner_narrows_the_rows_to_that_partner(self):
         self.assign(partner=self.partner)
@@ -479,7 +486,7 @@ class PartnerFilterTest(PageFixture):
         self.assertIn('aria-label="Programme Lead teams"', body)
         self.assertIn("Mary", body)
         self.assertIn("Other Lead", body)
-        self.assertIn('aria-label="Partners"', body)
+        self.assertIn('name="partner"', body)
 
     def test_partner_page_offers_all_four_period_lenses(self):
         self.assign()

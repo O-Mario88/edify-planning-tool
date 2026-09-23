@@ -1042,10 +1042,7 @@ def team_planning_oversight_view(request):
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
-    if (
-        active_view in ("planning", "coverage", "portfolio")
-        and not can_view_planning
-    ):
+    if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
 
     available_lenses = {
@@ -1188,7 +1185,8 @@ def team_planning_oversight_view(request):
 
     summary = oversight.summarize(visible)
     owner_groups = oversight.group_by_owner(
-        visible, owners=oversight.program_lead_members(selected) if country_lens else None
+        visible,
+        owners=oversight.program_lead_members(selected) if country_lens else None,
     )
     _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
@@ -1312,15 +1310,15 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    active_view = (
-        requested_view if requested_view in {"portfolio"} else "planning"
-    )
+    active_view = requested_view if requested_view in {"portfolio"} else "planning"
     lens_tabs = _lens_tabs(
         COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio"}
     )
 
     if active_view == "portfolio":
-        context_data = _portfolio_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH)
+        context_data = _portfolio_context(
+            request, period, base_url=COUNTRY_OVERSIGHT_PATH
+        )
         template = "partials/oversight/portfolio_workspace.html"
 
         context = {
@@ -1900,30 +1898,38 @@ def partner_oversight_view(request):
     # one, choosing a partner would collapse the list to that partner and
     # leave no way back to any other.
     all_items = partner_oversight.build_items(request.user, **_service_period(period))
-    country_lens = _partner_scope(request.user)["is_country"]
+    partner_scope = _partner_scope(request.user)
+    country_lens = partner_scope["is_country"]
     if country_lens:
         sys_pls = oversight.system_program_leads()
+        if partner_scope.get("region_ids") is not None:
+            visible_leads = {i.supervising_pl_id for i in all_items}
+            sys_pls = [p for p in sys_pls if p["id"] in visible_leads]
         program_lead_tabs, requested_pl, team_items = _program_lead_tabs(
             all_items, requested_pl, program_leads=sys_pls
         )
     else:
         program_lead_tabs, team_items = [], all_items
 
+    roster = oversight.program_lead_members(
+        requested_pl if country_lens else request.user.id
+    )
+    # Partner Monitoring (owner, 2026-09-23): one Partner at a time, never an
+    # undifferentiated table of every organisation's work. The Partner tabs
+    # choose the organisation (the first opens when none is chosen); the team
+    # workspace below — team-member tabs, filters, KPIs and the school, cluster
+    # and activity tables — reads that Partner's work alone.
     partner_pairs = sorted(
         {(i.partner_id, i.partner_name) for i in team_items if i.partner_id},
         key=lambda pair: pair[1],
     )
-    # Partner Monitoring (owner, 2026-09-23): one Partner at a time, never an
-    # undifferentiated table of every organisation's work. The tabs list every
-    # Partner in the reader's scope with its count; the selection is in the
-    # URL, and with nothing chosen the first Partner opens.
     partner_tabs = [
         {
-            "key": partner_id,
+            "key": partner_key,
             "label": partner_name,
-            "count": sum(1 for i in team_items if i.partner_id == partner_id),
+            "count": sum(1 for i in team_items if i.partner_id == partner_key),
         }
-        for partner_id, partner_name in partner_pairs
+        for partner_key, partner_name in partner_pairs
     ]
     active_partner = next(
         (entry for entry in partner_tabs if entry["key"] == requested_partner),
@@ -1934,14 +1940,41 @@ def partner_oversight_view(request):
     partner_id = active_partner["key"] if active_partner else ""
     partner_items = [i for i in team_items if partner_id and i.partner_id == partner_id]
 
-    requested_status = (request.GET.get("status") or "all").strip()
-    if requested_status not in dict(partner_oversight.MONITORING_FILTERS):
-        requested_status = "all"
-    counts = partner_oversight.filter_counts(partner_items)
-    rows = [i for i in partner_items if i.matches(requested_status)]
+    member_names = {p["id"]: p["name"] for p in roster}
+    member_names.update(
+        {
+            i.responsible_cceo_id or "unassigned": i.responsible_cceo_name
+            or "Unassigned"
+            for i in partner_items
+        }
+    )
+    member = (request.GET.get("member") or "all").strip()
+    if member not in member_names:
+        member = "all"
+    member_tabs = [
+        {"key": "all", "label": "All team members", "count": len(partner_items)}
+    ] + [
+        {
+            "key": key,
+            "label": name,
+            "count": sum(
+                (i.responsible_cceo_id or "unassigned") == key for i in partner_items
+            ),
+        }
+        for key, name in member_names.items()
+    ]
+    for entry in member_tabs:
+        entry["is_active"] = entry["key"] == member
+    member_items = partner_oversight.filter_workspace(partner_items, member=member)
+    activity_type = request.GET.get("activity_type", "")
+    status = request.GET.get("status", "")
+    typed_items = partner_oversight.filter_workspace(
+        member_items, activity_type=activity_type
+    )
+    items = partner_oversight.filter_workspace(typed_items, status=status)
     # Waiting-on-staff first: a hand-back nobody has decided on is the one row
     # somebody here has to act on.
-    rows.sort(
+    items.sort(
         key=lambda i: (not i.awaits_staff_decision, not i.is_overdue, i.school_name)
     )
     # The approved Salesforce authority is unchanged (owner, 2026-09-12): the
@@ -1956,7 +1989,7 @@ def partner_oversight_view(request):
         "Program Lead",
         "ProjectCoordinator",
     )
-    for item in rows:
+    for item in items:
         item.can_enter_salesforce = bool(
             monitors
             and item.partner_activity_id
@@ -1964,7 +1997,7 @@ def partner_oversight_view(request):
             and item.activity_status == "awaiting_ia_verification"
             and item.salesforce_status != "recorded"
         )
-    summary = partner_oversight.summarize(partner_items)
+    summary = partner_oversight.summarize(items)
     partner_group = None
     if active_partner:
         partner_group = {"id": partner_id, "name": active_partner["label"]}
@@ -1977,18 +2010,36 @@ def partner_oversight_view(request):
         "program_lead_tabs": program_lead_tabs,
         "partner": partner_id,
         "partner_tabs": partner_tabs,
-        # Many Partners get a search box over the tabs rather than a tab row
-        # that runs off the page.
+        # Many Partners get a picker over the tabs rather than a tab row that
+        # runs off the page.
         "partner_search": len(partner_tabs) > 6,
         "active_partner": partner_group,
-        "summary": summary,
-        "monitoring": partner_oversight.monitoring_summary(partner_items),
-        "monitoring_filters": [
-            {"key": key, "label": label, "count": counts[key]}
-            for key, label in partner_oversight.MONITORING_FILTERS
+        "member_tabs": member_tabs,
+        "member": member,
+        "activity_type": activity_type,
+        "activity_types": sorted(
+            {i.activity_type for i in member_items if i.activity_type}
+        ),
+        "status": status,
+        # Each status with how many of this Partner's rows it would show, so
+        # the filter says what it returns before it is chosen.
+        "statuses": [
+            {
+                "key": key,
+                "count": sum(1 for i in typed_items if i.delivery_phase == key),
+            }
+            for key in (
+                "awaiting_schedule",
+                "scheduled",
+                "in_progress",
+                "verification",
+                "completed",
+                "returned",
+            )
         ],
-        "status": requested_status,
-        "rows": rows,
+        "workspace_tables": partner_oversight.workspace_tables(items),
+        "summary": summary,
+        "kpis": _partner_kpis(summary),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
         # above the partner table because a decision somebody is waiting on
         # outranks routine monitoring.
@@ -2265,6 +2316,13 @@ def partner_oversight_export_view(request):
         partner_id=partner_id,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
         **_service_period(period),
+    )
+
+    items = partner_oversight.filter_workspace(
+        items,
+        member=request.GET.get("member", ""),
+        activity_type=request.GET.get("activity_type", ""),
+        status=request.GET.get("status", ""),
     )
 
     class _Echo:

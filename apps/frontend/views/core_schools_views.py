@@ -496,7 +496,7 @@ def core_schools_view(request):
         request.headers.get("HX-Target") == "core-schools-table-container"
         and lens != "oversight"
     ):
-        return render(request, "partials/core_schools/matrix_table.html", context)
+        return render(request, "partials/core_schools/matrix_response.html", context)
 
     return render(request, "pages/core_schools/index.html", context)
 
