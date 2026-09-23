@@ -19,17 +19,20 @@
     <!-- Partner Assigned School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <ul class="planning-school-list school-record-list" role="list" aria-label="Partner-assigned schools" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable" aria-label="Partner-assigned schools" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+          <caption class="sr-only">School planning statuses</caption>
+          {% include "components/school_plan_table_head.html" with selectable=True %}
+          <tbody>
           {% for r in schools %}
             {% if group_by_owner %}{% ifchanged r.groupKey %}
-            <li class="planning-owner-group" role="presentation" data-owner-group="{{ r.groupKey }}">
+            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="6" scope="rowgroup">
               <span class="planning-owner-group__label">{{ r.groupLabel }}</span>
               <span class="planning-owner-group__count">{{ r.groupCount }} school{{ r.groupCount|pluralize }}</span>
-            </li>
+            </th></tr>
             {% endifchanged %}{% endif %}
             {% include "partials/planning/school_row.html" with school=r can_assign_partner=can_assign_partner %}
           {% endfor %}
-        </ul>
+        </tbody></table></div>
       {% else %}
         <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-surface border border-dashed border-slate-200">
           No partner assignments pending.
@@ -41,17 +44,20 @@
     <!-- Default (Client / Core) School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <ul class="planning-school-list school-record-list" role="list" aria-label="Schools ready for planning" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+        <div class="school-plan-table-scroll"><table class="school-plan-table school-plan-table--selectable" aria-label="Schools ready for planning" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+          <caption class="sr-only">School planning statuses</caption>
+          {% include "components/school_plan_table_head.html" with selectable=True %}
+          <tbody>
           {% for r in schools %}
             {% if group_by_owner %}{% ifchanged r.groupKey %}
-            <li class="planning-owner-group" role="presentation" data-owner-group="{{ r.groupKey }}">
+            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="6" scope="rowgroup">
               <span class="planning-owner-group__label">{{ r.groupLabel }}</span>
               <span class="planning-owner-group__count">{{ r.groupCount }} school{{ r.groupCount|pluralize }}</span>
-            </li>
+            </th></tr>
             {% endifchanged %}{% endif %}
             {% include "partials/planning/school_row.html" with school=r can_assign_partner=can_assign_partner %}
           {% endfor %}
-        </ul>
+        </tbody></table></div>
       {% else %}
         {% comment %}
           Two different emptinesses, and telling them apart is the whole point.

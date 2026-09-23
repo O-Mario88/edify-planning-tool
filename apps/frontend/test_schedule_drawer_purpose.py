@@ -45,42 +45,17 @@ class DrawerAsksForPurposeTest(TestCase):
         purpose_block = source.split('name="purpose_of_visit"')[1][:400]
         self.assertIn("required", purpose_block)
 
-    def test_the_struggling_ssa_interventions_are_named(self):
-        """The diagnostic the officer needs, shown as evidence rather than
-        converted into an instruction."""
+    def test_recommended_interventions_are_a_coloured_hyphen_list(self):
         source = _drawer_source()
-        self.assertIn("Top SSA recommendation", source)
-        self.assertIn("Additional SSA interventions performing poorly", source)
-        self.assertIn('{% for r in recommendations|slice:"1:" %}', source)
-
-    def test_top_ssa_recommendation_uses_the_risk_alert_format(self):
-        source = _drawer_source()
-
-        self.assertIn('class="edify-risk-card"', source)
-        self.assertIn('class="edify-risk-card__icon"', source)
-        self.assertIn("Top SSA recommendation", source)
-        self.assertIn("{{ recommendations.0.label }}", source)
-        self.assertIn("edify-danger-text", source)
-
-    def test_recommendation_scores_are_plain_red_text_not_border_pills(self):
-        source = _drawer_source()
-        recommendation_list = source.split("{% if recommendations|length > 1 %}", 1)[
-            1
-        ].split("{% endif %}", 1)[0]
-
-        self.assertIn("{{ r.band }} · {{ r.score }}/10", recommendation_list)
-        self.assertIn("edify-danger-text", recommendation_list)
-        self.assertNotIn("rounded-pill", recommendation_list)
-        self.assertNotIn("border-amber", recommendation_list)
-
-        top_recommendation = source.split("{% if recommendations %}", 1)[1].split(
-            "{% else %}", 1
-        )[0]
-        self.assertIn(
-            "{{ recommendations.0.band }} · {{ recommendations.0.score }}/10",
-            top_recommendation,
-        )
-        self.assertNotIn("rounded-pill", top_recommendation)
+        recommendations = source.split('<section class="planning-recommendations"', 1)[1].split('</section>', 1)[0]
+        self.assertIn("Recommended interventions", recommendations)
+        self.assertIn("{% for r in recommendations %}", recommendations)
+        self.assertIn('<span aria-hidden="true">-</span>', recommendations)
+        self.assertIn("{{ r.label }}", recommendations)
+        self.assertIn("{{ r.score }}/10", recommendations)
+        self.assertIn("edify-danger-text", recommendations)
+        self.assertNotIn("edify-risk-card", recommendations)
+        self.assertNotIn("rounded", recommendations)
 
     def test_the_engine_no_longer_exposes_a_catalogue_picker(self):
         source = _drawer_source()
