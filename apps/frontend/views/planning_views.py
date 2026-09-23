@@ -32,11 +32,10 @@ from apps.partners.models import Partner, PartnerAssignment
 from apps.partners.support_responsibility import (
     visibility_enabled as support_visibility_enabled,
 )
-from apps.planning.planning_badges import PLANNING_SUPPORT_FILTERS
+from apps.planning.planning_support import PLANNING_SUPPORT_FILTERS
 from apps.partners import services as partner_services
 from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
-    PURPOSE_ACTIVITY_TYPES,
     PARTNER_VISIT_PURPOSES,
     STAFF_VISIT_PURPOSES,
     normalise_visit_purpose,
@@ -632,7 +631,12 @@ def planning_dashboard_view(request):
             "Owner",
         ]
         if support_columns:
-            header += ["Responsible", "Partner Workflow", "Visit", "Training / Cluster"]
+            header += [
+                "Responsible",
+                "Partner Workflow",
+                "Visit Status",
+                "Training Status",
+            ]
         writer.writerow(header)
         for s in export_data["schools"]:
             row = [
@@ -647,11 +651,16 @@ def planning_dashboard_view(request):
                 s["ownerName"],
             ]
             if support_columns and s.get("responsible"):
+                # The same chips the row shows (school_planning_badges).
+                badges = s["planningBadges"]
                 row += [
                     s["responsible"]["display"],
                     s["responsible"]["workflow_label"],
-                    s["visitIndicator"]["label"],
-                    s["trainingIndicator"]["label"],
+                    " · ".join(chip["label"] for chip in badges.visit_chips),
+                    " · ".join(
+                        chip["label"]
+                        for chip in badges.training_chips + badges.cluster_meeting_chips
+                    ),
                 ]
             writer.writerow(row)
         return response
@@ -870,12 +879,14 @@ def planning_dashboard_view(request):
 
 
 def _partner_support_drawer_context(school, principal, *, project_id="") -> dict:
-    """What the Schedule drawer shows about the school's support and plans.
+    """What the Schedule drawer says about a Partner supporting the school.
 
     Two reads, both bounded: the responsibility resolver for this one school,
-    and the school's live activities in the operational year (six at most).
-    The locked purposes come from the same policy the create service
-    enforces, so the drawer cannot offer what the save refuses.
+    and the Partner's live plans there in the operational year (six at most).
+    Every plan the school has — staff or Partner — is the existing-plan note's
+    (school_planning_badges.existing_plan_warning), not repeated here. The
+    locked purposes come from the same policy the create service enforces, so
+    the drawer cannot offer what the save refuses.
     """
     from apps.activities.models import Activity
     from apps.partners.purposes import STAFF_VISIT_PURPOSES
@@ -884,68 +895,51 @@ def _partner_support_drawer_context(school, principal, *, project_id="") -> dict
         allowed_direct_purposes,
         restriction_message,
     )
-    from apps.planning.planning_badges import PLANNED_STATUSES, UNCOUNTED_STATUSES
+    from apps.planning.school_planning_badges import PLANNED_STATUSES
 
     context = {
         "enabled": support_visibility_enabled(principal),
         "responsible": None,
         "locked_purposes": [],
         "lock_reason": "",
-        "existing_plans": [],
+        "partner_plans": [],
     }
     if not context["enabled"] or school is None:
         return context
     fy = get_operational_fy()
     responsible = SchoolSupportResponsibilityService.for_school(school, fy=fy)
     context["responsible"] = responsible.as_dict()
-    if responsible.is_partner and not project_id:
+    if not responsible.is_partner:
+        return context
+    if not project_id:
         allowed = set(allowed_direct_purposes())
         context["locked_purposes"] = [
             value for value, _label in STAFF_VISIT_PURPOSES if value not in allowed
         ]
         context["lock_reason"] = restriction_message(responsible.responsible_name)
-    partner_names = dict(
-        Partner.all_objects.filter(
-            id__in=Activity.objects.filter(
-                school=school, fy=fy, deleted_at__isnull=True, delivery_type="partner"
-            ).values("assigned_partner_id")
-        ).values_list("id", "name")
-    )
     for activity in (
-        Activity.objects.filter(school=school, fy=fy, deleted_at__isnull=True)
-        .exclude(status__in=UNCOUNTED_STATUSES)
+        Activity.objects.filter(
+            school=school,
+            fy=fy,
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            status__in=PLANNED_STATUSES,
+        )
         .order_by("planned_date", "created_at")
         .only(
-            "id",
-            "activity_type",
-            "activity_name_snapshot",
-            "planned_date",
-            "status",
-            "delivery_type",
-            "assigned_partner_id",
+            "id", "activity_type", "activity_name_snapshot", "planned_date", "status"
         )[:6]
     ):
-        by_partner = activity.delivery_type == "partner"
-        context["existing_plans"].append(
+        context["partner_plans"].append(
             {
-                "id": activity.id,
-                "activity_type": activity.activity_type,
                 "label": activity.activity_name_snapshot
                 or activity.get_activity_type_display(),
-                "who": (
-                    partner_names.get(activity.assigned_partner_id, "Partner")
-                    if by_partner
-                    else "Staff"
-                ),
-                "by_partner": by_partner,
                 "status_label": activity.get_status_display(),
                 "date_label": (
                     activity.planned_date.strftime("%-d %B %Y")
                     if activity.planned_date
                     else "Not dated"
                 ),
-                "live": activity.status in PLANNED_STATUSES,
-                "url": f"/my-plan/{activity.id}",
             }
         )
     return context
@@ -1347,8 +1341,15 @@ def schedule_modal_view(request):
         responsible_staff_id = _requester_identity(request.user)
         responsible_staff_name = getattr(request.user, "name", "") or "You"
 
+    # What the school already has this year, said before another is planned
+    # (owner, 2026-09-22). A note, never a gate: every action stays open.
+    from apps.planning.school_planning_badges import existing_plan_warning
+
     context = {
         "school": school,
+        "existing_plan_warning": existing_plan_warning(
+            school.id, financial_year=get_operational_fy()
+        ),
         "visit_request_owner_name": visit_request_owner_name,
         # Says, in the drawer, what `visit_owner_for` just decided: the school
         # is not this person's, so the visit is theirs rather than its owner's.
@@ -1391,21 +1392,6 @@ def schedule_modal_view(request):
         "partner_support": partner_support,
         "partner_locked_purposes": partner_support["locked_purposes"],
         "partner_locked_purposes_json": json.dumps(partner_support["locked_purposes"]),
-        "existing_plans": partner_support["existing_plans"],
-        "existing_plans_json": json.dumps(
-            [
-                {
-                    "id": plan["id"],
-                    "activityType": plan["activity_type"],
-                    "label": plan["label"],
-                    "date": plan["date_label"],
-                    "url": plan["url"],
-                }
-                for plan in partner_support["existing_plans"]
-                if plan["live"]
-            ]
-        ),
-        "purpose_activity_types_json": json.dumps(PURPOSE_ACTIVITY_TYPES),
         "catalogue_recommendations": catalogue_recommendations,
         "primary_catalogue_items": primary_catalogue_items,
         "other_catalogue_items": other_catalogue_items,

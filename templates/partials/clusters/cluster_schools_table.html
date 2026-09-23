@@ -54,7 +54,12 @@
               <span class="sr-only">School ID </span>{{ s.schoolId }}
             </span>
             <div class="school-record-row__identity">
-              <h2 class="school-record-row__title">{{ s.name }}</h2>
+              <div class="school-record-row__name-and-status">
+                <h2 class="school-record-row__title">{{ s.name }}</h2>
+                <dl class="school-record-row__planning-status">
+                  {% include "components/school_planning_badges.html" with badges=s.planningBadges %}
+                </dl>
+              </div>
               <dl class="school-record-row__metadata">
                 <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
                 <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>

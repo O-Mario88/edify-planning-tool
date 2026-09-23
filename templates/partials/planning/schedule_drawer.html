@@ -120,18 +120,10 @@ onPurposeChange() {
   if (this.showSsaDataGathering || (this.showFollowUpPicker && this.followUpRequiresTraining)) { this.focusIntervention = ''; }
 },
 plannedParticipants: '',
-{% comment %}Soft duplicate protection (owner, 2026-09-23). A school may be
-planned more than once, so an existing plan of the same kind is a notice with
-four ways forward, never a refusal. The list and the purpose → kind map are the
-server's; this only matches them.{% endcomment %}
-existingPlans: {{ existing_plans_json|default:'[]' }},
-purposeTypes: {{ purpose_activity_types_json|default:'{}' }},
-lockedPurposes: {{ partner_locked_purposes_json|default:'[]' }},
-duplicateAcknowledged: false,
-get overlapPlan() {
-  const kind = this.purposeTypes[this.purposeOfVisit];
-  return kind ? (this.existingPlans.find(plan => plan.activityType === kind) || null) : null;
-}
+{% comment %}Purposes a Partner-supported school keeps for its Partner (owner,
+2026-09-23) — the server's list, so the existing-plan note never offers a
+purpose the save would refuse.{% endcomment %}
+lockedPurposes: {{ partner_locked_purposes_json|default:'[]' }}
 }"
 x-init="ensureTrainingActivity()"
 >
@@ -152,31 +144,18 @@ x-init="ensureTrainingActivity()"
 {% if partner_support.responsible.is_partner and not reschedule_mode %}
 {% comment %}The school stays in the planner's portfolio and on this drawer;
 what changes is who delivers the support a Partner has taken on (owner,
-2026-09-23). Named, with the Partner's plans, so nobody schedules on top of
-them without seeing them first.{% endcomment %}
+2026-09-23). Named, with the Partner's live plans, so nobody schedules on top
+of them without seeing them first. Every plan the school has, staff or
+Partner, is in the existing-plan note below.{% endcomment %}
 <div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-partner-support-notice>
   <p class="font-bold">This school is supported by {% if partner_support.responsible.needs_review %}more than one Partner ({{ partner_support.responsible.responsible_name }}){% else %}{{ partner_support.responsible.responsible_name }}{% endif %}.</p>
-  {% for plan in existing_plans %}{% if plan.by_partner %}
+  {% for plan in partner_support.partner_plans %}
   <p class="mt-1 font-medium">Existing Partner activity: {{ plan.label }} {{ plan.status_label|lower }} for {{ plan.date_label }}.</p>
-  {% endif %}{% endfor %}
+  {% endfor %}
   {% if partner_support.locked_purposes %}
   <p class="mt-1 font-medium" data-partner-lock-reason>{{ partner_support.lock_reason }}</p>
   {% endif %}
 </div>
-{% endif %}
-
-{% if existing_plans and not reschedule_mode %}
-<details class="rounded-surface border border-slate-200 bg-slate-50 p-3" data-existing-plans>
-  <summary class="cursor-pointer font-bold text-slate-700">Already planned at this school ({{ existing_plans|length }})</summary>
-  <ul class="mt-2 space-y-1">
-    {% for plan in existing_plans %}
-    <li class="flex items-center justify-between gap-3">
-      <span class="min-w-0 truncate">{{ plan.label }} · {{ plan.who }}</span>
-      <span class="shrink-0 whitespace-nowrap font-medium text-slate-500">{{ plan.date_label }} · {{ plan.status_label }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-</details>
 {% endif %}
 
 {% if visit_request_owner_name and not reschedule_mode %}
@@ -204,6 +183,41 @@ them without seeing them first.{% endcomment %}
 </template>
 <input type="hidden" name="activity_type" :value="activityType">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
+
+{% if existing_plan_warning %}
+{% comment %}
+  The school's existing plans, said once (owner, 2026-09-22). A soft warning,
+  never a gate: another visit, a follow-up, a different intervention, a Core
+  slot or a project activity is legitimate further work, so nothing here needs
+  an override and the form submits exactly as it would without it. Only an
+  exact technical duplicate (same target, type, day and owner) is refused, by
+  the service, as before.
+{% endcomment %}
+<div
+  x-data="{ shown: true, listOpen: false }"
+  x-show="shown"
+  class="rounded-surface border border-amber-200 bg-amber-50 p-3.5 text-[12px] leading-normal text-amber-900 shadow-sm"
+  role="status"
+  data-existing-plan-warning
+>
+  <p class="font-bold">This school already has plans this year</p>
+  <p class="mt-1 font-medium">{{ existing_plan_warning.message }}</p>
+  <ul class="mt-2 space-y-1" x-show="listOpen" x-cloak data-existing-plans>
+    {% for plan in existing_plan_warning.plans %}
+    <li class="flex items-center justify-between gap-3">
+      <span class="font-semibold">{{ plan.label }}{% if plan.date %} · {{ plan.date|date:"j M Y" }}{% endif %}</span>
+      <span class="school-planning-badge" data-planning-tone="{{ plan.tone }}">{{ plan.status_label }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="mt-2.5 flex flex-wrap gap-2">
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="listOpen = !listOpen" :aria-expanded="listOpen.toString()" data-existing-plan-action="view">View Existing Plans</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="shown = false" data-existing-plan-action="continue">Continue Planning</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" x-show="!lockedPurposes.includes('training_follow_up')" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); shown = false" data-existing-plan-action="follow-up">Plan as Follow-Up</button>
+    <button type="button" class="h-7 px-2.5 rounded-control border border-amber-300 edify-surface font-bold" @click="$dispatch('close-drawer')" data-existing-plan-action="cancel">Cancel</button>
+  </div>
+</div>
+{% endif %}
 
 {% if not catalogue_recommendations.hasApplicableSsa %}
 <div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm" role="status">
@@ -329,18 +343,6 @@ its costing on, so the costing link is derived server-side and never asked for.
     names the person who can fix it. It never tells anyone to create a
     Project they do not need.
   {% endcomment %}
-  <template x-if="overlapPlan && !duplicateAcknowledged">
-    <div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-duplicate-warning>
-      <p class="font-bold">A plan like this already exists at this school.</p>
-      <p class="mt-1 font-medium normal-case tracking-normal"><span x-text="overlapPlan.label"></span> · <span x-text="overlapPlan.date"></span>. A school may be planned more than once — continue if this is separate work.</p>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <a :href="overlapPlan.url" class="btn h-8 whitespace-nowrap">View Existing Plan</a>
-        <button type="button" class="btn h-8 whitespace-nowrap" @click="duplicateAcknowledged = true">Continue Planning</button>
-        <button type="button" class="btn h-8 whitespace-nowrap" x-show="!lockedPurposes.includes('training_follow_up')" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); duplicateAcknowledged = true">Plan as Follow-Up</button>
-        <button type="button" class="btn h-8 whitespace-nowrap" @click="$dispatch('close-drawer')">Cancel</button>
-      </div>
-    </div>
-  </template>
   <p x-show="purposeOfVisit && profile.schedulable === false" style="display:none"
      class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-rose-600"
      x-text="profile.unavailableReason" role="alert"></p>

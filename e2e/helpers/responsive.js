@@ -154,7 +154,7 @@ function measureLayout() {
     ), { inlineOnly: true }),
     tabs: wrapped(within('[role="tab"], .edify-tab-btn, [data-edify-tab], [class*="tabs__link"]'), { inlineOnly: true }),
     badges: wrapped(within(
-      '.edify-badge, .badge, .status-pill, .edify-status-badge, .pill, .planning-indicator, .planning-responsible'
+      '.edify-badge, .badge, .status-pill, .edify-status-badge, .pill, .school-planning-badge, .planning-responsible'
     )),
     navigation: wrapped('.edify-bottom-nav a, .app-sidebar nav a', { inlineOnly: true }),
     tableHeaders: wrapped(within('th')),

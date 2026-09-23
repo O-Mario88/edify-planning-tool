@@ -257,7 +257,7 @@ class PlanningDashboardService:
         # Partner assignment changes who delivers, not who owns the school,
         # and a school with work already planned may legitimately take more.
         # With the rule live nothing is excluded from the lists; the Visit and
-        # Training indicators and the Responsible column say what is already
+        # Training Status badges and the Responsible column say what is already
         # arranged instead of the row disappearing. Off, the lists read
         # exactly as before.
         from apps.partners.support_responsibility import (
@@ -270,9 +270,9 @@ class PlanningDashboardService:
             exclude_school_ids = set()
             support_filter = filters.get("support") or "all"
             if support_filter != "all":
-                from apps.planning.planning_badges import SchoolPlanningBadgeService
+                from apps.planning.planning_support import filter_queryset
 
-                schools_qs = SchoolPlanningBadgeService.filter_queryset(
+                schools_qs = filter_queryset(
                     schools_qs, support_filter, fy=fy, principal=principal
                 )
 
@@ -473,6 +473,19 @@ class PlanningDashboardService:
             from apps.schools.school_status import visit_statuses
 
             visit_state_by_school = visit_statuses(school_ids, fy=fy)
+            # The count-based Visit and Training badges (owner, 2026-09-22):
+            # the same batched, read-only calculation the Cluster School List
+            # reads, so the two lists cannot disagree about a school.
+            from apps.planning.school_planning_badges import (
+                SchoolPlanningBadgeService,
+            )
+
+            # Next Activity reads the same pass (``details``), so it cannot
+            # name a plan the badges did not count.
+            badge_details = [] if support_rule else None
+            badges_by_school = SchoolPlanningBadgeService.get_for_schools(
+                school_ids, financial_year=fy, details=badge_details
+            )
             ssa_records = (
                 SsaRecord.objects.filter(
                     school_id__in=school_ids,
@@ -626,20 +639,17 @@ class PlanningDashboardService:
             # the two shared read services the Cluster School List also reads,
             # so the same school gives the same answer on both pages.
             responsibility_map = {}
-            indicator_map = {}
+            next_activity_map = {}
             if support_rule:
                 from apps.partners.support_responsibility import (
                     SchoolSupportResponsibilityService,
                 )
-                from apps.planning.planning_badges import (
-                    SchoolPlanningBadgeService,
-                    next_activity,
-                )
+                from apps.planning.planning_support import next_activities
 
                 responsibility_map = SchoolSupportResponsibilityService.resolve(
                     paginated_schools, fy=fy
                 )
-                indicator_map = SchoolPlanningBadgeService.badges(school_ids, fy=fy)
+                next_activity_map = next_activities(badge_details)
 
             # Serialize Schools
             for s in paginated_schools:
@@ -736,6 +746,7 @@ class PlanningDashboardService:
                         "visitPlanStatusTone": visit_state_by_school[s.id].tone,
                         "nextVisitDate": visit_state_by_school[s.id].next_date,
                         "trainingCount": completed_trainings_by_school.get(s.id, 0),
+                        "planningBadges": badges_by_school[s.id],
                         "data_quality_score": s.data_quality_score,
                         "data_quality_status": s.data_quality_status,
                         "currentPartnerType": partner_assignment.partner.name
@@ -745,15 +756,7 @@ class PlanningDashboardService:
                         "responsible": responsibility_map[s.id].as_dict()
                         if support_rule
                         else None,
-                        "visitIndicator": indicator_map[s.id]["visit"].as_dict()
-                        if support_rule
-                        else None,
-                        "trainingIndicator": indicator_map[s.id]["training"].as_dict()
-                        if support_rule
-                        else None,
-                        "nextActivity": next_activity(indicator_map[s.id])
-                        if support_rule
-                        else None,
+                        "nextActivity": next_activity_map.get(s.id),
                     }
                 )
 

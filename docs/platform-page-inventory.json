@@ -551,6 +551,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 2207,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/partials/clusters/<str:cluster_id>/schools",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "School Planning Badges",
+      "purpose": "Reusable school planning badges interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/school_planning_badges.html",
+      "variants": [
+        "{{ chip.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -2923,7 +2948,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10831,
+      "bytes": 11105,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -9209,7 +9234,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 42597,
+      "bytes": 42741,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -9230,7 +9255,9 @@
       ],
       "tables": 0,
       "template": "partials/planning/schedule_drawer.html",
-      "variants": []
+      "variants": [
+        "{{ plan.tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9258,7 +9285,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8190,
+      "bytes": 7924,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9277,9 +9304,7 @@
       ],
       "tables": 0,
       "template": "partials/planning/school_row.html",
-      "variants": [
-        "{{ school.visitPlanStatusTone }}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -9307,7 +9332,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2203,
+      "bytes": 1772,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>"
@@ -9324,11 +9349,14 @@
       ],
       "tables": 0,
       "template": "partials/planning/support_cells.html",
-      "variants": []
+      "variants": [
+        "replan",
+        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
+      ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3158,
+      "bytes": 2744,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -9346,7 +9374,10 @@
       ],
       "tables": 0,
       "template": "partials/planning/support_fields.html",
-      "variants": []
+      "variants": [
+        "replan",
+        "{% if r.needs_review %}replan{% else %}awaiting{% endif %}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -104943,7 +104974,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 478,
+    "component_templates": 479,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

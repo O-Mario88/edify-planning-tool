@@ -678,7 +678,7 @@
      screen shows it whole. */
   var TRUNCATABLE = [
     '.truncate', '.text-ellipsis', '.edify-badge', '.badge', '.status-pill',
-    '.edify-status-badge', '.pill', '.planning-indicator', '.planning-responsible',
+    '.edify-status-badge', '.pill', '.school-planning-badge', '.planning-responsible',
     '[data-record-title] > *',
     '.edify-table-scroll-region > table > tbody > tr > :is(:first-child, :nth-child(2)) > :first-child'
   ].join(', ');

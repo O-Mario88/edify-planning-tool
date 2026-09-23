@@ -26,7 +26,12 @@
       </span>
 
       <div class="school-record-row__identity">
-        <h2 class="school-record-row__title"><a href="/schools/{{ school.id }}" class="hover:underline text-slate-900 font-semibold">{{ school.name }}</a></h2>
+        <div class="school-record-row__name-and-status">
+          <h2 class="school-record-row__title"><a href="/schools/{{ school.id }}" class="hover:underline text-slate-900 font-semibold">{{ school.name }}</a></h2>
+          <dl class="school-record-row__planning-status">
+            {% include "components/school_planning_badges.html" with badges=school.planningBadges %}
+          </dl>
+        </div>
         <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shippingAddress }}</dd></div>
@@ -39,10 +44,6 @@
           <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssaAverage is not None %} style="color: {{ school.ssaAverage|ssa_score_colour }}" title="{{ school.ssaAverage|ssa_score_band_label }}"{% endif %}>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
           {% if not school.supportRule %}
           <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
-          {% comment %}Derived from the canonical activities, never stored and
-          never editable (owner, 2026-09-15): the same phrase the Directory,
-          School 360 and Team Oversight show.{% endcomment %}
-          <div data-visit-status><dt>Visit status:</dt><dd><span class="edify-badge" data-tone="{{ school.visitPlanStatusTone }}">{{ school.visitPlanStatus }}</span>{% if school.nextVisitDate %} <span class="edify-text-caption">{{ school.nextVisitDate|date:"j M Y" }}</span>{% endif %}</dd></div>
           <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
           {% endif %}
         </dl>

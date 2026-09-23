@@ -928,7 +928,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 337,
+   "line": 338,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -937,7 +937,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 372,
+   "line": 373,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -946,7 +946,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 395,
+   "line": 396,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -6830,14 +6830,14 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 215,
+   "line": 229,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-risk-card",
    "branch_path": [
     [
-     14,
+     12,
      0
     ],
     [

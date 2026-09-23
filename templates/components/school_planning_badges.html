@@ -1,0 +1,26 @@
+{% comment %}
+  The Visit and Training planning badges (owner, 2026-09-22). Rendered on two
+  lists only — the Planning page school list and the Cluster School List — and
+  from one server-side calculation, apps.planning.school_planning_badges, so
+  both show the same counts for the same school and year. The browser renders
+  what the server counted and decides nothing.
+
+  Informational only: the row stays selectable and its Schedule button stays
+  where it is, whatever the counts say.
+
+  Usage: {% include "components/school_planning_badges.html" with badges=row.planningBadges %}
+  Optional: layout="cells" renders two <td>s for a table instead of <dl> rows.
+{% endcomment %}
+{% if badges %}
+{% if layout == "cells" %}
+<td class="px-4 py-3" data-label="Visit Status" data-planning-badges="visits">
+  <span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span>
+</td>
+<td class="px-4 py-3" data-label="Training Status" data-planning-badges="trainings">
+  <span class="school-planning-badges">{% for chip in badges.training_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% for chip in badges.cluster_meeting_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}" data-cluster-meeting>{{ chip.label }}</span>{% endfor %}</span>
+</td>
+{% else %}
+<div data-planning-badges="visits"><dt>Visit Status:</dt><dd><span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span></dd></div>
+<div data-planning-badges="trainings"><dt>Training Status:</dt><dd><span class="school-planning-badges">{% for chip in badges.training_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% for chip in badges.cluster_meeting_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}" data-cluster-meeting>{{ chip.label }}</span>{% endfor %}</span></dd></div>
+{% endif %}
+{% endif %}

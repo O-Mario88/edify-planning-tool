@@ -10,8 +10,9 @@ Owner rule, 2026-09-23. These tests hold the rule end to end:
   browser sends;
 * Partner-delivered work is the Partner's: never on a staff My Plan, never in
   a staff fund request, never a staff target credit;
-* the Visit and Training indicators are counts from canonical activities,
-  honest about planned / submitted / verified, and never block planning.
+* the shared Visit and Training Status badges count Partner work where the
+  school is, honest about planned / submitted / verified, and never block
+  planning; the Planning filters and Next Activity read the same buckets.
 """
 
 from __future__ import annotations
@@ -45,7 +46,12 @@ from apps.planning.partner_school_policy import (
     assert_cluster_invitations_allowed,
     partner_supported_members,
 )
-from apps.planning.planning_badges import SchoolPlanningBadgeService
+from apps.planning.planning_support import (
+    PLANNING_SUPPORT_FILTERS,
+    filter_queryset,
+    next_activities,
+)
+from apps.planning.school_planning_badges import SchoolPlanningBadgeService
 from apps.planning.test_standard_support_scheduling import (
     StandardSupportBase,
     _at,
@@ -231,14 +237,21 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
         self.partner_activity()
         self.staff_activity("STANDARD_DONOR_VISIT")
 
-        planning = self.planning_rows()[self.school.school_id]
-        cluster = {
-            r["schoolId"]: r for r in cluster_schools(self.cluster.id, self.user)
-        }[self.school.school_id]
+        from django.test import RequestFactory
 
-        for key in ("responsible", "visitIndicator", "trainingIndicator"):
-            with self.subTest(field=key):
-                self.assertEqual(planning[key], cluster[key])
+        from apps.frontend.views.cluster_views import _attach_planning_badges
+
+        planning = self.planning_rows()[self.school.school_id]
+        roster = cluster_schools(self.cluster.id, self.user)
+        _attach_planning_badges(RequestFactory().get("/", {"fy": self.fy}), roster)
+        cluster = {r["schoolId"]: r for r in roster}[self.school.school_id]
+
+        self.assertEqual(planning["responsible"], cluster["responsible"])
+        self.assertEqual(
+            planning["planningBadges"].as_dict(), cluster["planningBadges"].as_dict()
+        )
+        self.assertEqual(planning["nextActivity"], cluster["nextActivity"])
+        self.assertEqual(planning["planningBadges"].visits.planned_count, 2)
 
     def test_ownership_is_unchanged_by_the_assignment(self):
         before = (
@@ -597,33 +610,34 @@ class ClusterPlanningTest(PartnerSchoolFixture):
             ).exists()
         )
 
-    def test_membership_alone_does_not_mark_the_school_planned(self):
-        def training():
-            return SchoolPlanningBadgeService.badges([self.school.id], fy=self.fy)[
-                self.school.id
-            ]["training"]
+    def badges(self):
+        return SchoolPlanningBadgeService.get_for_schools(
+            [self.school.id], financial_year=self.fy
+        )[self.school.id]
 
-        # The Partner's own In-school Training handover is all it has so far.
-        before = training()
-        self.assertEqual(before.planned, 0)
-        self.assertEqual(before.partner_planned, 1)
+    def test_membership_alone_does_not_mark_the_school_planned(self):
+        # The Partner's own In-school Training handover is all it has so far,
+        # and a handover is not yet a plan.
+        before = self.badges()
+        self.assertEqual(before.trainings.total, 0)
+        self.assertEqual(before.cluster_meetings.total, 0)
 
         # A meeting for the rest of the cluster, this school left unticked.
         self.cluster_session("STANDARD_CLUSTER_MEETING", self.members)
 
-        after = training()
-        self.assertEqual(after.planned, 0)
-        self.assertEqual(after.as_dict(), before.as_dict())
+        self.assertEqual(self.badges().as_dict(), before.as_dict())
 
-    def test_explicit_selection_updates_the_training_indicator(self):
+    def test_explicit_selection_updates_the_training_badges(self):
+        self.cluster_session("STANDARD_CLUSTER_TRAINING", [self.school])
         self.cluster_session("STANDARD_CLUSTER_MEETING", [self.school])
 
-        indicator = SchoolPlanningBadgeService.badges([self.school.id], fy=self.fy)[
-            self.school.id
-        ]["training"]
-
-        self.assertEqual(indicator.planned, 1)
-        self.assertEqual(indicator.state, "planned")
+        badges = self.badges()
+        # The training is a training; the meeting is named as a meeting (or
+        # counted as training where its catalogue item says so), never lost.
+        self.assertEqual(
+            badges.trainings.planned_count + badges.cluster_meetings.planned_count, 2
+        )
+        self.assertGreaterEqual(badges.trainings.planned_count, 1)
 
     def test_the_cluster_activity_is_on_the_staff_owners_my_plan(self):
         result = self.cluster_session("STANDARD_CLUSTER_TRAINING", [self.school])
@@ -726,18 +740,37 @@ class MyPlanRoutingTest(PartnerSchoolFixture):
                 self.assertIn(activity_id, mine)
 
 
-# ── Planning indicators ─────────────────────────────────────────────────────
-class PlanningIndicatorTest(PartnerSchoolFixture):
-    def indicator(self, category="visit"):
-        return SchoolPlanningBadgeService.badges([self.school.id], fy=self.fy)[
-            self.school.id
-        ][category]
+# ── Planning badges on Partner-supported schools ────────────────────────────
+class PlanningBadgesOnPartnerSchoolsTest(PartnerSchoolFixture):
+    """The shared Visit and Training Status badges (school_planning_badges)
+    counting Partner work where the school is, and the Planning filters and
+    Next Activity built on the same buckets (planning_support)."""
 
-    def test_a_waiting_handover_counts_as_partner_planned(self):
+    def badges(self):
+        return SchoolPlanningBadgeService.get_for_schools(
+            [self.school.id], financial_year=self.fy
+        )[self.school.id]
+
+    def labels(self, chips):
+        return [chip["label"] for chip in chips]
+
+    def next_activity(self):
+        details = []
+        SchoolPlanningBadgeService.get_for_schools(
+            [self.school.id], financial_year=self.fy, details=details
+        )
+        return next_activities(details).get(self.school.id)
+
+    def test_a_waiting_handover_is_named_by_responsible_not_counted(self):
         self.hand_to_partner()
 
-        self.assertEqual(self.indicator("training").partner_planned, 1)
-        self.assertEqual(self.indicator("training").state, "planned")
+        self.assertEqual(self.badges().trainings.total, 0)
+        self.assertEqual(
+            self.planning_rows()[self.school.school_id]["responsible"][
+                "responsibility_type"
+            ],
+            "partner",
+        )
 
     def test_a_partner_scheduled_visit_counts_once(self):
         assignment = self.hand_to_partner()
@@ -746,43 +779,58 @@ class PlanningIndicatorTest(PartnerSchoolFixture):
             status="partner_scheduled", scheduled_activity=activity
         )
 
-        visit = self.indicator("visit")
-        self.assertEqual(visit.partner_planned, 1)
-        self.assertIn("1 Partner Planned", visit.label)
-        self.assertEqual(self.indicator("training").partner_planned, 0)
+        badges = self.badges()
+        self.assertEqual(badges.visits.planned_count, 1)
+        self.assertEqual(self.labels(badges.visit_chips), ["1 Planned"])
+        self.assertEqual(badges.trainings.total, 0)
+
+    def test_next_activity_names_the_partner_visit(self):
+        self.partner_activity()
+
+        upcoming = self.next_activity()
+
+        self.assertEqual(upcoming["label"], "Partner School Visit")
+        self.assertEqual(upcoming["date"], _schedulable_date())
+
+    def test_next_activity_ignores_a_past_plan(self):
+        self.partner_activity(
+            planned_date=timezone.localdate() - datetime.timedelta(days=3)
+        )
+
+        self.assertEqual(self.badges().visits.planned_count, 1)
+        self.assertIsNone(self.next_activity())
 
     def test_submitted_work_is_not_green(self):
         self.partner_activity(status="awaiting_ia_verification")
 
-        visit = self.indicator()
-        self.assertEqual(visit.state, "in_progress")
-        self.assertEqual(visit.label, "1 Awaiting Verification")
+        chips = self.badges().visit_chips
+        self.assertEqual(self.labels(chips), ["1 Awaiting Verification"])
+        self.assertEqual(chips[0]["tone"], "awaiting")
 
     def test_only_ia_verified_work_is_complete(self):
         self.partner_activity(status="ia_verified", ia_verification_status="confirmed")
         self.partner_activity(status="completed")
 
-        visit = self.indicator()
-        self.assertEqual(visit.verified, 1)
-        self.assertEqual(visit.awaiting_verification, 1)
-        self.assertNotEqual(visit.state, "verified")
+        visits = self.badges().visits
+        self.assertEqual(visits.verified_count, 1)
+        self.assertEqual(visits.awaiting_verification_count, 1)
 
-    def test_ia_verified_alone_is_green(self):
-        self.partner_activity(status="ia_verified", ia_verification_status="confirmed")
-
-        self.assertEqual(self.indicator().state, "verified")
-        self.assertEqual(self.indicator().label, "1 Complete")
-
-    def test_cancelled_and_returned_work_stops_counting(self):
+    def test_cancelled_and_returned_assignments_stop_counting(self):
         self.partner_activity(status="cancelled")
         assignment = self.hand_to_partner()
         PartnerAssignment.objects.filter(id=assignment.id).update(
             status=PartnerAssignment.STATUS_RETURNED_TO_STAFF
         )
 
-        self.assertEqual(self.indicator().total, 0)
-        self.assertEqual(self.indicator("training").total, 0)
-        self.assertEqual(self.indicator().label, "Not Planned")
+        badges = self.badges()
+        self.assertEqual(badges.visits.total, 0)
+        self.assertEqual(badges.trainings.total, 0)
+        self.assertEqual(self.labels(badges.visit_chips), ["Not Planned"])
+
+    def test_returned_work_needs_replanning(self):
+        self.partner_activity(status="returned")
+
+        self.assertEqual(self.labels(self.badges().visit_chips), ["1 Needs Replanning"])
 
     def test_several_legitimate_activities_are_all_counted(self):
         self.staff_activity("STANDARD_DONOR_VISIT")
@@ -793,15 +841,14 @@ class PlanningIndicatorTest(PartnerSchoolFixture):
         )
         self.partner_activity(status="ia_verified", ia_verification_status="confirmed")
 
-        visit = self.indicator()
-        self.assertEqual(visit.planned, 2)
-        self.assertEqual(visit.verified, 1)
-        self.assertTrue(visit.label.startswith("2 Planned · 1 Complete"))
+        self.assertEqual(
+            self.labels(self.badges().visit_chips), ["2 Planned", "1 Complete"]
+        )
 
-    def test_the_indicator_never_blocks_further_planning(self):
+    def test_the_badges_never_block_further_planning(self):
         self.hand_to_partner()
         self.staff_activity("STANDARD_DONOR_VISIT")
-        self.assertEqual(self.indicator().state, "planned")
+        self.assertEqual(self.badges().visits.planned_count, 1)
 
         again = self.schedule(
             schoolId=self.school.school_id,
@@ -823,38 +870,71 @@ class PlanningIndicatorTest(PartnerSchoolFixture):
             self.schedule(**payload)
         self.assertEqual(Activity.objects.filter(school=self.school).count(), 1)
 
-    def test_past_due_plans_need_replanning(self):
-        self.partner_activity(
-            status="partner_scheduled",
-            planned_date=timezone.localdate() - datetime.timedelta(days=3),
-        )
-
-        visit = self.indicator()
-        self.assertEqual(visit.state, "needs_replanning")
-        self.assertIn("Needs Replanning", visit.label)
-
-    def test_the_filters_agree_with_the_indicators(self):
-        from apps.planning.planning_badges import PLANNING_SUPPORT_FILTERS
-
+    def test_the_filters_agree_with_the_badges(self):
         self.hand_to_partner()
         self.staff_activity("STANDARD_DONOR_VISIT")
         base = School.objects.filter(school_id__startswith="STD-")
 
         def codes(key):
             return set(
-                SchoolPlanningBadgeService.filter_queryset(
-                    base, key, fy=self.fy, principal=self.user
-                ).values_list("school_id", flat=True)
+                filter_queryset(base, key, fy=self.fy, principal=self.user).values_list(
+                    "school_id", flat=True
+                )
             )
 
         self.assertEqual(codes("partner_support"), {"STD-001"})
         self.assertNotIn("STD-001", codes("staff_managed"))
-        self.assertIn("STD-001", codes("both_planned"))
         self.assertIn("STD-001", codes("my_scheduled_visits"))
         self.assertNotIn("STD-001", codes("visit_not_planned"))
         self.assertIn("STD-MEM-0", codes("visit_not_planned"))
+        # The handover is not a plan, so the training is still to plan.
+        self.assertIn("STD-001", codes("training_not_planned"))
+        self.assertNotIn("STD-001", codes("both_planned"))
         self.assertEqual(codes("completed"), set())
+
+        self.partner_activity(activity_type="in_school_training")
+        self.assertIn("STD-001", codes("both_planned"))
+        self.assertNotIn("STD-001", codes("training_not_planned"))
         self.assertEqual(len(PLANNING_SUPPORT_FILTERS), 10)
+
+    def test_the_status_filters_follow_the_badge_buckets(self):
+        base = School.objects.filter(school_id__startswith="STD-")
+
+        def codes(key):
+            return set(
+                filter_queryset(base, key, fy=self.fy).values_list(
+                    "school_id", flat=True
+                )
+            )
+
+        for status, key in (
+            ("awaiting_ia_verification", "awaiting_verification"),
+            ("ia_verified", "completed"),
+            ("returned_by_ia", "needs_replanning"),
+        ):
+            with self.subTest(status=status):
+                activity = self.partner_activity(status=status)
+                self.assertEqual(codes(key), {"STD-001"})
+                activity.delete()
+                self.assertEqual(codes(key), set())
+
+    def test_a_cluster_session_counts_only_for_the_schools_invited(self):
+        self.schedule(
+            clusterId=self.cluster.id,
+            catalogueItemId=self.item("STANDARD_CLUSTER_TRAINING").id,
+            focusIntervention="enrolment",
+            participantsPerSchool=2,
+            invitedSchoolIds=[self.school.id],
+        )
+        base = School.objects.filter(school_id__startswith="STD-")
+        planned = set(
+            filter_queryset(base, "training_not_planned", fy=self.fy).values_list(
+                "school_id", flat=True
+            )
+        )
+
+        self.assertNotIn("STD-001", planned)
+        self.assertTrue({m.school_id for m in self.members} <= planned)
 
     def test_indicators_render_only_on_planning_and_the_cluster_list(self):
         """The two pages the owner named, and no other template."""
@@ -880,20 +960,15 @@ class PlanningIndicatorTest(PartnerSchoolFixture):
                 "partials/planning/school_row.html",
             ],
         )
-        drawing = sorted(
-            str(path.relative_to(templates))
-            for path in templates.rglob("*.html")
-            if 'class="planning-indicator"' in path.read_text()
-        )
-        self.assertEqual(
-            drawing,
-            [
-                "partials/planning/support_cells.html",
-                "partials/planning/support_fields.html",
-            ],
-        )
+        # The Partner fields draw no second set of Visit or Training counts:
+        # those are the shared badges' alone.
+        for partial in partials:
+            with self.subTest(partial=partial):
+                body = (templates / partial).read_text()
+                self.assertNotIn("data-visit-indicator", body)
+                self.assertNotIn("data-training-indicator", body)
 
-    def test_my_plan_and_the_directory_carry_no_planning_indicator(self):
+    def test_my_plan_and_the_directory_carry_no_partner_planning_fields(self):
         self.hand_to_partner()
         client = Client()
         client.force_login(self.user)
@@ -901,8 +976,8 @@ class PlanningIndicatorTest(PartnerSchoolFixture):
         for url in ("/my-plan", "/schools", f"/schools/{self.school.id}"):
             with self.subTest(url=url):
                 body = client.get(url).content.decode()
-                self.assertNotIn("data-visit-indicator", body)
-                self.assertNotIn("data-training-indicator", body)
+                self.assertNotIn("data-planning-support", body)
+                self.assertNotIn("data-next-activity", body)
 
 
 # ── Finance and achievement ─────────────────────────────────────────────────
@@ -1018,14 +1093,22 @@ class QueryCountTest(PartnerSchoolFixture):
         self.assertEqual(small, large)
         self.assertLessEqual(large, 4)
 
-    def test_the_indicators_are_constant_in_the_number_of_schools(self):
+    def test_next_activity_is_constant_in_the_number_of_schools(self):
         few = [s.id for s in self._schools(3, "BF")]
         many = [s.id for s in self._schools(12, "BM")]
 
+        def upcoming(ids):
+            details = []
+            SchoolPlanningBadgeService.get_for_schools(
+                ids, financial_year=self.fy, details=details
+            )
+            return next_activities(details)
+
+        # The badge service's three reads, and one to name Partner work.
         with self.assertNumQueries(4):
-            SchoolPlanningBadgeService.badges(few, fy=self.fy)
+            self.assertEqual(len(upcoming(few)), 3)
         with self.assertNumQueries(4):
-            SchoolPlanningBadgeService.badges(many, fy=self.fy)
+            self.assertEqual(len(upcoming(many)), 12)
 
     def test_a_planning_page_costs_the_same_with_more_partner_schools(self):
         from apps.planning.planning_service import PlanningDashboardService

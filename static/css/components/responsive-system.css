@@ -77,7 +77,8 @@
    that has to be cut ends in an ellipsis, and micro-ux.js gives every cut
    label its full text as a title, so nothing is lost silently. */
 :is(.edify-workspace, #drawer-container)
-  :is(.edify-badge, .badge, .status-pill, .edify-status-badge, .pill, .edify-pill) {
+  :is(.edify-badge, .badge, .status-pill, .edify-status-badge, .pill, .edify-pill,
+      .school-planning-badge) {
   white-space: nowrap;
   max-inline-size: 100%;
   overflow: hidden;

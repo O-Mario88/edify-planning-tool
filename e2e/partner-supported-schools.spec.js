@@ -106,8 +106,9 @@ test.describe('Partner-supported schools — journeys', () => {
     await expect(responsible).toContainText(hope.partner);
     await expect(row).toContainText(data.cceo_name);
     await expect(row.getByRole('button', { name: `Schedule activity for ${hope.name}` })).toBeEnabled();
-    await expect(row.locator('[data-visit-indicator] .planning-indicator')).toBeVisible();
-    await expect(row.locator('[data-training-indicator] .planning-indicator')).toBeVisible();
+    // The shared Visit and Training Status badges, beside the school's name.
+    await expect(row.locator('[data-planning-badges="visits"] .school-planning-badge').first()).toBeVisible();
+    await expect(row.locator('[data-planning-badges="trainings"] .school-planning-badge').first()).toBeVisible();
 
     const facts = fixture('inspect', hope.school_id);
     expect(facts.assignments).toBe(1);
@@ -200,8 +201,8 @@ test.describe('Partner-supported schools — journeys', () => {
     await expect(page.locator('#drawer-container button[type="submit"]')).toHaveCount(0, { timeout: 15_000 });
 
     const planningAfter = await planningRow(page, hope, days[2].fy);
-    await expect(planningAfter.locator('[data-training-indicator] .planning-indicator')).toContainText('Planned');
-    await shoot(page, 'j4-training-indicator', testInfo);
+    await expect(planningAfter.locator('[data-planning-badges="trainings"]')).toContainText('Planned');
+    await shoot(page, 'j4-training-badges', testInfo);
   });
 
   test('J5 · the Partner schedules; staff see the badge, not the work', async ({ page }, testInfo) => {
@@ -237,7 +238,8 @@ test.describe('Partner-supported schools — journeys', () => {
     await page.context().clearCookies();
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope, partnerWork.fy);
-    await expect(row.locator('[data-visit-indicator] .planning-indicator')).toContainText('Partner Planned');
+    await expect(row.locator('[data-planning-badges="visits"]')).toContainText('Planned');
+    await expect(row.locator('[data-partner-workflow]')).toContainText('Scheduled');
     await expect(row.locator('.planning-responsible[data-responsible="partner"]')).toContainText(hope.partner);
     await page.goto('/my-plan');
     await expect(activityControls(page, partnerWork.id)).toHaveCount(0);
@@ -258,7 +260,7 @@ test.describe('Partner-supported schools — journeys', () => {
     const fy = fixture('inspect', hope.school_id).activities.find(a => a.id === progressed.activity_id).fy;
     await signIn(page, 'cceo@edify.org', PASSWORD);
     let row = await planningRow(page, hope, fy);
-    await expect(row.locator('[data-visit-indicator] .planning-indicator')).toContainText('Awaiting Verification');
+    await expect(row.locator('[data-planning-badges="visits"]')).toContainText('Awaiting Verification');
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${fy}`);
     let monitored = page.locator(`tr[data-assignment="${hope.assignment_id}"]`);
     await expect(monitored).toContainText('Evidence Submitted');
@@ -269,7 +271,7 @@ test.describe('Partner-supported schools — journeys', () => {
     expect(verified.ia).toBe('confirmed');
 
     row = await planningRow(page, hope, fy);
-    await expect(row.locator('[data-visit-indicator] .planning-indicator')).toContainText('1 Complete');
+    await expect(row.locator('[data-planning-badges="visits"]')).toContainText('1 Complete');
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${fy}`);
     monitored = page.locator(`tr[data-assignment="${hope.assignment_id}"]`);
     await expect(monitored).toContainText('Verified');
@@ -336,7 +338,7 @@ test.describe('Partner-supported schools — layout on every screen', () => {
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope);
     await expect(row.locator('[data-responsible]').first()).toBeVisible();
-    const indicator = row.locator('[data-visit-indicator] .planning-indicator');
+    const indicator = row.locator('[data-planning-badges="visits"] .school-planning-badge').first();
     const box = await indicator.boundingBox();
     const lineHeight = await indicator.evaluate(el => parseFloat(getComputedStyle(el).lineHeight) || 16);
     expect(box.height).toBeLessThan(lineHeight * 2 + 8);

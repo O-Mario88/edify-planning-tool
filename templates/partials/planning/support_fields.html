@@ -1,20 +1,20 @@
 {% comment %}
-Who supports the school and what is already planned there — the Planning
-page's and the Cluster School List's shared fields, and ONLY theirs (owner,
-2026-09-23). Every value is the server's: `responsible` from
-SchoolSupportResponsibilityService, the two indicators and Next Activity from
-SchoolPlanningBadgeService. The staff owner stays on the row beside this
+Who supports the school and what comes next — the Planning page's and the
+Cluster School List's shared fields, and ONLY theirs (owner, 2026-09-23).
+Every value is the server's: `responsible` from
+SchoolSupportResponsibilityService, Next Activity from the same
+SchoolPlanningBadgeService pass that draws the Visit and Training Status
+badges beside the school's name. The staff owner stays on the row beside this
 (Staff Name), because a Partner supporting the school does not own it.
 
 Its own always-visible strip under the school's name, outside the row's
-collapsible metadata: these are the Responsible, Visit, Training / Cluster,
-Next Activity and Partner Workflow columns, and a planner scanning the list
-must not have to open every row to read them. On a wide screen the strip is a
-grid, so the values line up down the list like columns; on a narrow one each
-label-and-value pair wraps as a unit. Informational only: nothing here
-disables the row's actions.
+collapsible metadata: these are the Responsible, Next Activity and Partner
+Workflow columns, and a planner scanning the list must not have to open every
+row to read them. On a wide screen the strip is a grid, so the values line up
+down the list like columns; on a narrow one each label-and-value pair wraps
+as a unit. Informational only: nothing here disables the row's actions.
 {% endcomment %}
-{% with r=school.responsible v=school.visitIndicator t=school.trainingIndicator na=school.nextActivity %}
+{% with r=school.responsible na=school.nextActivity %}
 <dl class="planning-support" data-planning-support>
 <div data-responsible="{{ r.responsibility_type }}">
   <dt>Responsible</dt>
@@ -27,14 +27,6 @@ disables the row's actions.
     </span>
   </dd>
 </div>
-<div data-visit-indicator>
-  <dt>Visit</dt>
-  <dd><span class="planning-indicator" data-state="{{ v.state }}" title="Visits: {{ v.label }}">{{ v.label }}</span></dd>
-</div>
-<div data-training-indicator>
-  <dt>Training / Cluster</dt>
-  <dd><span class="planning-indicator" data-state="{{ t.state }}" title="Training and cluster engagement: {{ t.label }}">{{ t.label }}</span></dd>
-</div>
 <div data-next-activity>
   <dt>Next Activity</dt>
   <dd>{% if na %}{{ na.label }} · {{ na.date|date:"j M" }}{% else %}—{% endif %}</dd>
@@ -43,14 +35,14 @@ disables the row's actions.
 <div data-partner-workflow="returned">
   <dt>Partner Workflow</dt>
   <dd>
-    <span class="planning-indicator" data-state="action_required" title="{{ r.returned_partner_name }} returned this work{% if r.returned_reason %}: {{ r.returned_reason }}{% endif %}">{{ r.workflow_label }}</span>
+    <span class="school-planning-badge" data-planning-tone="replan" title="{{ r.returned_partner_name }} returned this work{% if r.returned_reason %}: {{ r.returned_reason }}{% endif %}">{{ r.workflow_label }}</span>
     {% if can_monitor_partners %}<a class="edify-primary-text font-semibold hover:underline" href="/partner-oversight/?partner={{ r.returned_partner_id }}&amp;status=returned">Resolve</a>{% endif %}
   </dd>
 </div>
 {% elif r.is_partner %}
 <div data-partner-workflow="{{ r.partner_status|default:'review' }}">
   <dt>Partner Workflow</dt>
-  <dd><span class="planning-indicator" data-state="{% if r.needs_review %}action_required{% else %}in_progress{% endif %}">{{ r.workflow_label }}</span></dd>
+  <dd><span class="school-planning-badge" data-planning-tone="{% if r.needs_review %}replan{% else %}awaiting{% endif %}">{{ r.workflow_label }}</span></dd>
 </div>
 {% endif %}
 </dl>

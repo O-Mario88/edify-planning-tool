@@ -386,9 +386,43 @@ def cluster_list_view(request):
     return render(request, "pages/clusters/index.html", context)
 
 
+def _attach_planning_badges(request, schools) -> str:
+    """The Visit and Training badges on a Cluster School List (owner,
+    2026-09-22), from the one calculation the Planning page reads, for the
+    same financial year Planning defaults to. Returns that year.
+
+    With the Partner-supported school rule on, Next Activity (owner,
+    2026-09-23) is read from the same pass, as it is on Planning."""
+    from apps.core.fy import get_operational_fy
+    from apps.planning.school_planning_badges import (
+        SchoolPlanningBadges,
+        SchoolPlanningBadgeService,
+    )
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    rows = list(schools)
+    details = [] if any(row.get("supportRule") for row in rows) else None
+    badges = SchoolPlanningBadgeService.get_for_schools(
+        [row["id"] for row in rows], financial_year=fy, details=details
+    )
+    upcoming = {}
+    if details is not None:
+        from apps.planning.planning_support import next_activities
+
+        upcoming = next_activities(details)
+    for row in rows:
+        row["planningBadges"] = badges.get(row["id"]) or SchoolPlanningBadges(
+            school_id=row["id"]
+        )
+        if details is not None:
+            row["nextActivity"] = upcoming.get(row["id"])
+    return fy
+
+
 @require_page_permission("planning")
 def cluster_schools_partial(request, cluster_id):
     schools = ClusterPlanningService.get_cluster_schools(cluster_id, request.user)
+    _attach_planning_badges(request, schools)
     context = {
         "schools": schools,
         "cluster_id": cluster_id,
@@ -865,6 +899,7 @@ def cluster_detail_view(request, cluster_id):
     _cluster_row = _Cluster.objects.filter(
         id=cluster_id, deleted_at__isnull=True
     ).first()
+    _attach_planning_badges(request, schools)
     context = {
         "cluster": detail,
         # The reason the Delete control is inert, shown beside it — a cluster

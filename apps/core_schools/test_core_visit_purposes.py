@@ -19,7 +19,8 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+
+from django.utils import timezone
 
 from django.test import TestCase
 
@@ -31,7 +32,13 @@ from apps.core_schools.models import CoreActivitySlot, CorePlan, cslot_id
 from apps.core_schools import test_core_planning as _planning
 from apps.partners.models import Partner, PartnerAssignment
 
-TODAY = date.today()
+
+def _today():
+    """The platform's date, read when a test runs rather than when the module
+    is imported. A module-level constant went stale when the suite ran across
+    midnight in Africa/Nairobi, and the scheduling rules then refused every
+    "today" as a day that had passed."""
+    return timezone.localdate()
 
 
 class _CoreFixture(TestCase):
@@ -65,7 +72,7 @@ class _CoreFixture(TestCase):
         payload = {
             "school_id": self.school.school_id,
             "visit_number": "1",
-            "scheduled_date": TODAY.isoformat(),
+            "scheduled_date": _today().isoformat(),
             "responsible_staff_id": self.cceo_sp.id,
             **fields,
         }
@@ -81,7 +88,7 @@ class _CoreFixture(TestCase):
             school=self.school,
             fy=self.plan.fy,
             status="ia_verified",
-            planned_date=TODAY,
+            planned_date=_today(),
             focus_intervention=intervention,
             responsible_staff_id=self.cceo_sp.id,
         )
@@ -216,7 +223,7 @@ class CoreVisitPurposeTest(_CoreFixture):
             cluster=self.cluster,
             fy=self.plan.fy,
             status="ia_verified",
-            planned_date=TODAY,
+            planned_date=_today(),
             focus_intervention="teaching_environment",
             attended_school_ids=[self.school.id],
         )
@@ -225,7 +232,7 @@ class CoreVisitPurposeTest(_CoreFixture):
             cluster=self.cluster,
             fy=self.plan.fy,
             status="ia_verified",
-            planned_date=TODAY,
+            planned_date=_today(),
             focus_intervention="teaching_environment",
             attended_school_ids=[self.other_school.id],
         )
@@ -273,7 +280,7 @@ class CoreTrainingCatalogueTest(_CoreFixture):
             {
                 "school_id": self.school.school_id,
                 "training_number": "1",
-                "scheduled_date": TODAY.isoformat(),
+                "scheduled_date": _today().isoformat(),
                 "catalogue_item_id": course.id,
                 "responsible_staff_id": self.cceo_sp.id,
             },
@@ -293,7 +300,7 @@ class ClusterSessionCoreCreditTest(_CoreFixture):
             cluster=self.cluster,
             fy=self.plan.fy,
             status="scheduled",
-            planned_date=TODAY,
+            planned_date=_today(),
             responsible_staff_id=self.cceo_sp.id,
         )
         for school in invited or []:
@@ -515,7 +522,10 @@ class CorePartnerPurposeTest(_CoreFixture):
 
         partner_schedule(
             pa.id,
-            {"scheduledDate": TODAY.isoformat(), "deliveryContactName": "Field Lead"},
+            {
+                "scheduledDate": _today().isoformat(),
+                "deliveryContactName": "Field Lead",
+            },
             self.partner_user,
         )
         activity = Activity.objects.get(school=self.school)
