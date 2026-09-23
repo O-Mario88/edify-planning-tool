@@ -314,6 +314,13 @@ def reset():
     removed += Activity.objects.filter(
         id__in=partner_work, deleted_at__isnull=True
     ).update(deleted_at=now)
+    # The SSA results ``ia-verify`` recorded on that work: a rerun on the same
+    # day would otherwise meet its own record as a duplicate.
+    from apps.ssa.models import SsaRecord
+
+    SsaRecord.objects.filter(
+        source_activity_id__in=partner_work, deleted_at__isnull=True
+    ).update(deleted_at=now)
     replacements = PartnerAssignment.objects.filter(replaces_assignment__in=marker)
     count = replacements.count() + marker.count()
     replacements.delete()
