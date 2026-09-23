@@ -17,6 +17,7 @@
 
   </div></td>
   {% include "components/school_planning_badges.html" with badges=school.planningBadges layout="cells" %}
+  {% if school.supportRule %}{% include "partials/planning/support_cell.html" %}{% endif %}
   <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
       {% comment %}
         Schedule and Assign grey out on the school's own visit rule as well as
@@ -65,7 +66,7 @@
 </tr>
 <tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="5">
+  <td colspan="{% if school.supportRule %}6{% else %}5{% endif %}">
     {% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ school.id }}" class="edify-text-caption hover:underline">Open {{ school.name }} school profile</a>{% endif %}
     <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>
@@ -79,6 +80,7 @@
           <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if school.ssaAverage is not None %} style="color: {{ school.ssaAverage|ssa_score_colour }}" title="{{ school.ssaAverage|ssa_score_band_label }}"{% endif %}>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
           <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
           <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
+          {% if school.supportRule %}{% include "partials/planning/support_fields.html" %}{% endif %}
         </dl>
     {% include "partials/schools/ssa_score_groups.html" with detail_id="planning-school-details-"|add:school.id ssa_groups=school.ssaGroups has_ssa_scores=school.hasSsaScores selected_fy=selected_fy %}
   </td>

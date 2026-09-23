@@ -1516,11 +1516,21 @@ class TypeScaleFloorTest(SimpleTestCase):
             if path.name != "main.css"
         ]
 
+    def _every_source_stylesheet(self):
+        """Top-level and nested: components/ and pages/ carried 79 sizes below
+        the floor while this lint only read static/css/*.css (2026-09-23)."""
+        return [
+            path
+            for path in (ROOT / "static" / "css").rglob("*.css")
+            if path.name not in {"main.css", "tokens.css"}
+            and "vendor" not in path.parts
+        ]
+
     def test_no_stylesheet_hardcodes_a_size_below_the_micro_tier(self):
         declaration_pattern = re.compile(r"font-size:\s*([^;}{]+)")
         value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
         offenders = []
-        for path in self._source_stylesheets():
+        for path in self._every_source_stylesheet():
             for declaration in declaration_pattern.findall(path.read_text()):
                 for value, unit in value_pattern.findall(declaration):
                     pixels = float(value) * 16 if unit == "rem" else float(value)
@@ -1635,17 +1645,13 @@ class TypeScaleFloorTest(SimpleTestCase):
         self.assertEqual(offenders, [], f"inline text below the floor: {offenders}")
 
     def test_readable_core_tiers_are_defined(self):
+        """The fluid scale's lower bounds are the readable tiers: micro never
+        below the 12px floor, labels from 13px and body copy from 14px."""
         tokens = _read("static/css/design-system.css")
-        self.assertIn("--edify-text-floor:        0.75rem;", tokens)
-        self.assertIn("--edify-text-micro-size:   var(--edify-text-floor);", tokens)
-        self.assertIn(
-            "--edify-text-label-size:   0.8125rem;",
-            tokens,
-        )
-        self.assertIn(
-            "--edify-text-body-size:    0.8125rem;",
-            tokens,
-        )
+        self.assertIn("--edify-text-floor: 0.75rem;", tokens)
+        self.assertIn("--edify-text-micro-size: clamp(var(--edify-text-floor),", tokens)
+        self.assertIn("--edify-text-label-size: clamp(0.8125rem,", tokens)
+        self.assertIn("--edify-text-body-size: clamp(0.875rem,", tokens)
 
     def test_legacy_compact_template_utilities_map_to_the_label_tier(self):
         consistency = _read("static/css/consistency.css")
@@ -1663,18 +1669,27 @@ class TypeScaleFloorTest(SimpleTestCase):
 
 
 class StableTypographyContractTest(SimpleTestCase):
-    """Typography stays stable while component layout responds around it."""
+    """One fluid type scale, while component layout responds around it."""
 
-    def test_core_and_component_type_steps_do_not_continuously_resize(self):
+    def test_core_type_steps_are_fluid_only_between_approved_bounds(self):
+        """The owner replaced the stepped scale with one fluid scale on
+        2026-09-23 ("one fluid type system with approved minimum and maximum
+        sizes"). Each core step is a clamp on the viewport between an
+        approved phone and wide-screen size — never container units, so a
+        label does not change size because its card is a few pixels wider.
+        test_responsive_system.FluidTypeScaleTest checks the order holds at
+        every width."""
         tokens = _read("static/css/design-system.css")
         components = _read("static/css/components.css")
-        consistency = _read("static/css/consistency.css")
 
         typography_block = tokens.split("/* ── TYPOGRAPHY SCALE", 1)[1].split(
-            "/* ── SPACING", 1
+            "/* ── OPERATIONAL TABLE CONTRACT", 1
         )[0]
-        self.assertNotRegex(typography_block, r"\b(?:clamp|calc)\(")
-        self.assertNotRegex(typography_block, r"\b(?:vw|cqi|cqw)\b")
+        for step in ("display", "heading", "title", "body", "label", "micro"):
+            self.assertRegex(
+                typography_block, rf"--edify-text-{step}-size: clamp\([^;]+vw"
+            )
+        self.assertNotRegex(typography_block, r"\b(?:cqi|cqw)\b")
 
         # Containers still respond by changing layout, never the type scale.
         # (The edify-kpi-card twin left with the legacy adapter — the classes
@@ -1731,18 +1746,18 @@ class StableTypographyContractTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
 
         for expected in (
-            "--edify-text-display-size: 1.25rem;",
-            "--edify-text-heading-size: 1rem;",
-            "--edify-text-tile-value-size: 1.25rem;",
-            "--edify-text-table-size: 0.8125rem;",
-            "--edify-text-floor:        0.75rem;",
-            "--edify-text-micro-size:   var(--edify-text-floor);",
+            "--edify-text-display-size: clamp(1.25rem,",
+            "--edify-text-heading-size: clamp(1rem,",
+            "--edify-text-tile-value-size: clamp(1.125rem,",
+            "--edify-text-table-size: var(--edify-text-label-size);",
+            "--edify-text-floor: 0.75rem;",
+            "--edify-text-micro-size: clamp(var(--edify-text-floor),",
         ):
             self.assertIn(expected, tokens)
-        # Headers sit one step below cells (12px medium, muted) per the
-        # reference dashboard — the band separates by weight and colour.
+        # Headers sit one step below cells (micro, muted) per the reference
+        # dashboard — the band separates by weight and colour.
         self.assertIn(
-            "--edify-text-table-heading-size: 0.75rem;",
+            "--edify-text-table-heading-size: var(--edify-text-micro-size);",
             tokens,
         )
 
@@ -1783,7 +1798,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn(".drawer-body table th {", platform)
         self.assertIn(".drawer-body table td {", platform)
         self.assertIn(
-            "--edify-text-table-heading-size: 0.75rem;",
+            "--edify-text-table-heading-size: var(--edify-text-micro-size);",
             _read("static/css/design-system.css"),
         )
         self.assertIn("text-wrap: nowrap", platform)

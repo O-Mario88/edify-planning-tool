@@ -3363,10 +3363,13 @@ main table tbody > tr:only-child > td[colspan] > :is(
    text, wherever it sits, so it reads inline. Badges, pills and chips are
    excluded (they are boxes with padding), `div` is excluded (an empty div is
    usually a bar or a rule, and inline would collapse it), and `[x-show]` is
-   excluded because display on those belongs to the script. */
+   excluded because display on those belongs to the script. So is the name
+   a scrolling table pins (responsive-system.css): an inline box ignores the
+   identity measure, and a plain-text name then pinned the whole width of a
+   phone. `:where()` keeps this rule's weight unchanged. */
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
-  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]) {
+  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]):not(:where(.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody > tr > :first-child > :first-child)) {
   display: inline !important;
   margin-block: 0 !important;
 }
@@ -4372,6 +4375,14 @@ main textarea,
   inline-size: calc(100% - 2 * var(--edify-drawer-inset)) !important;
   min-inline-size: 0 !important;
 }
+/* Except on a phone, where the drawer is a full-width sheet from the bottom
+   edge (drawers.css, 2026-09-23); at this specificity the card width above
+   would otherwise hold it clear of both edges. */
+@media (max-width: 47.99rem) {
+  .drawer-surface.drawer-surface.drawer-surface {
+    inline-size: 100% !important;
+  }
+}
 /* Choice cards retain their title/description hierarchy in a narrow dialog. */
 .drawer-surface .drawer-body button.edify-stacked-label-button {
   display: flex !important;
@@ -4637,6 +4648,17 @@ main .edify-avatar-neutral {
 .school-plan-table--selectable thead th:nth-child(5) { width: 17%; }
 .school-plan-table--selectable thead th:nth-child(6) { width: 24%; }
 .school-plan-table .school-plan-table__details > td { white-space: normal !important; overflow: visible !important; }
+/* With the Partner-supported school rule on, the planning table carries a
+   Responsible column before Actions (owner, 2026-09-23): seven columns, the
+   name giving up the room the new column takes. */
+:root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 52rem !important; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(1) { width: 5%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(2) { width: 8%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(3) { width: 23%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(4) { width: 14%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(5) { width: 15%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 17%; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(7) { width: 18%; }
 .school-plan-table .school-plan-table__name-toggle { white-space: normal !important; height: auto !important; }
 .drawer-header__subtitle:empty { display: none; }
 

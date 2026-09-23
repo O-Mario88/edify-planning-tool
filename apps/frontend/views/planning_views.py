@@ -29,6 +29,10 @@ from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.support_responsibility import (
+    visibility_enabled as support_visibility_enabled,
+)
+from apps.planning.planning_support import PLANNING_SUPPORT_FILTERS
 from apps.partners import services as partner_services
 from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
@@ -168,6 +172,21 @@ def _scheduled_into_own_plan(created, principal) -> tuple[bool, str]:
     if activity is None:
         return True, ""
     mine = set(owner_ids(principal))
+    if activity.delivery_type == "partner" and support_visibility_enabled(principal):
+        # Partner delivery lands on the Partner's My Plan, never the staff
+        # member's (owner, 2026-09-23); staff follow it on Partner Monitoring.
+        from apps.partners.models import Partner
+
+        name = (
+            Partner.all_objects.filter(
+                id=Activity.objects.filter(id=activity.id).values(
+                    "assigned_partner_id"
+                )[:1]
+            )
+            .values_list("name", flat=True)
+            .first()
+        )
+        return False, name or "the Partner"
     if activity.responsible_staff_id in mine:
         return True, ""
     if activity.delivery_type == "partner" and activity.monitored_by_staff_id in mine:
@@ -564,6 +583,10 @@ def planning_dashboard_view(request):
         "ssa_status": request.GET.get("ssa_status", "All"),
         "cluster_status": request.GET.get("cluster_status", "All"),
         "partner": request.GET.get("partner", "All"),
+        # Who supports the school and what is already planned there (owner,
+        # 2026-09-23). Validated against the menu so a stray value reads as
+        # "All Schools" rather than silently emptying the list.
+        "support": _planning_support_filter(request.GET.get("support")),
         "q": request.GET.get("q", ""),
         "tab": request.GET.get("tab", "client"),
         "page": request.GET.get("page", 1),
@@ -592,33 +615,54 @@ def planning_dashboard_view(request):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="planning_export.csv"'
         writer = csv.writer(response)
-        writer.writerow(
-            [
-                "School ID",
-                "Name",
-                "District",
-                "Type",
-                "SSA Status",
-                "Weakest Intervention",
-                "Planning Readiness",
-                "Recommended Action",
-                "Owner",
+        # The export carries what the page shows, from the same services: the
+        # Responsible column and both planning indicators, never a copy of
+        # them held on the school.
+        support_columns = support_visibility_enabled(request.user)
+        header = [
+            "School ID",
+            "Name",
+            "District",
+            "Type",
+            "SSA Status",
+            "Weakest Intervention",
+            "Planning Readiness",
+            "Recommended Action",
+            "Owner",
+        ]
+        if support_columns:
+            header += [
+                "Responsible",
+                "Partner Workflow",
+                "Visit Status",
+                "Training Status",
             ]
-        )
+        writer.writerow(header)
         for s in export_data["schools"]:
-            writer.writerow(
-                [
-                    s["schoolId"],
-                    s["name"],
-                    s["district"],
-                    s["schoolType"],
-                    s["ssaStatus"],
-                    s["weakestIntervention"],
-                    s["planningReadiness"],
-                    s["recommendedAction"],
-                    s["ownerName"],
+            row = [
+                s["schoolId"],
+                s["name"],
+                s["district"],
+                s["schoolType"],
+                s["ssaStatus"],
+                s["weakestIntervention"],
+                s["planningReadiness"],
+                s["recommendedAction"],
+                s["ownerName"],
+            ]
+            if support_columns and s.get("responsible"):
+                # The same chips the row shows (school_planning_badges).
+                badges = s["planningBadges"]
+                row += [
+                    s["responsible"]["display"],
+                    s["responsible"]["workflow_label"],
+                    " · ".join(chip["label"] for chip in badges.visit_chips),
+                    " · ".join(
+                        chip["label"]
+                        for chip in badges.training_chips + badges.cluster_meeting_chips
+                    ),
                 ]
-            )
+            writer.writerow(row)
         return response
 
     # 2. Query Dashboard data from Service — inside a memo scope, so the
@@ -770,6 +814,26 @@ def planning_dashboard_view(request):
         "selected_ssa_status": filters["ssa_status"],
         "selected_cluster_status": filters["cluster_status"],
         "selected_partner": filters["partner"],
+        "selected_support": filters["support"],
+        # How many narrowing filters are set, for the phone disclosure that
+        # folds the filter row away ("Filters · 2 active"). Year, quarter and
+        # grouping always carry a value, so they are the view, not a filter.
+        "active_filter_count": sum(
+            1
+            for key, idle in (
+                ("district", "All"),
+                ("staff", "All"),
+                ("planning_readiness", "All"),
+                ("ssa_status", "All"),
+                ("support", "all"),
+            )
+            if (filters.get(key) or idle) != idle
+        ),
+        "support_filters": PLANNING_SUPPORT_FILTERS,
+        "support_rule": support_visibility_enabled(request.user),
+        "can_monitor_partners": _has_permission(
+            request.user, _Permission.PARTNER_MONITORING_VIEW.value
+        ),
         "search_q": filters["q"],
         "active_tab": filters["tab"],
         # Pagination
@@ -812,6 +876,78 @@ def planning_dashboard_view(request):
         "hx_include": "#filters-form",
     }
     return render(request, "pages/planning/index.html", context)
+
+
+def _partner_support_drawer_context(school, principal, *, project_id="") -> dict:
+    """What the Schedule drawer says about a Partner supporting the school.
+
+    Two reads, both bounded: the responsibility resolver for this one school,
+    and the Partner's live plans there in the operational year (six at most).
+    Every plan the school has — staff or Partner — is the existing-plan note's
+    (school_planning_badges.existing_plan_warning), not repeated here. The
+    locked purposes come from the same policy the create service enforces, so
+    the drawer cannot offer what the save refuses.
+    """
+    from apps.activities.models import Activity
+    from apps.partners.purposes import STAFF_VISIT_PURPOSES
+    from apps.partners.support_responsibility import SchoolSupportResponsibilityService
+    from apps.planning.partner_school_policy import (
+        allowed_direct_purposes,
+        restriction_message,
+    )
+    from apps.planning.school_planning_badges import PLANNED_STATUSES
+
+    context = {
+        "enabled": support_visibility_enabled(principal),
+        "responsible": None,
+        "locked_purposes": [],
+        "lock_reason": "",
+        "partner_plans": [],
+    }
+    if not context["enabled"] or school is None:
+        return context
+    fy = get_operational_fy()
+    responsible = SchoolSupportResponsibilityService.for_school(school, fy=fy)
+    context["responsible"] = responsible.as_dict()
+    if not responsible.is_partner:
+        return context
+    if not project_id:
+        allowed = set(allowed_direct_purposes())
+        context["locked_purposes"] = [
+            value for value, _label in STAFF_VISIT_PURPOSES if value not in allowed
+        ]
+        context["lock_reason"] = restriction_message(responsible.responsible_name)
+    for activity in (
+        Activity.objects.filter(
+            school=school,
+            fy=fy,
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            status__in=PLANNED_STATUSES,
+        )
+        .order_by("planned_date", "created_at")
+        .only(
+            "id", "activity_type", "activity_name_snapshot", "planned_date", "status"
+        )[:6]
+    ):
+        context["partner_plans"].append(
+            {
+                "label": activity.activity_name_snapshot
+                or activity.get_activity_type_display(),
+                "status_label": activity.get_status_display(),
+                "date_label": (
+                    activity.planned_date.strftime("%-d %B %Y")
+                    if activity.planned_date
+                    else "Not dated"
+                ),
+            }
+        )
+    return context
+
+
+def _planning_support_filter(raw) -> str:
+    value = str(raw or "all").strip()
+    return value if value in dict(PLANNING_SUPPORT_FILTERS) else "all"
 
 
 def _may_open_schedule_drawer(user) -> bool:
@@ -899,9 +1035,26 @@ def schedule_modal_view(request):
         # cannot disagree — and completion opens with the register already
         # filled in. Everyone is ticked on first open, which is what the
         # number it replaces defaulted to.
+        #
+        # Except a Partner-supported school, which starts unticked and names
+        # its Partner: it joins a group session because a planner chose it,
+        # not because it is in the cluster (owner, 2026-09-23). Opened from one
+        # school's row ("Add to Cluster Meeting"), that school is pre-ticked.
+        from apps.planning.partner_school_policy import partner_supported_members
+
+        members = list(active_schools(cluster.id))
+        supported = partner_supported_members([s.id for s in members], request.user)
+        chosen_school = (request.GET.get("school_id") or "").strip()
         member_schools = [
-            {"id": s.id, "name": s.name, "school_id": s.school_id, "invited": True}
-            for s in active_schools(cluster.id)
+            {
+                "id": s.id,
+                "name": s.name,
+                "school_id": s.school_id,
+                "invited": s.id not in supported
+                or chosen_school in (s.id, s.school_id),
+                "partner_name": supported.get(s.id, ""),
+            }
+            for s in members
         ]
         # Owner, 2026-09-13: cluster sessions are SSA informed too. The drawer
         # used to offer a course or a meeting with no member evidence at all;
@@ -950,7 +1103,7 @@ def schedule_modal_view(request):
             # submission so a stale drawer cannot price an activity.
             "cluster_school_count": active_school_count(cluster.id),
             "member_schools": member_schools,
-            "schools_invited": len(member_schools),
+            "schools_invited": sum(1 for s in member_schools if s["invited"]),
             "training_activity_options": training_options,
             "training_activity_options_json": json.dumps(training_options),
             # §16 — certified agencies only. `partners` above is the ordinary
@@ -1023,6 +1176,13 @@ def schedule_modal_view(request):
         else ""
     )
     project_id = request.GET.get("project_id", "")
+    # Partner support (owner, 2026-09-23): the school stays plannable, but the
+    # support a Partner delivers is theirs. The drawer names the Partner, shows
+    # what is already planned, and offers only the purposes the service will
+    # accept — the same policy, so nothing offered here is refused on save.
+    partner_support = _partner_support_drawer_context(
+        school, request.user, project_id=project_id
+    )
     from apps.activity_catalogue.services import recommend_activities
 
     catalogue_recommendations = recommend_activities(
@@ -1037,6 +1197,11 @@ def schedule_modal_view(request):
     first_catalogue_item = (
         primary_catalogue_items[0] if primary_catalogue_items else None
     )
+    if partner_support["locked_purposes"]:
+        # The SSA's top pick is support the Partner now delivers. Pinning it
+        # would override the whitelisted purpose the planner chooses, so the
+        # costing item is derived from the purpose on save instead.
+        first_catalogue_item = None
 
     # Resolve focus recommendations
     recommendations = []
@@ -1217,9 +1382,16 @@ def schedule_modal_view(request):
         "recommended_visit_purpose": (
             ""
             if recommended_visit_purpose
-            in (*locked_visit_purposes, *package_locked_purposes)
+            in (
+                *locked_visit_purposes,
+                *package_locked_purposes,
+                *partner_support["locked_purposes"],
+            )
             else recommended_visit_purpose
         ),
+        "partner_support": partner_support,
+        "partner_locked_purposes": partner_support["locked_purposes"],
+        "partner_locked_purposes_json": json.dumps(partner_support["locked_purposes"]),
         "catalogue_recommendations": catalogue_recommendations,
         "primary_catalogue_items": primary_catalogue_items,
         "other_catalogue_items": other_catalogue_items,

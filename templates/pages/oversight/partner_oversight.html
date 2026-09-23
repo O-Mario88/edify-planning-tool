@@ -1,8 +1,8 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block title %}Partner Oversight · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260923partner1">{% endblock %}
+{% block title %}Partner Monitoring · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260923partner4">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
@@ -10,22 +10,23 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Supervision</p>
-      <h1 class="edify-page-title edify-page-header__title">Partner Oversight</h1>
-      <p class="edify-page-header__description">Track school and cluster assignments, scheduled partner activities, and delivery by Programme Lead and team member.</p>
+      <h1 class="edify-page-title edify-page-header__title">Partner Monitoring</h1>
+      <p class="edify-page-header__description">One Partner at a time: the schools, clusters and activities handed to it, by team member, and where each stands.</p>
     </div>
     {% if can_grant_allowance or can_create_partner %}
     <div class="edify-page-header__controls">
       {% if can_create_partner %}
       <button type="button"
               hx-get="/partners/create" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="btn btn-primary h-8" data-add-partner-organisation>
+              class="edify-action-button primary h-9" data-add-partner-organisation>
         Add Partner Organisation
       </button>
       {% endif %}
       {% if can_grant_allowance %}
       <button type="button"
               hx-get="/partner-oversight/allowance-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-3.5 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
+              class="edify-action-button secondary h-9">
+        <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Grant Extra Allowance
       </button>
       {% endif %}
@@ -33,12 +34,8 @@
     {% endif %}
   </header>
 
-  {% include "partials/oversight/period_filter_bar.html" with filter_label="Partner oversight period" target_url="/partner-oversight/" target_id="#partner-workspace" %}
-
   <div id="partner-workspace">
     {% include "partials/oversight/partner_workspace.html" %}
   </div>
-
-  <div id="drawer-container"></div>
 </div>
 {% endblock %}

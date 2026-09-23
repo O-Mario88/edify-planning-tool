@@ -225,7 +225,7 @@
                 {% if n.status == 'unread' %}
                   <a
                     href="/notifications/{{ n.id }}/read?redirect=/notifications"
-                    class="edify-text-caption font-bold text-slate-500 hover:transition-colors"
+                    class="inline-flex min-h-6 items-center edify-text-caption font-bold text-slate-500 hover:transition-colors"
                   >
                     Mark read
                   </a>
@@ -239,7 +239,7 @@
                     <input type="hidden" name="notification_id" value="{{ n.id }}">
                     <button
                       type="submit"
-                      class="edify-text-caption font-bold text-slate-500 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
+                      class="inline-flex min-h-6 items-center edify-text-caption font-bold text-slate-500 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
                     >
                       Archive
                     </button>

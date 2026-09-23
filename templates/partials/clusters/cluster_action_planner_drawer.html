@@ -216,6 +216,7 @@ hx-include="#action-planner-form"
                  class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
           <span class="shrink-0 edify-text-caption font-semibold text-slate-400 tabular-nums">{{ s.school_id }}</span>
           <span class="min-w-0 flex-1 text-[13px] font-semibold edify-text truncate">{{ s.name }}</span>
+          {% if s.partner_name %}<span class="planning-responsible shrink-0 edify-text-caption" data-responsible="partner" title="Partner-supported: invited only when ticked"><span class="planning-responsible__kind">Partner</span> <span class="planning-responsible__name">{{ s.partner_name }}</span></span>{% endif %}
         </label>
         {% empty %}
         <p class="px-3 py-4 text-[13px] font-semibold text-slate-500">No active schools in this cluster.</p>

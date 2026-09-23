@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
-test('scheduling, assignment and cluster creation stay centred and contained',async({page})=>{
+test('scheduling, assignment and cluster creation stay contained: a sheet on a phone, a centred card wider',async({page})=>{
  test.setTimeout(180000);
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
  for(const flow of [
@@ -17,10 +17,19 @@ test('scheduling, assignment and cluster creation stay centred and contained',as
   for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
    await page.setViewportSize({width,height});
    const r=await surface.boundingBox();
-   expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
-   expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
-   expect(Math.abs(r.y+r.height/2-height/2)).toBeLessThan(2);
-   expect(r.height).toBeLessThanOrEqual(height-16);
+   // A phone gets a sheet from the bottom edge (2026-09-23); the nested
+   // popup dialog and every wider screen keep the centred card.
+   const sheet=width<768 && !flow.nested;
+   if(sheet){
+    // Edge to edge and flush with the bottom, within emulation rounding.
+    expect(Math.abs(r.x)).toBeLessThan(1);expect(Math.abs(r.width-width)).toBeLessThan(2);
+    expect(Math.abs(r.y+r.height-height)).toBeLessThanOrEqual(3);expect(r.y).toBeGreaterThanOrEqual(8);
+   }else{
+    expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
+    expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
+    expect(Math.abs(r.y+r.height/2-height/2)).toBeLessThan(2);
+    expect(r.height).toBeLessThanOrEqual(height-16);
+   }
    if(width>=768)expect(r.width).toBeLessThanOrEqual(800);
    expect(await surface.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(2);
    const submit=surface.locator('button[type="submit"]').last();

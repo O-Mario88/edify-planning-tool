@@ -113,7 +113,7 @@ class PartnerWorkspaceTests(TestCase):
         response = self.client.get(f"/partners?fy={self.fy}", follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Partner Oversight")
+        self.assertContains(response, "Partner Monitoring")
         self.assertContains(response, "Partner Workspace Organisation")
         # The scheduled Activity. It reaches this page only because the merge
         # added partner-delivered activities with no PartnerAssignment row as a
@@ -131,8 +131,13 @@ class PartnerWorkspaceTests(TestCase):
         self.assertContains(response, "School Visit Ssa Collection")
         self.assertContains(response, "Handovers Yet To Schedule: 1.")
         self.assertContains(response, "Schools assigned (1)")
-        # The scheduled activity's agreed cost line, in the budget figure.
-        self.assertContains(response, "120,000")
+        # Partner Monitoring counts the same two rows by stage in its status
+        # filter, where the workflow-group headings used to count them.
+        self.assertContains(response, "Scheduled (1)")
+        self.assertContains(response, "Awaiting Schedule (1)")
+        # The agreed cost line travels in the export, where it always did.
+        export = self.client.get(f"/partner-oversight/export?fy={self.fy}")
+        self.assertIn("120000", b"".join(export.streaming_content).decode())
 
     def test_the_merge_kept_the_partners_contact_details(self):
         """The directory was the only place a supervisor could find who to

@@ -58,11 +58,17 @@ def reconcile_issues(schools, *, location_override_ids=None) -> dict:
             )
         for issue in build_data_quality_issues(school, has_location=has_location):
             fresh[issue.condition_key] = issue
+    # Issues another module owns and reconciles itself are not this
+    # builder's to close: a school save knows nothing of Partner assignments,
+    # so treating their absence from `fresh` as "cleared" would resolve a live
+    # multiple-Partner exception every time the school record was edited.
+    from apps.partners.support_responsibility import MULTIPLE_PARTNER_ISSUE_TYPE
+
     open_rows = {
         row.condition_key: row
         for row in DataQualityIssue.objects.filter(
             school_id__in=[school.id for school in schools], status="open"
-        )
+        ).exclude(issue_type__in=(MULTIPLE_PARTNER_ISSUE_TYPE,))
     }
     now = timezone.now()
     to_resolve = [row for key, row in open_rows.items() if key not in fresh]

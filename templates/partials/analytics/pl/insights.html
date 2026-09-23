@@ -14,7 +14,7 @@
       </div>
       <button type="button" hx-get="/analytics/program-lead/drilldown{{ i.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
          hx-target="#drawer-container" hx-swap="innerHTML"
-         class="edify-text-caption font-bold text-slate-400 edify-primary-text-hover shrink-0 pt-0.5">View</button>
+         class="inline-flex min-h-6 items-center edify-text-caption font-bold text-slate-400 edify-primary-text-hover shrink-0">View</button>
     </div>
     {% empty %}
     <div class="flex flex-col items-center justify-center py-8 text-center">

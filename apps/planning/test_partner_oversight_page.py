@@ -31,7 +31,9 @@ class PageFixture(PartnerOversightFixture):
 
 
 class PageRendersTest(PageFixture):
-    def test_the_program_lead_sees_the_page_grouped_by_partner(self):
+    def test_the_program_lead_sees_one_partner_table_at_a_time(self):
+        """Every Partner is a tab; the table is the selected Partner's alone
+        (owner, 2026-09-23: no undifferentiated table of all Partners)."""
         self.assign()
         self.schedule(self.assign(partner=self.other_partner), cost=180_000)
         self.sign_in(self.pl_user)
@@ -43,6 +45,8 @@ class PageRendersTest(PageFixture):
         self.assertIn("Partner X", body)
         self.assertIn("Partner Y", body)
         self.assertIn("Schools assigned", body)
+        # One Partner's workspace: its three tables, never another Partner's.
+        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
 
     def test_a_cceo_sees_the_page_for_their_own_schools(self):
         """The CCEO helps the PL monitor. They were previously refused the
@@ -69,7 +73,7 @@ class PageRendersTest(PageFixture):
 
 
 class NoCostBeforeSchedulingOnThePageTest(PageFixture):
-    def test_the_yet_to_schedule_table_has_no_cost_column(self):
+    def test_the_monitoring_table_has_no_cost_column(self):
         self.assign()
         self.sign_in(self.pl_user)
 

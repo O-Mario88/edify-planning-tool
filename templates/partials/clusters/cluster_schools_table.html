@@ -36,9 +36,9 @@
 </div>
 
 {% if schools %}
-  <div class="school-plan-table-scroll"><table class="school-plan-table" aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
+  <div class="school-plan-table-scroll"><table class="school-plan-table"{% if schools.0.supportRule %} data-support-column{% endif %} aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
     <caption class="sr-only">School planning statuses</caption>
-          {% include "components/school_plan_table_head.html" %}
+          {% include "components/school_plan_table_head.html" with support=schools.0.supportRule %}
     <tbody>
     {% for s in schools %}
       <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
@@ -50,6 +50,7 @@
 
         </div></td>
         {% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
+        {% if s.supportRule %}{% include "partials/planning/support_cell.html" with school=s %}{% endif %}
         <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
             {% if can_schedule and s.staffCanSchedule %}
               <button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ s.name }}">
@@ -69,6 +70,21 @@
               <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ s.assignPartnerReason }}" data-assign-locked="{% if not s.canAssignPartner %}true{% else %}false{% endif %}" aria-label="Assign {{ s.name }} to a partner unavailable{% if s.assignPartnerReason %}: {{ s.assignPartnerReason }}{% endif %}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg><span>Assign</span></button>
             {% endif %}
 
+            {% if can_plan_clusters and s.supportRule and s.responsible.is_partner %}
+              {% comment %}Cluster Planning stays open to a Partner-supported
+              school (owner, 2026-09-23). The drawer opens with this school
+              ticked and the cluster's other Partner-supported schools not, so
+              each joins because somebody chose it.{% endcomment %}
+              <button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?cluster_id={{ cluster_id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Add {{ s.name }} to a Cluster Meeting" data-add-to-cluster="meeting">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="9" r="2.5"/><circle cx="16" cy="9" r="2.5"/><path d="M3.5 18c.4-2.7 2-4 4.5-4s4.1 1.3 4.5 4M11.5 18c.4-2.7 2-4 4.5-4s4.1 1.3 4.5 4"/></svg>
+                <span>Add to Meeting</span>
+              </button>
+              <button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?cluster_id={{ cluster_id }}&amp;action=training&amp;school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Add {{ s.name }} to a Group Training" data-add-to-cluster="training">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6.5h16v10H4zM9 20h6M12 16.5V20"/></svg>
+                <span>Add to Training</span>
+              </button>
+            {% endif %}
+
             {% if can_edit_cluster %}
               {% comment %}A school added by mistake leaves the cluster from
               its row (owner, 2026-09-15). The roster re-fetches on the same
@@ -81,7 +97,7 @@
           </div></td>
       </tr>
       <tr id="cluster-school-details-{{ s.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ s.id }}'" x-cloak>
-        <td colspan="5">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
+        <td colspan="{% if s.supportRule %}6{% else %}5{% endif %}">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
                 <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
                 <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
                 <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>
@@ -93,6 +109,7 @@
                 <div class="school-record-row__ssa {% if s.ssaAverageTone %}is-{{ s.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd{% if s.currentSsaAverage is not None %} style="color: {{ s.currentSsaAverage|ssa_score_colour }}" title="{{ s.currentSsaAverage|ssa_score_band_label }}"{% endif %}>{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
                 <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</dd></div>
                 <div><dt>Last Training:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</dd></div>
+                {% if s.supportRule %}{% include "partials/planning/support_fields.html" with school=s %}{% endif %}
               </dl>
 {% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-school-details-"|add:s.id ssa_groups=s.ssaGroups has_ssa_scores=s.hasSsaScores %}</td>
       </tr>

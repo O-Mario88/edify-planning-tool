@@ -3,6 +3,7 @@ from django.utils.html import escape
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.htmx_errors import error_fragment
 from apps.core.permissions import (
+    has_permission,
     require_export_permission,
     require_page_permission,
     RolePermissionService,
@@ -17,6 +18,9 @@ from datetime import datetime, timedelta
 
 from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.frontend.views.planning_views import _no_scheduling_permission_message
+from apps.partners.support_responsibility import (
+    visibility_enabled as support_visibility_enabled,
+)
 from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
@@ -386,12 +390,33 @@ def cluster_list_view(request):
 def _attach_planning_badges(request, schools) -> str:
     """The Visit and Training badges on a Cluster School List (owner,
     2026-09-22), from the one calculation the Planning page reads, for the
-    same financial year Planning defaults to. Returns that year."""
+    same financial year Planning defaults to. Returns that year.
+
+    With the Partner-supported school rule on, Next Activity (owner,
+    2026-09-23) is read from the same pass, as it is on Planning."""
     from apps.core.fy import get_operational_fy
-    from apps.planning.school_planning_badges import SchoolPlanningBadgeService
+    from apps.planning.school_planning_badges import (
+        SchoolPlanningBadges,
+        SchoolPlanningBadgeService,
+    )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    SchoolPlanningBadgeService.attach(schools, financial_year=fy)
+    rows = list(schools)
+    details = [] if any(row.get("supportRule") for row in rows) else None
+    badges = SchoolPlanningBadgeService.get_for_schools(
+        [row["id"] for row in rows], financial_year=fy, details=details
+    )
+    upcoming = {}
+    if details is not None:
+        from apps.planning.planning_support import next_activities
+
+        upcoming = next_activities(details)
+    for row in rows:
+        row["planningBadges"] = badges.get(row["id"]) or SchoolPlanningBadges(
+            school_id=row["id"]
+        )
+        if details is not None:
+            row["nextActivity"] = upcoming.get(row["id"])
     return fy
 
 
@@ -415,6 +440,12 @@ def cluster_schools_partial(request, cluster_id):
         # writes activities for several schools at once and the request flow
         # decides them one at a time (owner, 2026-09-21).
         "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
+        # Cluster Meetings and Group Training are the cluster owner's
+        # programme; a Partner-supported school joins one by name from its row.
+        "can_plan_clusters": RolePermissionService.can_schedule_activity(request.user),
+        "can_monitor_partners": has_permission(
+            request.user, Permission.PARTNER_MONITORING_VIEW.value
+        ),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
 
@@ -907,6 +938,9 @@ def cluster_detail_view(request, cluster_id):
         # 2026-09-21): one press writes activities at five or more schools,
         # and a visit request is decided one school at a time.
         "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
+        # Responsible, Visit, Training / Cluster and Partner Workflow columns
+        # (owner, 2026-09-23), from the rows cluster_schools() already carries.
+        "support_rule": support_visibility_enabled(request.user),
     }
     context.update(_catchment_context(request.user, _cluster_row))
     return render(request, "pages/clusters/detail.html", context)
@@ -1202,9 +1236,19 @@ def planner_drawer_view(request):
     member_ids = {s.id for s in member_schools}
     invited_ids = [s for s in raw_invited if s in member_ids]
     # First open, and any re-render that has not been through the list yet,
-    # invites the whole cluster — which is what the old number defaulted to.
+    # invites the whole cluster — which is what the old number defaulted to —
+    # except its Partner-supported schools, which are invited by name only
+    # (owner, 2026-09-23); a school_id on the request pre-ticks that one.
+    from apps.planning.partner_school_policy import partner_supported_members
+
+    supported = partner_supported_members([s.id for s in member_schools], request.user)
     if not raw_invited:
-        invited_ids = [s.id for s in member_schools]
+        chosen_school = request.GET.get("school_id", "").strip()
+        invited_ids = [
+            s.id
+            for s in member_schools
+            if s.id not in supported or chosen_school in (s.id, s.school_id)
+        ]
     invited_id_set = set(invited_ids)
     # Who the planner is inviting from each school. The drawer re-renders on
     # every cluster / activity-type change, so these come back from the form
@@ -1312,6 +1356,7 @@ def planner_drawer_view(request):
                 "name": s.name,
                 "school_id": s.school_id,
                 "invited": s.id in invited_id_set,
+                "partner_name": supported.get(s.id, ""),
             }
             for s in member_schools
         ],

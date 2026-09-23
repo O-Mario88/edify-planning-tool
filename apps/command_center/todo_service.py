@@ -1204,7 +1204,10 @@ def _returned_assignment_todos(principal, scope, today):
     who assigned it does something — revise it, give it to another partner,
     schedule it themselves or cancel it. The notification announces the return
     once; this is what keeps it in a queue afterwards, and it closes itself as
-    soon as the status moves off `returned_to_staff`.
+    soon as a staff member records the decision
+    (`apps.partners.services.resolve_returned_assignment` stamps
+    `resolved_at`). `returned_to_staff` itself is terminal, so reading the
+    status alone kept every return in the queue for ever.
     """
     from apps.partners.models import PartnerAssignment
 
@@ -1215,6 +1218,7 @@ def _returned_assignment_todos(principal, scope, today):
         PartnerAssignment.objects.filter(
             status=PartnerAssignment.STATUS_RETURNED_TO_STAFF,
             assigning_staff_id__in=owner_ids,
+            resolved_at__isnull=True,
         )
         .select_related("school", "cluster", "partner")
         .order_by("-returned_at")[:10]
@@ -1249,7 +1253,9 @@ def _returned_assignment_todos(principal, scope, today):
                 "due_tone": "warning" if days < 3 else "danger",
                 "linked": f"{where} · {a.partner.name}",
                 "action_label": "Review",
-                "action_url": "/partners",
+                "action_url": (
+                    f"/partner-oversight/?partner={a.partner_id}&status=returned"
+                ),
                 "actionable": True,
                 "source": "Partner workflow",
                 "_due_sort": a.returned_at.date() if a.returned_at else date.max,

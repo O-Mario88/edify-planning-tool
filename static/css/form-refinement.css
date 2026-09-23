@@ -1,14 +1,15 @@
 /* Shared outlined forms: quiet surfaces, clear boundaries and visible states. */
-/* Not for a control inside a data table. micro-ux.js marks those
-   `.edify-table-plain-content`, and consistency.css draws them as ink on the
-   table surface, with an outline only on focus, at the row's 24px control height.
-   `:is(body, #drawer-container)` carries an id's specificity, so without this
-   exclusion these rules boxed every table input and select back to a 38-44px
-   bordered field (the fiscal-years reason input, 2026-09-23). consistency.css
-   excludes the same class from its own field rules. */
 :root { --form-outline: #858e98; --form-placeholder: #707b87; }
 html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #798796; --form-placeholder: #a4afbd; }
-:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea):not(.edify-table-plain-content) {
+/* Content inside a plain table (micro-ux.js marks it .edify-table-plain-content)
+   reads as table text, as consistency.css's field rules already allow: this
+   selector's #drawer-container gives it ID weight, which would otherwise put
+   the outline back on an inline cell field. The exclusion sits in :where() so
+   it adds no weight: a heavier rule here would outrank the 16px phone field
+   size that keeps iOS from zooming. The padding, textarea and desktop height
+   rules below skip it the same way, so a cell field keeps the row's 24px
+   control line; the 16px phone size still applies to it. */
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"], input[type="week"], select, textarea):not(:where(.edify-table-plain-content)) {
   min-height: 44px !important;
   max-width: 100%;
   border: 1px solid var(--form-outline) !important;
@@ -28,8 +29,8 @@ html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #
 }
 :is(body, #drawer-container) :is(input, select, textarea)[aria-invalid="true"] { border-color: #dc2626 !important; }
 :is(body, #drawer-container) :is(input, select, textarea):disabled { opacity: .6; cursor: not-allowed; }
-:is(body, #drawer-container) textarea:not(.edify-table-plain-content) { padding: .75rem; min-height: 96px !important; }
-:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="time"], input[type="datetime-local"]):not(.edify-table-plain-content) { padding-block: .65rem; }
+:is(body, #drawer-container) textarea:not(:where(.edify-table-plain-content)) { padding: .75rem; min-height: 96px !important; }
+:is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="time"], input[type="datetime-local"]):not(:where(.edify-table-plain-content)) { padding-block: .65rem; }
 :is(body, #drawer-container) :is(.drawer-body, .edify-popup-dialog__surface) label {
   color: var(--edify-text);
   font-weight: 500;
@@ -46,7 +47,7 @@ body .drawer-header__subtitle { margin-left: 0 !important; }
 body .drawer-body { background: var(--edify-surface); }
 body .drawer-footer { background: var(--edify-surface) !important; border-top: 1px solid var(--edify-border); box-shadow: none; }
 @media (max-width: 640px) {
-  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea):not(.edify-table-plain-content) { font-size: 16px !important; }
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) { font-size: 16px !important; }
   body .drawer-header { padding-left: 1rem; }
 }
 /* !important: components.css gives every text field `transition: all` with
@@ -57,7 +58,7 @@ body .drawer-footer { background: var(--edify-surface) !important; border-top: 1
    zoom and OS accessibility scaling; wide monitors must not inflate controls. */
 body { font-size-adjust: none; }
 @media (min-width: 1024px) {
-  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select):not(.edify-table-plain-content) {
+  :is(body, #drawer-container) :is(input:not([type]), input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="datetime-local"], input[type="time"], select):not(:where(.edify-table-plain-content)) {
     min-height: 38px !important;
     padding-block: .45rem;
   }

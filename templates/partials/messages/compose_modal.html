@@ -60,7 +60,7 @@
 
       <div class="space-y-1">
         <label for="compose-recipient-add" class="block edify-text-caption font-semibold text-slate-600">Recipients <span class="text-rose-500">*</span></label>
-        <div class="min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 rounded-control border border-slate-200">
+        <div class="min-w-0 min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 rounded-control border border-slate-200">
           <template x-for="r in to" :key="r.id">
             <span class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-pill edify-primary-soft edify-text-caption font-semibold edify-primary-text">
               <span x-text="r.name"></span>

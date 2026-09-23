@@ -1009,7 +1009,36 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "total_trainings": total_trainings,
             }
         )
+    _attach_planning_support(out, schools, principal)
     return out
+
+
+def _attach_planning_support(rows: list[dict], schools, principal) -> None:
+    """Who supports each school on the roster: the Responsible column.
+
+    The same responsibility service the Planning page reads, for the same
+    financial year, so one school gives one answer on both pages (owner,
+    2026-09-23). The Visit and Training Status badges and Next Activity come
+    from the badge service when the view attaches them. A constant number of
+    queries for the whole roster; none at all while the Partner-supported
+    school rule is off for this reader.
+    """
+    from apps.partners.support_responsibility import (
+        SchoolSupportResponsibilityService,
+        visibility_enabled,
+    )
+
+    enabled = visibility_enabled(principal)
+    for row in rows:
+        row["supportRule"] = enabled
+    if not enabled or not rows:
+        return
+    from apps.core.fy import get_operational_fy
+
+    fy = get_operational_fy()
+    responsibility = SchoolSupportResponsibilityService.resolve(list(schools), fy=fy)
+    for row in rows:
+        row["responsible"] = responsibility[row["id"]].as_dict()
 
 
 def active_school_count(cluster_id: str) -> int:

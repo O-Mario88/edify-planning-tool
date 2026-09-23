@@ -49,6 +49,35 @@ _IN_PROGRESS_STATUSES = ("in_progress", "completion_started")
 _EVIDENCE_REVIEW_STATUSES = ("evidence_uploaded", "submitted_to_pl", "returned_by_pl")
 _AWAITING_IA_STATUSES = ("awaiting_ia_verification", "salesforce_id_required")
 _COMPLETE_STATUSES = ("ia_verified", "accountant_confirmed", "completed", "closed")
+_NOT_STARTED_STATUSES = (
+    "planned",
+    "scheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+)
+_RETURNED_TO_PARTNER_STATUSES = ("returned", "returned_by_pl", "returned_by_ia")
+_PAID_STATUSES = ("paid", "closed", "netsuite_accountability")
+_PAYMENT_PROCESSING_STATUSES = (
+    "pl_approval_required",
+    "pl_approved",
+    "accountant_cleared",
+    "disbursed",
+)
+
+#: The Partner Monitoring filter menu, in the owner's order.
+MONITORING_FILTERS: tuple[tuple[str, str], ...] = (
+    ("all", "All Assigned Schools"),
+    ("awaiting_schedule", "Awaiting Schedule"),
+    ("scheduled", "Scheduled"),
+    ("in_progress", "In Progress"),
+    ("evidence_submitted", "Evidence Submitted"),
+    ("returned_by_ia", "Returned by IA"),
+    ("ia_verified", "IA Verified"),
+    ("awaiting_payment", "Awaiting Payment"),
+    ("paid", "Paid"),
+    ("overdue", "Overdue"),
+    ("returned", "Returned to Staff"),
+)
 
 
 @dataclass
@@ -111,6 +140,22 @@ class PartnerOversightItem:
     cost_catalogue_id: str | None = None
     cost_catalogue_version: int | None = None
 
+    # Partner Monitoring (owner, 2026-09-23). The school's portfolio owner is
+    # kept apart from the managing CCEO above: a Partner supporting a school
+    # does not own it, and the owner stays visible on every row.
+    staff_owner_id: str | None = None
+    staff_owner_name: str = ""
+    school_cluster_name: str = ""
+    field_officer: str = ""
+    reschedule_count: int = 0
+    last_updated: object = None
+    resolution: str = ""
+    resolution_label: str = ""
+    # The staff member named as the Partner activity's monitor — the one person
+    # besides IA who may record its Salesforce entry (owner, 2026-09-12).
+    monitor_id: str | None = None
+    can_enter_salesforce: bool = False
+
     risks: list[dict] = field(default_factory=list)
     next_action_owner: str = ""
     next_action: str = ""
@@ -137,6 +182,97 @@ class PartnerOversightItem:
     @property
     def at_risk(self) -> bool:
         return bool(self.risks)
+
+    # ── Monitoring columns, each one fact ──────────────────────────────────
+    @property
+    def schedule_status(self) -> str:
+        if self.stage == STAGE_RETURNED:
+            return "Returned to Staff"
+        if self.stage == STAGE_AWAITING_SCHEDULE:
+            return "Awaiting Schedule"
+        return "Rescheduled" if self.reschedule_count else "Scheduled"
+
+    @property
+    def execution_status(self) -> str:
+        if not self.is_scheduled:
+            return "—"
+        if self.activity_status in _NOT_STARTED_STATUSES:
+            return "Not Started"
+        if self.activity_status in (
+            *_IN_PROGRESS_STATUSES,
+            *_RETURNED_TO_PARTNER_STATUSES,
+            # Uploaded but not yet submitted: still the Partner's to finish.
+            "evidence_uploaded",
+            "evidence_accepted",
+        ):
+            return "In Progress"
+        return "Evidence Submitted"
+
+    @property
+    def ia_status_label(self) -> str:
+        if self.activity_status in _RETURNED_TO_PARTNER_STATUSES or (
+            self.ia_status == "returned"
+        ):
+            return "Returned"
+        if self.ia_status == "confirmed" or self.activity_status in (
+            "ia_verified",
+            "accountant_confirmed",
+        ):
+            return "Verified"
+        if self.execution_status == "Evidence Submitted":
+            return "Pending"
+        return "—"
+
+    @property
+    def salesforce_label(self) -> str:
+        if not self.is_scheduled or self.execution_status != "Evidence Submitted":
+            return "—"
+        return "Confirmed" if self.salesforce_status == "recorded" else "Pending"
+
+    @property
+    def payment_label(self) -> str:
+        if self.ia_status_label != "Verified":
+            return "Not Eligible"
+        if self.payment_status in _PAID_STATUSES:
+            return "Paid"
+        if self.payment_status in _PAYMENT_PROCESSING_STATUSES:
+            return "Processing"
+        return "Awaiting Payment"
+
+    @property
+    def is_overdue(self) -> bool:
+        today = date.today()
+        if self.stage == STAGE_AWAITING_SCHEDULE:
+            return bool(self.schedule_by_date and self.schedule_by_date < today)
+        return bool(
+            self.is_scheduled
+            and self.scheduled_date
+            and self.scheduled_date < today
+            and self.execution_status == "Not Started"
+        )
+
+    @property
+    def awaits_staff_decision(self) -> bool:
+        return self.stage == STAGE_RETURNED and not self.resolution
+
+    def matches(self, status: str) -> bool:
+        """Whether this row belongs under one Partner Monitoring filter."""
+        if status in ("", "all"):
+            return True
+        return {
+            "awaiting_schedule": self.stage == STAGE_AWAITING_SCHEDULE,
+            "scheduled": self.is_scheduled and self.execution_status == "Not Started",
+            "in_progress": self.execution_status == "In Progress"
+            and self.ia_status_label != "Returned",
+            "evidence_submitted": self.execution_status == "Evidence Submitted"
+            and self.ia_status_label == "Pending",
+            "returned_by_ia": self.ia_status_label == "Returned",
+            "ia_verified": self.ia_status_label == "Verified",
+            "awaiting_payment": self.payment_label == "Awaiting Payment",
+            "paid": self.payment_label == "Paid",
+            "overdue": self.is_overdue,
+            "returned": self.stage == STAGE_RETURNED,
+        }.get(status, False)
 
     @property
     def delivery_phase(self) -> str:
@@ -309,11 +445,66 @@ def build_items(
             )
         ]
 
+    _attach_school_clusters(items)
+
     from apps.planning import partner_risk_service
 
     partner_risk_service.annotate(items)
     items.sort(key=lambda i: (i.partner_name, i.school_name))
     return items
+
+
+def _attach_school_clusters(items) -> None:
+    """Each row's own school cluster, in two queries for the whole list.
+
+    ``cluster_name`` is the cluster an assignment was made against, which a
+    school-level handover does not have; the monitoring table's District /
+    Cluster column is the school's own membership.
+    """
+    from apps.clusters.models import Cluster
+    from apps.schools.models import School
+
+    school_ids = {i.school_id for i in items if i.school_id}
+    if not school_ids:
+        return
+    cluster_of = dict(
+        School.objects.filter(id__in=school_ids)
+        .exclude(cluster_id__isnull=True)
+        .values_list("id", "cluster_id")
+    )
+    names = dict(
+        Cluster.objects.filter(id__in=set(cluster_of.values())).values_list(
+            "id", "name"
+        )
+    )
+    for item in items:
+        item.school_cluster_name = (
+            names.get(cluster_of.get(item.school_id), "") or item.cluster_name
+        )
+
+
+def monitoring_summary(items) -> dict:
+    """The one-line summary above a Partner's table, from the same rows.
+
+    Every figure is a count of rows the table's own filters return, so the
+    summary and the table reconcile by construction.
+    """
+    items = list(items)
+    return {
+        "assigned": len(items),
+        "scheduled": sum(1 for i in items if i.is_scheduled),
+        "awaiting_schedule": sum(1 for i in items if i.matches("awaiting_schedule")),
+        "under_ia_review": sum(1 for i in items if i.matches("evidence_submitted")),
+        "returned": sum(1 for i in items if i.awaits_staff_decision),
+        "overdue": sum(1 for i in items if i.is_overdue),
+    }
+
+
+def filter_counts(items) -> dict:
+    items = list(items)
+    return {
+        key: sum(1 for i in items if i.matches(key)) for key, _ in MONITORING_FILTERS
+    }
 
 
 def _unassigned_partner_activities(
@@ -378,6 +569,9 @@ def _unassigned_partner_activities(
         ).values_list("id", "name")
     )
     costs = _cost_by_activity([a.id for a in activities])
+    owner_names = _owner_names(
+        {getattr(a.school, "account_owner_id", None) for a in activities}
+    )
 
     from types import SimpleNamespace
 
@@ -435,13 +629,44 @@ def _unassigned_partner_activities(
             evidence_status=activity.evidence_status or "",
             ia_status=activity.ia_verification_status or "",
             payment_status=activity.payment_status or "",
+            salesforce_status=(
+                "recorded" if activity.salesforce_activity_id else "missing"
+            ),
             planned_cost=cost,
             cost_catalogue_id=catalogue_id,
             cost_catalogue_version=catalogue_version,
+            staff_owner_id=getattr(activity.school, "account_owner_id", None),
+            staff_owner_name=owner_names.get(
+                getattr(activity.school, "account_owner_id", None) or "", ""
+            )
+            or getattr(activity.school, "account_owner_name_raw", "")
+            or "",
+            field_officer=activity.delivery_contact_name or "",
+            monitor_id=activity.monitored_by_staff_id,
+            reschedule_count=activity.reschedule_count or 0,
+            last_updated=activity.updated_at,
         )
         _set_next_action(item)
         items.append(item)
     return items
+
+
+def _owner_names(ids) -> dict:
+    """Display names for school owners, in both id spaces, one query."""
+    from apps.accounts.models import StaffProfile
+
+    ids = {i for i in ids if i}
+    if not ids:
+        return {}
+    names = {}
+    for sp in StaffProfile.objects.filter(
+        Q(id__in=ids) | Q(user_id__in=ids)
+    ).select_related("user"):
+        label = getattr(sp.user, "name", "") or getattr(sp.user, "email", "")
+        for key in (sp.id, sp.user_id):
+            if key:
+                names[key] = label
+    return names
 
 
 def _has_soft_delete() -> bool:
@@ -466,10 +691,13 @@ def _assignment_fy(assignment, get_operational_fy) -> str:
 
 
 def _resolve_scope(principal) -> dict:
-    from apps.core.rbac import EdifyRole
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import EdifyRole, Permission
     from apps.core.scoping import owner_ids, resolve_user_scope
 
     role = getattr(principal, "active_role", "") or ""
+    # A Regional Programme Lead reads the partner work of their regions,
+    # whoever monitors it.
     if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
         scope = resolve_user_scope(principal)
         return {
@@ -478,18 +706,15 @@ def _resolve_scope(principal) -> dict:
             "staff_ids": set(),
             "region_ids": scope.region_ids,
         }
-    # Country lens for the roles whose remit genuinely is the whole country.
-    # Impact Assessment and the Accountant are included because their queues
-    # already are country-wide — IA verifies every submission and the
-    # Accountant pays every partner — so a team-shaped scope would resolve to
-    # the empty set and hand them a blank page, which reads as "no partner work
-    # is stuck" rather than "you were shown nothing".
-    if role in (
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
-        EdifyRole.ADMIN.value,
-        EdifyRole.IMPACT_ASSESSMENT.value,
-        EdifyRole.PROGRAM_ACCOUNTANT.value,
+    # Country lens for the roles whose remit genuinely is the whole country —
+    # the Country Director, the RVP, Admin, and Impact Assessment and the
+    # Accountant, whose queues already are country-wide (IA verifies every
+    # submission, the Accountant pays every partner), so a team-shaped scope
+    # would resolve to the empty set and hand them a blank page, which reads as
+    # "no partner work is stuck" rather than "you were shown nothing". Named by
+    # the permission that grants exactly that set, not by a role list.
+    if has_permission(
+        principal, Permission.PARTNER_MONITORING_COUNTRY.value
     ) or getattr(principal, "is_superuser", False):
         return {"kind": "country", "is_country": True, "staff_ids": set()}
 
@@ -647,6 +872,19 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         assignment_status=assignment.status,
         return_reason_category=assignment.return_reason_category or "",
         return_reason=assignment.return_reason or "",
+        resolution=getattr(assignment, "resolution", "") or "",
+        resolution_label=(
+            assignment.get_resolution_display()
+            if getattr(assignment, "resolution", "")
+            else ""
+        ),
+        staff_owner_id=getattr(assignment.school, "account_owner_id", None),
+        staff_owner_name=directory["names"].get(
+            getattr(assignment.school, "account_owner_id", None) or "", ""
+        )
+        or getattr(assignment.school, "account_owner_name_raw", "")
+        or "",
+        last_updated=assignment.updated_at,
         planned_cost=cost,
         cost_catalogue_id=catalogue_id,
         cost_catalogue_version=catalogue_version,
@@ -667,6 +905,13 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         item.submitted_to_ia_at = (
             activity.submitted_to_ia_at.date() if activity.submitted_to_ia_at else None
         )
+        item.field_officer = activity.delivery_contact_name or ""
+        item.monitor_id = activity.monitored_by_staff_id
+        item.reschedule_count = activity.reschedule_count or 0
+        if activity.updated_at and (
+            item.last_updated is None or activity.updated_at > item.last_updated
+        ):
+            item.last_updated = activity.updated_at
 
     _set_next_action(item)
     _set_withdrawal_action(item)

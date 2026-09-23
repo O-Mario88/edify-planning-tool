@@ -29,9 +29,13 @@
   font-weight: var(--edify-text-micro-weight);
   line-height: var(--edify-text-micro-leading);
   letter-spacing: var(--edify-text-micro-tracking);
-  white-space: normal;
+  /* One line, like every status label (responsive-system.css): a label that
+     runs out of room ends in an ellipsis and carries its full text as a
+     title, instead of wrapping into a taller pill than its neighbours. */
+  white-space: nowrap;
   max-inline-size: 100%;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .edify-badge[data-tone="success"] {
@@ -5311,6 +5315,66 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .admin-progress > span { background: var(--edify-series-1) !important; }
 .edify-column-chart__track > span { position: relative; }
 .edify-column-chart__track > span > strong { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 500; }
+
+/* ── Planning support ────────────────────────────────────────────────────
+   Owner, 2026-09-23. Rendered ONLY on the Planning page and the Cluster
+   School List (partials/planning/support_cell.html, support_cells.html):
+   who is responsible for the school, what comes next, and where a Partner's
+   work stands. The Visit and Training Status counts are the shared
+   .school-planning-badge chips above, and the Partner Workflow state wears
+   the same chip, so one colour means one thing on both lists. */
+.planning-responsible {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+.planning-responsible__kind {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--edify-text-muted);
+}
+.planning-responsible[data-responsible="partner"] .planning-responsible__kind {
+  color: var(--edify-planned-text);
+}
+.planning-responsible[data-responsible="multiple_partners"] .planning-responsible__kind {
+  color: var(--edify-warning-text);
+}
+.planning-responsible__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--edify-text);
+}
+/* The Responsible cell (partials/planning/support_cell.html): who supports
+   the school on the first line and, under a Partner, the Partner Workflow
+   chip on the second. Both lines stay single-line; a long Partner name or
+   workflow label ends in an ellipsis and keeps its full text as a title. */
+.planning-support-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.planning-support-cell__workflow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+.planning-support-cell .school-planning-badge {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */
 .context-metrics {

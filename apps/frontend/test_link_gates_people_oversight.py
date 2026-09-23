@@ -266,7 +266,9 @@ class HrOperationsLinkTest(SimpleTestCase):
         self.assertNotIn('href="/recruitment"', html)
         self.assertNotIn('href="/org-structure"', html)
         self.assertIn(
-            '<div class="hrd-figure"><span class="hrd-figure__label">Open roles', html
+            '<div class="hrd-figure"><span class="hrd-figure__label" title="Open roles">'
+            "Open roles",
+            html,
         )
 
         hr = self._operations(HR)

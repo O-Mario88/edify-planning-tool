@@ -46,10 +46,10 @@
       <p class="edify-text-caption text-slate-600 font-medium mt-1">{{ a.body }}</p>
       {% if a.drill == 'approvals' %}
       <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="mt-2 edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</button>
+              class="mt-2 inline-flex min-h-6 items-center edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</button>
       {% else %}
       <a href="#{% if a.drill == 'regions' %}region-ranking{% elif a.drill == 'projects' %}special-projects{% else %}rvp-approvals{% endif %}"
-         class="inline-block mt-2 edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</a>
+         class="inline-flex min-h-6 items-center mt-2 edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</a>
       {% endif %}
     </div>
     {% endfor %}
