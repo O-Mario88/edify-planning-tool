@@ -175,8 +175,18 @@
   }
 
   function restoreAll() {
-    restore(workspace(), read(pageKey()));
-    restore(sidebar(), read(SIDEBAR_KEY));
+    var mainTop = read(pageKey());
+    if (mainTop) restore(workspace(), mainTop);
+    /* Finding the visible sidebar reads layout. At DOMContentLoaded that
+       forced a full layout of the page before it had laid out once, ~1 s on
+       a long My Plan (2026-09-24 audit); after the first frame the layout
+       it reads is already there. */
+    var navTop = read(SIDEBAR_KEY);
+    if (navTop) {
+      window.requestAnimationFrame(function () {
+        window.setTimeout(function () { restore(sidebar(), navTop); }, 0);
+      });
+    }
   }
 
   function watch() {
@@ -185,11 +195,13 @@
       main.__edifyScrollWatched = true;
       main.addEventListener("scroll", saveSoon, { passive: true });
     }
-    var nav = sidebar();
-    if (nav && !nav.__edifyScrollWatched) {
+    /* Both sidebars listen; only the one on screen ever scrolls. Choosing it
+       here meant reading layout before the page had any. */
+    document.querySelectorAll(".app-sidebar__nav-container").forEach(function (nav) {
+      if (nav.__edifyScrollWatched) return;
       nav.__edifyScrollWatched = true;
       nav.addEventListener("scroll", saveSoon, { passive: true });
-    }
+    });
   }
 
   function start() {

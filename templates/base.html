@@ -57,9 +57,9 @@ inset themselves — see components/mobile-shell.css.
       });
     }
 
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() { html.classList.add('theme-fade'); });
-    });
+    // `theme-fade` is added by applyTheme for the length of a switch only:
+    // added here after load, it restyled the whole page once more on every
+    // visit and left colour transitions on every table cell.
   })();
 </script>
 
