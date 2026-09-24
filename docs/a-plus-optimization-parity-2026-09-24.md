@@ -128,6 +128,21 @@ change in the branch, made on the owner's instruction after §9 raised it;
 `test_team_plans_shows_the_canonical_next_action` fails on the previous code
 ("—" instead of "Start") and passes now.
 
+**R-3 Map SSA figures changed between loads (owner-approved).** The
+regional map's sub-county, district and sub-region means come from
+PostgreSQL's `AVG`, which adds floats in whatever order the plan visits the
+rows; rounded straight to two places, a mean at a rounding edge read 5.42 on
+one load and 5.43 on the next, and best/worst interventions were chosen on
+the raw means in the order the grouped rows arrived. `map_score` (beside
+`_ssa_score`, which already solves this at one decimal) rounds to six places
+before two, and best/worst are ranked on that value with ties broken by
+intervention code. Three uncached runs of `country_map_context` on the
+50,000-school copy, which previously all differed, are now byte-identical;
+6–8 of 99,112 values differ from earlier runs, each by at most 0.01, and no
+best/worst name changed. `test_map_score_stability` pins a real case:
+`[6.6, 8.4, 8.1, 7.8]` averages to 7.7250000000000005 forwards and 7.725
+backwards, which plain rounding shows as 7.73 and 7.72.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -410,7 +425,7 @@ brief's parity lock it needs an owner decision.
 | # | Finding | Evidence | Proposed correction |
 |---|---|---|---|
 | F-A | **Fixed after owner approval (see §5, R-2).** Admin Team Plans never showed a next action | — | — |
-| F-B | **Map metrics are not deterministic.** The CD/RVP dashboard's sub-county metrics (`country_map_context`) come out differently on successive uncached runs of the *baseline*: PostgreSQL's parallel `AVG` adds floats in a different order, and a value at a rounding edge flips by 0.01 | 4 of 2,560 entries differed between runs | round to 6 places before 2, as `pl_analytics_service._ssa_score` already does |
+| F-B | **Fixed after owner approval (see §5, R-3).** Map metrics were not deterministic | — | — |
 | F-C | **The fiscal-year rollover can run inside a user request.** `FiscalYearRolloverMiddleware` performs the whole rollover (600–2,900 queries, 9–12 s at this scale) on the first signed-in request of a process when the scheduler has not done it; other processes wait on its row lock | observed on every fresh database copy | leave the self-heal to the scheduler and have the middleware only raise a System Health alarm, or enqueue it |
 | F-D | **Leadership pages rebuild the achievement ledger on every load** (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
 | F-E | **Heavy country pages still take seconds.** Team and country planning oversight and their exports (4–6 s), SSA (≈3 s), IA learning (≈3 s), the Country Director's dashboard (2.7 MB of HTML, ≈8 s under load) for country roles at 50,000 schools; they build every item in the country in Python | profiles in §6 | per-lead lazy sections or read models, each needing a parity review |
