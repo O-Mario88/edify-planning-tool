@@ -66,10 +66,13 @@ _MASKS = (
         rb"<iso-ts>",
     ),
     (re.compile(rb"\b\d\d:\d\d:\d\d\b"), rb"<hh:mm:ss>"),
+    # Minute stamps ("Updated 20:27", "Generated ... 20:28 EAT"): two captures
+    # of the same build an hour apart differ in these and nothing else.
+    (re.compile(rb"\b\d\d:\d\d\b"), rb"<hh:mm>"),
     # Relative ages ("3 minutes ago", "just now").
     (
         re.compile(
-            rb"\b\d+\xc2\xa0?\s?(?:second|minute|min|hour)s?(?:,\s*\d+\s?\w+)?\s+ago\b"
+            rb"\b\d+(?:\xc2\xa0)?\s?(?:second|minute|min|hour)s?(?:,\s*\d+\s?\w+)?\s+ago\b"
         ),
         rb"<ago>",
     ),
