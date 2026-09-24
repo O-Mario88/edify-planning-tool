@@ -55,10 +55,18 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
         theirs.refresh_from_db()
         # The Country Director closes on planning authority, as before.
         _assert_may_close(self.cd, theirs)
-        for offset, who in enumerate((self.ia, self.accountant), start=1):
+        from apps.core.calendar_policy import SchedulingPolicyService
+
+        day = self.__class__.day
+        for who in (self.ia, self.accountant):
             with self.subTest(role=who.active_role):
-                # One visit per person per day at a school; move the date.
-                self.day = self.__class__.day + datetime.timedelta(days=offset)
+                # One visit per person per day at a school; move the date to
+                # the next day the calendar allows (a plain +1/+2 landed on a
+                # Sunday whenever the base day was a Friday).
+                day += datetime.timedelta(days=1)
+                while SchedulingPolicyService.check(None, day)["status"] == "blocked":
+                    day += datetime.timedelta(days=1)
+                self.day = day
                 # Each person's own visit at another school in the portfolio,
                 # so the one being closed is unambiguously theirs.
                 own = self._request(who, self._owned_school(who.active_role))
