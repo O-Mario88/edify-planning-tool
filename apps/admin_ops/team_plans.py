@@ -230,7 +230,12 @@ class AdminTeamPlansService:
                     "status": label,
                     "statusClass": status_class,
                     "rawStatus": a.status,
-                    "nextAction": next_action.get("label") or "—",
+                    # `compute_next_action` names its step "text", as My Plan
+                    # reads it. This read "label", which it never returns, so
+                    # every row said "—" and the health tile counted them all.
+                    "nextAction": next_action.get("text") or "—",
+                    # "view" is its default when no owner step applies.
+                    "nextActionKind": next_action.get("action") or "",
                     "executor": executor,
                     "managingStaff": monitor.get("name") or "—",
                     "budgetState": "Costed" if not a.cost_missing else "Cost missing",
@@ -269,7 +274,11 @@ class AdminTeamPlansService:
         each is computed from the rows already loaded, so the preview costs no
         extra queries.
         """
-        no_next_action = sum(1 for r in rows if r["nextAction"] in ("—", "", None))
+        # A row whose only action is the default "View Details" has no step
+        # for anybody to take, which is what this tile asks about.
+        no_next_action = sum(
+            1 for r in rows if r.get("nextActionKind", "") in ("", "view")
+        )
         overdue = sum(1 for r in rows if r["overdue"])
         cost_missing = sum(1 for r in rows if r["budgetState"] == "Cost missing")
         unassigned = sum(1 for r in rows if not r["userId"])

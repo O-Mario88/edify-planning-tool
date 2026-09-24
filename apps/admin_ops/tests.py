@@ -488,7 +488,40 @@ class AdminWorkspaceTests(AdminOpsTestBase):
         self.assertLessEqual(len(many.captured_queries), len(few.captured_queries))
         # Every row tied on the date fields: the order is the id order.
         self.assertEqual([r["id"] for r in rows], sorted(r["id"] for r in rows))
-        self.assertTrue(all(r["nextAction"] for r in rows))
+        self.assertTrue(all(r["nextAction"] != "—" for r in rows))
+
+    def test_team_plans_shows_the_canonical_next_action(self):
+        """The Next Action column is the step My Plan offers the officer.
+
+        It read a key `compute_next_action` never returns, so every row
+        said "—" and the health tile counted every row as having no next
+        action. The default step ("View Details") is not an owner step, so
+        only rows that fall to it count there.
+        """
+        from apps.my_plan.services import compute_next_action
+
+        today = timezone.localdate()
+        started = self._activity(status="scheduled", planned_date=today)
+        waiting = self._activity(
+            status="scheduled", planned_date=today + timedelta(days=10)
+        )
+        rows = {r["id"]: r for r in AdminTeamPlansService.get(self.admin, {})["rows"]}
+        for activity in (started, waiting):
+            expected = compute_next_action(activity, today)
+            with self.subTest(activity=activity.id):
+                self.assertEqual(rows[activity.id]["nextAction"], expected["text"])
+                self.assertEqual(
+                    rows[activity.id]["nextActionKind"], expected["action"]
+                )
+        self.assertNotEqual(rows[started.id]["nextAction"], "—")
+        default_rows = sum(
+            1
+            for activity in (started, waiting)
+            if compute_next_action(activity, today)["action"] == "view"
+        )
+        health = AdminTeamPlansService.get(self.admin, {})["health"]
+        self.assertEqual(health["no_next_action"], default_rows)
+        self.assertLess(health["no_next_action"], health["total_active"])
 
     def test_team_plans_excludes_terminal_activities_like_my_plan_does(self):
         self._activity(status="cancelled")

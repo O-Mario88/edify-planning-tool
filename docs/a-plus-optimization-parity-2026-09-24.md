@@ -118,6 +118,16 @@ In PostgreSQL a varchar length increase is a catalogue change: no table
 rewrite and no index rebuild, safe online. Rollback: the previous image runs
 unchanged against the wider column.
 
+**R-2 Admin Team Plans showed no next action (owner-approved visible
+change).** The row read `next_action["label"]`; `compute_next_action`
+returns `"text"`. Every row showed "—" in Next Action and the "No next
+action" tile counted every row. The column now shows the same step My Plan
+offers the officer, and the tile counts only rows whose only action is the
+default "View Details" (no owner step). This is the one deliberate visible
+change in the branch, made on the owner's instruction after §9 raised it;
+`test_team_plans_shows_the_canonical_next_action` fails on the previous code
+("—" instead of "Start") and passes now.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -399,7 +409,7 @@ brief's parity lock it needs an owner decision.
 
 | # | Finding | Evidence | Proposed correction |
 |---|---|---|---|
-| F-A | **Admin Team Plans never shows a next action.** The page reads `next_action["label"]`; `compute_next_action` returns `"text"`. Every row shows "—", and the health tile counts every row as having no next action | `apps/admin_ops/team_plans.py` row builder | read `"text"`; the column and the tile will change |
+| F-A | **Fixed after owner approval (see §5, R-2).** Admin Team Plans never showed a next action | — | — |
 | F-B | **Map metrics are not deterministic.** The CD/RVP dashboard's sub-county metrics (`country_map_context`) come out differently on successive uncached runs of the *baseline*: PostgreSQL's parallel `AVG` adds floats in a different order, and a value at a rounding edge flips by 0.01 | 4 of 2,560 entries differed between runs | round to 6 places before 2, as `pl_analytics_service._ssa_score` already does |
 | F-C | **The fiscal-year rollover can run inside a user request.** `FiscalYearRolloverMiddleware` performs the whole rollover (600–2,900 queries, 9–12 s at this scale) on the first signed-in request of a process when the scheduler has not done it; other processes wait on its row lock | observed on every fresh database copy | leave the self-heal to the scheduler and have the middleware only raise a System Health alarm, or enqueue it |
 | F-D | **Leadership pages rebuild the achievement ledger on every load** (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
