@@ -173,6 +173,13 @@ jobs:
           git diff --exit-code static/css/main.css static/css/tokens.css static/build/css \
             || { echo "::error::Generated CSS is out of date — run 'npm run build:css' and commit the result"; exit 1; }
 
+      # The browser-side state helpers and the templates' inline scripts
+      # (tests/js). A few seconds, no server, time zones pinned per test; run
+      # nowhere before, one of them went stale unnoticed (8bb11a1).
+      - name: UI state tests
+        if: ${{ !cancelled() }}
+        run: npm run test:ui-state
+
   # Chromium and the authenticated role route audit gate every push. The whole
   # cross-browser matrix used to run here as well, one project after another
   # with a single worker — 636 tests that could not finish in the job's thirty

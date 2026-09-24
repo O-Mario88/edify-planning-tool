@@ -27,7 +27,7 @@ from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity
-from apps.budget.models import CostCatalogue, CostSetting
+from apps.budget.models import CostSetting
 from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
@@ -144,9 +144,13 @@ class VisitRequestFixture(TestCase):
 
         cls.day = _schedulable_date()
         cls.fy = get_operational_fy(cls.day)
-        catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy=cls.fy, is_active=True, defaults={"version": 1}
-        )
+        # The rate card pricing reads, whatever year the day falls in (pricing
+        # no longer asks the year). A catalogue made for the day's own year
+        # was a second active card: from 24 September "today + 7" is in the
+        # next fiscal year, and scheduling was refused for want of Lunch.
+        from apps.budget.reference import ensure_active_catalogue
+
+        catalogue = ensure_active_catalogue()
         for key, cost in (
             ("primary_transport_per_day", 50_000),
             ("primary_lunch_per_day", 12_000),
@@ -156,7 +160,7 @@ class VisitRequestFixture(TestCase):
                 defaults={
                     "label": key.replace("_", " ").title(),
                     "unit_cost": cost,
-                    "fy": cls.fy,
+                    "fy": catalogue.fy,
                     "catalogue": catalogue,
                 },
             )
@@ -651,6 +655,9 @@ class CoreVisitRequestTest(VisitRequestFixture):
             stable_code="CORE_SCHOOL_FOLLOWUP_VISIT"
         )
         cls.core_schools = {}
+        # The drawers schedule against the operational year's package, whatever
+        # year the visit falls in; from 24 September "today + 7" is next year's.
+        package_fy = get_operational_fy()
         for stage in ("core", "champion", "core_trained", "core_graduate"):
             school = School.objects.create(
                 school_id=f"VR-{stage.upper()}",
@@ -667,16 +674,16 @@ class CoreVisitRequestTest(VisitRequestFixture):
             StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=school.id)
             _confirmed_ssa(school)
             plan = CorePlan.objects.create(
-                id=cplan_id(school.school_id, cls.fy),
+                id=cplan_id(school.school_id, package_fy),
                 school_id=school.school_id,
-                fy=cls.fy,
+                fy=package_fy,
                 status="Active",
             )
             CoreSchoolProfile.objects.create(
                 id=cprof_id(school.school_id),
                 school_id=school.school_id,
                 core_plan=plan,
-                core_start_fy=cls.fy,
+                core_start_fy=package_fy,
             )
             create_package_slots(plan, school.school_id, ["leadership"])
             cls.core_schools[stage] = school

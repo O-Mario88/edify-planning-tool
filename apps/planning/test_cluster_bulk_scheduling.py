@@ -106,16 +106,18 @@ class TheCeilingIsFiveSchoolsTest(_ClusterDay):
         self.assertEqual(len(result["created"]), 1)
 
     def test_two_three_and_four_schools_are_days_too(self):
+        # Each day after the last one. `when + count` rolled Sunday forward
+        # onto the next count's Monday whenever the suite ran on a Thursday,
+        # and the same schools were refused as a duplicate on that day.
+        day = self.when
         for count in (2, 3, 4):
+            day = _next_working_day(day + timedelta(days=1))
             with self.subTest(schools=count):
                 result = bulk_schedule_cluster_visits(
                     self.cluster.id,
                     self._payload(
                         schoolIds=[s.id for s in self.schools[:count]],
-                        scheduledDate=_next_working_day(
-                            date.fromisoformat(self._payload()["scheduledDate"])
-                            + timedelta(days=count)
-                        ).isoformat(),
+                        scheduledDate=day.isoformat(),
                     ),
                     self.user,
                 )

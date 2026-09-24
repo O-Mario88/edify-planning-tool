@@ -44,7 +44,7 @@
       <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
         <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
         <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
-          <button type="button" class="school-plan-table__name-toggle" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
+          <button type="button" class="school-plan-table__name-toggle" title="{{ s.name }}" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
   {{ s.name }}
 </button>
 

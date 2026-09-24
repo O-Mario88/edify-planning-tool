@@ -59,6 +59,17 @@ from apps.schools.models import School
 User = get_user_model()
 
 
+def _schedulable(day: date) -> date:
+    """The first day from ``day`` the calendar policy accepts."""
+    from apps.core.calendar_policy import SchedulingPolicyService
+
+    for _ in range(21):
+        if SchedulingPolicyService.check(None, day)["status"] != "blocked":
+            return day
+        day += timedelta(days=1)
+    raise AssertionError("no schedulable date within three weeks")
+
+
 def _staff(uid, role, name):
     user = User.objects.create(
         id=uid,
@@ -433,18 +444,19 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         from apps.planning import visit_requests
 
         school = self._school("VG-S0")
-        self._spend_client_visits(school)
-        _assert_schedule_entitlement(
-            "school_visit", school, self.fy, {}, is_request=True
-        )
-        request = self._visit(school, status=visit_requests.AWAITING)
+        # Counted in the year the visit falls in: approving files it there,
+        # and from late September `_visit`'s date is in the next fiscal year.
+        fy = get_operational_fy(date.today() + timedelta(days=7))
+        self._spend_client_visits(school, fy=fy)
+        _assert_schedule_entitlement("school_visit", school, fy, {}, is_request=True)
+        request = self._visit(school, status=visit_requests.AWAITING, fy=fy)
         request.approval_owner_id = self.cceo.id
         request.save(update_fields=["approval_owner_id"])
         # The pending request is not one of the counted visits.
-        self.assertEqual(visit_gate(school).total_visits, CLIENT_VISIT_CAP)
+        self.assertEqual(visit_gate(school, fy).total_visits, CLIENT_VISIT_CAP)
         approved = visit_requests.approve(request.id, self.cceo_user)
         self.assertEqual(approved.status, "scheduled")
-        self.assertEqual(visit_gate(school).total_visits, CLIENT_VISIT_CAP + 1)
+        self.assertEqual(visit_gate(school, fy).total_visits, CLIENT_VISIT_CAP + 1)
 
     def test_staff_may_schedule_a_school_that_is_with_a_partner(self):
         school = self._school("VG-S3")
@@ -549,7 +561,9 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         # Pinning them to today's FY made this test pass for most of the year
         # and fail every late September, when today + 10 days crosses into the
         # next FY and the gate correctly finds an untouched allowance.
-        when_on = date.today() + timedelta(days=10)
+        # A day the calendar accepts: today + 10 alone is a Sunday one week in
+        # seven, and the partner's booking was refused for it.
+        when_on = _schedulable(date.today() + timedelta(days=10))
         self._spend_client_visits(school, fy=get_operational_fy(when_on))
         assignment = self._assign(school, expected_activity_type="school_visit")
         created = _partner_schedule_from_assignment(

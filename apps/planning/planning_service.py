@@ -498,10 +498,16 @@ class PlanningDashboardService:
             )
 
             # Next Activity reads the same pass (``details``), so it cannot
-            # name a plan the badges did not count.
+            # name a plan the badges did not count. The operational year reads
+            # forward into the years ahead, so a school planned now for October
+            # (the next fiscal year) is Planned rather than Not Planned.
+            from apps.planning.fy_policy import planning_horizon
+
             badge_details = [] if support_rule else None
             badges_by_school = SchoolPlanningBadgeService.get_for_schools(
-                school_ids, financial_year=fy, details=badge_details
+                school_ids,
+                financial_year=planning_horizon(fy),
+                details=badge_details,
             )
             ssa_records = (
                 SsaRecord.objects.filter(

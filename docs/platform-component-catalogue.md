@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **490**
+Components and application partials: **491**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -193,7 +193,7 @@ Components and application partials: **490**
 | `partials/dashboards/pl/body.html` | application-partial | Reusable body interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/cceo_performance.html` | application-partial | Reusable cceo performance interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/coaching_view.html` | application-partial | Reusable coaching view interface primitive | danger, warning; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
-| `partials/dashboards/pl/collaboration_view.html` | application-partial | Reusable collaboration view interface primitive | danger; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/pl/collaboration_view.html` | application-partial | Reusable collaboration view interface primitive | danger; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/drilldown.html` | application-partial | Reusable drilldown interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /dashboard/pl-drilldown | 0 |
 | `partials/dashboards/pl/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/priorities_view.html` | application-partial | Reusable priorities view interface primitive | danger, warning, {{ row.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
@@ -395,8 +395,8 @@ Components and application partials: **490**
 | `partials/planning/schedule_school_options.html` | application-partial | Reusable schedule school options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /planning/schedule<br>/planning/schedule/schools | 0 |
 | `partials/planning/school_row.html` | application-partial | Reusable school row interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/planning/school_table.html` | application-partial | Reusable school table interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
-| `partials/planning/support_cell.html` | application-partial | Reusable support cell interface primitive | replan, {% if r.needs_review %}replan{% else %}awaiting{% endif %}; default | inherits containing page contract | inherits semantic parent contract | /partials/clusters/<str:cluster_id>/schools<br>/planning | 0 |
-| `partials/planning/support_cells.html` | application-partial | Reusable support cells interface primitive | replan, {% if r.needs_review %}replan{% else %}awaiting{% endif %}; default | inherits containing page contract | inherits semantic parent contract | /clusters/<str:cluster_id> | 0 |
+| `partials/planning/support_cell.html` | application-partial | Reusable support cell interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partials/clusters/<str:cluster_id>/schools<br>/planning | 0 |
+| `partials/planning/support_cells.html` | application-partial | Reusable support cells interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /clusters/<str:cluster_id> | 0 |
 | `partials/planning/support_fields.html` | application-partial | Reusable support fields interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partials/clusters/<str:cluster_id>/schools<br>/planning | 0 |
 | `partials/planning/tabs.html` | application-partial | Reusable tabs interface primitive | canonical; default, selected | inherits containing page contract | accessible name and label, keyboard focus visibility | /planning | 0 |
 | `partials/planning/view_controls.html` | application-partial | Reusable view controls interface primitive | canonical; default | inherits containing page contract | accessible name and label | /planning | 0 |
@@ -486,7 +486,8 @@ Components and application partials: **490**
 | `partials/today/queue_item.html` | application-partial | Reusable queue item interface primitive | danger, {{ todo.due_tone|default:; default, error, open | inherits containing page contract | accessible name and label, announced dynamic state | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/today/queue_item_done.html` | application-partial | Reusable queue item done interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /today/act<br>/today/snooze | 0 |
 | `partials/today/queue_row.html` | application-partial | Reusable queue row interface primitive | danger, {{ todo.due_tone|default:, {{ todo.status_tone|default:; default, error, open | inherits containing page contract | accessible name and label, announced dynamic state | /today<br>/today/panel<br>/today/unsnooze | 0 |
-| `partials/today/workbench.html` | application-partial | Reusable workbench interface primitive | info, success; default, empty | explicit responsive contract | accessible name and label | /today<br>/today/panel<br>/today/unsnooze | 0 |
+| `partials/today/waiting_table.html` | application-partial | Reusable waiting table interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /today<br>/today/panel<br>/today/unsnooze | 0 |
+| `partials/today/workbench.html` | application-partial | Reusable workbench interface primitive | info, success; default | explicit responsive contract | accessible name and label | /today<br>/today/panel<br>/today/unsnooze | 0 |
 | `partials/todos/row.html` | application-partial | Reusable row interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /todos | 0 |
 | `partials/upload_result.html` | application-partial | Reusable upload result interface primitive | canonical; default, error | explicit responsive contract | inherits semantic parent contract | /schools/upload | 0 |
 | `partials/vendor/apexcharts.html` | application-partial | Reusable apexcharts interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /analytics<br>/analytics/<br>/analytics/closure-quality<br>/analytics/country-director<br>/analytics/people<br>/analytics/program-lead<br>/analytics/publishing<br>/analytics/publishing/ | 0 |

@@ -7,8 +7,8 @@
 
   {% kpi_strip %}
     {% kpi_metric %}{% kpi_label %}Total Clusters{% endkpi_label %}{{ total_clusters }}{% kpi_helper %}{{ total_schools }} member schools{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Cluster Meetings Planned{% endkpi_label %}{{ meetings_planned }}{% kpi_helper %}Open plans in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
-    {% kpi_metric %}{% kpi_label %}Group Trainings Planned{% endkpi_label %}{{ trainings_planned }}{% kpi_helper %}Open plans in FY {{ fy }}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Cluster Meetings Planned{% endkpi_label %}{{ meetings_planned }}{% kpi_helper %}Open plans in {% firstof plan_period_label "FY "|add:fy %}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Group Trainings Planned{% endkpi_label %}{{ trainings_planned }}{% kpi_helper %}Open plans in {% firstof plan_period_label "FY "|add:fy %}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Active Clusters{% endkpi_label %}{{ perf_totals.active_clusters|default_if_none:0 }}{% kpi_helper %}{{ perf_totals.dormant_clusters|default:0 }} dormant{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Sessions Held{% endkpi_label %}{{ perf_totals.sessions_held|default:0 }}{% kpi_helper %}Meetings &amp; trainings{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Schools Reached{% endkpi_label %}{{ perf_totals.unique_schools_reached|default_if_none:0 }}{% kpi_helper %}Participating schools{% endkpi_helper %}{% endkpi_metric %}

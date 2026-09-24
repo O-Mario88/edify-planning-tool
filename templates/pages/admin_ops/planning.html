@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 
 {% block title %}Admin Planning — Edify{% endblock %}
 
@@ -16,33 +16,52 @@
   <section class="card p-4 space-y-3" aria-labelledby="admin-backlog-title">
     <h2 id="admin-backlog-title" class="text-[14px] font-extrabold text-slate-800">Unscheduled Platform Work</h2>
     {% if backlog %}
-    <div class="divide-y divide-slate-50">
-      {% for item in backlog %}
-      <div class="py-3 flex flex-col lg:flex-row lg:items-center gap-3">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-1.5 rounded-pill edify-text-caption font-bold {% if item.severity == 'critical' %}bg-rose-100 text-rose-700{% elif item.severity == 'high' %}bg-amber-100 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ item.get_severity_display }}</span>
-            <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ item.reference }}</span>
-            <span class="edify-text-caption font-bold text-slate-400">{{ item.get_category_display }}</span>
-          </div>
-          <p class="text-[13px] font-bold text-slate-700 mt-1">{{ item.title }}</p>
-          {% if item.affected_route %}<p class="text-[12px] font-semibold text-slate-400 mt-0.5">{{ item.affected_route }}</p>{% endif %}
-        </div>
-        <form method="post" action="/admin-ops/work-items/{{ item.id }}/schedule" class="flex items-center gap-2 shrink-0">
-          {% csrf_token %}
-          <label class="sr-only" for="sched-{{ item.id }}">Schedule {{ item.reference }} for</label>
-          <input id="sched-{{ item.id }}" type="date" name="scheduled_date" required class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
-          <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Schedule</button>
-        </form>
-      </div>
-      {% endfor %}
+    {% comment %}A table with the action at the end of each row (owner,
+    2026-09-23). A form cannot wrap a table row, so each row's form sits in
+    its Action cell and the date input joins it through `form=`.{% endcomment %}
+    <div class="overflow-x-auto">
+      {% paginate backlog "backlog_page" as backlog_pager %}
+      <table class="edify-record-table w-full text-left" data-waiting-table data-admin-backlog-table>
+        <caption class="sr-only">Platform work waiting to be scheduled, with its severity, category and the date to schedule it for</caption>
+        <thead>
+          <tr>
+            <th scope="col">Work item</th>
+            <th scope="col">Reference</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Category</th>
+            <th scope="col">Schedule for</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in backlog_pager.rows %}
+          <tr>
+            <th scope="row" data-record-title title="{{ item.title }}{% if item.affected_route %} · {{ item.affected_route }}{% endif %}"><span>{{ item.title }}</span>{% if item.affected_route %}<span>{{ item.affected_route }}</span>{% endif %}</th>
+            <td data-label="Reference" class="tabular-nums">{{ item.reference }}</td>
+            <td data-label="Severity"><span class="edify-badge" data-tone="{% if item.severity == 'critical' %}danger{% elif item.severity == 'high' %}warning{% else %}neutral{% endif %}">{{ item.get_severity_display }}</span></td>
+            <td data-label="Category">{{ item.get_category_display }}</td>
+            <td data-label="Schedule for">
+              <label class="sr-only" for="sched-{{ item.id }}">Schedule {{ item.reference }} for</label>
+              <input id="sched-{{ item.id }}" form="schedule-{{ item.id }}" type="date" name="scheduled_date" required class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+            </td>
+            <td data-label="Action">
+              <form id="schedule-{{ item.id }}" method="post" action="/admin-ops/work-items/{{ item.id }}/schedule" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Schedule</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=backlog_pager param="backlog_page" %}
     </div>
     {% else %}
     <p class="text-[12px] font-medium text-slate-400 py-8 text-center">Nothing is waiting to be scheduled. New tickets, incidents and maintenance appear here automatically.</p>
     {% endif %}
   </section>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="space-y-4">
     <section class="card p-4 space-y-2" aria-labelledby="admin-open-incidents-title">
       <h2 id="admin-open-incidents-title" class="text-[14px] font-extrabold text-slate-800">Open Incidents</h2>
       {% for incident in open_incidents %}
@@ -60,23 +79,45 @@
 
     <section class="card p-4 space-y-2" aria-labelledby="admin-untriaged-title">
       <h2 id="admin-untriaged-title" class="text-[14px] font-extrabold text-slate-800">Tickets Awaiting Triage</h2>
-      {% for ticket in untriaged_tickets %}
-      <form method="post" action="/admin-ops/tickets/{{ ticket.id }}/triage" class="py-2 border-b border-slate-50 last:border-0 flex flex-col sm:flex-row sm:items-center gap-2">
-        {% csrf_token %}
-        <div class="min-w-0 flex-1">
-          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ ticket.reference }}</span>
-          <p class="text-[12px] font-bold text-slate-700">{{ ticket.title }}</p>
-          <p class="edify-text-caption font-semibold text-slate-400">{{ ticket.get_category_display }} · {{ ticket.reporter_role|default:"user" }}</p>
-        </div>
-        <label class="sr-only" for="sev-{{ ticket.id }}">Severity for {{ ticket.reference }}</label>
-        <select id="sev-{{ ticket.id }}" name="severity" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
-          {% for value, label in severities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select>
-        <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid text-white text-[12px] font-bold shrink-0">Triage</button>
-      </form>
-      {% empty %}
+      {% if untriaged_tickets %}
+      <div class="overflow-x-auto">
+        {% paginate untriaged_tickets "triage_page" as triage_pager %}
+        <table class="edify-record-table w-full text-left" data-waiting-table data-admin-triage-table>
+          <caption class="sr-only">Support tickets waiting for triage, with the severity to give each</caption>
+          <thead>
+            <tr>
+              <th scope="col">Ticket</th>
+              <th scope="col">Category</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ticket in triage_pager.rows %}
+            <tr>
+              <th scope="row" data-record-title title="{{ ticket.reference }} · {{ ticket.title }}"><span class="tabular-nums">{{ ticket.reference }}</span><span>{{ ticket.title }}</span></th>
+              <td data-label="Category">{{ ticket.get_category_display }} · {{ ticket.reporter_role|default:"user" }}</td>
+              <td data-label="Severity">
+                <label class="sr-only" for="sev-{{ ticket.id }}">Severity for {{ ticket.reference }}</label>
+                <select id="sev-{{ ticket.id }}" form="triage-{{ ticket.id }}" name="severity" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+                  {% for value, label in severities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                </select>
+              </td>
+              <td data-label="Action">
+                <form id="triage-{{ ticket.id }}" method="post" action="/admin-ops/tickets/{{ ticket.id }}/triage" class="m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid text-white text-[12px] font-bold">Triage</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=triage_pager param="triage_page" %}
+      </div>
+      {% else %}
       <p class="text-[12px] font-medium text-slate-400 py-6 text-center">No tickets are waiting for triage.</p>
-      {% endfor %}
+      {% endif %}
     </section>
   </div>
 </div>

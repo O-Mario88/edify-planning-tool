@@ -76,6 +76,41 @@ def _supervisor_of(profile):
     return None
 
 
+def _last_delivered_dates(cluster_ids) -> dict:
+    """Each cluster's most recent meeting or training that actually happened.
+
+    Delivered means completed by the person who ran it: submitted and waiting
+    for verification, or verified. A plan is not an activity until then, and
+    plans are cancelled and moved all the time, so a planned, rescheduled or
+    cancelled session never sets this date (owner, 2026-09-23). The delivery
+    date the completion recorded wins over the date it was planned for.
+    """
+    from django.db.models import Max
+    from django.db.models.functions import Coalesce
+
+    from apps.activities.models import Activity
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.planning.school_planning_badges import (
+        AWAITING_VERIFICATION_STATUSES,
+        VERIFIED_STATUSES,
+    )
+
+    if not cluster_ids:
+        return {}
+    return {
+        row["cluster_id"]: row["last_date"]
+        for row in Activity.objects.filter(
+            cluster_id__in=cluster_ids,
+            deleted_at__isnull=True,
+            activity_type__in=CLUSTER_MEETING_TYPES + TRAINING_TYPES,
+            status__in=AWAITING_VERIFICATION_STATUSES | VERIFIED_STATUSES,
+        )
+        .values("cluster_id")
+        .annotate(last_date=Max(Coalesce("actual_delivery_date", "planned_date")))
+        if row["last_date"]
+    }
+
+
 def _label(profile) -> str:
     if profile is None:
         return "Unassigned"
@@ -117,9 +152,7 @@ def grouped_clusters(principal) -> dict:
     # 7-column metrics for cluster tables
     cluster_ids = [c.id for c in clusters]
     from apps.ssa.models import SsaRecord, SsaScore
-    from django.db.models import Avg, Max
-    from apps.activities.models import Activity
-    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from django.db.models import Avg
     from apps.core.enums import SsaIntervention
 
     ssa_avgs = {
@@ -156,16 +189,8 @@ def grouped_clusters(principal) -> dict:
         least_interventions[cid] = f"{int_label} ({round(min_score, 1)})"
 
     last_activities = {
-        row["cluster_id"]: row["last_date"].strftime("%b %d, %Y")
-        if row["last_date"]
-        else "—"
-        for row in Activity.objects.filter(
-            cluster_id__in=cluster_ids,
-            deleted_at__isnull=True,
-            activity_type__in=CLUSTER_MEETING_TYPES + TRAINING_TYPES,
-        )
-        .values("cluster_id")
-        .annotate(last_date=Max("planned_date"))
+        cluster_id: day.strftime("%b %d, %Y")
+        for cluster_id, day in _last_delivered_dates(cluster_ids).items()
     }
 
     groups: dict[str, dict] = {}
@@ -246,10 +271,9 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     from apps.core.scoping import cluster_queryset, resolve_user_scope
     from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
-    from apps.activities.models import Activity
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
     from apps.planning.oversight_service import system_program_leads
-    from django.db.models import Avg, Max
+    from django.db.models import Avg
 
     scope = resolve_user_scope(principal)
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
@@ -264,7 +288,52 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         .order_by("name")
     )
     cluster_ids = [c.id for c in clusters]
-    owners = _staff_directory({c.responsible_staff_id for c in clusters})
+
+    # The group trainings and cluster meetings, from the same planning records
+    # My Plan reads. The operational year reads forward into the years ahead:
+    # in September people plan October, which is the next fiscal year, and a
+    # page limited to the operational year showed empty tables while My Plan
+    # listed the sessions (owner, 2026-09-23).
+    from apps.core.fy import get_operational_fy
+    from apps.core.scoping import owner_ids
+    from apps.planning import oversight_service as planning
+    from apps.planning.fy_policy import horizon_label, planning_horizon
+
+    page_fy = str(fy or get_operational_fy())
+    plan_fys = planning_horizon(page_fy)
+    cluster_work = [
+        item
+        for item in planning.build_items(principal, fy=page_fy, fys=plan_fys)
+        if item.cluster_id
+        and not item.is_in_school_training
+        and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
+    ]
+
+    # Keep the activity ledger within this page's cluster/team scope, even
+    # when a development account also carries superuser privileges.
+    allowed_people = planning._both_id_spaces(
+        set(owner_ids(principal)) | set(scope.supervised_staff_ids or [])
+    )
+    cluster_work = [
+        item
+        for item in cluster_work
+        if item.cluster_id in cluster_ids
+        or (uses_member_tabs and item.operational_owner_id in allowed_people)
+    ]
+
+    # One directory for the people holding clusters and the people running
+    # the sessions. A person's work is filed by the same profile and the same
+    # Programme Lead as their clusters, in either id space: resolving the two
+    # separately filed a CCEO's clusters under one tab and their sessions
+    # under another, or under a second tab of the same name.
+    owners = _staff_directory(
+        {c.responsible_staff_id for c in clusters}
+        | {item.operational_owner_id for item in cluster_work}
+    )
+    placements = []
+    for item in cluster_work:
+        worker = owners.get((item.operational_owner_id or "").strip())
+        placements.append((item, worker, _supervisor_of(worker)))
 
     # 1. School counts & mapping
     schools = list(
@@ -322,18 +391,8 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             int_label = int_code.replace("_", " ").title()
         least_interventions[cid] = f"{int_label} ({round(min_score, 1)})"
 
-    # 4. Date of last activity (cluster meeting or training)
-    act_filter = {
-        "cluster_id__in": cluster_ids,
-        "deleted_at__isnull": True,
-        "activity_type__in": CLUSTER_MEETING_TYPES + TRAINING_TYPES,
-    }
-    last_activities = {
-        row["cluster_id"]: row["last_date"]
-        for row in Activity.objects.filter(**act_filter)
-        .values("cluster_id")
-        .annotate(last_date=Max("planned_date"))
-    }
+    # 4. Date of last activity: the last meeting or training delivered.
+    last_activities = _last_delivered_dates(cluster_ids)
 
     # 5. Format cluster table rows (excluding Responsible CCEO column)
     formatted_clusters = []
@@ -366,32 +425,6 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             }
         )
 
-    from apps.planning import oversight_service as planning
-    from apps.core.fy import get_operational_fy
-
-    cluster_work = [
-        item
-        for item in planning.build_items(principal, fy=str(fy or get_operational_fy()))
-        if item.cluster_id
-        and not item.is_in_school_training
-        and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES
-    ]
-
-    # Keep the activity ledger within this page's cluster/team scope, even
-    # when a development account also carries superuser privileges.
-    from apps.core.scoping import owner_ids
-
-    allowed_people = planning._both_id_spaces(
-        set(owner_ids(principal)) | set(scope.supervised_staff_ids or [])
-    )
-    cluster_work = [
-        item
-        for item in cluster_work
-        if item.cluster_id in cluster_ids
-        or (uses_member_tabs and item.operational_owner_id in allowed_people)
-    ]
-
-    # 6. Build hierarchy tabs
     # 6. Build hierarchy tabs (Unified across PL, IA, CD, RPL)
     sys_pls = system_program_leads()
     if not scope.country_scope:
@@ -402,9 +435,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             if identifier
         }
         visible_lead_ids.update(
-            str(item.supervising_pl_id)
-            for item in cluster_work
-            if item.supervising_pl_id
+            str(lead.id) for _item, _worker, lead in placements if lead
         )
         sys_pls = [
             pl for pl in sys_pls if visible_lead_ids.intersection(map(str, pl["ids"]))
@@ -463,8 +494,11 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             key=lambda g: (g["id"] == "__unassigned__", g["name"].casefold()),
         )
 
+    def lead_entry(lead):
+        return pl_lookup.get(str(lead.id)) if lead else None
+
     if unassigned_pl["count"] > 0 or any(
-        not item.supervising_pl_id for item in cluster_work
+        lead_entry(lead) is None for _item, _worker, lead in placements
     ):
         unassigned_pl["cceo_tabs"] = sorted(
             unassigned_pl["cceos"].values(),
@@ -473,8 +507,6 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         leads_data.append(unassigned_pl)
 
     # Determine default selected PL tab (preselect viewing PL if applicable)
-    from apps.core.scoping import owner_ids
-
     user_staff_ids = set(owner_ids(principal))
     selected_program_lead = None
     for pl_entry in leads_data:
@@ -548,99 +580,60 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
             "schools": 0,
         }
 
+    def session_list(tab, item):
+        key = "meetings" if item.activity_type in CLUSTER_MEETING_TYPES else "trainings"
+        return tab.setdefault(key, [])
+
+    def worker_key(worker):
+        return str(worker.id) if worker else UNASSIGNED
+
+    def worker_name(item, worker):
+        return (
+            _label(worker) if worker else (item.operational_owner_name or "Unassigned")
+        )
+
     # Every Lead's roster in two queries, not two per Lead.
     rosters = planning.program_lead_rosters([lead["id"] for lead in leads_data])
-    # Work reaches a tab by its owner, and `operational_owner_id` is a User id
-    # or a StaffProfile id depending on the path that wrote it, while the tabs
-    # are keyed by profile. Grouped by the raw id, an officer with no Lead got
-    # two "Unassigned" tabs — one holding their clusters, one their work — so
-    # every owner is resolved to one identity, in both id spaces, first.
-    people = _staff_directory(
-        {item.operational_owner_id for item in cluster_work}
-        | {str(tab["id"]) for lead in leads_data for tab in lead["cceo_tabs"]}
-    )
-
-    def owner_entry(key):
-        if not key or key == UNASSIGNED:
-            return {
-                "id": UNASSIGNED,
-                "name": "Unassigned",
-                "ids": {UNASSIGNED, "", None},
-            }
-        profile = people.get(key)
-        if profile is None:
-            return {"id": key, "name": "Unassigned", "ids": {key}}
-        return {
-            "id": profile.id,
-            "name": _label(profile),
-            "ids": {profile.id, profile.user_id} - {None},
-        }
 
     for lead in leads_data:
         roster = rosters.get(str(lead["id"]), [])
         existing = {tab["id"]: tab for tab in lead["cceo_tabs"]}
         ordered = [existing.pop(member["id"], member_tab(member)) for member in roster]
         lead["cceo_tabs"] = ordered + list(existing.values())
-        lead_work = [
-            item
-            for item in cluster_work
-            if str(item.supervising_pl_id or UNASSIGNED) == str(lead["id"])
-        ]
-        # The roster, then everyone else this Lead's tabs or work name — each
-        # once, so their clusters and their work share one tab.
-        owners = list(roster)
-        known = {owner_id for member in roster for owner_id in member["ids"]}
-        for key in [str(tab["id"]) for tab in lead["cceo_tabs"]] + [
-            item.operational_owner_id for item in lead_work
-        ]:
-            if key in known:
-                continue
-            entry = owner_entry(key)
-            owners.append(entry)
-            known.update(entry["ids"] | {key})
-        groups = planning.group_by_owner(lead_work, owners=owners)
-        tabs = {tab["id"]: tab for tab in lead["cceo_tabs"]}
-        for group in groups:
-            if not group["items"] and group["id"] not in tabs:
-                continue
-            tab = tabs.get(group["id"])
-            if tab is None:
-                tab = member_tab(group)
-                lead["cceo_tabs"].append(tab)
-            tab["meetings"] = [
-                item
-                for item in group["items"]
-                if item.activity_type in CLUSTER_MEETING_TYPES
-            ]
-            tab["trainings"] = [
-                item for item in group["items"] if item.activity_type in TRAINING_TYPES
-            ]
+        for tab in lead["cceo_tabs"]:
+            tab["meetings"], tab["trainings"] = [], []
+    lead_tabs = {
+        id(lead): {str(tab["id"]): tab for tab in lead["cceo_tabs"]}
+        for lead in leads_data
+    }
+    for item, worker, lead in placements:
+        target = lead_entry(lead) or unassigned_pl
+        tabs = lead_tabs.get(id(target))
+        if tabs is None:
+            continue
+        key = worker_key(worker)
+        tab = tabs.get(key)
+        if tab is None:
+            tab = member_tab({"id": key, "name": worker_name(item, worker)})
+            target["cceo_tabs"].append(tab)
+            tabs[key] = tab
+        session_list(tab, item).append(item)
 
     if uses_member_tabs:
-        directory = _staff_directory(
-            {item.operational_owner_id for item in cluster_work}
-        )
         tabs = {str(tab["id"]): tab for tab in cceo_tabs}
         for tab in cceo_tabs:
             tab["meetings"], tab["trainings"] = [], []
-        for item in cluster_work:
-            owner = directory.get(item.operational_owner_id)
-            key = (
-                "my-clusters"
-                if item.operational_owner_id in user_staff_ids
-                else str(getattr(owner, "id", None) or "__unassigned__")
+        for item, worker, _lead in placements:
+            mine = item.operational_owner_id in user_staff_ids or (
+                worker is not None
+                and bool({str(worker.id), str(worker.user_id)} & user_staff_ids)
             )
+            key = "my-clusters" if mine else worker_key(worker)
             if key not in tabs:
-                tab = member_tab({"id": key, "name": _label(owner)})
+                tab = member_tab({"id": key, "name": worker_name(item, worker)})
                 cceo_tabs.append(tab)
                 tabs[key] = tab
-            tab = tabs[key]
-            tab.setdefault(
-                "meetings"
-                if item.activity_type in CLUSTER_MEETING_TYPES
-                else "trainings",
-                [],
-            ).append(item)
+            session_list(tabs[key], item).append(item)
 
     from apps.planning.school_planning_badges import PLANNED_STATUSES
 
@@ -681,7 +674,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     officer_activity: list[dict] = []
     lead_activity: list[dict] = []
     try:
-        perf = cluster_performance(principal, fy=str(fy or "2026"))
+        perf = cluster_performance(principal, fy=page_fy)
         raw_totals = perf.get("totals", {})
         perf_totals = {
             "active_clusters": max(0, len(clusters) - raw_totals.get("dormant", 0)),
@@ -747,6 +740,8 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         "is_programme_lead": is_programme_lead,
         "uses_member_tabs": uses_member_tabs,
         **plan_counts(cluster_work),
+        "plan_fys": plan_fys,
+        "plan_period_label": horizon_label(plan_fys),
         "selected_program_lead": selected_program_lead
         or (leads_data[0]["id"] if leads_data else ""),
         "leads": leads_data,
