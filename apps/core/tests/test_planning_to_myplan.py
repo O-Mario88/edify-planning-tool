@@ -21,7 +21,6 @@ from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.fund_requests.models import FundRequest, WeeklyFundRequest
 from apps.core.fy import get_operational_fy
-from apps.core.tests.fy_windows import MidFiscalYearClock
 from apps.geography.models import Region, District
 from apps.my_plan.services import get_frontend_context
 from apps.schools.models import School
@@ -73,7 +72,7 @@ def _schedulable_date():
     return day
 
 
-class PlanningToMyPlanFlowTest(MidFiscalYearClock, TestCase):
+class PlanningToMyPlanFlowTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="East")
         self.district = District.objects.create(name="Mbale", region=self.region)

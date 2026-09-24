@@ -45,7 +45,6 @@ from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.activities.models import Activity
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy
-from apps.core.tests.fy_windows import MidFiscalYearClock
 from apps.geography.models import District, Region, SubCounty
 from apps.partners.models import Partner, PartnerAssignment
 from apps.planning.visit_gate import (
@@ -74,7 +73,7 @@ def _staff(uid, role, name):
     )
 
 
-class _GateFixture(MidFiscalYearClock):
+class _GateFixture:
     """Deliberately not a TestCase: subclassing one test class from another
     makes the parent's tests run a second time under the child's name."""
 
