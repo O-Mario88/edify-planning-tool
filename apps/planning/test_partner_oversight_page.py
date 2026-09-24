@@ -97,8 +97,8 @@ class NoCostBeforeSchedulingOnThePageTest(PageFixture):
 
     def test_the_export_leaves_the_cost_cell_empty_rather_than_zero(self):
         """A spreadsheet sums a column without asking what the zeros meant."""
-        self.assign()
         self.schedule(self.assign(), cost=95_000)
+        self.assign()
 
         rows = list(svc.export_rows(svc.build_items(self.pl_user, fy=self.fy)))
 

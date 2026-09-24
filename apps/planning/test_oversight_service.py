@@ -128,7 +128,7 @@ class OversightFixture(TestCase):
             )
         return activity
 
-    def _assignment(self, *, school, managing_staff, status="assigned"):
+    def _assignment(self, *, school, managing_staff, status="assigned", **kw):
         return PartnerAssignment.objects.create(
             school=school,
             partner=self.partner,
@@ -136,6 +136,7 @@ class OversightFixture(TestCase):
             monitoring_staff_id=managing_staff.id,
             expected_activity_type="school_visit",
             status=status,
+            **kw,
         )
 
 
@@ -370,8 +371,15 @@ class QueryBudgetTest(OversightFixture):
         for index in range(12):
             owner = self.james if index % 2 else self.mary
             self._activity(owner=owner, school=self.school_a, cost=1_000 * index)
-        for _ in range(6):
-            self._assignment(school=self.school_b, managing_staff=self.mary)
+        # Six waiting handovers, each a different Core slot: a school waits
+        # on the same partner once per slot at a time.
+        for index in range(6):
+            self._assignment(
+                school=self.school_b,
+                managing_staff=self.mary,
+                support_type="Visit",
+                visit_number=str(index + 1),
+            )
 
         # Five statements, and five whatever the row count: activities,
         # assignments, the staff directory, the supervisor links, the cost

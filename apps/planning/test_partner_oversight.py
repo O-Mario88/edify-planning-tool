@@ -147,8 +147,10 @@ class OneItemPerHandoverTest(PartnerOversightFixture):
     def test_two_handovers_to_one_partner_at_one_school_stay_distinct(self):
         """The case a partner+school match would collapse into one."""
         first = self.assign()
-        second = self.assign()
         self.schedule(first)
+        # Scheduled before the second arrives: a school waits on the same
+        # partner once at a time.
+        second = self.assign()
 
         items = svc.build_items(self.pl_user, fy=self.fy)
 
@@ -169,8 +171,8 @@ class CostAppearsOnlyAfterSchedulingTest(PartnerOversightFixture):
         self.assertFalse(item.has_cost)
 
     def test_the_scheduled_budget_excludes_unscheduled_handovers(self):
-        self.assign()
         self.schedule(self.assign(), cost=180_000)
+        self.assign()
 
         summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
 
@@ -298,8 +300,10 @@ class QueryBudgetTest(PartnerOversightFixture):
     def test_the_cost_is_fixed_rather_than_one_query_per_handover(self):
         for _ in range(10):
             self.schedule(self.assign(), cost=10_000)
-        for _ in range(5):
-            self.assign()
+        # Five waiting handovers, each a different Core slot: a school waits
+        # on the same partner once per slot at a time.
+        for index in range(5):
+            self.assign(support_type="Visit", visit_number=str(index + 1))
 
         with CaptureQueriesContext(connection) as captured:
             items = svc.build_items(self.pl_user, fy=self.fy)
