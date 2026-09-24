@@ -1,9 +1,9 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load static frontend_filters %}
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/presence.css' %}?v=20260924plpresence1">{% endblock %}
 
 {% block shell_content %}
 {% comment %}

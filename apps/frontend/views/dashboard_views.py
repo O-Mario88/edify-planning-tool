@@ -361,11 +361,13 @@ def _program_lead_dashboard(request, avatar_initials: str):
 
         context.update(country_map_context(fy))
         context.update(_pl_map_context(user, fy, {}))
-    if view == "team":
+    if view in ("today", "team"):
         # Who's Online, over this Lead's reporting line and nobody else's
-        # (owner, 2026-09-22). It is built only for the view that shows it:
-        # the Lead's other views ask different questions and should not pay a
-        # roster query for a panel they do not draw.
+        # (owner, 2026-09-22). On Today as well as Team since 2026-09-24 —
+        # "put it on the main dashboard so they can monitor their team
+        # working". Built only for the views that show it: the Lead's other
+        # views ask different questions and should not pay a roster query for
+        # a panel they do not draw.
         from apps.accounts.presence import presence_summary, team_user_ids
 
         context["presence"] = presence_summary(only_user_ids=team_user_ids(user))
@@ -1852,6 +1854,43 @@ def planning_progress_fragment_view(request):
 
 @login_required
 @require_page_permission("dashboard")
+def pl_past_due_popup_view(request):
+    """The team's past-due plans, in the popup the Lead's dashboard opens.
+
+    Owner, 2026-09-24: "All past due activities planned should popup on the
+    program leads main dashboard with the button send to {CCEO name} and when
+    they work on it, it should disappear." The rows are the dashboard's own
+    past-due rows (apps.my_plan.past_due_service), team only and oldest first,
+    so a plan leaves the popup the moment its officer completes, reschedules
+    or cancels it — nothing here is stored.
+    """
+    from django.http import HttpResponseForbidden
+
+    from apps.my_plan.past_due_service import get_past_due_dashboard_context
+
+    if getattr(request.user, "active_role", "") != "Program Lead":
+        return HttpResponseForbidden("The past-due popup is the Programme Lead's.")
+    data = get_past_due_dashboard_context(request.user)
+    team = data.get("past_due_team") or []
+    return render(
+        request,
+        "partials/dashboards/pl/past_due_popup.html",
+        {
+            "rows": list(team[:PAST_DUE_POPUP_LIMIT]),
+            "total": len(team),
+            "unsent": data.get("pl_team_past_due_unsent", 0),
+            "drawer_size": "lg",
+        },
+    )
+
+
+#: How many past-due team plans the popup lists; the rest are one link away,
+#: in "What needs you now" on the same dashboard.
+PAST_DUE_POPUP_LIMIT = 25
+
+
+@login_required
+@require_page_permission("dashboard")
 @require_POST
 def notify_past_due_activity(request, activity_id: str):
     """Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity."""
@@ -1862,7 +1901,20 @@ def notify_past_due_activity(request, activity_id: str):
     from apps.accounts.models import StaffProfile, User
     from apps.notifications.services import WorkflowNotificationService
 
-    activity = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    from django.http import HttpResponseForbidden
+
+    from apps.my_plan.past_due_service import team_past_due_activity
+
+    get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    # Only the Lead the dashboard showed it to, and only while it is still
+    # past due: any signed-in user could previously POST any activity id and
+    # send its officer an "Action Required" notice.
+    activity = team_past_due_activity(request.user, activity_id)
+    if activity is None:
+        return HttpResponseForbidden(
+            "Only the officer's Programme Lead can send a past-due plan, and "
+            "only while it is still past due."
+        )
     recipient_id = activity.responsible_staff_id or activity.monitored_by_staff_id
 
     # Resolve recipient name and user

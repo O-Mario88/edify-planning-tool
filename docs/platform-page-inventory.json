@@ -4617,6 +4617,30 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4844,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard/past-due-popup"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Past Due Popup",
+      "purpose": "Reusable past due popup interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/pl/past_due_popup.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
@@ -4718,18 +4742,19 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1575,
+      "bytes": 3179,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Today View",
       "purpose": "Reusable today view interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "error"
       ],
       "tables": 0,
       "template": "partials/dashboards/pl/today_view.html",
@@ -6676,7 +6701,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4219,
+      "bytes": 4454,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline/<str:application_id>",
@@ -6690,7 +6715,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Form Drawer",
       "purpose": "Reusable form drawer interface primitive",
@@ -7694,9 +7719,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 9507,
+      "bytes": 9742,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -7711,12 +7737,15 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "error",
         "selected",
         "open"
       ],
       "tables": 1,
       "template": "partials/my_plan/activity_detail_drawer.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -7884,7 +7913,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23514,
+      "bytes": 23848,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -8621,14 +8650,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5770,
+      "bytes": 6817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Cluster Activity Table",
       "purpose": "Reusable cluster activity table interface primitive",
@@ -16204,7 +16233,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.activity_detail_view",
       "card_count": 0,
@@ -16284,7 +16313,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -24615,7 +24644,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -24842,7 +24873,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25077,7 +25110,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25314,7 +25349,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25393,7 +25430,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25620,7 +25659,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25855,7 +25896,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -26169,7 +26212,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -26399,7 +26444,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -28764,7 +28811,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -28843,7 +28892,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -29347,7 +29398,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -29426,7 +29479,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -29505,7 +29560,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -33404,7 +33461,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -33942,6 +34001,106 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.pl_past_due_popup_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/dashboards/pl/past_due_popup.html",
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /dashboard/notify-past-due/{{ row.id }}/"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-F635C306BF",
+      "page_title": "Pl Past Due Popup",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Pl Past Due Popup",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The team's past-due plans, in the popup the Lead's dashboard opens.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/dashboard/past-due-popup",
+      "route_name": "pl_past_due_popup",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.admin_ops.services",
+        "apps.cce_leadership.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.notifications.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/dashboards/pl/past_due_popup.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -36801,7 +36960,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -36954,7 +37115,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -41044,7 +41207,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -41197,7 +41362,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -44459,7 +44626,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -44618,7 +44787,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -44777,7 +44948,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -44936,7 +45109,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -45172,7 +45347,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -45331,7 +45508,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -45490,7 +45669,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -46141,7 +46322,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -46223,7 +46406,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -46536,7 +46721,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -46618,7 +46805,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -46854,7 +47043,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -47013,7 +47204,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -47249,7 +47442,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -47716,7 +47911,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -47878,7 +48075,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -48171,7 +48370,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -48399,7 +48600,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -48642,7 +48845,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -48795,7 +49000,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -48948,7 +49155,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -49101,7 +49310,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -49451,7 +49662,7 @@
       "page_type": "approval-or-verification",
       "per_page_css": [],
       "permission_key": "ia_partner_evidence",
-      "primary_action": "Complete",
+      "primary_action": "Verified",
       "primary_user_decision": "Should this record be approved, returned, or verified?",
       "purpose": "\u00a710.2 the review page: plan vs actual, evidence, history \u2014 and the two workflow decisions, Return and Complete.",
       "remediation": "No automated remediation outstanding",
@@ -50486,7 +50697,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -50719,7 +50932,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -50876,7 +51091,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -51265,7 +51482,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -51532,7 +51751,7 @@
       "page_type": "approval-or-verification",
       "per_page_css": [],
       "permission_key": "ia_review_workspace",
-      "primary_action": "Clear Activity",
+      "primary_action": "Verified",
       "primary_user_decision": "Should this record be approved, returned, or verified?",
       "purpose": "Premium workspace for verifying a single activity.",
       "remediation": "No automated remediation outstanding",
@@ -57029,7 +57248,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -57650,7 +57871,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.activity_detail_view",
       "card_count": 0,
@@ -57730,7 +57951,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
@@ -58378,7 +58599,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -60934,7 +61157,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -61087,7 +61312,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -61399,7 +61626,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -62028,7 +62257,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -62120,7 +62351,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -62299,7 +62532,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -62565,7 +62800,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -67784,7 +68021,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -67963,7 +68202,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -69874,7 +70115,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -69954,7 +70197,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -70123,7 +70368,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -70816,7 +71063,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -71227,7 +71476,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -71388,7 +71639,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -74153,7 +74406,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -74306,7 +74561,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -74817,7 +75074,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -74983,7 +75242,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -75288,7 +75549,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -75530,7 +75793,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -75685,7 +75950,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -80197,7 +80464,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -83062,7 +83331,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -83146,7 +83417,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -83309,7 +83582,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -83551,7 +83826,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ form_secondary.hx_get }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -85665,6 +85942,21 @@
         "max_interval_minutes": 1800,
         "max_retries": 2,
         "name": "daily_digest",
+        "retryable": true
+      },
+      {
+        "cron": "daily 06:45 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 6,
+          "minute": 45
+        },
+        "description": "Each CCEO's activities for the day, and each Programme Lead's team plans to monitor (today's work, past due, completions waiting).",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "Keyed per person per day (context_id dp-<date>), checked even against archived notices; a same-day re-run sends nothing.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "daily_plan_notifications",
         "retryable": true
       },
       {
@@ -97205,6 +97497,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.dashboard_views.pl_past_due_popup_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/dashboard/past-due-popup",
+      "route_name": "pl_past_due_popup",
+      "templates": [
+        "partials/dashboards/pl/past_due_popup.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
       "kind": "action",
       "methods": [
@@ -105330,39 +105636,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 533,
+    "accessibility_contract_pass": 534,
     "activity_states": 24,
-    "all_routes": 1296,
+    "all_routes": 1297,
     "api_routes": 360,
-    "component_templates": 492,
+    "component_templates": 493,
     "full_pages": 260,
-    "mobile_contract_pass": 533,
+    "mobile_contract_pass": 534,
     "nonvisual_actions": 266,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 536,
+      "interaction-fragment": 537,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 270,
-    "permission_gated": 809,
+    "partials_and_drawers": 271,
+    "permission_gated": 810,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 824,
-    "scheduled_jobs": 28,
+    "routed_surfaces": 825,
+    "scheduled_jobs": 29,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 533,
-    "test_referenced": 717,
-    "theme_contract_pass": 533
+    "tablet_contract_pass": 534,
+    "test_referenced": 718,
+    "theme_contract_pass": 534
   }
 }

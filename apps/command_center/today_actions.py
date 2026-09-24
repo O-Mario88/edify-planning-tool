@@ -211,6 +211,10 @@ def _query(row: dict) -> dict[str, str]:
 
 _CONFIRM = Operation("confirm", "Confirm", tone="primary")
 _APPROVE = Operation("approve", "Approve", tone="primary")
+#: An activity completion's two decisions, named the same on every surface a
+#: Programme Lead or Impact Assessment decides one (owner, 2026-09-24):
+#: Verified, or Return with the reason the officer reads.
+_VERIFIED = Operation("confirm", "Verified", tone="primary")
 
 
 def _return(label="Return", reason_label="What needs correcting") -> Operation:
@@ -236,8 +240,8 @@ ADAPTERS: tuple[Adapter, ...] = (
         re.compile(r"^plrev-(?P<id>.+)$"),
         "completion_review",
         (
-            _CONFIRM,
-            _return(),
+            _VERIFIED,
+            _return(reason_label="Why are you returning it?"),
             _open(
                 "review",
                 "Review evidence",
@@ -317,7 +321,7 @@ ADAPTERS: tuple[Adapter, ...] = (
         (
             Operation(
                 "confirm",
-                "Confirm",
+                "Verified",
                 tone="primary",
                 reason="optional",
                 reason_label="Verification note (optional)",

@@ -1,0 +1,78 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+The team's past-due plans, opened by the Programme Lead's main dashboard
+(owner, 2026-09-24): "All past due activities planned should popup on the
+program leads main dashboard with the button send to {CCEO name} and when they
+work on it, it should disappear."
+
+Rows are apps.my_plan.past_due_service's team rows, oldest first. Nothing is
+stored for the popup: a plan leaves it the moment its officer completes,
+reschedules or cancels it, and that same moment closes the officer's reminder
+(apps.activities.services._resolve_overdue_reminder). The send button is the
+one "What needs you now" already uses, against the same scoped endpoint.
+{% endcomment %}
+
+{% block drawer_title %}Past-due team plans{% endblock %}
+{% block drawer_subtitle %}{{ total }} plan{{ total|pluralize }} past {% if total == 1 %}its{% else %}their{% endif %} date{% if unsent %} · {{ unsent }} not yet sent{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-3 text-slate-700" data-pl-past-due-popup>
+  <p class="edify-text-caption text-slate-500">Send each one to its officer to complete, reschedule or cancel. A plan leaves this list as soon as they act on it.</p>
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="edify-record-table w-full text-left border-collapse text-[12px]" aria-label="Past-due team plans">
+      <thead>
+        <tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/40">
+          <th scope="col" class="px-4 py-2.5">Plan</th>
+          <th scope="col" class="px-4 py-2.5">Officer</th>
+          <th scope="col" class="px-4 py-2.5">Planned date</th>
+          <th scope="col" class="px-3 py-2.5 text-right"><span class="sr-only">Send</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for row in rows %}
+        <tr data-past-due-row="{{ row.id }}">
+          <td class="px-4 py-3 align-top" data-record-title>
+            <span class="font-bold">{{ row.activity_type_label }}</span>
+            <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ row.school_name }}</p>
+          </td>
+          <td class="px-4 py-3 align-top text-slate-600 font-semibold" data-label="Officer">{{ row.owner }}</td>
+          <td class="px-4 py-3 align-top" data-label="Planned date">
+            {{ row.planned_date|date:"j M Y"|default:"—" }}
+            <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ row.days_overdue }} day{{ row.days_overdue|pluralize }} late</p>
+          </td>
+          <td class="px-3 py-3 align-top text-right" data-label="Send">
+            {% if row.reminder_sent %}
+            <button type="button" disabled
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                    title="Reminder already sent to {{ row.owner }}">
+              <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Sent to {{ row.owner_first_name }}
+            </button>
+            {% else %}
+            <button type="button"
+                    hx-post="/dashboard/notify-past-due/{{ row.id }}/"
+                    hx-swap="outerHTML"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
+                    title="Notify {{ row.owner }} to complete, reschedule, or cancel this activity">
+              <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              Send to {{ row.owner_first_name }}
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total > rows|length %}
+  <p class="edify-text-caption text-slate-500">Showing the {{ rows|length }} oldest of {{ total }}. The rest are in What needs you now on your dashboard.</p>
+  {% endif %}
+  {% else %}
+  {% include "components/empty_state.html" with message="No past-due team plans." hint="Every plan your officers hold is on or ahead of its date." compact="true" %}
+  {% endif %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+</div>
+{% endblock %}

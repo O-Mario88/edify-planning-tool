@@ -270,6 +270,20 @@ class ActivityReturnService:
         _assert_may_certify(actor_id, activity)
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
+        # The reason is required here, not only in the form (owner,
+        # 2026-09-24: "the reason for returning should be clearly stated"). A
+        # category names the kind of problem; the written explanation tells
+        # the officer what to fix, so it is the part that may not be blank.
+        reasons = [str(r).strip() for r in (reasons or []) if str(r).strip()]
+        comment = (comment or "").strip()
+        if not comment:
+            raise BadRequest(
+                "Say why you are returning it — for example, which participants "
+                "are not entered in Salesforce — so the officer knows what to fix."
+            )
+        from apps.activities.return_notes import compose
+
+        note = compose(reasons, comment)
         with transaction.atomic():
             activity = (
                 Activity.objects.select_for_update().filter(id=activity.id).first()
@@ -281,8 +295,16 @@ class ActivityReturnService:
                 raise BadRequest("Activity is not awaiting IA verification")
             activity.status = ActivityStatus.RETURNED_BY_IA
             activity.ia_verification_status = VerificationStatus.RETURNED
+            # Where the officer reads it: My Plan, the activity page and the
+            # completion drawer all read this field (apps.activities.return_notes).
+            activity.pl_review_note = note
             activity.save(
-                update_fields=["status", "ia_verification_status", "updated_at"]
+                update_fields=[
+                    "status",
+                    "ia_verification_status",
+                    "pl_review_note",
+                    "updated_at",
+                ]
             )
             # A returned activity is no longer verified work: its milestone
             # credit reverses with it — the same rule services.ia_return
@@ -329,7 +351,7 @@ class ActivityReturnService:
                     category="ia",
                     priority="high",
                     title="Activity Returned by IA",
-                    body=f"Activity '{activity.activity_type}' at '{activity.school.name if activity.school else ''}' needs correction. Reason: {', '.join(reasons)}",
+                    body=f"Activity '{activity.activity_type}' at '{activity.school.name if activity.school else ''}' needs correction. Reason: {note}",
                     context_type="Activity",
                     context_id=activity.id,
                     recipients=[recipient],

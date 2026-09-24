@@ -24,6 +24,15 @@
     </span>
   </div>
 
+  {% if return_note %}
+  {# Owner, 2026-09-24: the reason a reviewer returned it, clearly stated, so
+     the officer can fix it and resubmit. #}
+  <div class="edify-note" data-tone="danger" role="alert" data-return-note>
+    <p class="edify-note__body"><strong>Returned by {{ returned_by|default:"the reviewer" }}:</strong> {{ return_note }}</p>
+    <p class="edify-note__body">Fix what is described, then complete the activity again to resubmit it.</p>
+  </div>
+  {% endif %}
+
   <div class="ad-grid">
 
     {# ── Activity overview ─────────────────────────────────────────────── #}

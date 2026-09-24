@@ -832,8 +832,17 @@ def get_frontend_context(principal, query: dict) -> dict:
         | Q(planned_date__isnull=True, scheduled_date__isnull=True)
     )
     if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+        # Work a reviewer sent back stays on the plan whatever its date: it
+        # is waiting on this person to fix and resubmit it, and a returned
+        # visit dated last week vanished from My Plan along with the reason it
+        # was returned (owner, 2026-09-24: "the staff can resubmit after
+        # fixing the issue").
+        from apps.activities.services import RETURNED_STATUSES
+
         qs_period = qs_period.filter(
-            upcoming_filter | Q(status__in=COMPLETED_WORK_STATUSES)
+            upcoming_filter
+            | Q(status__in=COMPLETED_WORK_STATUSES)
+            | Q(status__in=RETURNED_STATUSES)
         )
 
     # 7. Compute KPI values for upcoming plans
@@ -1343,11 +1352,13 @@ def get_frontend_context(principal, query: dict) -> dict:
             "returned_by_pl",
             "returned_by_ia",
         ):
-            return_reason = a.last_reason or "Correction required"
-            if a.ia_verification_status == "returned":
-                returned_by = "Internal Auditor"
-            else:
-                returned_by = "Project Leader"
+            # The reviewer's own words, from the one field every return path
+            # writes (apps.activities.return_notes). ``last_reason`` is the
+            # reschedule/cancel note and said nothing about the return.
+            from apps.activities import return_notes
+
+            return_reason = return_notes.note_for(a) or "Correction required"
+            returned_by = return_notes.returned_by(a)
 
         cluster_district_name = ""
         if a.cluster and getattr(a.cluster, "district", None):

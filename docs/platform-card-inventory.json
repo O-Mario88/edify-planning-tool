@@ -4,10 +4,10 @@
   "templates": 249,
   "distinct_titles": 646,
   "with_card_key": 13,
-  "untitled_surfaces": 608,
+  "untitled_surfaces": 609,
   "untitled_chrome": 158,
   "untitled_nested": 237,
-  "untitled_headless": 213,
+  "untitled_headless": 214,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
   "ambiguous_titles": 1
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 30,
+   "line": 39,
    "title": "Activity Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2240,7 +2240,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 99,
+   "line": 108,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2249,7 +2249,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 163,
+   "line": 172,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2258,7 +2258,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 199,
+   "line": 208,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2285,7 +2285,7 @@
   },
   {
    "template": "templates/pages/my_plan/pl_queue.html",
-   "line": 26,
+   "line": 28,
    "title": "Waiting on you",
    "heading_level": 2,
    "has_card_key": false,

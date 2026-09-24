@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **492**
+Components and application partials: **493**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -196,11 +196,12 @@ Components and application partials: **492**
 | `partials/dashboards/pl/collaboration_view.html` | application-partial | Reusable collaboration view interface primitive | danger; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/drilldown.html` | application-partial | Reusable drilldown interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /dashboard/pl-drilldown | 0 |
 | `partials/dashboards/pl/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/pl/past_due_popup.html` | application-partial | Reusable past due popup interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label | /dashboard/past-due-popup | 0 |
 | `partials/dashboards/pl/priorities_view.html` | application-partial | Reusable priorities view interface primitive | danger, warning, {{ row.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/programmes_view.html` | application-partial | Reusable programmes view interface primitive | {{ row.tone }}; default, loading | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/ssa_intelligence.html` | application-partial | Reusable ssa intelligence interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/team_view.html` | application-partial | Reusable team view interface primitive | danger, {% if group.overdue %}danger{% else %}warning{% endif %}; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
-| `partials/dashboards/pl/today_view.html` | application-partial | Reusable today view interface primitive | {{ a.tone }}; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/pl/today_view.html` | application-partial | Reusable today view interface primitive | {{ a.tone }}; default, error | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/urgent_action_error.html` | application-partial | Reusable urgent action error interface primitive | canonical; default, error | inherits containing page contract | announced dynamic state | /dashboard/pl-send-urgent-action | 0 |
 | `partials/dashboards/pl/urgent_action_sent.html` | application-partial | Reusable urgent action sent interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /dashboard/pl-send-urgent-action | 0 |
 | `partials/dashboards/pl/urgent_schools_page.html` | application-partial | Reusable urgent schools page interface primitive | canonical; default | inherits containing page contract | accessible name and label | /dashboard/pl-urgent-schools | 0 |
@@ -319,7 +320,7 @@ Components and application partials: **492**
 | `partials/messages/unread_badge_oob.html` | application-partial | Reusable unread badge oob interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /messages<br>/messages/<br>/messages/thread/<str:thread_id><br>/messages/thread/<str:thread_id>/reply | 0 |
 | `partials/my_plan/_priority_group.html` | application-partial | Reusable  priority group interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/my_plan/accountability_drawer.html` | application-partial | Reusable accountability drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/accountability | 0 |
-| `partials/my_plan/activity_detail_drawer.html` | application-partial | Reusable activity detail drawer interface primitive | canonical; default, selected, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id><br>/my-plan/<str:activity_id> | 0 |
+| `partials/my_plan/activity_detail_drawer.html` | application-partial | Reusable activity detail drawer interface primitive | danger; default, error, selected, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id><br>/my-plan/<str:activity_id> | 0 |
 | `partials/my_plan/activity_row.html` | application-partial | Reusable activity row interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /my-plan | 0 |
 | `partials/my_plan/activity_table.html` | application-partial | Reusable activity table interface primitive | canonical; default | inherits containing page contract | keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/my_plan/attendance_drawer.html` | application-partial | Reusable attendance drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/attendance | 0 |

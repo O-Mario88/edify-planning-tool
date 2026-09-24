@@ -268,6 +268,13 @@ def team_user_ids(user) -> set[str]:
                 supervisee__deleted_at__isnull=True,
             ).values_list("supervisee__user_id", flat=True)
         )
+        # A Lead covering an absent Lead leads that Lead's officers while the
+        # cover is active (apps.hr.team_roster.team_members). Team Today and
+        # the past-due tables already count them; Who's Online now does too,
+        # so the Lead's views agree about who is on the team.
+        from apps.hr.team_roster import team_members
+
+        ids.update(member.user_id for member in team_members(user))
     ids.discard(None)
     return ids
 

@@ -22,7 +22,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 50 | 27 | 2 | 2 | 1 | 4 | 66 |
 | `journey-06` | Special Project | ✓ | 1 | 102 | 31 | 3 | 5 | 6 | 18 | 55 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 77 | 30 | 4 | 10 | 9 | 23 | 55 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 73 | 26 | 3 | 6 | 7 | 18 | 54 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 74 | 26 | 3 | 6 | 7 | 18 | 54 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 51 | 15 | 0 | 0 | 1 | 4 | 15 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 94 | 35 | 2 | 2 | 7 | 25 | 55 |
 | `journey-11` | Professional Development | ✓ | 1 | 41 | 8 | 0 | 0 | 1 | 1 | 1 |
@@ -193,7 +193,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activities/views.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+63 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activities/views.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+64 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostCatalogue`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest` _+14 more_ |
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |

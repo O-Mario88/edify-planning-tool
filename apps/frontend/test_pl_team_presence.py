@@ -33,6 +33,17 @@ class ProgrammeLeadTeamPresenceTest(SimpleTestCase):
         source = (ROOT / "apps/frontend/views/dashboard_views.py").read_text()
         block = source.split("def _program_lead_dashboard", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("presence_summary(only_user_ids=team_user_ids(user))", block)
-        # Built for the view that shows it, not on every tab the Lead opens.
-        self.assertIn('if view == "team":', block)
+        # Built for the views that show it, not on every tab the Lead opens.
+        self.assertIn('if view in ("today", "team"):', block)
         self.assertNotIn("presence_summary()", block)
+
+    def test_the_main_dashboard_draws_the_team_panel(self):
+        """Owner, 2026-09-24: Who's Online on the Lead's main dashboard."""
+        source = (ROOT / "templates/partials/dashboards/pl/today_view.html").read_text()
+        self.assertIn('{% include "partials/dashboards/_whos_online.html" %}', source)
+        self.assertIn("{% if presence %}", source)
+
+    def test_the_lead_s_page_loads_the_panel_s_styles(self):
+        """Without it the status lights were empty and folded groups open."""
+        page = (ROOT / "templates/pages/dashboards/pl.html").read_text()
+        self.assertIn("css/components/presence.css", page)
