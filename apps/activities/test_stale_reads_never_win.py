@@ -14,6 +14,9 @@ writer won:
      work that was already verified.
   2. `record_attendance` wrote `status` back from its read. A cancel, a lead's
      approval or an IA verification made in between was reverted.
+  3. `complete` and `submit_for_review` submitted twice and undid a cancel. On
+     a cluster session the second write of the attendance register could
+     collide with the first on its unique constraint and return a 500.
 
 Each test hands the service a read taken before the competing write, as the
 losing request had. The service must re-read the row under a lock and either
@@ -22,10 +25,12 @@ refuse or apply its change to the row as it now stands.
 
 from __future__ import annotations
 
+import threading
 from datetime import date, timedelta
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.db import connections
+from django.test import TestCase, TransactionTestCase
 
 from apps.accounts.models import (
     StaffProfile,
@@ -34,13 +39,19 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities import services
-from apps.activities.models import Activity, ActivitySalesforceReference
+from apps.activities.models import (
+    Activity,
+    ActivitySalesforceReference,
+    ClusterActivityAttendance,
+)
+from apps.clusters.models import Cluster
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region
+from apps.notifications.models import Notification
 from apps.partners.models import Partner
 from apps.pl_review import services as pl_review
 from apps.schools.models import School
@@ -277,3 +288,140 @@ class AttendanceKeepsTheCurrentStatusTest(FieldWorkFixture):
         work.refresh_from_db()
         self.assertEqual(work.status, "ia_verified")
         self.assertEqual(work.teachers_attended, 12)
+
+
+class CompletionIsSubmittedOnceTest(FieldWorkFixture):
+    COMPLETION = {"salesforceId": "SVE-STALE-0101"}
+
+    def _leads_notice(self, work):
+        return Notification.objects.get(
+            recipient_id=self.pl_user.id,
+            source_event_type="activity_submitted_for_review",
+            context_id=work.id,
+        )
+
+    def test_a_second_completion_is_refused_and_the_lead_is_told_once(self):
+        work = self._work("completion_started")
+        stale = self._read_before_the_other_write(work)
+        services.complete(work.id, self.COMPLETION, self.cceo_user)
+
+        with patch.object(services, "_get_for_execution", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.complete(work.id, self.COMPLETION, self.cceo_user)
+
+        self.assertEqual(self._leads_notice(work).reminder_count, 0)
+
+    def test_a_completion_that_lost_to_a_cancel_leaves_it_cancelled(self):
+        work = self._work("completion_started")
+        stale = self._read_before_the_other_write(work)
+        self._cancel(work)
+
+        with patch.object(services, "_get_for_execution", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.complete(work.id, self.COMPLETION, self.cceo_user)
+
+        work.refresh_from_db()
+        self.assertEqual(work.status, "cancelled")
+
+    def test_a_second_submission_for_review_is_refused(self):
+        work = self._work("completion_started", salesforce_activity_id="SVE-STALE-0102")
+        stale = self._read_before_the_other_write(work)
+        services.submit_for_review(work.id, self.cceo_user)
+
+        with patch.object(services, "_get_for_execution", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.submit_for_review(work.id, self.cceo_user)
+
+        self.assertEqual(self._leads_notice(work).reminder_count, 0)
+
+
+class SimultaneousClusterCompletionsTest(TransactionTestCase):
+    """The double-click on a cluster session, for real: two requests on two
+    connections, both through the unlocked read before either writes. The
+    loser either submitted the session again or collided with the winner's
+    attendance rows on their unique constraint (a 500)."""
+
+    reset_sequences = False
+
+    def setUp(self):
+        region = Region.objects.create(name="Race Region")
+        district = District.objects.create(name="Race District", region=region)
+        self.cceo_user, cceo = _staff(
+            "race-cluster-cceo@t.test", "Race CCEO", EdifyRole.CCEO
+        )
+        cluster = Cluster.objects.create(
+            name="Race Cluster",
+            region=region,
+            district=district,
+            responsible_staff_id=cceo.id,
+        )
+        self.schools = [
+            School.objects.create(
+                school_id=f"RACE-C-{n}",
+                name=f"Race School {n}",
+                region=region,
+                district=district,
+                cluster_id=cluster.id,
+            )
+            for n in (1, 2)
+        ]
+        self.session = Activity.objects.create(
+            activity_type="cluster_training",
+            delivery_type="staff",
+            status="completion_started",
+            fy="2026",
+            quarter="Q4",
+            cluster=cluster,
+            responsible_staff_id=cceo.id,
+            planned_date=date.today() - timedelta(days=1),
+        )
+        _evidence(self.session, self.cceo_user.id)
+
+    def test_two_simultaneous_completions_apply_once(self):
+        workers = 2
+        both_have_read = threading.Barrier(workers)
+        read = services._get_for_execution
+        outcomes: list[str] = []
+
+        def read_then_wait(activity_id, principal):
+            activity = read(activity_id, principal)
+            both_have_read.wait(timeout=10)
+            return activity
+
+        def complete():
+            try:
+                services.complete(
+                    self.session.id,
+                    {
+                        "salesforceId": "TS-RACE-0001",
+                        "teachersAttended": 12,
+                        "leadersAttended": 2,
+                        "attendedSchoolIds": [s.id for s in self.schools],
+                    },
+                    self.cceo_user,
+                )
+                outcomes.append("completed")
+            except BadRequest:
+                outcomes.append("refused")
+            except Exception as exc:  # pragma: no cover - the assertion reports it
+                outcomes.append(repr(exc))
+            finally:
+                for db_connection in connections.all():
+                    db_connection.close()
+
+        with patch.object(services, "_get_for_execution", side_effect=read_then_wait):
+            threads = [threading.Thread(target=complete) for _ in range(workers)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=30)
+
+        self.assertEqual(sorted(outcomes), ["completed", "refused"])
+        self.assertEqual(
+            ClusterActivityAttendance.objects.filter(
+                activity=self.session, attended=True
+            ).count(),
+            2,
+        )
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.status, "submitted_to_pl")

@@ -3349,6 +3349,16 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        # The status check at the top read the row without a lock. A second
+        # submission that read it before the first one wrote (a double-click,
+        # a second tab) was applied again: the reviewer was told twice, a
+        # cluster session's register collided with the first write on its
+        # unique constraint, and a cancel that landed in between was undone.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status not in COMPLETABLE_STATUSES:
+            raise BadRequest(
+                "Click Complete first to unlock evidence upload and Activity Code entry."
+            )
         if followed_up is not None:
             a.follow_up_of_activity = followed_up
         a.teachers_attended = data.get("teachersAttended")
@@ -3515,6 +3525,10 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        # Re-checked under the lock, for the reason complete() gives.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status not in SUBMITTABLE_STATUSES:
+            raise BadRequest("Activity is not ready to be submitted for review.")
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
