@@ -91,5 +91,6 @@ class PhaseFourMobileWorkflowContractTest(SimpleTestCase):
         review = _read("templates/pages/ia/review_workspace.html")
         self.assertIn("lg:hidden fixed inset-x-0 bottom-0", review)
         self.assertIn('form="verify-form"', review)
-        self.assertIn("Clear Activity", review)
+        # Verified and Return, the two decisions (owner, 2026-09-24).
+        self.assertIn(">Verified</button>", review)
         self.assertIn("Return", review)

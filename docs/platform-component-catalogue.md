@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **493**
+Components and application partials: **494**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -189,6 +189,7 @@ Components and application partials: **493**
 | `partials/dashboards/hr/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/hr/operations.html` | application-partial | Reusable operations interface primitive | danger, primary, success, warning, {% if performance.overdue %}danger{% else %}success{% endif %}, {% if policies.acknowledgement_rate >= 90 %}success{% elif policies.acknowledgement_rate >= 70 %}warning{% else %}danger{% endif %}, {% if row.score < 3 %}danger{% elif row.score < 3.5 %}warning{% else %}success{% endif %}, {% if stage.key == , {{ morale.overall.tone }}, {{ row.morale.tone }}, {{ row.tone }}; default, loading, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/hr/view.html` | application-partial | Reusable view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
+| `partials/dashboards/pl/_past_due_popup_table.html` | application-partial | Reusable  past due popup table interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label | /dashboard/past-due-popup | 0 |
 | `partials/dashboards/pl/approval_queue.html` | application-partial | Reusable approval queue interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /dashboard/pl-drilldown | 0 |
 | `partials/dashboards/pl/body.html` | application-partial | Reusable body interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/cceo_performance.html` | application-partial | Reusable cceo performance interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | dynamic / parent-owned | 0 |
@@ -196,7 +197,7 @@ Components and application partials: **493**
 | `partials/dashboards/pl/collaboration_view.html` | application-partial | Reusable collaboration view interface primitive | danger; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/drilldown.html` | application-partial | Reusable drilldown interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /dashboard/pl-drilldown | 0 |
 | `partials/dashboards/pl/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
-| `partials/dashboards/pl/past_due_popup.html` | application-partial | Reusable past due popup interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label | /dashboard/past-due-popup | 0 |
+| `partials/dashboards/pl/past_due_popup.html` | application-partial | Reusable past due popup interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /dashboard/past-due-popup | 0 |
 | `partials/dashboards/pl/priorities_view.html` | application-partial | Reusable priorities view interface primitive | danger, warning, {{ row.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/programmes_view.html` | application-partial | Reusable programmes view interface primitive | {{ row.tone }}; default, loading | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/dashboards/pl/ssa_intelligence.html` | application-partial | Reusable ssa intelligence interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |

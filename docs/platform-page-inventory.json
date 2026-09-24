@@ -4458,6 +4458,30 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3657,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard/past-due-popup"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Past Due Popup Table",
+      "purpose": "Reusable  past due popup table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/pl/_past_due_popup_table.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 1411,
       "deprecated_alternatives": [],
@@ -4616,26 +4640,23 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4844,
+      "accessibility_requirements": [],
+      "bytes": 1749,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/past-due-popup"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Past Due Popup",
       "purpose": "Reusable past due popup interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "disabled"
+        "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/dashboards/pl/past_due_popup.html",
       "variants": []
     },
@@ -34014,6 +34035,7 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/dashboards/pl/_past_due_popup_table.html",
         "template:partials/dashboards/pl/past_due_popup.html",
         "test:referenced-by-automated-test",
         "permission:dashboard"
@@ -34092,6 +34114,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/dashboards/pl/_past_due_popup_table.html",
         "partials/dashboards/pl/past_due_popup.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -97507,6 +97530,7 @@
       "route": "/dashboard/past-due-popup",
       "route_name": "pl_past_due_popup",
       "templates": [
+        "partials/dashboards/pl/_past_due_popup_table.html",
         "partials/dashboards/pl/past_due_popup.html"
       ]
     },
@@ -105640,7 +105664,7 @@
     "activity_states": 24,
     "all_routes": 1297,
     "api_routes": 360,
-    "component_templates": 493,
+    "component_templates": 494,
     "full_pages": 260,
     "mobile_contract_pass": 534,
     "nonvisual_actions": 266,

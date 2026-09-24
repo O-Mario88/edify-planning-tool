@@ -1871,22 +1871,26 @@ def pl_past_due_popup_view(request):
     if getattr(request.user, "active_role", "") != "Program Lead":
         return HttpResponseForbidden("The past-due popup is the Programme Lead's.")
     data = get_past_due_dashboard_context(request.user)
+    # Every past-due team plan, paged by the shared pager ({% paginate %}):
+    # a slice builds only the page it shows (past_due_service.PastDueRows).
     team = data.get("past_due_team") or []
-    return render(
-        request,
-        "partials/dashboards/pl/past_due_popup.html",
-        {
-            "rows": list(team[:PAST_DUE_POPUP_LIMIT]),
-            "total": len(team),
-            "unsent": data.get("pl_team_past_due_unsent", 0),
-            "drawer_size": "lg",
-        },
-    )
+    context = {
+        "rows": team,
+        "total": len(team),
+        "unsent": data.get("pl_team_past_due_unsent", 0),
+        "drawer_size": "lg",
+    }
+    # The pager re-fetches its own fragment (static/js/table-pagination.js):
+    # answer it with the table alone, not a second popup inside the first.
+    if request.headers.get("HX-Target") == PAST_DUE_POPUP_TABLE_ID:
+        return render(
+            request, "partials/dashboards/pl/_past_due_popup_table.html", context
+        )
+    return render(request, "partials/dashboards/pl/past_due_popup.html", context)
 
 
-#: How many past-due team plans the popup lists; the rest are one link away,
-#: in "What needs you now" on the same dashboard.
-PAST_DUE_POPUP_LIMIT = 25
+#: The element the popup's pager swaps a new page into.
+PAST_DUE_POPUP_TABLE_ID = "pl-past-due-table"
 
 
 @login_required

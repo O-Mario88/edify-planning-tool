@@ -79,6 +79,23 @@ class ThePopupListsTheTeamTest(_Fixture):
             response, f'data-past-due-row="{self.pl_past_due_meeting.id}"'
         )
 
+    def test_the_table_pages_in_place(self):
+        """Every past-due plan is reachable a page at a time, and a page is
+        fetched into the popup's table rather than as a second popup."""
+        opened = self.client_for(self.pl_user).get(POPUP)
+        self.assertContains(opened, 'data-pager-fragment="/dashboard/past-due-popup"')
+        self.assertContains(opened, 'id="pl-past-due-table"')
+
+        page = self.client_for(self.pl_user).get(
+            POPUP,
+            {"past_due_page": "1"},
+            headers={"HX-Request": "true", "HX-Target": "pl-past-due-table"},
+        )
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, f'data-past-due-row="{self.cceo_past_due_visit.id}"')
+        self.assertNotContains(page, "data-pl-past-due-popup")
+        self.assertNotContains(page, 'id="pl-past-due-table"')
+
     def test_the_main_dashboard_opens_it_while_anything_is_unsent(self):
         response = self.client_for(self.pl_user).get("/dashboard")
         self.assertContains(response, "data-pl-past-due-autoload")
