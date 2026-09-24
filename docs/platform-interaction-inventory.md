@@ -24,10 +24,10 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 758 |
+| browser-rendered | 755 |
 | none | 357 |
 | page-tested | 1241 |
-| request-tested | 1047 |
+| request-tested | 1050 |
 
 ## State-changing controls with no automated evidence
 
