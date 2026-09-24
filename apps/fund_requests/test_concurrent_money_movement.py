@@ -22,6 +22,7 @@ precisely how this class of bug survives a test suite.
 from __future__ import annotations
 
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from unittest.mock import patch
@@ -426,6 +427,75 @@ class ConcurrentReimbursementTest(TransactionTestCase):
             "the settlement identity must hold on a real settled record",
         )
         self.assertTrue(_reconciliation_ok(self.advance))
+
+
+class WeeklyDeclineRacingThePaymentTest(_DisbursableAdvance, TransactionTestCase):
+    """The owner declines the week while the Accountant pays one of its lines.
+
+    disburse() is paused just before it commits, holding the advance's row
+    lock, until the decline is seen waiting on that lock. The decline must
+    then find the advance paid and leave it alone. Skipping paid advances by a
+    status read before the payment committed would still overwrite it."""
+
+    def tearDown(self):
+        connection.close()
+
+    def _another_backend_is_waiting_on_a_lock(self) -> bool:
+        deadline = time.monotonic() + 10
+        with connection.cursor() as cursor:
+            while time.monotonic() < deadline:
+                cursor.execute(
+                    "SELECT EXISTS (SELECT 1 FROM pg_locks WHERE NOT granted)"
+                )
+                if cursor.fetchone()[0]:
+                    return True
+                time.sleep(0.02)
+        return False
+
+    def test_a_decline_waits_for_the_payment_and_leaves_it_paid(self):
+        from apps.fund_requests import weekly_service
+
+        weekly = WeeklyFundRequest.objects.get(
+            lines__activity_budget_line=self.cost_line
+        )
+        paying = threading.Event()
+        decline_was_blocked = []
+        outcomes = []
+
+        def hold_the_payment_open(advance_id):
+            paying.set()
+            decline_was_blocked.append(self._another_backend_is_waiting_on_a_lock())
+
+        def decline():
+            try:
+                paying.wait(timeout=10)
+                weekly_service.not_requested(
+                    weekly.id, _Principal("race-owner", "CCEO")
+                )
+                outcomes.append("declined")
+            except Exception as exc:  # pragma: no cover - the assertion reports it
+                outcomes.append(repr(exc))
+            finally:
+                connections.close_all()
+
+        worker = threading.Thread(target=decline)
+        worker.start()
+        with patch(
+            "apps.integrations.services.enqueue_advance_netsuite_sync",
+            side_effect=hold_the_payment_open,
+        ):
+            disburse(
+                self.advance.id,
+                {"amount": 450_000, "method": "bank", "reference": "REF-1"},
+                _Principal("acct-1"),
+            )
+        worker.join(timeout=30)
+
+        self.assertEqual(decline_was_blocked, [True])
+        self.assertEqual(outcomes, ["declined"])
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, AdvanceRequestStatus.DISBURSED)
+        self.assertEqual(self.advance.disbursed_amount, 450_000)
 
 
 class LockActuallySerializesTest(TransactionTestCase):

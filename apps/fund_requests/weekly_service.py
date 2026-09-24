@@ -15,7 +15,11 @@ from apps.core.scoping import (
     person_country_q,
     resolve_user_scope,
 )
-from .models import WeeklyFundRequest, WeeklyFundRequestLine
+from .models import (
+    MONEY_MOVED_ADVANCE_STATUSES,
+    WeeklyFundRequest,
+    WeeklyFundRequestLine,
+)
 
 logger = logging.getLogger("edify.weekly_fund_request")
 
@@ -292,10 +296,17 @@ def _submission_status_for(owner_role: str) -> str:
 
 
 def _sync_advances(wfr: WeeklyFundRequest, status: str, advance_type: str) -> None:
+    # Money that already moved is never rewritten, the rule the accountant's
+    # return and the monthly sync already keep. A line this request carries
+    # can be paid through a monthly plan too; its DISBURSED advance used to go
+    # back to pending here, then confirmed on approval, and the funding guard
+    # released the line again, so the weekly channel paid it a second time.
+    # The row lock keeps the check true against a disbursement committing in
+    # another channel meanwhile.
     now = timezone.now()
     for line in wfr.lines.select_related("activity_budget_line"):
-        adv = line.activity_budget_line.advance_requests.first()
-        if adv:
+        adv = line.activity_budget_line.advance_requests.select_for_update().first()
+        if adv and adv.status not in MONEY_MOVED_ADVANCE_STATUSES:
             adv.status = status
             adv.advance_type = advance_type
             adv.confirmed_at = now
@@ -626,21 +637,10 @@ def not_requested(request_id: str, principal) -> dict:
         wfr.confirmed_at = timezone.now()
         wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
 
-        # Also update linked AdvanceRequests status
-        for line in wfr.lines.select_related("activity_budget_line"):
-            adv = line.activity_budget_line.advance_requests.first()
-            if adv:
-                adv.status = "not_requested"
-                adv.advance_type = "not_requested"
-                adv.confirmed_at = timezone.now()
-                adv.save(
-                    update_fields=[
-                        "status",
-                        "advance_type",
-                        "confirmed_at",
-                        "updated_at",
-                    ]
-                )
+        # Also update linked AdvanceRequests status -- through _sync_advances,
+        # so a line already paid through another channel keeps its DISBURSED
+        # advance and stays owed accountability.
+        _sync_advances(wfr, "not_requested", "not_requested")
 
     return _serialize_request(wfr)
 
