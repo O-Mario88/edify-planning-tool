@@ -1636,7 +1636,7 @@
    "audit_id": "KPI-SOURCE-084",
    "kind": "other",
    "module": "apps/analytics/platform_engine.py",
-   "line": 352,
+   "line": 363,
    "label": null,
    "keys": [
     "direction",
@@ -1770,7 +1770,7 @@
    "audit_id": "KPI-SOURCE-091",
    "kind": "other",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 261,
+   "line": 336,
    "label": null,
    "keys": [
     "fy",
@@ -1790,7 +1790,7 @@
    "audit_id": "KPI-SOURCE-092",
    "kind": "other",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 735,
+   "line": 856,
    "label": null,
    "keys": [
     "band",
@@ -1809,7 +1809,7 @@
    "audit_id": "KPI-SOURCE-093",
    "kind": "breakdown-row",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 962,
+   "line": 1069,
    "label": null,
    "keys": [
     "label",
@@ -9105,7 +9105,7 @@
    "audit_id": "KPI-SOURCE-505",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 766,
+   "line": 768,
    "label": "School",
    "keys": [
     "label",
@@ -9122,7 +9122,7 @@
    "audit_id": "KPI-SOURCE-506",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 770,
+   "line": 772,
    "label": "Assessment date",
    "keys": [
     "label",
@@ -9139,7 +9139,7 @@
    "audit_id": "KPI-SOURCE-507",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 771,
+   "line": 773,
    "label": "Average score",
    "keys": [
     "label",
@@ -9156,7 +9156,7 @@
    "audit_id": "KPI-SOURCE-508",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ssa_views.py",
-   "line": 772,
+   "line": 774,
    "label": "How it arrived",
    "keys": [
     "label",
