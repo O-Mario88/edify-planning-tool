@@ -28,6 +28,17 @@ def get_one(budget_id: str) -> dict:
     return data
 
 
+#: The only states a month's admin lines may change in: once the Country
+#: Director submits it, send_to_rvp has frozen its totals and written the
+#: snapshot the RVP decides on.
+ADMIN_LINES_EDITABLE = (
+    MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
+    MonthlyWorkPlanBudgetStatus.CD_REVIEW,
+    MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
+    MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
+)
+
+
 def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     from django.db import transaction
 
@@ -40,12 +51,7 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     role = getattr(principal, "active_role", None)
     if role is not None and role not in ("CountryDirector", "Admin"):
         raise Forbidden("Only the Country Director can add a country admin budget.")
-    editable = (
-        MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
-        MonthlyWorkPlanBudgetStatus.CD_REVIEW,
-        MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
-        MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
-    )
+    editable = ADMIN_LINES_EDITABLE
     if b.status not in editable:
         raise BadRequest("This General Budget is locked and can no longer be changed.")
     description = (data.get("description") or "").strip()
@@ -102,13 +108,32 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
 
 
 def remove_admin_line(budget_id: str, line_id: str, principal) -> dict:
-    line = AdminBudgetLine.objects.filter(
-        id=line_id, monthly_budget_id=budget_id
-    ).first()
-    if line:
-        b = line.monthly_budget
-        line.delete()
-        recompute_totals(b)
+    """Remove an admin line, only while the month is editable.
+
+    Adding a line refused a submitted month; removing one did not, so a
+    submitted or approved month's totals could fall after the snapshot the
+    RVP decided on. Same states and the same row lock as add_admin_line.
+    """
+    from django.db import transaction
+
+    with transaction.atomic():
+        b = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not b:
+            raise NotFoundError("Monthly work-plan budget not found.")
+        if b.status not in ADMIN_LINES_EDITABLE:
+            raise BadRequest(
+                "This General Budget is locked and can no longer be changed."
+            )
+        line = AdminBudgetLine.objects.filter(
+            id=line_id, monthly_budget_id=budget_id
+        ).first()
+        if line:
+            line.delete()
+            recompute_totals(b)
     return {"ok": True}
 
 
