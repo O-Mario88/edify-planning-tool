@@ -67,6 +67,7 @@ one column, as every platform drawer is.
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if form_secondary %}<button type="button" class="btn btn-secondary h-8" hx-get="{{ form_secondary.hx_get }}" hx-target="#drawer-container" hx-swap="innerHTML" data-drawer-secondary>{{ form_secondary.label }}</button>{% endif %}
     <button type="submit" class="btn btn-primary h-8">{{ form_submit|default:"Save" }}</button>
   </div>
 </form>

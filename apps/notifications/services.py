@@ -157,6 +157,12 @@ class NotificationLinkResolver:
         # ── PL alignment · T ──
         # The supervising Programme Lead reviewed an officer's field debrief;
         # the author opens the debrief and reads the feedback on it.
+        # Daily plan notices (owner, 2026-09-24): the officer opens their
+        # day; the Programme Lead monitors the team's plans.
+        if event_type == "daily_plan_today":
+            return "/dashboard?view=today", "Open Today"
+        if event_type == "pl_team_daily_monitor":
+            return "/team-planning-oversight/", "Monitor Team Plans"
         if event_type == "field_debrief_reviewed":
             return (
                 f"/debriefs/{context_id}" if context_id else "/debriefs",

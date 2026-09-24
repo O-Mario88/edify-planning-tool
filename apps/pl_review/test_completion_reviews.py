@@ -331,7 +331,7 @@ class CompletionReviewsPageTest(ReviewFixture):
     def test_admin_may_open_the_queue(self):
         self.assertEqual(self.as_user(self.admin_user).get(QUEUE_URL).status_code, 200)
 
-    def test_the_open_drawer_reads_the_completion_and_offers_approve(self):
+    def test_the_open_drawer_reads_the_completion_and_offers_both_decisions(self):
         work = self._completion(self.james.id, salesforce_activity_id="SV-77")
         EvidenceRecord.objects.create(
             activity=work,
@@ -345,8 +345,12 @@ class CompletionReviewsPageTest(ReviewFixture):
             f"{QUEUE_URL}/{work.id}/drawer", headers={"HX-Request": "true"}
         )
 
-        self.assertContains(response, "Approve completion")
+        # The two decisions, named the same on every surface (owner,
+        # 2026-09-24): Verified submits the confirm; Return opens the reason.
+        self.assertContains(response, ">Verified</button>")
         self.assertContains(response, f'action="{QUEUE_URL}/{work.id}/confirm"')
+        self.assertContains(response, f'hx-get="{QUEUE_URL}/{work.id}/return-drawer"')
+        self.assertContains(response, ">Return</button>")
         self.assertContains(response, "SV-77")
         self.assertContains(response, "visit-photo.jpg")
 

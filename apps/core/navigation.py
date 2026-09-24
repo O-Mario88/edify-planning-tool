@@ -569,15 +569,15 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "partner_my_plan": {PARTNER, ADMIN},
     # Feature pages that previously had no key of their own
     "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
-    # Watching a Special Project without being able to touch it (owner,
-    # 2026-09-21): "Add project page to CCEO, PL and IA to monitor all the
-    # project activities ... but they Only have read only access." CD and
-    # Admin read it as they read every country surface. The Project
-    # Coordinator is deliberately absent — they are in control of the work
-    # and already see all of it from Project Planning, where the scheduling
-    # and partner-assignment controls are; a read-only copy for them would be
-    # a second answer to a question their own surface already answers.
-    "project_monitoring": {PL, IA, CD, ADMIN},
+    # Following a Special Project school by school (owner, 2026-09-21 and
+    # 2026-09-24): "The staff except Project coordinator have read only
+    # access." PL and IA watch the schools in a project, CD and Admin read it
+    # as they read every country surface, all read only. The Project
+    # Coordinator is in control of the work and reads every school in their
+    # projects with the two controls they hold on Project Planning — schedule
+    # and assign to a partner — which open the same drawers, checked there.
+    # CCEOs oversee partner work on Partner Oversight (2026-09-23).
+    "project_monitoring": {PL, IA, CD, ADMIN, PROJECT_COORDINATOR},
     "analytics_publishing": {CD, IA, ADMIN},
     # IA owns evidence assurance before records can enter finance and
     # leadership analytics, so the role must be able to open the shared

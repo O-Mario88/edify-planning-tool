@@ -225,6 +225,7 @@ def _decorate_sessions(principal, items) -> None:
         # Partner work is verified on Partner Evidence, which carries the
         # Salesforce entry step; staff work in the IA review workspace.
         item.ia_verify_url = ""
+        item.ia_return_url = ""
         if (
             item.activity_id
             and item.activity_status in _IA_PENDING_STATUSES
@@ -232,12 +233,16 @@ def _decorate_sessions(principal, items) -> None:
         ):
             if item.is_partner_work and ia_partner_page:
                 item.ia_verify_url = f"/ia/partner-evidence/{item.activity_id}/"
+                # The partner evidence page carries both decisions itself.
+                item.ia_return_url = item.ia_verify_url
             elif (
                 not item.is_partner_work
                 and ia_staff_page
                 and item.activity_status == "awaiting_ia_verification"
             ):
                 item.ia_verify_url = f"/ia/verification/{item.activity_id}/"
+                # Opens the workspace with the Return panel already open.
+                item.ia_return_url = f"{item.ia_verify_url}?return=1"
 
 
 def _label(profile) -> str:

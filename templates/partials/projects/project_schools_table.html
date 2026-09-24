@@ -14,6 +14,12 @@
   project profile shows, so the card and the profile cannot disagree about
   where a school's planning has reached.
 
+  Both row controls stamp the project on the work (2026-09-24): Schedule
+  carries the project into the scheduling drawer, and Partner opens the
+  project handover (/projects/planning/bulk-partner) rather than the generic
+  school-support drawer, which files a handover with no project and so never
+  reached this project's planning, monitoring or impact rows.
+
   The card is a glance, so it holds the first twelve and sends the rest to the
   profile. A pager would not work here: this fragment is fetched into an open
   card, and the shared pager's plain page links would navigate the whole page
@@ -74,7 +80,7 @@
             <button
               type="button"
               class="school-record-action school-record-action--schedule"
-              hx-get="/planning/schedule-modal?school_id={{ row.school_code }}"
+              hx-get="/planning/schedule-modal?school_id={{ row.school_id }}&amp;project_id={{ project_id }}"
               hx-target="#drawer-container"
               hx-swap="innerHTML"
               aria-label="Schedule an activity for {{ row.school_name }}"
@@ -87,7 +93,7 @@
             <button
               type="button"
               class="school-record-action school-record-action--assign"
-              hx-get="/planning/assign-partner-modal?school_id={{ row.school_code }}"
+              hx-get="/projects/planning/bulk-partner?assignments={{ row.assignment_id }}"
               hx-target="#drawer-container"
               hx-swap="innerHTML"
               aria-label="Assign {{ row.school_name }} to a partner"

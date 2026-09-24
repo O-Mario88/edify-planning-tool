@@ -150,6 +150,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
 
     own_count = 0
     team_count = 0
+    team_ids: list[str] = []
     visit_ids: list[str] = []
     training_ids: list[str] = []
     meeting_ids: list[str] = []
@@ -158,6 +159,7 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             own_count += 1
         else:
             team_count += 1
+            team_ids.append(activity_id)
         if activity_type in VISIT_TYPES:
             visit_ids.append(activity_id)
         elif activity_type in TRAINING_TYPES:
@@ -175,7 +177,14 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     past_due_cluster_trainings = PastDueRows(training_ids, build)
     past_due_cluster_meetings = PastDueRows(meeting_ids, build)
 
+    # The team's rows alone, oldest first, for the Lead's past-due popup
+    # (owner, 2026-09-24), and how many of them nobody has sent to their
+    # officer yet — the popup opens by itself only while that is non-zero.
+    sent = _reminded_activity_ids(team_ids)
+
     return {
+        "past_due_team": PastDueRows(team_ids, build),
+        "pl_team_past_due_unsent": len([i for i in team_ids if i not in sent]),
         "past_due_total_count": len(light),
         "pl_own_past_due_count": own_count,
         "pl_team_past_due_count": team_count,
@@ -365,8 +374,62 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
     return rows
 
 
+#: The notification a Lead's "Send to <officer>" raises for a past-due plan.
+OVERDUE_REMINDER_EVENT = "pl_activity_overdue_reminder"
+
+
+def _reminded_activity_ids(activity_ids) -> set[str]:
+    """The activities whose officer holds a live overdue reminder, one query."""
+    if not activity_ids:
+        return set()
+    from apps.notifications.models import Notification
+
+    return set(
+        Notification.objects.filter(
+            source_event_type=OVERDUE_REMINDER_EVENT,
+            context_id__in=list(activity_ids),
+            resolved_at__isnull=True,
+        ).values_list("context_id", flat=True)
+    )
+
+
+def team_past_due_activity(user, activity_id: str):
+    """This Lead's team's past-due activity by id, or None.
+
+    The same membership and the same past-due rule the dashboard lists them
+    by, so "Send to <officer>" can reach exactly the rows the Lead was shown
+    and nothing else — not another team's work, not the Lead's own, and not
+    work already done or rescheduled.
+    """
+    if getattr(user, "active_role", "") != "Program Lead":
+        return None
+    from apps.hr.team_roster import team_members
+
+    team_ids: list[str] = []
+    for member in team_members(user):
+        team_ids.append(member.id)
+        if member.user_id:
+            team_ids.append(member.user_id)
+    if not team_ids:
+        return None
+    today = timezone.localdate()
+    return (
+        Activity.objects.filter(id=activity_id, deleted_at__isnull=True)
+        .exclude(status__in=TERMINAL_OR_COMPLETED_STATUSES)
+        .filter(
+            Q(planned_date__lt=today)
+            | Q(planned_date__isnull=True, scheduled_date__date__lt=today)
+        )
+        .filter(staff_my_plan_q(team_ids, user))
+        .select_related("school", "cluster")
+        .first()
+    )
+
+
 def _empty_past_due_context(is_pl: bool) -> dict[str, Any]:
     return {
+        "past_due_team": [],
+        "pl_team_past_due_unsent": 0,
         "past_due_total_count": 0,
         "pl_own_past_due_count": 0,
         "pl_team_past_due_count": 0,

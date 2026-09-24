@@ -84,6 +84,24 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="daily_plan_notifications",
+        description=(
+            "Each CCEO's activities for the day, and each Programme Lead's "
+            "team plans to monitor (today's work, past due, completions waiting)."
+        ),
+        cron="daily 06:45 Africa/Nairobi",
+        cron_kwargs={"hour": 6, "minute": 45},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note=(
+            "Keyed per person per day (context_id dp-<date>), checked even "
+            "against archived notices; a same-day re-run sends nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="activity_reminders",
         description="'Starts tomorrow' reminder to each responsible person for every planned activity (incl. non-school programme events).",
         cron="daily 07:00 Africa/Nairobi",

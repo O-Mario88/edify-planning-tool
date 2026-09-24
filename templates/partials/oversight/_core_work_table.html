@@ -1,0 +1,51 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+The core visits and trainings on this person's My Plan (owner, 2026-09-24:
+Core School Oversight fetches from My Plan). Rows come from
+apps.core_schools.oversight_service.planned_core_work — the planning
+oversight items sorted into core work the way My Plan sorts its core tables,
+so a cluster group training appears once for each core school it reaches, as
+it does on the officer's own My Plan. Read only: the person doing the work
+opens and completes it from their My Plan.
+{% endcomment %}
+{% paginate work page_param|default:"core_work_page" as work_pager %}
+<section class="border-t edify-border" aria-label="Planned core work">
+  <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+    <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
+      <span>Planned core visits &amp; trainings</span>
+      <span class="pill pill-info text-xs font-semibold">{{ work|length }}</span>
+    </h4>
+    <span class="edify-text-caption edify-text-muted">From {% if owner_name %}{{ owner_name }}'s{% else %}their{% endif %} My Plan · {% firstof plan_period_label "this financial year" %}</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="edify-record-table w-full text-left whitespace-nowrap" aria-label="Planned core visits and trainings" data-mobile-table="scroll" data-core-work>
+      <thead>
+        <tr>
+          <th scope="col" class="min-w-[100px]">School ID</th>
+          <th scope="col" class="min-w-[200px]">School Name</th>
+          <th scope="col" class="min-w-[90px]">Package</th>
+          <th scope="col" class="min-w-[160px]">Activity</th>
+          <th scope="col" class="min-w-[110px]">Planned Date</th>
+          <th scope="col" class="min-w-[130px]">Delivered by</th>
+          <th scope="col" class="min-w-[120px]">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in work_pager.rows %}
+        <tr data-core-work-row="{% firstof item.activity_id item.partner_assignment_id %}">
+          <td class="font-mono text-xs" data-label="School ID">{{ item.school_code|default:"—" }}</td>
+          <td class="font-semibold" data-record-title>{% if item.school_id %}<a href="/schools/{{ item.school_id }}" class="hover:underline">{{ item.school_name }}</a>{% else %}{{ item.school_name|default:"—" }}{% endif %}</td>
+          <td data-label="Package">{% if item.package_label %}<span class="pill pill-neutral text-xs font-medium">{{ item.package_label }}</span>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+          <td data-label="Activity">{{ item.activity_type|status_label }}{% if item.via_cluster %} <span class="edify-text-caption edify-text-muted">· {{ item.cluster_name|default:"cluster" }}</span>{% endif %}</td>
+          <td class="tabular-nums" data-label="Planned Date">{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
+          <td data-label="Delivered by">{{ item.executor_name|default:"—" }}</td>
+          <td data-label="Status"><span class="cluster-session-status" data-status-tone="{{ item.session_tone }}">{{ item.session_status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No core visits or trainings on {% if owner_name %}{{ owner_name }}'s{% else %}this{% endif %} My Plan for {% firstof plan_period_label "this financial year" %}.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=work_pager param=page_param|default:"core_work_page" pagination_label="Planned core work" %}
+</section>

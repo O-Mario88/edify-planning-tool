@@ -194,8 +194,11 @@ class IAVerificationWorkspaceContractTest(SimpleTestCase):
         self.assertIn("flex-col lg:flex-row", self.review)
         self.assertIn("fixed inset-0 lg:absolute", self.review)
         self.assertIn("sticky bottom-0", self.review)
-        self.assertIn("Clear Activity", self.review)
-        self.assertIn("Return for Correction", self.review)
+        # The two decisions are Verified and Return (owner, 2026-09-24), and
+        # a return must say why.
+        self.assertIn(">Verified</button>", self.review)
+        self.assertIn('@click="openReturn($event)">Return</button>', self.review)
+        self.assertIn("Why are you returning it? (required)", self.review)
         self.assertIn("@keydown.arrow-right.prevent", self.review)
         self.assertIn("Salesforce Activity ID", self.review)
         self.assertIn("Finance routing", self.review)

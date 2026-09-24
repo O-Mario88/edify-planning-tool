@@ -397,7 +397,13 @@ class OversightViewsAccessTest(TestCase):
         items = oversight_service.build_items(self.cd, fy="2026")
         groups = oversight_service.group_by_owner(items)
         _partition_owner_groups_by_stream(groups, self.cd)
-        officer = next(group for group in groups if group["id"] == str(self.cceo.id))
+        # One person, one group, keyed by their staff profile whichever id
+        # space wrote the activity (oversight mirrors My Plan, 2026-09-24).
+        officer = next(
+            group
+            for group in groups
+            if group["id"] in {str(self.cceo.id), str(self.cceo.staff_profile.id)}
+        )
 
         self.assertEqual(officer["cluster_meetings"][0].participants, 5)
         self.assertEqual(

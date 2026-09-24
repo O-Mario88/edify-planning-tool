@@ -605,6 +605,49 @@ def _activity_records(rows) -> list[_Record]:
     return records
 
 
+def _dated_between(start: date | None, end: date | None) -> Q:
+    """Activities dated in [start, end), read the way My Plan reads a date.
+
+    The planned date is the source of truth; an older scheduled row with no
+    planned date falls back to its scheduled timestamp
+    (``apps.my_plan.services._scheduled_in_range``). Reading the date alone
+    here dropped those rows from a period on oversight while My Plan listed
+    them.
+    """
+    planned = Q()
+    scheduled = Q(planned_date__isnull=True)
+    if start:
+        planned &= Q(planned_date__gte=start)
+        scheduled &= Q(scheduled_date__date__gte=start)
+    if end:
+        planned &= Q(planned_date__lt=end)
+        scheduled &= Q(scheduled_date__date__lt=end)
+    return planned | scheduled
+
+
+def _in_month(month: int, fys: tuple[str, ...]) -> Q:
+    """Activities in one calendar month of the given fiscal years.
+
+    My Plan decides the month by the planned date, not by the convenience
+    ``planned_month`` column, which older rows left empty — so a dated legacy
+    visit sat in its month on My Plan and in no month on oversight. The date
+    decides here too; ``planned_month`` still places an undated row, which
+    oversight reports and My Plan's month slice does not, and showing more
+    than My Plan is allowed where showing less is not.
+    """
+    match = Q(planned_date__isnull=True, scheduled_date__isnull=True) & Q(
+        planned_month=month
+    )
+    for fy in fys:
+        year = int(fy) - 1 if month >= 10 else int(fy)
+        first = date(year, month, 1)
+        after = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+        match |= _dated_between(first, after)
+    if not fys:
+        match |= Q(planned_month=month)
+    return match
+
+
 def _activities_in_scope(
     scope: OversightScope,
     *,
@@ -628,13 +671,11 @@ def _activities_in_scope(
     if fy:
         qs = qs.filter(fy__in=_fy_tuple(fy))
     if month:
-        qs = qs.filter(planned_month=month)
+        qs = qs.filter(_in_month(month, _fy_tuple(fy) if fy else ()))
     if quarter:
         qs = qs.filter(quarter=quarter)
-    if date_start:
-        qs = qs.filter(planned_date__gte=date_start)
-    if date_end:
-        qs = qs.filter(planned_date__lt=date_end)
+    if date_start or date_end:
+        qs = qs.filter(_dated_between(date_start, date_end))
 
     if scope.is_region and not scope.region_ids:
         return []
@@ -1463,29 +1504,70 @@ def program_lead_rosters(program_lead_ids) -> dict[str, list[dict]]:
     }
 
 
+def _canonical_staff_ids(ids) -> dict[str, str]:
+    """Each id mapped to the StaffProfile id of the person it names.
+
+    `operational_owner_id` is whatever `Activity.responsible_staff_id` held —
+    a StaffProfile id from `activities.services.create`, a User id from older
+    paths — so grouping on it raw filed one person under two tabs of the same
+    name, each holding part of their plan (owner, 2026-09-24: oversight must
+    mirror each person's My Plan, which reads both id spaces as one person).
+    One query; an id naming no profile maps to itself.
+    """
+    from apps.accounts.models import StaffProfile
+
+    wanted = {str(i) for i in ids if i}
+    if not wanted:
+        return {}
+    canonical = {i: i for i in wanted}
+    for staff_id, user_id in StaffProfile.objects.filter(
+        Q(id__in=wanted) | Q(user_id__in=wanted)
+    ).values_list("id", "user_id"):
+        for key in (staff_id, user_id):
+            if key and str(key) in wanted:
+                canonical[str(key)] = staff_id
+    return canonical
+
+
+def _group_by_person(items) -> list[dict]:
+    """`_group` by owner, with both id spaces folded into one person."""
+    canonical = _canonical_staff_ids(i.operational_owner_id for i in items)
+    names: dict[str, str] = {}
+    for item in items:
+        key = canonical.get(str(item.operational_owner_id or ""))
+        if key and item.operational_owner_name:
+            names.setdefault(key, item.operational_owner_name)
+
+    def person(item):
+        key = canonical.get(str(item.operational_owner_id or ""))
+        return key, names.get(key, item.operational_owner_name)
+
+    return _group(items, key=person)
+
+
 def group_by_owner(items, *, owners=None) -> list[dict]:
-    """Group work by owner; a supplied roster also shows members with no work."""
+    """Group work by owner; a supplied roster also shows members with no work.
+
+    Either way one person is one group, whichever id space wrote their work.
+    """
     if owners is None:
-        return _group(
-            items, key=lambda i: (i.operational_owner_id, i.operational_owner_name)
-        )
+        return _group_by_person(items)
     groups = [{"id": p["id"], "name": p["name"], "items": []} for p in owners]
     lookup = {
-        owner_id: group for p, group in zip(owners, groups) for owner_id in p["ids"]
+        str(owner_id): group
+        for p, group in zip(owners, groups)
+        for owner_id in p["ids"]
+        if owner_id
     }
     remaining = []
     for item in items:
-        group = lookup.get(item.operational_owner_id)
+        group = lookup.get(str(item.operational_owner_id or ""))
         if group is None:
             remaining.append(item)
         else:
             group["items"].append(item)
     # Preserve historical or unassigned owners whose scoped work is still visible.
-    groups.extend(
-        _group(
-            remaining, key=lambda i: (i.operational_owner_id, i.operational_owner_name)
-        )
-    )
+    groups.extend(_group_by_person(remaining))
     for index, group in enumerate(groups, start=1):
         group["summary"] = summarize(group["items"])
         group["page_param"] = f"g{index}_page"

@@ -268,6 +268,11 @@ urlpatterns = [
         name="pl_send_urgent_action",
     ),
     path(
+        "dashboard/past-due-popup",
+        dashboard_views.pl_past_due_popup_view,
+        name="pl_past_due_popup",
+    ),
+    path(
         "dashboard/notify-past-due/<str:activity_id>/",
         dashboard_views.notify_past_due_activity,
         name="dashboard_notify_past_due",

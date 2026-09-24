@@ -27,5 +27,39 @@
   {% endcomment %}
   {% include "partials/dashboards/what_needs_you_now.html" %}
 
+  {% comment %}The team's past-due plans pop up by themselves (owner,
+  2026-09-24) while any of them has not been sent to its officer. Once a
+  browser session per day and per count, so switching tabs does not reopen it
+  and a newly past-due plan does. The list itself is the same live read as
+  "What needs you now": a plan leaves it when its officer acts.{% endcomment %}
+  {% if is_pl and pl_team_past_due_unsent %}
+  <script>
+    window.edifyPastDuePopupDue = function (key) {
+      try {
+        var name = "edify.plPastDuePopup";
+        if (window.sessionStorage.getItem(name) === key) return false;
+        window.sessionStorage.setItem(name, key);
+      } catch (error) { /* Storage refused: open it, the safe side. */ }
+      return true;
+    };
+  </script>
+  <div hidden
+       hx-get="/dashboard/past-due-popup"
+       hx-trigger="load[window.edifyPastDuePopupDue && edifyPastDuePopupDue('{% now "Y-m-d" %}-{{ pl_team_past_due_unsent }}')]"
+       hx-target="#drawer-container"
+       hx-swap="innerHTML"
+       data-pl-past-due-autoload></div>
+  {% endif %}
+
   {% include "partials/today/dashboard_loader.html" %}
+
+  {% comment %}Who's Online for this Lead's team, on the main dashboard
+  (owner, 2026-09-24: "so they can be able to monitor their team working").
+  The same scoped panel the Team view draws; the view builds `presence` over
+  the reporting line only, so a Lead never sees anyone else's staff.{% endcomment %}
+  {% if presence %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" data-pl-presence>
+    {% include "partials/dashboards/_whos_online.html" %}
+  </div>
+  {% endif %}
 </div>

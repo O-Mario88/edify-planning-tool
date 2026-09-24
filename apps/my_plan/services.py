@@ -25,11 +25,21 @@ from apps.partners.purposes import visit_purpose_label
 # requester's plan: it takes effect there only once approved (owner,
 # 2026-09-03; apps.planning.visit_requests). Pending ones are tracked on the
 # Visit Requests page, and stay reachable here through the status filter.
+#
+# Deferred and never-planned rows are released work everywhere else — the
+# visit gate, Today, work-plan health, the coordinator's My Plan and every
+# oversight page read them as not work — but this list let them through, so a
+# dead row sat on My Plan labelled "Scheduled" and no supervisor could see it:
+# My Plan and oversight disagreed about what a person's plan held (owner,
+# 2026-09-24: oversight must mirror My Plan). An explicit status filter still
+# reaches them, as it reaches the other exclusions.
 ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
     "closed",
     "cancelled",
     "rejected",
     "awaiting_owner_approval",
+    "deferred",
+    "not_planned",
 )
 
 #: The calendar month a quarter opens on. The fiscal year starts in October,
@@ -809,8 +819,17 @@ def get_frontend_context(principal, query: dict) -> dict:
         | Q(planned_date__isnull=True, scheduled_date__isnull=True)
     )
     if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+        # Work a reviewer sent back stays on the plan whatever its date: it
+        # is waiting on this person to fix and resubmit it, and a returned
+        # visit dated last week vanished from My Plan along with the reason it
+        # was returned (owner, 2026-09-24: "the staff can resubmit after
+        # fixing the issue").
+        from apps.activities.services import RETURNED_STATUSES
+
         qs_period = qs_period.filter(
-            upcoming_filter | Q(status__in=COMPLETED_WORK_STATUSES)
+            upcoming_filter
+            | Q(status__in=COMPLETED_WORK_STATUSES)
+            | Q(status__in=RETURNED_STATUSES)
         )
 
     # 7. Compute KPI values for upcoming plans
@@ -1320,11 +1339,13 @@ def get_frontend_context(principal, query: dict) -> dict:
             "returned_by_pl",
             "returned_by_ia",
         ):
-            return_reason = a.last_reason or "Correction required"
-            if a.ia_verification_status == "returned":
-                returned_by = "Internal Auditor"
-            else:
-                returned_by = "Project Leader"
+            # The reviewer's own words, from the one field every return path
+            # writes (apps.activities.return_notes). ``last_reason`` is the
+            # reschedule/cancel note and said nothing about the return.
+            from apps.activities import return_notes
+
+            return_reason = return_notes.note_for(a) or "Correction required"
+            returned_by = return_notes.returned_by(a)
 
         cluster_district_name = ""
         if a.cluster and getattr(a.cluster, "district", None):

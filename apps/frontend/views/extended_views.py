@@ -4325,34 +4325,42 @@ def unmatched_ssa_queue_view(request):
 
 @require_page_permission("project_monitoring")
 def project_monitoring_view(request):
-    """Watching a Special Project without being able to touch it.
+    """Following a Special Project school by school.
 
-    Owner, 2026-09-21: CCEO, Programme Lead and Impact Assessment monitor the
-    activities the project coordinator and their partners deliver, read only.
-    The coordinator keeps control of scheduling and partner assignment — this
-    page carries no control that would change any of it, and the enrolment
-    lens (apps.projects.monitoring) decides what each reader sees.
+    Owner, 2026-09-21 and 2026-09-24: every school the reader put into a
+    project, grouped by project — whether it is planned (by the coordinator,
+    or handed to a partner and scheduled by them), whether the work happened,
+    and whether its focus SSA interventions moved. Everyone but the Project
+    Coordinator reads; the coordinator also gets the two controls they hold on
+    Project Planning (schedule, assign to a partner), which open the same
+    drawers and are checked by them. The enrolment lens
+    (apps.projects.monitoring) decides what each reader sees.
     """
     from django.http import HttpResponseNotAllowed
 
     from apps.core.fy import fy_options, get_operational_fy
     from apps.projects import monitoring
 
-    # Read only is a promise, so the door keeps it: nothing here writes, and a
-    # POST is refused rather than quietly rendering as though it had done
-    # something.
+    # Nothing here writes — the coordinator's controls open drawers served by
+    # their own routes — so a POST is refused rather than quietly rendering as
+    # though it had done something.
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
 
     requested_fy = (request.GET.get("fy") or "").strip()
     fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
     selected_project = (request.GET.get("project") or "").strip()
+    stages = dict(monitoring.STAGE_FILTERS)
+    requested_stage = (request.GET.get("stage") or "").strip()
+    selected_stage = requested_stage if requested_stage in stages else ""
 
     result = monitoring.project_monitoring(
-        request.user, fy=fy, project_id=selected_project
+        request.user, fy=fy, project_id=selected_project, stage=selected_stage
     )
     # The picker offers exactly the projects this reader is already allowed to
-    # watch, so it can never name one the page would then refuse to show.
+    # watch, so it can never name one the page would then refuse to show. The
+    # stage filter narrows school rows, never projects, so only a chosen
+    # project needs the unfiltered list rebuilt.
     everything = (
         result
         if not selected_project
@@ -4366,6 +4374,8 @@ def project_monitoring_view(request):
             "rows": result.rows,
             "project_options": [(row.id, row.name) for row in everything.rows],
             "selected_project": selected_project,
+            "stage_options": monitoring.STAGE_FILTERS,
+            "selected_stage": selected_stage,
             "fy": fy,
             "fy_options": fy_options(),
         },

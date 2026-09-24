@@ -6,28 +6,28 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 529 |
-| Control declarations | 3392 |
-| State-changing | 410 |
-| High-consequence (state-changing) | 182 |
-| No automated evidence | 363 |
-| State-changing with no automated evidence | 26 |
+| Templates with controls | 532 |
+| Control declarations | 3403 |
+| State-changing | 411 |
+| High-consequence (state-changing) | 183 |
+| No automated evidence | 357 |
+| State-changing with no automated evidence | 25 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1100 |
+| button | 1107 |
 | disclosure | 69 |
-| field | 1177 |
-| link | 981 |
+| field | 1178 |
+| link | 984 |
 | tab | 65 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 755 |
-| none | 363 |
-| page-tested | 1233 |
-| request-tested | 1041 |
+| browser-rendered | 758 |
+| none | 357 |
+| page-tested | 1241 |
+| request-tested | 1047 |
 
 ## State-changing controls with no automated evidence
 
@@ -58,4 +58,3 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-BBDF43A17433 | partials/oversight/withdrawal_drawer.html | 186 | Send request to Program Lead {{ preview.kind_label }} | `POST /partner-oversight/withdraw/submit` |
 | INT-D45ACD9CF57B | partials/partner/invoice_drawer.html | 93 | Send to my Program Lead | `POST /partner/invoices` |
 | INT-50E0D15180C8 | partials/partners/return_assignment_drawer.html | 55 | Return to staff | `POST /partner/assignments/{{ assignment.id }}/return-action` |
-| INT-501BF8E3A8DA | partials/projects/bulk_partner_drawer.html | 31 | Assign {{ assignments\|length }} activit{{ assignments\|length\|pluralize:"y,ies" }} | `POST /projects/planning/bulk-partner` |

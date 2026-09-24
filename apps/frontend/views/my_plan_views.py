@@ -231,6 +231,24 @@ def my_plan_view(request):
     return render(request, "pages/my_plan/index.html", context)
 
 
+def _return_context(a) -> dict:
+    """Why a returned activity came back, for the pages its officer fixes it on.
+
+    Shown only while the activity is in a returned status: the note stays on
+    the record as history after resubmission, and a fixed completion must not
+    keep telling its officer it was returned.
+    """
+    from apps.activities import return_notes
+    from apps.activities.services import RETURNED_STATUSES
+
+    if a.status not in RETURNED_STATUSES:
+        return {"return_note": "", "returned_by": ""}
+    return {
+        "return_note": return_notes.note_for(a) or "Correction required",
+        "returned_by": return_notes.returned_by(a),
+    }
+
+
 @require_page_permission("my_plan")
 def activity_detail_view(request, activity_id):
     a = get_object_or_404(
@@ -373,6 +391,7 @@ def activity_detail_view(request, activity_id):
             and a.status == "awaiting_ia_verification"
         ),
         "ssa_verdict": verdict_display(a),
+        **_return_context(a),
     }
     # ── IA review · IA-P: OneTest results ──
     # A delivered OneTest visit carries "Record learning results"; the link a
@@ -618,6 +637,7 @@ def complete_drawer_view(request, activity_id):
             if paired_school_visit is not None
             else None
         ),
+        **_return_context(a),
     }
     # A follow-up visit is completed against the exact training it answered
     # (owner, 2026-09-21). The list is the school's completed sessions by
@@ -1467,10 +1487,17 @@ def pl_review_drawer(request, activity_id):
         or activity.get_activity_type_display(),
         facts=_review_facts(activity),
         action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
-        submit="Approve completion",
+        # The two decisions a reviewer holds, named the same on every surface
+        # (owner, 2026-09-24): Verified, or Return with the reason.
+        submit="Verified",
+        secondary={
+            "label": "Return",
+            "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
+        },
         note=(
-            "Approving verifies this completion and marks it complete. To "
-            "send it back to the officer, use Return."
+            "Verified confirms the completion against Salesforce and marks it "
+            "complete. Return sends it back to the officer with your reason — "
+            "for example, participants not entered in Salesforce."
         ),
     )
 
@@ -1506,12 +1533,17 @@ def pl_return_drawer(request, activity_id):
         fields=[
             _field(
                 "reason",
-                "What needs correcting",
+                "Why are you returning it?",
                 type="textarea",
                 required=True,
                 rows=4,
                 maxlength=512,
-                placeholder="The evidence, attendance or Salesforce detail to fix",
+                placeholder=(
+                    "Say exactly what to fix, e.g. The attendance form and "
+                    "training ID are uploaded, but the participants are not "
+                    "entered in Salesforce."
+                ),
+                help="The officer reads this as written on their My Plan.",
             )
         ],
     )

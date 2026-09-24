@@ -1104,7 +1104,11 @@ def team_planning_oversight_view(request):
     summary = oversight.summarize(visible)
     owner_groups = oversight.group_by_owner(
         visible,
-        owners=oversight.program_lead_members(selected) if country_lens else None,
+        owners=(
+            oversight.program_lead_members(selected)
+            if country_lens
+            else _team_roster(request.user, selected)
+        ),
     )
     _partition_owner_groups_by_stream(owner_groups, request.user)
     context = {
@@ -1173,6 +1177,31 @@ def team_planning_oversight_view(request):
         )
         return render(request, template, context)
     return render(request, "pages/oversight/team_planning.html", context)
+
+
+def _team_roster(user, selected: str) -> list[dict] | None:
+    """The people the team lens files work under, for the tab the lead chose.
+
+    The lead first, then everyone who reports to them — the same roster the
+    country lens reads for this lead, so a Programme Lead and their Country
+    Director see one team the same way. It is what keeps each person to one
+    officer tab whichever id space wrote their activities, and what gives an
+    officer with nothing planned a tab that says so instead of no tab at all
+    (owner, 2026-09-24: oversight mirrors each person's My Plan).
+
+    Narrowed to the chosen person on "My Work" and on an officer's tab, so a
+    tab about one person does not list everybody else as empty. None for a
+    reader who leads no team, which keeps the plain grouping.
+    """
+    roster = oversight.program_lead_members(user.id)
+    if not roster:
+        return None
+    if selected == WHOLE_TEAM_TAB:
+        return roster
+    if selected == "mine":
+        return roster[:1]
+    chosen = [member for member in roster if str(selected) in map(str, member["ids"])]
+    return chosen or None
 
 
 def _team_members(scope) -> list[dict]:
