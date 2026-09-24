@@ -110,6 +110,36 @@ class LeaveDecisionTests(TestCase):
             LeaveApprovalService.escalate_to_hr(leave, self.pl)
         self.assertIn("already approved", str(caught.exception))
 
+    # The view hands in the leave it loaded. These pass a copy loaded while
+    # the request was pending, as a page open before the other decision is.
+    def test_an_escalation_that_lost_to_an_approval_is_refused(self):
+        leave = self._leave()
+        loaded_while_pending = Leave.objects.get(id=leave.id)
+        LeaveApprovalService.approve_request(leave.id, self.pl)
+
+        with self.assertRaises(BadRequest) as caught:
+            LeaveApprovalService.escalate_to_hr(loaded_while_pending, self.pl)
+
+        self.assertIn("already approved", str(caught.exception))
+        leave.refresh_from_db()
+        self.assertEqual(leave.status, "approved")
+
+    def test_escalating_from_two_tabs_is_recorded_once(self):
+        from apps.audit.models import AuditLog
+
+        leave = self._leave()
+        second_tab = Leave.objects.get(id=leave.id)
+        LeaveApprovalService.escalate_to_hr(leave, self.pl)
+
+        LeaveApprovalService.escalate_to_hr(second_tab, self.pl)
+
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="leave.escalated_to_hr", subject_id=leave.id
+            ).count(),
+            1,
+        )
+
     # ── C2 ───────────────────────────────────────────────────────────────
     def test_an_approved_leave_cannot_later_be_rejected(self):
         leave = self._leave()
