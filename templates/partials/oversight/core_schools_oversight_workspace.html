@@ -14,7 +14,7 @@
   {% if is_programme_lead %}
     {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
     {% if cceo_tabs %}
-    {% team_chart cceo_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
+    {% team_chart package_chart_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
     <div x-data="tabState('activeCceo', 'cceo', {% tab_values cceo_tabs %}, '{{ cceo_tabs.0.id }}')" class="space-y-4">
       <div class="oversight-team-selector">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">

@@ -341,6 +341,25 @@ class CoreSchoolsOversightMirrorsMyPlanTest(MirrorFixture):
         planned = {item.activity_id for item in tabs[str(self.james.id)]["core_work"]}
         self.assertEqual(self._my_plan_core_ids(self.james_user) - planned, set())
 
+    def test_the_package_chart_is_drawn_for_the_people_who_hold_the_schools(self):
+        """Planned work opens a tab; it does not put a person on the chart.
+
+        The chart sums each person's core packages. Mary holds no core school:
+        her visit to James's opens her tab, but a chart row for her would be
+        all zeros — and a first range of such rows drew no bars at all.
+        """
+        from apps.core_schools.oversight_service import core_schools_oversight_data
+
+        mary_visit = self._activity("core_visit", self.mary.id, school=self.core_school)
+        data = core_schools_oversight_data(self.pl_user, fy=self.fy)
+        tabs = {str(tab["id"]): tab for tab in data["cceo_tabs"]}
+        self.assertIn(
+            mary_visit.id,
+            {item.activity_id for item in tabs[str(self.mary.id)]["core_work"]},
+        )
+        charted = [str(tab["id"]) for tab in data["package_chart_tabs"]]
+        self.assertEqual(charted, [str(data["cceo_tabs"][0]["id"]), str(self.james.id)])
+
     def test_the_page_lists_the_planned_core_work(self):
         self.client.force_login(self.pl_user)
         response = self.client.get("/core-schools-oversight/", {"fy": self.fy})

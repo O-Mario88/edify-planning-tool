@@ -241,6 +241,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             "is_programme_lead": is_programme_lead,
             "leads": [],
             "cceo_tabs": [],
+            "package_chart_tabs": [],
             "total_schools": 0,
             "completed_packages": 0,
             "in_progress": 0,
@@ -540,6 +541,15 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
             for kind, label in type_options()
         ]
 
+    # The package chart sums the core schools each person holds, so it is
+    # drawn for "you" and the officers who hold them. A tab opened only by
+    # planned work — someone visiting a school another officer holds — has no
+    # package of its own, and eight such all-zero people filled the chart's
+    # first range with nothing to draw.
+    package_chart_tabs = [
+        tab for index, tab in enumerate(cceo_tabs) if index == 0 or tab["count"]
+    ]
+
     valid_ssas = [float(s["ssa_avg"]) for s in formatted_schools if s["ssa_avg"] != "—"]
     overall_avg = round(sum(valid_ssas) / len(valid_ssas), 1) if valid_ssas else "—"
 
@@ -547,6 +557,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
         "is_programme_lead": is_programme_lead,
         "leads": leads_data,
         "cceo_tabs": cceo_tabs,
+        "package_chart_tabs": package_chart_tabs,
         "total_schools": len(schools),
         "completed_packages": completed_count,
         "in_progress": in_progress_count,
