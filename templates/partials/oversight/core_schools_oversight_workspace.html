@@ -38,8 +38,9 @@
         </nav>
       </div>
 
+      {% tab_initial cceo_tabs "cceo" cceo_tabs.0.id as initial_cceo %}
       {% for cceo in cceo_tabs %}
-      <div x-show="activeCceo === '{{ cceo.id }}'" x-cloak id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3">
+      <div x-show="activeCceo === '{{ cceo.id }}'"{% if cceo.id|stringformat:"s" != initial_cceo %} x-cloak{% endif %} id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3">
         <div class="card p-0 overflow-hidden shadow-xs border edify-border">
           <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
@@ -87,8 +88,9 @@
       </div>
 
       {# Level 2: CCEO Tabs under each PL #}
+      {% tab_initial leads "lead" leads.0.id as initial_lead %}
       {% for lead in leads %}
-      <div x-show="activeLead === '{{ lead.id }}'" x-cloak id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
+      <div x-show="activeLead === '{{ lead.id }}'"{% if lead.id|stringformat:"s" != initial_lead %} x-cloak{% endif %} id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
         {% if lead.cceo_tabs %}
         <div x-data="tabState('activeOfficer', 'officer', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
           <div class="oversight-team-selector">
@@ -113,8 +115,9 @@
             </nav>
           </div>
 
+          {% tab_initial lead.cceo_tabs "officer" lead.cceo_tabs.0.id as initial_officer %}
           {% for cceo in lead.cceo_tabs %}
-          <div x-show="activeOfficer === '{{ cceo.id }}'" x-cloak id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
+          <div x-show="activeOfficer === '{{ cceo.id }}'"{% if cceo.id|stringformat:"s" != initial_officer %} x-cloak{% endif %} id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
             <div class="card p-0 overflow-hidden shadow-xs border edify-border">
               <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
                 <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">

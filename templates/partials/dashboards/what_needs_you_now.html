@@ -6,6 +6,11 @@ For CCEO: surfaces their own past due activities with Complete / Reschedule / Ca
 For Program Lead: surfaces both own past due plans and line-managed team plans, with a "Send to <Team Member>" reminder dispatch button.
 {% endcomment %}
 
+{% comment %}The three category panels are not x-cloak'd: every one is visible
+in the initial state (activeCategory 'all'), so the server's render is already
+what Alpine settles on. Cloaking them held the list back until the scripts
+ran and then pushed the dashboard below it down (layout shift 0.15 on the
+CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
 <section class="space-y-4" data-section="what-needs-you-now"
          x-data="{
            activeScope: 'all',
@@ -107,7 +112,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
   {% else %}
 
   <!-- 1. School Visits Table -->
-  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'visits'" x-cloak>
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'visits'">
     <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs">
       <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -267,7 +272,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
   </div>
 
   <!-- 2. Trainings Table -->
-  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'trainings'" x-cloak>
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'trainings'">
     <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs">
       <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -429,7 +434,7 @@ For Program Lead: surfaces both own past due plans and line-managed team plans, 
   </div>
 
   <!-- 3. Cluster Meetings Table -->
-  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'meetings'" x-cloak>
+  <div class="space-y-3" x-show="activeCategory === 'all' || activeCategory === 'meetings'">
     <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs">
       <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
         <div class="flex items-center gap-2">

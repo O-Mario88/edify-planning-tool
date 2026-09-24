@@ -51,9 +51,12 @@ and level 3 (4 distinct tables per staff member:
   </div>
 
   {# ── Officer Panels with 4 Tables Each ───────────────────────────────── #}
+  {% comment %}The panel tabState opens on is not cloaked, so the page paints with
+  it rather than growing by a whole panel when the scripts run (P-4).{% endcomment %}
+  {% if default_officer %}{% tab_initial owner_groups "officer" default_officer as initial_officer %}{% else %}{% tab_initial owner_groups "officer" owner_groups.0.id as initial_officer %}{% endif %}
   {% for group in owner_groups %}
   <div x-show="activeOfficer === '{{ group.id }}'"
-       x-cloak
+       {% if group.id|stringformat:"s" != initial_officer %}x-cloak{% endif %}
        id="officer-panel-{{ forloop.counter }}"
        role="tabpanel"
        class="space-y-6">

@@ -147,6 +147,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     enhanceDialogs(document);
     syncFamilyFilters(document);
+    // The disclosures now have their final state: let their bodies back into
+    // the layout (base.html set this flag so a phone never paints them open
+    // and then collapses them under the reader).
+    document.documentElement.removeAttribute('data-filters-syncing');
     requestAnimationFrame(noteFirstAction);
   });
 

@@ -66,9 +66,10 @@ summary and the detail are the same numbers by construction.
     </div>
 
     {# ── Tab Panels for each Program Lead ──────────────────────────────── #}
+    {% firstof selected_lead groups.0.id "" as lead_fallback %}{% tab_initial groups "lead" lead_fallback as initial_lead %}
     {% for group in groups %}
     <div x-show="activeLead === '{{ group.id }}'"
-         x-cloak
+         {% if group.id|stringformat:"s" != initial_lead %}x-cloak{% endif %}
          id="lead-panel-{{ forloop.counter }}"
          role="tabpanel"
          class="space-y-4">

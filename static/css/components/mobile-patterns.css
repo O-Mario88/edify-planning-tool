@@ -186,6 +186,23 @@
   display: none;
 }
 
+/* Filter disclosures render open, for desktop and no-JavaScript readers, and
+   mobile-ux.js closes them on phones at DOMContentLoaded. Painting them open
+   first moved everything below by the filter's height once they closed
+   (layout shift 0.35 on Planning; 2026-09-24 A+ audit, P-4). While the head
+   script's flag is set, their body stays out of a phone's layout, so the
+   first paint is already the closed disclosure. The flag is only set when
+   JavaScript runs, and the page's load event clears it if mobile-ux.js never
+   does. The form inside is laid out by `display: … !important` rules keyed
+   on its id (components.css) and on shared filter classes (consistency.css),
+   so this one is !important too and carries an id's weight (`:not(#_)`)
+   to outrank them for the moment the flag is set. */
+@media (max-width: 63.999rem) {
+  html[data-filters-syncing] .mobile-family-filter > :not(summary):not(#_) {
+    display: none !important;
+  }
+}
+
 @media (min-width: 64rem) {
   .mobile-family-filter:not([open]) > :not(summary) {
     display: block;
