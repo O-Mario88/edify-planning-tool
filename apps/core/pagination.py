@@ -236,11 +236,3 @@ def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -
         # enough for a phone without hiding the first or last page.
         "pages": make_pagination_window(current, page_count, window_size=1),
     }
-
-
-def page_from(query: dict, key: str) -> int:
-    """Read one card's page number, tolerating anything a URL can carry."""
-    try:
-        return max(1, int((query or {}).get(key) or 1))
-    except (TypeError, ValueError):
-        return 1

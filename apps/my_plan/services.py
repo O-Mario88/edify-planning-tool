@@ -72,19 +72,6 @@ def _widened(previous, current) -> bool:
     return str(previous) != str(current)
 
 
-def get_weeks_for_month(year: int, month: int) -> list[dict]:
-    """Helper to generate week choices within a month."""
-    last_day = calendar.monthrange(year, month)[1]
-    month_name = date(year, month, 1).strftime("%b")
-    weeks_list = []
-    for w in range(1, 6):
-        start_day = (w - 1) * 7 + 1
-        end_day = last_day if w == 5 else min(last_day, w * 7)
-        label = f"{month_name} {start_day} – {month_name} {end_day}"
-        weeks_list.append({"val": w, "label": label})
-    return weeks_list
-
-
 def get_week_date_range(year: int, month: int, week: int) -> tuple[date, date]:
     """Helper to resolve range bounds for a 1-5 week division."""
     last_day = calendar.monthrange(year, month)[1]

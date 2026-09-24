@@ -1738,14 +1738,6 @@ def _serialize(m: Message) -> dict:
     }
 
 
-def get_user_threads(user, context_type: str | None = None) -> list[dict]:
-    """Legacy list shape used by the old inbox view."""
-    rows = threads_for_user(user, tab="all")
-    if context_type:
-        rows = [r for r in rows if r["context_type"] == context_type]
-    return rows
-
-
 def resolve_context_label(context_type: str | None, context_id: str | None) -> str:
     _, label = resolve_context_record(context_type, context_id)
     return label

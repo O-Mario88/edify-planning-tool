@@ -2092,13 +2092,6 @@ class CoreInterventionRecommendationService:
         return {"available": True, "maintenance": False, "rows": rows, "reason": ""}
 
 
-class CoreMyPlanSyncService:
-    @staticmethod
-    def sync_to_my_plan(activity) -> bool:
-        """Pushes scheduled activity to My Plan (standard Activity record in DB)."""
-        return True
-
-
 class CoreTeamOversightService:
     """The read-only lens a supervisor gets over their team's core schools.
 

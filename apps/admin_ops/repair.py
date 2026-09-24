@@ -1,9 +1,7 @@
 """Data Repair Center — controlled correction of inconsistent records.
 
-Admin can *see* every business record and can change none of them through the
-ordinary pages (apps/admin_ops/middleware.py enforces that). Real
-inconsistencies still have to be fixable, so they are fixed here, through a
-flow that leaves evidence:
+Real inconsistencies have to be fixable without editing records by hand, so
+they are fixed here, through a flow that leaves evidence:
 
     detect -> propose -> list affected records -> dry run -> impact preview
     -> apply (idempotent) -> verify -> audit -> close

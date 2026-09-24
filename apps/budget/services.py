@@ -1925,17 +1925,6 @@ def _quarter_months(quarter: str) -> list[int]:
     ]
 
 
-def _activity_to_costable(a) -> dict:
-    return {
-        "activityType": a.activity_type,
-        "deliveryType": a.delivery_type,
-        "teachersAttended": a.teachers_attended,
-        "leadersAttended": a.leaders_attended,
-        "otherParticipants": a.other_participants,
-        "projectId": a.project_id,
-    }
-
-
 def _snapshot_lines(a) -> list[dict]:
     return [
         {

@@ -85,6 +85,7 @@ class Command(BaseCommand):
             "autopilot_weekly_proposals": jobs.autopilot_weekly_proposals_job,
             "scheduler_watchdog": jobs.scheduler_watchdog_job,
             "closure_checklist_refresh": jobs.closure_checklist_refresh_job,
+            "scheduler_history_prune": jobs.scheduler_history_prune_job,
         }
 
         # One source of truth for the programme timezone. This was hard-coded,

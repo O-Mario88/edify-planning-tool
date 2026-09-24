@@ -95,16 +95,6 @@ class ClusterReadScopeTests(TestCase):
             )
 
 
-class PlanningIntelligenceScopeTests(TestCase):
-    def test_panel_uses_the_scoped_school_queryset(self):
-        import inspect
-
-        from apps.frontend.views import planning_views
-
-        source = inspect.getsource(planning_views.planning_intelligence_view)
-        self.assertIn("school_queryset(resolve_user_scope(request.user))", source)
-
-
 class FundRequestScopeFailsClosedTests(TestCase):
     """`and scope.staff_ids` skipped the narrowing for anyone without a
     StaffProfile and fell through to the unfiltered .all()."""

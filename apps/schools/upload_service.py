@@ -297,15 +297,6 @@ def _parse_date(value: str) -> date:
     raise ValueError(f"Unrecognized date '{value}'")
 
 
-def _match_account_owner(name: str) -> tuple[str | None, str]:
-    """Match a raw staff name via the StaffMatchingService. Returns
-    (staff_profile_id | None, status). Replaces the old single-user iexact match
-    with role-aware matching + ambiguity detection."""
-    from apps.accounts.staff_matching import match as staff_match
-
-    return staff_match(name)
-
-
 def _auto_create_user_from_upload(full_name: str) -> str:
     """Automatically create a User and StaffProfile when a school is uploaded with an unmatched owner name."""
     from apps.accounts.models import User, StaffProfile, UserStatus

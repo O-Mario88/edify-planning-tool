@@ -152,7 +152,7 @@ Reopen Closed Activity
 {% endif %}
 {% else %}
 {% if is_ready %}
-<form method="POST" action="/activities/{{ act.id }}/closure/close/" @submit="submittingClose = true">
+<form method="POST" action="/activities/{{ act.id }}/closure/close" @submit="submittingClose = true">
 {% csrf_token %}
 <button
 type="submit"
@@ -203,7 +203,7 @@ style="display: none;"
 </button>
 </div>
 
-<form id="reopen-form" method="POST" action="/activities/{{ act.id }}/reopen/" class="space-y-4" @submit="submittingReopen = true">
+<form id="reopen-form" method="POST" action="/activities/{{ act.id }}/reopen" class="space-y-4" @submit="submittingReopen = true">
 {% csrf_token %}
 
 <div>

@@ -48,22 +48,6 @@ class InterventionSeverityClassifier:
             return "maintain"
 
 
-class OwnerRecommendationService:
-    """Provides recommendations on who should own or support the school based on severity classification."""
-
-    @staticmethod
-    def recommend_owner(score: float | None) -> str:
-        severity = InterventionSeverityClassifier.classify_severity(score)
-        if severity == "Critical":
-            return "Partner (In-school coaching)"
-        elif severity == "Warning":
-            return "Staff (Visit/training support)"
-        elif severity == "Improving":
-            return "Monitor"
-        else:
-            return "Maintain/consider champion pathway"
-
-
 class PlanningRecommendationService:
     """Generates planning readiness states, recommended actions, and reasons for schools."""
 

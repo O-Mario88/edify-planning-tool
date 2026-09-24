@@ -44,7 +44,6 @@ class PhaseFiveMobileLongTailContractTest(SimpleTestCase):
                 "templates/pages/hr/performance_conversation.html",
                 "templates/pages/hr/professional_development_dashboard.html",
                 "templates/pages/hr/priority_configuration.html",
-                "templates/pages/hr/strategic_priorities.html",
                 "templates/pages/hr/module_workspace.html",
             ),
         )

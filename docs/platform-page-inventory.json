@@ -288,29 +288,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
-      ],
-      "bytes": 2310,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "shared-component",
-      "name": "Input",
-      "purpose": "Reusable input interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "error"
-      ],
-      "tables": 0,
-      "template": "components/input.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 349,
       "deprecated_alternatives": [],
@@ -5726,25 +5703,6 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6502,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Accountant Insights",
-      "purpose": "Reusable accountant insights interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/finance/accountant_insights.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
       "bytes": 144,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -7744,27 +7702,6 @@
     },
     {
       "accessibility_requirements": [
-        "keyboard focus visibility"
-      ],
-      "bytes": 8122,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Activity Table",
-      "purpose": "Reusable activity table interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "partials/my_plan/activity_table.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
@@ -7838,7 +7775,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4597,
+      "bytes": 4859,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7859,7 +7796,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6761,
+      "bytes": 7021,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8101,30 +8038,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1691,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Priority Queue",
-      "purpose": "Reusable priority queue interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/my_plan/priority_queue.html",
-      "variants": [
-        "amber",
-        "rose",
-        "slate"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3739,
+      "bytes": 4024,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8215,7 +8129,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4483,
+      "bytes": 4727,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8661,25 +8575,6 @@
       ],
       "tables": 0,
       "template": "partials/oversight/cluster_oversight_workspace.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 438,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Cluster Performance Workspace",
-      "purpose": "Reusable cluster performance workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/cluster_performance_workspace.html",
       "variants": []
     },
     {
@@ -10386,25 +10281,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 504,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Delta Pill",
-      "purpose": "Reusable delta pill interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/projects/delta_pill.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label",
         "announced dynamic state"
@@ -10525,28 +10401,6 @@
       "template": "partials/projects/my_plan_workspace.html",
       "variants": [
         "executive"
-      ]
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 2968,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Plan Activity Table",
-      "purpose": "Reusable plan activity table interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/projects/plan_activity_table.html",
-      "variants": [
-        "sm"
       ]
     },
     {
@@ -12366,7 +12220,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12454,7 +12307,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12542,7 +12394,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12632,7 +12483,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12722,7 +12572,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12813,7 +12662,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12901,7 +12749,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -12982,7 +12829,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13163,7 +13009,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13253,7 +13098,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13341,7 +13185,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13428,7 +13271,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13515,7 +13357,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13602,7 +13443,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13691,7 +13531,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13780,7 +13619,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13867,7 +13705,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -13954,7 +13791,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14043,7 +13879,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14129,7 +13964,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14211,7 +14045,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14298,7 +14131,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14393,7 +14225,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14492,7 +14323,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14590,7 +14420,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14679,7 +14508,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14760,7 +14588,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14845,7 +14672,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -14936,7 +14762,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15023,7 +14848,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15104,7 +14928,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15185,7 +15008,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15266,7 +15088,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15348,7 +15169,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15435,7 +15255,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15521,7 +15340,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15603,7 +15421,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15690,7 +15507,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15777,7 +15593,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -15864,7 +15679,6 @@
         "apps.budget.models",
         "apps.budget.services",
         "apps.core.scoping",
-        "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
         "apps.partners.models"
@@ -16532,8 +16346,8 @@
       "route_name": "activity_closure_detail",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/activities/{{ act.id }}/closure/close/",
-        "/activities/{{ act.id }}/reopen/"
+        "/activities/{{ act.id }}/closure/close",
+        "/activities/{{ act.id }}/reopen"
       ],
       "services_and_models": [
         "apps.activities.models",
@@ -16622,8 +16436,8 @@
       "route_name": "",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/activities/{{ act.id }}/closure/close/",
-        "/activities/{{ act.id }}/reopen/"
+        "/activities/{{ act.id }}/closure/close",
+        "/activities/{{ act.id }}/reopen"
       ],
       "services_and_models": [
         "apps.activities.models",
@@ -61829,7 +61643,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68077,7 +67890,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68175,7 +67987,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68273,7 +68084,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68370,7 +68180,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68488,98 +68297,6 @@
       ]
     },
     {
-      "accessibility_status": "not-applicable-nonvisual",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.planning_views",
-      "backend_view": "apps.frontend.views.planning_views.planning_intelligence_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": false,
-      "evidence": [
-        "test:referenced-by-automated-test",
-        "permission:planning"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "not-applicable-nonvisual-action",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "not-applicable-nonvisual",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-CDB4BA67D1",
-      "page_title": "Planning Intelligence",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "planning",
-      "primary_action": "Planning Intelligence",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate planning intelligence within the frontend workflow.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "manual-review-required",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/planning/intelligence",
-      "route_name": "planning_intelligence",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.activity_catalogue.models",
-        "apps.activity_catalogue.services",
-        "apps.clusters.models",
-        "apps.clusters.services",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.partners.models",
-        "apps.partners.services",
-        "apps.planning.services",
-        "apps.projects.models",
-        "apps.schools.models",
-        "apps.ssa.services"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "action",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "not-applicable-nonvisual",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "not-applicable-nonvisual",
-      "theme_status": "not-applicable-nonvisual",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -68637,7 +68354,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68738,7 +68454,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68835,7 +68550,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -68940,7 +68654,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -69041,7 +68754,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -73677,7 +73389,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -73778,7 +73489,6 @@
         "apps.activities.services",
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
-        "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
@@ -78919,7 +78629,7 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.catalogue_views",
       "backend_view": "apps.frontend.views.catalogue_views.activity_catalogue_page",
@@ -79002,7 +78712,7 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.catalogue_views",
       "backend_view": "apps.frontend.views.catalogue_views.activity_catalogue_create_action",
@@ -85945,6 +85655,35 @@
         "max_interval_minutes": 1560,
         "max_retries": 2,
         "name": "admin_maintenance_generation",
+        "retryable": true
+      },
+      {
+        "cron": "daily 03:40 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 3,
+          "minute": 40
+        },
+        "description": "Deletes scheduled-job run history past its retention: successes after 90 days, failures after 365, never a job's latest success.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "A delete of rows already past retention; a rerun finds none.",
+        "idempotent": true,
+        "max_interval_minutes": 1560,
+        "max_retries": 2,
+        "name": "scheduler_history_prune",
+        "retryable": true
+      },
+      {
+        "cron": "every 30 minutes at :10 and :40",
+        "cron_kwargs": {
+          "minute": "10,40"
+        },
+        "description": "Persists the closure checklist and blockers of every open activity, so the Blocked Closures page and System Health read current facts while the readiness queue itself stays read-only.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "Derives the facts afresh and writes only rows whose facts changed; a blocker that still applies keeps its row, so a rerun writes nothing.",
+        "idempotent": true,
+        "max_interval_minutes": 120,
+        "max_retries": 1,
+        "name": "closure_checklist_refresh",
         "retryable": true
       },
       {
@@ -102544,20 +102283,6 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.planning_views.planning_intelligence_view",
-      "kind": "partial",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "planning",
-      "required_permissions": [],
-      "route": "/planning/intelligence",
-      "route_name": "planning_intelligence",
-      "templates": [
-        "partials/planning/right_panel.html"
-      ]
-    },
-    {
       "callback": "apps.frontend.views.planning_views.route_preview_view",
       "kind": "partial",
       "methods": [
@@ -105301,29 +105026,29 @@
   "summary": {
     "accessibility_contract_pass": 533,
     "activity_states": 24,
-    "all_routes": 1296,
+    "all_routes": 1295,
     "api_routes": 360,
-    "component_templates": 491,
+    "component_templates": 484,
     "full_pages": 260,
     "mobile_contract_pass": 533,
-    "nonvisual_actions": 266,
+    "nonvisual_actions": 265,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 536,
+      "interaction-fragment": 535,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
     "partials_and_drawers": 270,
-    "permission_gated": 809,
+    "permission_gated": 808,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 824,
-    "scheduled_jobs": 28,
+    "routed_surfaces": 823,
+    "scheduled_jobs": 30,
     "severity_counts": {
       "critical": 0,
       "high": 0,
@@ -105331,7 +105056,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 533,
-    "test_referenced": 717,
+    "test_referenced": 716,
     "theme_contract_pass": 533
   }
 }

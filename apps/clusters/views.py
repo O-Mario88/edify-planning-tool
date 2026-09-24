@@ -49,14 +49,6 @@ class ClusterPlanningView(APIView):
         return Response(services.cluster_planning(request.user))
 
 
-class ClusterCreateView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = ASSIGN
-
-    def post(self, request: Request) -> Response:
-        return Response(services.create_cluster(request.data, request.user), status=201)
-
-
 class ClusterFromSchoolView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ASSIGN

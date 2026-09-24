@@ -80,14 +80,6 @@ class SsaVerificationSummaryView(APIView):
         return Response(services.verification_summary(request.user, _q(request)))
 
 
-class SsaUploadView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = UPLOAD
-
-    def post(self, request: Request) -> Response:
-        return Response(services.upload(request.data, request.user), status=201)
-
-
 class SsaFileUploadView(APIView):
     """POST /api/ssa/upload — multipart SSA file (CSV / XLSX), field `file`."""
 

@@ -691,14 +691,6 @@ def _kind(record) -> str:
     return "area" if isinstance(record, OutcomeArea) else "indicator"
 
 
-def _record_url(record) -> str:
-    if isinstance(record, OutcomeArea):
-        return f"/ia/framework/?tab=areas&open=area-{record.id}"
-    if record.key.startswith(LOAN_PURPOSE_KEY_PREFIX):
-        return f"/ia/framework/?tab=purposes&open=indicator-{record.id}"
-    return f"/ia/framework/?tab=indicators&open=indicator-{record.id}"
-
-
 def _title(record) -> str:
     return f"{record.name} (v{record.version})"
 

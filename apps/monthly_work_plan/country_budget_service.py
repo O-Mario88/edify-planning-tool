@@ -252,25 +252,6 @@ def _valid_lines_qs(fy, month_num):
     return planned_lines_for_period(lines, start, end)
 
 
-def _team_monthly_requests(fy, month_num):
-    """Program Lead team-budget snapshots for the selected month.
-
-    The presence of even one of these requests turns on the deliberate monthly
-    submission workflow. That means the General Budget can never quietly fall
-    back to every raw scheduled cost line after Program Leads have started
-    submitting their own monthly requests.
-    """
-    from apps.fund_requests.models import FundRequest, FundRequestPeriod
-
-    return FundRequest.objects.filter(
-        fy=fy,
-        period=FundRequestPeriod.MONTHLY,
-        period_key=f"{fy}-M{int(month_num)}",
-        scope="team",
-        submitted_by_role="Program Lead",
-    ).order_by("created_at")
-
-
 def _program_source(fy, month_num):
     """Return every valid scheduled planned-activity cost line for the month.
 

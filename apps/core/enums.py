@@ -256,14 +256,6 @@ class PlanningSource(models.TextChoices):
     MANUAL_WORK_PLAN = "manual_work_plan", "Work Plan (Non-School)"
 
 
-class ActivityContextType(models.TextChoices):
-    SCHOOL = "school", "School"
-    CLUSTER = "cluster", "Cluster"
-    PROJECT = "project", "Project"
-    PROGRAMME = "programme", "Programme"
-    ORGANIZATION = "organization", "Organization"
-
-
 class SupportRationale(models.TextChoices):
     """Strategic rationale for work that has no school SSA recommendation."""
 

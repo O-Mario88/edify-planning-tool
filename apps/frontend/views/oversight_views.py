@@ -402,46 +402,6 @@ def _portfolio_kpis(totals, *, base_url: str) -> list[dict]:
     ]
 
 
-def _cluster_performance_context(request, period: dict, *, base_url: str) -> dict:
-    """The cluster lens — activity, planning, SSA and reach, most active first."""
-    from apps.planning.cluster_performance_service import (
-        ACTIVE_SHARE,
-        QUIET_SHARE,
-        WEIGHT_SESSION,
-        WEIGHT_SSA,
-        WEIGHT_VISIT,
-        cluster_performance,
-    )
-
-    performance = cluster_performance(
-        request.user,
-        fy=period["fy"],
-        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
-    )
-    totals = performance["totals"]
-    return {
-        "cluster_performance": performance,
-        "cluster_totals": totals,
-        "cluster_leads": performance["leads"],
-        "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
-        "cluster_performance_url": "/cluster-oversight/",
-        # The weighting is on the page. A ranking whose arithmetic nobody can
-        # read is a ranking nobody can argue with, which is worse than a rough
-        # one they can.
-        "cluster_index_note": (
-            f"Activity index = {WEIGHT_SESSION}× cluster sessions + "
-            f"{WEIGHT_VISIT}× member-school visits + "
-            f"{WEIGHT_SSA}× member schools assessed."
-        ),
-        "cluster_band_note": (
-            f"High activity is at or above {round(ACTIVE_SHARE * 100)}% of the "
-            f"busiest cluster's index; low activity at or below "
-            f"{round(QUIET_SHARE * 100)}%."
-        ),
-        "kpis": _cluster_kpis(totals),
-    }
-
-
 def _cluster_kpis(totals) -> list[dict]:
     return [
         render_kpi_item(

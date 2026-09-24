@@ -225,28 +225,6 @@ def _agenda_title_and_location(activity):
     return title, location, short_location
 
 
-def _build_agenda_item(activity, today):
-    title, location, _ = _agenda_title_and_location(activity)
-    status, status_class = _agenda_status_pill(activity, today)
-    item = {
-        "title": title,
-        "location": location,
-        "status": status,
-        "status_class": status_class,
-        "icon": _agenda_icon(activity.activity_type),
-    }
-    if activity.salesforce_activity_id:
-        item["sf"] = True
-    participant_count = (
-        (activity.teachers_attended or 0)
-        + (activity.leaders_attended or 0)
-        + (activity.other_participants or 0)
-    )
-    if participant_count:
-        item["count"] = participant_count
-    return item
-
-
 def _pl_map_context(user, fy, filters) -> dict:
     """The district table under the Program Lead's map: the same district
     performance rows PL Analytics shows, with each district's region."""

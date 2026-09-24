@@ -594,19 +594,6 @@ def regenerate(period: str, principal, strict: bool = True) -> dict:
     return submit(data, principal, strict=strict)
 
 
-def _to_costable(a: Activity) -> dict:
-    return {
-        "activityType": a.activity_type,
-        "deliveryType": a.delivery_type,
-        "teachersAttended": a.teachers_attended,
-        "leadersAttended": a.leaders_attended,
-        "otherParticipants": a.other_participants,
-        "projectId": a.project_id,
-        "estCostCents": a.est_cost_cents,
-        "costMissing": a.cost_missing,
-    }
-
-
 def _snapshot_lines(a: Activity) -> list[dict]:
     return [
         {
