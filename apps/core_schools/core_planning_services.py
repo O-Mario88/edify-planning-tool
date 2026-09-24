@@ -552,7 +552,11 @@ class CoreSchoolsService:
             elif partner_assigned == "unassigned":
                 core_schools_qs = core_schools_qs.exclude(id__in=assigned_ids)
 
-        return core_schools_qs
+        # Newest first, as School's default ordering, with `id` settling
+        # schools created in the same instant (imports and seeds share a
+        # timestamp): without it the rows on a page changed between loads
+        # (owner-approved, 2026-09-24 A+ audit F-G).
+        return core_schools_qs.order_by("-created_at", "id")
 
     @staticmethod
     def self_heal_plans(core_schools_qs, fy: str, user) -> int:
@@ -1957,9 +1961,16 @@ class CoreRecommendationService:
     def get_recommendation_card(core_schools_qs) -> dict:
         """Prepares strategy, attention needed, and playbook data for right panel."""
         fy = get_operational_fy()
-        plans = CorePlan.objects.filter(
-            school_id__in=core_schools_qs.values_list("school_id", flat=True), fy=fy
-        ).prefetch_related("slots")
+        # Ordered by school code so the Attention Needed list is the same on
+        # every load (it followed the table's physical order; F-G).
+        plans = (
+            CorePlan.objects.filter(
+                school_id__in=core_schools_qs.values_list("school_id", flat=True),
+                fy=fy,
+            )
+            .order_by("school_id", "id")
+            .prefetch_related("slots")
+        )
 
         # Count over the prefetched slot lists in Python (a .filter() here would
         # re-query per plan) and bulk-load the schools once.

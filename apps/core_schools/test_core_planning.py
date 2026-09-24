@@ -829,6 +829,45 @@ class CoreSchoolsPlanningTest(TestCase):
             1,
         )
 
+    def test_core_school_lists_have_a_total_order(self):
+        """Schools created in the same instant (an import) and the Attention
+        Needed plans come back in one fixed order on every load (F-G)."""
+        from django.utils import timezone
+
+        from apps.core_schools.core_planning_services import (
+            CoreRecommendationService,
+            CoreSchoolsService,
+        )
+
+        extra = [
+            self._school(f"CORE-T{n}", f"Tied Core School {n}", self.cceo_sp)
+            for n in range(4)
+        ]
+        for school in extra:
+            self._plan(school)
+        stamp = timezone.now()
+        School.objects.filter(id__in=[s.id for s in extra]).update(created_at=stamp)
+
+        listed = list(
+            CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY}).values_list(
+                "id", "created_at"
+            )
+        )
+        tied = [school_id for school_id, created in listed if created == stamp]
+        self.assertTrue({s.id for s in extra} <= set(tied))
+        self.assertEqual(tied, sorted(tied))
+        self.assertEqual(
+            [created for _id, created in listed],
+            sorted((created for _id, created in listed), reverse=True),
+        )
+
+        card = CoreRecommendationService.get_recommendation_card(
+            School.objects.filter(school_type="core")
+        )
+        codes = [row["school_id"] for row in card["attention_needed"]]
+        self.assertEqual(codes, sorted(codes))
+        self.assertGreater(len(codes), 1)
+
     def test_four_weakest_interventions_are_recommended(self):
         from apps.core_schools.core_planning_services import (
             CoreInterventionRecommendationService,

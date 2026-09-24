@@ -156,6 +156,17 @@ def capture(args) -> int:
 
     import time
 
+    # A database whose year has not rolled over gets it from the first
+    # signed-in request, on a background thread: pages captured while it runs
+    # would see the year before it (SSA status, targets). Finish it first so
+    # every build is captured in the same, rolled-over state.
+    try:
+        from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+    except ImportError:
+        pass
+    else:
+        ensure_current_fiscal_year(initiated_by="parity-capture")
+
     started_ms = int(time.time() * 1000)
     out = pathlib.Path(args.out)
     (out / "bodies").mkdir(parents=True, exist_ok=True)
