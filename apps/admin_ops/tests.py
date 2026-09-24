@@ -442,7 +442,16 @@ class AdminWorkspaceTests(AdminOpsTestBase):
         from apps.fund_requests.models import AdvanceRequest
 
         def costed_activity(n):
-            activity = self._activity()
+            # Verified, evidenced and past: the rows whose next action is
+            # decided by their money, which is where the cost lines are read.
+            activity = self._activity(
+                status="ia_verified",
+                evidence_status="accepted",
+                ia_verification_status="confirmed",
+                payment_status="disbursed",
+                salesforce_activity_id=f"SF-TP-{n}",
+                planned_date=timezone.localdate() - timedelta(days=3),
+            )
             line = ActivityScheduleCostLine.objects.create(
                 activity=activity,
                 cost_setting_key="school_visit_cost_per_school",
