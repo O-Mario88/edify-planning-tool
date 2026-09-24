@@ -121,40 +121,58 @@ def _cluster_latest_scores(cluster_id: str) -> dict[str, dict[str, float]]:
     the request: every school in the cluster asks the same question, and
     Planning renders fifteen of them a page."""
     from apps.core.request_cache import memoize
+
+    return memoize(
+        ("ssa.cluster_latest_scores", cluster_id),
+        lambda: _latest_scores_by_cluster([cluster_id]).get(cluster_id, {}),
+    )
+
+
+def _latest_scores_by_cluster(cluster_ids) -> dict[str, dict[str, dict[str, float]]]:
+    """{cluster: {school: {intervention: latest confirmed score}}} for several
+    clusters in three queries — the one definition `_cluster_latest_scores`
+    answers from, whether for one cluster or a page of them.
+
+    A school belongs to one cluster, so reading the clusters together and
+    splitting by `cluster_id` gives each cluster exactly the rows its own read
+    would have (2026-09-24 A+ audit: three queries per cluster, fifteen
+    clusters on a field officer's Planning page).
+    """
     from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
 
-    def compute():
-        school_ids = list(
-            School.objects.filter(
-                cluster_id=cluster_id, deleted_at__isnull=True
-            ).values_list("id", flat=True)
+    wanted = [cid for cid in dict.fromkeys(cluster_ids) if cid]
+    out: dict[str, dict[str, dict[str, float]]] = {cid: {} for cid in wanted}
+    if not wanted:
+        return out
+    cluster_of = dict(
+        School.objects.filter(
+            cluster_id__in=wanted, deleted_at__isnull=True
+        ).values_list("id", "cluster_id")
+    )
+    if not cluster_of:
+        return out
+    latest_by_school: dict[str, str] = {}
+    for row in (
+        SsaRecord.objects.filter(
+            school_id__in=list(cluster_of),
+            verification_status="confirmed",
+            deleted_at__isnull=True,
         )
-        if not school_ids:
-            return {}
-        latest_by_school: dict[str, str] = {}
-        for row in (
-            SsaRecord.objects.filter(
-                school_id__in=school_ids,
-                verification_status="confirmed",
-                deleted_at__isnull=True,
-            )
-            .order_by("school_id", "-date_of_ssa", "-created_at")
-            .values("id", "school_id")
-        ):
-            latest_by_school.setdefault(row["school_id"], row["id"])
-        school_by_record = {rid: sid for sid, rid in latest_by_school.items()}
-        scores: dict[str, dict[str, float]] = {sid: {} for sid in latest_by_school}
-        for row in SsaScore.objects.filter(
-            ssa_record_id__in=list(latest_by_school.values())
-        ).values("ssa_record_id", "intervention", "score"):
-            if row["score"] is not None and row["intervention"] in _ALL_INTERVENTIONS:
-                scores[school_by_record[row["ssa_record_id"]]][row["intervention"]] = (
-                    float(row["score"])
-                )
-        return scores
-
-    return memoize(("ssa.cluster_latest_scores", cluster_id), compute)
+        .order_by("school_id", "-date_of_ssa", "-created_at")
+        .values("id", "school_id")
+    ):
+        latest_by_school.setdefault(row["school_id"], row["id"])
+    school_by_record = {rid: sid for sid, rid in latest_by_school.items()}
+    for sid in latest_by_school:
+        out[cluster_of[sid]][sid] = {}
+    for row in SsaScore.objects.filter(
+        ssa_record_id__in=list(latest_by_school.values())
+    ).values("ssa_record_id", "intervention", "score"):
+        if row["score"] is not None and row["intervention"] in _ALL_INTERVENTIONS:
+            sid = school_by_record[row["ssa_record_id"]]
+            out[cluster_of[sid]][sid][row["intervention"]] = float(row["score"])
+    return out
 
 
 def _peer_stats(school) -> dict[str, dict[str, float]]:
@@ -275,9 +293,14 @@ def prime_recommendation_inputs(schools) -> None:
     for school in schools:
         bucket[("ssa.confirmed_history", school.id)] = history.get(school.id, [])
         bucket[("ssa.prior_support", school.id)] = support.get(school.id, {})
-    for cluster_id in {getattr(s, "cluster_id", None) for s in schools}:
-        if cluster_id:
-            _cluster_latest_scores(cluster_id)
+    # Every cluster on the page in one read rather than three queries each.
+    missing = [
+        cid
+        for cid in dict.fromkeys(getattr(s, "cluster_id", None) for s in schools)
+        if cid and ("ssa.cluster_latest_scores", cid) not in bucket
+    ]
+    for cluster_id, scores in _latest_scores_by_cluster(missing).items():
+        bucket[("ssa.cluster_latest_scores", cluster_id)] = scores
 
 
 def _component_severity(latest_score: float) -> dict[str, Any]:
