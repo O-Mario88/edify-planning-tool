@@ -11,6 +11,7 @@ recommendations, accountable strategy notes, and auto-closing RVP To-Dos.
 from __future__ import annotations
 
 from datetime import date
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
@@ -524,3 +525,94 @@ class RVPDashboardTest(TestCase):
         self.assertNotEqual(
             self._client(self.cceo).get("/rvp/approvals").status_code, 200
         )
+
+
+class AnnualBudgetDecidedOnceTest(TestCase):
+    """An annual budget is decided once. Each test reads it the way a request
+    that lost a race did: before the other write landed. That read is the
+    courtesy check; the decision must re-read under a lock and refuse."""
+
+    def setUp(self):
+        self.rvp = User.objects.create_user(
+            email="once-rvp@r.org",
+            name="Once RVP",
+            roles=[EdifyRole.REGIONAL_VICE_PRESIDENT.value],
+            active_role=EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+            password="x",
+            is_active=True,
+        )
+        self.annual = CountryAnnualBudget.objects.create(
+            fy=FY,
+            country_id="Uganda",
+            program_total=80_000_000,
+            admin_total=20_000_000,
+            total_amount=100_000_000,
+            status="submitted_to_rvp",
+            submitted_at=timezone.now(),
+        )
+
+    def _read_before_the_other_write(self):
+        return CountryAnnualBudget.objects.get(id=self.annual.id)
+
+    def _deciding_on(self, stale):
+        """Answer the decision's unlocked read with the copy it was holding."""
+        rows = MagicMock()
+        rows.first.return_value = stale
+        return patch.object(CountryAnnualBudget.objects, "filter", return_value=rows)
+
+    def _decisions(self, action):
+        return RVPApprovalDecision.objects.filter(
+            decision_type="annual_budget", subject_id=self.annual.id, action=action
+        ).count()
+
+    def test_a_second_approval_is_refused_and_recorded_once(self):
+        stale = self._read_before_the_other_write()
+        rvp_annual_decide(self.annual.id, "approve", {}, self.rvp)
+
+        with self._deciding_on(stale), self.assertRaises(BadRequest):
+            rvp_annual_decide(self.annual.id, "approve", {}, self.rvp)
+
+        self.assertEqual(self._decisions("approve"), 1)
+
+    def test_a_return_that_lost_to_an_approval_leaves_the_baseline_locked(self):
+        stale = self._read_before_the_other_write()
+        rvp_annual_decide(self.annual.id, "approve", {}, self.rvp)
+
+        with self._deciding_on(stale), self.assertRaises(BadRequest):
+            rvp_annual_decide(
+                self.annual.id, "return", {"note": "Rephase Q3"}, self.rvp
+            )
+
+        self.annual.refresh_from_db()
+        self.assertEqual(self.annual.status, "approved_by_rvp")
+        self.assertIsNotNone(self.annual.baseline_locked_at)
+        self.assertEqual(self._decisions("return"), 0)
+
+    def test_an_approval_that_lost_to_a_return_leaves_the_budget_returned(self):
+        stale = self._read_before_the_other_write()
+        rvp_annual_decide(self.annual.id, "return", {"note": "Rephase Q3"}, self.rvp)
+
+        with self._deciding_on(stale), self.assertRaises(BadRequest):
+            rvp_annual_decide(self.annual.id, "approve", {}, self.rvp)
+
+        self.annual.refresh_from_db()
+        self.assertEqual(self.annual.status, "returned_by_rvp")
+        self.assertIsNone(self.annual.baseline_locked_at)
+        self.assertEqual(self._decisions("approve"), 0)
+
+    def test_an_approval_keeps_the_totals_a_resubmission_wrote_meanwhile(self):
+        """The Country Director's resubmission refreshes the totals under its
+        own lock and leaves the budget submitted; an approval holding the
+        older copy used to write every field of it back over them."""
+        stale = self._read_before_the_other_write()
+        CountryAnnualBudget.objects.filter(id=self.annual.id).update(
+            program_total=90_000_000, total_amount=110_000_000
+        )
+
+        with self._deciding_on(stale):
+            rvp_annual_decide(self.annual.id, "approve", {}, self.rvp)
+
+        self.annual.refresh_from_db()
+        self.assertEqual(self.annual.status, "approved_by_rvp")
+        self.assertEqual(self.annual.program_total, 90_000_000)
+        self.assertEqual(self.annual.total_amount, 110_000_000)

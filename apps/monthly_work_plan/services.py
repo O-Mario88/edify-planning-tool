@@ -372,6 +372,8 @@ def submit_annual_to_rvp(budget_id: str, principal):
 
 
 def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
+    from django.db import transaction
+
     from apps.monthly_work_plan.models import (
         CountryAnnualBudget,
         CountryAnnualBudgetStatus,
@@ -384,32 +386,43 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
         raise Forbidden("This annual budget is outside your region.")
     if b.status != CountryAnnualBudgetStatus.SUBMITTED_TO_RVP:
         raise BadRequest("Only a submitted annual budget can be decided.")
-    if action == "approve":
-        b.status = CountryAnnualBudgetStatus.APPROVED_BY_RVP
-        b.baseline_locked_at = timezone.now()  # baseline locked on approval
-    elif action == "return":
-        reason = (data.get("note") or "").strip()
-        if not reason:
-            raise BadRequest("A return reason is required.")
-        b.status = CountryAnnualBudgetStatus.RETURNED_BY_RVP
-        b.rvp_review_note = reason
-    else:
-        raise BadRequest("Unknown annual budget action.")
-    b.rvp_reviewed_at = timezone.now()
-    b.rvp_reviewed_by_user_id = principal.user_id
-    b.save()
+    with transaction.atomic():
+        # The read above is the courtesy check; this is the guard. Two
+        # decisions that both read "submitted" (a double-click, two tabs) both
+        # applied: two audit rows and two notices, or an approval and a return
+        # with the last writer winning. The full save also wrote the stale copy
+        # over totals a resubmission had refreshed meanwhile.
+        b = CountryAnnualBudget.objects.select_for_update().filter(id=budget_id).first()
+        if not b:
+            raise NotFoundError("Annual budget not found.")
+        if b.status != CountryAnnualBudgetStatus.SUBMITTED_TO_RVP:
+            raise BadRequest("Only a submitted annual budget can be decided.")
+        if action == "approve":
+            b.status = CountryAnnualBudgetStatus.APPROVED_BY_RVP
+            b.baseline_locked_at = timezone.now()  # baseline locked on approval
+        elif action == "return":
+            reason = (data.get("note") or "").strip()
+            if not reason:
+                raise BadRequest("A return reason is required.")
+            b.status = CountryAnnualBudgetStatus.RETURNED_BY_RVP
+            b.rvp_review_note = reason
+        else:
+            raise BadRequest("Unknown annual budget action.")
+        b.rvp_reviewed_at = timezone.now()
+        b.rvp_reviewed_by_user_id = principal.user_id
+        b.save()
+        _rvp_audit(
+            "annual_budget",
+            b.id,
+            f"Country Annual Budget FY {b.fy}",
+            action,
+            principal,
+            reason=b.rvp_review_note or "",
+            amount=b.total_amount,
+            fy=b.fy,
+        )
     # Deciding is what ends "ready for your approval" (INTG-03).
     _rvp_resolve(ANNUAL_BUDGET_SUBMITTED, "CountryAnnualBudget", b.id)
-    _rvp_audit(
-        "annual_budget",
-        b.id,
-        f"Country Annual Budget FY {b.fy}",
-        action,
-        principal,
-        reason=b.rvp_review_note or "",
-        amount=b.total_amount,
-        fy=b.fy,
-    )
     if b.submitted_by_user_id:
         _rvp_notify(
             b.submitted_by_user_id,
