@@ -1643,6 +1643,7 @@ def team_targets_catchup_create_view(request):
 @require_page_permission("team_targets")
 def team_targets_catchup_action_view(request, plan_id):
     from django.http import HttpResponseBadRequest, HttpResponseForbidden
+    from apps.core.exceptions import BadRequest
     from apps.targets.models import CatchUpPlan
     from apps.targets.team_targets import PLCatchUpPlanService
 
@@ -1653,7 +1654,13 @@ def team_targets_catchup_action_view(request, plan_id):
         return HttpResponseForbidden("Not your catch-up plan.")
     action = (request.POST.get("action") or "").strip()
     if action == "approve":
-        result = PLCatchUpPlanService.approve(plan, request.user)
+        try:
+            result = PLCatchUpPlanService.approve(plan, request.user)
+        except BadRequest as exc:
+            # Already decided (a double-click, a second tab): say so on the
+            # page rather than as the middleware's bare 400.
+            messages.error(request, str(exc))
+            return redirect("/team-targets")
         messages.success(
             request,
             f"Catch-up plan approved — {len(result['created'])} activit"

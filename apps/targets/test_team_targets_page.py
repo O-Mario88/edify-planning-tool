@@ -13,6 +13,7 @@ from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from freezegun import freeze_time
 
 from django.test import Client, TestCase
@@ -25,6 +26,7 @@ from apps.accounts.models import (
     StaffSupervisorAssignment,
 )
 from apps.activities.models import Activity
+from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.partners.models import Partner
@@ -32,6 +34,7 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
 from apps.targets.models import (
+    CatchUpPlan,
     MonthlyPersonalTarget,
     MostSignificantChangeStory,
     TargetAchievementLedger,
@@ -794,6 +797,45 @@ class TeamTargetsPageTest(TestCase):
         self.assertEqual(plan.status, "scheduled")
         self.assertIsNotNone(act.scheduled_date)
         self.assertGreater(act.schedule_cost_lines.count(), 0)  # budget lines exist
+
+    def _recovery_plan(self):
+        return PLCatchUpPlanService.submit(
+            self.pl,
+            staff_user_id=self.cceo1.id,
+            area_key="school_visits",
+            fy=FY,
+            month_of_fy=JULY,
+            count=1,
+            school_ids=[self.school.school_id],
+        )
+
+    def test_a_recovery_plan_is_approved_once(self):
+        """The page hands in the plan it loaded. A second tab loaded while the
+        plan was waiting approved it again: its undated recovery visit
+        entered Planning twice and the plan lost the first approval's ids."""
+        plan = self._recovery_plan()
+        second_tab = CatchUpPlan.objects.select_related("area").get(pk=plan.pk)
+        first = PLCatchUpPlanService.approve(plan, self.pl)
+        activities = Activity.objects.count()
+
+        with self.assertRaises(BadRequest):
+            PLCatchUpPlanService.approve(second_tab, self.pl)
+
+        plan.refresh_from_db()
+        self.assertEqual(plan.created_activity_ids, first["created"])
+        self.assertEqual(Activity.objects.count(), activities)
+
+    def test_approving_a_decided_plan_from_the_page_says_so(self):
+        plan = self._recovery_plan()
+        PLCatchUpPlanService.approve(plan, self.pl)
+        c = Client()
+        c.force_login(self.pl)
+
+        resp = c.post(f"/team-targets/catchup/{plan.id}/action", {"action": "approve"})
+
+        self.assertEqual(resp.status_code, 302)
+        notes = [str(m) for m in get_messages(resp.wsgi_request)]
+        self.assertIn("This catch-up plan is already approved.", notes)
 
     # ── 19: reversal ─────────────────────────────────────────────────────────
     def test_target_credit_reversed_when_activity_returned(self):

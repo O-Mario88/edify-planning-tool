@@ -1983,6 +1983,39 @@ class PLCatchUpPlanService:
 
     @staticmethod
     def approve(plan: CatchUpPlan, approver) -> dict:
+        from django.db import transaction
+
+        # Approval is from "submitted" only: the one state the page offers
+        # Approve on and counts as pending, and a returned plan is never
+        # resubmitted (see submit). Nothing checked it, so a second approval (a
+        # double-click, a second tab) ran again: undated recovery work entered
+        # Planning twice, and a dated plan went back to "approved" with its
+        # created ids blanked by create()'s duplicate refusals.
+        def refuse_unless_submitted(current) -> None:
+            if current.status != "submitted":
+                raise BadRequest(
+                    "This catch-up plan is already "
+                    f"{current.get_status_display().lower()}."
+                )
+
+        refuse_unless_submitted(plan)
+        with transaction.atomic():
+            # Claimed under the lock; the activities are still created after
+            # it, outside any transaction of ours. create() writes its audit row
+            # and notices best-effort after its own transaction, and an error
+            # it swallowed inside this one would poison it.
+            plan = (
+                CatchUpPlan.objects.select_for_update(of=("self",))
+                .select_related("area")
+                .get(pk=plan.pk)
+            )
+            refuse_unless_submitted(plan)
+            plan.status = "approved"
+            plan.approved_by = approver.id
+            plan.approved_at = timezone.now()
+            plan.save(
+                update_fields=["status", "approved_by", "approved_at", "updated_at"]
+            )
         staff_user = User.objects.filter(id=plan.staff_user_id).first()
         sp_id = getattr(staff_user, "staff_profile_id", None) if staff_user else None
         created, errors = [], []
@@ -2061,18 +2094,8 @@ class PLCatchUpPlanService:
                 except Exception as exc:  # noqa: BLE001 — surface, never hide
                     errors.append(f"{school_id}: {exc}")
         plan.status = "scheduled" if (created and plan.planned_dates) else "approved"
-        plan.approved_by = approver.id
-        plan.approved_at = timezone.now()
         plan.created_activity_ids = [c for c in created if c]
-        plan.save(
-            update_fields=[
-                "status",
-                "approved_by",
-                "approved_at",
-                "created_activity_ids",
-                "updated_at",
-            ]
-        )
+        plan.save(update_fields=["status", "created_activity_ids", "updated_at"])
         # The decision the "proposed" notice was waiting for (INTG-03).
         PLCatchUpPlanService._resolve(CATCHUP_PLAN_PROPOSED, plan.id)
         PLCatchUpPlanService._notify(
