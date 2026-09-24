@@ -12,6 +12,8 @@ writer won:
      "ia_confirmed". `complete_partner_ssa_support` locked the school, not the
      activity, so a second completion re-keyed the scores and the enrolment of
      work that was already verified.
+  2. `record_attendance` wrote `status` back from its read. A cancel, a lead's
+     approval or an IA verification made in between was reverted.
 
 Each test hands the service a read taken before the competing write, as the
 losing request had. The service must re-read the row under a lock and either
@@ -20,12 +22,17 @@ refuse or apply its change to the row as it now stands.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.test import TestCase
 
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import (
+    StaffProfile,
+    StaffSchoolAssignment,
+    StaffSupervisorAssignment,
+    User,
+)
 from apps.activities import services
 from apps.activities.models import Activity, ActivitySalesforceReference
 from apps.core.enums import SsaIntervention
@@ -35,6 +42,7 @@ from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region
 from apps.partners.models import Partner
+from apps.pl_review import services as pl_review
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 
@@ -197,3 +205,75 @@ class OneIaDecisionPerActivityTest(TestCase):
         self.assertEqual(
             SsaRecord.objects.filter(source_activity_id=work.id).count(), 1
         )
+
+
+class FieldWorkFixture(TestCase):
+    """An officer's school visit, reviewed by their Programme Lead."""
+
+    @classmethod
+    def setUpTestData(cls):
+        region = Region.objects.create(name="Field Region")
+        district = District.objects.create(name="Field District", region=region)
+        cls.pl_user, pl = _staff(
+            "stale-pl@t.test", "Lead", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        cls.cceo_user, cls.cceo = _staff("stale-cceo@t.test", "Officer", EdifyRole.CCEO)
+        StaffSupervisorAssignment.objects.create(supervisee=cls.cceo, supervisor=pl)
+        cls.school = School.objects.create(
+            school_id="STALE-FW-1",
+            name="Field Primary",
+            region=region,
+            district=district,
+        )
+        StaffSchoolAssignment.objects.create(staff=cls.cceo, school_id=cls.school.id)
+
+    def _work(self, status, **extra):
+        values = {
+            "school": self.school,
+            "activity_type": "school_visit",
+            "delivery_type": "staff",
+            "status": status,
+            "fy": "2026",
+            "quarter": "Q4",
+            "planned_date": date.today() - timedelta(days=3),
+            "responsible_staff_id": self.cceo.id,
+        }
+        values.update(extra)
+        work = Activity.objects.create(**values)
+        _evidence(work, self.cceo_user.id)
+        return work
+
+    def _read_before_the_other_write(self, work):
+        return services._get_for_execution(work.id, self.cceo_user)
+
+    def _cancel(self, work):
+        services.cancel(work.id, {"reason": "School closed for exams"}, self.cceo_user)
+
+
+class AttendanceKeepsTheCurrentStatusTest(FieldWorkFixture):
+    ATTENDANCE = {"teachersAttended": 12, "leadersAttended": 2}
+
+    def test_attendance_after_a_cancel_is_refused_and_leaves_it_cancelled(self):
+        work = self._work("completion_started")
+        stale = self._read_before_the_other_write(work)
+        self._cancel(work)
+
+        with patch.object(services, "_get_for_execution", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.record_attendance(work.id, self.ATTENDANCE, self.cceo_user)
+
+        work.refresh_from_db()
+        self.assertEqual(work.status, "cancelled")
+        self.assertIsNone(work.teachers_attended)
+
+    def test_attendance_during_review_keeps_the_leads_approval(self):
+        work = self._work("submitted_to_pl")
+        stale = self._read_before_the_other_write(work)
+        pl_review.confirm(work.id, self.pl_user)
+
+        with patch.object(services, "_get_for_execution", return_value=stale):
+            services.record_attendance(work.id, self.ATTENDANCE, self.cceo_user)
+
+        work.refresh_from_db()
+        self.assertEqual(work.status, "ia_verified")
+        self.assertEqual(work.teachers_attended, 12)

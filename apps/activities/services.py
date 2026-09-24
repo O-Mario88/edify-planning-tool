@@ -3543,7 +3543,8 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
     requirements enforced by ``complete()`` and ``submit_for_review()``.
     """
     a = _get_for_execution(activity_id, principal)
-    if a.status in ("closed", "cancelled", "rejected", "deferred"):
+    closed_statuses = ("closed", "cancelled", "rejected", "deferred")
+    if a.status in closed_statuses:
         raise BadRequest("Attendance cannot be changed after this activity is closed.")
 
     def count(name: str) -> int:
@@ -3557,6 +3558,14 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         return value
 
     with transaction.atomic():
+        # The save below writes `status` back. Taken from the read above, it
+        # reverted whatever landed in between (a lead's approval, an IA
+        # verification, a cancel), so re-read under the lock and write there.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status in closed_statuses:
+            raise BadRequest(
+                "Attendance cannot be changed after this activity is closed."
+            )
         a.teachers_attended = count("teachersAttended")
         a.leaders_attended = count("leadersAttended")
         a.other_participants = count("otherParticipants")
