@@ -178,6 +178,40 @@ class NotificationsWorkflowTest(TestCase):
         self.assertEqual(cceo_notif.target_route, "/planning")
         self.assertEqual(cceo_notif.action_label, "Open Planning")
 
+    def test_every_notification_is_reachable_a_page_at_a_time(self):
+        """The list stopped at the latest hundred and drew them all at once
+        (~550 KB of HTML for a busy officer); older ones could not be reached.
+        It now pages all of them, 25 at a time, newest first."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        Notification.objects.bulk_create(
+            Notification(
+                recipient_id=self.cceo.id, title=f"Paged notice {n:03d}", status="read"
+            )
+            for n in range(120)
+        )
+        now = timezone.now()
+        for notice in Notification.objects.filter(recipient_id=self.cceo.id):
+            n = int(notice.title.rsplit(" ", 1)[1])
+            Notification.objects.filter(id=notice.id).update(
+                created_at=now - timedelta(minutes=n)
+            )
+
+        self.client.force_login(self.cceo)
+        first = self.client.get("/notifications").content.decode()
+        drawn = [n for n in range(120) if f"Paged notice {n:03d}" in first]
+        self.assertEqual(drawn, list(range(25)))
+        self.assertIn('aria-label="Notification pages"', first)
+
+        last = self.client.get("/notifications?page=5").content.decode()
+        drawn = [n for n in range(120) if f"Paged notice {n:03d}" in last]
+        self.assertEqual(drawn, list(range(100, 120)), "past the old hundred")
+
+        filtered = self.client.get("/notifications?q=notice+119").content.decode()
+        self.assertIn("Paged notice 119", filtered)
+
     def test_notifications_page_view(self):
         """Verify that the notification dashboard filters and KPIs render correctly."""
         # Create dummy notifications

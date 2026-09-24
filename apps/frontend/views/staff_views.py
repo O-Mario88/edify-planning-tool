@@ -981,7 +981,11 @@ def notifications_page_view(request):
     if q:
         qs = qs.filter(Q(title__icontains=q) | Q(body__icontains=q))
 
-    notifications = qs.order_by("-created_at")[:100]
+    # Paged by the template, 25 to a page, in the database (COUNT plus
+    # LIMIT/OFFSET). It was cut at the latest hundred: older notifications
+    # could not be reached at all, and a hundred cards were ~550 KB of HTML
+    # on every visit. The id keeps page boundaries stable within one second.
+    notifications = qs.order_by("-created_at", "-id")
 
     # Get distinct categories
     categories = list(
