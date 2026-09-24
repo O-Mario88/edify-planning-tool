@@ -177,9 +177,19 @@ class AdminTeamPlansService:
         rows = []
         # `Activity.project_id` is a plain CharField, not a relation -- there
         # is no `project` to select_related, and the id is shown as-is.
-        for a in qs.select_related("school", "school__district", "cluster").order_by(
-            "planned_date", "planned_month", "planned_week"
-        )[: PAGE_SIZE * 5]:
+        # `compute_next_action` reads each activity's cost lines and their
+        # advances through `.all()`; prefetched, as My Plan does, rather than
+        # two queries per row (634 queries for 500 rows, 2026-09-24 A+ audit).
+        for a in (
+            qs.select_related("school", "school__district", "cluster")
+            .prefetch_related("schedule_cost_lines__advance_requests")
+            # `id` last makes the order total: rows tied on the date fields
+            # came back in whatever order the plan produced, so under the
+            # slice two loads could show different activities.
+            .order_by("planned_date", "planned_month", "planned_week", "id")[
+                : PAGE_SIZE * 5
+            ]
+        ):
             label, status_class = get_activity_status_label_and_class(a, today)
             next_action = compute_next_action(a, today)
 

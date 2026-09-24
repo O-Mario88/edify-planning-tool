@@ -290,9 +290,8 @@ def _portfolio_counts(staff_ids: list[str]) -> dict[str, dict[str, int]]:
     from apps.accounts.models import StaffSchoolAssignment
     from apps.schools.models import School
 
-    assignments = StaffSchoolAssignment.objects.filter(
-        staff_id__in=staff_ids
-    ).values_list("staff_id", "school_id")
+    in_scope = StaffSchoolAssignment.objects.filter(staff_id__in=staff_ids)
+    assignments = in_scope.values_list("staff_id", "school_id")
     school_to_staff: dict[str, list[str]] = {}
     for staff_id, school_id in assignments:
         school_to_staff.setdefault(str(school_id), []).append(str(staff_id))
@@ -301,8 +300,10 @@ def _portfolio_counts(staff_ids: list[str]) -> dict[str, dict[str, int]]:
     }
     if not school_to_staff:
         return counts
+    # The assigned schools as a subquery: the same ids as `school_to_staff`,
+    # without binding a country's ~50,000 of them one placeholder each.
     schools = School.objects.filter(
-        id__in=list(school_to_staff),
+        id__in=in_scope.values("school_id"),
         deleted_at__isnull=True,
         operational_status__in=("active", "reopened"),
     ).values_list("id", "school_type")
@@ -390,6 +391,10 @@ def _staff_recommendation_context(
     staff_ids = list(dict.fromkeys(str(staff_id) for staff_id in staff_ids))
     portfolio = portfolio if portfolio is not None else _portfolio_counts(staff_ids)
     start, end = Cal.fy_range(fy)
+    # Everyone's approved leave in one read for the request memo that
+    # `working_days` answers from, rather than a query per person (166 for a
+    # country, 2026-09-24 A+ audit).
+    Cal.prime_leave_days(staff_ids)
     available_days = {
         staff_id: Cal.working_days(start, end, _CapacityUser(staff_profile_id=staff_id))
         for staff_id in staff_ids

@@ -194,3 +194,62 @@ class WorkbookStylingCostTest(SimpleTestCase):
         self.assertEqual(even.alignment.vertical, "top")
         self.assertEqual(sheet["B3"].number_format, "#,##0")
         self.assertEqual(sheet.freeze_panes, "A2")
+
+    def test_the_body_styling_writes_the_same_workbook_as_before(self):
+        """The direct style indices save exactly what cell assignment saved.
+
+        Styled through the cell, every body cell hashed three styles into the
+        workbook's lists (2026-09-24 A+ audit); `style_body` now assigns once
+        per band and copies the indices. This frozen copy of the old loop and
+        the new one must save byte-identical sheets and styles, dates (which
+        carry their own number format) and blank cells included.
+        """
+        import datetime
+        import zipfile
+
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment, Border, PatternFill, Side
+
+        from apps.core import excel
+
+        def frozen_style_body(sheet, number_formats=None):
+            fills = (
+                PatternFill("solid", fgColor="FFFFFF"),
+                PatternFill("solid", fgColor=excel.BAND),
+            )
+            border = Border(bottom=Side(style="thin", color=excel.ROW_RULE))
+            alignment = Alignment(vertical="top", wrap_text=True)
+            for row_index, row in enumerate(sheet.iter_rows(min_row=2), start=2):
+                fill = fills[row_index % 2 == 0]
+                for cell in row:
+                    cell.fill = fill
+                    cell.border = border
+                    cell.alignment = alignment
+                for column, number_format in (number_formats or {}).items():
+                    sheet.cell(row_index, column).number_format = number_format
+
+        def build(style_body):
+            workbook = Workbook()
+            sheet = workbook.active
+            sheet.append(["School", "Date", "Cost", "Note"])
+            excel.style_header(sheet)
+            for n in range(57):
+                sheet.append(
+                    [
+                        f"School {n}",
+                        datetime.date(2026, 1, 1) + datetime.timedelta(days=n),
+                        n * 1000,
+                        None if n % 5 else "note",
+                    ]
+                )
+            style_body(sheet, {3: "#,##0"})
+            out = io.BytesIO()
+            workbook.save(out)
+            with zipfile.ZipFile(out) as archive:
+                return {
+                    name: archive.read(name)
+                    for name in archive.namelist()
+                    if not name.startswith("docProps/")
+                }
+
+        self.assertEqual(build(excel.style_body), build(frozen_style_body))
