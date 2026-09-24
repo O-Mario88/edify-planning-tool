@@ -10,6 +10,18 @@ returns exactly what it returns, for country, country-with-staff-country,
 team, personal, summary and empty scopes, with quarter, month, geography,
 school-type, activity-type, partner, staff and search filters, over two
 fiscal years of work and assessments.
+
+One intended departure from commit 4425605 (2026-09-24, the grouped-count
+correction): the frozen copy's four grouped activity counts (months,
+districts, regions, clusters) now clear the ordering before grouping, as the
+live method does. Before, a `.distinct()` scope (country, Programme Lead team,
+staff filter) carried Activity's `-created_at` ordering into the SELECT and
+the GROUP BY, so each count was split by creation time and only one slice
+survived. The fixture used to create every activity under one frozen
+`created_at`, which hid that; it now gives each activity its own. Nothing else
+in the frozen copy changed, so the oracle still proves the performance change
+altered no other figure. `test_analytics_grouped_counts.py` pins the true
+counts directly.
 """
 
 from __future__ import annotations
@@ -663,9 +675,13 @@ def _frozen_get_analytics_data(principal, filters: dict) -> dict:
 
     # One grouped query for all twelve months. Counting month-by-month cost
     # 24 round trips for data the database can group in a single pass.
+    # Grouped-count correction (see the module docstring): the ordering is
+    # cleared so the GROUP BY is the key alone. Applied to all four counts.
     month_counts = {
         row["planned_month"]: row
-        for row in activities_qs.values("planned_month").annotate(
+        for row in activities_qs.order_by()
+        .values("planned_month")
+        .annotate(
             planned=Count("id"),
             achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
         )
@@ -734,6 +750,7 @@ def _frozen_get_analytics_data(principal, filters: dict) -> dict:
     district_counts = {
         row["school__district_id"]: row
         for row in activities_qs.filter(school__district_id__in=scoped_district_ids)
+        .order_by()
         .values("school__district_id")
         .annotate(
             planned=Count("id"),
@@ -883,7 +900,9 @@ def _frozen_get_analytics_data(principal, filters: dict) -> dict:
     # were the one place the page's cost tracked geography growth.
     region_acts = {
         row["school__region_id"]: row
-        for row in activities_qs.values("school__region_id").annotate(
+        for row in activities_qs.order_by()
+        .values("school__region_id")
+        .annotate(
             planned=Count("id"),
             achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
         )
@@ -928,6 +947,7 @@ def _frozen_get_analytics_data(principal, filters: dict) -> dict:
     cluster_acts = {
         row["school__cluster_id"]: row
         for row in activities_qs.filter(school__cluster_id__in=shown_cluster_ids)
+        .order_by()
         .values("school__cluster_id")
         .annotate(
             trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
@@ -1378,8 +1398,14 @@ class AnalyticsDashboardOracleTest(TestCase):
             9: "Q4",
         }
 
+        # Each activity is created at its own moment, as real work is. Under
+        # the class's frozen clock they would all share one `created_at`, and
+        # a grouped count that splits on the creation time would agree with
+        # a correct one by accident.
+        created = iter(range(1, 1000))
+
         def act(sp, planned, atype="school_visit", status="ia_verified", **extra):
-            return Activity.objects.create(
+            activity = Activity.objects.create(
                 activity_type=atype,
                 delivery_type=extra.pop("delivery_type", "staff"),
                 status=status,
@@ -1393,6 +1419,10 @@ class AnalyticsDashboardOracleTest(TestCase):
                 ),
                 **extra,
             )
+            Activity.objects.filter(id=activity.id).update(
+                created_at=timezone.now() - datetime.timedelta(hours=next(created))
+            )
+            return activity
 
         act(
             c1_sp,

@@ -651,9 +651,18 @@ class AnalyticsDashboardService:
 
         # One grouped query for all twelve months. Counting month-by-month cost
         # 24 round trips for data the database can group in a single pass.
+        #
+        # Every grouped count over `activities_qs` clears the ordering first.
+        # A scoped queryset is `.distinct()` (scope_activities), and on a
+        # DISTINCT query Django selects the model's `-created_at` ordering
+        # column and so groups by it too: one row per (month, creation time),
+        # of which the dict below kept only the last. The joins are all
+        # many-to-one, so each group still counts each activity once.
         month_counts = {
             row["planned_month"]: row
-            for row in activities_qs.values("planned_month").annotate(
+            for row in activities_qs.order_by()
+            .values("planned_month")
+            .annotate(
                 planned=Count("id"),
                 achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
             )
@@ -724,6 +733,7 @@ class AnalyticsDashboardService:
         district_counts = {
             row["school__district_id"]: row
             for row in activities_qs.filter(school__district_id__in=scoped_district_ids)
+            .order_by()
             .values("school__district_id")
             .annotate(
                 planned=Count("id"),
@@ -873,7 +883,9 @@ class AnalyticsDashboardService:
         # were the one place the page's cost tracked geography growth.
         region_acts = {
             row["school__region_id"]: row
-            for row in activities_qs.values("school__region_id").annotate(
+            for row in activities_qs.order_by()
+            .values("school__region_id")
+            .annotate(
                 planned=Count("id"),
                 achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
             )
@@ -918,6 +930,7 @@ class AnalyticsDashboardService:
         cluster_acts = {
             row["school__cluster_id"]: row
             for row in activities_qs.filter(school__cluster_id__in=shown_cluster_ids)
+            .order_by()
             .values("school__cluster_id")
             .annotate(
                 trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
