@@ -4911,7 +4911,17 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             ]
         )
 
-        # Update related PartnerAssignment if exists
+        # Update the handover this activity came from, if it has one.
+        #
+        # An activity that already names its handover (scheduled_activity) IS
+        # that handover's delivery, so no other assignment is touched. Before
+        # this, dating such an activity also marked whichever unscheduled
+        # handover the same Partner held at the school as scheduled — a
+        # different piece of work, left with no activity and no way back to
+        # the Partner's Schedule button. Only an older activity written without
+        # its handover still looks one up, and the pairing is now recorded the
+        # way the assignment path records it, so Partner Monitoring reads the
+        # two as one row: Scheduled, on the Partner's date (owner, 2026-09-24).
         from django.db.models import Q
 
         pa_filter = Q()
@@ -4920,10 +4930,12 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         elif a.cluster_id:
             pa_filter = Q(cluster_id=a.cluster_id)
 
-        if pa_filter:
+        paired = PartnerAssignment.objects.filter(scheduled_activity_id=a.id).exists()
+        if pa_filter and not paired:
             pa_rec = PartnerAssignment.objects.filter(
                 pa_filter,
                 partner_id=a.assigned_partner_id,
+                scheduled_activity__isnull=True,
                 status__in=[
                     "assigned",
                     "pending_scheduling",
@@ -4934,7 +4946,15 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             if pa_rec:
                 pa_rec.status = "partner_scheduled"
                 pa_rec.scheduled_date = new_date.date() if new_date else None
-                pa_rec.save(update_fields=["status", "scheduled_date", "updated_at"])
+                pa_rec.scheduled_activity = a
+                pa_rec.save(
+                    update_fields=[
+                        "status",
+                        "scheduled_date",
+                        "scheduled_activity",
+                        "updated_at",
+                    ]
+                )
 
         # Update related CoreActivitySlot if exists
         slot = CoreActivitySlot.objects.filter(activity_id=a.id).first()

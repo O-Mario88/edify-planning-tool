@@ -1228,8 +1228,29 @@ def resolve_returned_assignment(assignment_id: str, data: dict, principal) -> di
         principal, Permission.PARTNER_ASSIGNMENT_REASSIGN.value
     ):
         raise Forbidden("You do not have permission to reassign Partner work.")
-    if not assignment_in_scope(principal, assignment_id):
+    # Special Project work is its Project Coordinator's to decide, wherever
+    # the school sits (owner, 2026-09-24): the coordinator reaches it through
+    # the project, everyone else through the Partner Monitoring team lens —
+    # and on project work, that lens reads but does not decide.
+    from apps.projects.authority import directs_project_work, project_work_refusal
+
+    project_id = (
+        PartnerAssignment.objects.filter(id=assignment_id)
+        .values_list("project_id", flat=True)
+        .first()
+    )
+    directs = bool(project_id) and directs_project_work(principal, project_id)
+    if not directs and not assignment_in_scope(principal, assignment_id):
         raise NotFoundError("Assignment not found.")
+    if project_id and not directs:
+        from apps.projects.models import Project
+
+        raise Forbidden(
+            project_work_refusal(
+                Project.objects.filter(id=project_id).first(),
+                action="decide what happens to work its Partner returned",
+            )
+        )
 
     replacement = None
     with transaction.atomic():
@@ -1258,6 +1279,11 @@ def resolve_returned_assignment(assignment_id: str, data: dict, principal) -> di
                 raise BadRequest(
                     f"{partner.name} returned this work. Choose another Partner."
                 )
+            if assignment.project_id:
+                # New work on the project: a paused or closed one takes none.
+                from apps.projects.services import assert_accepts_new_work
+
+                assert_accepts_new_work(assignment.project)
             replacement = create_assignment(
                 school=assignment.school,
                 cluster=assignment.cluster,

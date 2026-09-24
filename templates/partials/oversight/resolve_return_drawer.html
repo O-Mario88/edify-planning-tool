@@ -7,6 +7,11 @@ support (a replacement assignment, no cost until they schedule), staff deliver
 it (the school is Staff Managed again and is planned from Planning), or the
 support is closed. The school's ownership never moves, and a second submit
 records nothing new.
+
+Special Project work a Partner handed back is its Project Coordinator's to
+decide (owner, 2026-09-24): anyone else is told so and offered no form.
+Project Monitoring opens this drawer for the coordinator and posts it to its
+own route (`submit_url`).
 {% endcomment %}
 {% block drawer_title %}{% if item %}Resolve return for {{ item.school_name }}{% else %}Not available{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% if item %}Returned by {{ item.partner_name }}{% else %}This assignment is not in your scope, or is not waiting on a decision.{% endif %}{% endblock %}
@@ -14,8 +19,16 @@ records nothing new.
 {% block drawer_body %}
 {% if not item %}
 <p class="text-sm edify-text-muted">This assignment is not in your scope, or is not waiting on a decision.</p>
+{% elif project_locked %}
+<div class="space-y-3" data-project-locked>
+  <p class="text-sm">This school's work belongs to {% firstof item.project_name "a Special Project" %}.</p>
+  <p class="edify-text-caption edify-text-muted">
+    Only its Project Coordinator decides what happens to work {{ item.partner_name|default:"the partner" }}
+    returned. Follow it on Project Monitoring.
+  </p>
+</div>
 {% else %}
-<form hx-post="/partner-oversight/resolve/submit" hx-target="#resolve-result" hx-swap="innerHTML"
+<form hx-post="{% firstof submit_url '/partner-oversight/resolve/submit' %}" hx-target="#resolve-result" hx-swap="innerHTML"
       hx-disabled-elt="find button[type=submit]"
       class="space-y-4" x-data="{ resolution: '' }">
   {% csrf_token %}
