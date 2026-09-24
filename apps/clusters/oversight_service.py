@@ -402,7 +402,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     """
     from apps.core.enums import SsaIntervention
     from apps.core.rbac import EdifyRole
-    from apps.core.scoping import cluster_queryset, resolve_user_scope
+    from apps.core.scoping import any_id, cluster_queryset, resolve_user_scope
     from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
@@ -488,32 +488,32 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         cid = s["cluster_id"]
         cluster_schools_count[cid] = cluster_schools_count.get(cid, 0) + 1
 
-    # 2. SSA average per cluster
-    ssa_filter = {
-        "school_id__in": list(school_to_cluster.keys()),
-        "deleted_at__isnull": True,
-    }
+    # 2. SSA average per cluster. The member schools go as one array: a
+    # country's clusters hold tens of thousands of schools, and one bind
+    # parameter each cost more to build and plan than the query took to run.
+    ssa_filter = {"deleted_at__isnull": True}
     if fy:
         ssa_filter["fy"] = str(fy)
 
     ssa_avgs = {
         row["school__cluster_id"]: row["avg_score"]
-        for row in SsaRecord.objects.filter(**ssa_filter)
+        for row in SsaRecord.objects.filter(
+            any_id("school_id", school_to_cluster), **ssa_filter
+        )
         .values("school__cluster_id")
         .annotate(avg_score=Avg("average_score"))
     }
 
     # 3. Least performing intervention per cluster
-    score_filter = {
-        "ssa_record__school_id__in": list(school_to_cluster.keys()),
-        "ssa_record__deleted_at__isnull": True,
-    }
+    score_filter = {"ssa_record__deleted_at__isnull": True}
     if fy:
         score_filter["ssa_record__fy"] = str(fy)
 
     cluster_intervention_scores: dict[str, list] = {}
     for row in (
-        SsaScore.objects.filter(**score_filter)
+        SsaScore.objects.filter(
+            any_id("ssa_record__school_id", school_to_cluster), **score_filter
+        )
         .values("ssa_record__school__cluster_id", "intervention")
         .annotate(avg=Avg("score"))
     ):

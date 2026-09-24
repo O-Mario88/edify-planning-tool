@@ -22,7 +22,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from django.db.models import Q
+from django.db.models import F, Lookup, Q
 
 from apps.core.rbac import EdifyRole, Permission, permissions_for_role
 
@@ -1148,6 +1148,33 @@ def id_array(ids):
     from django.db.models.expressions import RawSQL
 
     return RawSQL("SELECT unnest(%s::varchar[])", [[str(i) for i in ids]])
+
+
+class _AnyId(Lookup):
+    """``lhs = ANY(%s::varchar[])``, built by `any_id`; never registered."""
+
+    lookup_name = "any_id"
+    prepare_rhs = False
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        return f"{lhs} = ANY(%s::varchar[])", [*lhs_params, self.rhs]
+
+
+def any_id(field: str, ids):
+    """``field`` equal to one of ``ids``: ``.filter(any_id("school_id", ids))``.
+
+    The same rows as ``field__in=id_array(ids)``, also bound as one array. The
+    difference is the plan: behind ``IN (SELECT unnest(...))`` the planner
+    guesses 200 distinct ids and probes an index once per id, which for tens
+    of thousands of ids is a loop of index probes and a spilled aggregate. ``=
+    ANY`` is estimated from the array itself: a long list becomes one hashed
+    scan, a short one still uses the index (2026-09-24 audit at 50,000 schools:
+    a country's cost-line totals 372 ms -> 99 ms of execution). For a few
+    thousand ids, such as a country's clusters, the two measured the same or
+    `id_array` slightly quicker, so those callers keep it.
+    """
+    return _AnyId(F(field), [str(i) for i in ids])
 
 
 def direct_portfolio_schools(scope: UserScope, base=None):

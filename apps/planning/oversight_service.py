@@ -27,6 +27,7 @@ exactly how two numbers on one page drift apart.
 
 from __future__ import annotations
 
+from collections import namedtuple
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -493,50 +494,65 @@ _COURSE_COLUMNS = (
 )
 
 
-class _Record:
-    """Attribute access over one row of values, shaped like the model.
+#: One activity row, with attribute access shaped like the model.
+#:
+#: An oversight page reads a fixed set of columns from every activity in its
+#: scope. As model instances, each with six joined relations, that was
+#: ~520,000 objects for the country at 50,000 schools, and most of an 11 s
+#: request (2026-09-24 live-performance audit, R2). `_activity_item` reads the
+#: same attributes off these as off a model, and `build_item_by_reference`
+#: still passes it a real one. Named tuples rather than objects with a dict
+#: each: one small object per row instead of two large ones, which is also
+#: less for the garbage collector to walk on a 74,000-row page.
+_ActivityRecord = namedtuple(
+    "_ActivityRecord", (*_ACTIVITY_COLUMNS, "school", "cluster", "training_course")
+)
+_SchoolRecord = namedtuple(
+    "_SchoolRecord",
+    (
+        "school_id",
+        "name",
+        "school_type",
+        "district_id",
+        "district",
+        "region_id",
+        "region",
+    ),
+)
+_ClusterRecord = namedtuple("_ClusterRecord", ("name", "district_id", "district"))
+_ClusterDistrictRecord = namedtuple(
+    "_ClusterDistrictRecord", ("name", "region_id", "region")
+)
+_DistrictRecord = namedtuple("_DistrictRecord", ("name",))
+_RegionRecord = namedtuple("_RegionRecord", ("name",))
+_CourseRecord = namedtuple("_CourseRecord", ("display_name", "source_name"))
 
-    An oversight page reads a fixed set of columns from every activity in its
-    scope. As model instances, each with six joined relations, that was
-    ~520,000 objects for the country at 50,000 schools, and most of an 11 s
-    request (2026-09-24 live-performance audit, R2). `_activity_item` reads
-    the same attributes off these as off a model, and `build_item_by_reference`
-    still passes it a real one.
-    """
 
-    def __init__(self, **fields):
-        self.__dict__.update(fields)
-
-
-def _record(fields: dict) -> _Record:
-    record = _Record.__new__(_Record)
-    record.__dict__ = fields
-    return record
-
-
-def _activity_records(rows) -> list[_Record]:
+def _activity_records(rows) -> list[_ActivityRecord]:
     """One record per activity row; each school, cluster, district, region
     and course is one shared record however many activities point at it."""
     width = len(_ACTIVITY_COLUMNS)
     school_end = width + len(_SCHOOL_COLUMNS)
     cluster_end = school_end + len(_CLUSTER_COLUMNS)
-    names: dict[tuple, _Record] = {}
-    schools: dict[str, _Record] = {}
-    clusters: dict[str, _Record] = {}
-    courses: dict[str, _Record] = {}
+    school_at = _ACTIVITY_COLUMNS.index("school_id")
+    cluster_at = _ACTIVITY_COLUMNS.index("cluster_id")
+    course_at = _ACTIVITY_COLUMNS.index("training_course_id")
+    names: dict[tuple, tuple] = {}
+    schools: dict[str, _SchoolRecord] = {}
+    clusters: dict[str, _ClusterRecord] = {}
+    courses: dict[str, _CourseRecord] = {}
 
-    def named(kind, key, name, **extra):
+    def named(kind, key, *fields):
         if key is None:
             return None
         found = names.get((kind, key))
         if found is None:
-            found = names[(kind, key)] = _record({"name": name, **extra})
+            found = names[(kind, key)] = kind(*fields)
         return found
 
     records = []
     for row in rows:
-        fields = dict(zip(_ACTIVITY_COLUMNS, row[:width]))
-        school_id = fields["school_id"]
+        school_id = row[school_at]
         school = None
         if school_id is not None:
             school = schools.get(school_id)
@@ -550,20 +566,17 @@ def _activity_records(rows) -> list[_Record]:
                     region_id,
                     region_name,
                 ) = row[width:school_end]
-                school = schools[school_id] = _record(
-                    {
-                        "school_id": code,
-                        "name": school_name,
-                        "school_type": school_type,
-                        "district_id": district_id,
-                        "district": named("district", district_id, district_name),
-                        "region_id": region_id,
-                        "region": named("region", region_id, region_name),
-                    }
+                school = schools[school_id] = _SchoolRecord(
+                    code,
+                    school_name,
+                    school_type,
+                    district_id,
+                    named(_DistrictRecord, district_id, district_name),
+                    region_id,
+                    named(_RegionRecord, region_id, region_name),
                 )
-        fields["school"] = school
 
-        cluster_id = fields["cluster_id"]
+        cluster_id = row[cluster_at]
         cluster = None
         if cluster_id is not None:
             cluster = clusters.get(cluster_id)
@@ -575,33 +588,26 @@ def _activity_records(rows) -> list[_Record]:
                     region_id,
                     region_name,
                 ) = row[school_end:cluster_end]
-                region = named("region", region_id, region_name)
-                cluster = clusters[cluster_id] = _record(
-                    {
-                        "name": cluster_name,
-                        "district_id": district_id,
-                        "district": named(
-                            "cluster-district",
-                            district_id,
-                            district_name,
-                            region_id=region_id,
-                            region=region,
-                        ),
-                    }
+                region = named(_RegionRecord, region_id, region_name)
+                cluster = clusters[cluster_id] = _ClusterRecord(
+                    cluster_name,
+                    district_id,
+                    named(
+                        _ClusterDistrictRecord,
+                        district_id,
+                        district_name,
+                        region_id,
+                        region,
+                    ),
                 )
-        fields["cluster"] = cluster
 
-        course_id = fields["training_course_id"]
+        course_id = row[course_at]
         course = None
         if course_id is not None:
             course = courses.get(course_id)
             if course is None:
-                display_name, source_name = row[cluster_end:]
-                course = courses[course_id] = _record(
-                    {"display_name": display_name, "source_name": source_name}
-                )
-        fields["training_course"] = course
-        records.append(_record(fields))
+                course = courses[course_id] = _CourseRecord(*row[cluster_end:])
+        records.append(_ActivityRecord(*row[:width], school, cluster, course))
     return records
 
 
@@ -883,14 +889,14 @@ def _cost_by_activity(activity_ids) -> dict[str, int]:
         return {}
     # One array parameter, not one bind parameter per activity: a country
     # page passes every activity in the country.
-    from apps.core.scoping import id_array
+    from apps.core.scoping import any_id
 
     rows = (
-        ActivityScheduleCostLine.objects.filter(activity_id__in=id_array(activity_ids))
-        .values("activity_id")
+        ActivityScheduleCostLine.objects.filter(any_id("activity_id", activity_ids))
+        .values_list("activity_id")
         .annotate(total=Sum("amount"))
     )
-    return {r["activity_id"]: int(r["total"] or 0) for r in rows}
+    return {activity_id: int(total or 0) for activity_id, total in rows}
 
 
 def _partner_names(partner_ids) -> dict[str, str]:
@@ -923,6 +929,7 @@ class _StaffDirectory:
         self._roles: dict[str, str] = {}
         self._supervisor_of: dict[str, str] = {}
         self._staff_for: dict[str, str] = {}
+        self._leads: dict[str, tuple[str | None, str]] = {}
 
         if not ids:
             return
@@ -968,6 +975,14 @@ class _StaffDirectory:
         return self._roles.get(staff_id, "") if staff_id else ""
 
     def supervisor_of(self, staff_id) -> tuple[str | None, str]:
+        # A few hundred people own every row of a country page, so each one's
+        # lead is worked out once rather than once per row.
+        lead = self._leads.get(staff_id)
+        if lead is None:
+            lead = self._leads[staff_id] = self._lead_of(staff_id)
+        return lead
+
+    def _lead_of(self, staff_id) -> tuple[str | None, str]:
         if not staff_id:
             return None, ""
         canonical = self._staff_for.get(staff_id, staff_id)
@@ -1338,57 +1353,66 @@ def summarize(items) -> dict:
 
     Nothing here re-queries. A KPI that disagrees with the table below it is
     not possible while this stays a fold, which is the whole reason it is one.
+    It is one pass: a country page folds 74,000 items per summary, and a list
+    per count read each of them a dozen times (2026-09-24 audit).
     """
-    items = list(items)
-    staff_scheduled = [i for i in items if i.stage == STAGE_STAFF_SCHEDULED]
-    partner_awaiting = [i for i in items if i.is_awaiting_partner_schedule]
-    partner_scheduled = [i for i in items if i.stage == STAGE_PARTNER_SCHEDULED]
-    scheduled = staff_scheduled + partner_scheduled
-
     # Execution progress counts only work whose date has arrived. Future work
     # is not late, and counting it as unfinished would report every team as
     # behind on the first day of a period.
     today = date.today()
-    due = [i for i in scheduled if i.planned_date and i.planned_date <= today]
-    completed_due = [i for i in due if i.is_completed]
-
-    return {
-        "total_planned": len(items),
-        "staff_scheduled": len(staff_scheduled),
-        "partner_awaiting_schedule": len(partner_awaiting),
-        "partner_scheduled": len(partner_scheduled),
-        "scheduled_total": len(scheduled),
-        "at_risk": len([i for i in items if i.at_risk]),
-        "needs_attention": len([i for i in items if i.at_risk]),
-        "planned_budget": sum(i.planned_cost for i in items),
-        "completed": len([i for i in items if i.is_completed]),
-        "due_count": len(due),
-        "execution_progress": (
-            round(len(completed_due) * 100 / len(due)) if due else None
-        ),
-        "cost_missing": len([i for i in scheduled if i.cost_missing]),
+    total = staff = awaiting = partner = at_risk = completed = budget = 0
+    due = completed_due = cost_missing = awaiting_verification = unpaid = 0
+    for i in items:
+        total += 1
+        budget += i.planned_cost
+        is_completed = i.is_completed
+        if is_completed:
+            completed += 1
+        if i.is_awaiting_partner_schedule:
+            awaiting += 1
+        if i.stage in (STAGE_STAFF_SCHEDULED, STAGE_PARTNER_SCHEDULED):
+            if i.stage == STAGE_STAFF_SCHEDULED:
+                staff += 1
+            else:
+                partner += 1
+            if i.cost_missing:
+                cost_missing += 1
+            if i.planned_date and i.planned_date <= today:
+                due += 1
+                if is_completed:
+                    completed_due += 1
+        if i.at_risk:
+            at_risk += 1
         # The tail of the chain. Folded from the same items, so these agree
         # with the rows like every other number here. They exist because a
         # plan that is 100% delivered and 0% verified is not a finished plan,
         # and a page that stops at "completed" says it is.
-        "awaiting_verification": len(
-            [i for i in items if i.submitted_to_ia_at and i.ia_status == "pending"]
-        ),
-        "awaiting_payment": len(
-            [
-                i
-                for i in items
-                if i.ia_status == "confirmed"
-                and (i.finance_status or "none")
-                not in (
-                    "paid",
-                    "disbursed",
-                    "netsuite_accountability",
-                    "closed",
-                    "rejected",
-                )
-            ]
-        ),
+        if i.submitted_to_ia_at and i.ia_status == "pending":
+            awaiting_verification += 1
+        if i.ia_status == "confirmed" and (i.finance_status or "none") not in (
+            "paid",
+            "disbursed",
+            "netsuite_accountability",
+            "closed",
+            "rejected",
+        ):
+            unpaid += 1
+
+    return {
+        "total_planned": total,
+        "staff_scheduled": staff,
+        "partner_awaiting_schedule": awaiting,
+        "partner_scheduled": partner,
+        "scheduled_total": staff + partner,
+        "at_risk": at_risk,
+        "needs_attention": at_risk,
+        "planned_budget": budget,
+        "completed": completed,
+        "due_count": due,
+        "execution_progress": round(completed_due * 100 / due) if due else None,
+        "cost_missing": cost_missing,
+        "awaiting_verification": awaiting_verification,
+        "awaiting_payment": unpaid,
     }
 
 
@@ -1584,22 +1608,48 @@ def system_program_leads() -> list[dict]:
     from apps.accounts.models import StaffProfile
     from apps.core.rbac import EdifyRole
 
-    profiles = (
+    profiles = list(
         StaffProfile.objects.filter(
             user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         )
         .select_related("user")
         .order_by("user__name")
     )
+    id_spaces = _each_in_both_id_spaces(p.id for p in profiles)
     return [
         {
             "id": p.id,
             "user_id": p.user_id,
             "name": getattr(p.user, "name", "") or getattr(p.user, "email", ""),
-            "ids": _both_id_spaces({p.id}),
+            "ids": id_spaces.get(p.id, set()),
         }
         for p in profiles
     ]
+
+
+def _each_in_both_id_spaces(staff_ids) -> dict[str, set[str]]:
+    """`_both_id_spaces` of each id on its own, in two queries for all of them.
+
+    Asking one id at a time cost two queries per Programme Lead on every
+    country and cluster oversight load.
+    """
+    from apps.accounts.models import StaffProfile
+
+    ids = {i for i in staff_ids if i}
+    spaces = {i: {i} for i in ids}
+    if not ids:
+        return spaces
+    for staff_id, user_id in StaffProfile.objects.filter(id__in=ids).values_list(
+        "id", "user_id"
+    ):
+        if user_id:
+            spaces[staff_id].add(user_id)
+    for staff_id, user_id in StaffProfile.objects.filter(user_id__in=ids).values_list(
+        "id", "user_id"
+    ):
+        if staff_id:
+            spaces[user_id].add(staff_id)
+    return spaces
 
 
 def group_by_program_lead(items, *, program_leads=None) -> list[dict]:
