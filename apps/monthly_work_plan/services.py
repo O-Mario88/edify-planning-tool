@@ -29,6 +29,8 @@ def get_one(budget_id: str) -> dict:
 
 
 def add_admin_line(budget_id: str, data: dict, principal) -> dict:
+    from django.db import transaction
+
     b = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
     if not b:
         raise NotFoundError("Monthly work-plan budget not found.")
@@ -38,12 +40,13 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     role = getattr(principal, "active_role", None)
     if role is not None and role not in ("CountryDirector", "Admin"):
         raise Forbidden("Only the Country Director can add a country admin budget.")
-    if b.status not in (
+    editable = (
         MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
         MonthlyWorkPlanBudgetStatus.CD_REVIEW,
         MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
         MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
-    ):
+    )
+    if b.status not in editable:
         raise BadRequest("This General Budget is locked and can no longer be changed.")
     description = (data.get("description") or "").strip()
     if not description:
@@ -64,20 +67,37 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     if unit < 0 or qty_dec <= 0:
         raise BadRequest("Unit cost and quantity must be greater than zero.")
     total = int((qty_dec * unit).to_integral_value())
-    line = AdminBudgetLine.objects.create(
-        monthly_budget=b,
-        cost_category=(data.get("costCategory") or "other").strip() or "other",
-        description=description,
-        quantity=qty_dec,
-        unit_cost=unit,
-        total_cost=total,
-        justification=data.get("justification"),
-        created_by_user_id=principal.user_id,
-    )
-    recompute_totals(b)
-    if b.status != MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED:
-        b.status = MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED
-        b.save(update_fields=["status", "updated_at"])
+    with transaction.atomic():
+        # The status check above is the courtesy; this is the guard, under the
+        # row lock send_to_rvp takes to recompute, snapshot and submit. An add
+        # that read "editable" before a submission committed used to land after
+        # it: a line the snapshot never saw, the submitted totals rewritten and
+        # the status put back to admin_plan_added, un-submitting the month.
+        b = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not b:
+            raise NotFoundError("Monthly work-plan budget not found.")
+        if b.status not in editable:
+            raise BadRequest(
+                "This General Budget is locked and can no longer be changed."
+            )
+        line = AdminBudgetLine.objects.create(
+            monthly_budget=b,
+            cost_category=(data.get("costCategory") or "other").strip() or "other",
+            description=description,
+            quantity=qty_dec,
+            unit_cost=unit,
+            total_cost=total,
+            justification=data.get("justification"),
+            created_by_user_id=principal.user_id,
+        )
+        recompute_totals(b)
+        if b.status != MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED:
+            b.status = MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED
+            b.save(update_fields=["status", "updated_at"])
     return _serialize_line(line)
 
 

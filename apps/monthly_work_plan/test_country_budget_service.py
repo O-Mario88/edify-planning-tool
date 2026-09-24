@@ -7,6 +7,7 @@ Budget from the CD Monthly Admin Plan (MonthlyWorkPlanBudget + AdminBudgetLine)
 """
 
 from datetime import date, datetime
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -645,6 +646,37 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertTrue(ctx2["can_send_to_rvp"])
         b = svc.send_to_rvp(self.cd_p, ctx2["budget_id"])
         self.assertEqual(b.status, "submitted_to_rvp")
+
+    def test_an_admin_line_that_lost_to_the_submission_is_refused(self):
+        """The add read the month as editable, then send_to_rvp took the row
+        lock, froze the totals and wrote the immutable snapshot. The line used
+        to land anyway, rewrite the frozen totals and put the status back to
+        admin_plan_added, un-submitting the month."""
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        read_before_the_submission = MonthlyWorkPlanBudget.objects.get(
+            id=ctx["budget_id"]
+        )
+        submitted = svc.send_to_rvp(self.cd_p, ctx["budget_id"])
+
+        rows = MagicMock()
+        rows.first.return_value = read_before_the_submission
+        with patch.object(MonthlyWorkPlanBudget.objects, "filter", return_value=rows):
+            with self.assertRaises(BadRequest):
+                add_admin_line(
+                    ctx["budget_id"],
+                    {
+                        "costCategory": "operations",
+                        "description": "Office internet",
+                        "unitCost": 50_000,
+                        "quantity": 1,
+                    },
+                    self.cd_p,
+                )
+
+        budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
+        self.assertEqual(budget.status, "submitted_to_rvp")
+        self.assertEqual(budget.total_amount, submitted.total_amount)
+        self.assertFalse(budget.admin_lines.exists())
 
     # ── §13 RVP country-scope guard (parity with services._assert_rvp_can_decide) ──
     def test_rvp_cannot_approve_budget_from_another_country(self):
