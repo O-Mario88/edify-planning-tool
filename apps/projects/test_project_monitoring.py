@@ -182,10 +182,27 @@ class ThePageIsReadOnlyTest(_Fixture):
         self.assertNotIn("/planning/schedule-modal", html)
         self.assertNotIn("assign-partner-modal", html)
 
-    def test_cceo_only_has_partner_oversight(self):
+    def test_a_cceo_reads_the_schools_they_added(self):
+        """Owner, 2026-09-24: "Users want to see the schools they have
+        assigned to the project so make sure the tables for each of the
+        project they have assigned schools to is available to them." The CCEO
+        had lost the page on 2026-09-23 while still adding schools."""
         self.client.force_login(self.mine_user)
         response = self.client.get("/projects/monitoring")
-        self.assertIn(response.status_code, (302, 403))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("PM Literacy Project", html)
+        self.assertIn(f'data-project-school="{self.my_school.id}"', html)
+        self.assertNotIn(f'data-project-school="{self.their_school.id}"', html)
+        self.assertIn("Read only", html)
+        for door in (
+            "/planning/schedule-modal",
+            "/projects/planning/bulk-partner",
+            "/projects/monitoring/withdraw",
+            "/projects/monitoring/resolve",
+        ):
+            with self.subTest(door=door):
+                self.assertNotIn(door, html)
 
     def test_it_opens_for_impact_assessment(self):
         self.client.force_login(self.ia_user)

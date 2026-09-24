@@ -16017,6 +16017,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "ImpactAssessment",
@@ -16026,6 +16027,86 @@
    "route": "/projects/monitoring",
    "route_name": "project_monitoring",
    "view": "apps.frontend.views.extended_views.project_monitoring_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/monitoring/resolve",
+   "route_name": "project_monitoring_resolve",
+   "view": "apps.frontend.views.extended_views.project_monitoring_resolve_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/monitoring/resolve/submit",
+   "route_name": "project_monitoring_resolve_submit",
+   "view": "apps.frontend.views.extended_views.project_monitoring_resolve_submit_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/monitoring/school",
+   "route_name": "project_monitoring_school",
+   "view": "apps.frontend.views.extended_views.project_monitoring_school_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/monitoring/withdraw",
+   "route_name": "project_monitoring_withdraw",
+   "view": "apps.frontend.views.extended_views.project_monitoring_withdraw_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/monitoring/withdraw/submit",
+   "route_name": "project_monitoring_withdraw_submit",
+   "view": "apps.frontend.views.extended_views.project_monitoring_withdraw_submit_view"
   },
   {
    "page_permission": "projects",
@@ -18022,26 +18103,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 409,
-  "Admin": 1007,
+  "Admin": 1012,
   "BusinessTransformationOfficer": 233,
-  "CCEO": 532,
-  "CountryDirector": 763,
+  "CCEO": 538,
+  "CountryDirector": 768,
   "HumanResources": 331,
-  "ImpactAssessment": 627,
+  "ImpactAssessment": 632,
   "MfiLoanOfficer": 129,
   "MfiPartnerAdmin": 132,
   "PartnerAdmin": 220,
   "PartnerFieldOfficer": 220,
-  "Program Lead": 618,
-  "ProjectCoordinator": 448,
+  "Program Lead": 623,
+  "ProjectCoordinator": 453,
   "RegionalProgramLead": 318,
   "RegionalVicePresident": 370
  },
  "summary": {
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
-  "routes_guarded": 1104,
-  "routes_total": 1297,
+  "routes_guarded": 1109,
+  "routes_total": 1302,
   "routes_unguarded": 193,
   "surfaces_no_role_can_reach": 0
  },

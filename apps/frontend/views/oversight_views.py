@@ -1886,7 +1886,17 @@ def partner_oversight_view(request):
     # options have to come from the unfiltered set: derived from the filtered
     # one, choosing a partner would collapse the list to that partner and
     # leave no way back to any other.
-    all_items = partner_oversight.build_items(request.user, **_service_period(period))
+    #
+    # The operational year reads forward, as Cluster and Core School
+    # Oversight do: a handover made in September that the Partner dates into
+    # October is next year's work, and it must stay on the page reading
+    # Scheduled on that date rather than vanish when it is scheduled.
+    from apps.planning.fy_policy import horizon_label, planning_horizon
+
+    plan_fys = planning_horizon(period["fy"])
+    all_items = partner_oversight.build_items(
+        request.user, fys=plan_fys, **_service_period(period)
+    )
     partner_scope = _partner_scope(request.user)
     country_lens = partner_scope["is_country"]
     if country_lens:
@@ -1986,6 +1996,7 @@ def partner_oversight_view(request):
             and item.activity_status == "awaiting_ia_verification"
             and item.salesforce_status != "recorded"
         )
+    _lock_project_work(request.user, items)
     summary = partner_oversight.summarize(items)
     partner_group = None
     if active_partner:
@@ -2027,6 +2038,10 @@ def partner_oversight_view(request):
             )
         ],
         "workspace_tables": partner_oversight.workspace_tables(items),
+        # The years the page read, said beside the tables (FY 2026–2027 in
+        # September), so a row dated next October is not a surprise.
+        "plan_period_label": horizon_label(plan_fys),
+        "plan_reads_forward": len(plan_fys) > 1,
         "summary": summary,
         "kpis": _partner_kpis(summary),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
@@ -2083,6 +2098,29 @@ def partner_oversight_view(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/oversight/partner_workspace.html", context)
     return render(request, "pages/oversight/partner_oversight.html", context)
+
+
+def _lock_project_work(user, items) -> None:
+    """Special Project handovers are their Project Coordinator's to change.
+
+    Owner, 2026-09-24: "Schools assigned to project cannot be withdrawn by the
+    staff but the project coordinator can withdraw from the partner they
+    assigned to and reassign to another partner." Partner Monitoring still
+    shows project work to the staff who follow the school; it draws no
+    withdrawal or hand-back decision on it for anyone the project's rule
+    (apps.projects.authority) refuses, and says whose decision it is instead.
+    The services refuse the same people, so this is the page agreeing with
+    them, not the rule itself.
+    """
+    from apps.projects.authority import projects_directed_by
+
+    directed = projects_directed_by(
+        user, {item.project_id for item in items if item.project_id}
+    )
+    for item in items:
+        if item.project_id and item.project_id not in directed:
+            item.project_locked = True
+            item.withdrawal_label = ""
 
 
 def _partner_kpis(summary) -> list[dict]:
@@ -2302,15 +2340,18 @@ def partner_oversight_export_view(request):
     from django.http import StreamingHttpResponse
 
     from apps.planning import partner_oversight_service as partner_oversight
+    from apps.planning.fy_policy import planning_horizon
 
     period = _period_filters(request)
     partner_id = (request.GET.get("partner") or "").strip() or None
     if partner_id == "all":
         partner_id = None
+    # The years the page reads, so the export holds the rows the page shows.
     items = partner_oversight.build_items(
         request.user,
         partner_id=partner_id,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+        fys=planning_horizon(period["fy"]),
         **_service_period(period),
     )
 
@@ -2361,6 +2402,7 @@ def partner_withdrawal_preview_view(request):
     from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
 
     preview = withdrawal_service.preview(request.user, item.partner_assignment_id)
+    _lock_project_work(request.user, [item])
     return render(
         request,
         "partials/oversight/withdrawal_drawer.html",
@@ -2375,6 +2417,9 @@ def partner_withdrawal_preview_view(request):
             # rule the service enforces, so the page cannot offer a control
             # the service will refuse.
             "must_request": _must_request(request.user, item, preview),
+            # Special Project work: the drawer says whose decision it is
+            # rather than offering a form the service refuses (2026-09-24).
+            "project_locked": item.project_locked,
         },
     )
 
@@ -2632,6 +2677,16 @@ def partner_return_resolve_drawer_view(request):
             "partials/oversight/resolve_return_drawer.html",
             {"item": None},
             status=404 if item is None else 403,
+        )
+    _lock_project_work(request.user, [item])
+    if item.project_locked:
+        # Project work a Partner handed back is its Project Coordinator's to
+        # decide (owner, 2026-09-24); the service refuses anyone else.
+        return render(
+            request,
+            "partials/oversight/resolve_return_drawer.html",
+            {"item": item, "project_locked": True},
+            status=403,
         )
     can_reassign = has_permission(
         request.user, Permission.PARTNER_ASSIGNMENT_REASSIGN.value

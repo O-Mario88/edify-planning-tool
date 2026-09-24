@@ -571,13 +571,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
     # Following a Special Project school by school (owner, 2026-09-21 and
     # 2026-09-24): "The staff except Project coordinator have read only
-    # access." PL and IA watch the schools in a project, CD and Admin read it
-    # as they read every country surface, all read only. The Project
-    # Coordinator is in control of the work and reads every school in their
-    # projects with the two controls they hold on Project Planning — schedule
-    # and assign to a partner — which open the same drawers, checked there.
-    # CCEOs oversee partner work on Partner Oversight (2026-09-23).
-    "project_monitoring": {PL, IA, CD, ADMIN, PROJECT_COORDINATOR},
+    # access." The CCEO and PL watch the schools they added to a project —
+    # "Users want to see the schools they have assigned to the project so make
+    # sure the tables for each of the project they have assigned schools to is
+    # available to them" (owner, 2026-09-24; the CCEO had lost the page on
+    # 2026-09-23 while still adding schools). IA watches every school, CD and
+    # Admin read it as they read every country surface, all read only. The
+    # Project Coordinator is in control of the work and reads every school in
+    # their projects with the controls they hold — schedule, assign to a
+    # partner, withdraw from a partner and reassign — each checked again by
+    # the drawer's own route and by the service behind it.
+    "project_monitoring": {CCEO, PL, IA, CD, ADMIN, PROJECT_COORDINATOR},
     "analytics_publishing": {CD, IA, ADMIN},
     # IA owns evidence assurance before records can enter finance and
     # leadership analytics, so the role must be able to open the shared

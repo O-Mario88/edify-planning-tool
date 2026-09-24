@@ -21,13 +21,31 @@ Owner, 2026-09-24:
   been planned for, execution has taken place, improvement against their focus
   ssa interventions."
 
+And later the same day, on the table itself:
+
+  "build the table similar to the one of partner oversight ... Schools
+  assigned to project cannot be withdrawn by the staff but the project
+  coordinator can withdraw from the partner they assigned to and reassign to
+  another partner. Users want to see the schools they have assigned to the
+  project so make sure the tables for each of the project they have assigned
+  schools to is available to them. They have read only access, Only Project
+  coordinator can edit plan and do everything."
+
+So each school row reads Partner Monitoring's columns — School ID, School
+Name, Staff Name, Training, Purpose of Assignment, SSA Intervention, Status,
+Activity date, Actions — and a school nobody has planned yet is Awaiting
+Project Coordinator Action.
+
 The rules:
 
 * **Read only, except for the coordinator.** This module computes; it never
   writes. Scheduling a project activity and handing one to a partner stay the
-  coordinator's, through the same drawers Project Planning opens — and the page
-  draws those two controls for the Project Coordinator alone. Everyone else
-  reads, and asks the coordinator for work they need.
+  coordinator's, through the same drawers Project Planning opens; so do taking
+  a school's work back from its partner, reassigning it, and deciding what
+  happens to work a partner handed back (owner, 2026-09-24) — the page draws
+  those controls for the Project Coordinator alone and the services refuse
+  everyone else (``apps.projects.authority``). Everyone else reads, and asks
+  the coordinator for work they need.
 * **Contribution, not the whole project.** A CCEO or Programme Lead sees the
   enrolments they added themselves (``ProjectSchoolAssignment.assigned_by``),
   never another officer's. Impact Assessment, the Country Director and Admin
@@ -56,11 +74,14 @@ from datetime import date
 from apps.core.rbac import EdifyRole
 
 __all__ = [
+    "STATUS_LABELS",
     "WHOLE_PROJECT_ROLES",
     "ProjectMonitoringRow",
     "ProjectMonitoring",
     "ProjectSchoolRow",
+    "ProjectWorkLine",
     "controls_project_work",
+    "find_school_row",
     "project_monitoring",
     "sees_whole_project",
 ]
@@ -172,6 +193,76 @@ STAGE_FILTERS = (
 )
 
 
+#: The table's Status column (owner, 2026-09-24), read like Partner
+#: Monitoring's: the school waits on the Project Coordinator until they plan
+#: it or hand it to a partner; a partner handover waits on the partner's date
+#: and reads Scheduled, on that date, once the partner picks it.
+STATUS_AWAITING_COORDINATOR = "awaiting_coordinator"
+STATUS_AWAITING_PARTNER = "awaiting_partner"
+STATUS_PARTNER_RETURNED = "partner_returned"
+STATUS_SCHEDULED = "scheduled"
+STATUS_IN_PROGRESS = "in_progress"
+STATUS_AWAITING_VERIFICATION = "awaiting_verification"
+STATUS_COMPLETED = "completed"
+STATUS_RETURNED = "returned"
+
+STATUS_LABELS = {
+    STATUS_AWAITING_COORDINATOR: "Awaiting Project Coordinator Action",
+    STATUS_AWAITING_PARTNER: "Awaiting Partner Schedule",
+    STATUS_PARTNER_RETURNED: "Returned by Partner",
+    STATUS_SCHEDULED: "Scheduled",
+    STATUS_IN_PROGRESS: "In Progress",
+    STATUS_AWAITING_VERIFICATION: "Awaiting Verification",
+    STATUS_COMPLETED: "Completed",
+    STATUS_RETURNED: "Returned",
+}
+
+#: Partner Monitoring's chip tones: blue while the work waits on somebody
+#: else, amber while it is scheduled or under way, red when it came back,
+#: green only once IA has verified it.
+STATUS_TONES = {
+    STATUS_AWAITING_COORDINATOR: TONE_INFO,
+    STATUS_AWAITING_PARTNER: TONE_INFO,
+    STATUS_PARTNER_RETURNED: TONE_DANGER,
+    STATUS_SCHEDULED: TONE_WARNING,
+    STATUS_IN_PROGRESS: TONE_WARNING,
+    STATUS_AWAITING_VERIFICATION: TONE_INFO,
+    STATUS_COMPLETED: TONE_SUCCESS,
+    STATUS_RETURNED: TONE_DANGER,
+}
+
+
+@dataclass
+class ProjectWorkLine:
+    """One piece of project work at a school — a dated activity, or a partner
+    handover the partner has not scheduled or handed back — in the table's
+    words. Every value is read from the Activity or PartnerAssignment row."""
+
+    kind: str
+    id: str
+    training_name: str = ""
+    purpose_label: str = ""
+    intervention_label: str = ""
+    status_key: str = STATUS_SCHEDULED
+    delivered_by: str = ""
+    by_partner: bool = False
+    activity_date: date | None = None
+    #: The PartnerAssignment behind partner work, for the coordinator's doors.
+    handover_id: str = ""
+    #: Filled in for the Project Coordinator only.
+    withdraw_label: str = ""
+    withdraw_url: str = ""
+    resolve_url: str = ""
+
+    @property
+    def status_label(self) -> str:
+        return STATUS_LABELS[self.status_key]
+
+    @property
+    def status_tone(self) -> str:
+        return STATUS_TONES[self.status_key]
+
+
 @dataclass
 class InterventionReading:
     """A focus intervention at one school: where it started, where it is."""
@@ -232,6 +323,40 @@ class ProjectSchoolRow:
     #: Filled in for the coordinator only; empty means no control is drawn.
     schedule_url: str = ""
     partner_url: str = ""
+
+    #: The table's columns (owner, 2026-09-24): Training, Purpose of
+    #: Assignment, SSA Intervention, Status and Activity date, read from the
+    #: one piece of work that says where the school stands — the next thing
+    #: planned, else a handover still with its partner, else one handed back,
+    #: else the latest work done. With none of those the school is waiting on
+    #: the Project Coordinator.
+    training_name: str = ""
+    purpose_label: str = ""
+    intervention_label: str = ""
+    status_key: str = STATUS_AWAITING_COORDINATOR
+    activity_date: date | None = None
+    #: Every piece of project work at the school, for the row's details and
+    #: its View drawer: nothing the Status sums up is hidden.
+    work: list[ProjectWorkLine] = field(default_factory=list)
+    #: The read-only View drawer, for every reader.
+    detail_url: str = ""
+    #: The coordinator's doors on the row's own partner work.
+    withdraw_label: str = ""
+    withdraw_url: str = ""
+    resolve_url: str = ""
+
+    @property
+    def status_label(self) -> str:
+        return STATUS_LABELS[self.status_key]
+
+    @property
+    def status_tone(self) -> str:
+        return STATUS_TONES[self.status_key]
+
+    @property
+    def awaiting_date(self) -> bool:
+        """A partner holds the work and has not picked its day yet."""
+        return self.status_key == STATUS_AWAITING_PARTNER
 
     @property
     def plan_label(self) -> str:
@@ -447,8 +572,9 @@ def _projects_for(principal):
 def _lens_note(*, whole: bool, controls: bool) -> str:
     if controls:
         return (
-            "Every school in the projects you coordinate. Schedule the work or "
-            "assign it to a partner from a school's row, or from Project Planning."
+            "Every school in the projects you coordinate. Schedule the work, "
+            "assign it to a partner, or withdraw it from a partner and reassign "
+            "it, from a school's row — or from Project Planning."
         )
     if whole:
         return "Every school in every live project."
@@ -558,6 +684,32 @@ def project_monitoring(
     return result
 
 
+def find_school_row(principal, enrolment_id: str, *, fy: str | None = None):
+    """One enrolment as this reader's lens builds it: ``(project, row)``, or
+    ``(None, None)`` when the reader may not see it.
+
+    The View drawer asks for a school by its enrolment id. Rebuilding it
+    through ``project_monitoring`` — the same lens as the page — means an id
+    belonging to another officer's enrolment resolves to nothing rather than
+    to a school the page would not have shown.
+    """
+    from apps.projects.models import ProjectSchoolAssignment
+
+    project_id = (
+        ProjectSchoolAssignment.objects.filter(id=enrolment_id)
+        .values_list("project_id", flat=True)
+        .first()
+    )
+    if not project_id:
+        return None, None
+    result = project_monitoring(principal, fy=fy, project_id=project_id)
+    for project_row in result.rows:
+        for row in project_row.all_school_rows:
+            if row.assignment_id == enrolment_id:
+                return project_row, row
+    return None, None
+
+
 def _activity_totals(project_ids, school_ids, *, fys, whole: bool) -> dict:
     """Scheduled and delivered counts per project, in two queries.
 
@@ -650,6 +802,7 @@ def _school_rows(
     for activity in (
         _live_project_activities(project_ids, fys)
         .filter(school_id__in=school_ids)
+        .select_related("training_course")
         .only(
             "id",
             "project_id",
@@ -659,7 +812,20 @@ def _school_rows(
             "assigned_partner_id",
             "responsible_staff_id",
             "planned_date",
+            "scheduled_date",
             "actual_delivery_date",
+            # The table's Training, Purpose and SSA Intervention columns, and
+            # what a withdrawal would be — read here so no row queries again.
+            "activity_type",
+            "purpose_type",
+            "focus_intervention",
+            "purpose_intervention",
+            "activity_name_snapshot",
+            "evidence_status",
+            "payment_status",
+            "training_course",
+            "training_course__display_name",
+            "training_course__source_name",
         )
         .order_by("planned_date")
     ):
@@ -667,26 +833,36 @@ def _school_rows(
             activity
         )
 
-    # Handovers the partner has not scheduled, and the ones handed back to
-    # staff and not yet resolved. A scheduled handover is represented by the
-    # activity it became, so it is not read twice.
+    # Every project handover at these schools, in one query: the ones the
+    # partner has not scheduled and the ones handed back to staff and not yet
+    # resolved are rows of their own; a scheduled one is represented by the
+    # activity it became, and is kept only to name that activity's handover.
     handovers: dict[tuple, list] = {}
+    by_activity: dict[str, object] = {}
     for handover in (
         PartnerAssignment.objects.filter(
-            project_id__in=project_ids,
-            school_id__in=school_ids,
-            status__in=(
-                *PartnerAssignment.UNSCHEDULED_STATUSES,
-                PartnerAssignment.STATUS_RETURNED_TO_STAFF,
-            ),
+            project_id__in=project_ids, school_id__in=school_ids
         )
-        .select_related("partner")
+        .select_related(
+            "partner",
+            "training_course",
+            "catalogue_item",
+            "source_activity__training_course",
+        )
         .order_by("created_at")
     ):
+        if handover.scheduled_activity_id:
+            by_activity[handover.scheduled_activity_id] = handover
+        if handover.status not in (
+            *PartnerAssignment.UNSCHEDULED_STATUSES,
+            PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+        ):
+            continue
         if (
             handover.status == PartnerAssignment.STATUS_RETURNED_TO_STAFF
             and handover.resolved_at is not None
         ):
+            # Decided — by staff, or by the withdrawal that took it back.
             continue
         handovers.setdefault((handover.project_id, handover.school_id), []).append(
             handover
@@ -730,6 +906,9 @@ def _school_rows(
             district=getattr(school.district, "name", "") or "",
             added_by=names.get(assignment.assigned_by, "") or "—",
             enrolled_on=enrolled_on,
+            detail_url=(
+                f"/projects/monitoring/school?{urlencode({'enrolment': assignment.id})}"
+            ),
         )
 
         # Execution first: it decides which of the plan's facts still matter.
@@ -807,6 +986,19 @@ def _school_rows(
             row.partner_name = getattr(handed_back[-1].partner, "name", "") or ""
 
         _attach_ssa(row, assignment, project, readings, intervention_labels)
+        _attach_work(
+            row,
+            assignment,
+            project,
+            work=work,
+            ahead=ahead,
+            awaiting=awaiting,
+            handed_back=handed_back,
+            by_activity=by_activity,
+            partner_names=partner_names,
+            names=names,
+            controls=controls,
+        )
 
         if controls and project.accepts_new_work:
             # The two doors that stamp the project on the work. The generic
@@ -818,6 +1010,226 @@ def _school_rows(
             row.partner_url = f"/projects/planning/bulk-partner?{urlencode({'assignments': assignment.id})}"
         out.setdefault(project.id, []).append(row)
     return out
+
+
+def _activity_status_key(activity, *, by_partner: bool) -> str:
+    """Where one project activity stands, in the table's Status words."""
+    from apps.planning.school_planning_badges import (
+        AWAITING_VERIFICATION_STATUSES,
+        NEEDS_REPLANNING_STATUSES,
+        VERIFIED_STATUSES,
+    )
+
+    status = activity.status or ""
+    if status in VERIFIED_STATUSES:
+        return STATUS_COMPLETED
+    if status in AWAITING_VERIFICATION_STATUSES:
+        return STATUS_AWAITING_VERIFICATION
+    if status in NEEDS_REPLANNING_STATUSES:
+        return STATUS_RETURNED
+    if by_partner and (status == "assigned_to_partner" or not activity.planned_date):
+        # With the partner and not dated by them yet (My Plan: "Pending
+        # Partner Scheduling"). It reads Scheduled once they pick the day.
+        return STATUS_AWAITING_PARTNER
+    if status in ("in_progress", "completion_started"):
+        return STATUS_IN_PROGRESS
+    return STATUS_SCHEDULED
+
+
+def _activity_line(activity, handover, *, partner_names, names) -> ProjectWorkLine:
+    from apps.planning.partner_oversight_service import activity_day, describe_work
+
+    by_partner = activity.delivery_type == "partner" or bool(
+        activity.assigned_partner_id
+    )
+    status_key = _activity_status_key(activity, by_partner=by_partner)
+    if handover is not None:
+        # The handover says why the school was handed over and which course;
+        # the activity the partner created says when.
+        training, purpose, intervention = describe_work(
+            purpose_code=handover.purpose_of_visit or "",
+            activity_type=activity.activity_type or "",
+            course=handover.training_course,
+            catalogue_item=handover.catalogue_item,
+            source_activity=handover.source_activity,
+            activity=activity,
+            focus=handover.focus_intervention or "",
+        )
+    else:
+        training, purpose, intervention = describe_work(activity=activity)
+    if status_key == STATUS_AWAITING_PARTNER:
+        day = None
+    elif status_key in (
+        STATUS_AWAITING_VERIFICATION,
+        STATUS_COMPLETED,
+        STATUS_RETURNED,
+    ):
+        day = activity.actual_delivery_date or activity_day(activity)
+    else:
+        day = activity_day(activity)
+    return ProjectWorkLine(
+        kind="activity",
+        id=activity.id,
+        training_name=training,
+        purpose_label=purpose,
+        intervention_label=intervention,
+        status_key=status_key,
+        delivered_by=(
+            partner_names.get(activity.assigned_partner_id, "")
+            if by_partner
+            else names.get(activity.responsible_staff_id, "")
+        ),
+        by_partner=by_partner,
+        activity_date=day,
+        handover_id=getattr(handover, "id", "") or "",
+    )
+
+
+def _handover_line(handover, status_key: str) -> ProjectWorkLine:
+    from apps.planning.partner_oversight_service import describe_work
+
+    training, purpose, intervention = describe_work(
+        purpose_code=handover.purpose_of_visit or "",
+        activity_type=handover.expected_activity_type or "",
+        course=handover.training_course,
+        catalogue_item=handover.catalogue_item,
+        source_activity=handover.source_activity,
+        focus=handover.focus_intervention or "",
+    )
+    return ProjectWorkLine(
+        kind="handover",
+        id=handover.id,
+        training_name=training,
+        purpose_label=purpose,
+        intervention_label=intervention,
+        status_key=status_key,
+        delivered_by=getattr(handover.partner, "name", "") or "",
+        by_partner=True,
+        handover_id=handover.id,
+    )
+
+
+def _attach_doors(line: ProjectWorkLine, handover, activity=None) -> None:
+    """The Project Coordinator's doors on one piece of partner work.
+
+    Withdraw (or reassign) while the withdrawal service would act on it —
+    its own ``resolve_kind`` names the action, so the button says what the
+    service will do — and Resolve on a hand-back nobody has decided yet. The
+    routes check the coordinator again, and the services a third time.
+    """
+    from urllib.parse import urlencode
+
+    from apps.partners.models import PartnerAssignment
+    from apps.partners.withdrawal_models import WithdrawalKind
+    from apps.partners.withdrawal_service import resolve_kind
+
+    if handover is None:
+        return
+    query = urlencode({"handover": handover.id})
+    if handover.status == PartnerAssignment.STATUS_RETURNED_TO_STAFF:
+        # Work handed back waits on the coordinator until a decision is
+        # recorded (a withdrawal records its own when it is made).
+        if handover.resolved_at is None:
+            line.resolve_url = f"/projects/monitoring/resolve?{query}"
+        return
+    if handover.scheduled_activity_id and activity is None:
+        # Its activity lies outside the years this page reads; the partner's
+        # own record decides, not a guess from here.
+        return
+    kind = resolve_kind(handover, activity)
+    if kind == WithdrawalKind.BLOCKED:
+        return
+    line.withdraw_label = WithdrawalKind(kind).label
+    line.withdraw_url = f"/projects/monitoring/withdraw?{query}"
+
+
+def _attach_work(
+    row,
+    assignment,
+    project,
+    *,
+    work,
+    ahead,
+    awaiting,
+    handed_back,
+    by_activity,
+    partner_names,
+    names,
+    controls: bool,
+) -> None:
+    """Fill the row's Training, Purpose of Assignment, SSA Intervention,
+    Status and Activity date, and the list of every piece of work behind them.
+
+    One piece of work speaks for the school: the next thing planned, else a
+    handover still with its partner, else one handed back, else the latest
+    work done. With none, the school is waiting on the Project Coordinator —
+    and then Purpose and SSA Intervention say what the school was added for.
+    """
+    lines: dict[str, ProjectWorkLine] = {}
+    for activity in work:
+        handover = by_activity.get(activity.id)
+        line = _activity_line(
+            activity, handover, partner_names=partner_names, names=names
+        )
+        if controls:
+            _attach_doors(line, handover, activity)
+        lines[f"a:{activity.id}"] = line
+    for handover in awaiting:
+        line = _handover_line(handover, STATUS_AWAITING_PARTNER)
+        if controls:
+            _attach_doors(line, handover)
+        lines[f"h:{handover.id}"] = line
+    for handover in handed_back:
+        line = _handover_line(handover, STATUS_PARTNER_RETURNED)
+        if controls:
+            _attach_doors(line, handover)
+        lines[f"h:{handover.id}"] = line
+
+    focus = None
+    if ahead is not None:
+        focus = lines[f"a:{ahead.id}"]
+    elif awaiting:
+        focus = lines[f"h:{awaiting[-1].id}"]
+    elif handed_back:
+        focus = lines[f"h:{handed_back[-1].id}"]
+    elif work:
+        last = max(
+            work,
+            key=lambda a: a.actual_delivery_date or a.planned_date or date.min,
+        )
+        focus = lines[f"a:{last.id}"]
+
+    row.work = sorted(
+        lines.values(),
+        key=lambda line: (line.activity_date is None, line.activity_date or date.min),
+    )
+    if focus is None:
+        row.status_key = STATUS_AWAITING_COORDINATOR
+        row.purpose_label = assignment.participation_type or ""
+        row.intervention_label = _enrolment_intervention(assignment, project)
+        return
+    row.training_name = focus.training_name
+    row.purpose_label = focus.purpose_label
+    row.intervention_label = focus.intervention_label or _enrolment_intervention(
+        assignment, project
+    )
+    row.status_key = focus.status_key
+    row.activity_date = focus.activity_date
+    row.withdraw_label = focus.withdraw_label
+    row.withdraw_url = focus.withdraw_url
+    row.resolve_url = focus.resolve_url
+
+
+def _enrolment_intervention(assignment, project) -> str:
+    """The intervention a school is in the project for: the need it was
+    matched on, else the focus area chosen when it was added, else the
+    project's primary target."""
+    from apps.core.enums import SsaIntervention
+    from apps.planning.partner_oversight_service import choice_label
+
+    primary, _supporting = project.intervention_plan()
+    code = assignment.matched_intervention or assignment.support_area or primary or ""
+    return choice_label(code, SsaIntervention)
 
 
 def _attach_ssa(row, assignment, project, readings, intervention_labels) -> None:

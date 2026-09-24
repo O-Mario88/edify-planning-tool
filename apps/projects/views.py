@@ -88,11 +88,23 @@ class ProjectPartnersView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW
 
+    def get_permissions(self):
+        # Linking a partner changes the project, so it needs a project write
+        # permission, not the read one the list uses; the service then checks
+        # the caller runs this project (2026-09-24).
+        self.required_permissions = (
+            [Permission.PROJECT_MANAGE.value] if self.request.method == "POST" else VIEW
+        )
+        return [IsAuthenticated(), RequirePermissions()]
+
     def get(self, request: Request, project_id: str) -> Response:
         return Response(services.partners(project_id))
 
     def post(self, request: Request, project_id: str) -> Response:
-        return Response(services.assign_partner(project_id, request.data), status=201)
+        return Response(
+            services.assign_partner(project_id, request.data, request.user),
+            status=201,
+        )
 
 
 class ProjectSchoolsAssignView(APIView):
@@ -133,7 +145,18 @@ class ProjectSchoolsRemoveView(APIView):
     required_permissions = ASSIGN
 
     def delete(self, request: Request, project_id: str, school_id: str) -> Response:
-        return Response(services.remove_school(project_id, school_id))
+        # The caller is passed so the service can hold the owner's rule: only
+        # the project's coordinator removes a school (2026-09-24). Without it
+        # any holder of activity.assign could empty any project.
+        body = request.data if isinstance(request.data, dict) else {}
+        return Response(
+            services.remove_school(
+                project_id,
+                school_id,
+                request.user,
+                reason=str(body.get("reason") or ""),
+            )
+        )
 
 
 class ProjectPartnerRemoveView(APIView):
@@ -141,4 +164,5 @@ class ProjectPartnerRemoveView(APIView):
     required_permissions = ASSIGN
 
     def delete(self, request: Request, project_id: str, partner_id: str) -> Response:
-        return Response(services.remove_partner(project_id, partner_id))
+        # The caller is passed so the service can check they run this project.
+        return Response(services.remove_partner(project_id, partner_id, request.user))
