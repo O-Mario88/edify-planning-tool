@@ -1,4 +1,4 @@
-{% load school_identity table_pagination %}
+{% load school_identity %}
 <!-- Non-School Programme Activities Card -->
 <div class="card overflow-hidden">
 
@@ -22,7 +22,6 @@ Open Work Plan
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
 {% if programme_activities %}
-{% paginate programme_activities "programme_activities_page" 10 as programme_activities_pager %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
@@ -37,7 +36,7 @@ Open Work Plan
 </tr>
 </thead>
 <tbody>
-{% for row in programme_activities_pager.rows %}
+{% for row in programme_activities %}
 <tr>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
@@ -66,7 +65,6 @@ Open Work Plan
 {% endfor %}
 </tbody>
 </table>
-{% include "components/table_pager.html" with pager=programme_activities_pager param="programme_activities_page" pagination_label="Programme activity pages" %}
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline
 never meets the card edge (it was a hand-built block with its own icon size

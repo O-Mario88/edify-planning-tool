@@ -1,12 +1,17 @@
-"""My Plan's own tables draw one page at a time (PERF-05).
+"""My Plan's own tables show the whole period, not a page of it.
 
-My Plan defaults to the whole fiscal year (owner decision, kept). Its school
-visit, training, cluster meeting and programme activity tables drew every row
-of it: 3.0 MB of HTML for one field officer at 50,000 schools, which a
-mid-range phone parses and lays out before the first tap works. The core
-school tables beside them already paged at ten; these now use the same pager.
-The period, the filters and the export are unchanged: the export still
-carries the whole filtered plan.
+The owner's decision (2026-09-16, recorded in
+apps/system_health/test_table_inventory.py): the School Visits, Trainings,
+Cluster Meetings and Programme Activities cards show a person's plan arranged
+by month, and a pager puts the thing the page exists for behind "Next". They
+are bounded by what one officer can do in a year.
+
+The 2026-09-24 audit paged them at ten after measuring 3.0 MB of HTML for one
+officer — on a stress estate that gave each of twenty officers ~2,500 schools.
+On the realistic estate (~330 schools and ~490 planned activities per
+officer) the unpaged page is 174 KB, smaller than the paged one, so the pager
+bought nothing real and overrode the owner. It is gone again; these tests pin
+the owner's design.
 """
 
 from __future__ import annotations
@@ -28,7 +33,7 @@ FY = "2027"
 VISITS = 13
 
 
-class MyPlanTablePagesTest(TestCase):
+class MyPlanShowsTheWholePeriodTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         region = Region.objects.create(name="MPP Region")
@@ -69,22 +74,14 @@ class MyPlanTablePagesTest(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_the_first_page_draws_ten_visits_and_says_how_many_there_are(self):
+    def test_every_visit_of_the_period_is_drawn_without_a_pager(self):
         response = self.client.get(f"/my-plan?fy={FY}")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
         drawn = [n for n in range(1, VISITS + 1) if f"Paged visit {n:02d}" in body]
-        self.assertEqual(len(drawn), 10)
-        self.assertIn(f"of {VISITS}", body)
-        self.assertIn('aria-label="School visit pages"', body)
-        self.assertEqual(len(response.context["school_visits"]), VISITS)
-
-    def test_the_next_page_draws_the_rest_and_keeps_the_filters(self):
-        response = self.client.get(f"/my-plan?fy={FY}&school_visits_page=2")
-        body = response.content.decode()
-        drawn = [n for n in range(1, VISITS + 1) if f"Paged visit {n:02d}" in body]
-        self.assertEqual(len(drawn), VISITS - 10)
-        self.assertIn(f"fy={FY}", body)
+        self.assertEqual(len(drawn), VISITS)
+        self.assertNotIn('aria-label="School visit pages"', body)
+        self.assertNotIn("school_visits_page=", body)
 
     def test_the_export_still_carries_every_visit(self):
         response = self.client.get(f"/my-plan?fy={FY}&export=csv")
