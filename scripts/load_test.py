@@ -183,6 +183,48 @@ JOURNEYS = {
     ],
 }
 
+#: The approved 50-active-user workload (2026-09-24 mission brief §6): the
+#: field team planning and submitting evidence, leads approving, IA
+#: verifying, finance, leadership, HR, BT and the lending partner.
+ROLE_MIX_SPEC50 = {
+    "cceo": 18,
+    "pl": 8,
+    "ia": 5,
+    "partner": 4,
+    "accountant": 3,
+    "cd": 2,
+    "rvp": 1,
+    "hr": 3,
+    "bt": 3,
+    "mfi": 3,
+}
+
+#: Governed state changes a real session performs, drawn from a pool of
+#: records that are genuinely in the state the action needs, so each
+#: transition happens once. `integrity_report` checks that it did.
+WRITE_STEPS = {
+    "cceo": [("EVIDENCE", 2, "evidence_upload")],
+    "pl": [("PLCONFIRM", 2, "pl_confirm")],
+    "ia": [("IAVERIFY", 2, "ia_verify")],
+}
+
+# A 1×1 PNG: the smallest file the evidence validator accepts as an image.
+PNG_1X1 = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d49444154789c6360f8cfc0f01f0005000201"
+    "a5f6c3fd0000000049454e44ae426082"
+)
+
+
+def journeys_for(mix: str) -> dict:
+    if mix != "spec50":
+        return JOURNEYS
+    steps = {role: list(paths) for role, paths in JOURNEYS.items()}
+    for role, writes in WRITE_STEPS.items():
+        steps[role] = steps[role] + writes
+    return steps
+
+
 SEARCH_TERMS = [
     "mukono",
     "primary",
@@ -222,6 +264,54 @@ def database_session(email):
     return client.cookies["sessionid"].value
 
 
+#: Activity states the officer's evidence upload acts on.
+EVIDENCE_READY = ("in_progress", "evidence_uploaded")
+
+
+def spec50_accounts(role: str) -> list[str]:
+    """The role's accounts that hold records its governed write acts on.
+
+    A realistic dataset spreads the work over many officers, and the demo
+    accounts may hold nothing in the state a write needs. A write step with
+    nothing to act on is skipped silently and measures nothing, so the
+    officers and leads are chosen from the ones who have work waiting. Roles
+    without a governed write keep their fixed accounts.
+    """
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+    from apps.activities.models import Activity
+
+    base = Activity.objects.filter(deleted_at__isnull=True, delivery_type="staff")
+    if role == "cceo":
+        owners = set(
+            base.filter(status__in=EVIDENCE_READY).values_list(
+                "responsible_staff_id", flat=True
+            )
+        )
+        emails = set(
+            StaffProfile.objects.filter(id__in=owners).values_list(
+                "user__email", flat=True
+            )
+        ) | set(User.objects.filter(id__in=owners).values_list("email", flat=True))
+    elif role == "pl":
+        owners = set(
+            base.filter(status="submitted_to_pl").values_list(
+                "responsible_staff_id", flat=True
+            )
+        )
+        emails = set(
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=owners
+            ).values_list("supervisor__user__email", flat=True)
+        ) | set(
+            StaffSupervisorAssignment.objects.filter(
+                supervisee__user_id__in=owners
+            ).values_list("supervisor__user__email", flat=True)
+        )
+    else:
+        return ROLE_ACCOUNTS[role]
+    return sorted(e for e in emails if e) or ROLE_ACCOUNTS[role]
+
+
 def schools_for(email):
     from apps.accounts.models import StaffSchoolAssignment, User
 
@@ -234,6 +324,72 @@ def schools_for(email):
             "school_id", flat=True
         )[:200]
     )
+
+
+class WritePools:
+    """Records each account may act on once, shared by that account's VUs."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.pools: dict[tuple[str, str], list[str]] = {}
+
+    def load(self, role: str, email: str) -> None:
+        key = (role, email)
+        if key in self.pools or role not in WRITE_STEPS:
+            return
+        from apps.accounts.models import StaffSupervisorAssignment, User
+        from apps.activities.models import Activity
+
+        user = User.objects.get(email=email)
+        ids = [i for i in (user.id, getattr(user, "staff_profile_id", None)) if i]
+        base = Activity.objects.filter(deleted_at__isnull=True, delivery_type="staff")
+        if role == "cceo":
+            rows = base.filter(responsible_staff_id__in=ids, status__in=EVIDENCE_READY)
+        elif role == "pl":
+            team = list(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisor_id=user.staff_profile_id
+                ).values_list("supervisee_id", "supervisee__user_id")
+            )
+            members = {i for pair in team for i in pair if i}
+            rows = base.filter(
+                responsible_staff_id__in=members, status="submitted_to_pl"
+            )
+        else:  # ia
+            rows = base.filter(status="awaiting_ia_verification")
+        if role == "ia":
+            pool = self._verifiable(rows.order_by("id")[:2000], limit=400)
+        else:
+            pool = list(rows.order_by("id").values_list("id", flat=True)[:400])
+        random.Random(hash(email) & 0xFFFF).shuffle(pool)
+        self.pools[key] = pool
+
+    @staticmethod
+    def _verifiable(candidates, limit):
+        """Work IA's own preconditions accept. The verify view reports a
+        refusal as a message on a redirect, which a load test cannot see, so
+        a refused verification would look like a lost one."""
+        from apps.activities.ia_services import (
+            _assert_verifiable,
+            assert_ssa_visit_is_verifiable,
+        )
+
+        accepted = []
+        for activity in candidates:
+            try:
+                _assert_verifiable(activity)
+                assert_ssa_visit_is_verifiable(activity)
+            except Exception:  # noqa: BLE001 - refused work is left out
+                continue
+            accepted.append(activity.id)
+            if len(accepted) >= limit:
+                break
+        return accepted
+
+    def take(self, role: str, email: str) -> str | None:
+        with self.lock:
+            pool = self.pools.get((role, email)) or []
+            return pool.pop() if pool else None
 
 
 class VirtualUser(threading.Thread):
@@ -250,7 +406,7 @@ class VirtualUser(threading.Thread):
         self.conn = None
         self.rng = random.Random(index * 7919)
         self.stop = threading.Event()
-        steps = JOURNEYS[role]
+        steps = harness.journeys[role]
         self.paths = [s for s in steps]
         self.weights = [s[1] for s in steps]
 
@@ -261,7 +417,11 @@ class VirtualUser(threading.Thread):
             )
         return self.conn
 
-    def request(self, method, path, label, *, headers=None, body=None):
+    def request(
+        self, method, path, label, *, headers=None, body=None, subject="", fresh=False
+    ):
+        """One request on the VU's kept-alive connection; `fresh` sends it on a
+        new connection of its own, as a second tab or a double-click does."""
         headers = {
             "Accept-Encoding": "gzip",
             "User-Agent": "edify-load-test/1",
@@ -282,15 +442,24 @@ class VirtualUser(threading.Thread):
         # five seconds, which is shorter than the think time. Do the same once,
         # so a stale socket is not reported as a server failure.
         for attempt in (1, 2):
-            reused = self.conn is not None
+            reused = not fresh and self.conn is not None
             try:
-                conn = self._connection()
+                if fresh:
+                    conn = http.client.HTTPConnection(
+                        self.h.host, self.h.port, timeout=self.h.timeout
+                    )
+                else:
+                    conn = self._connection()
                 conn.request(method, path, body=body, headers=headers)
                 response = conn.getresponse()
                 raw = response.read()
                 status = response.status
                 size = len(raw)
                 queue_wait = float(response.getheader("X-Edify-Queue-Wait") or 0)
+                if fresh:
+                    conn.close()
+                    error = ""
+                    break
                 for value in response.headers.get_all("Set-Cookie") or []:
                     match = re.match(r"(sessionid|csrftoken)=([^;]*)", value)
                     if match and match.group(2):
@@ -307,7 +476,8 @@ class VirtualUser(threading.Thread):
                 BrokenPipeError,
                 ConnectionResetError,
             ) as exc:
-                self._reset()
+                if not fresh:
+                    self._reset()
                 error = type(exc).__name__
                 if reused and attempt == 1:
                     started = time.perf_counter()
@@ -315,7 +485,8 @@ class VirtualUser(threading.Thread):
                 break
             except (TimeoutError, OSError, http.client.HTTPException) as exc:
                 error = type(exc).__name__
-                self._reset()
+                if not fresh:
+                    self._reset()
                 break
         elapsed = (time.perf_counter() - started) * 1000
         self.h.record(
@@ -330,6 +501,7 @@ class VirtualUser(threading.Thread):
                 "bytes": size,
                 "queue_wait": queue_wait,
                 "error": error,
+                "subject": subject,
             }
         )
         return status
@@ -362,6 +534,88 @@ class VirtualUser(threading.Thread):
             body=body,
         )
 
+    def governed_write(self, kind):
+        activity_id = self.h.pools.take(self.role, self.email)
+        if activity_id is None:
+            return
+        referer = f"http://{self.h.host}:{self.h.port}/dashboard"
+        headers = {"X-CSRFToken": self.csrf or "", "Referer": referer}
+        if kind == "evidence_upload":
+            boundary = f"edifyload{self.index}{self.rng.randrange(10**9)}"
+            parts = [
+                (
+                    f"--{boundary}\r\nContent-Disposition: form-data; "
+                    'name="csrfmiddlewaretoken"\r\n\r\n'
+                    f"{self.csrf or ''}\r\n"
+                ).encode(),
+                (
+                    f"--{boundary}\r\nContent-Disposition: form-data; "
+                    'name="evidence_kind"\r\n\r\nphoto\r\n'
+                ).encode(),
+                (
+                    f"--{boundary}\r\nContent-Disposition: form-data; "
+                    'name="evidence_file"; filename="site-photo.png"\r\n'
+                    "Content-Type: image/png\r\n\r\n"
+                ).encode()
+                + PNG_1X1
+                + b"\r\n",
+                f"--{boundary}--\r\n".encode(),
+            ]
+            headers["Content-Type"] = f"multipart/form-data; boundary={boundary}"
+            self.request(
+                "POST",
+                f"/activities/{activity_id}/evidence/action",
+                "/activities/<id>/evidence/action [write]",
+                headers=headers,
+                body=b"".join(parts),
+                subject=f"{kind}:{activity_id}",
+            )
+            return
+        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        if kind == "pl_confirm":
+            path = f"/pl/review-queue/{activity_id}/confirm"
+            label = "/pl/review-queue/<id>/confirm [write]"
+            fields = {}
+        else:
+            path = f"/ia/verification/{activity_id}/verify"
+            label = "/ia/verification/<id>/verify [write]"
+            fields = dict.fromkeys(
+                (
+                    "evidence_exists",
+                    "attendance_valid",
+                    "ssa_uploaded",
+                    "correct_school",
+                    "correct_cluster",
+                    "correct_intervention",
+                    "sf_id_entered",
+                    "duplicate_check_passed",
+                    "analytics_ready",
+                ),
+                "on",
+            )
+        fields["csrfmiddlewaretoken"] = self.csrf or ""
+        body = urllib.parse.urlencode(fields)
+        subject = f"{kind}:{activity_id}"
+        twin = None
+        if self.rng.random() < self.h.double_submit:
+            # The same decision, at the same moment, from a second connection:
+            # a double-click or a second tab. Exactly one may apply.
+            twin = threading.Thread(
+                target=self.request,
+                args=("POST", path, label.replace("[write]", "[double]")),
+                kwargs={
+                    "headers": dict(headers),
+                    "body": body,
+                    "subject": subject,
+                    "fresh": True,
+                },
+                daemon=True,
+            )
+            twin.start()
+        self.request("POST", path, label, headers=headers, body=body, subject=subject)
+        if twin is not None:
+            twin.join(timeout=self.h.timeout + 5)
+
     def run(self):
         if self.login:
             self.session = None
@@ -386,6 +640,8 @@ class VirtualUser(threading.Thread):
                     path.replace("{q}", "…") + " [htmx]",
                     headers={"HX-Request": "true", "HX-Target": target.lstrip("#")},
                 )
+            elif kind in ("evidence_upload", "pl_confirm", "ia_verify"):
+                self.governed_write(kind)
             elif kind == "write":
                 self.request(
                     "POST",
@@ -430,9 +686,22 @@ class Monitor(threading.Thread):
                 found.append(int(pid))
         return found
 
-    def _proc_stats(self, now):
+    def _database_pids(self):
+        found = []
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                cmd = open(f"/proc/{pid}/cmdline", "rb").read()
+            except OSError:
+                continue
+            if cmd.startswith(b"postgres") or b"/postgres" in cmd.split(b"\0")[0]:
+                found.append(int(pid))
+        return found
+
+    def _proc_stats(self, now, pids=None):
         rss_total, cpu_total = 0, 0.0
-        for pid in self._processes():
+        for pid in self._processes() if pids is None else pids:
             try:
                 stat = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
                 rss = int(open(f"/proc/{pid}/statm").read().split()[1]) * self.page
@@ -487,6 +756,8 @@ class Monitor(threading.Thread):
             rss, cpu = self._proc_stats(now)
             sample["server_rss_mb"] = round(rss / 1048576, 1)
             sample["server_cpu_pct"] = round(cpu, 1)
+            _db_rss, db_cpu = self._proc_stats(now, self._database_pids())
+            sample["db_cpu_pct"] = round(db_cpu, 1)
             if redis_client:
                 try:
                     info = redis_client.info()
@@ -511,6 +782,9 @@ class Harness:
         self.lock = threading.Lock()
         self.stage = "warmup"
         self.done = threading.Event()
+        self.journeys = journeys_for(args.mix)
+        self.pools = WritePools()
+        self.double_submit = args.double_submit if args.mix == "spec50" else 0.0
 
     def record(self, row):
         with self.lock:
@@ -539,6 +813,82 @@ def summarise(rows, seconds):
     }
 
 
+#: The audit entry each governed write leaves behind, by write kind.
+WRITE_AUDIT = {
+    "evidence_upload": "upload_evidence",
+    "pl_confirm": "pl_approve_completion",
+    "ia_verify": "ia_verify_completion",
+}
+
+
+def integrity_report(started_at: float, results: list[dict]) -> dict:
+    """What the governed writes did to the database during the run.
+
+    A load test that only times responses cannot see a double submission or
+    a write that silently failed. For each write kind this compares the
+    records the virtual users were told were accepted (2xx/3xx) with the
+    audit entries the action writes:
+
+    - ``lost``: accepted, never audited — a submission the user believes landed;
+    - ``applied_unseen``: audited though the user saw no success (a timeout
+      or 5xx after the commit) — the case where a retry would duplicate;
+    - ``duplicated``: audited more than once — a double submission applied twice.
+
+    Each pool hands a record out once, so any repeat comes from the deliberate
+    double submissions, of which exactly one may apply.
+    """
+    from datetime import datetime, timezone
+
+    from apps.audit.models import AuditLog
+    from apps.evidence.models import EvidenceRecord
+
+    since = datetime.fromtimestamp(started_at, tz=timezone.utc)
+    report: dict = {}
+    for kind, action in WRITE_AUDIT.items():
+        rows = [r for r in results if r.get("subject", "").startswith(kind + ":")]
+        accepted = {
+            r["subject"].split(":", 1)[1] for r in rows if 200 <= r["status"] < 400
+        }
+        audited = Counter(
+            AuditLog.objects.filter(action=action, created_at__gte=since).values_list(
+                "subject_id", flat=True
+            )
+        )
+        report[kind] = {
+            "requests": len(rows),
+            "double_submits": sum(1 for r in rows if "[double]" in r["label"]),
+            "accepted": sum(1 for r in rows if 200 <= r["status"] < 400),
+            "rejected_4xx": sum(1 for r in rows if 400 <= r["status"] < 500),
+            "busy_503": sum(1 for r in rows if r["status"] == 503),
+            "failed_5xx_or_transport": sum(
+                1
+                for r in rows
+                if (r["status"] >= 500 and r["status"] != 503) or r["error"]
+            ),
+            "subjects_accepted": len(accepted),
+            "subjects_audited": len(audited),
+            "lost": sorted(accepted - set(audited))[:20],
+            "applied_unseen": sorted(set(audited) - accepted)[:20],
+            "duplicated": sorted((s, n) for s, n in audited.items() if n > 1)[:20],
+        }
+    uploads = report["evidence_upload"]
+    uploads["evidence_records_created"] = EvidenceRecord.objects.filter(
+        created_at__gte=since, original_name="site-photo.png"
+    ).count()
+    report["ok"] = (
+        all(
+            not v["lost"]
+            and not v["duplicated"]
+            and not v["applied_unseen"]
+            and not v["failed_5xx_or_transport"]
+            for v in report.values()
+            if isinstance(v, dict)
+        )
+        and uploads["evidence_records_created"] == uploads["accepted"]
+    )
+    return report
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
@@ -555,6 +905,19 @@ def main() -> int:
         "--recovery", type=int, default=30, help="seconds at 1 VU after load"
     )
     parser.add_argument("--out", default="")
+    parser.add_argument(
+        "--mix",
+        default="legacy",
+        choices=("legacy", "spec50"),
+        help="legacy: the 2026-09-23 role mix, reads plus one write; spec50: the "
+        "approved 50-user workload with governed writes and an integrity check",
+    )
+    parser.add_argument(
+        "--double-submit",
+        type=float,
+        default=0.1,
+        help="spec50: share of PL/IA decisions sent twice at once",
+    )
     args = parser.parse_args()
 
     django_setup()
@@ -564,8 +927,9 @@ def main() -> int:
     peak = max(u for u, _ in stages)
     harness = Harness(args)
 
+    mix = ROLE_MIX_SPEC50 if args.mix == "spec50" else ROLE_MIX
     roles = []
-    for role, weight in ROLE_MIX.items():
+    for role, weight in mix.items():
         roles.extend([role] * weight)
     rng = random.Random(42)
     plan = [roles[i % len(roles)] for i in rng.sample(range(len(roles)), len(roles))]
@@ -576,19 +940,32 @@ def main() -> int:
     school_cache = {}
     print(f"preparing {peak} virtual users …", flush=True)
     vus = []
+    spec_accounts: dict[str, list[str]] = {}
+    role_seen: Counter = Counter()
     for index, role in enumerate(plan):
-        accounts = ROLE_ACCOUNTS[role]
-        email = accounts[index % len(accounts)]
+        if args.mix == "spec50":
+            # One account per VU while the role has enough of them.
+            if role not in spec_accounts:
+                spec_accounts[role] = spec50_accounts(role)
+            accounts = spec_accounts[role]
+            email = accounts[role_seen[role] % len(accounts)]
+            role_seen[role] += 1
+        else:
+            accounts = ROLE_ACCOUNTS[role]
+            email = accounts[index % len(accounts)]
         login = rng.random() < args.login_fraction
         session = None if login else database_session(email)
         if email not in school_cache:
             school_cache[email] = schools_for(email)
+        if args.mix == "spec50":
+            harness.pools.load(role, email)
         vus.append(
             VirtualUser(
                 harness, index, role, email, session, school_cache[email], login
             )
         )
 
+    run_started = time.time()
     monitor = Monitor(harness, args.database_url, args.server_pattern, args.redis_url)
     monitor.start()
     started = []
@@ -619,7 +996,15 @@ def main() -> int:
         vu.join(timeout=args.timeout + 5)
     monitor.join(timeout=5)
 
-    report = {"stages": {}, "by_route": {}, "by_role": {}, "monitor": {}}
+    report = {
+        "mix": args.mix,
+        "stages": {},
+        "by_route": {},
+        "by_role": {},
+        "monitor": {},
+    }
+    if args.mix == "spec50":
+        report["integrity"] = integrity_report(run_started, harness.results)
     for name, begin, end in stage_windows:
         rows = [r for r in harness.results if r["stage"] == name]
         report["stages"][name] = summarise(rows, end - begin)
@@ -641,6 +1026,7 @@ def main() -> int:
             "db_lock_waits_max": peak_of("db_lock_waits"),
             "server_rss_mb_max": peak_of("server_rss_mb"),
             "server_cpu_pct_mean": mean_of("server_cpu_pct"),
+            "db_cpu_pct_mean": mean_of("db_cpu_pct"),
             "redis_clients_max": peak_of("redis_clients"),
         }
     loaded = [r for r in harness.results if r["stage"] not in ("warmup", "recovery")]
@@ -655,7 +1041,7 @@ def main() -> int:
         report["by_role"][role] = summarise(rows, 0)
 
     print(
-        "\nstage        req    rps    p50    p95    p99    max  503  err%   dbconn lockw  rssMB  cpu%"
+        "\nstage        req    rps    p50    p95    p99    max  503  err%   dbconn lockw  rssMB  cpu%  dbcpu%"
     )
     for name in report["stages"]:
         s, m = report["stages"][name], report["monitor"][name]
@@ -664,7 +1050,10 @@ def main() -> int:
             f"{s['max']:>7}{s['busy_503']:>5}{s['error_rate_pct']:>6}"
             f"{m['db_total_server_max'] or 0:>8}{m['db_lock_waits_max'] or 0:>6}"
             f"{m['server_rss_mb_max'] or 0:>7}{m['server_cpu_pct_mean'] or 0:>6}"
+            f"{m['db_cpu_pct_mean'] or 0:>8}"
         )
+    if "integrity" in report:
+        print("\nintegrity:", json.dumps(report["integrity"]))
     print("\nslowest routes under load (p95):")
     for label, s in sorted(report["by_route"].items(), key=lambda kv: -kv[1]["p95"])[
         :20

@@ -425,6 +425,41 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="scheduler_history_prune",
+        description=(
+            "Deletes scheduled-job run history past its retention: successes "
+            "after 90 days, failures after 365, never a job's latest success."
+        ),
+        cron="daily 03:40 Africa/Nairobi",
+        cron_kwargs={"hour": 3, "minute": 40},
+        expected_runtime_seconds=30,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note="A delete of rows already past retention; a rerun finds none.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="closure_checklist_refresh",
+        description=(
+            "Persists the closure checklist and blockers of every open "
+            "activity, so the Blocked Closures page and System Health read "
+            "current facts while the readiness queue itself stays read-only."
+        ),
+        cron="every 30 minutes at :10 and :40",
+        cron_kwargs={"minute": "10,40"},
+        expected_runtime_seconds=60,
+        max_interval_minutes=120,
+        idempotent=True,
+        idempotency_note=(
+            "Derives the facts afresh and writes only rows whose facts "
+            "changed; a blocker that still applies keeps its row, so a rerun "
+            "writes nothing."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
+    JobSpec(
         name="scheduler_watchdog",
         description=(
             "Notifies Admins when a scheduled job has failed, never run or "

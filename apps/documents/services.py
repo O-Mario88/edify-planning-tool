@@ -178,12 +178,6 @@ def administers(user, document) -> bool:
     return has_permission(user, "documents.create")
 
 
-def administers_any(user) -> bool:
-    return has_permission(user, "documents.create") or has_permission(
-        user, "training_resources.create"
-    )
-
-
 def readable_documents(user, document_type: str | None = None):
     """Every published document this user's audience covers."""
     qs = DocumentAsset.objects.filter(status__in=READABLE_STATUSES).prefetch_related(

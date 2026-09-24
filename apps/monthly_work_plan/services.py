@@ -28,7 +28,20 @@ def get_one(budget_id: str) -> dict:
     return data
 
 
+#: The only states a month's admin lines may change in: once the Country
+#: Director submits it, send_to_rvp has frozen its totals and written the
+#: snapshot the RVP decides on.
+ADMIN_LINES_EDITABLE = (
+    MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
+    MonthlyWorkPlanBudgetStatus.CD_REVIEW,
+    MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
+    MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
+)
+
+
 def add_admin_line(budget_id: str, data: dict, principal) -> dict:
+    from django.db import transaction
+
     b = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
     if not b:
         raise NotFoundError("Monthly work-plan budget not found.")
@@ -38,12 +51,8 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     role = getattr(principal, "active_role", None)
     if role is not None and role not in ("CountryDirector", "Admin"):
         raise Forbidden("Only the Country Director can add a country admin budget.")
-    if b.status not in (
-        MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
-        MonthlyWorkPlanBudgetStatus.CD_REVIEW,
-        MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
-        MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
-    ):
+    editable = ADMIN_LINES_EDITABLE
+    if b.status not in editable:
         raise BadRequest("This General Budget is locked and can no longer be changed.")
     description = (data.get("description") or "").strip()
     if not description:
@@ -64,31 +73,67 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     if unit < 0 or qty_dec <= 0:
         raise BadRequest("Unit cost and quantity must be greater than zero.")
     total = int((qty_dec * unit).to_integral_value())
-    line = AdminBudgetLine.objects.create(
-        monthly_budget=b,
-        cost_category=(data.get("costCategory") or "other").strip() or "other",
-        description=description,
-        quantity=qty_dec,
-        unit_cost=unit,
-        total_cost=total,
-        justification=data.get("justification"),
-        created_by_user_id=principal.user_id,
-    )
-    recompute_totals(b)
-    if b.status != MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED:
-        b.status = MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED
-        b.save(update_fields=["status", "updated_at"])
+    with transaction.atomic():
+        # The status check above is the courtesy; this is the guard, under the
+        # row lock send_to_rvp takes to recompute, snapshot and submit. An add
+        # that read "editable" before a submission committed used to land after
+        # it: a line the snapshot never saw, the submitted totals rewritten and
+        # the status put back to admin_plan_added, un-submitting the month.
+        b = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not b:
+            raise NotFoundError("Monthly work-plan budget not found.")
+        if b.status not in editable:
+            raise BadRequest(
+                "This General Budget is locked and can no longer be changed."
+            )
+        line = AdminBudgetLine.objects.create(
+            monthly_budget=b,
+            cost_category=(data.get("costCategory") or "other").strip() or "other",
+            description=description,
+            quantity=qty_dec,
+            unit_cost=unit,
+            total_cost=total,
+            justification=data.get("justification"),
+            created_by_user_id=principal.user_id,
+        )
+        recompute_totals(b)
+        if b.status != MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED:
+            b.status = MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED
+            b.save(update_fields=["status", "updated_at"])
     return _serialize_line(line)
 
 
 def remove_admin_line(budget_id: str, line_id: str, principal) -> dict:
-    line = AdminBudgetLine.objects.filter(
-        id=line_id, monthly_budget_id=budget_id
-    ).first()
-    if line:
-        b = line.monthly_budget
-        line.delete()
-        recompute_totals(b)
+    """Remove an admin line, only while the month is editable.
+
+    Adding a line refused a submitted month; removing one did not, so a
+    submitted or approved month's totals could fall after the snapshot the
+    RVP decided on. Same states and the same row lock as add_admin_line.
+    """
+    from django.db import transaction
+
+    with transaction.atomic():
+        b = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not b:
+            raise NotFoundError("Monthly work-plan budget not found.")
+        if b.status not in ADMIN_LINES_EDITABLE:
+            raise BadRequest(
+                "This General Budget is locked and can no longer be changed."
+            )
+        line = AdminBudgetLine.objects.filter(
+            id=line_id, monthly_budget_id=budget_id
+        ).first()
+        if line:
+            line.delete()
+            recompute_totals(b)
     return {"ok": True}
 
 
@@ -372,6 +417,8 @@ def submit_annual_to_rvp(budget_id: str, principal):
 
 
 def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
+    from django.db import transaction
+
     from apps.monthly_work_plan.models import (
         CountryAnnualBudget,
         CountryAnnualBudgetStatus,
@@ -384,32 +431,43 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
         raise Forbidden("This annual budget is outside your region.")
     if b.status != CountryAnnualBudgetStatus.SUBMITTED_TO_RVP:
         raise BadRequest("Only a submitted annual budget can be decided.")
-    if action == "approve":
-        b.status = CountryAnnualBudgetStatus.APPROVED_BY_RVP
-        b.baseline_locked_at = timezone.now()  # baseline locked on approval
-    elif action == "return":
-        reason = (data.get("note") or "").strip()
-        if not reason:
-            raise BadRequest("A return reason is required.")
-        b.status = CountryAnnualBudgetStatus.RETURNED_BY_RVP
-        b.rvp_review_note = reason
-    else:
-        raise BadRequest("Unknown annual budget action.")
-    b.rvp_reviewed_at = timezone.now()
-    b.rvp_reviewed_by_user_id = principal.user_id
-    b.save()
+    with transaction.atomic():
+        # The read above is the courtesy check; this is the guard. Two
+        # decisions that both read "submitted" (a double-click, two tabs) both
+        # applied: two audit rows and two notices, or an approval and a return
+        # with the last writer winning. The full save also wrote the stale copy
+        # over totals a resubmission had refreshed meanwhile.
+        b = CountryAnnualBudget.objects.select_for_update().filter(id=budget_id).first()
+        if not b:
+            raise NotFoundError("Annual budget not found.")
+        if b.status != CountryAnnualBudgetStatus.SUBMITTED_TO_RVP:
+            raise BadRequest("Only a submitted annual budget can be decided.")
+        if action == "approve":
+            b.status = CountryAnnualBudgetStatus.APPROVED_BY_RVP
+            b.baseline_locked_at = timezone.now()  # baseline locked on approval
+        elif action == "return":
+            reason = (data.get("note") or "").strip()
+            if not reason:
+                raise BadRequest("A return reason is required.")
+            b.status = CountryAnnualBudgetStatus.RETURNED_BY_RVP
+            b.rvp_review_note = reason
+        else:
+            raise BadRequest("Unknown annual budget action.")
+        b.rvp_reviewed_at = timezone.now()
+        b.rvp_reviewed_by_user_id = principal.user_id
+        b.save()
+        _rvp_audit(
+            "annual_budget",
+            b.id,
+            f"Country Annual Budget FY {b.fy}",
+            action,
+            principal,
+            reason=b.rvp_review_note or "",
+            amount=b.total_amount,
+            fy=b.fy,
+        )
     # Deciding is what ends "ready for your approval" (INTG-03).
     _rvp_resolve(ANNUAL_BUDGET_SUBMITTED, "CountryAnnualBudget", b.id)
-    _rvp_audit(
-        "annual_budget",
-        b.id,
-        f"Country Annual Budget FY {b.fy}",
-        action,
-        principal,
-        reason=b.rvp_review_note or "",
-        amount=b.total_amount,
-        fy=b.fy,
-    )
     if b.submitted_by_user_id:
         _rvp_notify(
             b.submitted_by_user_id,

@@ -779,19 +779,34 @@ class LeaveApprovalService:
         and a second caller could set `hr_review` while notifying nobody —
         recreating the original defect one call site over.
         """
+
         # 2026-08-20 HR audit C3: escalation used to accept ANY status, so an
         # already-approved leave could be pushed back to hr_review — which
         # dropped its days out of the approved balance while the person was
         # actually away. Escalation is a pending-only move.
-        if leave.status == "hr_review":
+        def still_pending(current) -> bool:
+            if current.status == "hr_review":
+                return False
+            if current.status != "pending":
+                raise BadRequest(
+                    f"Only a pending request can be escalated to HR — "
+                    f"this one is already {current.status}."
+                )
+            return True
+
+        if not still_pending(leave):
             return
-        if leave.status != "pending":
-            raise BadRequest(
-                f"Only a pending request can be escalated to HR — "
-                f"this one is already {leave.status}."
-            )
-        leave.status = "hr_review"
-        leave.save(update_fields=["status", "updated_at"])
+        with transaction.atomic():
+            # The caller's copy was loaded unlocked, while approve, reject and
+            # return re-read under a lock. An escalation holding a copy from
+            # before an approval still passed C3 and moved the approved leave
+            # to hr_review, where it could be approved a second time.
+            leave = type(leave).objects.select_for_update().get(id=leave.id)
+            if not still_pending(leave):
+                return
+            leave.status = "hr_review"
+            leave.save(update_fields=["status", "updated_at"])
+            _audit_leave("leave.escalated_to_hr", leave, reviewer_user)
         try:
             from apps.notifications.services import WorkflowNotificationService
 
@@ -814,7 +829,6 @@ class LeaveApprovalService:
                 )
         except Exception:  # noqa: BLE001
             pass
-        _audit_leave("leave.escalated_to_hr", leave, reviewer_user)
 
     @staticmethod
     def _rvp_covers(reviewer_user, leave) -> bool:

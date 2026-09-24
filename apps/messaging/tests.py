@@ -6,8 +6,11 @@ drafts, workflow-generated threads, archive/unread behaviour, attachments,
 and notification fan-out.
 """
 
+import shutil
+import tempfile
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
@@ -42,6 +45,23 @@ def _user(email, role, name):
 
 
 class MessagingBaseTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        # Each test uploads into a directory of its own. The default storage
+        # is the repository's media folder, which every parallel test worker
+        # shares: a file one test deleted could be re-created under the same
+        # name by another worker's upload before the first test asserted it
+        # was gone (CI, 2026-09-24).
+        media = tempfile.mkdtemp(prefix="edify-messaging-media-")
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        default = dict(settings.STORAGES["default"])
+        default["OPTIONS"] = {**default.get("OPTIONS", {}), "location": media}
+        private_media = self.settings(
+            STORAGES={**settings.STORAGES, "default": default}
+        )
+        private_media.enable()
+        self.addCleanup(private_media.disable)
+
     @classmethod
     def setUpTestData(cls):
         cls.admin = _user("admin@t.test", "Admin", "Admin One")
@@ -548,6 +568,78 @@ class AttachmentTest(MessagingBaseTest):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Message.objects.filter(body="do not create").exists())
+
+
+class AttachmentTransactionTest(MessagingBaseTest):
+    """Files reach storage before the message transaction opens (R9).
+
+    Saving each FileField inside the transaction held it open for the whole
+    upload to object storage; a slow field connection could outlast the
+    idle-in-transaction limit and roll back a message the sender saw as sent.
+    """
+
+    def _post(self, body="with file"):
+        return self.client.post(
+            "/messages/new/",
+            {
+                "recipient_ids": [self.pl.id],
+                "subject": "Stored first",
+                "category": "Planning",
+                "context_type": "school",
+                "context_id": self.school1.school_id,
+                "body": body,
+                "attachments": SimpleUploadedFile(
+                    "register.pdf", b"%PDF-1.4 fake", content_type="application/pdf"
+                ),
+            },
+        )
+
+    def test_the_file_is_written_before_the_transaction_opens(self):
+        from unittest import mock
+
+        from django.db import connection
+
+        storage = MessageAttachment._meta.get_field("file").storage
+        outside = len(connection.atomic_blocks)
+        depths = []
+        real_save = storage.save
+
+        def recording_save(*args, **kwargs):
+            depths.append(len(connection.atomic_blocks))
+            return real_save(*args, **kwargs)
+
+        self.client.force_login(self.cceo1)
+        with mock.patch.object(storage, "save", side_effect=recording_save):
+            response = self._post()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(depths, [outside])
+        att = MessageAttachment.objects.get(file_name="register.pdf")
+        self.assertTrue(storage.exists(att.file.name))
+
+    def test_a_message_that_fails_leaves_no_file_behind(self):
+        from unittest import mock
+
+        storage = MessageAttachment._meta.get_field("file").storage
+        saved = []
+        real_save = storage.save
+
+        def recording_save(*args, **kwargs):
+            name = real_save(*args, **kwargs)
+            saved.append(name)
+            return name
+
+        self.client.force_login(self.cceo1)
+        with (
+            mock.patch.object(storage, "save", side_effect=recording_save),
+            mock.patch.object(
+                services, "send", side_effect=BadRequest("recipient refused")
+            ),
+        ):
+            response = self._post(body="never sent")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(saved), 1)
+        self.assertFalse(storage.exists(saved[0]))
+        self.assertFalse(MessageAttachment.objects.exists())
 
 
 class PageRenderTest(MessagingBaseTest):

@@ -82,22 +82,6 @@ All components live in `templates/components/` and are loaded via
 | `tone` | `neutral` \| `success` \| `info` (tints icon) | `neutral` |
 | `compact` | `"true"` → for inside cards | — |
 
-### Form Input
-```django
-{% include "components/input.html" with label="Email" name="email" type="email" placeholder="you@org.org" required="true" %}
-{% include "components/input.html" with label="Amount" name="amount" type="number" hint="UGX" error="Required" %}
-```
-| Prop | Values | Default |
-|---|---|---|
-| `label` + `name` | (required) | — |
-| `type` | `text` \| `email` \| `number` \| `password` \| `date` \| `tel` | `text` |
-| `placeholder`, `value` | — | — |
-| `hint` | helper text | — |
-| `error` | error message (renders error state) | — |
-| `required` | `"true"` → asterisk + required attr | — |
-| `inputmode` | `numeric` \| `decimal` \| `tel` \| `email` | — |
-| `extra_attrs` | raw HTML attrs (e.g. `hx-post="/x" hx-target="#y"`) | — |
-
 ---
 
 ## Rules for new components

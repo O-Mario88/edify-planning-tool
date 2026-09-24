@@ -93,13 +93,19 @@ class ClosureReadinessQueueRefreshWindowTest(DomainFixturesMixin, TestCase):
         # for lack of a checklist.
         self.assertTrue(all_ids.issubset(bucketed_ids))
 
-        # Confirm every activity now actually has a persisted checklist (the
-        # bug this test targets: a stale/None checklist beyond row 20).
-        for a in self.activities:
-            a.refresh_from_db()
-            self.assertTrue(
-                hasattr(a, "closure_checklist") and a.closure_checklist is not None
-            )
+        # The queue reads its facts and writes nothing (2026-09-24, R10); the
+        # stored checklist is the scheduled refresh's job, and it covers every
+        # row too -- the bug this test targets was a checklist missing beyond
+        # row 20.
+        from apps.activities.closure_services import ClosureEligibilityService
+        from apps.activities.models import ClosureChecklist
+
+        ids = [a.id for a in self.activities]
+        self.assertFalse(ClosureChecklist.objects.filter(activity_id__in=ids).exists())
+        ClosureEligibilityService.refresh_open()
+        self.assertEqual(
+            ClosureChecklist.objects.filter(activity_id__in=ids).count(), len(ids)
+        )
 
 
 class SalesforceIdActionValidationTest(DomainFixturesMixin, TestCase):

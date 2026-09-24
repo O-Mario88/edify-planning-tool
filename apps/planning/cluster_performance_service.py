@@ -38,6 +38,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.core.scoping import any_id, id_array
 from apps.planning.portfolio_service import NO_LEAD_KEY, NO_LEAD_LABEL
 from apps.schools.school_status import CLUSTER_SESSION_TYPES, DEAD_STATUSES
 
@@ -122,7 +123,7 @@ def _schools_by_cluster(cluster_ids) -> dict[str, list[str]]:
     if not cluster_ids:
         return {}
     rows = active_schools(
-        School.objects.filter(cluster_id__in=cluster_ids)
+        School.objects.filter(cluster_id__in=id_array(cluster_ids))
     ).values_list("cluster_id", "id")
     out: dict[str, list[str]] = {}
     for cluster_id, school_id in rows:
@@ -138,7 +139,7 @@ def _sessions_by_cluster(cluster_ids, *, fy: str) -> dict[str, dict]:
         return {}
     rows = (
         Activity.objects.filter(
-            cluster_id__in=cluster_ids,
+            cluster_id__in=id_array(cluster_ids),
             fy=str(fy),
             activity_type__in=CLUSTER_SESSION_TYPES,
             deleted_at__isnull=True,
@@ -178,7 +179,7 @@ def _visits_by_cluster(school_ids_by_cluster, *, fy: str) -> dict[str, dict]:
         return {}
     rows = (
         Activity.objects.filter(
-            school_id__in=school_to_cluster,
+            any_id("school_id", school_to_cluster),
             fy=str(fy),
             activity_type__in=VISIT_TYPES,
             deleted_at__isnull=True,
@@ -230,7 +231,7 @@ def _budget_by_cluster(
     if cluster_ids:
         rows = (
             ActivityScheduleCostLine.objects.filter(
-                activity__cluster_id__in=cluster_ids,
+                activity__cluster_id__in=id_array(cluster_ids),
                 activity__fy=str(fy),
                 activity__deleted_at__isnull=True,
             )
@@ -243,7 +244,7 @@ def _budget_by_cluster(
     if school_to_cluster:
         rows = (
             ActivityScheduleCostLine.objects.filter(
-                activity__school_id__in=school_to_cluster,
+                any_id("activity__school_id", school_to_cluster),
                 activity__fy=str(fy),
                 activity__deleted_at__isnull=True,
                 # An activity carrying both a school and a cluster was already
@@ -275,7 +276,9 @@ def _ssa_by_cluster(school_ids_by_cluster, *, fy: str) -> dict[str, int]:
         return {}
     rows = (
         SsaRecord.objects.filter(
-            school_id__in=school_to_cluster, fy=str(fy), deleted_at__isnull=True
+            any_id("school_id", school_to_cluster),
+            fy=str(fy),
+            deleted_at__isnull=True,
         )
         .values_list("school_id", flat=True)
         .distinct()
@@ -300,7 +303,7 @@ def _attended_schools(cluster_ids, *, fy: str) -> dict[str, set]:
         return {}
     rows = (
         ClusterActivityAttendance.objects.filter(
-            activity__cluster_id__in=cluster_ids,
+            activity__cluster_id__in=id_array(cluster_ids),
             activity__fy=str(fy),
             activity__deleted_at__isnull=True,
         )

@@ -31,7 +31,12 @@ from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
-from apps.fund_requests import disbursement_dashboard_service, services
+from apps.fund_requests import (
+    advance_service,
+    disbursement_dashboard_service,
+    services,
+    weekly_service,
+)
 from apps.fund_requests.finance_services import (
     FinanceBlockedReasonService,
     PartnerPaymentService,
@@ -497,3 +502,58 @@ class HeadlineTotalsDoNotDoubleCountTest(_ChannelFixture):
             self.fy, MONTH
         )
         self.assertEqual(overview["disbursed"], self.AMOUNT)
+
+
+class TheWeeklyRequestNeverReopensPaidMoneyTest(_ChannelFixture):
+    """One line carried by a monthly plan and a weekly request. Once the plan
+    pays it, the weekly request's submit, return, approval and decline must
+    leave the paid advance alone: its status is the only thing that stops the
+    funding guard releasing the line a second time. Both paths used to
+    rewrite every child advance's status unfiltered."""
+
+    def _pay_through_the_monthly_plan(self):
+        self.advance.status = "submitted_to_accountant"
+        self.advance.save(update_fields=["status", "updated_at"])
+        fr = self._monthly_request("sent_to_accountant")
+        disbursement_dashboard_service.disburse(self.accountant, fr.id, {})
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "disbursed")
+        fr.refresh_from_db()
+        return fr
+
+    def test_the_weekly_channel_cannot_pay_a_line_the_monthly_plan_paid(self):
+        weekly = self._weekly_request("pending_responsible_confirmation")
+        self._pay_through_the_monthly_plan()
+        cd = self._person("cd", "CountryDirector")
+
+        weekly_service.request_advance(weekly.id, self.owner)
+        weekly_service.return_weekly_request(weekly.id, {"reason": "Dates"}, cd)
+        weekly_service.request_advance(weekly.id, self.owner)
+        weekly_service.approve_weekly_request(weekly.id, cd)
+
+        with self.assertRaises(
+            BadRequest, msg="the weekly channel paid the line a second time"
+        ) as refused:
+            weekly_service.disburse(weekly.id, {}, self.accountant)
+        self.assertIn("already had money released", str(refused.exception))
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "disbursed")
+        self.assertEqual(self.advance.disbursed_amount, self.AMOUNT)
+
+    def test_declining_the_week_leaves_the_paid_line_accountable(self):
+        weekly = self._weekly_request("pending_responsible_confirmation")
+        fr = self._pay_through_the_monthly_plan()
+
+        weekly_service.not_requested(weekly.id, self.owner)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "disbursed")
+        fr.receipt_confirmed_at = fr.disbursed_at
+        fr.save(update_fields=["receipt_confirmed_at", "updated_at"])
+        advance_service.submit_accountability(
+            self.advance.id,
+            {"amountSpent": self.AMOUNT, "netsuiteId": "NS-W-1"},
+            self.owner,
+        )
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "accountability_pl_pending")

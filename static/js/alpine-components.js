@@ -45,6 +45,26 @@ document.addEventListener('alpine:init', () => {
       this.actualTheme = actual;
 
       var html = document.documentElement;
+      var schemeMeta = document.querySelector('meta[name="color-scheme"]');
+      var schemeContent = mode === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
+      if (schemeMeta && schemeMeta.content !== schemeContent) schemeMeta.content = schemeContent;
+      /* The head script applied this theme before first paint. Re-applying it
+         unchanged rewrote the root's classes and then read a computed style,
+         which restyles every element on the page: ~0.9 s on a long My Plan,
+         at every load and every time the tab came back into view (2026-09-24
+         audit). A theme that is already in place is left alone. */
+      if (html.dataset.theme === actual && html.dataset.themePref === mode) {
+        if (persist) {
+          try { localStorage.setItem('edify_theme', mode); } catch (error) { /* Storage can be blocked. */ }
+        }
+        return;
+      }
+
+      /* Colours fade only across a real switch; the transition rules touch
+         every surface, so they are not left on for ordinary rendering. */
+      html.classList.add('theme-fade');
+      window.clearTimeout(this._themeFadeTimer);
+      this._themeFadeTimer = window.setTimeout(function () { html.classList.remove('theme-fade'); }, 400);
       html.classList.remove('light', 'theme-blue', 'theme-dark', 'dark');
       if (actual === 'light') html.classList.add('light');
       if (actual === 'blue') html.classList.add('dark', 'theme-blue');
@@ -52,9 +72,7 @@ document.addEventListener('alpine:init', () => {
       html.dataset.theme = actual;
       html.dataset.themePref = mode;
 
-      var schemeMeta = document.querySelector('meta[name="color-scheme"]');
       var themeMeta = document.querySelector('meta[name="theme-color"]');
-      if (schemeMeta) schemeMeta.content = mode === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
       if (themeMeta) themeMeta.content = getComputedStyle(html).getPropertyValue('--edify-bg').trim();
 
       if (persist) {

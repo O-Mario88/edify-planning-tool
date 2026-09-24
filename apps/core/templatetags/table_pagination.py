@@ -40,7 +40,12 @@ def paginate(context, rows, param="page", page_size=None):
 
     from apps.core.pagination import TABLE_PAGE_SIZE
 
-    return paginate_rows(rows or [], page=page, page_size=page_size or TABLE_PAGE_SIZE)
+    # Not `rows or []`: the truth test of a QuerySet fetches every row, which
+    # undid the database paging `paginate_rows` does for one. A missing
+    # context variable arrives as the template engine's empty string.
+    if rows is None or isinstance(rows, str):
+        rows = []
+    return paginate_rows(rows, page=page, page_size=page_size or TABLE_PAGE_SIZE)
 
 
 @register.simple_tag(takes_context=True)

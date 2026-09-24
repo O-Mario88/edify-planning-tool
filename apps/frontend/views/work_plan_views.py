@@ -442,9 +442,10 @@ def _require_export(view):
 def work_plan_export(request):
     """Export the same scoped rows and visible fields as the Work Plan table."""
     from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.styles import Font
     from openpyxl.utils import get_column_letter
 
+    from apps.core.excel import style_body, style_header
     from apps.frontend.views.work_plan_page import build_work_plan_context
 
     context = build_work_plan_context(request.user, request.GET)
@@ -486,24 +487,8 @@ def work_plan_export(request):
             ]
         )
 
-    navy = "102A43"
-    accent = "1677FF"
-    border = Side(style="thin", color="D9E2EC")
-    for cell in sheet[1]:
-        cell.fill = PatternFill("solid", fgColor=navy)
-        cell.font = Font(color="FFFFFF", bold=True, size=10)
-        cell.alignment = Alignment(vertical="center")
-        cell.border = Border(bottom=Side(style="medium", color=accent))
-    sheet.row_dimensions[1].height = 28
-    for row_index in range(2, sheet.max_row + 1):
-        fill = PatternFill(
-            "solid", fgColor="F7FAFC" if row_index % 2 == 0 else "FFFFFF"
-        )
-        for cell in sheet[row_index]:
-            cell.fill = fill
-            cell.border = Border(bottom=border)
-            cell.alignment = Alignment(vertical="top", wrap_text=True)
-        sheet.cell(row_index, 12).number_format = "#,##0"
+    style_header(sheet)
+    style_body(sheet, {12: "#,##0"})
     widths = [22, 20, 38, 28, 26, 18, 21, 28, 14, 28, 18, 18, 20]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
@@ -517,12 +502,7 @@ def work_plan_export(request):
     summary_sheet.append(
         ["Activity", "Number of Activities", "Unit Cost (UGX)", "Total Cost (UGX)"]
     )
-    for cell in summary_sheet[1]:
-        cell.fill = PatternFill("solid", fgColor=navy)
-        cell.font = Font(color="FFFFFF", bold=True, size=10)
-        cell.alignment = Alignment(vertical="center")
-        cell.border = Border(bottom=Side(style="medium", color=accent))
-    summary_sheet.row_dimensions[1].height = 28
+    style_header(summary_sheet)
     for section in context["plan_summary_sections"]:
         header_row = summary_sheet.max_row + 1
         summary_sheet.append([section["label"], "", "", ""])

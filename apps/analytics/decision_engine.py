@@ -408,15 +408,18 @@ def recommendations(principal, query: dict) -> list[dict]:
     return recs
 
 
-def ssa_performance_dashboard(principal, query: dict) -> dict:
+def ssa_performance_dashboard(
+    principal, query: dict, *, export_only: bool = False
+) -> dict:
     """Decision-engine view model for the unified SSA Performance workspace.
 
     Kept on the engine's public surface so the web page, exports, and any later
     API adapter cannot drift into separate risk or recommendation rules.
+    ``export_only`` returns the filters, scope and export rows alone.
     """
     from .ssa_performance_service import build_dashboard
 
-    return build_dashboard(principal, query)
+    return build_dashboard(principal, query, export_only=export_only)
 
 
 def impact_analytics_dashboard(principal, query: dict) -> dict:

@@ -125,26 +125,59 @@ class FinancialYearCalendarService:
         Approved leave runs to a handful of rows per person, so expanding all
         of it costs less than the query that would otherwise narrow it.
         """
-        from datetime import date as _d
-
         from apps.accounts.models import Leave
         from apps.core.request_cache import memoize
 
         def _compute() -> frozenset:
-            days: set = set()
-            for lv in Leave.objects.filter(status="approved", staff_id=sp_id):
-                try:
-                    d0 = _d.fromisoformat(lv.start_date)
-                    d1 = _d.fromisoformat(lv.end_date)
-                except (TypeError, ValueError):
-                    continue
-                day = d0
-                while day <= d1:
-                    days.add(day)
-                    day += timedelta(days=1)
-            return frozenset(days)
+            return FinancialYearCalendarService._leave_day_set(
+                Leave.objects.filter(status="approved", staff_id=sp_id).values_list(
+                    "start_date", "end_date"
+                )
+            )
 
         return memoize(("leave_all", sp_id), _compute)
+
+    @staticmethod
+    def prime_leave_days(sp_ids) -> None:
+        """Read a roster's approved leave in one query into the request memo
+        `_all_leave_days` answers from, rather than one query per person.
+        Outside a request there is no memo, and this does nothing."""
+        from apps.accounts.models import Leave
+        from apps.core.request_cache import store
+
+        bucket = store()
+        if bucket is None:
+            return
+        spans = {sp: [] for sp in sp_ids if sp and ("leave_all", sp) not in bucket}
+        if not spans:
+            return
+        for staff_id, start, end in Leave.objects.filter(
+            status="approved", staff_id__in=list(spans)
+        ).values_list("staff_id", "start_date", "end_date"):
+            spans[staff_id].append((start, end))
+        for sp_id, person_spans in spans.items():
+            bucket[("leave_all", sp_id)] = FinancialYearCalendarService._leave_day_set(
+                person_spans
+            )
+
+    @staticmethod
+    def _leave_day_set(spans) -> frozenset:
+        """Every day of each (start_date, end_date) ISO string pair; a span
+        that does not parse is skipped."""
+        from datetime import date as _d
+
+        days: set = set()
+        for start_date, end_date in spans:
+            try:
+                d0 = _d.fromisoformat(start_date)
+                d1 = _d.fromisoformat(end_date)
+            except (TypeError, ValueError):
+                continue
+            day = d0
+            while day <= d1:
+                days.add(day)
+                day += timedelta(days=1)
+        return frozenset(days)
 
     @staticmethod
     def _leave_days_cached(sp_id: str, start: date, end: date) -> frozenset:

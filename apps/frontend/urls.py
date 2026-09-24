@@ -707,11 +707,6 @@ urlpatterns = [
         name="planning_assign_partner_action",
     ),
     path(
-        "planning/intelligence",
-        planning_views.planning_intelligence_view,
-        name="planning_intelligence",
-    ),
-    path(
         "planning/bulk-action",
         planning_views.bulk_action_view,
         name="planning_bulk_action",

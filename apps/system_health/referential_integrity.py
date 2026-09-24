@@ -15,9 +15,10 @@ default.
 A note on identifier spaces, because it is easy to "fix" this the wrong way:
 
   CorePlan.school_id and CoreActivitySlot.school_id hold School.school_id (the
-  business key, e.g. "S-1042"), NOT School.id. apps/planning/checks.py looks
-  plans up by `school.school_id`, and that is the contract. Rewriting these to
-  primary keys would break every existing lookup.
+  business key, e.g. "S-1042"), NOT School.id. Every lookup reads plans by
+  the business key (apps.planning.action_service, the Core Schools views), and
+  that is the contract. Rewriting these to primary keys would break every
+  existing lookup.
 
   StaffSchoolAssignment.school_id holds School.id (the cuid primary key).
 

@@ -33,7 +33,7 @@ Reports views and the CSV download read the enrolment rows and never pay for
 the portfolio).
 """
 
-from collections import Counter
+from collections import Counter, defaultdict
 from functools import cache
 from statistics import median
 
@@ -415,7 +415,7 @@ def portfolio_change(user, *, fy: str) -> dict:
     """Paired confirmed SSAs across every school in the reader's scope, FY-1
     against FY, judged by apps.ssa.change_rules (seven queries at most)."""
     from apps.analytics.evidence_strength import grade
-    from apps.analytics.impact_engine import improvement_frame
+    from apps.analytics.impact_engine import improvement_rows
     from apps.ssa import change_rules
 
     scope = resolve_user_scope(user)
@@ -444,7 +444,8 @@ def portfolio_change(user, *, fy: str) -> dict:
     base["schools_in_scope"] = len(countries)
     if not countries:
         return base
-    frame = improvement_frame(list(countries), fy)
+    # The frame's records without the DataFrame: this page only iterates them.
+    records = improvement_rows(list(countries), fy)
     book = change_rules.RuleBook()
     base["rule_label"] = change_rules.rule_label_for(book)
 
@@ -452,10 +453,8 @@ def portfolio_change(user, *, fy: str) -> dict:
         return countries.get(school_id) or ""
 
     pairs = (
-        change_rules.classify_pairs(
-            frame.to_dict("records"), book=book, country_for=country_for
-        )
-        if not frame.empty
+        change_rules.classify_pairs(records, book=book, country_for=country_for)
+        if records
         else []
     )
     groups = _outcome_area_groups()
@@ -491,8 +490,15 @@ def portfolio_change(user, *, fy: str) -> dict:
     rows = []
     for group in groups:
         area_pairs = [p for p in pairs if p["intervention"] in group["domains"]]
-        area_verdicts = change_rules.school_verdicts(
-            area_pairs, book=book, country_for=country_for
+        # school_verdicts depends on its pairs alone, so an area holding every
+        # pair (the one unclaimed group before any area is approved) has
+        # exactly the portfolio's verdicts.
+        area_verdicts = (
+            verdicts
+            if len(area_pairs) == len(pairs)
+            else change_rules.school_verdicts(
+                area_pairs, book=book, country_for=country_for
+            )
         )
         rows.append(
             {
@@ -506,8 +512,12 @@ def portfolio_change(user, *, fy: str) -> dict:
                 "domains": group["domains"],
             }
         )
+        # One pass instead of one per domain; each list keeps the area order.
+        pairs_by_domain = defaultdict(list)
+        for pair in area_pairs:
+            pairs_by_domain[pair["intervention"]].append(pair)
         for code in group["domains"]:
-            domain_pairs = [p for p in area_pairs if p["intervention"] == code]
+            domain_pairs = pairs_by_domain.get(code, [])
             rows.append(
                 _change_row(
                     INTERVENTION_LABELS.get(code, code),

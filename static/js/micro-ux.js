@@ -608,11 +608,18 @@
     document.querySelectorAll('.edify-table-scroll-hint').forEach(function (hint) { hint.remove(); });
   }
 
+  function scrollStateOf(region) {
+    var reach = region.scrollWidth - region.clientWidth;
+    return reach <= 1 ? 'none'
+      : (region.scrollLeft <= 1 ? 'start' : (region.scrollLeft >= reach - 1 ? 'end' : 'middle'));
+  }
+
   function updateScrollState(region) {
     if (!region.isConnected) return;
-    var reach = region.scrollWidth - region.clientWidth;
-    var state = reach <= 1 ? 'none'
-      : (region.scrollLeft <= 1 ? 'start' : (region.scrollLeft >= reach - 1 ? 'end' : 'middle'));
+    applyScrollState(region, scrollStateOf(region));
+  }
+
+  function applyScrollState(region, state) {
     if (region.dataset.scrollState !== state) {
       var pinned = (region.dataset.scrollState || 'none') === 'none' || state === 'none';
       region.dataset.scrollState = state;
@@ -645,10 +652,7 @@
     : null;
 
   function watchScrollRegion(region) {
-    if (region.dataset.scrollWatch === 'true') {
-      updateScrollState(region);
-      return;
-    }
+    if (region.dataset.scrollWatch === 'true') return;
     region.dataset.scrollWatch = 'true';
     var queued = false;
     region.addEventListener('scroll', function () {
@@ -665,12 +669,18 @@
       var table = region.querySelector(':scope > table');
       if (table) regionResizeObserver.observe(table);
     }
-    updateScrollState(region);
   }
 
   function watchScrollRegions(root) {
-    if (root.matches && root.matches('.edify-table-scroll-region')) watchScrollRegion(root);
-    if (root.querySelectorAll) root.querySelectorAll('.edify-table-scroll-region').forEach(watchScrollRegion);
+    var regions = [];
+    if (root.matches && root.matches('.edify-table-scroll-region')) regions.push(root);
+    if (root.querySelectorAll) regions.push.apply(regions, root.querySelectorAll('.edify-table-scroll-region'));
+    regions.forEach(watchScrollRegion);
+    /* Every region read, then every region written. Reading one and writing
+       its state before reading the next forced a full layout per table:
+       ~0.8 s across a long My Plan (2026-09-24 audit). */
+    var states = regions.map(function (region) { return region.isConnected ? scrollStateOf(region) : null; });
+    regions.forEach(function (region, index) { if (states[index] !== null) applyScrollState(region, states[index]); });
   }
 
   /* ── A full-text path for every cut label ────────────────────────────────
@@ -1353,12 +1363,14 @@
     more.hidden = true;
   }
 
-  function planRail(rail) {
+  function numberRailItems(rail) {
     var items = railItems(rail);
     items.forEach(function (item, index) { if (!item.dataset.edifyRailIndex) item.dataset.edifyRailIndex = String(index + 1); });
-    if (rail.scrollWidth <= rail.clientWidth + 1) return null;
-    var more = railMore(rail);
-    more.hidden = false;
+    return items;
+  }
+
+  /* Reads only: the caller has numbered the items and shown the toggle. */
+  function planRail(rail, items, more) {
     var toggleWidth = more.getBoundingClientRect().width;
     var styles = window.getComputedStyle(rail);
     var available = rail.clientWidth - toggleWidth - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0) - 1;
@@ -1402,7 +1414,23 @@
       return !rail.closest('.edify-rail-more') && rail.getBoundingClientRect().width > 0;
     });
     rails.forEach(restoreRail);
-    var plans = rails.map(planRail);
+    /* Phases across every rail — number the items, measure every rail's
+       overflow, show every overflowing rail's toggle, measure those rails,
+       apply — so the pass forces two layouts rather than one per rail. Rail
+       by rail, each toggle shown before the next rail was measured cost a
+       full layout of the page per rail (~1.4 s on a long My Plan, 2026-09-24
+       audit). */
+    var itemsByRail = rails.map(numberRailItems);
+    var overflowing = rails.map(function (rail) { return rail.scrollWidth > rail.clientWidth + 1; });
+    var toggles = rails.map(function (rail, index) {
+      if (!overflowing[index]) return null;
+      var more = railMore(rail);
+      more.hidden = false;
+      return more;
+    });
+    var plans = rails.map(function (rail, index) {
+      return toggles[index] ? planRail(rail, itemsByRail[index], toggles[index]) : null;
+    });
     plans.forEach(function (plan) { if (plan) applyRailPlan(plan); });
   }
 
@@ -1996,9 +2024,15 @@
     });
   }
 
-  var fontsReadyAtEnhance = false;
+  /* Whether the web fonts had settled when the page was first enhanced.
+     The font set's status answered that, but reading it makes the browser
+     resolve style for the whole document first: ~0.7 s before first paint on
+     a long My Plan (2026-09-24 audit). The ready promise below says the same
+     thing without forcing anything. */
+  var fontsSettled = false;
+  var enhancedBeforeFonts = false;
   document.addEventListener('DOMContentLoaded', function () {
-    fontsReadyAtEnhance = Boolean(document.fonts && document.fonts.status === 'loaded');
+    enhancedBeforeFonts = !fontsSettled;
     enhance(document);
     var observer = new MutationObserver(scheduleMutationScan);
     observer.observe(document.body, {
@@ -2015,7 +2049,8 @@
      was enhanced were measured then, and a second pass would only force
      another style resolution. */
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
-    if (!fontsReadyAtEnhance) { fitRails(document); fitTables(document); }
+    fontsSettled = true;
+    if (enhancedBeforeFonts) { fitRails(document); fitTables(document); }
   });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);

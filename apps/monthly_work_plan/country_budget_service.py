@@ -252,33 +252,50 @@ def _valid_lines_qs(fy, month_num):
     return planned_lines_for_period(lines, start, end)
 
 
-def _team_monthly_requests(fy, month_num):
-    """Program Lead team-budget snapshots for the selected month.
+# Everything the General Budget page reads from a month's lines — the page
+# itself, its live envelope and its integrity checks (see _program_source).
+_PAGE_LINE_FIELDS = (
+    "activity_id",
+    "amount",
+    "responsible_user",
+    "catalogue_id",
+    "catalogue_version",
+    "cost_setting_key",
+    "line_item_type",
+    "project_id",
+)
+_PAGE_ACTIVITY_FIELDS = (
+    "status",
+    "delivery_type",
+    "planned_date",
+    "cost_missing",
+    "activity_type",
+    "school_id",
+    "project_id",
+    "teachers_attended",
+    "leaders_attended",
+    "other_participants",
+)
 
-    The presence of even one of these requests turns on the deliberate monthly
-    submission workflow. That means the General Budget can never quietly fall
-    back to every raw scheduled cost line after Program Leads have started
-    submitting their own monthly requests.
-    """
-    from apps.fund_requests.models import FundRequest, FundRequestPeriod
 
-    return FundRequest.objects.filter(
-        fy=fy,
-        period=FundRequestPeriod.MONTHLY,
-        period_key=f"{fy}-M{int(month_num)}",
-        scope="team",
-        submitted_by_role="Program Lead",
-    ).order_by("created_at")
-
-
-def _program_source(fy, month_num):
+def _program_source(fy, month_num, lean=False):
     """Return every valid scheduled planned-activity cost line for the month.
 
     Monthly fund requests remain workflow snapshots, but they are not a second
     budget source and cannot hide planned work from the General Budget. The
     activity schedule cost line is the authoritative amount everywhere.
+
+    ``lean`` returns the lines as plain rows of the _PAGE_* fields instead of
+    models, for the read-only page, which reads nothing else.
     """
-    lines = list(_valid_lines_qs(fy, month_num))
+    from apps.budget.services import cost_line_rows
+
+    lines_qs = _valid_lines_qs(fy, month_num)
+    lines = (
+        cost_line_rows(lines_qs, _PAGE_LINE_FIELDS, _PAGE_ACTIVITY_FIELDS)
+        if lean
+        else list(lines_qs)
+    )
     return {
         "uses_pl_request_workflow": False,
         "requests": [],
@@ -514,13 +531,16 @@ def _user_names(ids):
 
 def _trailing_month_series(fy, month_num, n=6):
     """Real trailing-month totals per category (oldest→newest, including the
-    current month) — powers the KPI trend arrows and sparklines. A handful
-    of small grouped-aggregate queries, not per-row fetches.
+    current month) — powers the KPI trend arrows and sparklines. One small
+    grouped-aggregate query, not per-row fetches.
 
     Walks backward in plain (calendar_year, calendar_month) space — always
     unambiguous — then derives each point's own FY label from the same rule
     used everywhere else (Oct-Dec belong to fy-1 relative to Jan-Sep)."""
-    from django.db.models import Sum
+    from functools import reduce
+    from operator import or_
+
+    from django.db.models import Q, Sum
 
     from apps.activities.models import ActivityScheduleCostLine
 
@@ -544,24 +564,31 @@ def _trailing_month_series(fy, month_num, n=6):
         ).values_list("month_key", "admin_total")
     )
 
-    series = []
-    for y, m in months:
-        line_fy = str(y + 1) if m >= 10 else str(y)
-        rows = (
-            ActivityScheduleCostLine.objects.filter(
-                activity__deleted_at__isnull=True, activity__fy=line_fy, month=m
-            )
-            .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-            .values(
-                "activity__activity_type",
-                "activity__delivery_type",
-                "activity__project_id",
-                "project_id",
-            )
-            .annotate(total=Sum("amount"))
+    # One grouped read for every point instead of one per month. Each
+    # (FY, month) pair names one calendar month, so grouping by the pair as
+    # well splits the rows exactly as the per-month queries did.
+    points = [(str(y + 1) if m >= 10 else str(y), m) for y, m in months]
+    rows_by_point: dict[tuple, list] = {}
+    for r in (
+        ActivityScheduleCostLine.objects.filter(activity__deleted_at__isnull=True)
+        .filter(reduce(or_, (Q(activity__fy=f, month=m) for f, m in points)))
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .values(
+            "activity__fy",
+            "month",
+            "activity__activity_type",
+            "activity__delivery_type",
+            "activity__project_id",
+            "project_id",
         )
+        .annotate(total=Sum("amount"))
+    ):
+        rows_by_point.setdefault((r["activity__fy"], r["month"]), []).append(r)
+
+    series = []
+    for (y, m), point in zip(months, points):
         bucket = {k: 0 for k in CATEGORY_ORDER}
-        for r in rows:
+        for r in rows_by_point.get(point, ()):
             is_project = bool(r["activity__project_id"] or r["project_id"])
             cat = _page_category(
                 r["activity__activity_type"], r["activity__delivery_type"], is_project
@@ -608,7 +635,7 @@ def get_country_monthly_budget(principal, filters=None):
     search = (filters.get("q") or "").strip().lower()
 
     budget = _get_or_create_budget(fy, month_num)
-    source = _program_source(fy, month_num)
+    source = _program_source(fy, month_num, lean=True)
     _recompute_if_live(budget, source)
 
     lines = source["lines"]
@@ -1156,10 +1183,16 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
     except (IndexError, ValueError, AttributeError):
         _month_num = None
     if _month_num is not None:
-        raw_lines = list(
-            ActivityScheduleCostLine.objects.filter(month=_month_num)
-            .filter(Q(activity__fy=budget.fy) | Q(fiscal_year=budget.fy))
-            .select_related("activity")
+        from apps.budget.services import cost_line_rows
+
+        # Plain rows of just what the checks below read: the month's raw set
+        # is every line, and full models for it were the checks' whole cost.
+        raw_lines = cost_line_rows(
+            ActivityScheduleCostLine.objects.filter(month=_month_num).filter(
+                Q(activity__fy=budget.fy) | Q(fiscal_year=budget.fy)
+            ),
+            ("amount",),
+            ("deleted_at", "status", "delivery_type", "planned_date"),
         )
 
     def _line_clean(li):

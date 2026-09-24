@@ -624,6 +624,80 @@ def target_ledger_sync_job():
     run_tracked_job("target_ledger_sync", _do_target_ledger_sync)
 
 
+# ── Scheduler history retention ──────────────────────────────────────────────
+#: How long a run's history row is kept. The every-minute outbox drain alone
+#: writes ~525,000 rows a year, and nothing ever deleted one (2026-09-23
+#: performance rescue, R13). Failures are kept longer: they are what an
+#: incident review reads.
+JOB_HISTORY_SUCCESS_RETENTION = timedelta(days=90)
+JOB_HISTORY_FAILURE_RETENTION = timedelta(days=365)
+
+
+def _do_scheduler_history_prune() -> int:
+    """Delete run history past retention, keeping each job's latest success.
+
+    System Health reads the latest row and the latest success per job; the
+    latest success is kept whatever its age, so a job that has been failing
+    for months still reports when it last worked.
+    """
+    from django.db.models import Max, Q
+
+    from .models import ScheduledJobExecution
+
+    now = timezone.now()
+    latest = Q(pk__in=[])
+    for row in (
+        ScheduledJobExecution.objects.filter(status="success")
+        .values("job_name")
+        .annotate(started=Max("started_at"))
+    ):
+        latest |= Q(job_name=row["job_name"], started_at=row["started"])
+    deleted, _ = (
+        ScheduledJobExecution.objects.filter(
+            status="success", started_at__lt=now - JOB_HISTORY_SUCCESS_RETENTION
+        )
+        .exclude(latest)
+        .delete()
+    )
+    failed, _ = ScheduledJobExecution.objects.filter(
+        status="failed", started_at__lt=now - JOB_HISTORY_FAILURE_RETENTION
+    ).delete()
+    if deleted or failed:
+        logger.info(
+            "Pruned %s successful and %s failed job runs past retention",
+            deleted,
+            failed,
+        )
+    return deleted + failed
+
+
+def scheduler_history_prune_job():
+    if not _enabled():
+        return
+    run_tracked_job("scheduler_history_prune", _do_scheduler_history_prune)
+
+
+# ── Closure checklist refresh ────────────────────────────────────────────────
+def _do_closure_checklist_refresh() -> int:
+    """Persist every open activity's closure checklist and blockers.
+
+    The readiness queue derives its facts read-only on each view; this keeps
+    the stored copy that the Blocked Closures page and the System Health
+    integrity checks read no more than half an hour behind.
+    """
+    from apps.activities.closure_services import ClosureEligibilityService
+
+    report = ClosureEligibilityService.refresh_open()
+    logger.info("Closure checklist refresh: %s", report)
+    return report["checklistsWritten"]
+
+
+def closure_checklist_refresh_job():
+    if not _enabled():
+        return
+    run_tracked_job("closure_checklist_refresh", _do_closure_checklist_refresh)
+
+
 # ── 6. Professional Development reminders ────────────────────────────────────
 def _do_pd_reminders() -> int:
     from apps.professional_development.reminders import send_due_reminders

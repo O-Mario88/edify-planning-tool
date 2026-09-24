@@ -152,8 +152,8 @@ def annotate(items, *, today: date | None = None):
 
 def risks_for(item, today: date) -> list[PlanningRisk]:
     """Every risk currently true of this item, worst first."""
-    found = [
-        detector(item, today)
+    risks = [
+        risk
         for detector in (
             _partner_not_scheduled,
             _scheduled_without_cost,
@@ -165,10 +165,17 @@ def risks_for(item, today: date) -> list[PlanningRisk]:
             _ia_verification_overdue,
             _payment_overdue,
         )
+        if (risk := detector(item, today)) is not None
     ]
-    risks = [r for r in found if r is not None]
-    risks.sort(key=lambda r: _SEVERITY_ORDER.get(r.severity, 9))
+    # The sort is stable, so no risk or one is already in order; most rows of
+    # a country page have one at most.
+    if len(risks) > 1:
+        risks.sort(key=_severity_rank)
     return risks
+
+
+def _severity_rank(risk: PlanningRisk) -> int:
+    return _SEVERITY_ORDER.get(risk.severity, 9)
 
 
 def _set_next_action_owner(item) -> None:

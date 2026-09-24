@@ -785,6 +785,13 @@ def verify_record(record, principal):
         # Idempotent: a double-submitted form re-confirms nothing and writes no
         # second audit row.
         return record
+    # That check read the caller's copy, loaded before this request. A second
+    # tab or a double-click holding a copy from before the first confirmation
+    # passed it and confirmed again: a second audit row and baseline capture.
+    # Check again on the row itself, locked for the rest of this transaction.
+    record = SsaRecord.objects.select_for_update().get(pk=record.pk)
+    if record.verification_status == VerificationStatus.CONFIRMED.value:
+        return record
 
     record.verification_status = VerificationStatus.CONFIRMED.value
     record.verified_by_user_id = _actor_id(principal)
@@ -840,6 +847,12 @@ def return_record(record, principal, reason: str = ""):
     reason = (reason or "").strip()
     if not reason:
         raise BadRequest("Say what needs correcting before returning the SSA.")
+    # As in verify_record: the caller's copy may predate another decision, so
+    # re-check on the locked row. Otherwise a second return was recorded twice
+    # and `wasConfirmed` described the copy rather than the record.
+    record = SsaRecord.objects.select_for_update().get(pk=record.pk)
+    if record.verification_status == VerificationStatus.RETURNED.value:
+        return record
 
     was_confirmed = record.verification_status == VerificationStatus.CONFIRMED.value
     record.verification_status = VerificationStatus.RETURNED.value

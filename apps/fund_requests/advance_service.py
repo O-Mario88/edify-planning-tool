@@ -20,7 +20,7 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
-from .models import AdvanceRequest, AdvanceRequestStatus
+from .models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest, AdvanceRequestStatus
 
 
 # ── Auto-creation (called by the CostingService when budget lines are written)
@@ -178,8 +178,13 @@ def sync_advances_for_period_request(fund_request, *, to_accountant: bool) -> in
 
 
 # ── Responsible-user confirmation ────────────────────────────────────────────
-def _get_for_owner(advance_id: str, principal) -> AdvanceRequest:
-    adv = AdvanceRequest.objects.filter(id=advance_id).first()
+def _get_for_owner(
+    advance_id: str, principal, *, for_update: bool = False
+) -> AdvanceRequest:
+    qs = AdvanceRequest.objects.filter(id=advance_id)
+    if for_update:
+        qs = qs.select_for_update()
+    adv = qs.first()
     if not adv:
         raise NotFoundError("Advance request not found.")
     # The responsible user confirms their OWN advances. Country-scope roles
@@ -191,18 +196,38 @@ def _get_for_owner(advance_id: str, principal) -> AdvanceRequest:
     return adv
 
 
+# The owner's three choices below read the advance twice, the same two layers
+# as disburse(): the first read is a courtesy that refuses early, the re-read
+# under the row lock is the guard. A choice that read the advance before a
+# disbursement committed used to write over it: "not requested" or
+# "self-funded" on money already paid out, so no accountability was owed, or
+# CONFIRMED_FOR_ADVANCE on a DISBURSED advance, which the funding guard reads
+# as payable again.
+#
+# Once money has moved the choice is closed, and that is asked of the
+# canonical MONEY_MOVED_ADVANCE_STATUSES, not a copy. The copy here listed
+# only DISBURSED, ACCOUNTED and REIMBURSED, so a reimbursement paid but not
+# yet confirmed received could be reset to "self-funded", claimed again and
+# paid a second time.
+_CONFIRMABLE = (
+    AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+    AdvanceRequestStatus.RETURNED,
+)
+
+
 def confirm_advance(advance_id: str, principal) -> dict:
     """Responsible user requests an advance → CONFIRMED_FOR_ADVANCE (Accountant may disburse)."""
     adv = _get_for_owner(advance_id, principal)
-    if adv.status not in (
-        AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-        AdvanceRequestStatus.RETURNED,
-    ):
+    if adv.status not in _CONFIRMABLE:
         raise BadRequest(f"Cannot confirm an advance in status '{adv.status}'.")
-    adv.status = AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
-    adv.advance_type = "advance"
-    adv.confirmed_at = timezone.now()
-    adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+    with transaction.atomic():
+        adv = _get_for_owner(advance_id, principal, for_update=True)
+        if adv.status not in _CONFIRMABLE:
+            raise BadRequest(f"Cannot confirm an advance in status '{adv.status}'.")
+        adv.status = AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
+        adv.advance_type = "advance"
+        adv.confirmed_at = timezone.now()
+        adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
     return _serialize(adv)
 
 
@@ -210,16 +235,16 @@ def self_funded(advance_id: str, principal) -> dict:
     """Responsible user elects to use own funds → SELF_FUNDED_PENDING_REIMBURSEMENT
     (no advance disbursement; reimbursement opens after completion + approval)."""
     adv = _get_for_owner(advance_id, principal)
-    if adv.status in (
-        AdvanceRequestStatus.DISBURSED,
-        AdvanceRequestStatus.ACCOUNTED,
-        AdvanceRequestStatus.REIMBURSED,
-    ):
+    if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot change a {adv.status} advance to self-funded.")
-    adv.status = AdvanceRequestStatus.SELF_FUNDED_PENDING_REIMBURSEMENT
-    adv.advance_type = "self_funded"
-    adv.confirmed_at = timezone.now()
-    adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+    with transaction.atomic():
+        adv = _get_for_owner(advance_id, principal, for_update=True)
+        if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
+            raise BadRequest(f"Cannot change a {adv.status} advance to self-funded.")
+        adv.status = AdvanceRequestStatus.SELF_FUNDED_PENDING_REIMBURSEMENT
+        adv.advance_type = "self_funded"
+        adv.confirmed_at = timezone.now()
+        adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
     return _serialize(adv)
 
 
@@ -227,16 +252,16 @@ def not_requested(advance_id: str, principal) -> dict:
     """Responsible user declines funds → NOT_REQUESTED (budget stays visible for
     planning; Accountant does not disburse)."""
     adv = _get_for_owner(advance_id, principal)
-    if adv.status in (
-        AdvanceRequestStatus.DISBURSED,
-        AdvanceRequestStatus.ACCOUNTED,
-        AdvanceRequestStatus.REIMBURSED,
-    ):
+    if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot cancel a {adv.status} advance.")
-    adv.status = AdvanceRequestStatus.NOT_REQUESTED
-    adv.advance_type = "not_requested"
-    adv.confirmed_at = timezone.now()
-    adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+    with transaction.atomic():
+        adv = _get_for_owner(advance_id, principal, for_update=True)
+        if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
+            raise BadRequest(f"Cannot cancel a {adv.status} advance.")
+        adv.status = AdvanceRequestStatus.NOT_REQUESTED
+        adv.advance_type = "not_requested"
+        adv.confirmed_at = timezone.now()
+        adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
     return _serialize(adv)
 
 

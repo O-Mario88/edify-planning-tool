@@ -242,16 +242,30 @@ def _service_period(period: dict) -> dict:
 
 
 # ── Program Lead ─────────────────────────────────────────────────────────────
-def _items_owned_by(items, owner_ids) -> list:
-    """Staff and partner work attributed to one person, in either id space."""
-    ids = {value for value in owner_ids if value}
-    return [
-        item
-        for item in items
-        if item.operational_owner_id in ids
-        or item.managing_staff_id in ids
-        or item.planned_by_id in ids
-    ]
+def _items_owned_by(items, *people) -> list[list]:
+    """Staff and partner work attributed to each person, in either id space.
+
+    ``people`` is one set of owner ids per person, and the result one list per
+    person, in item order. One pass for all of them: a pass per officer read a
+    lead's whole team once for every tab on the page.
+    """
+    holders: dict[str, set[int]] = {}
+    for position, owner_ids in enumerate(people):
+        for value in owner_ids:
+            if value:
+                holders.setdefault(value, set()).add(position)
+    owned = [[] for _ in people]
+    for item in items:
+        found = set()
+        for value in (
+            item.operational_owner_id,
+            item.managing_staff_id,
+            item.planned_by_id,
+        ):
+            found.update(holders.get(value, ()))
+        for position in found:
+            owned[position].append(item)
+    return owned
 
 
 #: The Programme Lead's default tab: their own work and every officer's, in one
@@ -402,46 +416,6 @@ def _portfolio_kpis(totals, *, base_url: str) -> list[dict]:
     ]
 
 
-def _cluster_performance_context(request, period: dict, *, base_url: str) -> dict:
-    """The cluster lens — activity, planning, SSA and reach, most active first."""
-    from apps.planning.cluster_performance_service import (
-        ACTIVE_SHARE,
-        QUIET_SHARE,
-        WEIGHT_SESSION,
-        WEIGHT_SSA,
-        WEIGHT_VISIT,
-        cluster_performance,
-    )
-
-    performance = cluster_performance(
-        request.user,
-        fy=period["fy"],
-        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
-    )
-    totals = performance["totals"]
-    return {
-        "cluster_performance": performance,
-        "cluster_totals": totals,
-        "cluster_leads": performance["leads"],
-        "selected_program_lead": (request.GET.get("program_lead") or "").strip(),
-        "cluster_performance_url": "/cluster-oversight/",
-        # The weighting is on the page. A ranking whose arithmetic nobody can
-        # read is a ranking nobody can argue with, which is worse than a rough
-        # one they can.
-        "cluster_index_note": (
-            f"Activity index = {WEIGHT_SESSION}× cluster sessions + "
-            f"{WEIGHT_VISIT}× member-school visits + "
-            f"{WEIGHT_SSA}× member schools assessed."
-        ),
-        "cluster_band_note": (
-            f"High activity is at or above {round(ACTIVE_SHARE * 100)}% of the "
-            f"busiest cluster's index; low activity at or below "
-            f"{round(QUIET_SHARE * 100)}%."
-        ),
-        "kpis": _cluster_kpis(totals),
-    }
-
-
 def _cluster_kpis(totals) -> list[dict]:
     return [
         render_kpi_item(
@@ -537,7 +511,9 @@ def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list
     Plan" link still lands on that officer, whichever id space it carries.
     """
     members = _team_members(scope)
-    own_items = _items_owned_by(items, scope.own_ids)
+    own_items, *members_items = _items_owned_by(
+        items, scope.own_ids, *(member["owner_ids"] for member in members)
+    )
     tabs = [
         {
             # Everything the team lens holds. `build_items` already bounded it
@@ -556,8 +532,7 @@ def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list
             "items": own_items,
         },
     ]
-    for member in members:
-        member_items = _items_owned_by(items, member["owner_ids"])
+    for member, member_items in zip(members, members_items):
         tabs.append(
             {
                 "key": member["id"],
@@ -1479,30 +1454,29 @@ def _filter_options(items) -> dict:
     """The values in the scoped period before advanced filters narrow it.
 
     This keeps other districts selectable while avoiding values that never
-    occur in the team's work for the period.
+    occur in the team's work for the period. One pass collects all five: the
+    country lens reads every item in the country here.
     """
+    activity_types, statuses, partners, districts, risks = (set() for _ in range(5))
+    for i in items:
+        if i.activity_type:
+            activity_types.add(i.activity_type)
+        statuses.add(
+            i.assignment_status if i.is_awaiting_partner_schedule else i.activity_status
+        )
+        if i.partner_id:
+            partners.add((i.partner_id, i.partner_name))
+        if i.district_id:
+            districts.add((i.district_id, i.district_name))
+        for r in i.risks:
+            risks.add(r["key"])
+    statuses.discard("")
     return {
-        "activity_types": sorted({i.activity_type for i in items if i.activity_type}),
-        "statuses": sorted(
-            {
-                (
-                    i.assignment_status
-                    if i.is_awaiting_partner_schedule
-                    else i.activity_status
-                )
-                for i in items
-            }
-            - {""}
-        ),
-        "partners": sorted(
-            {(i.partner_id, i.partner_name) for i in items if i.partner_id},
-            key=lambda pair: pair[1],
-        ),
-        "districts": sorted(
-            {(i.district_id, i.district_name) for i in items if i.district_id},
-            key=lambda pair: pair[1],
-        ),
-        "risks": sorted({r["key"] for i in items for r in i.risks}),
+        "activity_types": sorted(activity_types),
+        "statuses": sorted(statuses),
+        "partners": sorted(partners, key=lambda pair: pair[1]),
+        "districts": sorted(districts, key=lambda pair: pair[1]),
+        "risks": sorted(risks),
     }
 
 

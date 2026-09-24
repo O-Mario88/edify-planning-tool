@@ -49,8 +49,9 @@ def _permission(permission):
 @require_page_permission("strategic_priorities")
 @_permission(Permission.STRATEGIC_PRIORITIES_VIEW.value)
 def priority_configuration_page(request):
-    # Contract carried over from the page this view replaced
-    # (hr_views.strategic_priorities_view, see test_priority_cascade):
+    # Contract carried over from the page this view replaced (the old
+    # hr_views.strategic_priorities_view, removed 2026-09-24; see
+    # test_priority_cascade):
     # strategy pages are for the RVP/CD authors plus Admin/HR validation —
     # broad STRATEGIC_PRIORITIES_VIEW alone must not open it to every role —
     # and the requested FY is validated/rebuilt, never echoed into filters.

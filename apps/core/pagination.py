@@ -11,6 +11,7 @@ null/undefined — the frontend surfaces a DATA_CONTRACT_VIOLATION otherwise.
 
 from collections.abc import Sequence
 
+from django.db.models import QuerySet
 from rest_framework.pagination import BasePagination
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -193,15 +194,27 @@ def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -
     # A sized sequence that is not already in memory (a lazily built table,
     # such as apps.my_plan.past_due_service.PastDueRows) is sliced rather
     # than materialised, so only the page on show is built.
-    if not (isinstance(rows, Sequence) and not isinstance(rows, (list, tuple, str))):
-        rows = list(rows)
-    total = len(rows)
+    #
+    # An unevaluated QuerySet is paged in the database the same way: COUNT for
+    # the total, LIMIT/OFFSET for the page. `list(queryset)` fetched every row
+    # to draw ten — on the Blocked Closures page at 50,000 schools that was
+    # every blocker in the country, each with its activity and school joined.
+    if isinstance(rows, QuerySet) and rows._result_cache is None:
+        total = rows.count()
+    else:
+        if not (
+            isinstance(rows, Sequence) and not isinstance(rows, (list, tuple, str))
+        ):
+            rows = list(rows)
+        total = len(rows)
     page_size = max(1, int(page_size or TABLE_PAGE_SIZE))
     page_count = max(1, -(-total // page_size))  # ceiling division
     current = min(max(1, int(page or 1)), page_count)
 
     start = (current - 1) * page_size
-    window = rows[start : start + page_size]
+    window = rows[start : start + page_size] if total else []
+    if isinstance(window, QuerySet):
+        window = list(window)
 
     return {
         "rows": window,
@@ -223,11 +236,3 @@ def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -
         # enough for a phone without hiding the first or last page.
         "pages": make_pagination_window(current, page_count, window_size=1),
     }
-
-
-def page_from(query: dict, key: str) -> int:
-    """Read one card's page number, tolerating anything a URL can carry."""
-    try:
-        return max(1, int((query or {}).get(key) or 1))
-    except (TypeError, ValueError):
-        return 1

@@ -139,7 +139,7 @@ and level 3 (4 distinct tables per staff member:
                 {% endif %}
               </td>
               <td class="px-4 py-2.5">
-                {% if item.activity_id and request.user|can_open:"/activities/0" and request.user.active_role != "Accountant" %}
+                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
                 <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
                 {% else %}
                 <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"School Visit" }}</span>
@@ -244,7 +244,7 @@ and level 3 (4 distinct tables per staff member:
                 {{ item.district_name|default:"—" }}
               </td>
               <td class="px-4 py-2.5">
-                {% if item.activity_id and request.user|can_open:"/activities/0" and request.user.active_role != "Accountant" %}
+                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
                 <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
                 {% else %}
                 <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"Core Visit" }}</span>

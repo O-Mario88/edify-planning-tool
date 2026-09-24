@@ -98,7 +98,7 @@ def _stage_monthly_plan_at_accountant(cceo, cceo_sp, pl, fy, month):
     return fr
 
 
-class DisbursementDashboardTest(TestCase):
+class DisbursementFixture(TestCase):
     def setUp(self):
         User = get_user_model()
         self.region = Region.objects.create(name="Central")
@@ -184,6 +184,8 @@ class DisbursementDashboardTest(TestCase):
             self.cceo, self.cceo_sp, self.pl, FY, MONTH
         )
 
+
+class DisbursementDashboardTest(DisbursementFixture):
     # ── access + queue composition ────────────────────────────────────────────
     def test_only_accountant_can_open_dashboard(self):
         with self.assertRaises(Forbidden):
@@ -465,13 +467,105 @@ class DisbursementDashboardTest(TestCase):
         self.assertEqual(ctx["utilization"]["pct"], 0)
 
 
+class OneAccountantDecisionPerPlanTest(DisbursementFixture):
+    """Each test reads the plan the way a request that lost a race did: before
+    the other decision was written. That read is the courtesy check; the
+    decision itself must re-read under the row lock and refuse."""
+
+    def _read_before_the_other_decision(self, fr, statuses):
+        return svc._get_monthly_fr(fr.id, statuses)
+
+    def _courtesy_read_returns(self, stale):
+        """The unlocked read answers with the stale plan; the locked re-read
+        still goes to the database, as it would for the request that lost."""
+        read = svc._get_monthly_fr
+
+        def courtesy_read(fund_request_id, expected_statuses, for_update=False):
+            if for_update:
+                return read(fund_request_id, expected_statuses, for_update=True)
+            return stale
+
+        return patch.object(svc, "_get_monthly_fr", side_effect=courtesy_read)
+
+    def _decisions(self, fr, action):
+        return AuditLog.objects.filter(action=action, subject_id=fr.id).count()
+
+    def test_a_hold_that_lost_to_the_disbursement_leaves_the_plan_disbursed(self):
+        from apps.notifications.models import Notification
+
+        fr = self._approved_plan()
+        stale = self._read_before_the_other_decision(fr, {"sent_to_accountant"})
+        svc.disburse(self.acct_p, fr.id, {"method": "Bank Transfer", "reference": "R1"})
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                svc.hold(self.acct_p, fr.id, {"reason": "Cash not available"})
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "disbursed")
+        self.assertIsNone(fr.held_at)
+        self.assertEqual(self._decisions(fr, "fund_request.hold"), 0)
+        self.assertFalse(
+            Notification.objects.filter(
+                recipient_id=self.cceo.id, source_event_type="fund_request_held"
+            ).exists(),
+            "the requester must not be told a paid plan is on hold",
+        )
+
+    def test_a_return_that_lost_to_the_disbursement_leaves_the_plan_disbursed(self):
+        fr = self._approved_plan()
+        stale = self._read_before_the_other_decision(fr, {"sent_to_accountant", "held"})
+        svc.disburse(self.acct_p, fr.id, {"method": "Bank Transfer", "reference": "R1"})
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                svc.return_item(
+                    self.acct_p, fr.id, {"reason": "Missing payment details"}
+                )
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "disbursed")
+        self.assertEqual(self._decisions(fr, "fund_request.return_accountant"), 0)
+        titles = [t["title"] for t in get_todos(self.cceo_p)["todos"]]
+        self.assertNotIn("Fix Returned Fund Request", titles)
+        self.assertIn("Confirm Receipt of Funds", titles)
+
+    def test_a_second_hold_is_refused_and_not_recorded_twice(self):
+        fr = self._approved_plan()
+        stale = self._read_before_the_other_decision(fr, {"sent_to_accountant"})
+        svc.hold(self.acct_p, fr.id, {"reason": "Cash not available"})
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                svc.hold(self.acct_p, fr.id, {"reason": "Bank issue"})
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.held_reason, "Cash not available")
+        self.assertEqual(self._decisions(fr, "fund_request.hold"), 1)
+
+    def test_a_release_that_lost_to_a_return_leaves_the_plan_returned(self):
+        fr = self._approved_plan()
+        svc.hold(self.acct_p, fr.id, {"reason": "Bank issue"})
+        stale = self._read_before_the_other_decision(fr, {"held"})
+        svc.return_item(self.acct_p, fr.id, {"reason": "Missing payment details"})
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                svc.release(self.acct_p, fr.id)
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "returned_by_accountant")
+        self.assertEqual(self._decisions(fr, "fund_request.release_hold"), 0)
+
+
 class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
     """Regression test for a double-click on the "Disburse Funds" button: two
     near-simultaneous POSTs to /disbursements/action must not both pass the
     "still sent_to_accountant" check and write two sets of Disbursement audit
     rows. Uses real threads + TransactionTestCase so the two svc.disburse()
     calls run in genuinely concurrent DB transactions (a plain TestCase wraps
-    the whole test in one transaction and can't reproduce the race)."""
+    the whole test in one transaction and can't reproduce the race). The same
+    holds for "Place on hold" (test_a_double_clicked_hold_applies_once)."""
 
     def setUp(self):
         User = get_user_model()
@@ -590,3 +684,49 @@ class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
         self.assertEqual(fr.status, "disbursed")
         # Only one activity funds this plan — a duplicate write would leave 2.
         self.assertEqual(Disbursement.objects.filter(fund_request=fr).count(), 1)
+
+    def test_a_double_clicked_hold_applies_once(self):
+        """The same double-click on "Place on hold", with both requests
+        through the unlocked read before either writes. The loser must be
+        refused, not hold the plan a second time with a second audit row and
+        a second notice to the requester."""
+        fr = _stage_monthly_plan_at_accountant(
+            self.cceo, self.cceo_sp, self.pl, FY, MONTH
+        )
+        both_have_read = threading.Barrier(2)
+        read = svc._get_monthly_fr
+        outcomes = []
+
+        def read_then_wait(fund_request_id, expected_statuses, for_update=False):
+            plan = read(fund_request_id, expected_statuses, for_update=for_update)
+            if not for_update:
+                both_have_read.wait(timeout=10)
+            return plan
+
+        def hold():
+            try:
+                svc.hold(self.acct_p, fr.id, {"reason": "Cash not available"})
+                outcomes.append("held")
+            except BadRequest:
+                outcomes.append("refused")
+            except Exception as exc:  # pragma: no cover - the assertion reports it
+                outcomes.append(repr(exc))
+            finally:
+                connection.close()
+
+        with patch.object(svc, "_get_monthly_fr", side_effect=read_then_wait):
+            threads = [threading.Thread(target=hold) for _ in range(2)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(timeout=30)
+
+        self.assertEqual(sorted(outcomes), ["held", "refused"])
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="fund_request.hold", subject_id=fr.id
+            ).count(),
+            1,
+        )
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "held")

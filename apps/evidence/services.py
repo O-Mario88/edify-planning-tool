@@ -440,6 +440,21 @@ def review(record_id: str, data: dict, principal) -> dict:
     if not record:
         raise NotFoundError("Evidence not found.")
     _assert_activity_in_scope(record.activity, principal)
+    # Nobody decides their own work. Evidence review is a permission field
+    # officers hold (they review the partner evidence on work they monitor),
+    # so the scope check alone let an officer accept the evidence on their own
+    # activity through the API. Their lead reviews it; the pl_review queue
+    # and IA certification refuse the same self-decision.
+    own_ids = {
+        i
+        for i in (
+            getattr(principal, "user_id", None),
+            getattr(principal, "staff_profile_id", None),
+        )
+        if i
+    }
+    if record.activity.responsible_staff_id in own_ids:
+        raise Forbidden("You cannot review the evidence on your own activity.")
     action = data.get("action")
     if action == "accept":
         record.status = "accepted"

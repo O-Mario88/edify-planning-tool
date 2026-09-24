@@ -13,6 +13,7 @@ To-Do integration.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -20,6 +21,7 @@ from django.test import Client, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import CalendarBlock, StaffProfile, StaffSupervisorAssignment
+from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -28,10 +30,12 @@ from apps.professional_development.approval_service import PDApprovalRoutingServ
 from apps.professional_development.completion_service import PDCourseTrackingService
 from apps.professional_development.fund_service import PDFundRequestService
 from apps.professional_development.models import (
+    PDFundRequestStatus,
     PDRoleAllocation,
     PDStatus,
     ProfessionalDevelopmentAllocation,
     ProfessionalDevelopmentCertificate,
+    ProfessionalDevelopmentFundRequest,
     ProfessionalDevelopmentRequest,
 )
 from apps.professional_development.services import StaffPDService, staff_display_info
@@ -1018,3 +1022,268 @@ class HRTrackingAndApplyRemindersTests(PDTestBase):
         self.assertEqual(ctx["tracker_total"], 1)
         # Both disbursements draw on the envelope even though the search shows one.
         self.assertEqual(ctx["tracker_rows"][0]["staff_balance"], "USD 50,000")
+
+
+def _courtesy_read_returns(model, stale):
+    """The decision's unlocked `objects.get` answers with a row read before
+    the competing decision was written; its re-read under select_for_update
+    (a queryset, not the manager) still goes to the database."""
+    return patch.object(model.objects, "get", return_value=stale)
+
+
+def _decisions(action, subject_id):
+    return AuditLog.objects.filter(action=action, subject_id=subject_id).count()
+
+
+class OneDecisionPerApprovalStageTest(PDTestBase):
+    """Each test reads the request the way a decision that lost a race did:
+    before the other decision was written. That read is the courtesy check;
+    the decision itself must re-read under the row lock and refuse, as
+    supervisor_approve and hr_approve already do."""
+
+    def _funded_request_at_hr(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            course_fee_cents=50_000_00,
+        )
+        req.status = PDStatus.SUBMITTED_TO_HR
+        req.save()
+        return req
+
+    def _read_before_the_other_decision(self, req):
+        return ProfessionalDevelopmentRequest.objects.get(id=req.id)
+
+    def test_a_rejection_that_lost_to_the_approval_leaves_it_approved(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_reject(req.id, self.hr2, "Budget freeze")
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
+        self.assertTrue(req.calendar_block_id)
+        self.assertEqual(_decisions("pd_hr_reject", req.id), 0)
+
+    def test_a_return_that_lost_to_the_approval_leaves_it_approved(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_return(req.id, self.hr2, "Add a brochure")
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
+        self.assertTrue(req.calendar_block_id)
+        self.assertEqual(_decisions("pd_hr_return", req.id), 0)
+
+    def test_a_supervisor_return_that_lost_to_the_approval_leaves_it_with_hr(self):
+        req = self._draft(self.cceo)
+        req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
+        req.save()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.supervisor_return(
+                    req.id, self.pl, "Fix the dates"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.SUBMITTED_TO_HR)
+        self.assertEqual(_decisions("pd_supervisor_return", req.id), 0)
+
+    def test_a_second_rejection_is_refused_and_not_recorded_twice(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_reject(req.id, self.hr, "Budget freeze")
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_reject(req.id, self.hr2, "Out of scope")
+
+        req.refresh_from_db()
+        self.assertEqual(req.hr_note, "Budget freeze")
+        self.assertEqual(_decisions("pd_hr_reject", req.id), 1)
+
+
+class OneDecisionAtSignOffTest(PDTestBase):
+    """HR's return of a completion, read before a sign-off was written, must
+    re-read under the row lock sign_off takes and refuse, not reopen a closed
+    record whose CPD and skills were already credited."""
+
+    def _awaiting_signoff(self):
+        req = self._draft(self.cceo)
+        req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
+        req.save()
+        PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
+        req.refresh_from_db()
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
+        req.save()
+        PDCourseTrackingService.mark_complete(
+            req.id,
+            self.cceo,
+            actual_completion_date=date.today(),
+            course_outcome="Done.",
+            skills_gained="Coaching",
+        )
+        PDCourseTrackingService.upload_certificate(req.id, self.cceo, _pdf())
+        PDCourseTrackingService.confirm_bamboohr(req.id, self.cceo)
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.AWAITING_HR_SIGNOFF)
+        return req
+
+    def test_a_return_that_lost_to_the_sign_off_leaves_the_record_closed(self):
+        from apps.hr.models import EmployeeSkill
+
+        req = self._awaiting_signoff()
+        stale = ProfessionalDevelopmentRequest.objects.get(id=req.id)
+        PDCourseTrackingService.sign_off(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDCourseTrackingService.hr_return_completion(
+                    req.id, self.hr2, "certificate_unreadable", "Blurry scan"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.COMPLETED_CLOSED)
+        self.assertEqual(req.signed_off_by, self.hr.id)
+        self.assertIsNotNone(req.signed_off_at)
+        self.assertEqual(
+            EmployeeSkill.objects.get(
+                staff_id=req.staff_id, skill__name="Coaching"
+            ).level,
+            2,
+        )
+
+
+class FinanceActsOnlyWhereTheMoneyIsTest(PDTestBase):
+    """The Accountant holds or returns a PD fund request only while it is
+    still with finance (pending disbursement, or held), and returns
+    accountability only while it is submitted. None of the three checked any
+    state: a paid request could be held or sent back to HR, and a signed-off
+    course could be sent back to accountability. Each also re-checks under the
+    row lock, so a decision that lost to the payment or the clearance is
+    refused."""
+
+    def _approved_and_funded(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            course_fee_cents=50_000_00,
+        )
+        req.status = PDStatus.SUBMITTED_TO_HR
+        req.save()
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        req.refresh_from_db()
+        return req
+
+    def _pay(self, req):
+        PDFundRequestService.disburse(
+            req.fund_request.id, self.accountant, method="bank_transfer", reference="T1"
+        )
+
+    def _accountability_submitted(self):
+        return self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            status=PDStatus.ACCOUNTABILITY_SUBMITTED,
+            accountability_netsuite_id="NS-1",
+        )
+
+    def test_a_paid_fund_request_cannot_be_held(self):
+        req = self._approved_and_funded()
+        self._pay(req)
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+
+    def test_a_paid_fund_request_cannot_be_returned_to_hr(self):
+        req = self._approved_and_funded()
+        self._pay(req)
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.return_request(
+                req.fund_request.id, self.accountant, "Wrong account"
+            )
+
+        req.refresh_from_db()
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+        self.assertEqual(req.status, PDStatus.DISBURSED)
+
+    def test_a_held_fund_request_can_still_be_returned(self):
+        req = self._approved_and_funded()
+        PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        PDFundRequestService.return_request(
+            req.fund_request.id, self.accountant, "Wrong account"
+        )
+
+        req.refresh_from_db()
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.RETURNED)
+        self.assertEqual(req.status, PDStatus.RETURNED_BY_HR)
+
+    def test_a_hold_that_lost_to_the_payment_is_refused(self):
+        req = self._approved_and_funded()
+        stale = ProfessionalDevelopmentFundRequest.objects.get(id=req.fund_request.id)
+        self._pay(req)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentFundRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+
+    def test_a_signed_off_course_cannot_be_sent_back_to_accountability(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            status=PDStatus.COMPLETED_CLOSED,
+        )
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.return_accountability(
+                req.id, self.accountant, "Receipts missing"
+            )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.COMPLETED_CLOSED)
+
+    def test_an_accountability_return_that_lost_to_the_clearance_is_refused(self):
+        req = self._accountability_submitted()
+        stale = ProfessionalDevelopmentRequest.objects.get(id=req.id)
+        PDFundRequestService.clear_accountability(req.id, self.accountant)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDFundRequestService.return_accountability(
+                    req.id, self.accountant, "Receipts missing"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.AWAITING_HR_SIGNOFF)
+        self.assertEqual(req.accountability_reviewed_by, self.accountant.id)

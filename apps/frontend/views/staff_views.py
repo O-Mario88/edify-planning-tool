@@ -21,7 +21,7 @@ from apps.core.permissions import (
 from apps.core.scoping import owner_ids
 from django.db.models import Q, Count
 from django.utils import timezone
-from datetime import date, timedelta
+from datetime import date
 
 from apps.accounts.models import User, StaffProfile
 from apps.activities.models import Activity
@@ -504,76 +504,6 @@ def staff_profile_view(request, user_id):
 # ─── TODAY VIEW ───────────────────────────────────────────────────────────────
 
 
-@require_page_permission("dashboard")
-def today_view(request):
-    """Today's command center — overdue, today, upcoming, and pending actions."""
-    user = request.user
-    today = date.today()
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-
-    # Overdue activities (past due, not yet completed)
-    overdue = (
-        Activity.objects.filter(
-            responsible_staff_id=user.id,
-            planned_date__lt=today,
-            status__in=["scheduled", "in_progress", "completion_started"],
-            deleted_at__isnull=True,
-        )
-        .select_related("school", "cluster")
-        .order_by("planned_date")
-    )
-
-    # Today's activities
-    today_activities = (
-        Activity.objects.filter(
-            responsible_staff_id=user.id,
-            planned_date=today,
-            deleted_at__isnull=True,
-        )
-        .select_related("school", "cluster")
-        .order_by("activity_type")
-    )
-
-    # This week remaining
-    upcoming_week = (
-        Activity.objects.filter(
-            responsible_staff_id=user.id,
-            planned_date__range=[today + timedelta(days=1), week_end],
-            status="scheduled",
-            deleted_at__isnull=True,
-        )
-        .select_related("school", "cluster")
-        .order_by("planned_date")
-    )
-
-    # Evidence missing (completed but no evidence)
-    evidence_gap = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        status__in=COMPLETED_WORK_STATUSES,
-        evidence__isnull=True,
-        deleted_at__isnull=True,
-    ).select_related("school")[:5]
-
-    # Unread notifications
-    notifications = Notification.objects.filter(
-        recipient_id=user.id,
-        status="unread",
-    ).order_by("-created_at")[:5]
-
-    context = {
-        "overdue": overdue,
-        "today_activities": today_activities,
-        "upcoming_week": upcoming_week,
-        "evidence_gap": evidence_gap,
-        "notifications": notifications,
-        "today": today,
-        "week_start": week_start,
-        "week_end": week_end,
-    }
-    return render(request, "pages/today/index.html", context)
-
-
 # ─── VISITS LOG ───────────────────────────────────────────────────────────────
 
 
@@ -717,86 +647,6 @@ def evidence_gallery_view(request):
 # See trainings_log_view for why "group_training"/"teachers_training" are
 # wrong -- kept in sync with the real ActivityType enum members.
 _QUARTERS = ["Q1", "Q2", "Q3", "Q4"]
-
-
-def _quarter_completed_counts(activity_types, fy, staff_ids):
-    """Real per-quarter completed-activity counts for this FY, scoped to staff.
-    Accepts one id or an iterable — Activity.responsible_staff_id is canonically
-    a StaffProfile id but legacy rows key it by User.id, so pass both forms."""
-    if isinstance(staff_ids, str):
-        staff_ids = [staff_ids]
-    rows = (
-        Activity.objects.filter(
-            responsible_staff_id__in=list(staff_ids),
-            activity_type__in=activity_types,
-            fy=fy,
-            status__in=COMPLETED_WORK_STATUSES,
-            deleted_at__isnull=True,
-        )
-        .values("quarter")
-        .annotate(n=Count("id"))
-    )
-    counts = {q: 0 for q in _QUARTERS}
-    for r in rows:
-        if r["quarter"] in counts:
-            counts[r["quarter"]] = r["n"]
-    return counts
-
-
-def _cumulative_period_row(label, cumulative, target_at_period):
-    """Build one 'Targets by Time Period' row using real cumulative achievement
-    against a straight-line ramp of the annual target (same 25/50/75/100
-    methodology already used by apps.targets.services.time_period)."""
-    if target_at_period:
-        pct = round(cumulative / target_at_period * 100)
-    else:
-        pct = 100 if cumulative else None
-
-    if pct is None:
-        status, status_class = (
-            "No Target",
-            "text-slate-400 bg-slate-50 border-slate-100",
-        )
-    elif pct >= 100:
-        status, status_class = (
-            "Ahead",
-            "text-emerald-600 bg-emerald-50 border-emerald-100",
-        )
-    elif pct >= 90:
-        status, status_class = (
-            "On Track",
-            "text-emerald-600 bg-emerald-50 border-emerald-100",
-        )
-    elif pct >= 50:
-        status, status_class = "Behind", "text-amber-600 bg-amber-50 border-amber-100"
-    else:
-        status, status_class = "Critical", "text-rose-600 bg-rose-50 border-rose-100"
-
-    return {
-        "label": label,
-        "target": target_at_period,
-        "achieved": cumulative,
-        "pct": pct,
-        "status": status,
-        "status_class": status_class,
-    }
-
-
-def _kpi_status(kpi):
-    """Bucket a KPI into on_track / at_risk / off_track / no_target using real
-    values only — no fabricated numbers."""
-    if kpi.get("lower_is_better"):
-        if kpi["value"] == 0:
-            return "on_track"
-        return "at_risk" if kpi["value"] <= 3 else "off_track"
-    if not kpi.get("target"):
-        return "no_target"
-    pct = kpi["value"] / kpi["target"] * 100
-    if pct >= 90:
-        return "on_track"
-    if pct >= 50:
-        return "at_risk"
-    return "off_track"
 
 
 @require_page_permission("my_target")
@@ -1131,7 +981,11 @@ def notifications_page_view(request):
     if q:
         qs = qs.filter(Q(title__icontains=q) | Q(body__icontains=q))
 
-    notifications = qs.order_by("-created_at")[:100]
+    # Paged by the template, 25 to a page, in the database (COUNT plus
+    # LIMIT/OFFSET). It was cut at the latest hundred: older notifications
+    # could not be reached at all, and a hundred cards were ~550 KB of HTML
+    # on every visit. The id keeps page boundaries stable within one second.
+    notifications = qs.order_by("-created_at", "-id")
 
     # Get distinct categories
     categories = list(
@@ -1265,19 +1119,6 @@ def mark_notification_read(request, notif_id):
     ):
         return redirect(redirect_to)
     return redirect("/notifications")
-
-
-@require_page_permission("dashboard")
-def notification_badge_view(request):
-    """Return only the notification badge count HTML."""
-    unread_count = Notification.objects.filter(
-        recipient_id=request.user.id, status="unread"
-    ).count()
-    return render(
-        request,
-        "partials/notifications/notification_badge.html",
-        {"unread_notifications_count": unread_count},
-    )
 
 
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
@@ -1802,6 +1643,7 @@ def team_targets_catchup_create_view(request):
 @require_page_permission("team_targets")
 def team_targets_catchup_action_view(request, plan_id):
     from django.http import HttpResponseBadRequest, HttpResponseForbidden
+    from apps.core.exceptions import BadRequest
     from apps.targets.models import CatchUpPlan
     from apps.targets.team_targets import PLCatchUpPlanService
 
@@ -1812,16 +1654,26 @@ def team_targets_catchup_action_view(request, plan_id):
         return HttpResponseForbidden("Not your catch-up plan.")
     action = (request.POST.get("action") or "").strip()
     if action == "approve":
-        result = PLCatchUpPlanService.approve(plan, request.user)
+        try:
+            result = PLCatchUpPlanService.approve(plan, request.user)
+        except BadRequest as exc:
+            # Already decided (a double-click, a second tab): say so on the
+            # page rather than as the middleware's bare 400.
+            messages.error(request, str(exc))
+            return redirect("/team-targets")
         messages.success(
             request,
             f"Catch-up plan approved — {len(result['created'])} activit"
             f"{'y' if len(result['created']) == 1 else 'ies'} entered Planning.",
         )
     elif action == "return":
-        PLCatchUpPlanService.return_plan(
-            plan, request.user, request.POST.get("reason") or ""
-        )
+        try:
+            PLCatchUpPlanService.return_plan(
+                plan, request.user, request.POST.get("reason") or ""
+            )
+        except BadRequest as exc:
+            messages.error(request, str(exc))
+            return redirect("/team-targets")
         messages.info(request, "Catch-up plan returned.")
     else:
         return HttpResponseBadRequest("Unknown action.")

@@ -7,8 +7,8 @@ queue, heatmap, trend, and decision recommendations internally consistent.
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
-from django.db.models.expressions import RawSQL
 from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService
@@ -20,6 +20,7 @@ from .platform_engine import (
     completion_analysis,
     describe_numeric,
     engine_metadata,
+    mean_of_floats,
     safe_mean,
     trend_analysis,
 )
@@ -61,6 +62,12 @@ RECOMMENDED_ACTIONS = {
     SsaIntervention.ENROLMENT.value: "Enrolment planning and monitoring",
 }
 
+#: Read once. `SsaIntervention.choices` builds a new list on every access, and
+#: the loops below asked for it per district, per group and per school row —
+#: ~43,000 times for a Country Director at 50,000 schools.
+_INTERVENTION_CHOICES = tuple(SsaIntervention.choices)
+_INTERVENTION_LABELS = dict(_INTERVENTION_CHOICES)
+
 
 def _fy_label(fy: str) -> str:
     try:
@@ -84,6 +91,27 @@ def _round(value: float | None, digits: int = 2) -> float | None:
 
 def _average(values) -> float | None:
     return safe_mean(values)
+
+
+def _finite_columns(rows) -> tuple[list[float], dict[str, list[float]]]:
+    """One pass over assessed rows: their finite averages, and their finite
+    scores per intervention, each in row order.
+
+    These are exactly the lists ``_average`` builds from one generator per
+    column (it drops None and non-finite values and keeps the order), so
+    ``mean_of_floats`` over them is the same float. The breakdowns used to
+    walk every group's rows nine times, once per column.
+    """
+    averages: list[float] = []
+    columns: dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        average = row["average"]
+        if average is not None and math.isfinite(average):
+            averages.append(average)
+        for code, score in row["scores"].items():
+            if score is not None and math.isfinite(score):
+                columns[code].append(score)
+    return averages, columns
 
 
 def _band(score: float | None) -> dict:
@@ -187,12 +215,69 @@ def _scores_by_record(record_ids: list[str]) -> dict[str, dict[str, float]]:
     # latest record per school, so ~16,000 ids for a country reader, and a
     # literal IN of that size was ~0.2 s of adaptation and planning per call,
     # five calls a page (performance rescue, 2026-09-23). Same rows.
-    ids = RawSQL("SELECT unnest(%s::varchar[])", [list(record_ids)])
-    for row in SsaScore.objects.filter(ssa_record_id__in=ids).values(
-        "ssa_record_id", "intervention", "score"
-    ):
-        scores[row["ssa_record_id"]][row["intervention"]] = float(row["score"])
+    from apps.core.scoping import id_array
+
+    # Tuples, not dicts: a country reads ~500,000 of these rows, and building
+    # a dict per row was most of the cost. `score` is a float column.
+    for record_id, intervention, score in SsaScore.objects.filter(
+        ssa_record_id__in=id_array(record_ids)
+    ).values_list("ssa_record_id", "intervention", "score"):
+        scores[record_id][intervention] = float(score)
     return scores
+
+
+class _SsaReads:
+    """Every confirmed record and score one dashboard build reads, read once.
+
+    The page read the latest confirmed records five times (the selection, the
+    previous period, the seven-year trend and both years of the improvement
+    monitor) and their scores four times: ~1.1 million score rows for a
+    Country Director at 50,000 schools, most of them the same rows again. One
+    query now reads every record of every year the build looks at, and scores
+    are read once per record. Each "latest" is the same fold as
+    `_record_rows`: the first row per school in (school, newest date, newest
+    creation) order, with the id as the final tie-break so equal rows resolve
+    the same way on every run.
+    """
+
+    def __init__(self, school_ids, years):
+        self._by_fy: dict[str, list[dict]] = defaultdict(list)
+        self._scores: dict[str, dict[str, float]] = {}
+        if not school_ids or not years:
+            return
+        rows = (
+            SsaRecord.objects.filter(
+                school_id__in=_in_scope(school_ids),
+                fy__in=sorted(years),
+                deleted_at__isnull=True,
+                verification_status=VerificationStatus.CONFIRMED.value,
+            )
+            .values(
+                "id",
+                "school_id",
+                "fy",
+                "quarter",
+                "average_score",
+                "collected_by_partner_id",
+            )
+            .order_by("fy", "school_id", "-date_of_ssa", "-created_at", "-id")
+        )
+        for row in rows:
+            self._by_fy[row["fy"]].append(row)
+
+    def latest(self, fy: str, quarter: str | None = None) -> list[dict]:
+        rows = self._by_fy.get(fy, [])
+        if quarter:
+            rows = [row for row in rows if row["quarter"] == quarter]
+        return _latest(rows, ("school_id",))
+
+    def scores(self, record_ids) -> dict[str, dict[str, float]]:
+        wanted = [rid for rid in record_ids if rid not in self._scores]
+        if wanted:
+            fetched = _scores_by_record(wanted)
+            for rid in wanted:
+                self._scores[rid] = fetched.get(rid, {})
+        return self._scores
 
 
 def _resolved_average(record: dict, score_map: dict[str, float]) -> float | None:
@@ -201,30 +286,20 @@ def _resolved_average(record: dict, score_map: dict[str, float]) -> float | None
     return _average(score_map.values())
 
 
-def _trend(school_ids: list[str], selected_fy: str) -> dict:
+def _trend(school_ids: list[str], selected_fy: str, reads=None) -> dict:
     try:
         end_fy = int(selected_fy)
     except (TypeError, ValueError):
         end_fy = int(get_operational_fy())
     years = [str(year) for year in range(end_fy - 6, end_fy + 1)]
-    if not school_ids:
-        rows = []
-    else:
-        raw = list(
-            SsaRecord.objects.filter(
-                school_id__in=_in_scope(school_ids),
-                fy__in=years,
-                deleted_at__isnull=True,
-                verification_status=VerificationStatus.CONFIRMED.value,
-            )
-            .values("id", "school_id", "fy", "date_of_ssa", "average_score")
-            .order_by("fy", "school_id", "-date_of_ssa", "-created_at")
-        )
-        rows = _latest(raw, ("fy", "school_id"))
+    if reads is None:
+        reads = _SsaReads(school_ids, years)
+    # The latest confirmed record per school in each year, years in order.
+    rows = [row for year in years for row in reads.latest(year)]
 
     by_year: dict[str, list[float]] = defaultdict(list)
     missing_average_ids = [row["id"] for row in rows if row["average_score"] is None]
-    missing_scores = _scores_by_record(missing_average_ids)
+    missing_scores = reads.scores(missing_average_ids)
     for row in rows:
         avg = _resolved_average(row, missing_scores.get(row["id"], {}))
         if avg is not None:
@@ -276,7 +351,7 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
     # between FY26 and FY27?", which a single line of annual averages cannot
     # answer. Same records as the averages above: the latest confirmed record
     # per school per year, so both tell one story.
-    score_maps = _scores_by_record([row["id"] for row in rows])
+    score_maps = reads.scores([row["id"] for row in rows])
     by_year_intervention: dict[str, dict[str, list[float]]] = defaultdict(
         lambda: defaultdict(list)
     )
@@ -312,7 +387,7 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
     }
 
 
-def _fy_improvement_monitor(school_ids: list[str]) -> dict:
+def _fy_improvement_monitor(school_ids: list[str], reads=None) -> dict:
     """Track every FY2026 score against the same school's FY2027 score.
 
     Annual portfolio averages show coverage; improvement uses paired schools
@@ -320,12 +395,16 @@ def _fy_improvement_monitor(school_ids: list[str]) -> dict:
     decline. The latest confirmed record in each FY is authoritative, matching
     every other SSA performance surface.
     """
-    baseline_records = _record_rows(school_ids, IMPROVEMENT_BASELINE_FY, None)
-    comparison_records = _record_rows(school_ids, IMPROVEMENT_COMPARISON_FY, None)
+    if reads is None:
+        reads = _SsaReads(
+            school_ids, (IMPROVEMENT_BASELINE_FY, IMPROVEMENT_COMPARISON_FY)
+        )
+    baseline_records = reads.latest(IMPROVEMENT_BASELINE_FY)
+    comparison_records = reads.latest(IMPROVEMENT_COMPARISON_FY)
     baseline_by_school = {row["school_id"]: row for row in baseline_records}
     comparison_by_school = {row["school_id"]: row for row in comparison_records}
     record_ids = [row["id"] for row in baseline_records + comparison_records]
-    scores = _scores_by_record(record_ids)
+    scores = reads.scores(record_ids)
     paired_school_ids = set(baseline_by_school) & set(comparison_by_school)
 
     rows = []
@@ -333,13 +412,12 @@ def _fy_improvement_monitor(school_ids: list[str]) -> dict:
     comparison_score_count = 0
     all_paired_deltas: list[float] = []
     for intervention in SsaIntervention:
+        code = intervention.value
         baseline_values = [
-            scores.get(record["id"], {}).get(intervention.value)
-            for record in baseline_records
+            scores.get(record["id"], {}).get(code) for record in baseline_records
         ]
         comparison_values = [
-            scores.get(record["id"], {}).get(intervention.value)
-            for record in comparison_records
+            scores.get(record["id"], {}).get(code) for record in comparison_records
         ]
         baseline_values = [value for value in baseline_values if value is not None]
         comparison_values = [value for value in comparison_values if value is not None]
@@ -348,19 +426,15 @@ def _fy_improvement_monitor(school_ids: list[str]) -> dict:
 
         paired_deltas = []
         for school_id in paired_school_ids:
-            baseline = scores.get(baseline_by_school[school_id]["id"], {}).get(
-                intervention.value
-            )
-            comparison = scores.get(comparison_by_school[school_id]["id"], {}).get(
-                intervention.value
-            )
+            baseline = scores.get(baseline_by_school[school_id]["id"], {}).get(code)
+            comparison = scores.get(comparison_by_school[school_id]["id"], {}).get(code)
             if baseline is not None and comparison is not None:
                 paired_deltas.append(comparison - baseline)
         all_paired_deltas.extend(paired_deltas)
         delta = _average(paired_deltas)
         rows.append(
             {
-                "code": intervention.value,
+                "code": code,
                 "label": intervention.label,
                 "baseline_average": _round(_average(baseline_values)),
                 "comparison_average": _round(_average(comparison_values)),
@@ -408,15 +482,16 @@ def _breakdown_rows(assessed, schools, *, key, names, count_schools=True) -> lis
         group = key(row)
         if group:
             members[group].append(row)
-    labels = dict(SsaIntervention.choices)
+    labels = _INTERVENTION_LABELS
     rows = []
     for group in set(totals) | set(members):
         items = members.get(group, [])
         total = totals.get(group) or len(items)
-        average = _average(row["average"] for row in items)
+        averages, columns = _finite_columns(items)
+        average = mean_of_floats(averages)
         weakest_key, weakest_average = None, None
-        for value, _label in SsaIntervention.choices:
-            cell = _average(row["scores"].get(value) for row in items)
+        for value, _label in _INTERVENTION_CHOICES:
+            cell = mean_of_floats(columns.get(value, ()))
             if cell is not None and (weakest_average is None or cell < weakest_average):
                 weakest_key, weakest_average = value, cell
         rows.append(
@@ -551,8 +626,32 @@ def regional_ssa_headline(principal, *, fy: str) -> dict:
     }
 
 
-def build_dashboard(principal, query: dict) -> dict:
-    """Build the full SSA Performance view model from one role-scoped dataset."""
+def _export_rows(assessed: list[dict]) -> list[dict]:
+    return [
+        {
+            "school_id": row["school_id"],
+            "school": row["name"],
+            "region": row["region__name"],
+            "district": row["district__name"],
+            "average": _round(row["average"]),
+            "lowest_intervention": _INTERVENTION_LABELS.get(
+                row["minimum_intervention"], ""
+            ),
+            "lowest_score": _round(row["minimum_score"], 1),
+            "high_risk": "Yes" if row["is_high_risk"] else "No",
+        }
+        for row in assessed
+    ]
+
+
+def build_dashboard(principal, query: dict, *, export_only: bool = False) -> dict:
+    """Build the full SSA Performance view model from one role-scoped dataset.
+
+    ``export_only`` stops once the export rows exist: the CSV carries the
+    selected schools and nothing the trend, the improvement monitor or the
+    breakdown tables compute, so the export no longer builds them. The rows
+    come from the same selection as the page's either way.
+    """
     schools_qs, scope = _scoped_schools(principal)
     selected_fy = str(query.get("fy") or get_operational_fy())
     if not selected_fy.isdigit():
@@ -611,9 +710,21 @@ def build_dashboard(principal, query: dict) -> dict:
     schools_by_id = {row["id"]: row for row in schools}
     school_ids = _ScopedSchoolIds(schools_by_id, filtered_schools.values("id"))
 
-    latest_records = _record_rows(school_ids, selected_fy, record_quarter)
+    previous_fy, previous_quarter, previous_label = _previous_period(
+        selected_fy, selected_quarter
+    )
+    # Every year the build reads, fetched in one query (see _SsaReads): the
+    # selection, the period it is compared with, the seven-year trend and
+    # the two years of the improvement monitor.
+    years = {selected_fy}
+    if not export_only:
+        end_fy = int(selected_fy)
+        years |= {str(year) for year in range(end_fy - 6, end_fy + 1)}
+        years |= {previous_fy, IMPROVEMENT_BASELINE_FY, IMPROVEMENT_COMPARISON_FY}
+    reads = _SsaReads(school_ids, years)
+    latest_records = reads.latest(selected_fy, record_quarter)
     record_ids = [row["id"] for row in latest_records]
-    scores_by_record = _scores_by_record(record_ids)
+    scores_by_record = reads.scores(record_ids)
 
     assessed = []
     for record in latest_records:
@@ -644,17 +755,25 @@ def build_dashboard(principal, query: dict) -> dict:
             }
         )
 
+    if export_only:
+        return {
+            "filters": {
+                "fy": selected_fy,
+                "quarter": selected_quarter,
+                "is_full_year": selected_quarter == FULL_YEAR,
+            },
+            "scope": {"can_export": scope.can_export},
+            "export_rows": _export_rows(assessed),
+        }
+
     total_schools = len(schools)
     assessed_count = len(assessed)
     completion_rate = assessed_count / total_schools * 100 if total_schools else 0.0
     average_score = _average(row["average"] for row in assessed)
     high_risk = [row for row in assessed if row["is_high_risk"]]
 
-    previous_fy, previous_quarter, previous_label = _previous_period(
-        selected_fy, selected_quarter
-    )
-    previous_records = _record_rows(school_ids, previous_fy, previous_quarter)
-    previous_scores = _scores_by_record(
+    previous_records = reads.latest(previous_fy, previous_quarter)
+    previous_scores = reads.scores(
         [row["id"] for row in previous_records if row["average_score"] is None]
     )
     previous_average = _average(
@@ -678,8 +797,9 @@ def build_dashboard(principal, query: dict) -> dict:
 
     intervention_rows = []
     intervention_values: dict[str, float | None] = {}
-    for value, label in SsaIntervention.choices:
-        avg = _average(row["scores"].get(value) for row in assessed)
+    _assessed_averages, assessed_columns = _finite_columns(assessed)
+    for value, label in _INTERVENTION_CHOICES:
+        avg = mean_of_floats(assessed_columns.get(value, ()))
         intervention_values[value] = avg
         intervention_rows.append(
             {
@@ -704,9 +824,13 @@ def build_dashboard(principal, query: dict) -> dict:
     # honest place for a row with no district. The Data Quality Centre is where
     # they are named and repaired.
     district_school_counts: dict[str, int] = defaultdict(int)
+    # The first school's spelling of each district's name, read in the same
+    # pass: finding it per district rescanned every school in scope.
+    district_names: dict[str, str] = {}
     for school in schools:
         if school["district_id"]:
             district_school_counts[school["district_id"]] += 1
+            district_names.setdefault(school["district_id"], school["district__name"])
     district_assessed: dict[str, list[dict]] = defaultdict(list)
     for row in assessed:
         if row["district_id"]:
@@ -716,17 +840,14 @@ def build_dashboard(principal, query: dict) -> dict:
     matrix_rows = []
     for district_id, district_total in district_school_counts.items():
         district_items = district_assessed.get(district_id, [])
-        district_name = next(
-            row["district__name"]
-            for row in schools
-            if row["district_id"] == district_id
-        )
-        district_average = _average(row["average"] for row in district_items)
+        district_name = district_names[district_id]
+        district_averages, district_columns = _finite_columns(district_items)
+        district_average = mean_of_floats(district_averages)
         intervention_cells = []
         weakest_key = None
         weakest_average = None
-        for value, label in SsaIntervention.choices:
-            cell_average = _average(row["scores"].get(value) for row in district_items)
+        for value, label in _INTERVENTION_CHOICES:
+            cell_average = mean_of_floats(district_columns.get(value, ()))
             if cell_average is not None and (
                 weakest_average is None or cell_average < weakest_average
             ):
@@ -748,7 +869,7 @@ def build_dashboard(principal, query: dict) -> dict:
                 "average": _round(district_average),
                 "band": _band(district_average),
                 "weakest_key": weakest_key,
-                "weakest": dict(SsaIntervention.choices).get(weakest_key, "—"),
+                "weakest": _INTERVENTION_LABELS.get(weakest_key, "—"),
                 "high_risk": sum(1 for row in district_items if row["is_high_risk"]),
                 "completion_rate": round(len(district_items) / district_total * 100, 1)
                 if district_total
@@ -787,7 +908,7 @@ def build_dashboard(principal, query: dict) -> dict:
                     "school_id": row["school_id"],
                     "name": row["name"],
                     "district": row["district__name"],
-                    "intervention": dict(SsaIntervention.choices).get(
+                    "intervention": _INTERVENTION_LABELS.get(
                         intervention, "Overall SSA"
                     ),
                     "score": _round(row["minimum_score"], 1),
@@ -900,21 +1021,7 @@ def build_dashboard(principal, query: dict) -> dict:
         },
     ]
 
-    export_rows = [
-        {
-            "school_id": row["school_id"],
-            "school": row["name"],
-            "region": row["region__name"],
-            "district": row["district__name"],
-            "average": _round(row["average"]),
-            "lowest_intervention": dict(SsaIntervention.choices).get(
-                row["minimum_intervention"], ""
-            ),
-            "lowest_score": _round(row["minimum_score"], 1),
-            "high_risk": "Yes" if row["is_high_risk"] else "No",
-        }
-        for row in assessed
-    ]
+    export_rows = _export_rows(assessed)
 
     all_fy_options = sorted(
         set(fy_options()) | {selected_fy}, key=lambda value: int(value), reverse=True
@@ -941,8 +1048,8 @@ def build_dashboard(principal, query: dict) -> dict:
         else f"Showing only schools available to your {_role_name(scope.active_role)} role."
     )
 
-    trend = _trend(school_ids, selected_fy)
-    improvement_monitor = _fy_improvement_monitor(school_ids)
+    trend = _trend(school_ids, selected_fy, reads)
+    improvement_monitor = _fy_improvement_monitor(school_ids, reads)
     analytics_engine = engine_metadata(
         "ssa_performance", record_count=assessed_count, confirmed_only=True
     )

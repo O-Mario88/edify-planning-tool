@@ -67,14 +67,12 @@ Two judgement calls, both stated so they can be reversed:
    cut. The finance services split *view* from *action*: `_require_accountant`
    still admits Admin so the disbursement dashboard stays observable, while
    `_require_accountant_action` does not. Same split for the PL fund queue.
-3. **Edge** — `apps/admin_ops/middleware.py` refuses any unsafe HTTP method
-   from an Admin on a route outside the Admin-owned allow-list, whether it
-   arrives as a form POST, an HTMX request, an API call or a hand-edited URL.
-   Deny by default: a business route added tomorrow is protected on the day it
-   ships. Refusals are audited.
-
-`request.admin_support_view` drives the **"Admin Support View · Read Only"**
-banner on every business page. The banner is a courtesy; layer 3 is the rule.
+3. **Edge (retired)** — an Admin read-only middleware once refused unsafe
+   methods on business routes. Admin became the platform super-role, the
+   middleware was reduced to a pass-through that was no longer installed in
+   `MIDDLEWARE`, and the module was removed on 2026-09-24 (live-performance
+   audit, legacy removal). Domain workflows still enforce their own rules
+   through layers 1 and 2; nothing reads `request.admin_support_view`.
 
 ## 4. The three workspaces
 

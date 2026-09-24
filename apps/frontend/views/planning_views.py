@@ -27,7 +27,6 @@ from apps.planning.services import (
 )
 from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
-from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
 from apps.partners.support_responsibility import (
     visibility_enabled as support_visibility_enabled,
@@ -2413,94 +2412,6 @@ def assign_partner_action_view(request):
         )
     except Exception as e:
         return error_fragment(e, status=400)
-
-
-@require_page_permission("planning")
-def planning_intelligence_view(request):
-    school_id = request.GET.get("school_id")
-    if not school_id:
-        return HttpResponse(
-            '<p class="text-slate-400 text-[11.5px] font-bold py-6 text-center">Select a school to view planning intelligence.</p>'
-        )
-
-    # Scoped lookup — this panel returned any school's latest SSA date,
-    # weakest intervention and score for an arbitrary ?school_id=. The same
-    # file already uses the scoped helper twice; this call site did not.
-    from apps.core.scoping import resolve_user_scope, school_queryset
-
-    school = (
-        school_queryset(resolve_user_scope(request.user))
-        .filter(Q(id=school_id) | Q(school_id=school_id))
-        .first()
-    )
-    if not school:
-        return HttpResponse(
-            '<p class="text-rose-500 text-[11.5px] font-bold py-6 text-center">School not found.</p>'
-        )
-
-    # Fetch latest SSA date
-    latest_ssa = (
-        school.ssa_records.filter(
-            deleted_at__isnull=True, verification_status="confirmed"
-        )
-        .order_by("-date_of_ssa")
-        .first()
-    )
-    last_ssa_date = latest_ssa.date_of_ssa.strftime("%d %b %Y") if latest_ssa else "—"
-
-    # Weakest area
-    weakest_area = "—"
-    if latest_ssa:
-        from apps.ssa.recommendation_engine import prioritized_interventions
-
-        ranked = prioritized_interventions(school, n=1)
-        if ranked:
-            weakest_area = dict(SsaIntervention.choices).get(
-                ranked[0]["intervention"], ranked[0]["intervention"]
-            )
-
-    # Assigned staff
-    assigned_staff = "—"
-    if school.account_owner_id:
-        owner_profile = (
-            StaffProfile.objects.filter(user_id=school.account_owner_id)
-            .select_related("user")
-            .first()
-        )
-        if owner_profile:
-            assigned_staff = owner_profile.user.name
-
-    # recommended step
-    recommended_step = "Schedule visit"
-    recommended_desc = "SSA is complete and the school is ready for planning."
-
-    if school.current_fy_ssa_status != "done":
-        recommended_step = "Upload SSA before planning"
-        recommended_desc = "SSA has not been recorded for this FY yet."
-    elif not school.cluster_id:
-        recommended_step = "Assign school to cluster"
-        recommended_desc = "School must be grouped in a cluster first."
-    elif not school.account_owner_id:
-        recommended_step = "Match staff profile"
-        recommended_desc = "Staff matching is required for accountability."
-
-    # Cluster name
-    cluster_name = "—"
-    if school.cluster_id:
-        c_obj = Cluster.objects.filter(id=school.cluster_id).first()
-        if c_obj:
-            cluster_name = c_obj.name
-
-    context = {
-        "school": school,
-        "last_ssa_date": last_ssa_date,
-        "weakest_intervention": weakest_area,
-        "assigned_staff": assigned_staff,
-        "recommended_step": recommended_step,
-        "recommended_desc": recommended_desc,
-        "cluster_name": cluster_name,
-    }
-    return render(request, "partials/planning/right_panel.html", context)
 
 
 @require_page_permission("planning")

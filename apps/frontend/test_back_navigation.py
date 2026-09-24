@@ -31,7 +31,6 @@ DRILL_DOWN_PAGES = [
     "core_schools/detail.html",
     "my_plan/detail.html",
     "my_plan/evidence_packet.html",
-    "fund_requests/detail.html",
     "debriefs/detail.html",
     "planning/schedule.html",
     "closure/activity_closure_detail.html",

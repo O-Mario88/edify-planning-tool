@@ -20,14 +20,18 @@ Two moments, and they are different questions:
 
 from __future__ import annotations
 
+import threading
 from datetime import date, timedelta
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.db import connections
+from django.test import TestCase, TransactionTestCase
 
 from apps.activities.cluster_attendance import confirm_attendance, set_invited_schools
-from apps.activities.models import Activity
+from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy
+from apps.core_schools import cluster_credit
 from apps.core_schools.models import CoreActivitySlot, CorePlan, cplan_id
 from apps.core_schools.services import create_package_slots
 from apps.geography.models import District, Region, SubCounty
@@ -165,3 +169,98 @@ class ClusterTrainingCreditsThePackageTest(TestCase):
         session = self._session()
         set_invited_schools(session, [self.client_school.id])
         self.assertEqual(self._training_slots().exclude(activity_id=None).count(), 0)
+
+
+class SimultaneousSessionSavesTest(TransactionTestCase):
+    """Every save of a cluster session runs the credit pass. Two saves at once
+    (a double-click, the officer and the planner on one session) both read the
+    school as unlinked before either took the slot lock."""
+
+    reset_sequences = False
+
+    def setUp(self):
+        fy = get_operational_fy()
+        region = Region.objects.create(name="Race CTC Region")
+        district = District.objects.create(name="Race CTC District", region=region)
+        sub_county = SubCounty.objects.create(name="Race CTC SC", district=district)
+        cluster = Cluster.objects.create(
+            name="Race CTC Cluster",
+            region=region,
+            district=district,
+            sub_county=sub_county,
+            cluster_type="mixed",
+            status="active",
+        )
+        core = School.objects.create(
+            school_id="RACE-CORE",
+            name="Race Core",
+            region=region,
+            district=district,
+            sub_county=sub_county,
+            school_type="core",
+        )
+        School.objects.filter(id=core.id).update(
+            cluster_id=cluster.id, cluster_status="clustered"
+        )
+        self.plan = CorePlan.objects.create(
+            id=cplan_id("RACE-CORE", fy=fy),
+            school_id="RACE-CORE",
+            fy=fy,
+            status="Active",
+        )
+        create_package_slots(self.plan, "RACE-CORE", ["leadership"])
+        self.session = Activity.objects.create(
+            activity_type="cluster_training",
+            cluster=cluster,
+            fy=fy,
+            quarter="Q1",
+            status="scheduled",
+            planned_date=date.today() + timedelta(days=10),
+        )
+        # Invited, no slot taken yet: where a school stands when it became a
+        # Core School, or got its plan, after the session was booked.
+        ClusterActivityAttendance.objects.create(
+            activity=self.session, school_id=core.id, invited=True
+        )
+
+    def test_two_simultaneous_saves_credit_one_slot(self):
+        workers = 2
+        both_have_read = threading.Barrier(workers)
+        credited = cluster_credit.credited_school_ids
+        past_the_read: list[str] = []
+        failures: list[str] = []
+
+        def read_then_wait(activity):
+            schools = credited(activity)
+            both_have_read.wait(timeout=10)
+            past_the_read.append(activity.pk)
+            return schools
+
+        def save():
+            try:
+                Activity.objects.get(pk=self.session.pk).save()
+            except Exception as exc:  # pragma: no cover - the assertion reports it
+                failures.append(repr(exc))
+            finally:
+                for db_connection in connections.all():
+                    db_connection.close()
+
+        with patch.object(
+            cluster_credit, "credited_school_ids", side_effect=read_then_wait
+        ):
+            threads = [threading.Thread(target=save) for _ in range(workers)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=30)
+
+        self.assertEqual(failures, [])
+        self.assertEqual(len(past_the_read), workers)
+        self.assertEqual(
+            CoreActivitySlot.objects.filter(
+                core_plan=self.plan,
+                activity_type="training",
+                activity_id=self.session.id,
+            ).count(),
+            1,
+        )

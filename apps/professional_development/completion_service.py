@@ -497,13 +497,9 @@ class PDCourseTrackingService:
         return req
 
     @staticmethod
-    def hr_return_completion(
-        req_id: str, principal, reason_category: str, note: str = ""
-    ) -> ProfessionalDevelopmentRequest:
-        target = RETURN_REASON_TARGETS.get(reason_category)
-        if target is None:
-            raise BadRequest("Unknown return reason.")
-        req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
+    def _assert_may_return_completion(
+        req: ProfessionalDevelopmentRequest, principal
+    ) -> None:
         if not _may_close_stage(req, principal):
             raise Forbidden("Only HR may return a completion for correction.")
         if req.staff_id == (principal.staff_profile_id or ""):
@@ -512,11 +508,32 @@ class PDCourseTrackingService:
             )
         if req.status != PDStatus.AWAITING_HR_SIGNOFF:
             raise BadRequest("This record is not awaiting HR sign-off.")
-        req.status = target
-        req.hr_note = f"[{reason_category.replace('_', ' ').title()}] {note}"[:512]
-        req.hr_reviewed_by = principal.user_id
-        req.hr_reviewed_at = timezone.now()
-        req.save()
+
+    @staticmethod
+    def hr_return_completion(
+        req_id: str, principal, reason_category: str, note: str = ""
+    ) -> ProfessionalDevelopmentRequest:
+        target = RETURN_REASON_TARGETS.get(reason_category)
+        if target is None:
+            raise BadRequest("Unknown return reason.")
+        req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
+        PDCourseTrackingService._assert_may_return_completion(req, principal)
+        # The read above is a courtesy that refuses early; the re-check on the
+        # row locked below is the guard, the lock sign_off() already takes. A
+        # return that read "awaiting sign-off" before a sign-off committed used
+        # to save the whole stale row over it: the closed record reopened with
+        # signed_off_* wiped after its CPD and skills were credited, and the
+        # next sign-off credited them again. Now it waits and is refused.
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            PDCourseTrackingService._assert_may_return_completion(req, principal)
+            req.status = target
+            req.hr_note = f"[{reason_category.replace('_', ' ').title()}] {note}"[:512]
+            req.hr_reviewed_by = principal.user_id
+            req.hr_reviewed_at = timezone.now()
+            req.save()
         try:
             from apps.professional_development.approval_service import (
                 PDApprovalRoutingService,

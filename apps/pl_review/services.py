@@ -338,6 +338,31 @@ def _get_reviewable(activity_id: str, principal) -> Activity:
         .select_related("school", "cluster")
         .first()
     )
+    return _check_reviewable(a, principal)
+
+
+def _lock_reviewable(activity_id: str, principal) -> Activity:
+    """`_get_reviewable` again, under a row lock, inside the decision.
+
+    The first read is a courtesy that refuses early; this is the guard — the
+    same two layers as `ActivityCertificationService.certify_activity`. Two
+    requests that both read "submitted to PL" before either wrote (a
+    double-click, two tabs, two leads over one officer) both used to apply:
+    two approvals, two notices to the officer and two Salesforce syncs, or an
+    approval and a return with the last writer winning, so a completion could
+    end "returned" with its evidence accepted and its credit recorded. The
+    loser now waits for the lock and is refused.
+    """
+    a = (
+        Activity.objects.select_for_update(of=("self",))
+        .filter(id=activity_id, deleted_at__isnull=True)
+        .select_related("school", "cluster")
+        .first()
+    )
+    return _check_reviewable(a, principal)
+
+
+def _check_reviewable(a: Activity | None, principal) -> Activity:
     if not a:
         raise NotFoundError("Activity not found.")
     if a.status != "submitted_to_pl":
@@ -400,18 +425,18 @@ def confirm(activity_id: str, principal) -> dict:
     from apps.hr.milestone_progress import record_activity_progress
     from apps.integrations.services import enqueue_activity_salesforce_sync
 
-    a = _get_reviewable(activity_id, principal)
+    _get_reviewable(activity_id, principal)
     reviewed_at = timezone.now()
 
-    a.status = ActivityStatus.IA_VERIFIED
-    a.ia_verification_status = VerificationStatus.CONFIRMED
-    a.pl_reviewed_at = reviewed_at
-    a.pl_reviewed_by = principal.user_id
-    a.ia_confirmed_at = reviewed_at
-    a.ia_confirmed_by = principal.user_id
-    a.evidence_status = "accepted"
-
     with transaction.atomic():
+        a = _lock_reviewable(activity_id, principal)
+        a.status = ActivityStatus.IA_VERIFIED
+        a.ia_verification_status = VerificationStatus.CONFIRMED
+        a.pl_reviewed_at = reviewed_at
+        a.pl_reviewed_by = principal.user_id
+        a.ia_confirmed_at = reviewed_at
+        a.ia_confirmed_by = principal.user_id
+        a.evidence_status = "accepted"
         a.save(
             update_fields=[
                 "status",
@@ -453,29 +478,33 @@ def confirm(activity_id: str, principal) -> dict:
 
 def return_activity(activity_id: str, data: dict, principal) -> dict:
     """PL returns a completion to the CCEO for correction."""
+    from django.db import transaction
+
     from apps.activities.services import _serialize
 
-    a = _get_reviewable(activity_id, principal)
+    _get_reviewable(activity_id, principal)
     reason = str((data or {}).get("reason") or "").strip()
     if not reason:
         # The officer is told why in the notification below; a return with no
         # reason arrives as "fix this" with nothing to fix. The form marks the
         # field required, and this is the rule behind it for every door.
         raise BadRequest("Say what needs correcting before returning a completion.")
-    a.status = "returned_by_pl"
-    a.pl_review_note = reason
-    a.pl_reviewed_at = timezone.now()
-    a.pl_reviewed_by = principal.user_id
-    a.save(
-        update_fields=[
-            "status",
-            "pl_review_note",
-            "pl_reviewed_at",
-            "pl_reviewed_by",
-            "updated_at",
-        ]
-    )
-    _audit("pl_review_return", a, principal, reason=reason)
+    with transaction.atomic():
+        a = _lock_reviewable(activity_id, principal)
+        a.status = "returned_by_pl"
+        a.pl_review_note = reason
+        a.pl_reviewed_at = timezone.now()
+        a.pl_reviewed_by = principal.user_id
+        a.save(
+            update_fields=[
+                "status",
+                "pl_review_note",
+                "pl_reviewed_at",
+                "pl_reviewed_by",
+                "updated_at",
+            ]
+        )
+        _audit("pl_review_return", a, principal, reason=reason)
     _close_review_notice(a)
     # The submitter must be told, WITH the reason — returning work silently is
     # how a completion sat untouched until someone happened to reopen My Plan.

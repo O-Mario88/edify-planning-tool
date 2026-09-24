@@ -7,6 +7,7 @@ Budget from the CD Monthly Admin Plan (MonthlyWorkPlanBudget + AdminBudgetLine)
 """
 
 from datetime import date, datetime
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -22,7 +23,7 @@ from apps.geography.models import District, Region
 from apps.monthly_work_plan import country_budget_service as svc
 from apps.projects.models import Project
 from apps.monthly_work_plan.models import AdminBudgetLine, MonthlyWorkPlanBudget
-from apps.monthly_work_plan.services import add_admin_line
+from apps.monthly_work_plan.services import add_admin_line, remove_admin_line
 from apps.schools.models import School
 
 FY = "2026"
@@ -645,6 +646,75 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertTrue(ctx2["can_send_to_rvp"])
         b = svc.send_to_rvp(self.cd_p, ctx2["budget_id"])
         self.assertEqual(b.status, "submitted_to_rvp")
+
+    def test_an_admin_line_that_lost_to_the_submission_is_refused(self):
+        """The add read the month as editable, then send_to_rvp took the row
+        lock, froze the totals and wrote the immutable snapshot. The line used
+        to land anyway, rewrite the frozen totals and put the status back to
+        admin_plan_added, un-submitting the month."""
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        read_before_the_submission = MonthlyWorkPlanBudget.objects.get(
+            id=ctx["budget_id"]
+        )
+        submitted = svc.send_to_rvp(self.cd_p, ctx["budget_id"])
+
+        rows = MagicMock()
+        rows.first.return_value = read_before_the_submission
+        with patch.object(MonthlyWorkPlanBudget.objects, "filter", return_value=rows):
+            with self.assertRaises(BadRequest):
+                add_admin_line(
+                    ctx["budget_id"],
+                    {
+                        "costCategory": "operations",
+                        "description": "Office internet",
+                        "unitCost": 50_000,
+                        "quantity": 1,
+                    },
+                    self.cd_p,
+                )
+
+        budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
+        self.assertEqual(budget.status, "submitted_to_rvp")
+        self.assertEqual(budget.total_amount, submitted.total_amount)
+        self.assertFalse(budget.admin_lines.exists())
+
+    def test_an_admin_line_cannot_be_removed_from_a_submitted_month(self):
+        """Adding refused a submitted month; removing did not, so the totals
+        the RVP decides on could fall after the snapshot froze them."""
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        add_admin_line(
+            ctx["budget_id"],
+            {
+                "costCategory": "operations",
+                "description": "Office internet",
+                "unitCost": 50_000,
+                "quantity": 1,
+            },
+            self.cd_p,
+        )
+        line = AdminBudgetLine.objects.get(monthly_budget_id=ctx["budget_id"])
+        submitted = svc.send_to_rvp(self.cd_p, ctx["budget_id"])
+
+        with self.assertRaises(BadRequest):
+            remove_admin_line(ctx["budget_id"], line.id, self.cd_p)
+
+        budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
+        self.assertEqual(budget.status, "submitted_to_rvp")
+        self.assertEqual(budget.total_amount, submitted.total_amount)
+        self.assertTrue(AdminBudgetLine.objects.filter(id=line.id).exists())
+
+    def test_an_admin_line_is_removed_while_the_month_is_editable(self):
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        add_admin_line(
+            ctx["budget_id"],
+            {"costCategory": "operations", "description": "Fuel", "unitCost": 20_000},
+            self.cd_p,
+        )
+        line = AdminBudgetLine.objects.get(monthly_budget_id=ctx["budget_id"])
+        remove_admin_line(ctx["budget_id"], line.id, self.cd_p)
+        budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
+        self.assertFalse(budget.admin_lines.exists())
+        self.assertEqual(budget.admin_total, 0)
 
     # ── §13 RVP country-scope guard (parity with services._assert_rvp_can_decide) ──
     def test_rvp_cannot_approve_budget_from_another_country(self):

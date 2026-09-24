@@ -3395,6 +3395,16 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        # The status check at the top read the row without a lock. A second
+        # submission that read it before the first one wrote (a double-click,
+        # a second tab) was applied again: the reviewer was told twice, a
+        # cluster session's register collided with the first write on its
+        # unique constraint, and a cancel that landed in between was undone.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status not in COMPLETABLE_STATUSES:
+            raise BadRequest(
+                "Click Complete first to unlock evidence upload and Activity Code entry."
+            )
         if followed_up is not None:
             a.follow_up_of_activity = followed_up
         a.teachers_attended = data.get("teachersAttended")
@@ -3566,6 +3576,10 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        # Re-checked under the lock, for the reason complete() gives.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status not in SUBMITTABLE_STATUSES:
+            raise BadRequest("Activity is not ready to be submitted for review.")
         was_returned = a.status in RETURNED_STATUSES
         a.status = next_status
         if was_returned:
@@ -3605,7 +3619,8 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
     requirements enforced by ``complete()`` and ``submit_for_review()``.
     """
     a = _get_for_execution(activity_id, principal)
-    if a.status in ("closed", "cancelled", "rejected", "deferred"):
+    closed_statuses = ("closed", "cancelled", "rejected", "deferred")
+    if a.status in closed_statuses:
         raise BadRequest("Attendance cannot be changed after this activity is closed.")
 
     def count(name: str) -> int:
@@ -3619,6 +3634,14 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         return value
 
     with transaction.atomic():
+        # The save below writes `status` back. Taken from the read above, it
+        # reverted whatever landed in between (a lead's approval, an IA
+        # verification, a cancel), so re-read under the lock and write there.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        if a.status in closed_statuses:
+            raise BadRequest(
+                "Attendance cannot be changed after this activity is closed."
+            )
         a.teachers_attended = count("teachersAttended")
         a.leaders_attended = count("leadersAttended")
         a.other_participants = count("otherParticipants")
@@ -3793,6 +3816,30 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
     )
 
 
+def _lock_awaiting_ia_verification(activity_id: str) -> Activity:
+    """The activity again, under a row lock, inside the decision's transaction.
+
+    Callers check the status on a read taken without a lock. That check is a
+    courtesy and this is the guard, the same two layers as
+    `ActivityCertificationService.certify_activity`. Two decisions that both
+    read "awaiting" (a double submit, or IA returning work while the monitor
+    confirms it) both used to apply, the last writer winning: a returned
+    activity could end ia_verified with its clearance payable and its credit
+    recorded, and a verified one end returned with payment_status still
+    ia_confirmed. The loser now waits for the lock and is refused.
+    """
+    a = (
+        Activity.objects.select_for_update()
+        .filter(id=activity_id, deleted_at__isnull=True)
+        .first()
+    )
+    if not a:
+        raise NotFoundError("Activity not found.")
+    if a.status != "awaiting_ia_verification":
+        raise BadRequest("Activity is not awaiting IA verification")
+    return a
+
+
 def _confirm_activity_after_authorization(
     a: Activity,
     data: dict | None,
@@ -3803,6 +3850,26 @@ def _confirm_activity_after_authorization(
     """Shared confirmation transition after a caller-specific authority gate."""
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
+    # Every write the confirmation makes, the Salesforce entry and the note
+    # included, goes to the locked row: a confirmation that lost to a return
+    # must be refused before it overwrites the return's reason.
+    with transaction.atomic():
+        return _confirm_locked_activity(
+            _lock_awaiting_ia_verification(a.id),
+            data,
+            principal,
+            entry_source=entry_source,
+        )
+
+
+def _confirm_locked_activity(
+    a: Activity,
+    data: dict | None,
+    principal,
+    *,
+    entry_source: str,
+) -> dict:
+    """The confirmation, applied to the row its caller locked."""
     # SSA-01. The same rule the live IA screen holds
     # (ActivityCertificationService.certify_activity), on this door too.
     # SSA-01 exists BECAUSE a rule was written on one door only; fixing it on
@@ -4000,18 +4067,19 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     if deadline:
         note += f" · Deadline: {deadline}"
 
-    # Partner-delivered work returns on its own status (§15.1 "Returned by
-    # IA") so the partner surfaces can speak plainly; staff work keeps the
-    # historic "returned" value every existing pin expects.
-    a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
-    a.ia_verification_status = "returned"
-    # The instruction has no length limit on the form; the column holds 512.
-    # Cut to fit with a marker rather than failing the return at save.
-    from apps.activities.return_notes import fit
-
-    a.pl_review_note = fit(note)
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
+        a = _lock_awaiting_ia_verification(a.id)
+        # Partner-delivered work returns on its own status (§15.1 "Returned by
+        # IA") so the partner surfaces can speak plainly; staff work keeps the
+        # historic "returned" value every existing pin expects.
+        a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
+        a.ia_verification_status = "returned"
+        # The instruction has no length limit on the form; the column holds
+        # 512. Cut to fit with a marker rather than failing the return at save.
+        from apps.activities.return_notes import fit
+
+        a.pl_review_note = fit(note)
         a.save(
             update_fields=[
                 "status",
@@ -4180,33 +4248,6 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
-    # A multi-day activity keeps its duration when it moves: the end date
-    # shifts by the same delta as the start (an explicit endDate in the
-    # payload overrides, validated against the new start).
-    if a.end_date and a.planned_date:
-        duration = a.end_date - a.planned_date
-        end_raw = data.get("endDate") or data.get("end_date")
-        if end_raw:
-            new_end = _parse_date(str(end_raw)).date()
-            if new_end < planned_date:
-                raise BadRequest("The end date cannot precede the start date.")
-            a.end_date = new_end
-        else:
-            a.end_date = planned_date + duration
-    a.scheduled_date = new_date
-    a.fy = new_fy
-    a.quarter = new_quarter
-    a.planned_date = planned_date
-    a.planned_month = planned_month
-    a.planned_week = planned_week
-    if "expectedParticipants" in data:
-        a.expected_participants = data.get("expectedParticipants")
-    a.reschedule_count += 1
-    a.last_reason = data.get("reason")
-    if a.status == "assigned_to_partner" or a.delivery_type == "partner":
-        a.status = "partner_scheduled"
-    else:
-        a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
     # The schedule-field save, the batch re-slot / re-price, and the leave
     # budget-impact rewrite of cost lines are 3 separate writes that must all
     # land or all roll back — a crash mid-sequence otherwise leaves the
@@ -4215,8 +4256,40 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # Serialise concurrent reschedules of the same activity: without the
         # row lock two simultaneous submissions interleave their cost-line
         # rebuilds and fund-request syncs, and one reschedule_count increment
-        # is lost.
-        Activity.objects.select_for_update().filter(pk=a.pk).first()
+        # is lost. The move is computed from the row the lock returns. This
+        # used to discard it and save the copy read before the lock, which
+        # lost the increment anyway.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        old_date = a.scheduled_date
+        # A multi-day activity keeps its duration when it moves: the end date
+        # shifts by the same delta as the start (an explicit endDate in the
+        # payload overrides, validated against the new start).
+        if a.end_date and a.planned_date:
+            duration = a.end_date - a.planned_date
+            end_raw = data.get("endDate") or data.get("end_date")
+            if end_raw:
+                new_end = _parse_date(str(end_raw)).date()
+                if new_end < planned_date:
+                    raise BadRequest("The end date cannot precede the start date.")
+                a.end_date = new_end
+            else:
+                a.end_date = planned_date + duration
+        a.scheduled_date = new_date
+        a.fy = new_fy
+        a.quarter = new_quarter
+        a.planned_date = planned_date
+        a.planned_month = planned_month
+        a.planned_week = planned_week
+        if "expectedParticipants" in data:
+            a.expected_participants = data.get("expectedParticipants")
+        a.reschedule_count += 1
+        a.last_reason = data.get("reason")
+        if a.status == "assigned_to_partner" or a.delivery_type == "partner":
+            a.status = "partner_scheduled"
+        else:
+            a.status = (
+                "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
+            )
         a.save(
             update_fields=[
                 "scheduled_date",

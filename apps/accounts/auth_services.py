@@ -46,10 +46,6 @@ def _reset_ttl_minutes() -> int:
     return getattr(settings, "PASSWORD_RESET_TOKEN_TTL_MINUTES", 45)
 
 
-def _invite_ttl_days() -> int:
-    return getattr(settings, "INVITE_TOKEN_TTL_DAYS", 7)
-
-
 # ── Login ────────────────────────────────────────────────────────────────────
 def login(email: str, password: str, requested_active_role: str | None = None) -> dict:
     """Authenticate + issue a token pair. ONE authentication call

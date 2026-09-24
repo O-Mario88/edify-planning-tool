@@ -130,3 +130,67 @@ class TheExportsOfferBothFilesTest(SimpleTestCase):
                 self.assertIn("Export CSV", source)
                 self.assertIn("Export Excel", source)
                 self.assertIn("format=xlsx", source)
+
+
+class WorkbookStylingCostTest(SimpleTestCase):
+    """Styling a body is one pass, not one scan of the sheet per row (PERF-07).
+
+    `sheet[row_index]` recomputes the sheet's width on every call, so styling
+    row by row that way was quadratic: 231 million iterations and 11-15 s for
+    a 4,000-row Work Plan at 50,000 schools (2026-09-24 audit).
+    """
+
+    def _width_scans(self, rows):
+        from unittest import mock
+
+        from openpyxl.worksheet.worksheet import Worksheet
+
+        calls = []
+        real = Worksheet.max_column.fget
+
+        def counted(sheet):
+            calls.append(1)
+            return real(sheet)
+
+        with mock.patch.object(Worksheet, "max_column", property(counted)):
+            workbook_response(
+                "plan.xlsx",
+                [
+                    {
+                        "title": "Plan",
+                        "headers": ["School", "Cost"],
+                        "rows": [[f"School {n}", n] for n in range(rows)],
+                    }
+                ],
+            )
+        return len(calls)
+
+    def test_the_width_is_not_rescanned_per_row(self):
+        self.assertEqual(self._width_scans(20), self._width_scans(400))
+
+    def test_the_body_keeps_its_banding_rules_and_formats(self):
+        from openpyxl import load_workbook
+
+        response = workbook_response(
+            "plan.xlsx",
+            [
+                {
+                    "title": "Plan",
+                    "headers": ["School", "Cost"],
+                    "rows": [["A", 1000], ["B", 2000], ["C", 3000]],
+                    "number_formats": {2: "#,##0"},
+                }
+            ],
+        )
+        sheet = load_workbook(io.BytesIO(response.content))["Plan"]
+        header, even, odd = sheet["A1"], sheet["A2"], sheet["A3"]
+        self.assertEqual(header.fill.fgColor.rgb, "00102A43")
+        self.assertTrue(header.font.b)
+        self.assertEqual(header.border.bottom.style, "medium")
+        self.assertEqual(even.fill.fgColor.rgb, "00F7FAFC")
+        self.assertEqual(odd.fill.fgColor.rgb, "00FFFFFF")
+        self.assertEqual(even.border.bottom.style, "thin")
+        self.assertTrue(even.alignment.wrap_text)
+        self.assertEqual(even.alignment.vertical, "top")
+        self.assertEqual(sheet["B3"].number_format, "#,##0")
+        self.assertEqual(sheet.freeze_panes, "A2")

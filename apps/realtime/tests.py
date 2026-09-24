@@ -523,3 +523,41 @@ class SchedulerResilienceTests(TransactionTestCase):
             jobs.daily_debrief_reminders_job()
             jobs.weekly_debrief_reports_job()
         tracked.assert_not_called()
+
+
+class SchedulerHistoryPruneTests(TestCase):
+    """Run history has a retention, and health keeps what it reads (R13)."""
+
+    def _run(self, job, status, days_ago):
+        from apps.realtime.models import ScheduledJobExecution
+
+        started = timezone.now() - timedelta(days=days_ago)
+        return ScheduledJobExecution.objects.create(
+            job_name=job, status=status, started_at=started, completed_at=started
+        )
+
+    def test_old_history_goes_and_each_jobs_latest_success_stays(self):
+        from apps.realtime.jobs import _do_scheduler_history_prune
+        from apps.realtime.models import ScheduledJobExecution
+
+        recent = self._run("outbox_drain", "success", 10)
+        old = self._run("outbox_drain", "success", 120)
+        # A job that has only failed since: its last success is kept however
+        # old, so System Health can still say when it last worked.
+        lone_success = self._run("monthly_work_plan", "success", 400)
+        recent_failure = self._run("monthly_work_plan", "failed", 200)
+        ancient_failure = self._run("monthly_work_plan", "failed", 400)
+
+        self.assertEqual(_do_scheduler_history_prune(), 2)
+        remaining = set(ScheduledJobExecution.objects.values_list("id", flat=True))
+        self.assertEqual(remaining, {recent.id, lone_success.id, recent_failure.id})
+        self.assertNotIn(old.id, remaining)
+        self.assertNotIn(ancient_failure.id, remaining)
+        self.assertEqual(_do_scheduler_history_prune(), 0)
+
+    def test_the_prune_is_a_registered_job(self):
+        from apps.realtime import jobs
+        from apps.realtime.registry import JOB_NAMES
+
+        self.assertIn("scheduler_history_prune", JOB_NAMES)
+        self.assertTrue(callable(jobs.scheduler_history_prune_job))

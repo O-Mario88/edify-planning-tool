@@ -45,7 +45,3 @@ class SetPasswordSerializer(LenientSerializer):
     token = serializers.CharField(trim_whitespace=False)
     password = serializers.CharField(trim_whitespace=False)
     confirm = serializers.CharField(trim_whitespace=False)
-
-
-class InviteValidateSerializer(LenientSerializer):
-    token = serializers.CharField(trim_whitespace=False)

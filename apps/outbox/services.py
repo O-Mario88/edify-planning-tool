@@ -54,10 +54,6 @@ def register(event_type: str, *, idempotency_note: str):
     return decorator
 
 
-def registered_event_types() -> list[str]:
-    return sorted(_HANDLERS)
-
-
 def enqueue(
     event_type: str,
     payload: dict | None = None,

@@ -167,12 +167,21 @@ def credit_cluster_session(activity) -> None:
     if wanted:
         plans = CorePlan.objects.filter(school_id__in=wanted, fy=str(activity.fy))
         for plan in plans:
+            slots = list(
+                plan.slots.select_for_update()
+                .filter(activity_type="training")
+                .order_by("sequence_number")
+            )
+            # `already` was read before this lock. Every save of the session
+            # runs this pass, so two saves at once both found the school
+            # unlinked; the second waited here for the first to link a slot,
+            # then took the next open one too: one session, two trainings.
+            if any(slot.activity_id == activity.id for slot in slots):
+                continue
             open_slot = next(
                 (
                     slot
-                    for slot in plan.slots.select_for_update()
-                    .filter(activity_type="training")
-                    .order_by("sequence_number")
+                    for slot in slots
                     if not CorePackageSchedulingService.is_allocated(slot)
                     and (slot.status or "").strip().lower() != "assigned"
                 ),

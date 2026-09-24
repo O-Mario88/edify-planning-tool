@@ -46,13 +46,6 @@ ROW_KEYS = (
 )
 
 
-def csv_cell(value):
-    """Kept for callers of the old name; see apps.impact.reports.csv_value."""
-    from apps.impact.reports import csv_value
-
-    return csv_value(value)
-
-
 def _period(data) -> tuple[date | None, date | None, str]:
     """(start, end, label) from a financial year and optional dates."""
     from apps.core.fy import fy_options, get_fy_date_range

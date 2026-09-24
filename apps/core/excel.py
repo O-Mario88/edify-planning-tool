@@ -37,12 +37,10 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     money and count columns that otherwise arrive as bare integers.
     """
     from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
 
     workbook = Workbook()
     workbook.remove(workbook.active)
-    rule = Side(style="thin", color=ROW_RULE)
 
     for spec in sheets or [{"title": "Export", "headers": [], "rows": []}]:
         # Excel refuses a sheet title over 31 characters or carrying []:*?/\\.
@@ -54,27 +52,11 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
             sheet.append(list(row))
 
         if headers:
-            for cell in sheet[1]:
-                cell.fill = PatternFill("solid", fgColor=HEADER_FILL)
-                cell.font = Font(color="FFFFFF", bold=True, size=10)
-                cell.alignment = Alignment(vertical="center")
-                cell.border = Border(bottom=Side(style="medium", color=HEADER_RULE))
-            sheet.row_dimensions[1].height = 28
+            style_header(sheet)
             sheet.freeze_panes = "A2"
             if sheet.max_row > 1:
                 sheet.auto_filter.ref = sheet.dimensions
-
-        formats = spec.get("number_formats") or {}
-        for row_index in range(2, sheet.max_row + 1):
-            fill = PatternFill(
-                "solid", fgColor=BAND if row_index % 2 == 0 else "FFFFFF"
-            )
-            for cell in sheet[row_index]:
-                cell.fill = fill
-                cell.border = Border(bottom=rule)
-                cell.alignment = Alignment(vertical="top", wrap_text=True)
-            for column, number_format in formats.items():
-                sheet.cell(row_index, column).number_format = number_format
+        style_body(sheet, spec.get("number_formats") or {})
 
         widths = spec.get("widths") or _widths_for(headers)
         for index, width in enumerate(widths, start=1):
@@ -85,6 +67,50 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     workbook.save(response)
     return response
+
+
+def style_header(sheet) -> None:
+    """The navy heading row every plan export opens with."""
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    fill = PatternFill("solid", fgColor=HEADER_FILL)
+    font = Font(color="FFFFFF", bold=True, size=10)
+    alignment = Alignment(vertical="center")
+    border = Border(bottom=Side(style="medium", color=HEADER_RULE))
+    for row in sheet.iter_rows(min_row=1, max_row=1):
+        for cell in row:
+            cell.fill = fill
+            cell.font = font
+            cell.alignment = alignment
+            cell.border = border
+    sheet.row_dimensions[1].height = 28
+
+
+def style_body(sheet, number_formats: dict[int, str] | None = None) -> None:
+    """Banded, ruled, top-aligned body rows, and each column's number format.
+
+    One pass with `iter_rows`, and one style object per kind shared by every
+    cell. `sheet[row_index]` recomputes the sheet's width on every call, so
+    styling row by row that way was quadratic: 231 million iterations and
+    11-15 s for a 4,000-row Work Plan at 50,000 schools (2026-09-24 audit).
+    """
+    from openpyxl.styles import Alignment, Border, PatternFill, Side
+
+    fills = (
+        PatternFill("solid", fgColor="FFFFFF"),
+        PatternFill("solid", fgColor=BAND),
+    )
+    border = Border(bottom=Side(style="thin", color=ROW_RULE))
+    alignment = Alignment(vertical="top", wrap_text=True)
+    formats = number_formats or {}
+    for row_index, row in enumerate(sheet.iter_rows(min_row=2), start=2):
+        fill = fills[row_index % 2 == 0]
+        for cell in row:
+            cell.fill = fill
+            cell.border = border
+            cell.alignment = alignment
+        for column, number_format in formats.items():
+            sheet.cell(row_index, column).number_format = number_format
 
 
 def _sheet_title(title: str) -> str:

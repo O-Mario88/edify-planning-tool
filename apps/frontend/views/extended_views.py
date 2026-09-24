@@ -217,43 +217,6 @@ def _calendar_staff_names(activities) -> dict[str, str]:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@require_page_permission("ssa")
-def ssa_master_view(request):
-    """SSA master view — scores overview across all schools."""
-    fy = get_operational_fy()
-    search = request.GET.get("q", "").strip()
-
-    records = (
-        SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True)
-        .select_related("school")
-        .order_by("average_score")
-    )
-    if search:
-        records = records.filter(school__name__icontains=search)
-
-    records_list = list(records[:100])
-    avg_score = sum(r.average_score or 0 for r in records_list) / max(
-        len(records_list), 1
-    )
-    total_schools = active_schools().count()
-    schools_with_ssa = records.values("school_id").distinct().count()
-
-    context = {
-        "records": records_list,
-        "avg_score": round(avg_score, 2),
-        "total_schools": total_schools,
-        "schools_with_ssa": schools_with_ssa,
-        "fy": fy,
-        "search": search,
-        "topbar_search": {
-            "placeholder": "Search school…",
-            "value": search,
-            "action": "/ssa",
-        },
-    }
-    return render(request, "pages/ssa/index.html", context)
-
-
 @require_page_permission("planning")
 def fy_overview_view(request):
     """Fiscal year overview — planning status, readiness, and timeline."""
@@ -2235,14 +2198,6 @@ def map_view(request):
 
 
 @require_page_permission("planning")
-def core_schools_view(request):
-    """Core schools programme."""
-    plans = CorePlan.objects.all().order_by("-created_at")[:50]
-    context = {"plans": plans, "total": plans.count()}
-    return render(request, "pages/core_schools/index.html", context)
-
-
-@require_page_permission("planning")
 def core_school_detail_view(request, plan_id):
     """Core school detail."""
     plan = get_object_or_404(CorePlan, id=plan_id)
@@ -3578,46 +3533,6 @@ def quality_checks_view(request):
         "autoload_drawer": autoload_drawer,
     }
     return render(request, "pages/quality_checks/index.html", context)
-
-
-@require_page_permission("help")
-def help_view(request):
-    """Help centre — the operating-flow guide, role playbooks and FAQs."""
-    faqs = [
-        (
-            "Why can't I schedule a visit in some districts?",
-            "Every district must be classified primary or secondary by the CD/Admin before visits can be "
-            "scheduled there — daily visit costing and route rules depend on it. Ask the CD to classify the "
-            "district under Region & District Setup.",
-        ),
-        (
-            "Why does scheduling ask me for a reason?",
-            "The CD sets a required number of school visits per day. Planning fewer schools than the target "
-            "raises the cost per school, so the system records your justification with the day's batch.",
-        ),
-        (
-            "What makes a route 'Risky' or 'Not Feasible'?",
-            "Route Intelligence scores each visit day 0–100 from sub-county grouping, coordinates (when they "
-            "exist), the 8-hour working day, the CD daily target and district rules. Spread-out schools or an "
-            "overloaded day lower the score; a day with any secondary-district activity uses the secondary daily staff cost.",
-        ),
-        (
-            "Why is my completed activity not counted as verified?",
-            "Completed work must pass IA verification (evidence review) before it counts as verified impact. "
-            "Track it in My Plan; returned items show what to fix.",
-        ),
-        (
-            "When do SSA numbers change?",
-            "SSA impact is measured on verified annual cycles — the latest confirmed assessment per school "
-            "compared to the previous cycle. Monthly filters only narrow operational data, never SSA movement.",
-        ),
-        (
-            "Where does my weekly fund request go after I confirm it?",
-            "CCEO requests go to your Program Lead; PL/PC/IA requests go to the Country Director. Approved "
-            "requests move to the accountant for disbursement, and NetSuite accountability closes the loop.",
-        ),
-    ]
-    return render(request, "pages/help/index.html", {"faqs": faqs})
 
 
 def _humanize_rbac_token(token):
