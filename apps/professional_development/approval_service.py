@@ -457,12 +457,21 @@ class PDApprovalRoutingService:
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         PDApprovalRoutingService._assert_supervisor(req, principal)
-        req.status = PDStatus.RETURNED_BY_SUPERVISOR
-        req.supervisor_reviewed_by = principal.user_id
-        req.supervisor_reviewed_at = timezone.now()
-        req.supervisor_note = reason[:512]
-        req.save()
-        _audit_decision("pd_supervisor_return", req, principal, reason=reason)
+        # Courtesy check; the guard is the re-check under the row lock
+        # supervisor_approve takes (see hr_reject). A return that lost to the
+        # approval sent a request HR had just been asked to review back to
+        # the employee.
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            PDApprovalRoutingService._assert_supervisor(req, principal)
+            req.status = PDStatus.RETURNED_BY_SUPERVISOR
+            req.supervisor_reviewed_by = principal.user_id
+            req.supervisor_reviewed_at = timezone.now()
+            req.supervisor_note = reason[:512]
+            req.save()
+            _audit_decision("pd_supervisor_return", req, principal, reason=reason)
         PDApprovalRoutingService._notify(
             req.owner_user_id, "PD request returned by your supervisor", reason, req
         )
@@ -575,11 +584,20 @@ class PDApprovalRoutingService:
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         PDApprovalRoutingService._assert_hr(req, principal)
-        req.status = PDStatus.RETURNED_BY_HR
-        req.hr_reviewed_by = principal.user_id
-        req.hr_reviewed_at = timezone.now()
-        req.hr_note = reason[:512]
-        req.save()
+        # Courtesy check; the guard is the re-check under the row lock (see
+        # hr_reject). A return that lost to the approval sent an approved,
+        # funded request back into the correction loop.
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            PDApprovalRoutingService._assert_hr(req, principal)
+            req.status = PDStatus.RETURNED_BY_HR
+            req.hr_reviewed_by = principal.user_id
+            req.hr_reviewed_at = timezone.now()
+            req.hr_note = reason[:512]
+            req.save()
+            _audit_decision("pd_hr_return", req, principal, reason=reason)
         PDApprovalRoutingService._notify(
             req.owner_user_id, "PD request returned by HR", reason, req
         )
@@ -589,7 +607,6 @@ class PDApprovalRoutingService:
             "Your PD request needs a fix",
             f"“{req.course_name}” was returned: {reason}",
         )
-        _audit_decision("pd_hr_return", req, principal, reason=reason)
         return req
 
     @staticmethod
@@ -598,11 +615,25 @@ class PDApprovalRoutingService:
     ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         PDApprovalRoutingService._assert_hr(req, principal)
-        req.status = PDStatus.REJECTED
-        req.hr_reviewed_by = principal.user_id
-        req.hr_reviewed_at = timezone.now()
-        req.hr_note = (reason or "")[:512]
-        req.save()
+        # The read above is a courtesy that refuses early; the re-check on the
+        # row locked below is the guard, the lock hr_approve already takes. A
+        # rejection that read "submitted to HR" before an approval committed
+        # used to save the whole stale row over it: the request ended
+        # "rejected" with its calendar block cleared while the approval's PD
+        # fund request stayed pending disbursement, which disburse() then paid.
+        # A double-click rejected twice. The loser now waits for the lock and
+        # is refused.
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            PDApprovalRoutingService._assert_hr(req, principal)
+            req.status = PDStatus.REJECTED
+            req.hr_reviewed_by = principal.user_id
+            req.hr_reviewed_at = timezone.now()
+            req.hr_note = (reason or "")[:512]
+            req.save()
+            _audit_decision("pd_hr_reject", req, principal, reason=reason)
         PDApprovalRoutingService._notify(
             req.owner_user_id, "PD request rejected", reason or "", req
         )
@@ -613,7 +644,6 @@ class PDApprovalRoutingService:
             f"“{req.course_name}” was rejected."
             + (f" Reason: {reason}" if reason else ""),
         )
-        _audit_decision("pd_hr_reject", req, principal, reason=reason)
         return req
 
     # ── Helpers ───────────────────────────────────────────────────────────────

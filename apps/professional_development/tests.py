@@ -13,6 +13,7 @@ To-Do integration.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -20,6 +21,7 @@ from django.test import Client, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import CalendarBlock, StaffProfile, StaffSupervisorAssignment
+from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -1018,3 +1020,93 @@ class HRTrackingAndApplyRemindersTests(PDTestBase):
         self.assertEqual(ctx["tracker_total"], 1)
         # Both disbursements draw on the envelope even though the search shows one.
         self.assertEqual(ctx["tracker_rows"][0]["staff_balance"], "USD 50,000")
+
+
+def _courtesy_read_returns(model, stale):
+    """The decision's unlocked `objects.get` answers with a row read before
+    the competing decision was written; its re-read under select_for_update
+    (a queryset, not the manager) still goes to the database."""
+    return patch.object(model.objects, "get", return_value=stale)
+
+
+def _decisions(action, subject_id):
+    return AuditLog.objects.filter(action=action, subject_id=subject_id).count()
+
+
+class OneDecisionPerApprovalStageTest(PDTestBase):
+    """Each test reads the request the way a decision that lost a race did:
+    before the other decision was written. That read is the courtesy check;
+    the decision itself must re-read under the row lock and refuse, as
+    supervisor_approve and hr_approve already do."""
+
+    def _funded_request_at_hr(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            course_fee_cents=50_000_00,
+        )
+        req.status = PDStatus.SUBMITTED_TO_HR
+        req.save()
+        return req
+
+    def _read_before_the_other_decision(self, req):
+        return ProfessionalDevelopmentRequest.objects.get(id=req.id)
+
+    def test_a_rejection_that_lost_to_the_approval_leaves_it_approved(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_reject(req.id, self.hr2, "Budget freeze")
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
+        self.assertTrue(req.calendar_block_id)
+        self.assertEqual(_decisions("pd_hr_reject", req.id), 0)
+
+    def test_a_return_that_lost_to_the_approval_leaves_it_approved(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_return(req.id, self.hr2, "Add a brochure")
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.APPROVED_PENDING_FUNDING)
+        self.assertTrue(req.calendar_block_id)
+        self.assertEqual(_decisions("pd_hr_return", req.id), 0)
+
+    def test_a_supervisor_return_that_lost_to_the_approval_leaves_it_with_hr(self):
+        req = self._draft(self.cceo)
+        req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
+        req.save()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.supervisor_return(
+                    req.id, self.pl, "Fix the dates"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.SUBMITTED_TO_HR)
+        self.assertEqual(_decisions("pd_supervisor_return", req.id), 0)
+
+    def test_a_second_rejection_is_refused_and_not_recorded_twice(self):
+        req = self._funded_request_at_hr()
+        stale = self._read_before_the_other_decision(req)
+        PDApprovalRoutingService.hr_reject(req.id, self.hr, "Budget freeze")
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDApprovalRoutingService.hr_reject(req.id, self.hr2, "Out of scope")
+
+        req.refresh_from_db()
+        self.assertEqual(req.hr_note, "Budget freeze")
+        self.assertEqual(_decisions("pd_hr_reject", req.id), 1)
