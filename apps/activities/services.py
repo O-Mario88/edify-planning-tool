@@ -3731,6 +3731,30 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
     )
 
 
+def _lock_awaiting_ia_verification(activity_id: str) -> Activity:
+    """The activity again, under a row lock, inside the decision's transaction.
+
+    Callers check the status on a read taken without a lock. That check is a
+    courtesy and this is the guard, the same two layers as
+    `ActivityCertificationService.certify_activity`. Two decisions that both
+    read "awaiting" (a double submit, or IA returning work while the monitor
+    confirms it) both used to apply, the last writer winning: a returned
+    activity could end ia_verified with its clearance payable and its credit
+    recorded, and a verified one end returned with payment_status still
+    ia_confirmed. The loser now waits for the lock and is refused.
+    """
+    a = (
+        Activity.objects.select_for_update()
+        .filter(id=activity_id, deleted_at__isnull=True)
+        .first()
+    )
+    if not a:
+        raise NotFoundError("Activity not found.")
+    if a.status != "awaiting_ia_verification":
+        raise BadRequest("Activity is not awaiting IA verification")
+    return a
+
+
 def _confirm_activity_after_authorization(
     a: Activity,
     data: dict | None,
@@ -3741,6 +3765,26 @@ def _confirm_activity_after_authorization(
     """Shared confirmation transition after a caller-specific authority gate."""
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
+    # Every write the confirmation makes, the Salesforce entry and the note
+    # included, goes to the locked row: a confirmation that lost to a return
+    # must be refused before it overwrites the return's reason.
+    with transaction.atomic():
+        return _confirm_locked_activity(
+            _lock_awaiting_ia_verification(a.id),
+            data,
+            principal,
+            entry_source=entry_source,
+        )
+
+
+def _confirm_locked_activity(
+    a: Activity,
+    data: dict | None,
+    principal,
+    *,
+    entry_source: str,
+) -> dict:
+    """The confirmation, applied to the row its caller locked."""
     # SSA-01. The same rule the live IA screen holds
     # (ActivityCertificationService.certify_activity), on this door too.
     # SSA-01 exists BECAUSE a rule was written on one door only; fixing it on
@@ -3938,14 +3982,15 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     if deadline:
         note += f" · Deadline: {deadline}"
 
-    # Partner-delivered work returns on its own status (§15.1 "Returned by
-    # IA") so the partner surfaces can speak plainly; staff work keeps the
-    # historic "returned" value every existing pin expects.
-    a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
-    a.ia_verification_status = "returned"
-    a.pl_review_note = note
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
+        a = _lock_awaiting_ia_verification(a.id)
+        # Partner-delivered work returns on its own status (§15.1 "Returned by
+        # IA") so the partner surfaces can speak plainly; staff work keeps the
+        # historic "returned" value every existing pin expects.
+        a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
+        a.ia_verification_status = "returned"
+        a.pl_review_note = note
         a.save(
             update_fields=[
                 "status",
