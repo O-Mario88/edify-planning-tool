@@ -166,6 +166,65 @@ back-off and anonymous requests, and a new `TransactionTestCase` runs the
 real rollover on the thread's own database connection and reads its
 committed marker back.
 
+**R-5 Core Schools lists had no order (F-G, owner-approved 2026-09-25).**
+The main list ordered by `created_at` alone, and imported or seeded schools
+share a timestamp, so the rows on a page changed between loads. The
+Attention Needed card listed plans in the table's physical order. The list
+now ends with `id` (newest first is unchanged) and the card is ordered by
+school code. Two captures of the release now agree on all 90 `/core-schools`
+responses; two captures of the baseline differed on 20.
+`test_core_school_lists_have_a_total_order` fails on the previous code and
+passes now. The parity capture now finishes a pending fiscal-year rollover
+before it starts, since pages captured while the R-4 thread ran saw the
+previous year.
+
+**R-6 Leadership pages rebuilt the achievement ledger on every load (F-D,
+owner-approved 2026-09-25).** Every write to a ledger source (activity, SSA
+record, Most Significant Change story) now marks its officer and fiscal year
+dirty in the same transaction. The mark is one upsert into
+`target_ledger_dirty` (migration `targets.0007`, which starts everyone
+marked). Team Targets, CD/RVP analytics and the team roster rebuild only the
+marked members of their roster, then clear exactly the marks they answered;
+a mark written during that rebuild survives. A change saved through the ORM
+is therefore on the next load exactly as before, and a page with nothing
+marked writes nothing.
+- Bypasses: queryset `.update()` and bulk writes skip signals. The one bulk
+  write that reaches the ledger, SSA import's `bulk_create`, marks
+  explicitly. A change to the target areas marks everyone.
+- Backstop: `target_ledger_sync` still rebuilds every active officer every
+  30 minutes.
+- Unchanged: the officer's own My Targets page and export still rebuild
+  that one person.
+- Tests: `test_ledger_sync` saves every kind of change (new, verified,
+  reassigned, moved across the year boundary, returned, deleted) and checks
+  that a full rebuild afterwards changes nothing. Two page tests that
+  changed status with `.update()` now save, as the workflows do.
+- Measured: CD `/team-targets` 2,704 → 1,664 ms.
+
+**R-7 Layout shift after the first paint (P-4, owner-approved 2026-09-25).**
+Each cause was traced by recording shift sources and a filmstrip under the
+Slow 4G / 4× CPU profile, then fixed where it arose. The final rendered
+state of every page is unchanged; only what paints before the scripts run
+differs.
+
+| Cause | Fix | Pages |
+|---|---|---|
+| Filter disclosures render open, and `mobile-ux.js` closed them on phones after the first paint | a head flag keeps their body out of a phone's layout until the script has set their state; the page's `load` event clears the flag if the script never does | Planning, Schools, Analytics |
+| The KPI strip's "Swipe for more" navigation shipped `hidden` and appeared when `kpi-strips.js` ran | an inline check right after the strip makes the same overflow test while the page is parsed | every page with a context strip |
+| "What needs you now" category panels were `x-cloak`'d, although all are visible in their initial state | not cloaked | CCEO dashboard |
+| Oversight tab strips cloaked every panel, including the one Alpine opens | `tab_initial` (same rule as `tabState`, unit-tested) leaves that panel uncloaked | Team, Core School and Cluster Oversight |
+| Oversight period fields: all four painted, then three hidden; `micro-ux.js` then added `edify-filter-field` | the unused fields render hidden and every field carries the class | Team Oversight, Partner Monitoring |
+
+| Page (cold, Slow 4G, 4× CPU) | Before | After |
+|---|---:|---:|
+| CCEO `/planning` 412 px | 0.354 | 0.025–0.032 |
+| CCEO `/dashboard` 412 px | 0.153 | 0.035 |
+| CCEO `/schools` 412 px | 0.178 | 0.004 |
+| CD `/analytics` 412 px | 0.182 | 0.000 |
+| CD `/core-schools` 412 px | 0.132 | 0.039 |
+| PL `/team-planning-oversight/` 412 px / 1280 px | 0.171 / 0.427 | 0.024 / 0.009 |
+| CD `/core-schools-oversight/`, `/cluster-oversight/` 1280 px | — | 0.004 / 0.007 |
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -478,16 +537,18 @@ brief's parity lock it needs an owner decision.
 | F-A | **Fixed after owner approval (see §5, R-2).** Admin Team Plans never showed a next action | — | — |
 | F-B | **Fixed after owner approval (see §5, R-3).** Map metrics were not deterministic | — | — |
 | F-C | **Fixed after owner approval (see §5, R-4).** The fiscal-year rollover ran inside a user request | — | — |
-| F-D | **Leadership pages rebuild the achievement ledger on every load** (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
-| F-G | **Core Schools lists have no total order.** The main list orders by `-created_at` only (seeded and imported schools share timestamps) and the Attention Needed card lists plans in heap order, so the rows shown change between loads of the *baseline* (two baseline captures differ on 20 of 90 `/core-schools` responses, exactly as baseline vs release does) | baseline-vs-baseline capture | end both orderings with `id` (as F-9/F-11 did); a user may then see a different but stable first page |
+| F-D | **Fixed after owner approval (see §5, R-6).** Leadership pages rebuilt the achievement ledger on every load (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
+| F-G | **Fixed after owner approval (see §5, R-5).** Core Schools lists had no total order. The main list orders by `-created_at` only (seeded and imported schools share timestamps) and the Attention Needed card lists plans in heap order, so the rows shown change between loads of the *baseline* (two baseline captures differ on 20 of 90 `/core-schools` responses, exactly as baseline vs release does) | baseline-vs-baseline capture | end both orderings with `id` (as F-9/F-11 did); a user may then see a different but stable first page |
 | F-E | **Heavy country pages still take seconds.** Team and country planning oversight and their exports (4–6 s), SSA (≈3 s), IA learning (≈3 s), the Country Director's dashboard (2.7 MB of HTML, ≈8 s under load) for country roles at 50,000 schools; they build every item in the country in Python | profiles in §6 | per-lead lazy sections or read models, each needing a parity review |
 
-### Proposals that need approval
+### Proposals that needed approval
 
 The 2026-09-24 order says: where an optimization cannot be completed without
 a visible or behavioural change, stop, document the constraint, explain the
-change, and do not implement it without approval. Each proposal below is in
-that state. None is implemented in this branch.
+change, and do not implement it without approval. The owner approved all six
+on 2026-09-25. P-4 and P-6 are implemented (§5, R-5 to R-7); P-1, P-2, P-3 and
+P-5 are in progress and each will be verified against the page's final
+rendered state before it is claimed.
 
 | # | Gate it serves | Technical constraint | Proposed change | What would change for users | Expected result |
 |---|---|---|---|---|---|
