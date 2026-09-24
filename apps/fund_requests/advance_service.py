@@ -20,7 +20,7 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
-from .models import AdvanceRequest, AdvanceRequestStatus
+from .models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest, AdvanceRequestStatus
 
 
 # ── Auto-creation (called by the CostingService when budget lines are written)
@@ -203,14 +203,15 @@ def _get_for_owner(
 # "self-funded" on money already paid out, so no accountability was owed, or
 # CONFIRMED_FOR_ADVANCE on a DISBURSED advance, which the funding guard reads
 # as payable again.
+#
+# Once money has moved the choice is closed, and that is asked of the
+# canonical MONEY_MOVED_ADVANCE_STATUSES, not a copy. The copy here listed
+# only DISBURSED, ACCOUNTED and REIMBURSED, so a reimbursement paid but not
+# yet confirmed received could be reset to "self-funded", claimed again and
+# paid a second time.
 _CONFIRMABLE = (
     AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
     AdvanceRequestStatus.RETURNED,
-)
-_PAST_OWNER_CHOICE = (
-    AdvanceRequestStatus.DISBURSED,
-    AdvanceRequestStatus.ACCOUNTED,
-    AdvanceRequestStatus.REIMBURSED,
 )
 
 
@@ -234,11 +235,11 @@ def self_funded(advance_id: str, principal) -> dict:
     """Responsible user elects to use own funds → SELF_FUNDED_PENDING_REIMBURSEMENT
     (no advance disbursement; reimbursement opens after completion + approval)."""
     adv = _get_for_owner(advance_id, principal)
-    if adv.status in _PAST_OWNER_CHOICE:
+    if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot change a {adv.status} advance to self-funded.")
     with transaction.atomic():
         adv = _get_for_owner(advance_id, principal, for_update=True)
-        if adv.status in _PAST_OWNER_CHOICE:
+        if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
             raise BadRequest(f"Cannot change a {adv.status} advance to self-funded.")
         adv.status = AdvanceRequestStatus.SELF_FUNDED_PENDING_REIMBURSEMENT
         adv.advance_type = "self_funded"
@@ -251,11 +252,11 @@ def not_requested(advance_id: str, principal) -> dict:
     """Responsible user declines funds → NOT_REQUESTED (budget stays visible for
     planning; Accountant does not disburse)."""
     adv = _get_for_owner(advance_id, principal)
-    if adv.status in _PAST_OWNER_CHOICE:
+    if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot cancel a {adv.status} advance.")
     with transaction.atomic():
         adv = _get_for_owner(advance_id, principal, for_update=True)
-        if adv.status in _PAST_OWNER_CHOICE:
+        if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
             raise BadRequest(f"Cannot cancel a {adv.status} advance.")
         adv.status = AdvanceRequestStatus.NOT_REQUESTED
         adv.advance_type = "not_requested"

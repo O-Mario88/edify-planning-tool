@@ -47,6 +47,7 @@ from apps.fund_requests.advance_service import (
     reimburse,
 )
 from apps.fund_requests.models import (
+    MONEY_MOVED_ADVANCE_STATUSES,
     AdvanceRequest,
     AdvanceRequestStatus,
     WeeklyFundRequest,
@@ -316,8 +317,9 @@ class OwnerChoiceThatLostToTheDisbursementTest(_DisbursableAdvance, TestCase):
         self.assertEqual(_audit_count("advance_request.disburse", self.advance.id), 1)
 
 
-class ConcurrentReimbursementTest(TransactionTestCase):
-    """The other money-out path: reimbursing a claim six times at once."""
+class _SubmittedReimbursementClaim:
+    """A self-funded claim on IA-verified work, approved and waiting for the
+    Accountant to pay it."""
 
     def setUp(self):
         self.region = Region.objects.create(name="Race Region 2")
@@ -362,6 +364,10 @@ class ConcurrentReimbursementTest(TransactionTestCase):
             accounted_amount=200_000,
             status=AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
         )
+
+
+class ConcurrentReimbursementTest(_SubmittedReimbursementClaim, TransactionTestCase):
+    """The other money-out path: reimbursing a claim six times at once."""
 
     def tearDown(self):
         connection.close()
@@ -427,6 +433,50 @@ class ConcurrentReimbursementTest(TransactionTestCase):
             "the settlement identity must hold on a real settled record",
         )
         self.assertTrue(_reconciliation_ok(self.advance))
+
+
+class OwnerChoiceNeverReopensMovedMoneyTest(_SubmittedReimbursementClaim, TestCase):
+    """self_funded and not_requested refused only DISBURSED, ACCOUNTED and
+    REIMBURSED: a copy of MONEY_MOVED_ADVANCE_STATUSES that had fallen five
+    states behind. A reimbursement paid but not yet confirmed received could
+    be reset to self-funded, claimed again and paid a second time."""
+
+    def setUp(self):
+        super().setUp()
+        self.owner = _Principal("race2-owner", "CCEO")
+
+    def test_a_paid_reimbursement_cannot_be_reopened_as_a_new_claim(self):
+        reimburse(
+            self.advance.id,
+            {"method": "bank", "reference": "RB-1"},
+            _Principal("acct-1"),
+        )
+
+        with self.assertRaises(BadRequest):
+            advance_service.self_funded(self.advance.id, self.owner)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(
+            self.advance.status, AdvanceRequestStatus.REIMBURSEMENT_DISBURSED
+        )
+        self.assertEqual(_audit_count("advance_request.reimburse", self.advance.id), 1)
+
+    def test_every_money_moved_state_refuses_the_owners_choice(self):
+        """Asked of the canonical set, so a state added to it and forgotten
+        here fails instead of shipping."""
+        choices = (
+            (advance_service.self_funded, "to self-funded"),
+            (advance_service.not_requested, "Cannot cancel"),
+        )
+        for status in MONEY_MOVED_ADVANCE_STATUSES:
+            for choice, refusal in choices:
+                AdvanceRequest.objects.filter(id=self.advance.id).update(status=status)
+                with self.subTest(status=status, choice=choice.__name__):
+                    with self.assertRaises(BadRequest) as caught:
+                        choice(self.advance.id, self.owner)
+                    self.assertIn(refusal, str(caught.exception))
+                    self.advance.refresh_from_db()
+                    self.assertEqual(self.advance.status, status)
 
 
 class WeeklyDeclineRacingThePaymentTest(_DisbursableAdvance, TransactionTestCase):
