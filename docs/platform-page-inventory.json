@@ -9158,10 +9158,38 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 1562,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/edit-drawer",
+        "/partners/create"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Region Picker",
+      "purpose": "Reusable  region picker interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_region_picker.html",
+      "variants": [
+        "info"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4974,
+      "bytes": 4515,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -9190,7 +9218,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5129,
+      "bytes": 4662,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer"
@@ -105275,7 +105303,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 490,
+    "component_templates": 491,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

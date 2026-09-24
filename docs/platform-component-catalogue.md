@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **490**
+Components and application partials: **491**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -379,6 +379,7 @@ Components and application partials: **490**
 | `partials/oversight/withdrawal_drawer.html` | application-partial | Reusable withdrawal drawer interface primitive | info; default, open | explicit responsive contract | accessible name and label | /partner-oversight/withdraw | 0 |
 | `partials/partner/invoice_drawer.html` | application-partial | Reusable invoice drawer interface primitive | danger; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/invoices/new | 0 |
 | `partials/partners/_capability_picker.html` | application-partial | Reusable  capability picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
+| `partials/partners/_region_picker.html` | application-partial | Reusable  region picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
 | `partials/partners/create_partner_drawer.html` | application-partial | Reusable create partner drawer interface primitive | danger, info; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partners/create | 0 |
 | `partials/partners/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | danger; default, empty, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/edit-drawer | 0 |
 | `partials/partners/engagement_register.html` | application-partial | Reusable engagement register interface primitive | executive, warning, {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner-oversight/<br>/partners/<str:partner_id> | 0 |

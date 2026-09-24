@@ -28,7 +28,16 @@ class Partner(SoftDeleteModel):
 
     id = CuidField()
     name = models.CharField(max_length=255)
+    # One region, kept because the register, the oversight grouping, the
+    # targets table and the profile have always read it. It holds the FIRST of
+    # the ticked regions below, so a partner saved either way reads the same.
     region_name = models.CharField(max_length=255, null=True, blank=True)
+    # Where the organisation actually works (owner, 2026-09-23: "most of the
+    # partners operate in more than one region"). Ticked from the Region list;
+    # `apps.partners.services.region_list` normalises what comes back.
+    region_names = ArrayField(
+        base_field=models.CharField(max_length=255), default=list, blank=True
+    )
     trains_on = ArrayField(
         base_field=models.CharField(max_length=128), default=list, blank=True
     )
@@ -99,6 +108,22 @@ class Partner(SoftDeleteModel):
             return SsaIntervention(self.ssa_intervention).label
         except ValueError:
             return self.ssa_intervention.replace("_", " ").title()
+
+    @property
+    def regions(self) -> list[str]:
+        """Every region this organisation works in.
+
+        Falls back to the single column for an organisation saved before the
+        tick-list existed, so it never reads as working nowhere.
+        """
+        if self.region_names:
+            return list(self.region_names)
+        return [self.region_name] if self.region_name else []
+
+    @property
+    def region_label(self) -> str:
+        """The regions as one line, for the places that show a single value."""
+        return ", ".join(self.regions)
 
     @property
     def capabilities(self) -> dict:
