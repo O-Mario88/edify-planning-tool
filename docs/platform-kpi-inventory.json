@@ -8476,7 +8476,7 @@
    "audit_id": "KPI-SOURCE-469",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1887,
+   "line": 1916,
    "label": null,
    "keys": [
     "count",
@@ -8551,7 +8551,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1915,
+   "line": 1944,
    "label": "All team members",
    "keys": [
     "count",
@@ -8569,7 +8569,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1917,
+   "line": 1946,
    "label": null,
    "keys": [
     "count",
@@ -10772,7 +10772,7 @@
    "audit_id": "KPI-SOURCE-594",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1241,
+   "line": 1282,
    "label": "All Activities",
    "keys": [
     "count",
@@ -10791,7 +10791,7 @@
    "audit_id": "KPI-SOURCE-595",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1250,
+   "line": 1291,
    "label": null,
    "keys": [
     "count",
@@ -13701,7 +13701,7 @@
   {
    "audit_id": "KPI-SURFACE-057",
    "template": "templates/pages/projects/monitoring.html",
-   "line": 37,
+   "line": 42,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13712,10 +13712,11 @@
     "ADMIN",
     "CD",
     "IA",
-    "PL"
+    "PL",
+    "PROJECT_COORDINATOR"
    ],
-   "page_purpose": "Watching a Special Project without being able to touch it.",
-   "primary_action": "Review operational workspace",
+   "page_purpose": "Following a Special Project school by school.",
+   "primary_action": "Open next queue record",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",

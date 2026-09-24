@@ -15995,6 +15995,7 @@
     "Program Lead",
     "CountryDirector",
     "ImpactAssessment",
+    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/projects/monitoring",
@@ -18007,7 +18008,7 @@
   "PartnerAdmin": 219,
   "PartnerFieldOfficer": 219,
   "Program Lead": 617,
-  "ProjectCoordinator": 446,
+  "ProjectCoordinator": 447,
   "RegionalProgramLead": 317,
   "RegionalVicePresident": 369
  },

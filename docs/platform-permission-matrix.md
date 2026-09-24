@@ -21,7 +21,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | ImpactAssessment | 626 |
 | Accountant | 408 |
 | HumanResources | 330 |
-| ProjectCoordinator | 446 |
+| ProjectCoordinator | 447 |
 | PartnerAdmin | 219 |
 | PartnerFieldOfficer | 219 |
 | BusinessTransformationOfficer | 232 |
@@ -1010,7 +1010,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/projects/create/action` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filter` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/filters-drawer` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
-| `/projects/monitoring` | project_monitoring |  | Y | Y |  |  | Y |  |  |  |  |  |  |  |  | Y |
+| `/projects/monitoring` | project_monitoring |  | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/my-plan` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |
 | `/projects/planning/bulk-partner` | projects | Y | Y | Y |  |  | Y |  |  | Y |  |  |  |  |  | Y |

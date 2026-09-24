@@ -25,11 +25,21 @@ from apps.partners.purposes import visit_purpose_label
 # requester's plan: it takes effect there only once approved (owner,
 # 2026-09-03; apps.planning.visit_requests). Pending ones are tracked on the
 # Visit Requests page, and stay reachable here through the status filter.
+#
+# Deferred and never-planned rows are released work everywhere else — the
+# visit gate, Today, work-plan health, the coordinator's My Plan and every
+# oversight page read them as not work — but this list let them through, so a
+# dead row sat on My Plan labelled "Scheduled" and no supervisor could see it:
+# My Plan and oversight disagreed about what a person's plan held (owner,
+# 2026-09-24: oversight must mirror My Plan). An explicit status filter still
+# reaches them, as it reaches the other exclusions.
 ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
     "closed",
     "cancelled",
     "rejected",
     "awaiting_owner_approval",
+    "deferred",
+    "not_planned",
 )
 
 #: The calendar month a quarter opens on. The fiscal year starts in October,
