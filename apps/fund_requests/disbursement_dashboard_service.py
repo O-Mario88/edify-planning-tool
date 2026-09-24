@@ -1879,14 +1879,22 @@ def hold(principal, fund_request_id, data):
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A hold reason is required.")
-    fr = _get_monthly_fr(fund_request_id, {"sent_to_accountant"})
-    fr.status = "held"
-    fr.held_reason = (
-        reason + (" — " + data["comment"] if data.get("comment") else "")
-    )[:256]
-    fr.held_at = timezone.now()
-    fr.save(update_fields=["status", "held_reason", "held_at", "updated_at"])
-    _audit(principal, "fund_request.hold", fr, {"reason": reason})
+    # This read is a courtesy that refuses early; the re-read under the row
+    # lock below is the guard, the lock disburse() already takes. A hold that
+    # read "sent_to_accountant" before disburse() committed used to overwrite
+    # "disbursed": the money was out while the plan showed "held" and the
+    # requester was told so. A double-click held twice, with two audit rows
+    # and two notices. The loser now waits for the lock and is refused.
+    _get_monthly_fr(fund_request_id, {"sent_to_accountant"})
+    with transaction.atomic():
+        fr = _get_monthly_fr(fund_request_id, {"sent_to_accountant"}, for_update=True)
+        fr.status = "held"
+        fr.held_reason = (
+            reason + (" — " + data["comment"] if data.get("comment") else "")
+        )[:256]
+        fr.held_at = timezone.now()
+        fr.save(update_fields=["status", "held_reason", "held_at", "updated_at"])
+        _audit(principal, "fund_request.hold", fr, {"reason": reason})
     _notify_requester(
         fr,
         "fund_request_held",
@@ -1900,12 +1908,16 @@ def hold(principal, fund_request_id, data):
 def release(principal, fund_request_id):
     """Release a held plan back into the disbursement queue."""
     _require_accountant_action(principal)
-    fr = _get_monthly_fr(fund_request_id, {"held"})
-    fr.status = "sent_to_accountant"
-    fr.held_reason = None
-    fr.held_at = None
-    fr.save(update_fields=["status", "held_reason", "held_at", "updated_at"])
-    _audit(principal, "fund_request.release_hold", fr, {})
+    # Courtesy read, then the guard under the row lock (see hold): a release
+    # that lost to a return put a returned plan back in the disbursement queue.
+    _get_monthly_fr(fund_request_id, {"held"})
+    with transaction.atomic():
+        fr = _get_monthly_fr(fund_request_id, {"held"}, for_update=True)
+        fr.status = "sent_to_accountant"
+        fr.held_reason = None
+        fr.held_at = None
+        fr.save(update_fields=["status", "held_reason", "held_at", "updated_at"])
+        _audit(principal, "fund_request.release_hold", fr, {})
     return fr
 
 
@@ -1916,33 +1928,40 @@ def return_item(principal, fund_request_id, data):
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
-    fr = _get_monthly_fr(fund_request_id, {"sent_to_accountant", "held"})
-    fr.status = "returned_by_accountant"
-    fr.reviewed_by_user_id = principal.user_id
-    fr.reviewed_at = timezone.now()
-    fr.review_note = (
-        reason + (" — " + data["comment"] if data.get("comment") else "")
-    )[:512]
-    fr.held_reason = None
-    fr.held_at = None
-    fr.save(
-        update_fields=[
-            "status",
-            "reviewed_by_user_id",
-            "reviewed_at",
-            "review_note",
-            "held_reason",
-            "held_at",
-            "updated_at",
-        ]
-    )
-    # The plan is back in the owner's hands — advances the approval routed to
-    # the accountant queue go back to pending so nothing on this plan remains
-    # releasable until it is corrected and re-approved.
     from .advance_service import sync_advances_for_period_request
 
-    sync_advances_for_period_request(fr, to_accountant=False)
-    _audit(principal, "fund_request.return_accountant", fr, {"reason": reason})
+    # Courtesy read, then the guard under the row lock (see hold): a return
+    # that lost to disburse() marked a paid plan "returned" and sent the
+    # requester to fix it.
+    _get_monthly_fr(fund_request_id, {"sent_to_accountant", "held"})
+    with transaction.atomic():
+        fr = _get_monthly_fr(
+            fund_request_id, {"sent_to_accountant", "held"}, for_update=True
+        )
+        fr.status = "returned_by_accountant"
+        fr.reviewed_by_user_id = principal.user_id
+        fr.reviewed_at = timezone.now()
+        fr.review_note = (
+            reason + (" — " + data["comment"] if data.get("comment") else "")
+        )[:512]
+        fr.held_reason = None
+        fr.held_at = None
+        fr.save(
+            update_fields=[
+                "status",
+                "reviewed_by_user_id",
+                "reviewed_at",
+                "review_note",
+                "held_reason",
+                "held_at",
+                "updated_at",
+            ]
+        )
+        # The plan is back in the owner's hands — advances the approval routed
+        # to the accountant queue go back to pending so nothing on this plan
+        # remains releasable until it is corrected and re-approved.
+        sync_advances_for_period_request(fr, to_accountant=False)
+        _audit(principal, "fund_request.return_accountant", fr, {"reason": reason})
     _notify_requester(
         fr,
         "fund_request_returned",
