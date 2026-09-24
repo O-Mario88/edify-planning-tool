@@ -22,6 +22,7 @@ from apps.audit.models import AuditLog
 from apps.core.enums import VerificationStatus
 from apps.core.exceptions import Forbidden
 from apps.geography.models import District, Region
+from apps.outbox.models import OutboxEvent
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 from apps.ssa.services import return_record, verify_record
@@ -137,6 +138,51 @@ class SsaVerificationAuthorityTests(TestCase):
             AuditLog.objects.filter(action="ssa_verify", subject_id=record.id).count(),
             1,
         )
+
+    # Each caller loads the record itself and hands it in. The tests below
+    # pass a copy loaded while the record was still pending, as a second tab
+    # or a double-click does once the first decision has landed.
+    def test_a_confirmation_from_a_second_tab_is_recorded_once(self):
+        record = self._record()
+        second_tab = SsaRecord.objects.get(pk=record.pk)
+        verify_record(record, self.ia)
+
+        verify_record(second_tab, self.ia)
+
+        self.assertEqual(
+            AuditLog.objects.filter(action="ssa_verify", subject_id=record.id).count(),
+            1,
+        )
+        # The confirmation's downstream events are keyed on verified_at, so a
+        # second confirmation queued them again under its own new time.
+        self.assertEqual(
+            OutboxEvent.objects.filter(
+                idempotency_key__startswith=f"bt.ssa.confirmed:{record.id}:"
+            ).count(),
+            1,
+        )
+
+    def test_a_return_from_a_second_tab_writes_one_audit_row(self):
+        record = self._record()
+        second_tab = SsaRecord.objects.get(pk=record.pk)
+        return_record(record, self.ia, "Scores look transposed.")
+
+        return_record(second_tab, self.ia, "Scores look transposed.")
+
+        self.assertEqual(
+            AuditLog.objects.filter(action="ssa_return", subject_id=record.id).count(),
+            1,
+        )
+
+    def test_a_return_that_lost_to_a_confirmation_records_what_it_overturned(self):
+        record = self._record()
+        second_tab = SsaRecord.objects.get(pk=record.pk)
+        verify_record(record, self.ia)
+
+        return_record(second_tab, self.ia, "Scores look transposed.")
+
+        row = AuditLog.objects.get(action="ssa_return", subject_id=record.id)
+        self.assertTrue(row.payload["wasConfirmed"])
 
     def test_the_view_no_longer_writes_the_field_itself(self):
         """The regression this guards: the transition moving back into a view."""
