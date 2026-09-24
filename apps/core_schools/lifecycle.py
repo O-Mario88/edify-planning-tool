@@ -47,6 +47,10 @@ def school_work(schools, fy):
             )
         )
         .order_by("planned_date", "id")
+        # The five columns the rows below read. A country's programme schools
+        # carry thousands of activities, and loading every one of Activity's
+        # ~120 columns (JSON snapshots included) was most of this read.
+        .only("id", "school_id", "activity_type", "planned_date", "status")
     )
     for activity in activities:
         targets = set(invited[activity.id])

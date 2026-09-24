@@ -1713,13 +1713,31 @@ class PLTeamTargetsService:
             ]
         )
         rows = []
+        # The team's sources and series read once, not once per person: this
+        # was a ledger rebuild and three reads for every member, 758 queries
+        # for a Country Director's 150 officers (2026-09-24 A+ audit).
+        # `rebuild_many` is `rebuild` per person from one pre-read, and each
+        # person's targets and achievements come from the same arithmetic
+        # (`_targets_from` / `_achievements_from`) over their own rows, read
+        # for every area any member holds; a person's series is only ever
+        # indexed by their own areas below.
+        TargetAchievementService.rebuild_many(team, fy)
+        area_keys = [item.key for item in all_areas]
+        explicit_by_user = MyTargetQueryService._explicit_targets(team, fy, area_keys)
+        profiles = MyTargetQueryService._target_profiles(team, fy)
+        ledger_by_user = MyTargetQueryService._validated_ledger(team, fy, area_keys)
         for u in team:
             areas = areas_by_user.get(str(u.id), [])
             if selected_area_key:
                 areas = [item for item in areas if item.key == selected_area_key]
-            TargetAchievementService.rebuild(u, fy)
-            targets = MyTargetQueryService.monthly_targets(u, fy, areas=areas)
-            achieved = MyTargetQueryService.monthly_achievements(u, fy, areas=areas)
+            targets = MyTargetQueryService._targets_from(
+                areas,
+                explicit_by_user.get(u.id, {}),
+                profiles.get(getattr(u, "staff_profile_id", None)),
+            )
+            achieved = MyTargetQueryService._achievements_from(
+                areas, ledger_by_user.get(u.id, ())
+            )
             for a in areas:
                 cells = []
                 for period_key, months in zip(

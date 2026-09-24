@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import logging
+import threading
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
@@ -526,6 +528,39 @@ class LeaveRequestService:
         return leave
 
 
+# Lookups `is_authorized_approver` repeats for every leave it is asked about,
+# shared while `approval_lookups()` is open. A queue of pending leave asked
+# three queries per leave — the leave type's policy, the reviewer's active
+# coverage and the reviewer's supervisees — and every one of them depends on
+# the reviewer or the leave type, not on the leave: a Programme Lead's queue
+# of 348 country-wide requests was 1,130 queries (2026-09-24 A+ audit). Only
+# read-only listings open the scope, so no decision path can see a lookup
+# from before its own write.
+_approval_memo = threading.local()
+
+
+@contextmanager
+def approval_lookups():
+    """Share the per-reviewer approval lookups for the block's duration."""
+    outer = getattr(_approval_memo, "store", None)
+    if outer is None:
+        _approval_memo.store = {}
+    try:
+        yield
+    finally:
+        if outer is None:
+            _approval_memo.store = None
+
+
+def _approval_lookup(key, compute):
+    store = getattr(_approval_memo, "store", None)
+    if store is None:
+        return compute()
+    if key not in store:
+        store[key] = compute()
+    return store[key]
+
+
 # Seniority ladder used to test a leave type's approval floor. Roles absent
 # from the ladder (HR, IA, Accountant, Project Coordinator) are not part of the
 # line-management chain and are judged by the hierarchy branches alone.
@@ -540,7 +575,10 @@ def _policy_floor_met(leave, rev_role: str, normalize) -> bool:
     """
     if getattr(leave, "status", "") == "hr_review":
         return True
-    policy = LeaveTypePolicy.objects.filter(leave_type=leave.type).first()
+    policy = _approval_lookup(
+        ("policy", leave.type),
+        lambda: LeaveTypePolicy.objects.filter(leave_type=leave.type).first(),
+    )
     required = _APPROVER_SENIORITY.get(normalize(getattr(policy, "approver_role", "")))
     if not required:
         return True
@@ -714,13 +752,26 @@ class LeaveApprovalService:
         # approver going on leave froze their own approval queue: the platform
         # has a coverage mechanism precisely so authority moves with the
         # person, and this resolver was ignoring it.
-        supervisor_profiles = [
-            reviewer_profile.id,
-            *_covered_staff_ids(reviewer_profile),
-        ]
-        direct_supervisor = StaffSupervisorAssignment.objects.filter(
-            supervisee=leave.staff, supervisor_id__in=supervisor_profiles
-        ).exists()
+        supervisor_profiles = _approval_lookup(
+            ("supervisors", reviewer_profile.id),
+            lambda: [reviewer_profile.id, *_covered_staff_ids(reviewer_profile)],
+        )
+        if getattr(_approval_memo, "store", None) is None:
+            direct_supervisor = StaffSupervisorAssignment.objects.filter(
+                supervisee=leave.staff, supervisor_id__in=supervisor_profiles
+            ).exists()
+        else:
+            # The same rows the `.exists()` above tests, read once for the
+            # reviewer instead of once per leave.
+            supervised = _approval_lookup(
+                ("supervisees", reviewer_profile.id),
+                lambda: set(
+                    StaffSupervisorAssignment.objects.filter(
+                        supervisor_id__in=supervisor_profiles
+                    ).values_list("supervisee_id", flat=True)
+                ),
+            )
+            direct_supervisor = leave.staff_id in supervised
 
         staff_role = normalize_role(leave.staff.user.active_role)
 
