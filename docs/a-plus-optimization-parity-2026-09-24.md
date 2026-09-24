@@ -105,6 +105,9 @@ time.
 | F-12 | `/target-distribution` (CD, HR) | approved leave read per person (166); 50,000-id literal list | `prime_leave_days` (existing) + assignments as a subquery | page 962 → 237 ms (IA); 179 → 14 queries | identical | existing oracle |
 | F-13 | Plan workbooks (`/work-plan/export.xlsx` and every plan export) | openpyxl hashed 3 styles per cell (~250,000 lookups) | first cell of a band registers; later cells take the same indices | styling 1,323 → 131 ms for 4,220 rows | new test: saved workbook XML byte-identical to a frozen copy of the old loop | `test_the_body_styling_writes_the_same_workbook_as_before` |
 | F-14 | Team Oversight flagged schools; dashboard urgent-schools card | full 120-column activity rows read for 6 columns | `.only()` with the school joined whole | 671 → 548 ms | identical | existing suites |
+| F-15 | `/planning` (CCEO, PL, CD) | peer scores read per cluster on the page: 3 queries × up to 15 clusters | `_latest_scores_by_cluster` reads every cluster on the page in 3 queries and splits by cluster | **112 → 70 queries** (CCEO); time unchanged at ≈ 0.4 s (the queries were cheap; the page's time is Python) | golden master: 60 responses × 15 roles identical | `test_cluster_latest_scores_batch` (4; fails on old code: 12 → 6) |
+| F-16 | `/core-schools` (IA, CD, Accountant, Admin) | the same SSA score totals read twice (Intervention Impact, staff/partner split) and the same latest-record average twice (KPI strip, benchmark), each over a literal list of every scoped record id | each read once per request, keyed by the scope's SQL; latest records as a `DISTINCT ON` subquery | **IA 2,172 → 1,653 ms**, 83 → 73 queries; CD 2,286 → 1,823 ms | helper outputs identical (IA, CD, PL, CCEO); page differences only where two baseline captures differ from each other (F-G) | `test_the_page_reads_shared_scores_once_with_the_same_answers` (fails on old code: 2 → 1 score reads) |
+| F-17 | `/ia/dashboard/` portfolio change (and five other `classify_pairs` callers) | rule lookup and date interval decided for each of 160,208 domain rows | decided once per (domain, country) and once per pair of dates | classification 329 → 291 ms on production-shaped rows; portfolio 1.31 → 1.14–1.18 s | full classification output hash identical; portfolio JSON identical (IA, CD, PL) | `test_classify_pairs_equivalence` (randomized, every branch, against a frozen copy) |
 
 ## 5. Reliability defect fixed
 
@@ -418,6 +421,34 @@ gates are not met at production shape, and no code change measured here can
 meet them on one vCPU**; the capacity change in §10 is the prerequisite, and
 the stages must then be re-run there.
 
+**Candidate capacity: 2 vCPU, 4 workers, Redis (release build at `dd1e36f`).**
+The same workload and database, with the server pinned to two CPUs, four
+workers, and a Redis database of its own as cache and session store (the
+shape §10 proposes). Stages: 10 users 60 s, 50 users 300 s, 100 users 120 s,
+150 users 90 s, then 60 s at one user. PostgreSQL shared the machine and was
+not pinned, so its CPU also competed with the server's two cores.
+
+| Stage | Requests | req/s | p50 ms | p95 ms | p99 ms | 503 | Error % | DB conns | Peak RSS MB | Web CPU % of 2 cores | DB CPU % |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 10 users | 80 | 1.33 | 250 | 1,160 | 3,297 | 0 | 0.0 | 4 | 1,274 | 16 | 3 |
+| **50 users** | 1,580 | 5.27 | **767** | **5,700** | 11,946 | **0** | **0.0** | 22 | 2,535 | **67** | 38 |
+| 100 users | 732 | 6.10 | 5,391 | 22,151 | 30,032 | 28 | 5.6 | 27 | 3,015 | 84 | 71 |
+| 150 users | 657 | 7.30 | 12,204 | 24,472 | 30,034 | 130 | 23.0 | 27 | 3,505 | 87 | 70 |
+| recovery | 104 | 1.73 | 14,484 | 24,076 | 30,033 | 3 | 4.8 | 28 | 3,402 | 26 | 20 |
+
+Integrity passed again (evidence 25/25, PL confirmations 21/21 including
+two concurrent double submissions, IA verifications 20/20; no lost, unseen
+or duplicated transition; zero 5xx). At 50 users the p50 falls from 4.4 s
+to 0.77 s and nothing is refused, so doubling the web tier removes most of
+the queueing; but p95 is still 5.7 s, web CPU is 67 % (gate < 60 %), and the
+tail is set by the heavy country pages (slowest p95 under load:
+`/country-planning-oversight/`, `/core-schools`, `/ssa`,
+`/analytics/verification-quality`, `/ia/dashboard/` at the 30 s timeout;
+`/budget`, `/team-planning-oversight/`, `/analytics` 20–26 s), which hold a
+worker for seconds each. Peak memory for four workers is 2.5 GB at 50 users
+and 3.5 GB at 150. **Maximum stable concurrency at this shape: 50 users**
+(zero refusals, but outside the latency gates); 100 users is past the knee.
+
 **Not run:** the 2-hour sustained 50-user run, the 8-hour soak, and
 stress-to-failure beyond 200 users. The maximum stable concurrency at
 production shape is **below 50 users** for both builds (1 % refused, p95
@@ -448,6 +479,7 @@ brief's parity lock it needs an owner decision.
 | F-B | **Fixed after owner approval (see §5, R-3).** Map metrics were not deterministic | — | — |
 | F-C | **Fixed after owner approval (see §5, R-4).** The fiscal-year rollover ran inside a user request | — | — |
 | F-D | **Leadership pages rebuild the achievement ledger on every load** (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
+| F-G | **Core Schools lists have no total order.** The main list orders by `-created_at` only (seeded and imported schools share timestamps) and the Attention Needed card lists plans in heap order, so the rows shown change between loads of the *baseline* (two baseline captures differ on 20 of 90 `/core-schools` responses, exactly as baseline vs release does) | baseline-vs-baseline capture | end both orderings with `id` (as F-9/F-11 did); a user may then see a different but stable first page |
 | F-E | **Heavy country pages still take seconds.** Team and country planning oversight and their exports (4–6 s), SSA (≈3 s), IA learning (≈3 s), the Country Director's dashboard (2.7 MB of HTML, ≈8 s under load) for country roles at 50,000 schools; they build every item in the country in Python | profiles in §6 | per-lead lazy sections or read models, each needing a parity review |
 
 ## 10. Infrastructure (21)
@@ -456,10 +488,15 @@ The App Platform spec runs the web service as **one instance** of
 `apps-s-1vcpu-1gb-fixed` with `WEB_CONCURRENCY=2` and no Redis
 (`.do/app.yaml`). That is a single point of failure (21.2) and the capacity
 ceiling measured in §7. No infrastructure was changed: resizing costs money
-and is the owner's decision. What §7 shows is needed, and what the 2026-09-23
-report sized: at least two web instances (or 2 vCPU with 4 workers) behind
-readiness checks, and a managed Redis before any second instance (the spec's
-own comment explains why).
+and is the owner's decision.
+
+| Item | Finding |
+|---|---|
+| Exhausted resource | **Web CPU.** One vCPU is 93 % busy at 50 users in both builds (§7) while the database stays below 42 % CPU with 15–17 connections and no lock waits. Second: **web memory**. Two workers peak at 1.7–2.1 GB against a 1 GiB instance. |
+| Required infrastructure | Web tier with at least 2 vCPU of dedicated CPU and 4 GB memory in total, as two instances behind the existing readiness check, plus a managed Redis (cache and sessions) before the second instance. With per-worker LocMem caches and database sessions, a second instance serves stale dashboard fragments; the spec's own comment explains this. |
+| Configuration | Per instance: a dedicated-CPU size with 1 vCPU / 2 GB or larger, `WEB_CONCURRENCY=2`, `REDIS_URL` set to the managed Redis, the rest unchanged. Alternatively, one 2 vCPU / 4 GB instance with `WEB_CONCURRENCY=4`, which removes the queueing but not the single point of failure. |
+| Expected cost | Not verifiable here: the provider's price list is blocked by this environment's network policy. The owner should price two dedicated-CPU instances of the size above plus the smallest managed Redis node from the current App Platform and Managed Databases price lists. |
+| Expected result | Measured at the 2 vCPU / 4-worker / Redis shape (§7): 50 users with **p50 0.77 s** (was 4.4 s), **zero refusals** (was 0.9 %), p95 5.7 s, web CPU 67 %. So the capacity change is necessary. It is **not sufficient** for the p95 ≤ 400 ms gate: the tail is the heavy country pages (F-E), which need the read models in §9 whatever the size of the tier. |
 
 ## 11. Gates the brief requires that were not run here
 
