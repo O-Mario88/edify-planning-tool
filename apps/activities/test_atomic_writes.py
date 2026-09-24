@@ -185,6 +185,41 @@ class ActivitySchedulingAtomicityTest(TestCase):
         self.assertEqual(activity.reschedule_count, 1)
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
+    def test_a_reschedule_that_waited_for_another_counts_both_moves(self):
+        """The row lock serialises two reschedules of one activity, so the one
+        that waited must apply its move to the row the first left. It used to
+        save the copy it read before taking the lock, and one move's
+        reschedule_count increment was lost."""
+        result = asvc.create(self._create_data(), self.admin, core_slot_verified=True)
+        activity_id = result["id"]
+        read_before_the_first_move = asvc._get_for_execution(activity_id, self.admin)
+        asvc.reschedule(
+            activity_id,
+            {
+                "scheduledDate": "2026-07-27T00:00:00",
+                "reason": "first move",
+                "districtType": "primary",
+            },
+            self.admin,
+        )
+
+        with patch.object(
+            asvc, "_get_for_execution", return_value=read_before_the_first_move
+        ):
+            asvc.reschedule(
+                activity_id,
+                {
+                    "scheduledDate": "2026-08-03T00:00:00",
+                    "reason": "second move",
+                    "districtType": "primary",
+                },
+                self.admin,
+            )
+
+        activity = Activity.objects.get(id=activity_id)
+        self.assertEqual(activity.reschedule_count, 2)
+        self.assertEqual(activity.last_reason, "second move")
+
     # ── create(): permissive scheduling ─────────────────────────────────────
     def test_identical_schedule_is_rejected_as_duplicate(self):
         """An exactly identical second submission (same school, type, day and

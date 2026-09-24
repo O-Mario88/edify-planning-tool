@@ -4182,33 +4182,6 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
-    # A multi-day activity keeps its duration when it moves: the end date
-    # shifts by the same delta as the start (an explicit endDate in the
-    # payload overrides, validated against the new start).
-    if a.end_date and a.planned_date:
-        duration = a.end_date - a.planned_date
-        end_raw = data.get("endDate") or data.get("end_date")
-        if end_raw:
-            new_end = _parse_date(str(end_raw)).date()
-            if new_end < planned_date:
-                raise BadRequest("The end date cannot precede the start date.")
-            a.end_date = new_end
-        else:
-            a.end_date = planned_date + duration
-    a.scheduled_date = new_date
-    a.fy = new_fy
-    a.quarter = new_quarter
-    a.planned_date = planned_date
-    a.planned_month = planned_month
-    a.planned_week = planned_week
-    if "expectedParticipants" in data:
-        a.expected_participants = data.get("expectedParticipants")
-    a.reschedule_count += 1
-    a.last_reason = data.get("reason")
-    if a.status == "assigned_to_partner" or a.delivery_type == "partner":
-        a.status = "partner_scheduled"
-    else:
-        a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
     # The schedule-field save, the batch re-slot / re-price, and the leave
     # budget-impact rewrite of cost lines are 3 separate writes that must all
     # land or all roll back — a crash mid-sequence otherwise leaves the
@@ -4217,8 +4190,40 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # Serialise concurrent reschedules of the same activity: without the
         # row lock two simultaneous submissions interleave their cost-line
         # rebuilds and fund-request syncs, and one reschedule_count increment
-        # is lost.
-        Activity.objects.select_for_update().filter(pk=a.pk).first()
+        # is lost. The move is computed from the row the lock returns. This
+        # used to discard it and save the copy read before the lock, which
+        # lost the increment anyway.
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        old_date = a.scheduled_date
+        # A multi-day activity keeps its duration when it moves: the end date
+        # shifts by the same delta as the start (an explicit endDate in the
+        # payload overrides, validated against the new start).
+        if a.end_date and a.planned_date:
+            duration = a.end_date - a.planned_date
+            end_raw = data.get("endDate") or data.get("end_date")
+            if end_raw:
+                new_end = _parse_date(str(end_raw)).date()
+                if new_end < planned_date:
+                    raise BadRequest("The end date cannot precede the start date.")
+                a.end_date = new_end
+            else:
+                a.end_date = planned_date + duration
+        a.scheduled_date = new_date
+        a.fy = new_fy
+        a.quarter = new_quarter
+        a.planned_date = planned_date
+        a.planned_month = planned_month
+        a.planned_week = planned_week
+        if "expectedParticipants" in data:
+            a.expected_participants = data.get("expectedParticipants")
+        a.reschedule_count += 1
+        a.last_reason = data.get("reason")
+        if a.status == "assigned_to_partner" or a.delivery_type == "partner":
+            a.status = "partner_scheduled"
+        else:
+            a.status = (
+                "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
+            )
         a.save(
             update_fields=[
                 "scheduled_date",
