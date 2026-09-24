@@ -20,6 +20,7 @@ from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
+from apps.core.tests.fy_windows import MidFiscalYearClock
 from apps.geography.models import District, Region, SubCounty
 from apps.partners.purposes import CLUSTER_BULK_MAXIMUM_SCHOOLS
 from apps.planning.cluster_bulk_scheduling import (
@@ -37,7 +38,7 @@ def _next_working_day(start: date) -> date:
     return when
 
 
-class _ClusterDay(TestCase):
+class _ClusterDay(MidFiscalYearClock, TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.region = Region.objects.create(name="CB Region")

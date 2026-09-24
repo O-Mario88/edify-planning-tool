@@ -31,6 +31,7 @@ from apps.budget.models import CostCatalogue, CostSetting
 from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
+from apps.core.tests.fy_windows import MidFiscalYearClock
 from apps.geography.models import District, Region
 from apps.notifications.models import Notification
 from apps.planning import visit_requests
@@ -67,7 +68,7 @@ def _at(day: datetime.date):
     return timezone.make_aware(datetime.datetime.combine(day, datetime.time(9, 0)))
 
 
-class VisitRequestFixture(TestCase):
+class VisitRequestFixture(MidFiscalYearClock, TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.region = Region.objects.create(name="VR Region")

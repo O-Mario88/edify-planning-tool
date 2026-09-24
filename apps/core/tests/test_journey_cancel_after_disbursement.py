@@ -38,6 +38,7 @@ from apps.accounts.models import (
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.fy import get_operational_fy
+from apps.core.tests.fy_windows import MidFiscalYearClock
 from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -79,7 +80,7 @@ def _at(day: datetime.date):
     return timezone.make_aware(datetime.datetime.combine(day, datetime.time(9, 0)))
 
 
-class CancelAfterDisbursementJourneyTest(TestCase):
+class CancelAfterDisbursementJourneyTest(MidFiscalYearClock, TestCase):
     """Plan → fund → disburse → receipt → cancel → account → recover."""
 
     @classmethod
