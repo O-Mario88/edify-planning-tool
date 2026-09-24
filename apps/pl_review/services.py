@@ -94,12 +94,22 @@ def may_review(principal, activity) -> bool:
     """
     if activity is None:
         return False
+    return review_rule(principal)(_owning_staff_id(activity))
+
+
+def review_rule(principal):
+    """`may_review` for many rows: whose completions this reviewer may decide.
+
+    Returns a predicate over the owning staff id (either id space). The
+    reviewer's reach is resolved once, so a table can ask it of every row
+    without a query per row — Cluster Oversight offers Verify only where the
+    decision itself would accept it.
+    """
     if _is_admin(principal):
-        return True
-    owner = _owning_staff_id(activity)
-    if not owner or owner in _own_ids(principal):
-        return False
-    return owner in _reviewer_staff_ids(principal)
+        return lambda owner: True
+    mine = _own_ids(principal)
+    reviewable = _reviewer_staff_ids(principal)
+    return lambda owner: bool(owner) and owner not in mine and owner in reviewable
 
 
 def _queue_queryset(principal):

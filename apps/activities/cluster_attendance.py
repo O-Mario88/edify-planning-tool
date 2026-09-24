@@ -344,6 +344,83 @@ def expected_participants(activity) -> int:
     return per_school * invited
 
 
+def invited_head_counts(sessions) -> dict[str, int]:
+    """The people each cluster session invited, for tables of many sessions.
+
+    ``sessions`` is ``(activity_id, cluster_id)`` pairs. A session counts the
+    people its invited schools bring, not the per-school figure stored on the
+    activity: an invitation row may override the session's composition for
+    its school. A session nobody has been invited to yet reads its stored head
+    count, or its per-school figure across the cluster's member schools.
+
+    Three queries whatever the number of sessions. A session with neither
+    invitations nor a cluster is absent from the answer, so the caller keeps
+    whatever figure it already had.
+    """
+    from collections import defaultdict
+
+    from django.db.models import Count
+
+    from apps.activities.models import Activity, ClusterActivityAttendance
+    from apps.schools.models import School
+
+    cluster_of = {
+        activity_id: cluster_id for activity_id, cluster_id in sessions if activity_id
+    }
+    if not cluster_of:
+        return {}
+    activities = Activity.objects.in_bulk(list(cluster_of))
+    member_counts = dict(
+        School.objects.filter(
+            cluster_id__in={c for c in cluster_of.values() if c},
+            deleted_at__isnull=True,
+        )
+        .values("cluster_id")
+        .annotate(total=Count("id"))
+        .values_list("cluster_id", "total")
+    )
+    invites = defaultdict(list)
+    for invite in ClusterActivityAttendance.objects.filter(
+        activity_id__in=list(cluster_of), invited=True
+    ):
+        invites[invite.activity_id].append(invite)
+
+    def composition(invite):
+        return (invite.teachers, invite.leaders, invite.other)
+
+    counts: dict[str, int] = {}
+    for activity_id, cluster_id in cluster_of.items():
+        activity = activities.get(activity_id)
+        per_school = (
+            (activity.participants_per_school or activity.teachers_per_school or 0)
+            if activity
+            else 0
+        )
+        invited = invites.get(activity_id, [])
+        if invited:
+            if not per_school and all(
+                all(value is None for value in composition(invite))
+                for invite in invited
+            ):
+                counts[activity_id] = (
+                    (activity.expected_participants or 0) if activity else 0
+                )
+            else:
+                counts[activity_id] = sum(
+                    sum(value or 0 for value in composition(invite))
+                    if any(value is not None for value in composition(invite))
+                    else per_school
+                    for invite in invited
+                )
+        elif cluster_id:
+            counts[activity_id] = (
+                activity.expected_participants
+                if activity and activity.expected_participants
+                else per_school * member_counts.get(cluster_id, 0)
+            )
+    return counts
+
+
 def training_counts(school_ids, *, fy=None) -> dict[str, int]:
     """How many verified trainings each school has had, by either route.
 
