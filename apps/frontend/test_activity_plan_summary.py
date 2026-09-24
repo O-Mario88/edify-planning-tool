@@ -297,3 +297,21 @@ class ActivityPlanSummaryTest(TestCase):
             )
             self.assertEqual(workbook["Work Plan"].max_row, count + 1)
             self.assertEqual(workbook["Work Plan"]["A2"].value, "School Activities")
+
+    def test_rows_that_tie_on_date_and_creation_keep_one_order(self):
+        """Two activities written in one bulk insert tie on date and creation
+        time; the list, its pager and its export must agree on which comes
+        first on every load (2026-09-24 audit, R14)."""
+        created = timezone.now()
+        tied = [self.activity(school=self.school, venue=f"Tie {n}") for n in range(6)]
+        Activity.objects.filter(pk__in=[a.pk for a in tied]).update(created_at=created)
+        ids = [
+            row["id"]
+            for row in self.context()["rows"]
+            if row["id"] in {a.pk for a in tied}
+        ]
+        self.assertEqual(ids, sorted(ids))
+        self.assertEqual(
+            ids,
+            [row["id"] for row in self.context()["rows"] if row["id"] in set(ids)],
+        )

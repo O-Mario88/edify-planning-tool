@@ -270,6 +270,55 @@ class FinanceBlockedReasonService:
     def is_blocked(activity: Activity) -> bool:
         return len(FinanceBlockedReasonService.get_blocked_reasons(activity)) > 0
 
+    #: Statuses that carry IA verification (rule 1).
+    IA_VERIFIED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
+
+    @staticmethod
+    def blocked_activities(queryset=None):
+        """Every activity with at least one blocked reason, filtered in SQL.
+
+        The same four rules as `get_blocked_reasons`, as one WHERE clause, so
+        the Finance Blocked page can count and page its list in the database.
+        It used to load every activity in the country with its budget lines
+        and school to test them in Python: 14-18 s at 50,000 schools
+        (2026-09-24 live-performance audit). Rows carry `fin_has_evidence`
+        and `fin_has_budget_lines`, which `get_blocked_reasons` takes as-is.
+        """
+        from django.db.models import Exists, OuterRef, Q, Value
+        from django.db.models.functions import Coalesce, Upper
+
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.evidence.models import EvidenceRecord
+
+        if queryset is None:
+            queryset = Activity.objects.filter(deleted_at__isnull=True)
+        activity = OuterRef("pk")
+        return queryset.annotate(
+            fin_has_evidence=Exists(
+                EvidenceRecord.objects.filter(activity=activity, quarantined=False)
+            ),
+            fin_has_budget_lines=Exists(
+                ActivityScheduleCostLine.objects.filter(activity=activity)
+            ),
+            fin_sf_record_type=Upper(
+                Coalesce("salesforce_record_type_snapshot", Value(""))
+            ),
+        ).filter(
+            ~Q(status__in=FinanceBlockedReasonService.IA_VERIFIED_STATUSES)
+            | Q(fin_has_evidence=False)
+            | Q(fin_has_budget_lines=False)
+            # Rule 3: work with a Salesforce record and no SF ID. Only
+            # the NONE and SSA_DATA_GATHERING snapshots have no record
+            # (sf_kind_for_activity), and "" counts as no ID.
+            | (
+                ~Q(fin_sf_record_type__in=("NONE", "SSA_DATA_GATHERING"))
+                & (
+                    Q(salesforce_activity_id__isnull=True)
+                    | Q(salesforce_activity_id="")
+                )
+            )
+        )
+
 
 class AdvanceDisbursementService:
     """Manages releasing advance money before execution."""

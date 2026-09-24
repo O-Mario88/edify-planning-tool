@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
@@ -724,48 +726,54 @@ def netsuite_id_action(request, activity_id):
 @require_page_permission("disbursements")
 def blocked_view(request):
     """Finance Blocked Page."""
-    activities = (
-        Activity.objects.filter(deleted_at__isnull=True)
-        .prefetch_related("schedule_cost_lines")
-        .select_related("school")
-    )
-
-    # Fetch all active evidence activity IDs in one query
-    from apps.evidence.models import EvidenceRecord
-
-    activity_ids = [a.id for a in activities]
-    evidence_activity_ids = set(
-        EvidenceRecord.objects.filter(
-            activity_id__in=activity_ids, quarantined=False
-        ).values_list("activity_id", flat=True)
-    )
-
-    blocked_list = []
-    for a in activities:
-        # Check prefetch cache for budget lines
-        has_budget = len(a.schedule_cost_lines.all()) > 0
-        has_ev = a.id in evidence_activity_ids
-
-        reasons = FinanceBlockedReasonService.get_blocked_reasons(
-            a, has_evidence=has_ev, has_budget_lines=has_budget
-        )
-        if reasons:
-            blocked_list.append(
-                {"activity": a, "reasons": reasons, "reasons_label": ", ".join(reasons)}
-            )
-
-    from apps.activities.verification_analytics import _staff_names
-
-    _blocked_names = _staff_names(
-        {b["activity"].responsible_staff_id for b in blocked_list}
-    )
-    for b in blocked_list:
-        b["responsible_name"] = _blocked_names.get(
-            b["activity"].responsible_staff_id,
-            b["activity"].responsible_staff_id or "Unassigned",
-        )
-    context = {"blocked": blocked_list}
+    blocked = FinanceBlockedReasonService.blocked_activities().select_related("school")
+    context = {"blocked": BlockedFinanceRows(blocked.order_by("-created_at", "-id"))}
     return render(request, "pages/accounts/blocked.html", context)
+
+
+class BlockedFinanceRows(Sequence):
+    """The blocked list, built only for the page on show.
+
+    Counted and sliced in the database; each page's reasons and owner names
+    are resolved for its own rows (apps.core.pagination.paginate_rows slices
+    a sized sequence rather than materialising it).
+    """
+
+    def __init__(self, queryset):
+        self._queryset = queryset
+        self._count = None
+
+    def __len__(self):
+        if self._count is None:
+            self._count = self._queryset.count()
+        return self._count
+
+    def __getitem__(self, index):
+        if not isinstance(index, slice):
+            return self[index : index + 1][0]
+        activities = list(self._queryset[index])
+        from apps.activities.verification_analytics import _staff_names
+
+        names = _staff_names({a.responsible_staff_id for a in activities})
+        rows = []
+        for a in activities:
+            reasons = FinanceBlockedReasonService.get_blocked_reasons(
+                a,
+                has_evidence=a.fin_has_evidence,
+                has_budget_lines=a.fin_has_budget_lines,
+            )
+            rows.append(
+                {
+                    "activity": a,
+                    "reasons": reasons,
+                    "reasons_label": ", ".join(reasons),
+                    "responsible_name": names.get(
+                        a.responsible_staff_id,
+                        a.responsible_staff_id or "Unassigned",
+                    ),
+                }
+            )
+        return rows
 
 
 @require_page_permission("disbursements")

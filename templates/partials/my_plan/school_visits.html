@@ -1,4 +1,4 @@
-{% load school_identity frontend_filters %}
+{% load school_identity frontend_filters table_pagination %}
 <!-- School Visits Card -->
 <div class="card overflow-hidden">
 
@@ -22,6 +22,7 @@ Open Planning
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
 {% if school_visits %}
+{% paginate school_visits "school_visits_page" 10 as school_visits_pager %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
@@ -40,7 +41,7 @@ Open Planning
 </tr>
 </thead>
 <tbody>
-{% for row in school_visits %}
+{% for row in school_visits_pager.rows %}
 <tr>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
@@ -79,6 +80,7 @@ Open Planning
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=school_visits_pager param="school_visits_page" pagination_label="School visit pages" %}
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline
 never meets the card edge (it was a hand-built block with its own icon size

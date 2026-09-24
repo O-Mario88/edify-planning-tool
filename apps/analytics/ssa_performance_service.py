@@ -8,7 +8,6 @@ queue, heatmap, trend, and decision recommendations internally consistent.
 from __future__ import annotations
 
 from collections import defaultdict
-from django.db.models.expressions import RawSQL
 from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService
@@ -187,8 +186,9 @@ def _scores_by_record(record_ids: list[str]) -> dict[str, dict[str, float]]:
     # latest record per school, so ~16,000 ids for a country reader, and a
     # literal IN of that size was ~0.2 s of adaptation and planning per call,
     # five calls a page (performance rescue, 2026-09-23). Same rows.
-    ids = RawSQL("SELECT unnest(%s::varchar[])", [list(record_ids)])
-    for row in SsaScore.objects.filter(ssa_record_id__in=ids).values(
+    from apps.core.scoping import id_array
+
+    for row in SsaScore.objects.filter(ssa_record_id__in=id_array(record_ids)).values(
         "ssa_record_id", "intervention", "score"
     ):
         scores[row["ssa_record_id"]][row["intervention"]] = float(row["score"])

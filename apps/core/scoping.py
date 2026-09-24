@@ -1135,6 +1135,21 @@ def or_empty(queryset, model):
     return queryset if queryset is not None else model.objects.none()
 
 
+def id_array(ids):
+    """``ids`` as one array parameter, for an ``__in`` lookup on a text key.
+
+    ``field__in=[...]`` binds one placeholder per id. A country reader's
+    scope is tens of thousands of ids, and a statement that size costs more
+    to build, adapt and plan than to run: ~0.2 s per query at 16,000 ids,
+    several queries a page (performance rescue, 2026-09-23; 2026-09-24
+    audit at 50,000 schools). ``field__in=id_array(ids)`` returns the same
+    rows with one parameter.
+    """
+    from django.db.models.expressions import RawSQL
+
+    return RawSQL("SELECT unnest(%s::varchar[])", [[str(i) for i in ids]])
+
+
 def direct_portfolio_schools(scope: UserScope, base=None):
     """The schools this person may operate on — the direct portfolio.
 

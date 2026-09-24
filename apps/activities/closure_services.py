@@ -1,4 +1,4 @@
-from datetime import timedelta
+from dataclasses import dataclass
 
 from django.db import transaction
 from django.db.models import Sum
@@ -19,245 +19,418 @@ from apps.fund_requests.models import NetSuiteExpenseRecord, PartnerPayment
 from apps.notifications.services import WorkflowNotificationService
 
 
+#: Statuses in which the work has not happened (check 1). A visit request
+#: waiting on the school owner is not yet a plan, and work that was declined,
+#: cancelled or put off never happened; each read as executed, and with no
+#: cost lines its finance also read as cleared (2026-09-13 ecosystem audit).
+NOT_EXECUTED_STATUSES = (
+    "not_planned",
+    "awaiting_owner_approval",
+    "planned",
+    "scheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "rejected",
+    "cancelled",
+    "deferred",
+)
+
+#: Statuses that carry IA verification (check 4).
+IA_VERIFIED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
+
+#: Advance states in which the accountant has cleared the money (check 6,
+#: System B): "disbursed" and "accountability_pending" are pre-clearance — an
+#: advance at accountability_pending means the responsible user submitted but
+#: the accountant has NOT yet approved, so it must not count as cleared.
+CLEARED_ADVANCE_STATUSES = ("accounted", "reimbursed")
+
+#: Advance states in which money has left the account (check 7).
+MONEY_MOVED_ADVANCE_STATUSES = (
+    "disbursed",
+    "accountability_pending",
+    "accounted",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+    "reimbursed",
+)
+
+#: Blockers, in the order the checklist names them: (fact that clears it,
+#: whether it applies only when finance is required, reason, responsible role).
+_BLOCKER_RULES = (
+    ("activity_executed", False, "Activity not executed", "CCEO"),
+    ("evidence_uploaded", False, "Evidence Missing", "CCEO"),
+    ("salesforce_id_entered", False, "Activity SF ID Missing", "CCEO"),
+    ("ia_verified", False, "IA not verified", "ImpactAssessment"),
+    ("accounts_cleared", True, "Accounts not cleared", "Accountant"),
+    ("netsuite_id_entered", True, "NetSuite ID missing", "Accountant"),
+    ("analytics_published", False, "Analytics not published", "ImpactAssessment"),
+)
+
+#: The related-row facts, read as annotations on the activity query so a list
+#: of any length costs the one query that lists it.
+_FACT_PREFIX = "closure_fact_"
+_FACT_KEYS = tuple(
+    _FACT_PREFIX + name
+    for name in (
+        "evidence",
+        "cost_lines",
+        "netsuite_expense",
+        "cleared_advance",
+        "moved_advance",
+        "unaccounted_advance",
+        "publish_status",
+        "timeline",
+    )
+)
+
+
+def _fact_annotations() -> dict:
+    from django.db.models import Exists, OuterRef, Q, Subquery
+
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.models import AdvanceRequest
+
+    activity = OuterRef("pk")
+    moved = AdvanceRequest.objects.filter(
+        activity=activity, status__in=MONEY_MOVED_ADVANCE_STATUSES
+    )
+    return {
+        f"{_FACT_PREFIX}evidence": Exists(
+            EvidenceRecord.objects.filter(activity=activity, quarantined=False)
+        ),
+        f"{_FACT_PREFIX}cost_lines": Exists(
+            ActivityScheduleCostLine.objects.filter(activity=activity)
+        ),
+        f"{_FACT_PREFIX}netsuite_expense": Exists(
+            NetSuiteExpenseRecord.objects.filter(activity=activity)
+        ),
+        f"{_FACT_PREFIX}cleared_advance": Exists(
+            AdvanceRequest.objects.filter(
+                activity=activity, status__in=CLEARED_ADVANCE_STATUSES
+            )
+        ),
+        f"{_FACT_PREFIX}moved_advance": Exists(moved),
+        f"{_FACT_PREFIX}unaccounted_advance": Exists(
+            moved.filter(
+                Q(accountability_netsuite_id__isnull=True)
+                | Q(accountability_netsuite_id="")
+            )
+        ),
+        f"{_FACT_PREFIX}publish_status": Subquery(
+            AnalyticsPublishRecord.objects.filter(activity=activity).values("status")[
+                :1
+            ]
+        ),
+        f"{_FACT_PREFIX}timeline": Exists(
+            ActivityTimelineEvent.objects.filter(activity=activity)
+        ),
+    }
+
+
+def _reconcile_blockers(existing, wanted):
+    """Which blocker rows to keep, delete and create for one activity.
+
+    `existing` is the activity's rows oldest first; `wanted` its (reason,
+    role) pairs. A row that still applies is kept, so its age stays the age
+    of the block; duplicates and rows that no longer apply are deleted.
+    """
+    kept: dict[tuple[str, str], ClosureBlocker] = {}
+    stale = []
+    for blocker in existing:
+        key = (blocker.blocking_reason, blocker.responsible_role)
+        if key in wanted and key not in kept:
+            kept[key] = blocker
+        else:
+            stale.append(blocker.pk)
+    missing = [key for key in wanted if key not in kept]
+    return kept, stale, missing
+
+
+def _persist_batch(activities) -> tuple[int, int, int]:
+    """Write the changed checklists and blockers of annotated activities."""
+    facts = {a.pk: ClosureEligibilityService.facts(a) for a in activities}
+    ids = list(facts)
+    now = timezone.now()
+    with transaction.atomic():
+        current = {
+            c.activity_id: c
+            for c in ClosureChecklist.objects.filter(activity_id__in=ids)
+        }
+        created, updated = [], []
+        for activity_id, derived in facts.items():
+            fields = derived.checklist_fields()
+            row = current.get(activity_id)
+            if row is None:
+                created.append(
+                    ClosureChecklist(
+                        activity_id=activity_id, last_evaluated_at=now, **fields
+                    )
+                )
+            elif any(getattr(row, k) != v for k, v in fields.items()):
+                for k, v in fields.items():
+                    setattr(row, k, v)
+                row.last_evaluated_at = now
+                row.updated_at = now
+                updated.append(row)
+        # A closure act may create the same checklist concurrently; its row
+        # wins and the next run compares against it.
+        ClosureChecklist.objects.bulk_create(created, ignore_conflicts=True)
+        if updated:
+            ClosureChecklist.objects.bulk_update(
+                updated,
+                [*ClosureFacts.__dataclass_fields__, "last_evaluated_at", "updated_at"],
+            )
+
+        existing: dict[str, list[ClosureBlocker]] = {}
+        for blocker in ClosureBlocker.objects.filter(activity_id__in=ids).order_by(
+            "created_at", "id"
+        ):
+            existing.setdefault(blocker.activity_id, []).append(blocker)
+        stale_ids, new_rows = [], []
+        for activity_id, derived in facts.items():
+            _kept, stale, missing = _reconcile_blockers(
+                existing.get(activity_id, []), derived.blocker_specs()
+            )
+            stale_ids.extend(stale)
+            new_rows.extend(
+                ClosureBlocker(
+                    activity_id=activity_id,
+                    blocking_reason=reason,
+                    responsible_role=role,
+                )
+                for reason, role in missing
+            )
+        if stale_ids:
+            ClosureBlocker.objects.filter(pk__in=stale_ids).delete()
+        ClosureBlocker.objects.bulk_create(new_rows)
+    return len(created) + len(updated), len(new_rows), len(stale_ids)
+
+
+@dataclass(frozen=True)
+class ClosureFacts:
+    """The nine closure checks for one activity, derived and never stored.
+
+    One derivation serves every reader: the detail page and the close,
+    publish and finance acts persist it as the activity's ClosureChecklist;
+    the readiness queue reads it straight from its listing query.
+    """
+
+    activity_executed: bool
+    evidence_uploaded: bool
+    salesforce_id_entered: bool
+    ia_verified: bool
+    finance_required: bool
+    accounts_cleared: bool
+    netsuite_id_entered: bool
+    analytics_published: bool
+    audit_trail_saved: bool
+
+    def blocker_specs(self) -> list[tuple[str, str]]:
+        """(reason, responsible role) for every unmet check, in rule order."""
+        return [
+            (reason, role)
+            for fact, finance_only, reason, role in _BLOCKER_RULES
+            if not getattr(self, fact) and (self.finance_required or not finance_only)
+        ]
+
+    def checklist_fields(self) -> dict:
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
+
+
 class ClosureEligibilityService:
     """Evaluates if an activity meets all the requirements to be closed."""
 
     @staticmethod
+    def with_facts(queryset):
+        """Annotate an Activity queryset with every related-row closure fact.
+
+        The readiness queue re-derived a stale checklist per row on GET, each
+        inside its own transaction: ~1,000 statements and ~300 writes for one
+        IA view at 16,000 schools, duplicated by every concurrent viewer
+        (2026-09-23 performance rescue, R10). Annotated, the queue costs the
+        one query that lists it, reads fresh facts, and writes nothing.
+        """
+        return queryset.annotate(**_fact_annotations())
+
+    @staticmethod
+    def facts(activity: Activity) -> ClosureFacts:
+        """The activity's closure facts.
+
+        Row facts come from the instance as the caller holds it; related-row
+        facts from the annotations `with_facts` put on it, or from one query
+        when it was loaded without them.
+        """
+        related = {
+            key: getattr(activity, key) for key in _FACT_KEYS if hasattr(activity, key)
+        }
+        if len(related) != len(_FACT_KEYS):
+            related = (
+                type(activity)
+                ._base_manager.filter(pk=activity.pk)
+                .annotate(**_fact_annotations())
+                .values(*_FACT_KEYS)
+                .first()
+            ) or dict.fromkeys(_FACT_KEYS)
+
+        def fact(name):
+            return bool(related[f"{_FACT_PREFIX}{name}"])
+
+        from apps.activities.services import sf_kind_for_activity
+
+        # Check 1: executed. Check 4: IA verified.
+        executed = activity.status not in NOT_EXECUTED_STATUSES
+        ia_verified = activity.status in IA_VERIFIED_STATUSES
+
+        # Check 3: Salesforce ID entered — where the work has a Salesforce
+        # record. SSA data gathering has none by design (IA confirmation does
+        # not ask for one), so a verified, paid partner SSA Support could never
+        # close (2026-09-12 journey walk).
+        salesforce_id_entered = bool(activity.salesforce_activity_id) or (
+            sf_kind_for_activity(activity) is None
+        )
+
+        # Check 5: finance required.
+        finance_required = fact("cost_lines") or activity.delivery_type == "partner"
+
+        # Check 6: Accounts Cleared — requires genuine ACCOUNTANT action, not
+        # merely that money left the account. The mandate: "NO CLOSING AN
+        # ACTIVITY WITHOUT ... FINANCE CLEARANCE." The two finance systems
+        # each have a distinct accountant-clearance signal:
+        #   System A (activity-level disburse+clear): the accountant's
+        #     NetSuiteExpenseRecord entry IS the clearance step.
+        #   System B (weekly advance accountability): the accountant approves
+        #     submitted accountability, moving the advance to "accounted" (or
+        #     "reimbursed").
+        # Partners are paid directly by the accountant: payment_status "paid"
+        # is the clearance.
+        accounts_cleared = True
+        if finance_required:
+            if activity.delivery_type == "partner":
+                accounts_cleared = activity.payment_status == "paid"
+            else:
+                accounts_cleared = fact("netsuite_expense") or fact("cleared_advance")
+
+        # Check 7: NetSuite Code — accountability proof, required whenever
+        # money moved. Two independent, equally-valid completion signals: the
+        # accountant's own NetSuiteExpenseRecord entry (System A —
+        # apps.fund_requests.finance_services.NetSuiteExpenseService) OR, for
+        # advances that went through the responsible-user accountability chain
+        # (System B — apps.fund_requests.advance_service.submit_accountability),
+        # EVERY such advance carrying its own accountability NetSuite Code.
+        # These are an OR, not an either/or keyed off AdvanceRequest status: an
+        # activity disbursed via the System A queue still has its
+        # AdvanceRequest rows move to "disbursed", but that must never by
+        # itself demand the System B step System A's own flow never produces.
+        #
+        # NetSuite IDs exist for STAFF accountability. Partners are paid
+        # directly by the accountant (owner, 2026-08-20): the payment (check 6)
+        # IS the finance proof, and no NetSuite entry is asked of anyone for
+        # partner-delivered work.
+        netsuite_id_entered = True
+        if finance_required and activity.delivery_type != "partner":
+            netsuite_id_entered = fact("netsuite_expense") or (
+                fact("moved_advance") and not fact("unaccounted_advance")
+            )
+
+        return ClosureFacts(
+            activity_executed=executed,
+            evidence_uploaded=fact("evidence"),
+            salesforce_id_entered=salesforce_id_entered,
+            ia_verified=ia_verified,
+            finance_required=finance_required,
+            accounts_cleared=accounts_cleared,
+            netsuite_id_entered=netsuite_id_entered,
+            # Check 8: analytics published. Check 9: audit trail saved.
+            analytics_published=(
+                related[f"{_FACT_PREFIX}publish_status"] == "published"
+            ),
+            audit_trail_saved=fact("timeline"),
+        )
+
+    @staticmethod
     def evaluate(activity: Activity) -> tuple[ClosureChecklist, list[ClosureBlocker]]:
+        """Derive the facts and persist them as the activity's checklist.
+
+        Blockers are reconciled, not rebuilt: one that still applies keeps its
+        row, so its age on the Blocked Closures page is how long the activity
+        has actually been blocked, not how long since somebody last looked.
+        """
         with transaction.atomic():
-            # Check 1: Activity Executed
-            executed = activity.status not in [
-                "not_planned",
-                # A visit request waiting on the school owner is not yet a
-                # plan, and work that was declined, cancelled or put off never
-                # happened; each read as executed, and with no cost lines its
-                # finance also read as cleared (2026-09-13 ecosystem audit).
-                "awaiting_owner_approval",
-                "planned",
-                "scheduled",
-                "assigned_to_partner",
-                "partner_scheduled",
-                "rejected",
-                "cancelled",
-                "deferred",
-            ]
-
-            # Check 2: Evidence Uploaded
-            evidence_uploaded = EvidenceRecord.objects.filter(
-                activity=activity, quarantined=False
-            ).exists()
-
-            # Check 3: Salesforce ID entered — where the work has a Salesforce
-            # record. SSA data gathering has none by design (IA confirmation
-            # does not ask for one), so a verified, paid partner SSA Support
-            # could never close (2026-09-12 journey walk).
-            from apps.activities.services import sf_kind_for_activity
-
-            salesforce_id_entered = bool(activity.salesforce_activity_id) or (
-                sf_kind_for_activity(activity) is None
-            )
-
-            # Check 4: IA Verified
-            ia_verified = activity.status in [
-                "ia_verified",
-                "closed",
-                "accountant_confirmed",
-            ]
-
-            # Check 5: Finance Required
-            finance_required = (
-                activity.schedule_cost_lines.exists()
-                or activity.delivery_type == "partner"
-            )
-
-            # Check 6: Accounts Cleared — requires genuine ACCOUNTANT action,
-            # not merely that money left the account. The mandate: "NO CLOSING
-            # AN ACTIVITY WITHOUT ... FINANCE CLEARANCE." The two finance
-            # systems each have a distinct accountant-clearance signal:
-            #   System A (activity-level disburse+clear): the accountant's
-            #     NetSuiteExpenseRecord entry IS the clearance step.
-            #   System B (weekly advance accountability): the accountant
-            #     approves submitted accountability, moving the advance to
-            #     "accounted" (or "reimbursed").
-            # "disbursed" and "accountability_pending" are pre-clearance
-            # states — an advance sitting at accountability_pending means the
-            # responsible user submitted but the accountant has NOT yet
-            # approved, so it must NOT count as cleared (previously it did,
-            # letting activities close before accountant final-clearance).
-            accounts_cleared = True
-            if finance_required:
-                if activity.delivery_type == "partner":
-                    accounts_cleared = activity.payment_status == "paid"
-                else:
-                    has_netsuite_expense = NetSuiteExpenseRecord.objects.filter(
-                        activity=activity
-                    ).exists()
-                    accountant_approved_advance = activity.advance_requests.filter(
-                        status__in=["accounted", "reimbursed"]
-                    ).exists()
-                    accounts_cleared = (
-                        has_netsuite_expense or accountant_approved_advance
-                    )
-
-            # Check 7: NetSuite Code — accountability proof, required whenever
-            # money moved. Two independent, equally-valid completion signals:
-            # the accountant's own NetSuiteExpenseRecord entry (System A —
-            # apps.fund_requests.finance_services.NetSuiteExpenseService, the
-            # activity-level disburse+clear flow) OR, for advances that went
-            # through the responsible-user accountability chain (System B —
-            # apps.fund_requests.advance_service.submit_accountability), EVERY
-            # such advance carrying its own accountability NetSuite Code.
-            # These are an OR, not an either/or keyed off AdvanceRequest
-            # status: an activity disbursed via the System A queue still has
-            # its AdvanceRequest rows move to "disbursed" (so the money isn't
-            # silently double-payable through the System B queue too), but
-            # that must never by itself demand the System B accountability
-            # step System A's own flow was never designed to produce.
-            netsuite_id_entered = True
-            if finance_required and activity.delivery_type == "partner":
-                # NetSuite IDs exist for STAFF accountability — proof that
-                # money a staff member RECEIVED was accounted for. Partners
-                # are paid directly by the accountant (owner, 2026-08-20):
-                # the accountant's own payment (check 6: payment_status ==
-                # "paid") IS the finance proof, and no NetSuite entry is
-                # asked of anyone for partner-delivered work.
-                pass
-            elif finance_required:
-                from django.db.models import Q as _Q
-
-                has_netsuite_expense_record = NetSuiteExpenseRecord.objects.filter(
-                    activity=activity
-                ).exists()
-                money_moved_advances = activity.advance_requests.filter(
-                    status__in=[
-                        "disbursed",
-                        "accountability_pending",
-                        "accounted",
-                        "reimbursement_submitted",
-                        "reimbursement_disbursed",
-                        "reimbursed",
-                    ]
-                )
-                every_advance_accounted = not money_moved_advances.filter(
-                    _Q(accountability_netsuite_id__isnull=True)
-                    | _Q(accountability_netsuite_id="")
-                ).exists()
-                netsuite_id_entered = has_netsuite_expense_record or (
-                    money_moved_advances.exists() and every_advance_accounted
-                )
-
-            # Check 8: Analytics Published
-            pub_rec = AnalyticsPublishRecord.objects.filter(activity=activity).first()
-            analytics_published = pub_rec is not None and pub_rec.status == "published"
-
-            # Check 9: Audit Trail Saved
-            audit_trail_saved = ActivityTimelineEvent.objects.filter(
-                activity=activity
-            ).exists()
-
-            # Update or create Checklist
+            facts = ClosureEligibilityService.facts(activity)
             checklist, _ = ClosureChecklist.objects.update_or_create(
                 activity=activity,
                 defaults={
-                    "activity_executed": executed,
-                    "evidence_uploaded": evidence_uploaded,
-                    "salesforce_id_entered": salesforce_id_entered,
-                    "ia_verified": ia_verified,
-                    "finance_required": finance_required,
-                    "accounts_cleared": accounts_cleared,
-                    "netsuite_id_entered": netsuite_id_entered,
-                    "analytics_published": analytics_published,
-                    "audit_trail_saved": audit_trail_saved,
+                    **facts.checklist_fields(),
                     "last_evaluated_at": timezone.now(),
                 },
             )
 
-            # Rebuild blockers list
-            ClosureBlocker.objects.filter(activity=activity).delete()
-            blockers = []
-
-            if not executed:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="Activity not executed",
-                        responsible_role="CCEO",
-                    )
+            existing = ClosureBlocker.objects.filter(activity=activity).order_by(
+                "created_at", "id"
+            )
+            kept, stale, missing = _reconcile_blockers(existing, facts.blocker_specs())
+            if stale:
+                ClosureBlocker.objects.filter(pk__in=stale).delete()
+            for reason, role in missing:
+                kept[(reason, role)] = ClosureBlocker.objects.create(
+                    activity=activity, blocking_reason=reason, responsible_role=role
                 )
-            if not evidence_uploaded:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="Evidence Missing",
-                        responsible_role="CCEO",
-                    )
-                )
-            if not salesforce_id_entered:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="Activity SF ID Missing",
-                        responsible_role="CCEO",
-                    )
-                )
-            if not ia_verified:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="IA not verified",
-                        responsible_role="ImpactAssessment",
-                    )
-                )
-            if finance_required and not accounts_cleared:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="Accounts not cleared",
-                        responsible_role="Accountant",
-                    )
-                )
-            if finance_required and not netsuite_id_entered:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="NetSuite ID missing",
-                        responsible_role="Accountant",
-                    )
-                )
-            if not analytics_published:
-                blockers.append(
-                    ClosureBlocker.objects.create(
-                        activity=activity,
-                        blocking_reason="Analytics not published",
-                        responsible_role="ImpactAssessment",
-                    )
-                )
-
+            blockers = [kept[key] for key in facts.blocker_specs()]
             return checklist, blockers
 
-    #: A checklist evaluated this recently is reused by list pages. The
-    #: readiness queue evaluated every open activity on every load — twelve
-    #: writes and reads each, 5,445 queries and 2.7 seconds at 450 activities
-    #: (2026-09-06). Actions on an activity still evaluate it afresh.
-    LIST_FRESHNESS = timedelta(minutes=15)
+    #: Activities the readiness queue lists but has not closed.
+    OPEN_EXCLUDED_STATUSES = (
+        "not_planned",
+        "planned",
+        "scheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "closed",
+    )
 
     @staticmethod
-    def evaluate_for_listing(activity: Activity) -> ClosureChecklist | None:
-        """The activity's checklist, re-derived only when it is stale."""
-        checklist = getattr(activity, "closure_checklist", None)
-        if checklist is not None and checklist.last_evaluated_at >= (
-            timezone.now() - ClosureEligibilityService.LIST_FRESHNESS
-        ):
-            return checklist
-        checklist, _blockers = ClosureEligibilityService.evaluate(activity)
-        return checklist
+    def refresh_open(batch_size: int = 500) -> dict:
+        """Persist the checklist and blockers of every open activity.
+
+        The scheduled counterpart of the read-only queue: the Blocked
+        Closures page and the System Health integrity checks read the
+        persisted rows, which used to be refreshed only as a side effect of
+        somebody opening the queue. Batched by primary key, each batch in its
+        own short transaction, and only rows whose facts changed are written.
+        """
+        base = Activity.objects.filter(deleted_at__isnull=True).exclude(
+            status__in=ClosureEligibilityService.OPEN_EXCLUDED_STATUSES
+        )
+        evaluated = checklists_written = blockers_added = blockers_removed = 0
+        last_pk = ""
+        while True:
+            batch = list(
+                ClosureEligibilityService.with_facts(
+                    base.filter(pk__gt=last_pk).order_by("pk")
+                )[:batch_size]
+            )
+            if not batch:
+                break
+            last_pk = batch[-1].pk
+            written, added, removed = _persist_batch(batch)
+            evaluated += len(batch)
+            checklists_written += written
+            blockers_added += added
+            blockers_removed += removed
+        return {
+            "evaluated": evaluated,
+            "checklistsWritten": checklists_written,
+            "blockersAdded": blockers_added,
+            "blockersRemoved": blockers_removed,
+        }
 
     @staticmethod
-    def _core_requirements_met(checklist: ClosureChecklist) -> bool:
+    def _core_requirements_met(checklist: ClosureChecklist | ClosureFacts) -> bool:
         """Execution, evidence, SF ID, IA verification, and (if money moved)
-        accounts cleared + NetSuite Code entered. Shared by is_eligible() and
-        AnalyticsPublishingService.publish_if_ready() so analytics is only
-        ever marked published once these are genuinely true."""
+        accounts cleared + NetSuite Code entered. Shared by is_eligible(), the
+        readiness queue and AnalyticsPublishingService.publish_if_ready() so
+        analytics is only ever marked published once these are genuinely
+        true."""
         return (
             checklist.activity_executed
             and checklist.evidence_uploaded

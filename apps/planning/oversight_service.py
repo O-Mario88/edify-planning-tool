@@ -305,6 +305,8 @@ def build_items(
     program_lead_id: str | None = None,
     filters: dict | None = None,
     fys: tuple[str, ...] | None = None,
+    activity_types: tuple[str, ...] | None = None,
+    cluster_work_only: bool = False,
 ) -> list[PlanningOversightItem]:
     """Every oversight item this principal may see for the period.
 
@@ -314,6 +316,11 @@ def build_items(
 
     ``fys``, when given, reads those fiscal years instead of ``fy`` alone — a
     planning horizon (``fy_policy.planning_horizon``) in one query.
+
+    ``activity_types`` and ``cluster_work_only`` narrow what is read, for a
+    lens that shows only part of the plan: Cluster Oversight built every item
+    in the country to keep its cluster sessions (2026-09-24 audit). Each item
+    is built exactly as it would be in the full list.
     """
     scope = resolve_oversight_scope(principal)
     if scope.kind == "pl" and not scope.team_ids:
@@ -327,6 +334,8 @@ def build_items(
         quarter=quarter,
         date_start=date_start,
         date_end=date_end,
+        activity_types=activity_types,
+        cluster_work_only=cluster_work_only,
     )
     assignments = _unscheduled_assignments_in_scope(
         scope,
@@ -335,6 +344,8 @@ def build_items(
         quarter=quarter,
         date_start=date_start,
         date_end=date_end,
+        activity_types=activity_types,
+        cluster_work_only=cluster_work_only,
     )
 
     directory = _StaffDirectory(activities, assignments)
@@ -424,74 +435,196 @@ def _fy_tuple(fy) -> tuple[str, ...]:
     return (str(fy),)
 
 
+#: The activity columns an oversight item is built from, read as plain values.
+_ACTIVITY_COLUMNS = (
+    "id",
+    "activity_type",
+    "status",
+    "evidence_status",
+    "ia_verification_status",
+    "payment_status",
+    # The IA queue clock, read by the risk detector.
+    "submitted_to_ia_at",
+    "salesforce_activity_id",
+    "planned_date",
+    "fy",
+    "quarter",
+    "planned_month",
+    "responsible_staff_id",
+    "monitored_by_staff_id",
+    "assigned_partner_id",
+    "delivery_type",
+    "school_id",
+    "cluster_id",
+    "project_id",
+    "training_course_id",
+    "focus_intervention",
+    "purpose_intervention",
+    "support_rationale",
+    "activity_purpose_text",
+    "purpose_type",
+    "activity_name_snapshot",
+    "paired_school_visit_id",
+    "participants_per_school",
+    "expected_participants",
+    "cost_missing",
+    "reschedule_count",
+    "venue",
+)
+_SCHOOL_COLUMNS = (
+    "school__school_id",
+    "school__name",
+    "school__school_type",
+    "school__district_id",
+    "school__district__name",
+    "school__region_id",
+    "school__region__name",
+)
+_CLUSTER_COLUMNS = (
+    "cluster__name",
+    "cluster__district_id",
+    "cluster__district__name",
+    "cluster__district__region_id",
+    "cluster__district__region__name",
+)
+_COURSE_COLUMNS = (
+    "training_course__display_name",
+    "training_course__source_name",
+)
+
+
+class _Record:
+    """Attribute access over one row of values, shaped like the model.
+
+    An oversight page reads a fixed set of columns from every activity in its
+    scope. As model instances, each with six joined relations, that was
+    ~520,000 objects for the country at 50,000 schools, and most of an 11 s
+    request (2026-09-24 live-performance audit, R2). `_activity_item` reads
+    the same attributes off these as off a model, and `build_item_by_reference`
+    still passes it a real one.
+    """
+
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+
+
+def _record(fields: dict) -> _Record:
+    record = _Record.__new__(_Record)
+    record.__dict__ = fields
+    return record
+
+
+def _activity_records(rows) -> list[_Record]:
+    """One record per activity row; each school, cluster, district, region
+    and course is one shared record however many activities point at it."""
+    width = len(_ACTIVITY_COLUMNS)
+    school_end = width + len(_SCHOOL_COLUMNS)
+    cluster_end = school_end + len(_CLUSTER_COLUMNS)
+    names: dict[tuple, _Record] = {}
+    schools: dict[str, _Record] = {}
+    clusters: dict[str, _Record] = {}
+    courses: dict[str, _Record] = {}
+
+    def named(kind, key, name, **extra):
+        if key is None:
+            return None
+        found = names.get((kind, key))
+        if found is None:
+            found = names[(kind, key)] = _record({"name": name, **extra})
+        return found
+
+    records = []
+    for row in rows:
+        fields = dict(zip(_ACTIVITY_COLUMNS, row[:width]))
+        school_id = fields["school_id"]
+        school = None
+        if school_id is not None:
+            school = schools.get(school_id)
+            if school is None:
+                (
+                    code,
+                    school_name,
+                    school_type,
+                    district_id,
+                    district_name,
+                    region_id,
+                    region_name,
+                ) = row[width:school_end]
+                school = schools[school_id] = _record(
+                    {
+                        "school_id": code,
+                        "name": school_name,
+                        "school_type": school_type,
+                        "district_id": district_id,
+                        "district": named("district", district_id, district_name),
+                        "region_id": region_id,
+                        "region": named("region", region_id, region_name),
+                    }
+                )
+        fields["school"] = school
+
+        cluster_id = fields["cluster_id"]
+        cluster = None
+        if cluster_id is not None:
+            cluster = clusters.get(cluster_id)
+            if cluster is None:
+                (
+                    cluster_name,
+                    district_id,
+                    district_name,
+                    region_id,
+                    region_name,
+                ) = row[school_end:cluster_end]
+                region = named("region", region_id, region_name)
+                cluster = clusters[cluster_id] = _record(
+                    {
+                        "name": cluster_name,
+                        "district_id": district_id,
+                        "district": named(
+                            "cluster-district",
+                            district_id,
+                            district_name,
+                            region_id=region_id,
+                            region=region,
+                        ),
+                    }
+                )
+        fields["cluster"] = cluster
+
+        course_id = fields["training_course_id"]
+        course = None
+        if course_id is not None:
+            course = courses.get(course_id)
+            if course is None:
+                display_name, source_name = row[cluster_end:]
+                course = courses[course_id] = _record(
+                    {"display_name": display_name, "source_name": source_name}
+                )
+        fields["training_course"] = course
+        records.append(_record(fields))
+    return records
+
+
 def _activities_in_scope(
-    scope: OversightScope, *, fy, month, quarter, date_start=None, date_end=None
+    scope: OversightScope,
+    *,
+    fy,
+    month,
+    quarter,
+    date_start=None,
+    date_end=None,
+    activity_types=None,
+    cluster_work_only=False,
 ):
     from apps.activities.models import Activity
 
-    qs = (
-        Activity.objects.filter(
-            deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
-        )
-        .select_related(
-            "school",
-            "school__district",
-            "school__region",
-            "cluster",
-            "cluster__district",
-            "cluster__district__region",
-            "training_course",
-        )
-        .only(
-            "id",
-            "activity_type",
-            "status",
-            "evidence_status",
-            "ia_verification_status",
-            "payment_status",
-            # The IA queue clock. Without it in `.only()` the detector would
-            # trigger a deferred field load per activity — a per-row query on
-            # the page whose whole point is a fixed query cost.
-            "submitted_to_ia_at",
-            "salesforce_activity_id",
-            "planned_date",
-            "fy",
-            "quarter",
-            "planned_month",
-            "responsible_staff_id",
-            "monitored_by_staff_id",
-            "assigned_partner_id",
-            "delivery_type",
-            "school_id",
-            "cluster_id",
-            "project_id",
-            "focus_intervention",
-            "purpose_intervention",
-            "support_rationale",
-            "activity_purpose_text",
-            "purpose_type",
-            "activity_name_snapshot",
-            "paired_school_visit_id",
-            "participants_per_school",
-            "expected_participants",
-            "cost_missing",
-            "reschedule_count",
-            "venue",
-            "school__school_id",
-            "school__name",
-            "school__school_type",
-            "school__district_id",
-            "school__district__name",
-            "school__region_id",
-            "school__region__name",
-            "cluster__name",
-            "cluster__district_id",
-            "cluster__district__name",
-            "cluster__district__region_id",
-            "cluster__district__region__name",
-            "training_course__display_name",
-        )
+    qs = Activity.objects.filter(
+        deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
     )
+    if activity_types is not None:
+        qs = qs.filter(activity_type__in=activity_types)
+    if cluster_work_only:
+        qs = qs.filter(cluster_id__isnull=False)
     if fy:
         qs = qs.filter(fy__in=_fy_tuple(fy))
     if month:
@@ -508,7 +641,14 @@ def _activities_in_scope(
     scope_q = _activity_scope_q(scope)
     if scope_q is not None:
         qs = qs.filter(scope_q)
-    return list(qs)
+    # The model's own order, made total: build_items sorts by date and
+    # context, and ties keep this order, so a tie never reshuffles between
+    # two loads of the same page.
+    return _activity_records(
+        qs.order_by("-created_at", "id").values_list(
+            *_ACTIVITY_COLUMNS, *_SCHOOL_COLUMNS, *_CLUSTER_COLUMNS, *_COURSE_COLUMNS
+        )
+    )
 
 
 def _activity_scope_q(scope: OversightScope):
@@ -598,6 +738,8 @@ def _unscheduled_assignments_in_scope(
     quarter=None,
     date_start=None,
     date_end=None,
+    activity_types=None,
+    cluster_work_only=False,
 ):
     """Partner assignments the partner has not scheduled yet.
 
@@ -654,6 +796,10 @@ def _unscheduled_assignments_in_scope(
             "partner__name",
         )
     )
+    if activity_types is not None:
+        qs = qs.filter(expected_activity_type__in=activity_types)
+    if cluster_work_only:
+        qs = qs.filter(cluster_id__isnull=False)
     if scope.is_region and not scope.region_ids:
         return []
     scope_q = _assignment_scope_q(scope)
@@ -694,8 +840,12 @@ def _cost_by_activity(activity_ids) -> dict[str, int]:
 
     if not activity_ids:
         return {}
+    # One array parameter, not one bind parameter per activity: a country
+    # page passes every activity in the country.
+    from apps.core.scoping import id_array
+
     rows = (
-        ActivityScheduleCostLine.objects.filter(activity_id__in=activity_ids)
+        ActivityScheduleCostLine.objects.filter(activity_id__in=id_array(activity_ids))
         .values("activity_id")
         .annotate(total=Sum("amount"))
     )

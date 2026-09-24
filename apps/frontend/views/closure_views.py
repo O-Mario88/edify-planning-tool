@@ -88,21 +88,31 @@ def closure_readiness_queue_view(request):
                 "partner_scheduled",
             ]
         )
-        .select_related("school", "cluster", "closure_checklist")
-        .order_by("-updated_at")
+        .select_related("school", "cluster")
+        .order_by("-updated_at", "-id")
     )
 
-    # A closed activity is terminal: it needs no checklist refresh, and
-    # re-deriving one for every activity ever closed is what made this page
-    # cost 124 seconds at twelve thousand activities (2026-08 audit). It is
-    # listed from the database and never evaluated.
+    # A closed activity is terminal: it needs no checklist, and deriving one
+    # for every activity ever closed is what made this page cost 124 seconds
+    # at twelve thousand activities (2026-08 audit). It is listed from the
+    # database and never evaluated.
     closed_list = list(base.filter(status="closed")[:CLOSURE_TAB_LIMIT])
 
     # The live queue is bounded too. This is a work list, not an archive:
     # everything past the cap is older, already-surfaced work, and an
     # unbounded queue is precisely the shape that stops loading the year the
     # platform gets busy.
-    open_activities = list(base.exclude(status="closed")[:CLOSURE_QUEUE_LIMIT])
+    #
+    # Each row's closure facts arrive as annotations on this one query and are
+    # read, never written: a GET used to re-derive and persist every stale
+    # checklist, ~12 statements and several writes per row, repeated by every
+    # concurrent viewer (R10). The checklist is persisted where it is acted
+    # on — the closure workspace and the close, publish and finance acts.
+    open_activities = list(
+        ClosureEligibilityService.with_facts(base.exclude(status="closed"))[
+            :CLOSURE_QUEUE_LIMIT
+        ]
+    )
 
     ready_list = []
     finance_pending_list = []
@@ -111,21 +121,14 @@ def closure_readiness_queue_view(request):
     blocked_list = []
 
     for a in open_activities:
-        # Evaluate ONCE per activity and reuse the result. `is_eligible()`
-        # calls `evaluate()` internally, so the previous shape — a refresh
-        # loop, then `is_eligible` inside the bucketing loop — derived every
-        # checklist twice, each inside its own transaction.
-        checklist = ClosureEligibilityService.evaluate_for_listing(a)
-        if checklist is None:
-            continue
-
-        if ClosureEligibilityService._core_requirements_met(checklist):
+        facts = ClosureEligibilityService.facts(a)
+        if ClosureEligibilityService._core_requirements_met(facts):
             ready_list.append(a)
-        elif checklist.finance_required and not checklist.accounts_cleared:
+        elif facts.finance_required and not facts.accounts_cleared:
             finance_pending_list.append(a)
-        elif checklist.finance_required and not checklist.netsuite_id_entered:
+        elif facts.finance_required and not facts.netsuite_id_entered:
             accountability_list.append(a)
-        elif not checklist.analytics_published:
+        elif not facts.analytics_published:
             analytics_list.append(a)
         else:
             blocked_list.append(a)
@@ -146,9 +149,9 @@ def activity_closure_detail_view(request, activity_id):
     """One full closure workspace for a single activity."""
     a = _scoped_activity(request, activity_id)
 
-    # Run dynamic evaluate to get latest checklist and blockers
+    # Evaluate once: is_eligible() evaluates (and persists) again internally.
     checklist, blockers = ClosureEligibilityService.evaluate(a)
-    is_ready = ClosureEligibilityService.is_eligible(a)
+    is_ready = ClosureEligibilityService._core_requirements_met(checklist)
 
     context = {
         "act": a,

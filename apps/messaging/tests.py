@@ -550,6 +550,78 @@ class AttachmentTest(MessagingBaseTest):
         self.assertFalse(Message.objects.filter(body="do not create").exists())
 
 
+class AttachmentTransactionTest(MessagingBaseTest):
+    """Files reach storage before the message transaction opens (R9).
+
+    Saving each FileField inside the transaction held it open for the whole
+    upload to object storage; a slow field connection could outlast the
+    idle-in-transaction limit and roll back a message the sender saw as sent.
+    """
+
+    def _post(self, body="with file"):
+        return self.client.post(
+            "/messages/new/",
+            {
+                "recipient_ids": [self.pl.id],
+                "subject": "Stored first",
+                "category": "Planning",
+                "context_type": "school",
+                "context_id": self.school1.school_id,
+                "body": body,
+                "attachments": SimpleUploadedFile(
+                    "register.pdf", b"%PDF-1.4 fake", content_type="application/pdf"
+                ),
+            },
+        )
+
+    def test_the_file_is_written_before_the_transaction_opens(self):
+        from unittest import mock
+
+        from django.db import connection
+
+        storage = MessageAttachment._meta.get_field("file").storage
+        outside = len(connection.atomic_blocks)
+        depths = []
+        real_save = storage.save
+
+        def recording_save(*args, **kwargs):
+            depths.append(len(connection.atomic_blocks))
+            return real_save(*args, **kwargs)
+
+        self.client.force_login(self.cceo1)
+        with mock.patch.object(storage, "save", side_effect=recording_save):
+            response = self._post()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(depths, [outside])
+        att = MessageAttachment.objects.get(file_name="register.pdf")
+        self.assertTrue(storage.exists(att.file.name))
+
+    def test_a_message_that_fails_leaves_no_file_behind(self):
+        from unittest import mock
+
+        storage = MessageAttachment._meta.get_field("file").storage
+        saved = []
+        real_save = storage.save
+
+        def recording_save(*args, **kwargs):
+            name = real_save(*args, **kwargs)
+            saved.append(name)
+            return name
+
+        self.client.force_login(self.cceo1)
+        with (
+            mock.patch.object(storage, "save", side_effect=recording_save),
+            mock.patch.object(
+                services, "send", side_effect=BadRequest("recipient refused")
+            ),
+        ):
+            response = self._post(body="never sent")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(saved), 1)
+        self.assertFalse(storage.exists(saved[0]))
+        self.assertFalse(MessageAttachment.objects.exists())
+
+
 class PageRenderTest(MessagingBaseTest):
     def test_messages_page_renders_three_panels(self):
         self._send(self.cceo1, self.pl, subject="Panel check")

@@ -84,6 +84,7 @@ class Command(BaseCommand):
             "audit_chain_seal": jobs.audit_chain_seal_job,
             "autopilot_weekly_proposals": jobs.autopilot_weekly_proposals_job,
             "scheduler_watchdog": jobs.scheduler_watchdog_job,
+            "closure_checklist_refresh": jobs.closure_checklist_refresh_job,
         }
 
         # One source of truth for the programme timezone. This was hard-coded,

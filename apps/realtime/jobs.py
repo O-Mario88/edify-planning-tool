@@ -427,6 +427,27 @@ def target_ledger_sync_job():
     run_tracked_job("target_ledger_sync", _do_target_ledger_sync)
 
 
+# ── Closure checklist refresh ────────────────────────────────────────────────
+def _do_closure_checklist_refresh() -> int:
+    """Persist every open activity's closure checklist and blockers.
+
+    The readiness queue derives its facts read-only on each view; this keeps
+    the stored copy that the Blocked Closures page and the System Health
+    integrity checks read no more than half an hour behind.
+    """
+    from apps.activities.closure_services import ClosureEligibilityService
+
+    report = ClosureEligibilityService.refresh_open()
+    logger.info("Closure checklist refresh: %s", report)
+    return report["checklistsWritten"]
+
+
+def closure_checklist_refresh_job():
+    if not _enabled():
+        return
+    run_tracked_job("closure_checklist_refresh", _do_closure_checklist_refresh)
+
+
 # ── 6. Professional Development reminders ────────────────────────────────────
 def _do_pd_reminders() -> int:
     from apps.professional_development.reminders import send_due_reminders

@@ -432,7 +432,13 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     plan_fys = planning_horizon(page_fy)
     cluster_work = [
         item
-        for item in planning.build_items(principal, fy=page_fy, fys=plan_fys)
+        for item in planning.build_items(
+            principal,
+            fy=page_fy,
+            fys=plan_fys,
+            activity_types=tuple(CLUSTER_MEETING_TYPES + TRAINING_TYPES),
+            cluster_work_only=True,
+        )
         if item.cluster_id
         and not item.is_in_school_training
         and item.activity_type in CLUSTER_MEETING_TYPES + TRAINING_TYPES

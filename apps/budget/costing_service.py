@@ -410,28 +410,43 @@ def planned_minimum_amounts(activities) -> dict:
     """
     from decimal import Decimal, ROUND_HALF_UP
 
+    # Only the five columns the estimate reads. A whole snapshot carries five
+    # JSON documents, and decoding them for every activity in a field
+    # officer's year was half the cost of My Plan (2026-09-24 audit).
     snapshots = list(
         ActivityCostSnapshot.objects.filter(
             activity_id__in=[a.id for a in activities],
             is_current=True,
+        ).values_list(
+            "activity_id",
+            "operational_rate_card_id",
+            "operational_breakdown",
+            "operational_cost",
+            "missing_configuration",
         )
     )
     rates = {
         (row.catalogue_id, row.key): row
         for row in CostSetting.objects.filter(
-            catalogue_id__in={s.operational_rate_card_id for s in snapshots},
-        )
+            catalogue_id__in={s[1] for s in snapshots},
+        ).only("catalogue_id", "key", "approved_minimum", "unit_cost")
     }
     amounts = {}
-    for snapshot in snapshots:
+    for (
+        activity_id,
+        rate_card_id,
+        breakdown,
+        operational_cost,
+        missing_configuration,
+    ) in snapshots:
         total = 0
         missing = (
-            not snapshot.operational_rate_card_id
-            or (not snapshot.operational_breakdown and snapshot.operational_cost != 0)
-            or bool(snapshot.missing_configuration)
+            not rate_card_id
+            or (not breakdown and operational_cost != 0)
+            or bool(missing_configuration)
         )
-        for line in snapshot.operational_breakdown:
-            setting = rates.get((snapshot.operational_rate_card_id, line.get("key")))
+        for line in breakdown:
+            setting = rates.get((rate_card_id, line.get("key")))
             rate = setting.approved_minimum if setting else None
             unit = line.get("unit")
             if rate is None or unit is None or line.get("missing"):
@@ -460,7 +475,7 @@ def planned_minimum_amounts(activities) -> dict:
                 )
             elif rate != 0:
                 missing = True
-        amounts[snapshot.activity_id] = None if missing else total
+        amounts[activity_id] = None if missing else total
     return amounts
 
 

@@ -371,7 +371,10 @@ def build_work_plan_context(user, params) -> dict:
             "schedule_cost_lines__weekly_request_lines__weekly_fund_request",
             "schedule_cost_lines__advance_requests",
         )
-        .order_by("planned_date", "created_at")
+        # `id` makes the order total: two activities created in one bulk
+        # write tie on both keys, and the page, its pager and its export
+        # then disagreed about which came first from one load to the next.
+        .order_by("planned_date", "created_at", "id")
     )
 
     # ── Display-name maps: one query per id space, never per row. ────────────

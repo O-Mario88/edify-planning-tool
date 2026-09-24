@@ -7,6 +7,8 @@ only handles local UI state.
 
 from django.utils.html import format_html
 from django.contrib import messages as django_messages
+import logging
+
 from django.db import transaction
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect, render
@@ -33,6 +35,9 @@ TABS = [
     ("finance", "Finance"),
     ("ia_review", "IA Review"),
 ]
+
+
+logger = logging.getLogger(__name__)
 
 
 def _thread_context(request, thread_id):
@@ -93,19 +98,65 @@ def _validated_attachments(files):
     return uploads
 
 
-def _save_attachments(message_id, uploads, user_id):
-    # FileField storage hooks are intentionally invoked through save(); Django
-    # bulk_create bypasses model save hooks and can leave database rows pointing
-    # at files that were never written to the configured private storage.
-    for upload in uploads:
+def _store_attachments(uploads):
+    """Write each upload to storage before any transaction opens.
+
+    Saving the FileField inside the message's transaction held that
+    transaction open for the whole upload to object storage: five slow files
+    from a field connection could outlast the 60 s idle-in-transaction limit
+    and roll back a message the sender believed was sent, holding a pooled
+    connection the whole time (2026-09-23 performance rescue, R9). Returns
+    (stored name, upload) pairs; nothing is written to the database here.
+    """
+    field = MessageAttachment._meta.get_field("file")
+    stored = []
+    try:
+        for upload in uploads:
+            name = field.generate_filename(None, upload.name)
+            stored.append(
+                (field.storage.save(name, upload, max_length=field.max_length), upload)
+            )
+    except Exception:
+        _discard_stored_attachments(stored)
+        raise
+    return stored
+
+
+def _discard_stored_attachments(stored):
+    """Remove files whose message was never created, so none is orphaned."""
+    storage = MessageAttachment._meta.get_field("file").storage
+    for name, _upload in stored:
+        try:
+            storage.delete(name)
+        except Exception:  # noqa: BLE001 — cleanup must not mask the real error
+            logger.warning("Could not remove orphaned attachment %s", name)
+
+
+def _save_attachments(message_id, stored, user_id):
+    # The files are already in storage (_store_attachments), so each row
+    # points at a written file and the transaction holds only these inserts.
+    for name, upload in stored:
         MessageAttachment.objects.create(
             message_id=message_id,
-            file=upload,
+            file=name,
             file_name=upload.name,
             file_type=upload.content_type or "",
             file_size=upload.size or 0,
             uploaded_by=user_id,
         )
+
+
+def _send_with_attachments(create_message, uploads, user_id):
+    """Create a message and its attachment rows, storage first."""
+    stored = _store_attachments(uploads)
+    try:
+        with transaction.atomic():
+            msg = create_message()
+            _save_attachments(msg["id"], stored, user_id)
+    except BaseException:
+        _discard_stored_attachments(stored)
+        raise
+    return msg
 
 
 @require_page_permission("messages")
@@ -233,9 +284,11 @@ def thread_reply_action(request, thread_id):
     reply_error = ""
     try:
         uploads = _validated_attachments(request.FILES.getlist("attachments"))
-        with transaction.atomic():
-            msg = services.reply(thread_id, {"body": body}, request.user)
-            _save_attachments(msg["id"], uploads, request.user.id)
+        _send_with_attachments(
+            lambda: services.reply(thread_id, {"body": body}, request.user),
+            uploads,
+            request.user.id,
+        )
     except (Forbidden, NotFoundError, BadRequest) as e:
         reply_error = str(e)
         django_messages.error(request, f"Could not send reply: {e}")
@@ -444,9 +497,9 @@ def message_compose_view(request):
             if not data["subject"] or not data["body"]:
                 raise BadRequest("Subject and message are required.")
             uploads = _validated_attachments(request.FILES.getlist("attachments"))
-            with transaction.atomic():
-                msg = services.send(data, request.user)
-                _save_attachments(msg["id"], uploads, request.user.id)
+            msg = _send_with_attachments(
+                lambda: services.send(data, request.user), uploads, request.user.id
+            )
             if request.POST.get("draft_id"):
                 MessageDraft.objects.filter(
                     id=request.POST["draft_id"], user_id=request.user.id

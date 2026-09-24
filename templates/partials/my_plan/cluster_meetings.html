@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 <!-- Cluster Meetings Card -->
 <div class="card overflow-hidden">
 
@@ -22,6 +22,7 @@ Open Planning
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
 {% if cluster_meetings %}
+{% paginate cluster_meetings "cluster_meetings_page" 10 as cluster_meetings_pager %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
 <thead>
 <tr>
@@ -40,7 +41,7 @@ Open Planning
 </tr>
 </thead>
 <tbody>
-{% for row in cluster_meetings %}
+{% for row in cluster_meetings_pager.rows %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.cluster_district|default:"—" }}</td>
@@ -73,6 +74,7 @@ Open Planning
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=cluster_meetings_pager param="cluster_meetings_page" pagination_label="Cluster meeting pages" %}
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline
 never meets the card edge (it was a hand-built block with its own icon size

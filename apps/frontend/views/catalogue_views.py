@@ -1,6 +1,8 @@
 from functools import wraps
 
 from django.db import transaction
+from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
@@ -15,6 +17,7 @@ from apps.activity_catalogue.models import (
     DeliveryMethod,
 )
 from apps.activity_catalogue.services import list_catalogue, transition_item
+from apps.activities.models import Activity
 from apps.core.enums import SsaIntervention
 from apps.core.permissions import has_permission
 from apps.core.rbac import Permission
@@ -43,14 +46,32 @@ def activity_catalogue_page(request):
     can_manage = has_permission(
         request.user, Permission.ACTIVITY_CATALOGUE_MANAGE.value
     )
-    items = list_catalogue(
-        intervention=request.GET.get("intervention") or None,
-        activity_type=request.GET.get("activity_type") or None,
-        delivery_method=request.GET.get("delivery_method") or None,
-        project_id=request.GET.get("project_id") or None,
-        status=request.GET.get("status") or None,
-        include_inactive=can_manage,
-    ).prefetch_related("versions")
+    # Each card says how many activities use its item. Counted per card in the
+    # template, that was two COUNT queries per item: 130 on every load of this
+    # page (2026-09-24 live-performance audit). One correlated count instead.
+    uses = (
+        Activity.objects.filter(catalogue_item=OuterRef("pk"))
+        .order_by()
+        .values("catalogue_item")
+        .annotate(n=Count("pk"))
+        .values("n")
+    )
+    items = (
+        list_catalogue(
+            intervention=request.GET.get("intervention") or None,
+            activity_type=request.GET.get("activity_type") or None,
+            delivery_method=request.GET.get("delivery_method") or None,
+            project_id=request.GET.get("project_id") or None,
+            status=request.GET.get("status") or None,
+            include_inactive=can_manage,
+        )
+        .annotate(
+            scheduled_use_count=Coalesce(
+                Subquery(uses, output_field=IntegerField()), Value(0)
+            )
+        )
+        .prefetch_related("versions")
+    )
     from apps.projects.scoping import scoped_projects
 
     return render(
