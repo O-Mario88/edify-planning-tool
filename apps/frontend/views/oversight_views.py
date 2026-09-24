@@ -769,70 +769,14 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
         if item.activity_id
     ]
     if meeting_items:
-        from django.db.models import Count
-        from apps.activities.models import Activity
+        from apps.activities.cluster_attendance import invited_head_counts
 
-        meeting_ids = [item.activity_id for item in meeting_items]
-        activities_by_id = {
-            activity.id: activity
-            for activity in Activity.objects.filter(id__in=meeting_ids)
-        }
-        member_counts = dict(
-            School.objects.filter(
-                cluster_id__in={
-                    item.cluster_id for item in meeting_items if item.cluster_id
-                },
-                deleted_at__isnull=True,
-            )
-            .values("cluster_id")
-            .annotate(total=Count("id"))
-            .values_list("cluster_id", "total")
+        head_counts = invited_head_counts(
+            (item.activity_id, item.cluster_id) for item in meeting_items
         )
-        meeting_invites = defaultdict(list)
-        for invite in ClusterActivityAttendance.objects.filter(
-            activity_id__in=meeting_ids, invited=True
-        ):
-            meeting_invites[invite.activity_id].append(invite)
         for item in meeting_items:
-            activity = activities_by_id.get(item.activity_id)
-            per_school = (
-                (activity.participants_per_school or activity.teachers_per_school or 0)
-                if activity
-                else 0
-            )
-            invites = meeting_invites.get(item.activity_id, [])
-            if invites:
-                if (
-                    all(
-                        all(
-                            value is None
-                            for value in (invite.teachers, invite.leaders, invite.other)
-                        )
-                        for invite in invites
-                    )
-                    and not per_school
-                ):
-                    item.participants = (
-                        (activity.expected_participants or 0) if activity else 0
-                    )
-                else:
-                    item.participants = sum(
-                        (invite.teachers or 0)
-                        + (invite.leaders or 0)
-                        + (invite.other or 0)
-                        if any(
-                            value is not None
-                            for value in (invite.teachers, invite.leaders, invite.other)
-                        )
-                        else per_school
-                        for invite in invites
-                    )
-            elif item.cluster_id:
-                item.participants = (
-                    (activity.expected_participants or 0)
-                    if activity and activity.expected_participants
-                    else per_school * member_counts.get(item.cluster_id, 0)
-                )
+            if item.activity_id in head_counts:
+                item.participants = head_counts[item.activity_id]
 
     # ── Expand cluster trainings to confirmed / invited member schools ──
     if all_cluster_training_items:

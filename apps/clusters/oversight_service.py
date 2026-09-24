@@ -111,6 +111,135 @@ def _last_delivered_dates(cluster_ids) -> dict:
     }
 
 
+#: Status tones the session tables colour by (owner, 2026-09-24): green once the
+#: work is verified, blue while it waits on its verifier.
+TONE_COMPLETE = "complete"
+TONE_PENDING = "pending"
+TONE_RETURNED = "returned"
+TONE_OPEN = "open"
+
+#: Partner work waiting on Impact Assessment, Salesforce entry included.
+_IA_PENDING_STATUSES = frozenset({"awaiting_ia_verification", "salesforce_id_required"})
+
+
+def session_status(item) -> tuple[str, str]:
+    """The Status a group training or cluster meeting shows, and its tone.
+
+    A CCEO's completion waits on their Programme Lead ("PL Pending") and the
+    Lead's Verify makes it complete; everyone else's — a Programme Lead's own
+    session, or partner work — waits on Impact Assessment ("IA Pending").
+    Complete means verified, as on the Planning badges: the legacy
+    ``completed`` value was never verified, so it reads as waiting.
+    """
+    from apps.core.enums import ActivityStatus
+    from apps.planning.school_planning_badges import (
+        AWAITING_VERIFICATION_STATUSES,
+        NEEDS_REPLANNING_STATUSES,
+        VERIFIED_STATUSES,
+    )
+
+    status = item.activity_status or ""
+    if item.is_awaiting_partner_schedule:
+        return "Partner yet to schedule", TONE_OPEN
+    if status in VERIFIED_STATUSES:
+        return "Complete", TONE_COMPLETE
+    if status == "submitted_to_pl":
+        return "PL Pending", TONE_PENDING
+    if status in _IA_PENDING_STATUSES:
+        return "IA Pending", TONE_PENDING
+    if status == "completed":
+        return "Awaiting Verification", TONE_PENDING
+    if status in AWAITING_VERIFICATION_STATUSES:
+        return _words(status, ActivityStatus), TONE_PENDING
+    if status in NEEDS_REPLANNING_STATUSES:
+        return _words(status, ActivityStatus), TONE_RETURNED
+    return _words(status, ActivityStatus) or "—", TONE_OPEN
+
+
+def _words(value: str, choices) -> str:
+    """A stored token as its choice label, or plainly spaced when unknown."""
+    if not value:
+        return ""
+    try:
+        return choices(value).label
+    except ValueError:
+        return value.replace("_", " ").title()
+
+
+def _decorate_sessions(principal, items) -> None:
+    """What each session row shows beyond the planning item itself.
+
+    Status and tone, the people invited, the topic and intervention as words,
+    and the one verification this reader may perform on it: a Programme
+    Lead's Verify on a completion waiting on them (the rule
+    ``pl_review.services.confirm`` enforces), or Impact Assessment's Verify on
+    work waiting on IA. A fixed number of queries whatever the row count.
+    """
+    from apps.activities.cluster_attendance import invited_head_counts
+    from apps.core.activity_types import TRAINING_TYPES
+    from apps.core.enums import SsaIntervention
+    from apps.core.permissions import RolePermissionService, has_permission
+    from apps.core.rbac import Permission
+    from apps.core.scoping import owner_ids
+    from apps.pl_review.services import review_rule
+
+    if not items:
+        return
+    head_counts = invited_head_counts(
+        (item.activity_id, item.cluster_id) for item in items if item.activity_id
+    )
+    own = {str(i) for i in owner_ids(principal) if i}
+    can_view = RolePermissionService.can_view_page
+    may_review = (
+        review_rule(principal) if can_view(principal, "pl_review_queue") else None
+    )
+    ia_verifies = has_permission(principal, Permission.IA_VERIFY.value)
+    ia_staff_page = ia_verifies and can_view(principal, "ia_review_workspace")
+    ia_partner_page = ia_verifies and can_view(principal, "ia_partner_evidence")
+
+    for item in items:
+        item.session_status, item.session_tone = session_status(item)
+        if item.activity_id in head_counts:
+            item.participants = head_counts[item.activity_id]
+        item.intervention_label = _words(item.target_intervention, SsaIntervention)
+        training = item.training_name if item.training_name != "—" else ""
+        purpose = item.purpose_of_visit if item.purpose_of_visit != "—" else ""
+        is_training = item.activity_type in TRAINING_TYPES
+        item.topic = (
+            (training if is_training else "")
+            or purpose
+            or item.operational_rationale
+            or ("Group training" if is_training else "Cluster meeting")
+        )
+        item.is_owner = bool(
+            {str(item.operational_owner_id or ""), str(item.executor_id or "")} & own
+        )
+        # The owner of a completion under review, as pl_review reads it.
+        owner = item.planned_by_id
+        item.pl_verify = bool(
+            may_review
+            and item.activity_id
+            and item.activity_status == "submitted_to_pl"
+            and may_review(owner)
+        )
+        # Partner work is verified on Partner Evidence, which carries the
+        # Salesforce entry step; staff work in the IA review workspace.
+        item.ia_verify_url = ""
+        if (
+            item.activity_id
+            and item.activity_status in _IA_PENDING_STATUSES
+            and str(owner or "") not in own
+        ):
+            if item.is_partner_work and ia_partner_page:
+                item.ia_verify_url = f"/ia/partner-evidence/{item.activity_id}/"
+            elif (
+                not item.is_partner_work
+                and ia_staff_page
+                and item.activity_status == "awaiting_ia_verification"
+            ):
+                item.ia_verify_url = f"/ia/verification/{item.activity_id}/"
+
+
 def _label(profile) -> str:
     if profile is None:
         return "Unassigned"
@@ -320,6 +449,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         if item.cluster_id in cluster_ids
         or (uses_member_tabs and item.operational_owner_id in allowed_people)
     ]
+    _decorate_sessions(principal, cluster_work)
 
     # One directory for the people holding clusters and the people running
     # the sessions. A person's work is filed by the same profile and the same

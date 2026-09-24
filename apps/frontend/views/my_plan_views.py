@@ -1469,8 +1469,8 @@ def pl_review_drawer(request, activity_id):
         action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
         submit="Approve completion",
         note=(
-            "Approving sends this completion to Impact Assessment for "
-            "verification. To send it back to the officer, use Return."
+            "Approving verifies this completion and marks it complete. To "
+            "send it back to the officer, use Return."
         ),
     )
 
@@ -1534,9 +1534,9 @@ def pl_confirm_action(request, activity_id):
                 actor_role=request.user.active_role,
                 success=True,
             )
-            messages.success(
-                request, "Activity completion approved and routed to IA verification."
-            )
+            # pl_review.services.confirm verifies the work outright: the
+            # completion is complete, not waiting on Impact Assessment.
+            messages.success(request, "Completion verified and marked complete.")
         except Exception as e:
             messages.error(request, str(getattr(e, "detail", e)))
 

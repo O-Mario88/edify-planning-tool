@@ -1,20 +1,68 @@
 {% load frontend_filters table_pagination %}
+{% comment %}
+Group trainings and cluster meetings (owner, 2026-09-24): Cluster Name,
+District, Planned Date, Executor, Purpose (Meeting Topic), SSA Intervention,
+Participants, Cost, Status, Actions. Status and the verify actions come from
+apps.clusters.oversight_service._decorate_sessions: Complete (green) once
+verified; PL Pending (blue) while a CCEO's completion waits on their Programme
+Lead, whose Verify makes it complete; IA Pending (blue) while a Programme
+Lead's own session waits on Impact Assessment.
+{% endcomment %}
 {% paginate activities page_param|default:"cluster_activities_page" as activity_pager %}
 <section>
   <h3 class="edify-section-heading">{{ heading }} <span class="edify-text-caption">({{ activities|length }})</span></h3>
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-left" aria-label="{{ heading }}">
-      <thead><tr><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Delivery</th></tr></thead>
+    <table class="edify-record-table w-full text-left whitespace-nowrap" aria-label="{{ heading }}" data-mobile-table="scroll" data-cluster-sessions>
+      <thead>
+        <tr>
+          <th scope="col" class="min-w-[180px]">Cluster Name</th>
+          <th scope="col" class="min-w-[120px]">District</th>
+          <th scope="col" class="min-w-[110px]">Planned Date</th>
+          <th scope="col" class="min-w-[130px]">Executor</th>
+          <th scope="col" class="min-w-[180px]">Purpose (Meeting Topic)</th>
+          <th scope="col" class="min-w-[140px]">SSA Intervention</th>
+          <th scope="col" class="text-center min-w-[100px]">Participants</th>
+          <th scope="col" class="text-right min-w-[110px]">Cost</th>
+          <th scope="col" class="min-w-[120px]">Status</th>
+          <th scope="col" class="text-right min-w-[90px]">Actions</th>
+        </tr>
+      </thead>
       <tbody>
         {% for item in activity_pager.rows %}
-        <tr>
-          <td>{% if can_open_cluster == False %}{% firstof item.cluster_name item.context_label %}{% else %}<a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a>{% endif %}</td>
-          <td>{% if item.training_name and item.training_name != "—" %}{{ item.training_name }}{% else %}{{ item.activity_type|replace_underscore|title }}{% endif %}</td>
-          <td>{{ item.planned_date|date:"d M Y"|default:"Awaiting schedule" }}</td>
-          <td>{% firstof item.activity_status item.assignment_status as status %}{{ status|replace_underscore|title }}</td>
-          <td>{% firstof item.executor_name member.name %}</td>
+        <tr data-session-row="{% firstof item.activity_id item.partner_assignment_id %}">
+          <td class="font-semibold" data-record-title>{% if can_open_cluster == False or not item.cluster_id %}{% firstof item.cluster_name item.context_label %}{% else %}<a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a>{% endif %}</td>
+          <td data-label="District">{{ item.district_name|default:"—" }}</td>
+          <td class="tabular-nums" data-label="Planned Date">{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
+          <td data-label="Executor">{% firstof item.executor_name member.name %}</td>
+          <td class="whitespace-normal text-xs" data-label="Purpose (Meeting Topic)">{{ item.topic|default:"—" }}</td>
+          <td data-label="SSA Intervention">{% if item.intervention_label %}<span class="pill pill-neutral text-xs font-medium">{{ item.intervention_label }}</span>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+          <td class="text-center tabular-nums" data-label="Participants">{{ item.participants|default:"—" }}</td>
+          <td class="text-right tabular-nums" data-label="Cost">{% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}</td>
+          <td data-label="Status"><span class="cluster-session-status" data-status-tone="{{ item.session_tone }}">{{ item.session_status }}</span></td>
+          {% if item.pl_verify %}
+          <td class="text-right" data-record-action data-label="Actions">
+            <span class="inline-flex items-center justify-end gap-1.5">
+              <button type="button" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer" hx-get="/pl/review-queue/{{ item.activity_id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the completion from {% firstof item.executor_name member.name %}">View</button>
+              <form method="post" action="/pl/review-queue/{{ item.activity_id }}/confirm" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verify</button>
+              </form>
+            </span>
+          </td>
+          {% elif item.ia_verify_url %}
+          <td class="text-right" data-record-action data-label="Actions">
+            <a href="{{ item.ia_verify_url }}" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verify</a>
+          </td>
+          {% elif item.session_tone == "pending" %}
+          <td class="text-right" data-record-action data-label="Actions">
+            <button type="button" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer" hx-get="/team-planning-oversight/detail?activity_id={{ item.activity_id }}" hx-target="#drawer-container" hx-swap="innerHTML">View</button>
+          </td>
+          {% else %}
+          {% include "partials/oversight/_row_actions.html" %}
+          {% endif %}
         </tr>
-        {% empty %}<tr><td colspan="5">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="10">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

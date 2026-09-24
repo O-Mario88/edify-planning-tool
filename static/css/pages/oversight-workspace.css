@@ -669,3 +669,60 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+
+/* Cluster Oversight session tables (owner, 2026-09-24): the Status reads in
+   the colour of where the work stands — green once verified, blue while it
+   waits on the Programme Lead or Impact Assessment. */
+[data-oversight-workspace] .cluster-session-status {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.5rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--edify-border);
+  border-radius: 9999px;
+  background-color: var(--edify-surface);
+  color: var(--edify-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  white-space: nowrap;
+}
+
+[data-oversight-workspace] .cluster-session-status[data-status-tone="complete"] {
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
+
+[data-oversight-workspace] .cluster-session-status[data-status-tone="pending"] {
+  border-color: var(--edify-info-border);
+  color: var(--edify-info-text);
+}
+
+[data-oversight-workspace] .cluster-session-status[data-status-tone="returned"] {
+  border-color: var(--edify-warning-border);
+  color: var(--edify-warning-text);
+}
+
+[data-oversight-workspace] .cluster-session-action {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 1.75rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--edify-border);
+  border-radius: 0.375rem;
+  background-color: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+[data-oversight-workspace] .cluster-session-action:hover {
+  background-color: var(--edify-surface-muted, var(--edify-surface));
+}
+
+[data-oversight-workspace] .cluster-session-action--verify {
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
