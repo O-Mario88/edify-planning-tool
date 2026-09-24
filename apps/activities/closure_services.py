@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from django.db import transaction
@@ -17,6 +18,8 @@ from apps.core.exceptions import BadRequest
 from apps.evidence.models import EvidenceRecord
 from apps.fund_requests.models import NetSuiteExpenseRecord, PartnerPayment
 from apps.notifications.services import WorkflowNotificationService
+
+logger = logging.getLogger(__name__)
 
 
 #: Statuses in which the work has not happened (check 1). A visit request
@@ -651,8 +654,13 @@ class ActivityClosureService:
                         "actual_spend": actual_spend_total,
                     },
                 )
-            except Exception:  # pragma: no cover
-                pass
+            except Exception:  # noqa: BLE001 — the closure stands; the gap must not
+                # A closure missing from the tamper-evident chain is exactly
+                # what an audit looks for, and this used to vanish silently.
+                logger.exception(
+                    "Closure of activity %s was not written to the audit chain",
+                    activity.id,
+                )
 
             # Send Notification
             if activity.responsible_staff_id:
