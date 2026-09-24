@@ -1667,9 +1667,13 @@ def team_targets_catchup_action_view(request, plan_id):
             f"{'y' if len(result['created']) == 1 else 'ies'} entered Planning.",
         )
     elif action == "return":
-        PLCatchUpPlanService.return_plan(
-            plan, request.user, request.POST.get("reason") or ""
-        )
+        try:
+            PLCatchUpPlanService.return_plan(
+                plan, request.user, request.POST.get("reason") or ""
+            )
+        except BadRequest as exc:
+            messages.error(request, str(exc))
+            return redirect("/team-targets")
         messages.info(request, "Catch-up plan returned.")
     else:
         return HttpResponseBadRequest("Unknown action.")

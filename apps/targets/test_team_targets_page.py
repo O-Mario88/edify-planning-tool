@@ -837,6 +837,30 @@ class TeamTargetsPageTest(TestCase):
         notes = [str(m) for m in get_messages(resp.wsgi_request)]
         self.assertIn("This catch-up plan is already approved.", notes)
 
+    def test_a_return_cannot_overwrite_an_approved_plan(self):
+        """A return from a tab loaded before the approval used to put the plan
+        back to "returned" while its recovery work was already in Planning."""
+        plan = self._recovery_plan()
+        second_tab = CatchUpPlan.objects.select_related("area").get(pk=plan.pk)
+        first = PLCatchUpPlanService.approve(plan, self.pl)
+
+        with self.assertRaises(BadRequest):
+            PLCatchUpPlanService.return_plan(second_tab, self.pl, "Too late")
+
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, "approved")
+        self.assertEqual(plan.created_activity_ids, first["created"])
+
+        c = Client()
+        c.force_login(self.pl)
+        resp = c.post(
+            f"/team-targets/catchup/{plan.id}/action",
+            {"action": "return", "reason": "Too late"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        notes = [str(m) for m in get_messages(resp.wsgi_request)]
+        self.assertIn("This catch-up plan is already approved.", notes)
+
     # ── 19: reversal ─────────────────────────────────────────────────────────
     def test_target_credit_reversed_when_activity_returned(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)

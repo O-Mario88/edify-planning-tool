@@ -2114,9 +2114,26 @@ class PLCatchUpPlanService:
 
     @staticmethod
     def return_plan(plan: CatchUpPlan, approver, reason: str):
-        plan.status = "returned"
-        plan.return_reason = (reason or "")[:512]
-        plan.save(update_fields=["status", "return_reason", "updated_at"])
+        from django.db import transaction
+
+        # From "submitted" only, under the lock approve() takes: a return that
+        # read the plan before an approval committed used to overwrite it,
+        # leaving a "returned" plan whose recovery work was already in
+        # Planning.
+        with transaction.atomic():
+            plan = (
+                CatchUpPlan.objects.select_for_update(of=("self",))
+                .select_related("area")
+                .get(pk=plan.pk)
+            )
+            if plan.status != "submitted":
+                raise BadRequest(
+                    "This catch-up plan is already "
+                    f"{plan.get_status_display().lower()}."
+                )
+            plan.status = "returned"
+            plan.return_reason = (reason or "")[:512]
+            plan.save(update_fields=["status", "return_reason", "updated_at"])
         PLCatchUpPlanService._resolve(CATCHUP_PLAN_PROPOSED, plan.id)
         PLCatchUpPlanService._notify(
             plan.staff_user_id,
