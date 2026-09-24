@@ -1127,7 +1127,7 @@
    "audit_id": "KPI-SOURCE-058",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2691,
+   "line": 2769,
    "label": null,
    "keys": [
     "aging",
@@ -1147,7 +1147,7 @@
    "audit_id": "KPI-SOURCE-059",
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1258,
+   "line": 1263,
    "label": null,
    "keys": [
     "achieved",
@@ -1170,7 +1170,7 @@
    "audit_id": "KPI-SOURCE-060",
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1321,
+   "line": 1325,
    "label": null,
    "keys": [
     "achieved",
@@ -1193,7 +1193,7 @@
    "audit_id": "KPI-SOURCE-061",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1560,
+   "line": 1564,
    "label": null,
    "keys": [
     "band",
@@ -1217,7 +1217,7 @@
    "audit_id": "KPI-SOURCE-062",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2609,
+   "line": 2687,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1235,7 +1235,7 @@
    "audit_id": "KPI-SOURCE-063",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2610,
+   "line": 2688,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1253,7 +1253,7 @@
    "audit_id": "KPI-SOURCE-064",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2611,
+   "line": 2689,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1271,7 +1271,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2612,
+   "line": 2690,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1289,7 +1289,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2613,
+   "line": 2691,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1307,7 +1307,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2614,
+   "line": 2692,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1325,7 +1325,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1524,
+   "line": 1528,
    "label": null,
    "keys": [
     "band",
@@ -1930,7 +1930,7 @@
    "audit_id": "KPI-SOURCE-099",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 2009,
+   "line": 2077,
    "label": null,
    "keys": [
     "amount",
@@ -3894,7 +3894,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1388,
+   "line": 1389,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -8039,7 +8039,7 @@
    "audit_id": "KPI-SOURCE-445",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 1111,
+   "line": 1120,
    "label": "Search coverage by the staff member covered or covering",
    "keys": [
     "action",
@@ -10751,7 +10751,7 @@
    "audit_id": "KPI-SOURCE-593",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1456,
+   "line": 1526,
    "label": "All Activities",
    "keys": [
     "count",
@@ -10770,7 +10770,7 @@
    "audit_id": "KPI-SOURCE-594",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1465,
+   "line": 1535,
    "label": null,
    "keys": [
     "count",
@@ -11214,7 +11214,7 @@
    "audit_id": "KPI-SOURCE-618",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 637,
+   "line": 640,
    "label": null,
    "keys": [
     "label",
@@ -11231,7 +11231,7 @@
    "audit_id": "KPI-SOURCE-619",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 646,
+   "line": 649,
    "label": "Scheduled",
    "keys": [
     "label",
@@ -11248,7 +11248,7 @@
    "audit_id": "KPI-SOURCE-620",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 647,
+   "line": 650,
    "label": "In progress",
    "keys": [
     "label",
@@ -11265,7 +11265,7 @@
    "audit_id": "KPI-SOURCE-621",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 648,
+   "line": 651,
    "label": "Returned",
    "keys": [
     "label",
@@ -11282,7 +11282,7 @@
    "audit_id": "KPI-SOURCE-622",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 649,
+   "line": 652,
    "label": "In review",
    "keys": [
     "label",
@@ -11299,7 +11299,7 @@
    "audit_id": "KPI-SOURCE-623",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 650,
+   "line": 653,
    "label": "Completed",
    "keys": [
     "label",
@@ -11316,7 +11316,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
-   "line": 651,
+   "line": 654,
    "label": "Rescheduled",
    "keys": [
     "label",
@@ -40335,8 +40335,8 @@
   {
    "audit_id": "KPI-PAYLOAD-016",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 808,
-   "function": "leave_approvals_view",
+   "line": 817,
+   "function": "_leave_approvals_page",
    "target": "leave_kpi_items",
    "source_item_count": 6,
    "registered_metric_keys": [
