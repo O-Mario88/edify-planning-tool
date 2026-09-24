@@ -503,6 +503,88 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn("Team progress for School Visits", html)
         self.assertNotIn("Team progress for Cluster Meetings", html)
 
+    def test_matrix_rows_equal_the_per_person_computation(self):
+        """The matrix reads the team once (2026-09-24 A+ audit: a rebuild and
+        three reads per person, 758 queries for a country). Each row must be
+        what the per-person rebuild and reads produced, for every area filter,
+        and the query count must not grow with the team."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from apps.targets.my_targets import MyTargetQueryService
+
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
+        self._monthly(self.cceo1, "cluster_meetings", JULY, 2)
+        self._monthly(self.cceo2, "school_visits", JULY, 3)
+        self._act(self.cceo1_sp, date(2026, 7, 6), sf_id="SF-M1")
+        self._act(self.cceo2_sp, date(2026, 7, 8), sf_id="SF-M2")
+
+        def per_person_rows(area=""):
+            from apps.targets.my_targets import priority_target_areas_for_users
+            from apps.targets.team_targets import supervised_users
+
+            team = supervised_users(self.pl)
+            areas_by_user = priority_target_areas_for_users(team, FY)
+            rows = []
+            for u in team:
+                areas = areas_by_user.get(str(u.id), [])
+                if area:
+                    areas = [item for item in areas if item.key == area]
+                TargetAchievementService.rebuild(u, FY)
+                targets = MyTargetQueryService.monthly_targets(u, FY, areas=areas)
+                achieved = MyTargetQueryService.monthly_achievements(u, FY, areas=areas)
+                for a in areas:
+                    rows.append(
+                        (
+                            u.name,
+                            a.label,
+                            [targets[a.key][m - 1] for m in range(1, 13)],
+                            [achieved[a.key][m - 1] for m in range(1, 13)],
+                        )
+                    )
+            return rows
+
+        def matrix_rows(area=""):
+            payload = PLTeamTargetsService.matrix(
+                self.pl, fy=FY, month_of_fy=JULY, area=area
+            )
+            return payload["rows"]
+
+        for area in ("", "school_visits", "cluster_meetings"):
+            with self.subTest(area=area):
+                rows = matrix_rows(area)
+                self.assertTrue(rows)
+                expected = per_person_rows(area)
+                self.assertEqual(
+                    [(r["staff"], r["area"]) for r in rows],
+                    [(name, label) for name, label, _t, _a in expected],
+                )
+                for row, (_name, _label, targets, achieved) in zip(rows, expected):
+                    fy_cell = row["cells"][-1]
+                    self.assertEqual(fy_cell["t"], sum(targets))
+                    self.assertEqual(fy_cell["a"], sum(achieved))
+                    month_cell = row["cells"][0]
+                    self.assertEqual(month_cell["t"], targets[JULY - 1])
+                    self.assertEqual(month_cell["a"], achieved[JULY - 1])
+
+        # Measured inside a request's memo scope, as the page runs: the
+        # target-area configuration is read once per request by design.
+        from apps.core.request_cache import scoped
+
+        with scoped(), CaptureQueriesContext(connection) as small:
+            matrix_rows()
+        for n in range(4):
+            extra, extra_sp = self._staff(
+                f"extra{n}@t.org", f"Extra {n}", EdifyRole.CCEO.value
+            )
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.pl_sp, supervisee=extra_sp
+            )
+            self._monthly(extra, "school_visits", JULY, 2)
+        with scoped(), CaptureQueriesContext(connection) as large:
+            matrix_rows()
+        self.assertLessEqual(len(large.captured_queries), len(small.captured_queries))
+
     def test_target_area_progress_uses_the_wide_workspace_drawer_only(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         client = Client()
