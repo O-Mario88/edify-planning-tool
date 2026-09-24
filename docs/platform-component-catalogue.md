@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **491**
+Components and application partials: **492**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -351,6 +351,7 @@ Components and application partials: **491**
 | `partials/notifications/notification_drawer_list.html` | application-partial | Reusable notification drawer list interface primitive | canonical; default | inherits containing page contract | keyboard focus visibility | /notifications/<str:notif_id>/read<br>/notifications/drawer<br>/notifications/mark-all-read | 0 |
 | `partials/oversight/_cluster_table.html` | application-partial | Reusable  cluster table interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /cluster-oversight/ | 0 |
 | `partials/oversight/_core_schools_table.html` | application-partial | Reusable  core schools table interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /core-schools-oversight/ | 0 |
+| `partials/oversight/_core_work_table.html` | application-partial | Reusable  core work table interface primitive | {{ item.session_tone }}; default, empty | explicit responsive contract | accessible name and label | /core-schools-oversight/ | 0 |
 | `partials/oversight/_lens_tabs.html` | application-partial | Reusable  lens tabs interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_partner_view_button.html` | application-partial | Reusable  partner view button interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/_row_actions.html` | application-partial | Reusable  row actions interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /cluster-oversight/<br>/country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |

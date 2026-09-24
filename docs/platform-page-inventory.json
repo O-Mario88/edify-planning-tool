@@ -8441,6 +8441,32 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 3644,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Core Work Table",
+      "purpose": "Reusable  core work table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/_core_work_table.html",
+      "variants": [
+        "{{ item.session_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 980,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -8686,7 +8712,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9158,
+      "bytes": 9855,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -10658,7 +10684,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6760,
+      "bytes": 7157,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/projects/<str:project_id>/schools"
@@ -61892,8 +61918,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /projects/{{ project_id }}/schools/bulk-assign-drawer",
-        "GET /planning/schedule-modal?school_id={{ row.school_code }}",
-        "GET /planning/assign-partner-modal?school_id={{ row.school_code }}"
+        "GET /planning/schedule-modal?school_id={{ row.school_id }}&amp;project_id={{ project_id }}",
+        "GET /projects/planning/bulk-partner?assignments={{ row.assignment_id }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -73279,7 +73305,7 @@
       "backend_view": "apps.frontend.views.extended_views.project_monitoring_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/projects/monitoring.html",
         "test:referenced-by-automated-test",
@@ -73290,7 +73316,10 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ school.schedule_url }}",
+        "GET {{ school.partner_url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -73303,16 +73332,17 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "project_monitoring",
-      "primary_action": "Review operational workspace",
+      "primary_action": "Open next queue record",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Watching a Special Project without being able to touch it.",
+      "purpose": "Following a Special Project school by school.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "PROJECT_COORDINATOR"
       ],
       "route": "/projects/monitoring",
       "route_name": "project_monitoring",
@@ -73359,8 +73389,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -73374,6 +73404,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[12px]",
         "text-[13px]",
         "text-[15px]",
         "text-[18px]"
@@ -105303,7 +105334,7 @@
     "activity_states": 24,
     "all_routes": 1296,
     "api_routes": 360,
-    "component_templates": 491,
+    "component_templates": 492,
     "full_pages": 260,
     "mobile_contract_pass": 533,
     "nonvisual_actions": 266,

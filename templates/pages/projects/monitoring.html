@@ -179,11 +179,10 @@ is never shown as "no change".
               </td>
               <td class="px-4 py-3 align-top" data-label="Planning">
                 <span class="edify-status-badge {{ school.plan_tone }}">{{ school.plan_label }}</span>
-                {% with who=school.partner_name|default:school.planned_by %}
+                {% firstof school.partner_name school.planned_by "" as who %}
                 {% if school.next_date or who and not school.planned_by_coordinator %}
                 <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{% if who and not school.planned_by_coordinator %}{{ who }}{% if school.next_date %} · {% endif %}{% endif %}{% if school.next_date %}{% if school.is_overdue %}overdue {% endif %}{{ school.next_date|date:"j M" }}{% endif %}</p>
                 {% endif %}
-                {% endwith %}
               </td>
               <td class="px-4 py-3 align-top" data-label="Execution">
                 <span class="edify-status-badge {{ school.execution_tone }}">{{ school.execution_label }}</span>

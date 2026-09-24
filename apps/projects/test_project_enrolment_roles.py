@@ -235,13 +235,21 @@ class TheCoordinatorWorksFromTheProjectCardTest(_Roles):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn(self.cceo_school.name, html)
-        self.assertIn(
-            f"/planning/schedule-modal?school_id={self.cceo_school.school_id}", html
+        # Both actions stamp the project on the work (2026-09-24): scheduling
+        # carries the project, and the partner handover is the project's own
+        # rather than the generic school-support drawer, which files none.
+        enrolment = ProjectSchoolAssignment.objects.get(
+            project=self.project, school=self.cceo_school
         )
         self.assertIn(
-            f"/planning/assign-partner-modal?school_id={self.cceo_school.school_id}",
+            f"/planning/schedule-modal?school_id={self.cceo_school.id}"
+            f"&amp;project_id={self.project.id}",
             html,
         )
+        self.assertIn(
+            f"/projects/planning/bulk-partner?assignments={enrolment.id}", html
+        )
+        self.assertNotIn("/planning/assign-partner-modal", html)
         # A school in nobody's project is not listed by it.
         self.assertNotIn(self.outsider.name, html)
 

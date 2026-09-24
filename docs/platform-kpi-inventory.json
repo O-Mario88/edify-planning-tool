@@ -11354,7 +11354,7 @@
    "audit_id": "KPI-SOURCE-626",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 776,
+   "line": 845,
    "label": null,
    "keys": [
     "label",
@@ -11371,7 +11371,7 @@
    "audit_id": "KPI-SOURCE-627",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 785,
+   "line": 854,
    "label": "Staff-led",
    "keys": [
     "label",
@@ -11388,7 +11388,7 @@
    "audit_id": "KPI-SOURCE-628",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 786,
+   "line": 855,
    "label": "Partner-led",
    "keys": [
     "label",
@@ -11405,7 +11405,7 @@
    "audit_id": "KPI-SOURCE-629",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 787,
+   "line": 856,
    "label": "Not assigned",
    "keys": [
     "label",
@@ -11422,7 +11422,7 @@
    "audit_id": "KPI-SOURCE-630",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 790,
+   "line": 859,
    "label": null,
    "keys": [
     "label",
@@ -40832,7 +40832,7 @@
   {
    "audit_id": "KPI-PAYLOAD-030",
    "module": "apps/projects/planning_service.py",
-   "line": 550,
+   "line": 619,
    "function": "get_planning",
    "target": "kpis",
    "source_item_count": 6,
@@ -40862,7 +40862,7 @@
   {
    "audit_id": "KPI-PAYLOAD-031",
    "module": "apps/projects/planning_service.py",
-   "line": 595,
+   "line": 664,
    "function": "get_planning",
    "target": "band_cards",
    "source_item_count": 3,
@@ -40886,7 +40886,7 @@
   {
    "audit_id": "KPI-PAYLOAD-032",
    "module": "apps/projects/planning_service.py",
-   "line": 671,
+   "line": 740,
    "function": "get_planning",
    "target": "delivery",
    "source_item_count": 5,
