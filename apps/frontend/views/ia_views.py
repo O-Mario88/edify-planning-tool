@@ -1151,25 +1151,52 @@ def _ia_regions(request):
     return regions
 
 
-def _ia_activity_rollup(queryset, geography_field):
+IA_ROLLUP_METRICS = ("planned", "achieved", "verified", "waiting", "returned")
+
+
+def _ia_rollup_counts(values_queryset):
     from django.db.models import Count
 
     from apps.targets.performance import ACHIEVED_STATUSES
 
+    return values_queryset.annotate(
+        planned=Count("id"),
+        achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+        verified=Count("id", filter=Q(ia_verification_status="confirmed")),
+        waiting=Count("id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)),
+        returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
+    )
+
+
+def _ia_activity_rollup(queryset, geography_field):
     return {
         row[geography_field]: row
-        for row in queryset.exclude(**{f"{geography_field}__isnull": True})
-        .values(geography_field)
-        .annotate(
-            planned=Count("id"),
-            achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
-            verified=Count("id", filter=Q(ia_verification_status="confirmed")),
-            waiting=Count(
-                "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
-            ),
-            returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
+        for row in _ia_rollup_counts(
+            queryset.exclude(**{f"{geography_field}__isnull": True}).values(
+                geography_field
+            )
         )
     }
+
+
+def _ia_activity_rollup_pair(queryset, district_field, region_field):
+    """`_ia_activity_rollup` by a district field and by a region field, from
+    one GROUP BY over both: the counts are sums, so adding up the (district,
+    region) groups gives every district's and every region's exactly. One
+    scan of the reach where there were two."""
+    by_district: dict = {}
+    by_region: dict = {}
+    for row in _ia_rollup_counts(queryset.values(district_field, region_field)):
+        for field, rollup in ((district_field, by_district), (region_field, by_region)):
+            key = row[field]
+            if key is None:
+                continue
+            totals = rollup.setdefault(
+                key, {field: key, **dict.fromkeys(IA_ROLLUP_METRICS, 0)}
+            )
+            for metric in IA_ROLLUP_METRICS:
+                totals[metric] += row[metric]
+    return by_district, by_region
 
 
 def _ia_merge_rollups(*rollups):
@@ -1221,9 +1248,15 @@ def _ia_school_reach_sets(request, performance_qs):
     achieved_by_district: dict = {}
     planned_by_owner: dict = {}
     achieved_by_owner: dict = {}
-    for owner_id, school_id, district_id, status in performance_qs.exclude(
-        school_id__isnull=True
-    ).values_list("responsible_staff_id", "school_id", "school__district_id", "status"):
+    # Unordered: these become sets read by key, and sorting the year's
+    # activities by the model's default -created_at was a quarter of the query.
+    for owner_id, school_id, district_id, status in (
+        performance_qs.exclude(school_id__isnull=True)
+        .order_by()
+        .values_list(
+            "responsible_staff_id", "school_id", "school__district_id", "status"
+        )
+    ):
         planned_by_owner.setdefault(owner_id, set()).add(school_id)
         if district_id:
             planned_by_district.setdefault(district_id, set()).add(school_id)
@@ -1275,7 +1308,9 @@ def _ia_geography_context(request, performance_qs=None, reach_sets=None) -> dict
     if reach_sets is None:
         reach_sets = _ia_school_reach_sets(request, performance_qs)
 
-    school_district_rollup = _ia_activity_rollup(performance_qs, "school__district_id")
+    school_district_rollup, school_region_rollup = _ia_activity_rollup_pair(
+        performance_qs, "school__district_id", "school__region_id"
+    )
     event_district_rollup = _ia_activity_rollup(performance_qs, "event_district_id")
 
     def _school_reach(district_id):
@@ -1332,7 +1367,6 @@ def _ia_geography_context(request, performance_qs=None, reach_sets=None) -> dict
         group["count"] = len(group["districts"])
         district_groups.append(group)
 
-    school_region_rollup = _ia_activity_rollup(performance_qs, "school__region_id")
     event_region_rollup = _ia_activity_rollup(
         performance_qs, "event_district__region_id"
     )
@@ -1514,9 +1548,29 @@ def _ia_operations_context(request, header: dict) -> dict:
     evidence = EvidenceRecord.objects.filter(
         quarantined=False, activity_id__in=reach_ids
     )
-    evidence_pending = evidence.filter(status="uploaded").count()
+    # Each table is read once: today's SSA uploads ride on the review donut's
+    # aggregate, and the evidence waiting for review is the sum of the
+    # per-kind panel's "uploaded" counts. Same rows, same figures.
+    ssa_record_facts = ssa_records.aggregate(
+        total=Count("id"),
+        confirmed=Count("id", filter=Q(verification_status="confirmed")),
+        pending=Count("id", filter=Q(verification_status="pending")),
+        created_today=Count("id", filter=Q(created_at__gte=today_start)),
+    )
+    evidence_by_kind = list(
+        evidence.values("kind")
+        .annotate(
+            submitted=Count("id"),
+            verified=Count("id", filter=Q(status="accepted")),
+            returned=Count("id", filter=Q(status="returned")),
+            rejected=Count("id", filter=Q(status="rejected")),
+            uploaded=Count("id", filter=Q(status="uploaded")),
+        )
+        .order_by("-submitted")
+    )
+    evidence_pending = sum(row["uploaded"] for row in evidence_by_kind)
     uploads_today = (
-        ssa_records.filter(created_at__gte=today_start).count()
+        ssa_record_facts["created_today"]
         + EvidenceRecord.objects.filter(
             created_at__gte=today_start, activity_id__in=reach_ids
         ).count()
@@ -1675,11 +1729,6 @@ def _ia_operations_context(request, header: dict) -> dict:
         share_of=school_total or None,
     )
 
-    ssa_record_facts = ssa_records.aggregate(
-        total=Count("id"),
-        confirmed=Count("id", filter=Q(verification_status="confirmed")),
-        pending=Count("id", filter=Q(verification_status="pending")),
-    )
     ssa_rec_total = ssa_record_facts["total"]
     ssa_rec_confirmed = ssa_record_facts["confirmed"]
     ssa_rec_pending = ssa_record_facts["pending"]
@@ -1727,14 +1776,7 @@ def _ia_operations_context(request, header: dict) -> dict:
             "returned": row["returned"],
             "rejected": row["rejected"],
         }
-        for row in evidence.values("kind")
-        .annotate(
-            submitted=Count("id"),
-            verified=Count("id", filter=Q(status="accepted")),
-            returned=Count("id", filter=Q(status="returned")),
-            rejected=Count("id", filter=Q(status="rejected")),
-        )
-        .order_by("-submitted")
+        for row in evidence_by_kind
     ]
     evidence_totals = {
         "submitted": sum(m["submitted"] for m in evidence_metrics),

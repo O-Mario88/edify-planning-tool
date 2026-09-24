@@ -46,11 +46,13 @@ from __future__ import annotations
 import json
 import warnings
 from collections import defaultdict
+from datetime import date
+from datetime import timezone as dt_timezone
 
 import numpy as np
 import pandas as pd
-from django.db.models import Q
-from django.db.models.functions import Coalesce
+from django.db.models import F, Lookup, Q
+from django.db.models.functions import Coalesce, TruncDate
 
 
 from apps.accounts.models import StaffSchoolAssignment
@@ -185,59 +187,87 @@ def _scoped_schools(principal):
 # ── Frame builders ────────────────────────────────────────────────────────────
 
 
-def _latest_confirmed_records(school_ids: list[str], fy: str) -> dict[str, dict]:
+class _InArray(Lookup):
+    """``column IN ids`` written ``column = ANY(%s)``, the ids one array
+    parameter. A literal IN list of a country's 50,000 school ids spent more
+    time in bind-by-bind adaptation than in the query (performance rescue,
+    2026-09-23); and unlike ``IN (SELECT unnest(...))`` the planner knows the
+    array's size, so it hashes it rather than probing an index per id."""
+
+    lookup_name = "in_array"
+    prepare_rhs = False
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        return f"{lhs} = ANY(%s::varchar[])", [*lhs_params, list(self.rhs)]
+
+
+def _latest_confirmed_records(
+    school_ids: list[str], fy: str
+) -> dict[str, tuple[str, date]]:
     """Latest confirmed SSA record per school for one FY (upload enforces one
-    per FY; newest-first dedupe keeps this robust against legacy duplicates)."""
+    per FY; newest-first dedupe keeps this robust against legacy duplicates):
+    {school_id: (record id, UTC date of the assessment)}, in school_id order.
+
+    DISTINCT ON keeps the first row per school in the same newest-first
+    order. The date is taken in SQL, in UTC as ``date_of_ssa.date()`` read
+    it: Django parses each timestamptz in Python, a tenth of a second for
+    40,000 of them."""
+    if not school_ids:
+        return {}
     rows = (
         SsaRecord.objects.filter(
-            school_id__in=school_ids,
+            _InArray(F("school_id"), school_ids),
             fy=fy,
             deleted_at__isnull=True,
             verification_status=VerificationStatus.CONFIRMED.value,
         )
-        .values("id", "school_id", "date_of_ssa")
         .order_by("school_id", "-date_of_ssa", "-created_at")
+        .distinct("school_id")
+        .values_list(
+            "school_id", "id", TruncDate("date_of_ssa", tzinfo=dt_timezone.utc)
+        )
     )
-    latest: dict[str, dict] = {}
-    for row in rows:
-        latest.setdefault(row["school_id"], row)
-    return latest
+    return {school_id: (record_id, taken_on) for school_id, record_id, taken_on in rows}
 
 
-def improvement_frame(school_ids: list[str], fy: str) -> pd.DataFrame:
-    """One row per (school, intervention) with both cycles present:
-    columns school_id, intervention, prev_score, curr_score, delta,
-    window_start, window_end (assessment dates bounding the exposure)."""
+IMPROVEMENT_COLUMNS = [
+    "school_id",
+    "intervention",
+    "prev_score",
+    "curr_score",
+    "delta",
+    "window_start",
+    "window_end",
+]
+
+
+def improvement_rows(school_ids: list[str], fy: str) -> list[dict] | None:
+    """improvement_frame's rows as plain dicts, in the frame's order — what
+    ``improvement_frame(...).to_dict("records")`` returns, without building
+    the frame. None when no school has a confirmed SSA in both cycles."""
     prev_fy = str(int(fy) - 1)
     curr = _latest_confirmed_records(school_ids, fy)
     prev = _latest_confirmed_records(list(curr.keys()), prev_fy)
     paired_schools = [sid for sid in curr if sid in prev]
     if not paired_schools:
-        return pd.DataFrame(
-            columns=[
-                "school_id",
-                "intervention",
-                "prev_score",
-                "curr_score",
-                "delta",
-                "window_start",
-                "window_end",
-            ]
-        )
+        return None
 
-    record_ids = [curr[s]["id"] for s in paired_schools] + [
-        prev[s]["id"] for s in paired_schools
+    record_ids = [curr[s][0] for s in paired_schools] + [
+        prev[s][0] for s in paired_schools
     ]
     scores: dict[str, dict[str, float]] = defaultdict(dict)
-    for row in SsaScore.objects.filter(ssa_record_id__in=record_ids).values(
-        "ssa_record_id", "intervention", "score"
-    ):
-        scores[row["ssa_record_id"]][row["intervention"]] = float(row["score"])
+    for record_id, intervention, score in SsaScore.objects.filter(
+        _InArray(F("ssa_record_id"), record_ids)
+    ).values_list("ssa_record_id", "intervention", "score"):
+        scores[record_id][intervention] = float(score)
 
     rows = []
     for sid in paired_schools:
-        prev_map = scores.get(prev[sid]["id"], {})
-        curr_map = scores.get(curr[sid]["id"], {})
+        prev_id, window_start = prev[sid]
+        curr_id, window_end = curr[sid]
+        prev_map = scores.get(prev_id, {})
+        curr_map = scores.get(curr_id, {})
         for intervention in ALL_INTERVENTIONS:
             if intervention not in prev_map or intervention not in curr_map:
                 continue
@@ -248,10 +278,20 @@ def improvement_frame(school_ids: list[str], fy: str) -> pd.DataFrame:
                     "prev_score": prev_map[intervention],
                     "curr_score": curr_map[intervention],
                     "delta": curr_map[intervention] - prev_map[intervention],
-                    "window_start": prev[sid]["date_of_ssa"].date(),
-                    "window_end": curr[sid]["date_of_ssa"].date(),
+                    "window_start": window_start,
+                    "window_end": window_end,
                 }
             )
+    return rows
+
+
+def improvement_frame(school_ids: list[str], fy: str) -> pd.DataFrame:
+    """One row per (school, intervention) with both cycles present:
+    columns school_id, intervention, prev_score, curr_score, delta,
+    window_start, window_end (assessment dates bounding the exposure)."""
+    rows = improvement_rows(school_ids, fy)
+    if rows is None:
+        return pd.DataFrame(columns=IMPROVEMENT_COLUMNS)
     return pd.DataFrame(rows)
 
 
