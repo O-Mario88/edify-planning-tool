@@ -30,10 +30,12 @@ from apps.professional_development.approval_service import PDApprovalRoutingServ
 from apps.professional_development.completion_service import PDCourseTrackingService
 from apps.professional_development.fund_service import PDFundRequestService
 from apps.professional_development.models import (
+    PDFundRequestStatus,
     PDRoleAllocation,
     PDStatus,
     ProfessionalDevelopmentAllocation,
     ProfessionalDevelopmentCertificate,
+    ProfessionalDevelopmentFundRequest,
     ProfessionalDevelopmentRequest,
 )
 from apps.professional_development.services import StaffPDService, staff_display_info
@@ -1168,3 +1170,120 @@ class OneDecisionAtSignOffTest(PDTestBase):
             ).level,
             2,
         )
+
+
+class FinanceActsOnlyWhereTheMoneyIsTest(PDTestBase):
+    """The Accountant holds or returns a PD fund request only while it is
+    still with finance (pending disbursement, or held), and returns
+    accountability only while it is submitted. None of the three checked any
+    state: a paid request could be held or sent back to HR, and a signed-off
+    course could be sent back to accountability. Each also re-checks under the
+    row lock, so a decision that lost to the payment or the clearance is
+    refused."""
+
+    def _approved_and_funded(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            course_fee_cents=50_000_00,
+        )
+        req.status = PDStatus.SUBMITTED_TO_HR
+        req.save()
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        req.refresh_from_db()
+        return req
+
+    def _pay(self, req):
+        PDFundRequestService.disburse(
+            req.fund_request.id, self.accountant, method="bank_transfer", reference="T1"
+        )
+
+    def _accountability_submitted(self):
+        return self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            status=PDStatus.ACCOUNTABILITY_SUBMITTED,
+            accountability_netsuite_id="NS-1",
+        )
+
+    def test_a_paid_fund_request_cannot_be_held(self):
+        req = self._approved_and_funded()
+        self._pay(req)
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+
+    def test_a_paid_fund_request_cannot_be_returned_to_hr(self):
+        req = self._approved_and_funded()
+        self._pay(req)
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.return_request(
+                req.fund_request.id, self.accountant, "Wrong account"
+            )
+
+        req.refresh_from_db()
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+        self.assertEqual(req.status, PDStatus.DISBURSED)
+
+    def test_a_held_fund_request_can_still_be_returned(self):
+        req = self._approved_and_funded()
+        PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        PDFundRequestService.return_request(
+            req.fund_request.id, self.accountant, "Wrong account"
+        )
+
+        req.refresh_from_db()
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.RETURNED)
+        self.assertEqual(req.status, PDStatus.RETURNED_BY_HR)
+
+    def test_a_hold_that_lost_to_the_payment_is_refused(self):
+        req = self._approved_and_funded()
+        stale = ProfessionalDevelopmentFundRequest.objects.get(id=req.fund_request.id)
+        self._pay(req)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentFundRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDFundRequestService.hold(req.fund_request.id, self.accountant, "Cash")
+
+        req.fund_request.refresh_from_db()
+        self.assertEqual(req.fund_request.status, PDFundRequestStatus.DISBURSED)
+
+    def test_a_signed_off_course_cannot_be_sent_back_to_accountability(self):
+        req = self._draft(
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            status=PDStatus.COMPLETED_CLOSED,
+        )
+
+        with self.assertRaises(BadRequest):
+            PDFundRequestService.return_accountability(
+                req.id, self.accountant, "Receipts missing"
+            )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.COMPLETED_CLOSED)
+
+    def test_an_accountability_return_that_lost_to_the_clearance_is_refused(self):
+        req = self._accountability_submitted()
+        stale = ProfessionalDevelopmentRequest.objects.get(id=req.id)
+        PDFundRequestService.clear_accountability(req.id, self.accountant)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDFundRequestService.return_accountability(
+                    req.id, self.accountant, "Receipts missing"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.AWAITING_HR_SIGNOFF)
+        self.assertEqual(req.accountability_reviewed_by, self.accountant.id)

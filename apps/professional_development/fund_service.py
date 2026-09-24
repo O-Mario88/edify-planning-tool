@@ -45,6 +45,25 @@ def _assert_finance_role(req: ProfessionalDevelopmentRequest, principal) -> None
         )
 
 
+def _assert_still_with_finance(fr: ProfessionalDevelopmentFundRequest) -> None:
+    """Hold and return act only on a request finance has not yet decided:
+    pending disbursement, or held (a hold has no release, so returning is its
+    only way out). Once DISBURSED the money is out; once RETURNED it is back
+    with HR. The refusal is disburse()'s own."""
+    if fr.status not in (
+        PDFundRequestStatus.PENDING_DISBURSEMENT,
+        PDFundRequestStatus.HELD,
+    ):
+        raise BadRequest("This PD fund request is not pending disbursement.")
+
+
+def _assert_accountability_submitted(req: ProfessionalDevelopmentRequest) -> None:
+    """Returning accountability undoes a submission, so it needs one — the
+    state clear_accountability() acts on, refused with its message."""
+    if req.status != PDStatus.ACCOUNTABILITY_SUBMITTED:
+        raise BadRequest("Accountability has not been submitted for this request.")
+
+
 class PDFundRequestService:
     @staticmethod
     def can_review(req: ProfessionalDevelopmentRequest, principal) -> bool:
@@ -141,9 +160,19 @@ class PDFundRequestService:
         fr = ProfessionalDevelopmentFundRequest.objects.get(id=fund_request_id)
         req = ProfessionalDevelopmentRequest.objects.get(id=fr.request_id)
         _assert_finance_role(req, principal)
-        fr.status = PDFundRequestStatus.HELD
-        fr.hold_reason = (reason or "")[:512]
-        fr.save()
+        _assert_still_with_finance(fr)
+        # Courtesy check; the guard is the re-check under the row lock
+        # disburse() takes. This took no lock and checked no state, so a hold
+        # that lost to the payment, or one clicked later, turned a DISBURSED
+        # fund request into HELD.
+        with transaction.atomic():
+            fr = ProfessionalDevelopmentFundRequest.objects.select_for_update().get(
+                id=fund_request_id
+            )
+            _assert_still_with_finance(fr)
+            fr.status = PDFundRequestStatus.HELD
+            fr.hold_reason = (reason or "")[:512]
+            fr.save()
         return fr
 
     @staticmethod
@@ -155,12 +184,24 @@ class PDFundRequestService:
         fr = ProfessionalDevelopmentFundRequest.objects.get(id=fund_request_id)
         req = ProfessionalDevelopmentRequest.objects.get(id=fr.request_id)
         _assert_finance_role(req, principal)
-        fr.status = PDFundRequestStatus.RETURNED
-        fr.return_reason = reason[:512]
-        fr.save()
-        req.status = PDStatus.RETURNED_BY_HR  # back into the correction loop
-        req.hr_note = f"Finance returned: {reason}"[:512]
-        req.save(update_fields=["status", "hr_note", "updated_at"])
+        _assert_still_with_finance(fr)
+        # Courtesy check, then the guard under the locks disburse() takes, in
+        # its order (the fund request, then the PD request): a paid request
+        # used to be sent back to HR's correction loop.
+        with transaction.atomic():
+            fr = ProfessionalDevelopmentFundRequest.objects.select_for_update().get(
+                id=fund_request_id
+            )
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=fr.request_id
+            )
+            _assert_still_with_finance(fr)
+            fr.status = PDFundRequestStatus.RETURNED
+            fr.return_reason = reason[:512]
+            fr.save()
+            req.status = PDStatus.RETURNED_BY_HR  # back into the correction loop
+            req.hr_note = f"Finance returned: {reason}"[:512]
+            req.save(update_fields=["status", "hr_note", "updated_at"])
         # It has left the disbursement queue for the correction loop, so the
         # Accountant's queue item is satisfied too (INTG-03).
         PDFundRequestService._close_pending_disbursement(req)
@@ -214,11 +255,22 @@ class PDFundRequestService:
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_finance_role(req, principal)
-        req.status = PDStatus.BAMBOOHR_CONFIRMED  # back to "submit accountability"
-        req.accountability_variance_note = reason[:512]
-        req.accountability_reviewed_by = principal.user_id
-        req.accountability_reviewed_at = timezone.now()
-        req.save()
+        _assert_accountability_submitted(req)
+        # Courtesy check; the guard is the re-check under the row lock
+        # clear_accountability() takes. With no state check at all, a return
+        # that lost to the clearance undid it, and one sent after sign-off
+        # reopened the closed record, so its next sign-off credited the
+        # course's CPD and skills a second time.
+        with transaction.atomic():
+            req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+                id=req_id
+            )
+            _assert_accountability_submitted(req)
+            req.status = PDStatus.BAMBOOHR_CONFIRMED  # back to "submit accountability"
+            req.accountability_variance_note = reason[:512]
+            req.accountability_reviewed_by = principal.user_id
+            req.accountability_reviewed_at = timezone.now()
+            req.save()
         PDFundRequestService._notify(
             req.owner_user_id, "PD accountability returned", reason, req
         )
