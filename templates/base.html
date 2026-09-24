@@ -23,7 +23,7 @@ inset themselves — see components/mobile-shell.css.
   (function() {
     var html = document.documentElement;
     // Phones keep filter disclosures closed from the first paint; mobile-ux.js
-    // clears this once it has set their state (css/components/mobile-patterns.css).
+    // clears this once it has set their state (see the mobile patterns sheet).
     html.setAttribute('data-filters-syncing', '');
     window.addEventListener('load', function () {
       html.removeAttribute('data-filters-syncing');

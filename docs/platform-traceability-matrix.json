@@ -138,6 +138,7 @@
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/telemetry/middleware.py"
       ],
@@ -329,6 +330,7 @@
         "apps/core/concurrency.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
+        "apps/core/fy.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/permissions.py",
@@ -350,6 +352,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -540,6 +543,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -786,6 +790,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -951,6 +956,7 @@
         "apps/ssa/plan_alignment.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1200,6 +1206,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1447,6 +1454,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1688,6 +1696,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -2060,6 +2069,7 @@
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/targets/performance.py",
         "apps/telemetry/middleware.py"
@@ -2802,6 +2812,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -2943,6 +2954,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -3415,6 +3427,7 @@
         "apps/schools/models.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -3633,6 +3646,7 @@
         "apps/ssa/plan_alignment.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/telemetry/middleware.py"
       ],
@@ -3754,9 +3768,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "f610e2c0ac7541386fea6fd0fc6e2237fe80942a113154e07f74aee21a39c011",
-    "sources": "50b44e5263dee8e564fdc3247773f9473a18c976764421fdf9ef6549741940de",
-    "sourceCount": 215,
+    "payload": "1f61200af6a909d65eacc71a95722de8b1ed1021b07991ed9127030e2edcd31e",
+    "sources": "69a7439385f079433cc2f05a85f4160988b131a704feac21431577ac84ef23f9",
+    "sourceCount": 216,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
