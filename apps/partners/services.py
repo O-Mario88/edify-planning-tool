@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
@@ -1157,9 +1157,24 @@ def create_assignment(**fields):
     school = fields.get("school")
     assert_operating(school)
     _assert_school_takes_partner_work(school)
-    return PartnerAssignment.objects.create(
-        status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
-    )
+    try:
+        # A savepoint of its own, so a lost race leaves the caller's
+        # transaction usable for the error it reports.
+        with transaction.atomic():
+            return PartnerAssignment.objects.create(
+                status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
+            )
+    except IntegrityError as exc:
+        # Two submissions that both passed PartnerAssignment.save's check
+        # before either committed: the index refuses the second, and it gets
+        # the same sentence the check would have given it.
+        if "uniq_open_partner_school_assignment" not in str(exc):
+            raise
+        raise ConflictError(
+            f"{getattr(school, 'name', None) or 'This school'} is already "
+            "assigned to this partner and is waiting for the partner to "
+            "schedule it. A school is assigned to the same partner only once."
+        ) from exc
 
 
 def _assert_school_takes_partner_work(school) -> None:

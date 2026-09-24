@@ -390,7 +390,60 @@ class PartnerAssignment(TimeStampedModel):
                 )
 
                 assert_school_accepts_another_partner(self.school, self.partner_id)
+            if self.school_id and self.status in self.UNSCHEDULED_STATUSES:
+                # The same rule as uniq_open_partner_school_assignment, said
+                # in words before the database has to say it as an error.
+                existing = self.open_duplicate()
+                if existing is not None:
+                    from apps.core.exceptions import ConflictError
+
+                    school_name = getattr(self.school, "name", None) or "This school"
+                    partner_name = getattr(self.partner, "name", None) or "this partner"
+                    raise ConflictError(
+                        f"{school_name} is already assigned to {partner_name} "
+                        "and is waiting for the partner to schedule it. A school "
+                        "is assigned to the same partner only once."
+                    )
         return super().save(*args, **kwargs)
+
+    def open_duplicate(self):
+        """The partner's existing open handover of this school, if any.
+
+        Mirrors uniq_open_partner_school_assignment: same school, same
+        partner, same Core slot (NULL and "" alike), still waiting to be
+        scheduled.
+        """
+        if not (self.school_id and self.partner_id):
+            return None
+        return (
+            PartnerAssignment.objects.filter(
+                school_id=self.school_id,
+                partner_id=self.partner_id,
+                status__in=self.UNSCHEDULED_STATUSES,
+            )
+            .annotate(
+                _slot_support=Coalesce("support_type", models.Value("")),
+                _slot_visit=Coalesce("visit_number", models.Value("")),
+                _slot_training=Coalesce("training_number", models.Value("")),
+            )
+            .filter(
+                _slot_support=self.support_type or "",
+                _slot_visit=self.visit_number or "",
+                _slot_training=self.training_number or "",
+            )
+            .exclude(pk=self.pk)
+            .order_by("created_at")
+            .first()
+        )
+
+    @classmethod
+    def has_open_assignment(cls, school, partner) -> bool:
+        """Whether ``partner`` already has ``school`` waiting to be scheduled
+        (any slot). Bulk paths use it to skip a school rather than fail the
+        whole selection over it."""
+        return cls.objects.filter(
+            school=school, partner=partner, status__in=cls.UNSCHEDULED_STATUSES
+        ).exists()
 
     class Meta:
         db_table = "partner_assignment"
@@ -480,6 +533,36 @@ class PartnerAssignment(TimeStampedModel):
                     )
                 ),
                 name="uniq_live_partner_support_slot",
+            ),
+            # ── One open handover per school per partner ──
+            # Owner, 2026-09-24: "make sure schools can only be assigned to
+            # the partner once and also added to the same project once." A
+            # user had handed one school to one partner many times over; the
+            # only guards were a 15-second double-click window and, on the
+            # project drawer, a match on the exact catalogue item.
+            #
+            # The constraint above leaves ordinary handovers alone, because
+            # they name no slot. This one does not: while a partner still has
+            # a school waiting to be scheduled, that school is not handed to
+            # the same partner again — whichever project, activity or page it
+            # comes from. Once the partner schedules it (or returns it) the
+            # next piece of work may follow. Core-package slots stay apart
+            # (Visit 1 and Visit 2 may wait side by side), so the slot columns
+            # are part of the key, folded the same way as above.
+            #
+            # Literals rather than UNSCHEDULED_STATUSES for the same reason as
+            # the condition above.
+            models.UniqueConstraint(
+                "school",
+                "partner",
+                Coalesce("support_type", models.Value("")),
+                Coalesce("visit_number", models.Value("")),
+                Coalesce("training_number", models.Value("")),
+                condition=(
+                    models.Q(status__in=["assigned", "pending_scheduling"])
+                    & models.Q(school__isnull=False)
+                ),
+                name="uniq_open_partner_school_assignment",
             ),
         ]
 

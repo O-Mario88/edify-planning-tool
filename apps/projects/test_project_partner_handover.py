@@ -183,3 +183,35 @@ class ProjectPartnerHandoverTest(TestCase):
             html,
         )
         self.assertNotIn("/planning/assign-partner-modal", html)
+
+    def test_handing_the_school_to_the_same_partner_again_adds_nothing(self):
+        """Owner, 2026-09-24: a school is assigned to the partner once. The
+        drawer used to skip only an exact catalogue-item repeat, so choosing
+        a different activity handed the same school over again."""
+        self.client.force_login(self.coord_user)
+        items = self.client.get(self._row()["partner_url"]).context["catalogue_items"]
+        self.assertGreater(len(items), 1, "two activities to choose between")
+
+        def hand_over(item):
+            return self.client.post(
+                "/projects/planning/bulk-partner",
+                {
+                    "assignments": self.enrolment.id,
+                    "partner_id": self.partner.id,
+                    "scheduled_date": (
+                        timezone.localdate() + timedelta(days=7)
+                    ).isoformat(),
+                    "catalogue_item_id": item["catalogueItemId"],
+                },
+            )
+
+        self.assertEqual(hand_over(items[0]).status_code, 200)
+        again = hand_over(items[1])
+        self.assertEqual(again.status_code, 200, again.content[:400])
+        self.assertContains(again, "already assigned to PPH Partner")
+        self.assertEqual(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=self.partner
+            ).count(),
+            1,
+        )
