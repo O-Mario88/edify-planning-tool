@@ -514,9 +514,9 @@ def _target_bands(members, fy: str, today: date, approved_rows: dict) -> dict:
     computes it (PLTeamTargetsService.get_page's roster path)."""
     try:
         from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+        from apps.targets.ledger_sync import refresh_many
         from apps.targets.my_targets import (
             MyTargetQueryService,
-            TargetAchievementService,
             priority_target_areas_for_users,
         )
         from apps.targets.team_targets import PLTeamTargetsService
@@ -533,7 +533,7 @@ def _target_bands(members, fy: str, today: date, approved_rows: dict) -> dict:
         _prime_leave_days(approved_rows)
 
         areas_by_user = priority_target_areas_for_users(users, fy)
-        TargetAchievementService.rebuild_many(users, fy)
+        refresh_many(users, fy)
         area_keys = sorted(
             {a.key for u in users for a in areas_by_user.get(str(u.id), [])}
         )

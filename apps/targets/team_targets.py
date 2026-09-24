@@ -29,6 +29,7 @@ from apps.targets.fy_calendar import (
     QUARTERS,
     FinancialYearCalendarService as Cal,
 )
+from apps.targets.ledger_sync import refresh_many
 from apps.targets.models import CatchUpPlan
 from apps.targets.my_targets import (
     AREA_SOURCES,
@@ -36,7 +37,6 @@ from apps.targets.my_targets import (
     RETURNED_STATUSES,
     VISIT_TYPES,
     MyTargetQueryService,
-    TargetAchievementService,
     _user_ids,
     active_target_areas,
     agreed_target_areas,
@@ -202,7 +202,7 @@ class PLTeamTargetsService:
         prepared=None,
     ):
         if prepared is None:
-            TargetAchievementService.rebuild(user, fy)
+            refresh_many([user], fy)
             targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
             achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
         else:
@@ -517,11 +517,11 @@ class PLTeamTargetsService:
                 continue
             team.append(user)
 
-        # One ledger rebuild and one read of targets, profiles and validated
-        # credit for the whole roster. Per member this was a rebuild (four
-        # source reads and its writes) and three target reads on every load.
-        # Likewise one read of the roster's approved leave for the pacing.
-        TargetAchievementService.rebuild_many(team, fy)
+        # Rebuild only the members whose sources changed since their ledger
+        # was built (apps.targets.ledger_sync, F-D) — this rebuilt the whole
+        # roster on every load — then one read of targets, profiles and
+        # validated credit for the roster, and one of its approved leave.
+        refresh_many(team, fy)
         Cal.prime_leave_days([getattr(u, "staff_profile_id", None) for u in team])
         roster_area_keys = sorted(
             {
@@ -1716,12 +1716,12 @@ class PLTeamTargetsService:
         # The team's sources and series read once, not once per person: this
         # was a ledger rebuild and three reads for every member, 758 queries
         # for a Country Director's 150 officers (2026-09-24 A+ audit).
-        # `rebuild_many` is `rebuild` per person from one pre-read, and each
-        # person's targets and achievements come from the same arithmetic
-        # (`_targets_from` / `_achievements_from`) over their own rows, read
-        # for every area any member holds; a person's series is only ever
-        # indexed by their own areas below.
-        TargetAchievementService.rebuild_many(team, fy)
+        # Each person's targets and achievements come from the same
+        # arithmetic (`_targets_from` / `_achievements_from`) over their own
+        # rows, read for every area any member holds; a person's series is
+        # only ever indexed by their own areas below. Only members whose
+        # sources changed are rebuilt (ledger_sync, F-D).
+        refresh_many(team, fy)
         area_keys = [item.key for item in all_areas]
         explicit_by_user = MyTargetQueryService._explicit_targets(team, fy, area_keys)
         profiles = MyTargetQueryService._target_profiles(team, fy)

@@ -304,28 +304,6 @@ def _cycle_fys_uncached(school_ids, fy):
     return (fys[0] if fys else None), (fys[1] if len(fys) > 1 else None)
 
 
-def _refresh_target_ledger(cd: CDScope) -> None:
-    """Rebuild the TargetAchievementLedger for every CCEO in the resolved
-    scope before any CD/RVP-level rollup reads it. Without this, a CCEO
-    whose PL/self hasn't recently opened My/Team Targets shows stale
-    numbers at CD/RVP level — mirrors what My Targets / Team Targets
-    already do on their own page loads. Call once per page load (not per
-    section) since rebuild() is idempotent but not free.
-
-    Prefer `_prime_target_series(cd)` over this directly when the caller
-    will also read PL/CCEO-level target achievement afterwards — it does
-    this same rebuild AND caches the resulting series on `cd` so every
-    downstream _weighted_achievement() call reuses it instead of
-    re-fetching per PL/per CCEO."""
-    from apps.targets.my_targets import TargetAchievementService
-
-    if not cd.cceo_user_ids:
-        return
-    TargetAchievementService.rebuild_many(
-        User.objects.filter(id__in=cd.cceo_user_ids), cd.fy
-    )
-
-
 def _prime_pl_cceos(cd: CDScope) -> None:
     """Populate cd.pl_cceos for every Programme Lead in one go.
 
@@ -346,10 +324,10 @@ def _prime_pl_cceos(cd: CDScope) -> None:
 def _prime_target_series(cd: CDScope) -> None:
     """Populate the per-request derived data every CD surface shares.
 
-    cd.areas/cd.per_user_series: rebuilds every in-scope CCEO's ledger and
-    fetches their monthly target/achieved series exactly once each
-    (apps.targets.my_targets.per_user_monthly_series). Every
-    _weighted_achievement() call in this same request then pools from this
+    cd.areas/cd.per_user_series: fetches every in-scope CCEO's monthly
+    target/achieved series exactly once each (the ledger is kept current by
+    apps.targets.ledger_sync; apps.targets.my_targets.per_user_monthly_series).
+    Every _weighted_achievement() call in this same request then pools from this
     cached data (apps.targets.my_targets.pool_series — pure Python, no DB)
     instead of re-rebuilding + re-fetching per PL row AND again per CCEO row,
     which is what made target_by_pl_cceo/pl_oversight/kpis each independently

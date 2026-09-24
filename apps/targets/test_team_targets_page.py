@@ -730,7 +730,9 @@ class TeamTargetsPageTest(TestCase):
             uploaded_by=self.cceo1.id,
         )
         self.assertEqual(self._area(self._page(), "ssa_completed")["achieved"], 0)
-        SsaRecord.objects.filter(id=rec.id).update(verification_status="confirmed")
+        # Saved, as verify_record saves it (it marks the collector's ledger).
+        rec.verification_status = "confirmed"
+        rec.save(update_fields=["verification_status", "updated_at"])
         self.assertEqual(self._area(self._page(), "ssa_completed")["achieved"], 1)
 
     def test_team_mscs_counts_only_approved_mscs(self):
@@ -948,7 +950,10 @@ class TeamTargetsPageTest(TestCase):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         a = self._act(self.cceo1_sp, date(2026, 7, 6))
         self.assertEqual(self._area(self._page(), "school_visits")["achieved"], 1)
-        Activity.objects.filter(id=a.id).update(status="returned_by_ia")
+        # Saved, as the IA return workflow saves it: the save marks the
+        # officer's ledger for rebuild (apps.targets.ledger_sync).
+        a.status = "returned_by_ia"
+        a.save(update_fields=["status", "updated_at"])
         page = self._page()
         self.assertEqual(self._area(page, "school_visits")["achieved"], 0)
         row = TargetAchievementLedger.objects.get(source_id=a.id)

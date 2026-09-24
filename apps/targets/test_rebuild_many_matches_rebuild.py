@@ -364,7 +364,12 @@ class PerUserSeriesBatchingTest(RosterFixture, TestCase):
         from django.db import connection
         from django.test.utils import CaptureQueriesContext
 
+        # A built ledger with nothing marked dirty: the reads measured below
+        # are the series reads alone (apps.targets.ledger_sync).
+        from apps.targets.ledger_sync import refresh_many
+
         TargetAchievementService.rebuild_many(self.users, FY)
+        refresh_many(self.users, FY)
 
         def reads(roster):
             with CaptureQueriesContext(connection) as cap:
