@@ -52,10 +52,18 @@ def _confirmed_ssa(school):
         SsaScore.objects.create(ssa_record=record, intervention=intervention, score=6.0)
 
 
-def _schedulable_date() -> datetime.date:
+def _schedulable_date(after: datetime.date | None = None) -> datetime.date:
+    """The first day the calendar policy allows, a week out or after
+    ``after``. Tests that need a second or third day ask for the next one
+    rather than adding days, which lands on a blocked Sunday whenever the
+    first day falls late in the week."""
     from apps.core.calendar_policy import SchedulingPolicyService
 
-    day = timezone.localdate() + datetime.timedelta(days=7)
+    day = (
+        after + datetime.timedelta(days=1)
+        if after
+        else timezone.localdate() + datetime.timedelta(days=7)
+    )
     for _ in range(21):
         if SchedulingPolicyService.check(None, day)["status"] != "blocked":
             return day

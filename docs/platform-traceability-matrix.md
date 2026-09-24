@@ -19,7 +19,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-02` | SSA to school improvement | ✓ | 1 | 39 | 10 | 1 | 11 | 0 | 0 | 19 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 100 | 36 | 3 | 8 | 10 | 26 | 55 |
 | `journey-04` | Cluster training | ✓ | 1 | 56 | 17 | 1 | 2 | 0 | 1 | 51 |
-| `journey-05` | Partner assignment and payment | ✓ | 1 | 50 | 27 | 2 | 2 | 1 | 4 | 66 |
+| `journey-05` | Partner assignment and payment | ✓ | 1 | 49 | 27 | 2 | 2 | 1 | 4 | 66 |
 | `journey-06` | Special Project | ✓ | 1 | 102 | 31 | 3 | 5 | 6 | 18 | 55 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 77 | 30 | 4 | 10 | 9 | 23 | 55 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 74 | 26 | 3 | 6 | 7 | 18 | 54 |
@@ -133,7 +133,7 @@ Steps: Assign → Schedule or Return → My Plan → Start → Evidence → IA r
 | Permissions checked | `ia.verify`, `payment.act` |
 | Page gates checked | `disbursements` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+40 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+39 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityScheduleCostLine`, `activities.ActivityTimelineEvent`, `activities.ClosureBlocker`, `activities.ClosureChecklist`, `activities.CompletedActivitySnapshot`, `activities.IAVerification`, `activities.VerificationChecklist` _+15 more_ |
 | Notifications raised | `partner_scheduled_activity` |
 | Audit actions (evidence) | `activity.closed`, `finance.partner_paid`, `notification.partner_scheduled_activity`, `partner.assigned` |
