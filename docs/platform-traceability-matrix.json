@@ -1667,6 +1667,7 @@
         "apps/hr/accountability_cache.py",
         "apps/hr/milestone_progress.py",
         "apps/integrations/services.py",
+        "apps/my_plan/past_due_service.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
         "apps/partners/support_responsibility.py",
@@ -2639,6 +2640,7 @@
         "apps/core/scoping.py",
         "apps/core/templatetags/kpi_metrics.py",
         "apps/core/templatetags/static_version.py",
+        "apps/core/templatetags/table_pagination.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
         "apps/frontend/templatetags/chart_tags.py",
@@ -2677,6 +2679,7 @@
       "permissions": [],
       "pages": [
         "evidence_center",
+        "my_plan",
         "team_planning_oversight",
         "team_targets"
       ],
@@ -3751,9 +3754,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "3dded0eb3e7813a99a15dc7149e5fcf34cc8f31a3020cfe1799a8a47319a39dc",
-    "sources": "de4e33cd35707a5f983a5f8b26ba91de7778be9e49f20ca046b8147eb4869f4d",
-    "sourceCount": 214,
+    "payload": "f610e2c0ac7541386fea6fd0fc6e2237fe80942a113154e07f74aee21a39c011",
+    "sources": "7b5b6b7e85d3889d91bbe5cb25f040272085606226d1712c5e727d4829f583c9",
+    "sourceCount": 215,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

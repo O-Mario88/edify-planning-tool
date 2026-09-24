@@ -13,6 +13,12 @@ hx-target="#complete-errors"
 class="space-y-4 text-[12px] font-semibold text-slate-600"
 >
 <div id="complete-errors"></div>
+{% if return_note %}
+<div class="edify-note" data-tone="danger" role="alert" data-return-note>
+<p class="edify-note__body"><strong>Returned by {{ returned_by|default:"the reviewer" }}:</strong> {{ return_note }}</p>
+<p class="edify-note__body">Fix this, then submit again — it goes back to the same reviewer.</p>
+</div>
+{% endif %}
 
 <!-- Evidence -->
 <div class="space-y-2">

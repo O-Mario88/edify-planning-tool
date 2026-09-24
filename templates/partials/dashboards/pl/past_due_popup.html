@@ -1,0 +1,31 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+The team's past-due plans, opened by the Programme Lead's main dashboard
+(owner, 2026-09-24): "All past due activities planned should popup on the
+program leads main dashboard with the button send to {CCEO name} and when they
+work on it, it should disappear."
+
+Rows are apps.my_plan.past_due_service's team rows, oldest first. Nothing is
+stored for the popup: a plan leaves it the moment its officer completes,
+reschedules or cancels it, and that same moment closes the officer's reminder
+(apps.activities.services._resolve_overdue_reminder). The send button is the
+one "What needs you now" already uses, against the same scoped endpoint.
+{% endcomment %}
+
+{% block drawer_title %}Past-due team plans{% endblock %}
+{% block drawer_subtitle %}{{ total }} plan{{ total|pluralize }} past {% if total == 1 %}its{% else %}their{% endif %} date{% if unsent %} · {{ unsent }} not yet sent{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-3 text-slate-700" data-pl-past-due-popup>
+  <p class="edify-text-caption text-slate-500">Send each one to its officer to complete, reschedule or cancel. A plan leaves this list as soon as they act on it.</p>
+  {% comment %}Paged in place: the pager re-fetches this fragment from the
+  popup's own URL (static/js/table-pagination.js), so turning a page never
+  reloads the dashboard behind the popup.{% endcomment %}
+  <div id="pl-past-due-table" data-pager-fragment="/dashboard/past-due-popup">
+    {% include "partials/dashboards/pl/_past_due_popup_table.html" %}
+  </div>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+</div>
+{% endblock %}

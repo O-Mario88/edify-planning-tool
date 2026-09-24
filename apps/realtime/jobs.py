@@ -305,6 +305,203 @@ def daily_digest_job():
     run_tracked_job("daily_digest", _do_daily_digest)
 
 
+# ── Daily plan notifications (owner, 2026-09-24) ──────────────────────────────
+#: "Notifications also should notify the CCEO of the activities of that day.
+#: Notification for PL should be to monitor all the plans."
+DAILY_PLAN_TODAY_EVENT = "daily_plan_today"
+PL_TEAM_DAILY_EVENT = "pl_team_daily_monitor"
+#: How many of the day's activities a CCEO's notice names before "and N more".
+_DAILY_PLAN_NAMED = 3
+
+
+def _today_q(today):
+    """Activities dated today, read the way My Plan reads a date."""
+    from django.db.models import Q
+
+    return Q(planned_date=today) | Q(
+        planned_date__isnull=True, scheduled_date__date=today
+    )
+
+
+def _open_work(qs):
+    """Work still to do today: not released, and not already delivered —
+    a visit submitted for review this morning is not on the day's to-do."""
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.my_plan.past_due_service import TERMINAL_OR_COMPLETED_STATUSES
+    from apps.my_plan.services import ACTIVE_MY_PLAN_EXCLUDED_STATUSES
+
+    return qs.exclude(
+        status__in=(
+            *ACTIVE_MY_PLAN_EXCLUDED_STATUSES,
+            *COMPLETED_WORK_STATUSES,
+            *TERMINAL_OR_COMPLETED_STATUSES,
+        )
+    )
+
+
+def _already_told(recipient_id, event_type, key) -> bool:
+    """A notice for this person, event and day exists — even one they archived."""
+    from apps.notifications.models import Notification
+
+    return Notification.objects.filter(
+        recipient_id=recipient_id, source_event_type=event_type, context_id=key
+    ).exists()
+
+
+def _where_label(activity) -> str:
+    place = (
+        getattr(activity.school, "name", "")
+        if activity.school_id
+        else getattr(activity.cluster, "name", "")
+        if activity.cluster_id
+        else (activity.venue or "")
+    )
+    kind = activity.get_activity_type_display()
+    return f"{kind} at {place}" if place else kind
+
+
+def _do_daily_plan_notifications(today=None) -> int:
+    """Each CCEO's plan for the day, and each Programme Lead's team to monitor.
+
+    One notice per person per day, at 06:45 so it lands before the morning
+    digest counts unread notices. A person with nothing to act on today gets
+    nothing, the same no-nag rule the debrief reminders follow. The notices
+    are keyed to the day: a re-run the same day sends nothing twice (even to
+    someone who archived theirs), and yesterday's live notices are closed so a
+    stale "your plan today" never lingers into tomorrow.
+
+    The CCEO's list is their own My Plan for today (the same membership and
+    the same date rule), and the Lead's counts are over the officers they
+    lead, cover included (apps.hr.team_roster.team_members).
+    """
+    from django.db.models import Q
+
+    from apps.activities.models import Activity
+    from apps.core.scoping import owner_ids
+    from apps.hr.team_roster import team_members
+    from apps.my_plan.past_due_service import TERMINAL_OR_COMPLETED_STATUSES
+    from apps.my_plan.services import staff_my_plan_q
+    from apps.notifications.models import Notification
+    from apps.notifications.services import (
+        WorkflowNotificationService,
+        role_recipients,
+    )
+
+    today = today or timezone.localdate()
+    key = f"dp-{today.isoformat()}"
+    now = timezone.now()
+
+    # Yesterday's notices describe a day that is over.
+    Notification.objects.filter(
+        source_event_type__in=(DAILY_PLAN_TODAY_EVENT, PL_TEAM_DAILY_EVENT),
+        resolved_at__isnull=True,
+    ).exclude(context_id=key).update(
+        resolved_at=now, status="archived", action_required=False, updated_at=now
+    )
+
+    sent = 0
+    for user in role_recipients("CCEO"):
+        if _already_told(user.id, DAILY_PLAN_TODAY_EVENT, key):
+            continue
+        ids = [i for i in owner_ids(user) if i]
+        if not ids:
+            continue
+        work = list(
+            _open_work(
+                Activity.objects.filter(deleted_at__isnull=True)
+                .filter(_today_q(today))
+                .filter(staff_my_plan_q(ids, user))
+            )
+            .select_related("school", "cluster")
+            .order_by("planned_date", "created_at")
+        )
+        if not work:
+            continue
+        named = "; ".join(_where_label(a) for a in work[:_DAILY_PLAN_NAMED])
+        more = len(work) - _DAILY_PLAN_NAMED
+        WorkflowNotificationService.trigger(
+            event_type=DAILY_PLAN_TODAY_EVENT,
+            category="activity",
+            priority="normal",
+            title=f"Your plan today: {len(work)} activit{'y' if len(work) == 1 else 'ies'}",
+            body=named + (f"; and {more} more." if more > 0 else "."),
+            context_type="daily_plan",
+            context_id=key,
+            recipients=[user.id],
+        )
+        sent += 1
+
+    for lead in role_recipients("Program Lead"):
+        if _already_told(lead.id, PL_TEAM_DAILY_EVENT, key):
+            continue
+        team_ids: list[str] = []
+        person_of: dict[str, str] = {}
+        for member in team_members(lead):
+            for identifier in (member.id, member.user_id):
+                if identifier:
+                    team_ids.append(identifier)
+                    # One officer, whichever id space wrote their activity.
+                    person_of[identifier] = member.id
+        if not team_ids:
+            continue
+        team_q = staff_my_plan_q(team_ids, lead)
+        today_rows = list(
+            _open_work(
+                Activity.objects.filter(deleted_at__isnull=True)
+                .filter(_today_q(today))
+                .filter(team_q)
+            ).values_list("responsible_staff_id", "monitored_by_staff_id")
+        )
+        officers = {person_of.get(r or m, r or m) for r, m in today_rows if r or m}
+        past_due = (
+            Activity.objects.filter(deleted_at__isnull=True)
+            .exclude(status__in=TERMINAL_OR_COMPLETED_STATUSES)
+            .filter(
+                Q(planned_date__lt=today)
+                | Q(planned_date__isnull=True, scheduled_date__date__lt=today)
+            )
+            .filter(team_q)
+            .count()
+        )
+        waiting = Activity.objects.filter(
+            deleted_at__isnull=True,
+            status="submitted_to_pl",
+            responsible_staff_id__in=team_ids,
+        ).count()
+        if not (today_rows or past_due or waiting):
+            continue
+        parts = [
+            f"{len(today_rows)} activit{'y' if len(today_rows) == 1 else 'ies'} "
+            f"planned today by {len(officers)} officer{'s' if len(officers) != 1 else ''}"
+        ]
+        if past_due:
+            parts.append(f"{past_due} past due")
+        if waiting:
+            parts.append(
+                f"{waiting} completion{'s' if waiting != 1 else ''} waiting on you"
+            )
+        WorkflowNotificationService.trigger(
+            event_type=PL_TEAM_DAILY_EVENT,
+            category="team",
+            # Normal, not high: high sets action_required, and the escalation
+            # sweep would turn a daily summary urgent after 48 hours.
+            priority="normal",
+            title="Monitor your team's plans today",
+            body="; ".join(parts) + ".",
+            context_type="team_daily",
+            context_id=key,
+            recipients=[lead.id],
+        )
+        sent += 1
+    return sent
+
+
+def daily_plan_notifications_job():
+    if not _enabled():
+        return
+    run_tracked_job("daily_plan_notifications", _do_daily_plan_notifications)
+
+
 def _do_activity_reminders() -> int:
     """§33 — 'Activity starts tomorrow' for every responsible person.
 

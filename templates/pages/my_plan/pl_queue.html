@@ -9,8 +9,10 @@ Completion Reviews (Programme Lead alignment, 2026-09-13): the team's completed
 work waiting on the lead, as one plain register. The view
 (my_plan_views.pl_queue_view) hands it rows read in bulk by
 apps.pl_review.services.review_register; every column is text with a tone,
-never a card per activity. Open reads the whole completion in a drawer, Approve
-sends it to Impact Assessment, Return asks for the reason the officer will read.
+never a card per activity. Open reads the whole completion in a drawer.
+The lead holds two decisions, named the same on every surface (owner,
+2026-09-24): Verified confirms the completion and marks it complete, and
+Return sends it back with a reason the officer reads on their My Plan.
 The register takes the Regional Programme Lead dashboard's table grammar.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-completion-reviews>
@@ -18,7 +20,7 @@ The register takes the Regional Programme Lead dashboard's table grammar.
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Programme implementation</p>
       <h1 class="edify-page-title edify-page-header__title">Completion Reviews</h1>
-      <p class="edify-page-header__description">Your officers' completed work waiting for your confirmation before Impact Assessment verifies it. The longest waiting comes first.</p>
+      <p class="edify-page-header__description">Your officers' completed work waiting on your decision: Verified, or Return with the reason — for example, participants not entered in Salesforce. The longest waiting comes first.</p>
     </div>
   </div>
 
@@ -79,7 +81,7 @@ The register takes the Regional Programme Lead dashboard's table grammar.
               <form method="post" action="{{ queue_url }}/{{ row.id }}/confirm" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="rpl-row-link rounded-control" aria-label="Approve the completion from {{ row.cceo }}">Approve</button>
+                <button type="submit" class="rpl-row-link rounded-control" aria-label="Verify the completion from {{ row.cceo }}">Verified</button>
               </form>
               <button type="button" class="rpl-row-link rounded-control" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
             </td>

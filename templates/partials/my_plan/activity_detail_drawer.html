@@ -13,6 +13,11 @@ calls on close; the actions below swap the next drawer into
 
 {% block drawer_body %}
 <div x-data="{ activeTab: 'details' }" class="space-y-4">
+{% if return_note %}
+<div class="edify-note" data-tone="danger" role="alert" data-return-note>
+<p class="edify-note__body"><strong>Returned by {{ returned_by|default:"the reviewer" }}:</strong> {{ return_note }}</p>
+</div>
+{% endif %}
 
 <dl class="grid grid-cols-2 gap-3 text-[12px]" data-keep-columns>
 <div>

@@ -5,8 +5,9 @@ District, Planned Date, Executor, Purpose (Meeting Topic), SSA Intervention,
 Participants, Cost, Status, Actions. Status and the verify actions come from
 apps.clusters.oversight_service._decorate_sessions: Complete (green) once
 verified; PL Pending (blue) while a CCEO's completion waits on their Programme
-Lead, whose Verify makes it complete; IA Pending (blue) while a Programme
-Lead's own session waits on Impact Assessment.
+Lead, whose Verified makes it complete; IA Pending (blue) while a Programme
+Lead's own session waits on Impact Assessment. Every reviewer holds the same
+two decisions (owner, 2026-09-24): Verified, or Return with a reason.
 {% endcomment %}
 {% paginate activities page_param|default:"cluster_activities_page" as activity_pager %}
 <section>
@@ -46,13 +47,17 @@ Lead's own session waits on Impact Assessment.
               <form method="post" action="/pl/review-queue/{{ item.activity_id }}/confirm" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verify</button>
+                <button type="submit" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verified</button>
               </form>
+              <button type="button" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer" hx-get="/pl/review-queue/{{ item.activity_id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {% firstof item.executor_name member.name %} with a reason" data-session-return>Return</button>
             </span>
           </td>
           {% elif item.ia_verify_url %}
           <td class="text-right" data-record-action data-label="Actions">
-            <a href="{{ item.ia_verify_url }}" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verify</a>
+            <span class="inline-flex items-center justify-end gap-1.5">
+              <a href="{{ item.ia_verify_url }}" class="cluster-session-action cluster-session-action--verify" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verified</a>
+              <a href="{{ item.ia_return_url }}" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer" aria-label="Return the completion from {% firstof item.executor_name member.name %} with a reason" data-session-return>Return</a>
+            </span>
           </td>
           {% elif item.session_tone == "pending" %}
           <td class="text-right" data-record-action data-label="Actions">

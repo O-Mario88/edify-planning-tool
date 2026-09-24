@@ -28,6 +28,7 @@ from apps.core.permissions import (
 from apps.core.rbac import Permission
 from apps.core.scoping import activity_country_q, resolve_user_scope
 from apps.audit.services import log as audit_log
+from apps.activities.return_notes import COMMON_REASONS as COMMON_RETURN_REASONS
 from apps.activities.models import (
     Activity,
     IAVerification,
@@ -676,26 +677,36 @@ def ia_review_workspace_view(request, activity_id):
         "comments": comments,
         "cluster_schools": cluster_schools,
         "ssa_scores": ssa_scores,
-        "suggested_reasons": [
-            "Evidence missing",
-            "Evidence unclear",
-            "Attendance invalid",
-            "Attendance missing",
-            "SSA missing",
-            "SSA incomplete",
-            "Wrong School",
-            "Wrong Cluster",
-            "Wrong Intervention",
-            "Wrong Activity Type",
-            "Wrong Activity Date",
-            "Duplicate Activity",
-            "Activity SF ID missing",
-            "Activity SF ID invalid",
-            "Poor Data Quality",
-            "Other",
-        ],
+        # The most common reasons first, the owner's own example at the top
+        # (2026-09-24: "the participants are not entered" in Salesforce).
+        "open_return": request.GET.get("return") == "1",
+        "suggested_reasons": list(
+            dict.fromkeys([*COMMON_RETURN_REASONS, *LEGACY_IA_REASONS])
+        ),
     }
     return render(request, "pages/ia/review_workspace.html", context)
+
+
+#: The workspace's original return categories, kept so verification analytics
+#: keep counting the same strings (apps.activities.verification_analytics).
+LEGACY_IA_REASONS = (
+    "Evidence missing",
+    "Evidence unclear",
+    "Attendance invalid",
+    "Attendance missing",
+    "SSA missing",
+    "SSA incomplete",
+    "Wrong School",
+    "Wrong Cluster",
+    "Wrong Intervention",
+    "Wrong Activity Type",
+    "Wrong Activity Date",
+    "Duplicate Activity",
+    "Activity SF ID missing",
+    "Activity SF ID invalid",
+    "Poor Data Quality",
+    "Other",
+)
 
 
 @require_page_permission("ia_review_workspace")
@@ -770,7 +781,15 @@ def ia_return_action(request, activity_id):
 
         if not reasons:
             messages.error(request, "Please select at least one return reason.")
-            return local_redirect(f"/ia/verification/{activity_id}/")
+            return local_redirect(f"/ia/verification/{activity_id}/?return=1")
+        if not comment:
+            # The service refuses it too; saying so here keeps the reviewer
+            # on the activity with the panel open rather than on the queue.
+            messages.error(
+                request,
+                "Say why you are returning it, so the officer knows what to fix.",
+            )
+            return local_redirect(f"/ia/verification/{activity_id}/?return=1")
 
         try:
             ActivityReturnService.return_activity(

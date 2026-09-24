@@ -30,7 +30,7 @@ const next = this.allowedTabs[(current + delta + this.allowedTabs.length) % this
 this.setTab(next);
 this.$nextTick(() => document.getElementById('ia-review-tab-' + next)?.focus());
 },
-returnOpen: false,
+returnOpen: {% if open_return %}true{% else %}false{% endif %},
 returnTrigger: null,
 openReturn(event) { this.returnTrigger = event?.currentTarget || null; this.returnOpen = true; this.$nextTick(() => this.$refs.returnReason?.focus()); },
 closeReturn() { this.returnOpen = false; this.$nextTick(() => this.returnTrigger?.focus()); },
@@ -94,7 +94,7 @@ Compare Side-by-Side
      target the canonical forms below, so this is one action implementation,
      not a second workflow. -->
 <div class="lg:hidden fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-[var(--edify-border)] bg-[var(--edify-surface)] p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-lg">
-  <button form="verify-form" type="submit" class="btn btn-primary min-h-11">Clear Activity</button>
+  <button form="verify-form" type="submit" class="btn btn-primary min-h-11">Verified</button>
   <button type="button" class="btn min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]" @click="openReturn($event)">Return</button>
 </div>
 
@@ -437,14 +437,14 @@ form="verify-form"
 type="submit"
 class="btn btn-primary w-full min-h-11"
 >
-Clear Activity
+Verified
 </button>
 <button
 @click="openReturn($event)"
 type="button"
 class="btn w-full min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]"
 >
-Return for Correction
+Return
 </button>
 </div>
 
@@ -487,11 +487,13 @@ role="dialog" aria-modal="true" aria-labelledby="ia-return-title"
 </fieldset>
 
 <div>
-<label for="ia-return-comments" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Audit comments</label>
+<label for="ia-return-comments" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Why are you returning it? (required)</label>
 <textarea
 id="ia-return-comments"
 name="comment"
-placeholder="Details of corrections required e.g. Attendance sheet uploaded has only 14 teachers but activity recorded 25 participants."
+required
+maxlength="1000"
+placeholder="Say exactly what to fix, e.g. The attendance form and training ID are uploaded, but the 25 participants are not entered in Salesforce."
 class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:outline-none h-24 resize-none font-semibold"
 ></textarea>
 </div>
@@ -504,7 +506,7 @@ form="return-form"
 type="submit"
 class="w-full h-8 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
 >
-Confirm &amp; Return
+Return to officer
 </button>
 <button
 @click="closeReturn()"

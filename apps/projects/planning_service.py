@@ -143,8 +143,46 @@ def _activity_state(activity):
     return (status, "warning")
 
 
-def _row_state(latest_ssa, activities):
+#: Work that is still ahead at a school. A project handover the partner has
+#: not dated yet outranks anything else except this: a school with no live
+#: plan that has been handed to a partner is waiting on that partner.
+_LIVE_PLAN_STATES = {
+    ActivityStatus.PLANNED,
+    ActivityStatus.SCHEDULED,
+    ActivityStatus.RESCHEDULED,
+    ActivityStatus.ASSIGNED_TO_PARTNER,
+    ActivityStatus.PARTNER_SCHEDULED,
+    ActivityStatus.IN_PROGRESS,
+    ActivityStatus.COMPLETION_STARTED,
+}
+
+
+def _row_state(latest_ssa, activities, handover=None):
     latest_activity = activities[0] if activities else None
+    if handover is not None and (
+        latest_activity is None or latest_activity.status not in _LIVE_PLAN_STATES
+    ):
+        # Handed to a partner for this project and not yet dated by them.
+        # The handover has no Activity until the partner schedules it, so
+        # reading activities alone left the row "Ready for support" after the
+        # coordinator had acted, inviting the same school to be handed over
+        # twice.
+        return {
+            "bucket": "partner",
+            "baseline": (
+                f"SSA score available · {latest_ssa.date_of_ssa:%d %b %Y}"
+                if latest_ssa is not None
+                else "SSA Required"
+            ),
+            "baseline_tone": "success" if latest_ssa is not None else "danger",
+            "readiness": "Awaiting partner schedule",
+            "readiness_tone": "purple",
+            "action": "Monitor partner scheduling",
+            "next_step": "Confirm the partner's delivery date and monitor the evidence workflow.",
+            "action_kind": "my_plan",
+            "activity": None,
+            "handover": handover,
+        }
     if latest_ssa is None:
         baseline_activity = next(
             (activity for activity in activities if activity.ssa_collection_expected),
@@ -346,6 +384,22 @@ def get_planning(principal, filters=None) -> dict:
     for activity in activities:
         activities_by_pair[(activity.project_id, activity.school_id)].append(activity)
 
+    # Project handovers the partner has not dated yet, one per pair (the most
+    # recent). Scheduled ones are read through the activity they became.
+    from apps.partners.models import PartnerAssignment
+
+    open_handovers = {}
+    for handover in (
+        PartnerAssignment.objects.filter(
+            project_id__in=project_ids,
+            school_id__isnull=False,
+            status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+        )
+        .select_related("partner")
+        .order_by("created_at")
+    ):
+        open_handovers[(handover.project_id, handover.school_id)] = handover
+
     partner_ids = {a.assigned_partner_id for a in activities if a.assigned_partner_id}
     partner_names = {
         partner.id: partner.name
@@ -362,21 +416,24 @@ def get_planning(principal, filters=None) -> dict:
             for activity in pair_activities
         ):
             continue
-        if selected_partner_type == "partner" and not any(
-            a.delivery_type == "partner" for a in pair_activities
+        handover = open_handovers.get((project.id, school.id))
+        if (
+            selected_partner_type == "partner"
+            and handover is None
+            and not any(a.delivery_type == "partner" for a in pair_activities)
         ):
             continue
         if selected_partner_type == "staff" and not any(
             a.delivery_type == "staff" for a in pair_activities
         ):
             continue
-        if selected_partner_type == "unassigned" and pair_activities:
+        if selected_partner_type == "unassigned" and (pair_activities or handover):
             continue
 
         latest_ssa = (
             school.planning_ssa_records[0] if school.planning_ssa_records else None
         )
-        state = _row_state(latest_ssa, pair_activities)
+        state = _row_state(latest_ssa, pair_activities, handover)
         if selected_tab != "all" and state["bucket"] != selected_tab:
             continue
         weakest, weakest_score = _weakest(latest_ssa)
@@ -390,7 +447,11 @@ def get_planning(principal, filters=None) -> dict:
         partner_name = (
             partner_names.get(latest_activity.assigned_partner_id, "—")
             if latest_activity
-            else "—"
+            else (
+                getattr(state["handover"].partner, "name", "—")
+                if state.get("handover") is not None
+                else "—"
+            )
         )
         project_type = assignment.project_type or PROJECT_TYPE_LABELS.get(
             project.category, project.category.replace("_", " ").title()
@@ -431,9 +492,17 @@ def get_planning(principal, filters=None) -> dict:
                 else "—",
                 "planned_date": latest_activity.planned_date
                 if latest_activity
-                else None,
+                else (
+                    state["handover"].scheduled_date
+                    if state.get("handover") is not None
+                    else None
+                ),
                 "schedule_url": f"/planning/schedule-modal?{urlencode({'school_id': school.id, 'project_id': project.id})}",
-                "partner_url": f"/planning/assign-partner-modal?{urlencode({'school_id': school.id, 'project_id': project.id})}",
+                # The project-stamped handover. The generic partner drawer
+                # files school support with no project
+                # (planning_views.assign_partner_action_view), so a handover
+                # made there never reached this project's rows.
+                "partner_url": f"/projects/planning/bulk-partner?{urlencode({'assignments': assignment.id})}",
                 "my_plan_url": my_plan_url,
                 "school_url": f"/schools/{school.id}",
                 "ssa_url": f"/schools/{school.id}#ssa-timeline",

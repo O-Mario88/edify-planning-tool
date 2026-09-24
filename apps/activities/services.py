@@ -81,6 +81,52 @@ RETURNED_STATUSES = (
 
 logger = logging.getLogger(__name__)
 
+
+def _clear_returned_verification(a) -> None:
+    """Resubmitted work is waiting on its reviewer again, not "returned".
+
+    Resubmission used to leave ``ia_verification_status="returned"`` and the
+    IA record's "returned" standing, so My Plan kept a Returned badge on work
+    the officer had fixed and sent back, and the status label fell through to
+    "Accounts Pending" (owner, 2026-09-24: "the staff can resubmit after
+    fixing the issue"). The reviewer's note stays on the activity as history;
+    it is shown only while the activity is in a returned status.
+    """
+    from apps.activities.ia_models import IAVerification
+
+    a.ia_verification_status = "pending"
+    # The IA workspace's own record (``ia_verification``). The Salesforce-ID
+    # confirmation (``verification``) is reset to pending by the caller.
+    IAVerification.objects.filter(activity_id=a.id, status="returned").update(
+        status="pending"
+    )
+
+
+def _resolve_overdue_reminder(a) -> None:
+    """Close the officer's "Action Required: Overdue" notice once they act.
+
+    A Programme Lead's "Send to <officer>" on a past-due plan raises that
+    notice (dashboard_views.notify_past_due_activity). Completing,
+    rescheduling or cancelling the plan answers it, and the plan leaves the
+    Lead's past-due popup at the same moment (owner, 2026-09-24: "when they
+    work on it, it should disappear") — the officer's notice goes with it
+    rather than staying live until someone archives it. After commit, and
+    never able to fail the transition it follows.
+    """
+    activity_id = str(a.id)
+
+    def resolve():
+        try:
+            from apps.my_plan.past_due_service import OVERDUE_REMINDER_EVENT
+            from apps.notifications.services import resolve_condition
+
+            resolve_condition(OVERDUE_REMINDER_EVENT, "activity", activity_id)
+        except Exception:  # noqa: BLE001 - a notice never blocks the work
+            logger.warning("could not close overdue reminder for %s", activity_id)
+
+    transaction.on_commit(resolve)
+
+
 # Statuses from which a field worker may (re)enter completion: work in progress,
 # plus anything a reviewer returned for correction.
 COMPLETABLE_STATUSES = (
@@ -3371,7 +3417,10 @@ def complete(activity_id: str, data: dict, principal) -> dict:
             a.actual_observations = str(data.get("actualObservations") or "").strip()
         if data.get("followUpNote") is not None:
             a.follow_up_note = str(data.get("followUpNote") or "").strip()
+        was_returned = a.status in RETURNED_STATUSES
         a.status = next_status
+        if was_returned:
+            _clear_returned_verification(a)
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
             submitted = a
@@ -3395,6 +3444,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "status",
                 "submitted_to_ia_at",
                 "evidence_status",
+                "ia_verification_status",
                 "updated_at",
             ]
         )
@@ -3423,6 +3473,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 },
             )
     _notify_completion_routed(a, next_status, principal)
+    _resolve_overdue_reminder(a)
     return _serialize(a)
 
 
@@ -3515,12 +3566,22 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
+        was_returned = a.status in RETURNED_STATUSES
         a.status = next_status
+        if was_returned:
+            _clear_returned_verification(a)
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
             submitted = a
             transaction.on_commit(lambda: _notify_ia_submitted(submitted))
-        a.save(update_fields=["status", "submitted_to_ia_at", "updated_at"])
+        a.save(
+            update_fields=[
+                "status",
+                "submitted_to_ia_at",
+                "ia_verification_status",
+                "updated_at",
+            ]
+        )
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
             defaults={
@@ -3532,6 +3593,7 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
             },
         )
     _notify_completion_routed(a, next_status, principal)
+    _resolve_overdue_reminder(a)
     return _serialize(a)
 
 
@@ -3943,7 +4005,11 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     # historic "returned" value every existing pin expects.
     a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
     a.ia_verification_status = "returned"
-    a.pl_review_note = note
+    # The instruction has no length limit on the form; the column holds 512.
+    # Cut to fit with a marker rather than failing the return at save.
+    from apps.activities.return_notes import fit
+
+    a.pl_review_note = fit(note)
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
         a.save(
@@ -4277,6 +4343,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                     f"{(data.get('reason') or '').strip()}".strip()
                 ),
             )
+    _resolve_overdue_reminder(a)
     return _serialize(a)
 
 
@@ -5070,6 +5137,7 @@ def _cancel_or_defer(
                 else f"Work for {_where(a)} has been {new_status}."
             ),
         )
+    _resolve_overdue_reminder(a)
     return _serialize(a)
 
 

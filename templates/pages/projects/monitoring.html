@@ -6,19 +6,24 @@
 
 {% block shell_content %}
 {% comment %}
-Read only, deliberately and visibly (owner, 2026-09-21). The project
-coordinator is in control of every project activity — scheduling one and
-handing one to a partner both live on their Project Planning surface — so
-this page carries no control that would change anything here. A reader who
-wants work done asks the coordinator, and the page says so rather than
-offering a button that would answer 403.
+Every school a reader put into a project, grouped by project (owner,
+2026-09-21 and 2026-09-24): is it planned — by the coordinator, or handed to a
+partner and scheduled by them — did the work happen, and did its focus SSA
+interventions move.
+
+Read only for everyone but the Project Coordinator. The coordinator is in
+control of every project activity and gets the two controls they hold on
+Project Planning, Schedule and Assign to partner, which open the same drawers
+and are checked there. Nobody else is offered a control: a reader who wants
+work done asks the coordinator, and the page says so rather than offering a
+button that would answer 403.
 
 What each reader sees is decided by apps.projects.monitoring: Impact
-Assessment, the Country Director and Admin read a project whole, because
-verification and country oversight need it; a CCEO or Programme Lead reads
-the schools they added themselves, never another officer's. The SSA cohort is
-narrowed by the same lens and shows its own denominator, so a contribution is
-never the project's total dressed up as one person's.
+Assessment, the Country Director and Admin read a project whole; the
+coordinator reads the projects they run; a Programme Lead reads the schools
+they added themselves, never another officer's. The SSA verdict is the
+impact engine's (apps.projects.ssa_impact) — a missing follow-up says so and
+is never shown as "no change".
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
@@ -26,12 +31,12 @@ never the project's total dressed up as one person's.
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Special Projects</p>
       <h1 class="edify-page-title edify-page-header__title">Project Monitoring</h1>
-      <p class="edify-page-header__description">What each project coordinator and their partners have scheduled and delivered, and what it moved. Read only — the coordinator schedules the work and assigns it to partners.</p>
+      <p class="edify-page-header__description">{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved.{% else %}The schools you follow in each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. Read only — the coordinator schedules the work and assigns it to partners.{% endif %}</p>
     </div>
   </header>
 
   <div class="edify-note" data-tone="info" role="note">
-    <p class="edify-note__body">{{ result.lens_note }}</p>
+    <p class="edify-note__body">{{ result.lens_note }}{% if result.plan_period_label %} Activities read for {{ result.plan_period_label }}.{% endif %}</p>
   </div>
 
   {% kpi_strip %}
@@ -43,17 +48,22 @@ never the project's total dressed up as one person's.
     {% kpi_metric %}
       {% kpi_label %}Schools{% endkpi_label %}
       {{ result.schools|intcomma }}
-      {% kpi_helper %}{% if result.whole_project %}Enrolled in these projects{% else %}Enrolments you added{% endif %}{% endkpi_helper %}
+      {% kpi_helper %}{% if result.whole_project %}Enrolled in these projects{% else %}Schools you added{% endif %}{% endkpi_helper %}
     {% endkpi_metric %}
     {% kpi_metric %}
-      {% kpi_label %}Trainings{% endkpi_label %}
-      {{ result.trainings_completed|intcomma }} / {{ result.trainings_scheduled|intcomma }}
-      {% kpi_helper %}Delivered of scheduled, FY{{ fy }}{% endkpi_helper %}
+      {% kpi_label %}Schools planned{% endkpi_label %}
+      {{ result.schools_planned|intcomma }} / {{ result.schools|intcomma }}
+      {% kpi_helper %}By the coordinator or a partner{% endkpi_helper %}
     {% endkpi_metric %}
     {% kpi_metric %}
-      {% kpi_label %}School visits{% endkpi_label %}
-      {{ result.visits_completed|intcomma }} / {{ result.visits_scheduled|intcomma }}
-      {% kpi_helper %}Delivered of scheduled, FY{{ fy }}{% endkpi_helper %}
+      {% kpi_label %}Awaiting partner schedule{% endkpi_label %}
+      {{ result.schools_awaiting_partner|intcomma }}
+      {% kpi_helper %}Assigned to a partner, no date yet{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Schools delivered{% endkpi_label %}
+      {{ result.schools_delivered|intcomma }}
+      {% kpi_helper %}At least one activity carried out{% endkpi_helper %}
     {% endkpi_metric %}
     {% kpi_metric %}
       {% kpi_label %}Schools improved{% endkpi_label %}
@@ -73,6 +83,14 @@ never the project's total dressed up as one person's.
       </select>
     </label>
     <label class="block">
+      <span class="edify-filter-label">School stage</span>
+      <select name="stage" aria-label="School stage" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for value, label in stage_options %}
+        <option value="{{ value }}"{% if value == selected_stage %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
       <span class="edify-filter-label">Fiscal year</span>
       <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
         {% for option in fy_options %}
@@ -86,10 +104,10 @@ never the project's total dressed up as one person's.
   {% if rows %}
   {% paginate rows "monitoring_page" as pager %}
   {% for row in pager.rows %}
-  <section class="card p-0 overflow-hidden">
+  <section class="card p-0 overflow-hidden" aria-labelledby="project-{{ row.id }}-heading" data-project-monitoring="{{ row.id }}">
     <div class="px-5 py-4 border-b edify-border flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+        <h2 id="project-{{ row.id }}-heading" class="text-[15px] font-semibold text-slate-800 tracking-tight">
           {{ row.name }}{% if row.code %} <span class="edify-text-caption edify-text-muted font-mono">{{ row.code }}</span>{% endif %}
         </h2>
         <p class="mt-0.5 edify-text-caption edify-text-muted">
@@ -100,6 +118,9 @@ never the project's total dressed up as one person's.
       <div class="flex flex-wrap items-center gap-2">
         <span class="pill">{{ row.status_label }}</span>
         <span class="pill">{% if result.whole_project %}{{ row.my_schools }} schools{% else %}{{ row.my_schools }} of {{ row.schools }} schools yours{% endif %}</span>
+        <span class="pill pill-info">{{ row.schools_planned }} planned</span>
+        {% if row.schools_awaiting_partner %}<span class="pill pill-warn">{{ row.schools_awaiting_partner }} awaiting partner</span>{% endif %}
+        <span class="pill pill-success">{{ row.schools_delivered }} delivered</span>
       </div>
     </div>
 
@@ -122,8 +143,87 @@ never the project's total dressed up as one person's.
       <div>
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Who delivered</p>
         <p class="text-[18px] font-semibold tabular-nums">{{ row.staff_delivered }} staff · {{ row.partner_delivered }} partner</p>
-        <p class="edify-text-caption edify-text-muted">Activities in FY{{ fy }}</p>
+        <p class="edify-text-caption edify-text-muted">Activities in {% firstof result.plan_period_label "this financial year" %}</p>
       </div>
+    </div>
+
+    {% comment %}
+    One row per enrolled school the reader may see. Planning says who has
+    the work; Execution whether it happened; Focus SSA the confirmed score the
+    school entered with and the latest confirmed score since, per focus
+    intervention, beside the engine's verdict.
+    {% endcomment %}
+    <div class="border-t edify-border">
+      {% with page_key="schools_page-"|add:row.id %}
+      {% paginate row.school_rows page_key as school_pager %}
+      <div class="overflow-x-auto">
+        <table class="edify-record-table w-full text-left border-collapse text-[12px]" aria-label="Schools in {{ row.name }}" data-project-schools>
+          <caption class="sr-only">Schools in {{ row.name }}: who has the work, whether it happened, and whether their focus SSA interventions moved</caption>
+          <thead>
+            <tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/40">
+              <th scope="col" class="px-4 py-2.5">School</th>
+              <th scope="col" class="px-4 py-2.5">Planning</th>
+              <th scope="col" class="px-4 py-2.5">Execution</th>
+              <th scope="col" class="px-4 py-2.5">Improvement</th>
+              <th scope="col" class="px-4 py-2.5">Focus SSA</th>
+              {% if result.whole_project %}<th scope="col" class="px-4 py-2.5">Added by</th>{% endif %}
+              {% if result.controls %}<th scope="col" class="px-3 py-2.5 text-right"><span class="sr-only">Actions</span></th>{% endif %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for school in school_pager.rows %}
+            <tr class="hover:bg-slate-50/50 transition-colors" data-project-school="{{ school.school_pk }}" data-plan-stage="{{ school.plan_stage }}" data-execution="{{ school.execution }}">
+              <td class="px-4 py-3 align-top" data-record-title>
+                <a href="/schools/{{ school.school_pk }}" class="font-bold edify-primary-text edify-primary-text-hover hover:underline leading-tight">{{ school.school_name }}</a>
+                <p class="edify-text-caption text-slate-400 font-semibold mt-0.5" title="{{ school.district }}">{{ school.school_code }}</p>
+              </td>
+              <td class="px-4 py-3 align-top" data-label="Planning">
+                <span class="edify-status-badge {{ school.plan_tone }}">{{ school.plan_label }}</span>
+                {% firstof school.partner_name school.planned_by "" as who %}
+                {% if school.next_date or who and not school.planned_by_coordinator %}
+                <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{% if who and not school.planned_by_coordinator %}{{ who }}{% if school.next_date %} · {% endif %}{% endif %}{% if school.next_date %}{% if school.is_overdue %}overdue {% endif %}{{ school.next_date|date:"j M" }}{% endif %}</p>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 align-top" data-label="Execution">
+                <span class="edify-status-badge {{ school.execution_tone }}">{{ school.execution_label }}</span>
+                {% if school.planned %}<p class="edify-text-caption text-slate-400 font-semibold mt-0.5" title="{{ school.delivered }} of {{ school.planned }} project activities delivered, {{ school.verified }} verified">{{ school.delivered }}/{{ school.planned }} done{% if school.last_delivered_on %} · {{ school.last_delivered_on|date:"j M" }}{% endif %}</p>{% endif %}
+              </td>
+              <td class="px-4 py-3 align-top" data-label="Improvement"><span class="edify-status-badge {{ school.impact_tone }}">{{ school.impact_label }}</span></td>
+              <td class="px-4 py-3 align-top" data-label="Focus SSA">
+                {% for focus in school.focus %}
+                <p class="text-slate-600 font-semibold{% if not forloop.first %} mt-0.5{% endif %}" title="{{ focus.label }}: confirmed score at enrolment{% if focus.latest is not None %}, then on {{ focus.latest_on|date:'j M Y' }}{% endif %}">{% firstof focus.abbreviation focus.label %} {% if focus.baseline is not None %}{{ focus.baseline }}{% else %}–{% endif %}{% if focus.latest is not None %} → {{ focus.latest }}{% if focus.change is not None %} ({% if focus.direction == "up" %}+{% endif %}{{ focus.change }}){% endif %}{% endif %}</p>
+                {% empty %}
+                <p class="text-slate-400">No focus declared</p>
+                {% endfor %}
+              </td>
+              {% if result.whole_project %}<td class="px-4 py-3 align-top text-slate-600 font-semibold" data-label="Added by">{{ school.added_by }}</td>{% endif %}
+              {% if result.controls %}
+              <td class="px-3 py-3 align-top" data-label="Actions">
+                {% if school.schedule_url %}
+                <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" class="school-record-action school-record-action--schedule" hx-get="{{ school.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule project work at {{ school.school_name }}">
+                    <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <span class="school-record-action__label">Schedule</span>
+                  </button>
+                  <button type="button" class="school-record-action school-record-action--assign" hx-get="{{ school.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.school_name }} to a partner">
+                    <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m12-11a4 4 0 10-8 0 4 4 0 008 0zm4 1v6m3-3h-6" /></svg>
+                    <span class="school-record-action__label">Partner</span>
+                  </button>
+                </div>
+                {% else %}
+                <p class="edify-text-caption text-slate-400 text-right" title="A paused project takes no new work">Paused</p>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td class="px-4 py-3" colspan="7">{% if selected_stage %}No school in this project is at that stage.{% else %}No school in this project yet.{% endif %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "components/table_pager.html" with pager=school_pager param=page_key pagination_label="Schools in "|add:row.name %}
+      {% endwith %}
     </div>
 
     {% comment %}
@@ -175,9 +275,11 @@ never the project's total dressed up as one person's.
 
   {% include "components/table_pager.html" with pager=pager param="monitoring_page" pagination_label="Project monitoring pages" %}
 
+  {% if not result.controls %}
   <p class="edify-text-caption edify-text-muted px-1">
     Read only. Scheduling a project activity, or assigning one to a partner, is the project coordinator's — ask them to plan work you need at a school you added.
   </p>
+  {% endif %}
   {% else %}
   {% if result.whole_project %}
   {% include "components/empty_state.html" with title="No live projects yet" message="A project appears here once it is created and running. Paused and closed projects keep their history on the project's own page." %}

@@ -73,11 +73,19 @@ def _drawer(
     note_tone="info",
     next_url="",
     empty="",
+    secondary=None,
 ):
+    """The shared form drawer.
+
+    ``secondary`` is an optional second decision drawn beside the submit
+    button — ``{"label": ..., "hx_get": ...}`` — for a drawer that must offer
+    two outcomes, such as Verified and Return on a completion review.
+    """
     return render(
         request,
         "partials/hr/form_drawer.html",
         {
+            "form_secondary": secondary,
             "form_title": title,
             "form_subtitle": subtitle,
             "form_action": action,

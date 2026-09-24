@@ -7,13 +7,14 @@
     {% kpi_metric %}{% kpi_label %}Completed Packages{% endkpi_label %}{{ completed_packages }}{% kpi_helper %}4 visits + 4 trainings{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}In Progress{% endkpi_label %}{{ in_progress }}{% kpi_helper %}Delivery ongoing{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Average SSA Score{% endkpi_label %}{{ avg_ssa }}{% kpi_helper %}Verified baseline / follow-up{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Planned Core Work{% endkpi_label %}{{ planned_core_work }}{% kpi_helper %}Core visits &amp; trainings on My Plan · {% firstof plan_period_label "this financial year" %}{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
 
   {# ── Hierarchy Tabs & Tables ────────────────────────────────────────── #}
   {% if is_programme_lead %}
     {# ── Program Lead View: Direct CCEO Tabs ──────────────────────────── #}
     {% if cceo_tabs %}
-    {% team_chart cceo_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
+    {% team_chart package_chart_tabs "name" "visits_completed,visits_target,trainings_completed,trainings_target" "Visits completed,Visits target,Trainings completed,Trainings target" "Core package delivery by person" "You and each officer you supervise, summed over your core schools this financial year" %}
     <div x-data="tabState('activeCceo', 'cceo', {% tab_values cceo_tabs %}, '{{ cceo_tabs.0.id }}')" class="space-y-4">
       <div class="oversight-team-selector">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
@@ -31,7 +32,7 @@
                   @click="pick('cceo', '{{ cceo.id }}')"
                   class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
             <span>{% firstof cceo.tab_label cceo.name %}</span>
-            <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} schools</span>
+            <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }} schools{% if cceo.core_work %} · {{ cceo.core_work|length }} planned{% endif %}</span>
           </button>
           {% endfor %}
         </nav>
@@ -48,6 +49,7 @@
             </h3>
           </div>
           {% include "partials/oversight/_core_schools_table.html" with schools=cceo.core_schools page_param="cs-"|add:cceo.id %}
+          {% include "partials/oversight/_core_work_table.html" with work=cceo.core_work owner_name=cceo.name page_param="cw-"|add:cceo.id %}
           {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
         </div>
       </div>
@@ -105,7 +107,7 @@
                       @click="pick('officer', '{{ cceo.id }}')"
                       class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
                 <span>{{ cceo.name }}</span>
-                <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}</span>
+                <span class="pill pill-neutral text-xs py-0 px-1.5 bg-black/10 text-inherit">{{ cceo.count }}{% if cceo.core_work %} · {{ cceo.core_work|length }} planned{% endif %}</span>
               </button>
               {% endfor %}
             </nav>
@@ -122,6 +124,7 @@
                 </h4>
               </div>
           {% include "partials/oversight/_core_schools_table.html" with schools=cceo.core_schools page_param="cs-"|add:lead.id|add:"-"|add:cceo.id %}
+              {% include "partials/oversight/_core_work_table.html" with work=cceo.core_work owner_name=cceo.name page_param="cw-"|add:lead.id|add:"-"|add:cceo.id %}
               {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
             </div>
           </div>

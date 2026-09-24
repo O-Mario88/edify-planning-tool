@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **824**
-- All registered routes: **1296**
+- Routed product surfaces: **825**
+- All registered routes: **1297**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **28**
+- Scheduled jobs: **29**
 - Activity states: **24**
-- Shared component templates: **491**
+- Shared component templates: **494**
 - Full pages: **260**
-- Partials and drawers: **270**
-- Permission-gated surfaces: **809**
-- Referenced by automated tests: **717**
+- Partials and drawers: **271**
+- Permission-gated surfaces: **810**
+- Referenced by automated tests: **718**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -267,6 +267,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-4738B1CEF1 | /dashboard/cd-approve | Cd Dashboard Approve | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-35678484B9 | /dashboard/cd-return | Cd Dashboard Return | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F5B742C748 | /dashboard/notify-past-due/<str:activity_id>/ | Dashboard Notify Past Due | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-F635C306BF | /dashboard/past-due-popup | Pl Past Due Popup | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-190160CA0F | /dashboard/pl | Pl Dashboard | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9ED6856417 | /dashboard/pl-approve | Pl Dashboard Approve | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3D83415EFD | /dashboard/pl-drilldown | Pl Dashboard Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
