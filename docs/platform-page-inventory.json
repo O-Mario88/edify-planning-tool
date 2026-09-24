@@ -8828,7 +8828,34 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6122,
+      "bytes": 6033,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Partner School Row",
+      "purpose": "Reusable partner school row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/partner_school_row.html",
+      "variants": [
+        "danger",
+        "{{ item.status_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6049,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -8848,14 +8875,14 @@
       "template": "partials/oversight/partner_work_row.html",
       "variants": [
         "danger",
-        "{% if item.awaits_staff_decision %}danger{% elif item.delivery_phase == "
+        "{{ item.status_tone }}"
       ]
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2598,
+      "bytes": 4207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -8994,10 +9021,11 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3577,
+      "bytes": 4252,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/partner-oversight/resolve"
+        "/partner-oversight/resolve",
+        "/projects/monitoring/resolve"
       ],
       "findings": [],
       "forms": 1,
@@ -9048,10 +9076,11 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10018,
+      "bytes": 10702,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/partner-oversight/withdraw"
+        "/partner-oversight/withdraw",
+        "/projects/monitoring/withdraw"
       ],
       "findings": [],
       "forms": 1,
@@ -10402,6 +10431,29 @@
       ],
       "tables": 0,
       "template": "partials/projects/filters_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5836,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/projects/monitoring/school"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Monitoring School Drawer",
+      "purpose": "Reusable monitoring school drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/projects/monitoring_school_drawer.html",
       "variants": []
     },
     {
@@ -63284,7 +63336,7 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /partner-oversight/resolve/submit"
+        "POST {% firstof submit_url "
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -63317,7 +63369,7 @@
       "route_name": "partner_return_resolve_drawer",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/partner-oversight/resolve/submit"
+        "{% firstof submit_url "
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -63554,7 +63606,7 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /partner-oversight/withdraw/submit"
+        "POST {% firstof submit_url "
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -63587,7 +63639,7 @@
       "route_name": "partner_withdrawal_preview",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/partner-oversight/withdraw/submit"
+        "{% firstof submit_url "
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -73305,6 +73357,9 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET {{ school.detail_url }}&amp;fy={{ fy }}",
+        "GET {{ school.resolve_url }}",
+        "GET {{ school.withdraw_url }}",
         "GET {{ school.schedule_url }}",
         "GET {{ school.partner_url }}"
       ],
@@ -73318,7 +73373,9 @@
       "page_id": "UI-PAGE-6967B646E3",
       "page_title": "Project Monitoring \u00b7 Edify",
       "page_type": "operational-queue",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
       "permission_key": "project_monitoring",
       "primary_action": "Open next queue record",
       "primary_user_decision": "Which queued record should be handled next?",
@@ -73327,6 +73384,7 @@
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
+        "CCEO",
         "CD",
         "IA",
         "PL",
@@ -73392,11 +73450,550 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
         "text-[13px]",
         "text-[15px]",
         "text-[18px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_monitoring_resolve_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/resolve_return_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:project_monitoring"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST {% firstof submit_url "
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-5A0456A088",
+      "page_title": "Project Monitoring Resolve",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "project_monitoring",
+      "primary_action": "Record decision",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Decide what happens to project work its partner handed back: another partner, the coordinator's own delivery, or close the support.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/monitoring/resolve",
+      "route_name": "project_monitoring_resolve",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{% firstof submit_url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/resolve_return_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_monitoring_resolve_submit_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:project_monitoring"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EE1669145F",
+      "page_title": "Project Monitoring Resolve Submit",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "project_monitoring",
+      "primary_action": "Project Monitoring Resolve Submit",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate project monitoring resolve submit within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/monitoring/resolve/submit",
+      "route_name": "project_monitoring_resolve_submit",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_monitoring_school_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/projects/monitoring_school_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:project_monitoring"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ line.resolve_url }}",
+        "GET {{ line.withdraw_url }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-7108EA1C19",
+      "page_title": "Project Monitoring School",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "project_monitoring",
+      "primary_action": "Project Monitoring School",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One school's project work, read only \u2014 the row's View drawer.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/monitoring/school",
+      "route_name": "project_monitoring_school",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/projects/monitoring_school_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_monitoring_withdraw_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/withdrawal_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:project_monitoring"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST {% firstof submit_url "
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-47555C6ECB",
+      "page_title": "Project Monitoring Withdraw",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "project_monitoring",
+      "primary_action": "Send request to Program Lead",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Withdraw a project school's work from its partner, or reassign it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/monitoring/withdraw",
+      "route_name": "project_monitoring_withdraw",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{% firstof submit_url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/withdrawal_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.project_monitoring_withdraw_submit_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:project_monitoring"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B18AB360E8",
+      "page_title": "Project Monitoring Withdraw Submit",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "project_monitoring",
+      "primary_action": "Project Monitoring Withdraw Submit",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Record the coordinator's withdrawal through the withdrawal service, which decides the workflow from the record's state and checks the project's rule again.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/monitoring/withdraw/submit",
+      "route_name": "project_monitoring_withdraw_submit",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.documents.services",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -103359,6 +103956,72 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.extended_views.project_monitoring_resolve_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "project_monitoring",
+      "required_permissions": [],
+      "route": "/projects/monitoring/resolve",
+      "route_name": "project_monitoring_resolve",
+      "templates": [
+        "partials/oversight/resolve_return_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.extended_views.project_monitoring_resolve_submit_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "project_monitoring",
+      "required_permissions": [],
+      "route": "/projects/monitoring/resolve/submit",
+      "route_name": "project_monitoring_resolve_submit",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.extended_views.project_monitoring_school_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "project_monitoring",
+      "required_permissions": [],
+      "route": "/projects/monitoring/school",
+      "route_name": "project_monitoring_school",
+      "templates": [
+        "partials/projects/monitoring_school_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.extended_views.project_monitoring_withdraw_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "project_monitoring",
+      "required_permissions": [],
+      "route": "/projects/monitoring/withdraw",
+      "route_name": "project_monitoring_withdraw",
+      "templates": [
+        "partials/oversight/withdrawal_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.extended_views.project_monitoring_withdraw_submit_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "project_monitoring",
+      "required_permissions": [],
+      "route": "/projects/monitoring/withdraw/submit",
+      "route_name": "project_monitoring_withdraw_submit",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.special_projects_my_plan_view",
       "kind": "partial",
       "methods": [
@@ -105385,30 +106048,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 534,
+    "accessibility_contract_pass": 537,
     "activity_states": 24,
-    "all_routes": 1296,
+    "all_routes": 1301,
     "api_routes": 360,
-    "component_templates": 487,
+    "component_templates": 489,
     "full_pages": 260,
-    "mobile_contract_pass": 534,
-    "nonvisual_actions": 265,
+    "mobile_contract_pass": 537,
+    "nonvisual_actions": 267,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 536,
+      "interaction-fragment": 541,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 271,
-    "permission_gated": 809,
+    "partials_and_drawers": 274,
+    "permission_gated": 814,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 824,
+    "routed_surfaces": 829,
     "scheduled_jobs": 31,
     "severity_counts": {
       "critical": 0,
@@ -105416,8 +106079,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 534,
-    "test_referenced": 717,
-    "theme_contract_pass": 534
+    "tablet_contract_pass": 537,
+    "test_referenced": 722,
+    "theme_contract_pass": 537
   }
 }

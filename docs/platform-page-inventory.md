@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **824**
-- All registered routes: **1296**
+- Routed product surfaces: **829**
+- All registered routes: **1301**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **487**
+- Shared component templates: **489**
 - Full pages: **260**
-- Partials and drawers: **271**
-- Permission-gated surfaces: **809**
-- Referenced by automated tests: **717**
+- Partials and drawers: **274**
+- Permission-gated surfaces: **814**
+- Referenced by automated tests: **722**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -715,6 +715,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-2028F7552C | /projects/filter | Projects | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1CDA9A14C7 | /projects/filters-drawer | Projects Filters Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6967B646E3 | /projects/monitoring | Project Monitoring · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-5A0456A088 | /projects/monitoring/resolve | Project Monitoring Resolve | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EE1669145F | /projects/monitoring/resolve/submit | Project Monitoring Resolve Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7108EA1C19 | /projects/monitoring/school | Project Monitoring School | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-47555C6ECB | /projects/monitoring/withdraw | Project Monitoring Withdraw | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B18AB360E8 | /projects/monitoring/withdraw/submit | Project Monitoring Withdraw Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-89ED7D820F | /projects/my-plan | My Plan | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B86A5C6661 | /projects/planning | Planning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A4244346AC | /projects/planning/bulk-partner | Special Projects Bulk Partner | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

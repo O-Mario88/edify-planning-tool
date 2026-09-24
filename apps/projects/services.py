@@ -596,8 +596,16 @@ def remove_school(project_id: str, school_id: str, principal=None, *, reason: st
     measured from and what the project delivered there — is copied into
     ProjectSchoolEnrollment history first. Activities keep their project, so a
     removal never erases delivered work (owner, 2026-09-15).
+
+    Only the project's coordinator removes a school (owner, 2026-09-24:
+    "Schools assigned to project cannot be withdrawn by the staff"). The
+    officer who added the school reads it on Project Monitoring from then on.
+    A request always names its principal; ``None`` is for internal callers
+    that have already decided.
     """
     from apps.activities.models import Activity
+
+    _assert_directs_project(project_id, principal, "remove a school from it")
 
     assignment = (
         ProjectSchoolAssignment.objects.select_related("project", "school")
@@ -656,7 +664,26 @@ def remove_school(project_id: str, school_id: str, principal=None, *, reason: st
     return {"ok": True, "historyKept": True}
 
 
-def assign_partner(project_id: str, data: dict) -> dict:
+def _assert_directs_project(project_id: str, principal, action: str) -> None:
+    """Only the project's coordinator (or Admin) changes its work — owner,
+    2026-09-24: "Only Project coordinator can edit plan and do everything".
+    ``principal`` is None only for internal callers that have already
+    decided."""
+    if principal is None:
+        return
+    from apps.core.exceptions import Forbidden
+    from apps.projects.authority import directs_project_work, project_work_refusal
+
+    if not directs_project_work(principal, project_id):
+        raise Forbidden(
+            project_work_refusal(
+                Project.objects.filter(id=project_id).first(), action=action
+            )
+        )
+
+
+def assign_partner(project_id: str, data: dict, principal=None) -> dict:
+    _assert_directs_project(project_id, principal, "link a partner to it")
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
@@ -671,7 +698,8 @@ def assign_partner(project_id: str, data: dict) -> dict:
     return {"ok": True, "projectId": project_id, "partnerId": partner.id}
 
 
-def remove_partner(project_id: str, partner_id: str) -> dict:
+def remove_partner(project_id: str, partner_id: str, principal=None) -> dict:
+    _assert_directs_project(project_id, principal, "unlink a partner from it")
     ProjectPartnerAssignment.objects.filter(
         project_id=project_id, partner_id=partner_id
     ).delete()

@@ -1,0 +1,94 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+One school in a Special Project, read only (owner, 2026-09-24): every piece of
+project work there — who has it, its training, purpose and SSA intervention,
+where it stands and its date — and the school's focus SSA readings beside the
+impact engine's verdict. Built by apps.projects.monitoring through the same
+lens as the page, so a reader opens only a school the page shows them.
+
+Nothing here writes. The Project Coordinator's decisions on partner work
+(Withdraw / Reassign, Resolve) open their own drawers, drawn for the
+coordinator alone and checked again by each route and service.
+{% endcomment %}
+
+{% block drawer_title %}{% if row %}{{ row.school_name }}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if row %}{{ project.name }} · {{ row.school_code }}{% if row.district %} · {{ row.district }}{% endif %}{% else %}This school is not in a project you follow, or no longer exists.{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if row %}
+<div class="space-y-4 pr-1 edify-drawer-scroll" data-project-school-drawer="{{ row.assignment_id }}">
+
+  <section aria-labelledby="pm-school-now">
+    <h3 id="pm-school-now" class="text-sm font-semibold mb-2">Where it stands</h3>
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div><dt class="edify-text-caption edify-text-subtle">Status</dt><dd><span class="edify-status-badge {{ row.status_tone }}">{{ row.status_label }}</span></dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle">Activity date</dt><dd>{% if row.activity_date %}{{ row.activity_date|date:"j M Y" }}{% elif row.awaiting_date %}Awaiting scheduling{% else %}—{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle">Added by</dt><dd>{{ row.added_by }}{% if row.enrolled_on %} · {{ row.enrolled_on|date:"j M Y" }}{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle">Coordinator</dt><dd>{{ project.coordinator }}</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="pm-school-work">
+    <h3 id="pm-school-work" class="text-sm font-semibold mb-2">Project work at this school</h3>
+    {% if row.work %}
+    <ul class="space-y-2">
+      {% for line in row.work %}
+      <li class="rounded-surface border p-3 edify-border" data-work-line="{{ line.kind }}">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">{{ line.purpose_label|default:"Project work" }}{% if line.training_name %} · {{ line.training_name }}{% endif %}</p>
+            <p class="edify-text-caption edify-text-muted">
+              {% if line.by_partner %}Partner{% else %}Staff{% endif %}{% if line.delivered_by %}: {{ line.delivered_by }}{% endif %}
+              {% if line.intervention_label %} · {{ line.intervention_label }}{% endif %}
+              · {% if line.activity_date %}{{ line.activity_date|date:"j M Y" }}{% elif line.status_key == "awaiting_partner" %}Awaiting scheduling{% else %}No date{% endif %}
+            </p>
+          </div>
+          <span class="edify-status-badge {{ line.status_tone }}">{{ line.status_label }}</span>
+        </div>
+        {% if controls and line.withdraw_url or controls and line.resolve_url %}
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          {% if line.resolve_url %}
+          <button type="button" class="school-record-action school-record-action--schedule" hx-get="{{ line.resolve_url }}" hx-target="#drawer-container" hx-swap="innerHTML">
+            <span>Resolve</span>
+          </button>
+          {% endif %}
+          {% if line.withdraw_url %}
+          <button type="button" class="school-record-action school-record-action--assign" hx-get="{{ line.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML" title="{{ line.withdraw_label }}">
+            <span>Withdraw / Reassign</span>
+          </button>
+          {% endif %}
+        </div>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm">Nothing planned here yet — awaiting the Project Coordinator.</p>
+    {% if row.purpose_label or row.intervention_label %}
+    <p class="edify-text-caption edify-text-muted">Added for {% if row.purpose_label %}{{ row.purpose_label }}{% endif %}{% if row.purpose_label and row.intervention_label %} · {% endif %}{{ row.intervention_label }}.</p>
+    {% endif %}
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="pm-school-ssa">
+    <h3 id="pm-school-ssa" class="text-sm font-semibold mb-2">Focus SSA</h3>
+    <p class="text-sm mb-1"><span class="edify-status-badge {{ row.impact_tone }}">{{ row.impact_label }}</span></p>
+    {% if row.focus %}
+    <ul class="space-y-1 text-sm">
+      {% for focus in row.focus %}
+      <li title="{{ focus.label }}: confirmed score at enrolment{% if focus.latest is not None %}, then on {{ focus.latest_on|date:'j M Y' }}{% endif %}">{{ focus.label }}: {% if focus.baseline is not None %}{{ focus.baseline }}{% else %}–{% endif %}{% if focus.latest is not None %} → {{ focus.latest }}{% if focus.change is not None %} ({% if focus.direction == "up" %}+{% endif %}{{ focus.change }}){% endif %}{% else %} · no confirmed follow-up yet{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="edify-text-caption edify-text-muted">No focus intervention declared.</p>
+    {% endif %}
+  </section>
+
+  {% if not controls %}
+  <p class="edify-text-caption edify-text-muted">Read only. The Project Coordinator plans this school's work, assigns it to partners, and alone withdraws or reassigns it.</p>
+  {% endif %}
+</div>
+{% else %}
+<p class="text-sm edify-text-muted">This school is not in a project you follow, or no longer exists.</p>
+{% endif %}
+{% endblock %}

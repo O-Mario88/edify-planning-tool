@@ -167,6 +167,33 @@ def assert_may_withdraw(principal, assignment, kind: str) -> str:
     return role
 
 
+#: What a Special Project's withdrawal refusal says the coordinator may do.
+PROJECT_WITHDRAW_ACTION = (
+    "withdraw it from the partner or reassign it to another partner"
+)
+
+
+def assert_directs_project_work(
+    principal, assignment, *, action: str = PROJECT_WITHDRAW_ACTION
+) -> None:
+    """Project work is its Project Coordinator's to change (owner, 2026-09-24).
+
+    "Schools assigned to project cannot be withdrawn by the staff but the
+    project coordinator can withdraw from the partner they assigned to and
+    reassign to another partner." A handover that carries no project is
+    untouched by this rule; one that does is refused to everyone but the
+    coordinator who runs that project (and Admin), whichever page or route
+    the request came through.
+    """
+    if not getattr(assignment, "project_id", None):
+        return
+    from apps.projects.authority import directs_project_work, project_work_refusal
+
+    if directs_project_work(principal, assignment.project_id):
+        return
+    raise Forbidden(project_work_refusal(assignment.project, action=action))
+
+
 # ── Impact preview ───────────────────────────────────────────────────────────
 def preview(principal, assignment_id: str) -> dict:
     """What confirming would actually do, computed on the server.
@@ -290,7 +317,9 @@ def partner_facing_text(reason_category: str, explanation: str) -> str:
 
 
 # ── The decision ─────────────────────────────────────────────────────────────
-def withdraw(assignment_id: str, data: dict, principal) -> PartnerAssignmentWithdrawal:
+def withdraw(
+    assignment_id: str, data: dict, principal, *, school_closure: bool = False
+) -> PartnerAssignmentWithdrawal:
     """Take the work back, and record everything that happened because of it.
 
     One transaction. If any step fails the assignment stays exactly as it was,
@@ -301,6 +330,12 @@ def withdraw(assignment_id: str, data: dict, principal) -> PartnerAssignmentWith
     returns the existing record rather than opening a second one. Two open
     withdrawals would each claim the support slot, and the database constraint
     refuses that anyway; this turns the race into an answer.
+
+    Special Project work is withdrawn by its Project Coordinator alone
+    (``assert_directs_project_work``). ``school_closure`` is the one exception,
+    passed only by ``schools.lifecycle_service`` when a school shuts: that is
+    not a decision about the project, and the Partner has to stop whoever runs
+    it.
     """
     reason_category, explanation, disposition, internal_note = _validate(data)
     replacement_partner_id = ((data or {}).get("replacement_partner_id") or "").strip()
@@ -346,6 +381,8 @@ def withdraw(assignment_id: str, data: dict, principal) -> PartnerAssignmentWith
                 "are settled through a dispute or a reopening, not a withdrawal."
             )
         acting_role = assert_may_withdraw(principal, assignment, kind)
+        if not school_closure:
+            assert_directs_project_work(principal, assignment)
 
         if replacement_partner_id:
             _assert_replacement_eligible(assignment, replacement_partner_id)
@@ -427,6 +464,19 @@ def _perform(
     assignment.return_reason = withdrawal.partner_facing_reason
     assignment.returned_at = timezone.now()
     assignment.returned_by = getattr(principal, "id", "") or ""
+    # The withdrawal already decided what happens next, so the handover is
+    # recorded as decided. Without this it looked exactly like a Partner's own
+    # hand-back still waiting on staff: Partner Monitoring offered Resolve
+    # Exception on it, and resolving it again could open a second replacement
+    # for the same slot. A hold or an escalation leaves the decision open.
+    decided = decision_for(withdrawal.disposition)
+    if decided:
+        assignment.resolution = decided
+        assignment.resolution_note = (
+            f"Decided at withdrawal: {withdrawal.get_disposition_display()}."
+        )
+        assignment.resolved_at = timezone.now()
+        assignment.resolved_by = getattr(principal, "id", None)
     assignment.save(
         update_fields=[
             "status",
@@ -434,6 +484,10 @@ def _perform(
             "return_reason",
             "returned_at",
             "returned_by",
+            "resolution",
+            "resolution_note",
+            "resolved_at",
+            "resolved_by",
             "updated_at",
         ]
     )
@@ -454,6 +508,23 @@ def _perform(
     withdrawal.save(
         update_fields=["replacement_assignment", "state", "effective_at", "updated_at"]
     )
+
+
+#: What each disposition already decided about a withdrawn handover, in the
+#: vocabulary a Partner's hand-back is resolved in
+#: (``PartnerAssignment.RESOLUTION_CHOICES``). Holding for review and
+#: escalating decide nothing yet, so they are absent and stay open.
+DISPOSITION_DECISIONS = {
+    WithdrawalDisposition.REASSIGN_PARTNER: PartnerAssignment.RESOLUTION_REASSIGNED,
+    WithdrawalDisposition.RETURN_TO_PLANNING: PartnerAssignment.RESOLUTION_STAFF_DELIVERY,
+    WithdrawalDisposition.SCHEDULE_AS_STAFF: PartnerAssignment.RESOLUTION_STAFF_DELIVERY,
+    WithdrawalDisposition.CANCEL_SUPPORT: PartnerAssignment.RESOLUTION_SUPPORT_CLOSED,
+}
+
+
+def decision_for(disposition: str) -> str:
+    """The resolution a withdrawal's disposition records, or "" for none."""
+    return DISPOSITION_DECISIONS.get(disposition, "")
 
 
 OPEN_STATES = (
@@ -609,6 +680,14 @@ def _assert_replacement_eligible(assignment, replacement_partner_id: str) -> Non
         raise NotFoundError("That partner no longer exists.")
     if not partner.active_status:
         raise BadRequest(f"{partner.name} is not currently active.")
+
+    if assignment.project_id:
+        # The replacement is new work on the project, and a paused or closed
+        # project takes none — the rule every other project assignment path
+        # keeps (projects.services.assert_accepts_new_work).
+        from apps.projects.services import assert_accepts_new_work
+
+        assert_accepts_new_work(assignment.project)
 
     # One live assignment per support slot. Without this a school could end up
     # with two partners both believing they own the same visit, and both
@@ -865,6 +944,16 @@ def request_withdrawal(
         # Scope only — the CCEO is asking, not deciding, so the
         # already-scheduled refusal in assert_may_withdraw does not apply.
         _assert_owns(principal, assignment)
+        if assignment.project_id:
+            # Project work is not the staff's to withdraw, and asking a
+            # Programme Lead to would only route the decision to someone who
+            # may not make it either: it is the Project Coordinator's
+            # (owner, 2026-09-24).
+            from apps.projects.authority import project_work_refusal
+
+            raise Forbidden(
+                project_work_refusal(assignment.project, action=PROJECT_WITHDRAW_ACTION)
+            )
 
         withdrawal = PartnerAssignmentWithdrawal.objects.create(
             assignment=assignment,
@@ -994,6 +1083,10 @@ def review_request(
                 ]
             )
         return withdrawal
+
+    # Rejecting leaves the work where it is; approving performs a withdrawal,
+    # and on a Special Project that is its coordinator's decision alone.
+    assert_directs_project_work(principal, withdrawal.assignment)
 
     # Approving decides and performs in one transaction, so the queue can
     # never show an approved request that did not actually happen.

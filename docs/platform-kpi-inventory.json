@@ -8476,7 +8476,7 @@
    "audit_id": "KPI-SOURCE-469",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1890,
+   "line": 1900,
    "label": null,
    "keys": [
     "count",
@@ -8551,7 +8551,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1918,
+   "line": 1928,
    "label": "All team members",
    "keys": [
     "count",
@@ -8569,7 +8569,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1920,
+   "line": 1930,
    "label": null,
    "keys": [
     "count",
@@ -13658,7 +13658,7 @@
   {
    "audit_id": "KPI-SURFACE-056",
    "template": "templates/pages/projects/monitoring.html",
-   "line": 42,
+   "line": 49,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -13667,6 +13667,7 @@
    "page_title": "Project Monitoring \u00b7 Edify",
    "roles": [
     "ADMIN",
+    "CCEO",
     "CD",
     "IA",
     "PL",

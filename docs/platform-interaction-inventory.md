@@ -6,28 +6,28 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 532 |
-| Control declarations | 3403 |
+| Templates with controls | 534 |
+| Control declarations | 3411 |
 | State-changing | 411 |
-| High-consequence (state-changing) | 183 |
-| No automated evidence | 357 |
-| State-changing with no automated evidence | 25 |
+| High-consequence (state-changing) | 182 |
+| No automated evidence | 350 |
+| State-changing with no automated evidence | 24 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1107 |
+| button | 1116 |
 | disclosure | 69 |
 | field | 1178 |
-| link | 984 |
+| link | 983 |
 | tab | 65 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 755 |
-| none | 357 |
-| page-tested | 1241 |
-| request-tested | 1050 |
+| browser-rendered | 759 |
+| none | 350 |
+| page-tested | 1251 |
+| request-tested | 1051 |
 
 ## State-changing controls with no automated evidence
 
@@ -55,6 +55,5 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-4DAF16CA3708 | partials/ia/reports_view.html | 82 | Download annex (CSV) | `POST                                               ` |
 | INT-3144923BE448 | partials/leave/request_leave_drawer.html | 254 | Submit request | `POST                                          ` |
 | INT-E5ABD245F4FF | partials/oversight/allowance_grant_drawer.html | 58 | Grant allowance | `POST /partner-oversight/allowance-grant` |
-| INT-BBDF43A17433 | partials/oversight/withdrawal_drawer.html | 186 | Send request to Program Lead {{ preview.kind_label }} | `POST /partner-oversight/withdraw/submit` |
 | INT-D45ACD9CF57B | partials/partner/invoice_drawer.html | 93 | Send to my Program Lead | `POST /partner/invoices` |
 | INT-50E0D15180C8 | partials/partners/return_assignment_drawer.html | 55 | Return to staff | `POST /partner/assignments/{{ assignment.id }}/return-action` |

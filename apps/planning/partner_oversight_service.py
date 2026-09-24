@@ -64,6 +64,30 @@ _PAYMENT_PROCESSING_STATUSES = (
     "disbursed",
 )
 
+#: Every relation one handover's row reads, joined in the query that loads it,
+#: so the Schools-assigned table's Training, Purpose and SSA Intervention cost
+#: no query per row. The list query, the school section and the one-handover
+#: rebuild all read the same set, so a row and its drawer cannot disagree.
+ASSIGNMENT_RELATIONS: tuple[str, ...] = (
+    "school",
+    "school__district",
+    "cluster",
+    "partner",
+    "project",
+    "catalogue_item",
+    "training_course",
+    "source_activity__training_course",
+    "scheduled_activity__training_course",
+)
+
+#: What the SSA Intervention column says for work that collects the SSA itself
+#: and so moves no single intervention — the words the Assign to partner
+#: drawer already shows for SSA Support.
+DATA_GATHERING_LABEL = "Data Gathering"
+_DATA_GATHERING_TYPES = frozenset(
+    {"school_visit_ssa_collection", "baseline_ssa_visit", "partner_ssa_collection"}
+)
+
 #: The Partner Monitoring filter menu, in the owner's order.
 MONITORING_FILTERS: tuple[tuple[str, str], ...] = (
     ("all", "All Assigned Schools"),
@@ -111,6 +135,18 @@ class PartnerOversightItem:
     support_slot: str = ""
     target_intervention: str = ""
     source_ssa_id: str | None = None
+    # The Schools-assigned table's columns (owner, 2026-09-24), in words: the
+    # training the handover delivers or follows up, why the school was handed
+    # over, and the SSA intervention the work targets. Read from the handover,
+    # then from the activity the Partner's scheduling created.
+    training_name: str = ""
+    purpose_label: str = ""
+    intervention_label: str = ""
+    # The Special Project this handover belongs to, if any. Project work is
+    # the project's coordinator's to withdraw or reassign (owner, 2026-09-24),
+    # so the page names it and draws those controls for nobody else.
+    project_name: str = ""
+    project_locked: bool = False
 
     # When
     assignment_date: date | None = None
@@ -291,6 +327,137 @@ class PartnerOversightItem:
             return "in_progress"
         return "scheduled"
 
+    @property
+    def status_label(self) -> str:
+        """The Status column, in words: Awaiting Schedule until the Partner
+        dates the work, Scheduled once they have (owner, 2026-09-24), then
+        where delivery stands. A hand-back nobody has decided on says so."""
+        if self.awaits_staff_decision:
+            return self.schedule_status
+        return self.delivery_phase.replace("_", " ").title()
+
+    @property
+    def status_tone(self) -> str:
+        """Red when staff must act, blue while the work waits on the Partner's
+        date or on IA, amber while it is scheduled or under way, green only
+        once IA has verified it — the Planning badges' rule."""
+        if self.awaits_staff_decision:
+            return "danger"
+        phase = self.delivery_phase
+        if phase in ("awaiting_schedule", "verification"):
+            return "info"
+        if phase == "completed":
+            return "success" if self.ia_status_label == "Verified" else "info"
+        return "warning"
+
+    @property
+    def activity_date(self) -> date | None:
+        """The Activity date column: the day the Partner scheduled, and none
+        before they have — a schedule-by date is a deadline, not a visit."""
+        if self.stage != STAGE_SCHEDULED:
+            return None
+        return self.scheduled_date
+
+
+def choice_label(value: str, choices) -> str:
+    """A stored code as its choice label, or plainly spaced when unknown."""
+    if not value:
+        return ""
+    try:
+        return choices(value).label
+    except ValueError:
+        return str(value).replace("_", " ").title()
+
+
+def _course_name(course) -> str:
+    if course is None:
+        return ""
+    return (
+        getattr(course, "display_name", "") or getattr(course, "source_name", "") or ""
+    )
+
+
+def activity_day(activity) -> date | None:
+    """The day an activity is dated, read the way My Plan reads it: the
+    planned date, falling back to the scheduled timestamp an older row carries
+    on its own."""
+    if activity is None:
+        return None
+    if activity.planned_date:
+        return activity.planned_date
+    moment = activity.scheduled_date
+    if not moment:
+        return None
+    from django.utils import timezone
+
+    if timezone.is_naive(moment):
+        return moment.date()
+    return timezone.localtime(moment).date()
+
+
+def describe_work(
+    *,
+    purpose_code: str = "",
+    activity_type: str = "",
+    course=None,
+    catalogue_item=None,
+    source_activity=None,
+    activity=None,
+    focus: str = "",
+) -> tuple[str, str, str]:
+    """(Training, Purpose of Assignment, SSA Intervention) for one piece of
+    Partner or project work, every word read from the records behind it.
+
+    Training is the course a training delivers — the handover's own course,
+    else the scheduled activity's, else the approved catalogue item a training
+    handover names — or, for a Training Follow Up, the training it follows up.
+    Other work names no training. Purpose is the handover's stated reason,
+    else the activity's, else its activity type. The intervention is the
+    work's focus; work that collects the SSA itself reads Data Gathering.
+    """
+    from apps.core.enums import ActivityType, SsaIntervention
+    from apps.partners.purposes import visit_purpose_label
+
+    purpose_code = purpose_code or (
+        getattr(activity, "purpose_type", "") if activity is not None else ""
+    )
+    activity_type = activity_type or (
+        getattr(activity, "activity_type", "") if activity is not None else ""
+    )
+    is_training = (
+        purpose_code == "in_school_training" or activity_type in TRAINING_TYPES
+    )
+
+    training = _course_name(course)
+    if not training and activity is not None:
+        training = _course_name(getattr(activity, "training_course", None))
+    if not training and is_training:
+        training = _course_name(catalogue_item)
+        if not training and activity is not None:
+            training = getattr(activity, "activity_name_snapshot", "") or ""
+    if not training and purpose_code == "training_follow_up" and source_activity:
+        training = (
+            _course_name(getattr(source_activity, "training_course", None))
+            or getattr(source_activity, "activity_name_snapshot", "")
+            or choice_label(source_activity.activity_type, ActivityType)
+        )
+
+    purpose = visit_purpose_label(purpose_code, "") if purpose_code else ""
+    if not purpose:
+        purpose = choice_label(activity_type, ActivityType)
+
+    code = focus or (
+        (activity.focus_intervention or activity.purpose_intervention or "")
+        if activity is not None
+        else ""
+    )
+    intervention = choice_label(code, SsaIntervention)
+    if not intervention and (
+        purpose_code == "ssa_support" or activity_type in _DATA_GATHERING_TYPES
+    ):
+        intervention = DATA_GATHERING_LABEL
+    return training, purpose, intervention
+
 
 def _assignment_team_q(scope):
     """Which handovers a team lens reads, as one filter (None for the country).
@@ -346,12 +513,19 @@ def build_items(
     date_end: date | None = None,
     partner_id=None,
     program_lead_id=None,
+    fys: tuple[str, ...] | None = None,
 ):
     """Every partner handover this principal may oversee, for the period.
 
     One bulk query per source. The partner group expansion on the page reuses
     this list rather than re-querying, so a group's numbers and its rows are
     the same rows.
+
+    ``fys``, when given, reads those fiscal years instead of ``fy`` alone — a
+    planning horizon (``fy_policy.planning_horizon``). A handover made in
+    September that the Partner dates into October belongs to the next fiscal
+    year; read for the page year alone it left the list the moment it was
+    scheduled, instead of reading Scheduled on its date (owner, 2026-09-24).
     """
     from apps.partners.models import PartnerAssignment
 
@@ -359,27 +533,22 @@ def build_items(
     if scope["kind"] == "team" and not scope["staff_ids"]:
         return []
 
-    qs = (
-        PartnerAssignment.objects.select_related(
-            "school", "school__district", "cluster", "partner", "scheduled_activity"
-        ).filter(deleted_at__isnull=True)
-        if _has_soft_delete()
-        else PartnerAssignment.objects.select_related(
-            "school", "school__district", "cluster", "partner", "scheduled_activity"
-        )
-    )
+    qs = PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS)
+    if _has_soft_delete():
+        qs = qs.filter(deleted_at__isnull=True)
     team_q = _assignment_team_q(scope)
     if team_q is not None:
         qs = qs.filter(team_q)
     if partner_id:
         qs = qs.filter(partner_id=partner_id)
 
+    years = {str(year) for year in fys} if fys else ({str(fy)} if fy else set())
     assignments = list(qs)
-    if fy:
+    if years:
         from apps.core.fy import get_operational_fy
 
         assignments = [
-            a for a in assignments if _assignment_fy(a, get_operational_fy) == fy
+            a for a in assignments if _assignment_fy(a, get_operational_fy) in years
         ]
 
     activity_ids = [
@@ -390,7 +559,7 @@ def build_items(
 
     items = [_item_for(a, costs, directory) for a in assignments]
     items += _unassigned_partner_activities(
-        scope, fy=fy, partner_id=partner_id, already=set(activity_ids)
+        scope, fys=years, partner_id=partner_id, already=set(activity_ids)
     )
     if month:
         items = [
@@ -508,7 +677,7 @@ def filter_counts(items) -> dict:
 
 
 def _unassigned_partner_activities(
-    scope, *, fy: str, partner_id, already: set
+    scope, *, fys, partner_id, already: set
 ) -> list[PartnerOversightItem]:
     """Partner-delivered activities that no PartnerAssignment points at.
 
@@ -535,10 +704,10 @@ def _unassigned_partner_activities(
         .exclude(assigned_partner_id__isnull=True)
         .exclude(assigned_partner_id="")
         .exclude(status__in=("cancelled", "rejected", "deferred"))
-        .select_related("school", "school__district", "cluster")
+        .select_related("school", "school__district", "cluster", "training_course")
     )
-    if fy:
-        qs = qs.filter(fy=fy)
+    if fys:
+        qs = qs.filter(fy__in=tuple(fys))
     if partner_id:
         qs = qs.filter(assigned_partner_id=partner_id)
     if already:
@@ -569,6 +738,14 @@ def _unassigned_partner_activities(
         ).values_list("id", "name")
     )
     costs = _cost_by_activity([a.id for a in activities])
+    # Activity.project_id is a plain column, so the names come in one query.
+    from apps.projects.models import Project
+
+    project_names = dict(
+        Project.objects.filter(
+            id__in={a.project_id for a in activities if a.project_id}
+        ).values_list("id", "name")
+    )
     owner_names = _owner_names(
         {getattr(a.school, "account_owner_id", None) for a in activities}
     )
@@ -598,6 +775,7 @@ def _unassigned_partner_activities(
         pl_id, pl_name = directory["supervisor"].get(canonical, (None, ""))
         entry = costs.get(activity.id)
         cost, catalogue_id, catalogue_version = entry if entry else (0, None, None)
+        training, purpose, intervention = describe_work(activity=activity)
         item = PartnerOversightItem(
             stage=STAGE_SCHEDULED
             if (activity.planned_date or activity.scheduled_date)
@@ -620,8 +798,12 @@ def _unassigned_partner_activities(
             supervising_pl_name=pl_name,
             activity_type=activity.activity_type or "",
             target_intervention=activity.focus_intervention or "",
-            scheduled_date=activity.planned_date
-            or (activity.scheduled_date.date() if activity.scheduled_date else None),
+            training_name=training,
+            purpose_label=purpose,
+            intervention_label=intervention,
+            project_id=activity.project_id,
+            project_name=project_names.get(activity.project_id, ""),
+            scheduled_date=activity_day(activity),
             month=activity.planned_month,
             quarter=activity.quarter or "",
             financial_year=activity.fy or "",
@@ -840,6 +1022,20 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         entry = costs.get(activity.id)
         cost, catalogue_id, catalogue_version = entry if entry else (0, None, None)
 
+    training, purpose, intervention = describe_work(
+        purpose_code=assignment.purpose_of_visit or "",
+        activity_type=(
+            getattr(activity, "activity_type", "")
+            or assignment.expected_activity_type
+            or ""
+        ),
+        course=assignment.training_course,
+        catalogue_item=assignment.catalogue_item,
+        source_activity=assignment.source_activity,
+        activity=activity,
+        focus=assignment.focus_intervention or "",
+    )
+
     item = PartnerOversightItem(
         stage=stage,
         partner_assignment_id=assignment.id,
@@ -867,6 +1063,10 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         support_slot=assignment.support_type or "",
         target_intervention=assignment.focus_intervention or "",
         source_ssa_id=assignment.source_ssa_id,
+        training_name=training,
+        purpose_label=purpose,
+        intervention_label=intervention,
+        project_name=getattr(assignment.project, "name", "") or "",
         assignment_date=assignment.created_at.date() if assignment.created_at else None,
         schedule_by_date=assignment.scheduled_date,
         assignment_status=assignment.status,
@@ -891,7 +1091,10 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
     )
 
     if activity is not None:
-        item.scheduled_date = activity.planned_date
+        # The day the Partner scheduled — the Activity date column once they
+        # have (owner, 2026-09-24). An older row dated only by its timestamp
+        # reads that day, as it does on My Plan.
+        item.scheduled_date = activity_day(activity)
         item.month = activity.planned_month
         item.quarter = activity.quarter or ""
         item.financial_year = activity.fy or ""
@@ -1024,9 +1227,9 @@ def build_items_for_school(school_id: str):
     from apps.partners.models import PartnerAssignment
 
     assignments = list(
-        PartnerAssignment.objects.select_related(
-            "school", "school__district", "cluster", "partner", "scheduled_activity"
-        ).filter(school_id=school_id)
+        PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS).filter(
+            school_id=school_id
+        )
     )
     if not assignments:
         return []
@@ -1058,9 +1261,7 @@ def build_item_by_assignment(assignment_id: str):
     from apps.partners.models import PartnerAssignment
 
     assignment = (
-        PartnerAssignment.objects.select_related(
-            "school", "school__district", "cluster", "partner", "scheduled_activity"
-        )
+        PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS)
         .filter(id=assignment_id)
         .first()
     )
@@ -1397,6 +1598,9 @@ def filter_workspace(items, *, member="", activity_type="", status=""):
 
 
 def workspace_tables(items):
+    """The Partner's three tables. The schools table carries the owner's
+    columns (2026-09-24): School ID, School Name, Staff Name, Training,
+    Purpose of Assignment, SSA Intervention, Status, Activity date, Actions."""
     items = list(items)
     return [
         {
@@ -1404,6 +1608,7 @@ def workspace_tables(items):
             "title": "Schools assigned",
             "items": [i for i in items if i.partner_assignment_id and i.school_id],
             "kind": "assignment",
+            "columns": "school",
         },
         {
             "page_param": "partner_clusters_page",

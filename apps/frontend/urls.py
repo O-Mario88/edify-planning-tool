@@ -2285,6 +2285,34 @@ urlpatterns = [
         extended_views.project_monitoring_view,
         name="project_monitoring",
     ),
+    # One school's project work, read only, for everyone in the page's lens;
+    # and the Project Coordinator's two decisions on partner work — withdraw
+    # or reassign, and resolve a hand-back (owner, 2026-09-24).
+    path(
+        "projects/monitoring/school",
+        extended_views.project_monitoring_school_view,
+        name="project_monitoring_school",
+    ),
+    path(
+        "projects/monitoring/withdraw",
+        extended_views.project_monitoring_withdraw_view,
+        name="project_monitoring_withdraw",
+    ),
+    path(
+        "projects/monitoring/withdraw/submit",
+        extended_views.project_monitoring_withdraw_submit_view,
+        name="project_monitoring_withdraw_submit",
+    ),
+    path(
+        "projects/monitoring/resolve",
+        extended_views.project_monitoring_resolve_view,
+        name="project_monitoring_resolve",
+    ),
+    path(
+        "projects/monitoring/resolve/submit",
+        extended_views.project_monitoring_resolve_submit_view,
+        name="project_monitoring_resolve_submit",
+    ),
     path(
         "projects/<str:project_id>/staff/assign",
         extended_views.project_assign_staff_action_view,

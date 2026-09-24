@@ -4331,14 +4331,16 @@ def project_monitoring_view(request):
     project, grouped by project — whether it is planned (by the coordinator,
     or handed to a partner and scheduled by them), whether the work happened,
     and whether its focus SSA interventions moved. Everyone but the Project
-    Coordinator reads; the coordinator also gets the two controls they hold on
-    Project Planning (schedule, assign to a partner), which open the same
-    drawers and are checked by them. The enrolment lens
-    (apps.projects.monitoring) decides what each reader sees.
+    Coordinator reads; the coordinator also gets the controls they hold on
+    Project Planning (schedule, assign to a partner) and the two decisions on
+    partner work (withdraw or reassign, resolve a hand-back), which open
+    drawers served by their own routes and are checked there and by the
+    services behind them. The enrolment lens (apps.projects.monitoring)
+    decides what each reader sees.
     """
     from django.http import HttpResponseNotAllowed
 
-    from apps.core.fy import fy_options, get_operational_fy
+    from apps.core.fy import fy_options
     from apps.projects import monitoring
 
     # Nothing here writes — the coordinator's controls open drawers served by
@@ -4347,8 +4349,7 @@ def project_monitoring_view(request):
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
 
-    requested_fy = (request.GET.get("fy") or "").strip()
-    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
+    fy = _monitoring_fy(request)
     selected_project = (request.GET.get("project") or "").strip()
     stages = dict(monitoring.STAGE_FILTERS)
     requested_stage = (request.GET.get("stage") or "").strip()
@@ -4379,4 +4380,272 @@ def project_monitoring_view(request):
             "fy": fy,
             "fy_options": fy_options(),
         },
+    )
+
+
+def _monitoring_fy(request) -> str:
+    """The fiscal year Project Monitoring reads: the one asked for, if the FY
+    selector offers it, else the operational year."""
+    from apps.core.fy import fy_options, get_operational_fy
+
+    requested = (request.GET.get("fy") or "").strip()
+    return requested if requested in fy_options() else get_operational_fy()
+
+
+@require_page_permission("project_monitoring")
+def project_monitoring_school_view(request):
+    """One school's project work, read only — the row's View drawer.
+
+    Rebuilt through the page's own lens (``monitoring.find_school_row``), so a
+    CCEO or Programme Lead opens only a school they added, and an enrolment id
+    belonging to anyone else's school resolves to nothing.
+    """
+    from apps.projects import monitoring
+
+    fy = _monitoring_fy(request)
+    project, row = monitoring.find_school_row(
+        request.user, (request.GET.get("enrolment") or "").strip(), fy=fy
+    )
+    if row is None:
+        return render(
+            request,
+            "partials/projects/monitoring_school_drawer.html",
+            {"row": None},
+            status=404,
+        )
+    return render(
+        request,
+        "partials/projects/monitoring_school_drawer.html",
+        {
+            "row": row,
+            "project": project,
+            "controls": monitoring.controls_project_work(request.user),
+            "drawer_size": "md",
+        },
+    )
+
+
+def _coordinated_handover(user, handover_id: str):
+    """The project partner handover this Project Coordinator decides on.
+
+    Checked on the record rather than trusted from the URL: the reader must be
+    a Project Coordinator and the handover must carry a project they run
+    (apps.projects.authority). The withdrawal and resolve services check the
+    same rule again.
+    """
+    from apps.partners.models import PartnerAssignment
+    from apps.projects.authority import directs_project_work
+    from apps.projects.monitoring import controls_project_work
+
+    handover_id = (handover_id or "").strip()
+    if not handover_id or not controls_project_work(user):
+        return None
+    handover = (
+        PartnerAssignment.objects.select_related("project", "school", "partner")
+        .filter(id=handover_id)
+        .first()
+    )
+    if handover is None or not handover.project_id:
+        return None
+    if not directs_project_work(user, handover.project_id):
+        return None
+    return handover
+
+
+def _awaits_coordinator_decision(handover) -> bool:
+    """Project work handed back to staff with nothing decided yet. A
+    withdrawal records its own decision when it takes effect, so a second one
+    here could only duplicate it."""
+    from apps.partners.models import PartnerAssignment
+
+    return bool(
+        handover is not None
+        and handover.status == PartnerAssignment.STATUS_RETURNED_TO_STAFF
+        and handover.resolved_at is None
+    )
+
+
+def _replacement_partners(handover) -> list[dict]:
+    """Partners who can take the work instead: active, not on hold, and not
+    the one it is being taken from."""
+    from apps.partners.services import assignable_partners
+
+    return [
+        {"id": partner.id, "name": partner.name}
+        for partner in assignable_partners().exclude(id=handover.partner_id)[:200]
+    ]
+
+
+def _monitoring_decision_response(request, message: str):
+    """A recorded decision: close the drawer and redraw the page, so the row
+    reads its new status at once. A plain post returns to the page."""
+    if request.headers.get("HX-Request") == "true":
+        from django.utils.html import escape
+
+        response = HttpResponse(
+            f'<p class="pill pill-success" role="status">{escape(message)}</p>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        response["HX-Refresh"] = "true"
+        return response
+    messages.success(request, message)
+    return redirect("/projects/monitoring")
+
+
+@require_page_permission("project_monitoring")
+def project_monitoring_withdraw_view(request):
+    """Withdraw a project school's work from its partner, or reassign it.
+
+    Owner, 2026-09-24: "the project coordinator can withdraw from the partner
+    they assigned to and reassign to another partner." The same governed
+    withdrawal Partner Monitoring uses — its preview, its reasons and its
+    state-decided action — posted to this page's route, offered to the Project
+    Coordinator who runs the project and nobody else.
+    """
+    from apps.partners import withdrawal_service
+    from apps.partners.withdrawal_models import (
+        WithdrawalDisposition,
+        WithdrawalReason,
+    )
+    from apps.planning.partner_oversight_service import build_item_by_assignment
+
+    handover = _coordinated_handover(request.user, request.GET.get("handover"))
+    if handover is None:
+        return render(
+            request,
+            "partials/oversight/withdrawal_drawer.html",
+            {"preview": None},
+            status=404,
+        )
+    # Project work returns to the coordinator's own planning, not a CCEO's.
+    dispositions = [
+        (
+            value,
+            "Return to Project Planning"
+            if value == WithdrawalDisposition.RETURN_TO_PLANNING
+            else label,
+        )
+        for value, label in WithdrawalDisposition.choices
+    ]
+    return render(
+        request,
+        "partials/oversight/withdrawal_drawer.html",
+        {
+            "preview": withdrawal_service.preview(request.user, handover.id),
+            "item": build_item_by_assignment(handover.id),
+            "reasons": WithdrawalReason.choices,
+            "dispositions": dispositions,
+            "partners": _replacement_partners(handover),
+            "must_request": False,
+            "submit_url": "/projects/monitoring/withdraw/submit",
+        },
+    )
+
+
+@require_page_permission("project_monitoring")
+@require_POST
+def project_monitoring_withdraw_submit_view(request):
+    """Record the coordinator's withdrawal through the withdrawal service,
+    which decides the workflow from the record's state and checks the
+    project's rule again."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.core.htmx_errors import error_fragment
+    from apps.partners import withdrawal_service
+
+    handover = _coordinated_handover(request.user, request.POST.get("assignment_id"))
+    if handover is None:
+        return error_fragment(
+            Forbidden("That partner work is not in a project you coordinate."),
+            status=403,
+        )
+    try:
+        result = withdrawal_service.withdraw(
+            handover.id,
+            {
+                "reason_category": request.POST.get("reason_category"),
+                "partner_facing_reason": request.POST.get("partner_facing_reason"),
+                "internal_note": request.POST.get("internal_note"),
+                "disposition": request.POST.get("disposition"),
+                "replacement_partner_id": request.POST.get("replacement_partner_id"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return error_fragment(exc, status=400)
+    return _monitoring_decision_response(
+        request, f"{result.get_kind_display()} — {result.get_state_display()}."
+    )
+
+
+@require_page_permission("project_monitoring")
+def project_monitoring_resolve_view(request):
+    """Decide what happens to project work its partner handed back:
+    another partner, the coordinator's own delivery, or close the support."""
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.partner_oversight_service import build_item_by_assignment
+
+    handover = _coordinated_handover(request.user, request.GET.get("handover"))
+    if not _awaits_coordinator_decision(handover):
+        return render(
+            request,
+            "partials/oversight/resolve_return_drawer.html",
+            {"item": None},
+            status=404,
+        )
+    can_reassign = has_permission(
+        request.user, Permission.PARTNER_ASSIGNMENT_REASSIGN.value
+    )
+    return render(
+        request,
+        "partials/oversight/resolve_return_drawer.html",
+        {
+            "item": build_item_by_assignment(handover.id),
+            "drawer_size": "md",
+            "can_reassign": can_reassign,
+            "partners": _replacement_partners(handover) if can_reassign else [],
+            "resolutions": PartnerAssignment.RESOLUTION_CHOICES,
+            "submit_url": "/projects/monitoring/resolve/submit",
+        },
+    )
+
+
+@require_page_permission("project_monitoring")
+@require_POST
+def project_monitoring_resolve_submit_view(request):
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.core.htmx_errors import error_fragment
+    from apps.partners.services import resolve_returned_assignment
+
+    handover = _coordinated_handover(request.user, request.POST.get("assignment_id"))
+    if handover is None:
+        return error_fragment(
+            Forbidden("That partner work is not in a project you coordinate."),
+            status=403,
+        )
+    if not _awaits_coordinator_decision(handover):
+        return error_fragment(
+            BadRequest(
+                "This work is not waiting on a decision: what happens next "
+                "has already been recorded."
+            ),
+            status=400,
+        )
+    try:
+        result = resolve_returned_assignment(
+            handover.id,
+            {
+                "resolution": request.POST.get("resolution"),
+                "partner_id": request.POST.get("partner_id"),
+                "note": request.POST.get("note"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return error_fragment(exc, status=400)
+    return _monitoring_decision_response(
+        request,
+        "Decision recorded"
+        + (" — reassigned." if result.get("replacementAssignmentId") else "."),
     )

@@ -3,25 +3,25 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 755,
-   "none": 357,
-   "page-tested": 1241,
-   "request-tested": 1050
+   "browser-rendered": 759,
+   "none": 350,
+   "page-tested": 1251,
+   "request-tested": 1051
   },
   "by_kind": {
-   "button": 1107,
+   "button": 1116,
    "disclosure": 69,
    "field": 1178,
-   "link": 984,
+   "link": 983,
    "tab": 65
   },
-  "controls": 3403,
-  "high_consequence": 183,
+  "controls": 3411,
+  "high_consequence": 182,
   "state_changing": 411,
-  "templates_scanned": 532,
+  "templates_scanned": 534,
   "unresolved_destinations": 0,
-  "untested": 357,
-  "untested_state_changing": 25
+  "untested": 350,
+  "untested_state_changing": 24
  },
  "templates": {
   "base.html": {
@@ -743,6 +743,9 @@
     "/projects/<str:project_id>/schools/bulk-assign-drawer",
     "/projects/create",
     "/projects/filters-drawer",
+    "/projects/monitoring/resolve",
+    "/projects/monitoring/school",
+    "/projects/monitoring/withdraw",
     "/projects/planning/bulk-partner",
     "/projects/planning/bulk-schedule",
     "/pulse-surveys/<str:survey_id>",
@@ -4226,6 +4229,7 @@
    ],
    "roles": [
     "ADMIN",
+    "CCEO",
     "CD",
     "IA",
     "PL",
@@ -7614,6 +7618,21 @@
    "pages": [],
    "roles": []
   },
+  "partials/oversight/partner_school_row.html": {
+   "pages": [
+    "/partner-oversight/"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
   "partials/oversight/partner_work_row.html": {
    "pages": [
     "/partner-oversight/"
@@ -7703,7 +7722,8 @@
   },
   "partials/oversight/resolve_return_drawer.html": {
    "pages": [
-    "/partner-oversight/resolve"
+    "/partner-oversight/resolve",
+    "/projects/monitoring/resolve"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -7712,6 +7732,7 @@
     "CD",
     "IA",
     "PL",
+    "PROJECT_COORDINATOR",
     "RPL",
     "RVP"
    ]
@@ -7735,7 +7756,8 @@
   },
   "partials/oversight/withdrawal_drawer.html": {
    "pages": [
-    "/partner-oversight/withdraw"
+    "/partner-oversight/withdraw",
+    "/projects/monitoring/withdraw"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -7744,6 +7766,7 @@
     "CD",
     "IA",
     "PL",
+    "PROJECT_COORDINATOR",
     "RPL",
     "RVP"
    ]
@@ -8283,6 +8306,19 @@
   "partials/projects/filters_drawer.html": {
    "pages": [
     "/projects/filters-drawer"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ]
+  },
+  "partials/projects/monitoring_school_drawer.html": {
+   "pages": [
+    "/projects/monitoring/school"
    ],
    "roles": [
     "ADMIN",
@@ -10017,13 +10053,16 @@
   {"accessible_name": "{{ r.action }} →", "destination": "{{ r.href }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CA18088447BF", "kind": "link", "line": 237, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/index.html"},
   {"accessible_name": "All partners →", "destination": "/partners", "destination_route": "/partners", "evidence": "request-tested", "high_consequence": false, "id": "INT-6558B0CD5A13", "kind": "link", "line": 282, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/index.html"},
   {"accessible_name": "Open Project My Plan", "destination": "/projects/my-plan", "destination_route": "/projects/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-6DAF2F59D82F", "kind": "link", "line": 305, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/index.html"},
-  {"accessible_name": "Project", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F066D1EC798B", "kind": "field", "line": 78, "method": "", "selector": "select[name=project]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "School stage", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-198858A5B7C2", "kind": "field", "line": 87, "method": "", "selector": "select[name=stage]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A44ABA8EC81F", "kind": "field", "line": 95, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Apply", "destination": "/projects/monitoring", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-1320BC2F7753", "kind": "button", "line": 101, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "{{ school.school_name }}", "destination": "/schools/{{ school.school_pk }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-0951704528E6", "kind": "link", "line": 177, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Schedule project work at {{ school.school_name }}", "destination": "{{ school.schedule_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-04B613C0D8F0", "kind": "button", "line": 204, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
-  {"accessible_name": "Assign {{ school.school_name }} to a partner", "destination": "{{ school.partner_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E669A3DF3C52", "kind": "button", "line": 208, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Project", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F066D1EC798B", "kind": "field", "line": 85, "method": "", "selector": "select[name=project]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "School stage", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-198858A5B7C2", "kind": "field", "line": 94, "method": "", "selector": "select[name=stage]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A44ABA8EC81F", "kind": "field", "line": 102, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Apply", "destination": "/projects/monitoring", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-1320BC2F7753", "kind": "button", "line": 108, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Details for {{ school.school_name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FDF0B2A13AF5", "kind": "button", "line": 199, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "View {{ school.school_name }}'s project work", "destination": "{{ school.detail_url }}&fy={{ fy }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-16CD63418053", "kind": "button", "line": 215, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Resolve the work {{ school.school_name }}'s partner returned", "destination": "{{ school.resolve_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-468617094D04", "kind": "button", "line": 223, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "{{ school.withdraw_label }} at {{ school.school_name }}, or reassign it", "destination": "{{ school.withdraw_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D905C966228B", "kind": "button", "line": 229, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Schedule project work at {{ school.school_name }}", "destination": "{{ school.schedule_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-04B613C0D8F0", "kind": "button", "line": 235, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
+  {"accessible_name": "Assign {{ school.school_name }} to a partner", "destination": "{{ school.partner_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E669A3DF3C52", "kind": "button", "line": 239, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/monitoring.html"},
   {"accessible_name": "Export filtered project plan as CSV", "destination": "{{ export_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F4C819D95A5F", "kind": "link", "line": 22, "method": "GET", "selector": "#sp-plan-export-link", "state_changing": false, "tag": "a", "template": "pages/projects/my_plan.html"},
   {"accessible_name": "Filters", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EC8FB0B37A44", "kind": "button", "line": 26, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/my_plan.html"},
   {"accessible_name": "Open Calendar", "destination": "{{ calendar_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3DF4D2EDEB10", "kind": "link", "line": 30, "method": "GET", "selector": "#sp-plan-calendar-link", "state_changing": false, "tag": "a", "template": "pages/projects/my_plan.html"},
@@ -11492,7 +11531,7 @@
   {"accessible_name": "{{ item.school_name }}", "destination": "/schools/{{ item.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9680106FA530", "kind": "link", "line": 37, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/_core_work_table.html"},
   {"accessible_name": "{{ tab.label }}", "destination": "{{ tab.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-1999543D5340", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/_lens_tabs.html"},
   {"accessible_name": "View details View", "destination": "/partner-oversight/detail?assignment_id={{ item.partner_assignment_id }}", "destination_route": "/partner-oversight/detail", "evidence": "request-tested", "high_consequence": false, "id": "INT-9171F28A05C1", "kind": "button", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_partner_view_button.html"},
-  {"accessible_name": "{{ item.withdrawal_label }}", "destination": "/partner-oversight/withdraw?assignment_id={{ item.partner_assignment_id }}", "destination_route": "/partner-oversight/withdraw", "evidence": "page-tested", "high_consequence": false, "id": "INT-6E0D6442B588", "kind": "button", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_partner_view_button.html"},
+  {"accessible_name": "{{ item.withdrawal_label }}", "destination": "/partner-oversight/withdraw?assignment_id={{ item.partner_assignment_id }}", "destination_route": "/partner-oversight/withdraw", "evidence": "request-tested", "high_consequence": false, "id": "INT-6E0D6442B588", "kind": "button", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_partner_view_button.html"},
   {"accessible_name": "View Completed Activity", "destination": "                         /team-planning-oversight/detail?activity_id={{ item.activity_id }}          /team-planning-oversight/detail?assignment_id={{ item.partner_assignment_id }}           ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E0DC9D3BA5F0", "kind": "button", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_row_actions.html"},
   {"accessible_name": "Actions", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CD52005696F9", "kind": "button", "line": 21, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_row_actions.html"},
   {"accessible_name": "View Details", "destination": "                         /my-plan/{{ item.activity_id }}          /team-planning-oversight/detail?assignment_id={{ item.partner_assignment_id }}           ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E8F3C86779F1", "kind": "button", "line": 32, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/_row_actions.html"},
@@ -11565,6 +11604,9 @@
   {"accessible_name": "Open the full activity record", "destination": "/activities/{{ item.partner_activity_id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-B2586D132946", "kind": "link", "line": 208, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_detail_drawer.html"},
   {"accessible_name": "Activity", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-93A04541CA26", "kind": "field", "line": 4, "method": "", "selector": "select[name=activity_type]", "state_changing": false, "tag": "select", "template": "partials/oversight/partner_filter_fields.html"},
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FC64B8C693DB", "kind": "field", "line": 11, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "partials/oversight/partner_filter_fields.html"},
+  {"accessible_name": "Details for {{ item.school_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-86798DBC8626", "kind": "button", "line": 20, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/partner_school_row.html"},
+  {"accessible_name": "Resolve Exception", "destination": "/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}", "destination_route": "/partner-oversight/resolve", "evidence": "request-tested", "high_consequence": false, "id": "INT-63857F91FA71", "kind": "button", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/partner_school_row.html"},
+  {"accessible_name": "Enter Salesforce ID", "destination": "/activities/{{ item.partner_activity_id }}/salesforce-id", "destination_route": "/activities/<str:activity_id>/salesforce-id", "evidence": "request-tested", "high_consequence": false, "id": "INT-35C882BA9C66", "kind": "button", "line": 46, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/partner_school_row.html"},
   {"accessible_name": "Details for", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5F28779B49FE", "kind": "button", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/partner_work_row.html"},
   {"accessible_name": "Resolve Exception", "destination": "/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}", "destination_route": "/partner-oversight/resolve", "evidence": "request-tested", "high_consequence": false, "id": "INT-152D5B341A9B", "kind": "button", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/partner_work_row.html"},
   {"accessible_name": "View activity", "destination": "/activities/{{ item.partner_activity_id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-F35025427DCC", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/partner_work_row.html"},
@@ -11595,24 +11637,24 @@
   {"accessible_name": "{{ lead.name }} {{ lead.count }} school{{ lead.count|pluralize }} · {{ lead.planned }} planned · {{ lead.unplanned }} not planned · UGX {{ lead.budget|intcomma ", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BDAF408A78C8", "kind": "disclosure", "line": 81, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/oversight/portfolio_workspace.html"},
   {"accessible_name": "", "destination": "{{ school.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4B7588A51BE0", "kind": "link", "line": 136, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/portfolio_workspace.html"},
   {"accessible_name": "{{ school.cluster_name|default:\"—\" }}", "destination": "{{ school.cluster_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-03EBC931C191", "kind": "link", "line": 140, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/portfolio_workspace.html"},
-  {"accessible_name": "{{ value }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8DBD9D737F6E", "kind": "field", "line": 35, "method": "", "selector": "input[name=resolution]", "state_changing": false, "tag": "input", "template": "partials/oversight/resolve_return_drawer.html"},
-  {"accessible_name": "Choose a Partner… {{ partner.name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-390C0DD239C1", "kind": "field", "line": 45, "method": "", "selector": "#resolve-partner", "state_changing": false, "tag": "select", "template": "partials/oversight/resolve_return_drawer.html"},
-  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0CF83899BB28", "kind": "field", "line": 55, "method": "", "selector": "#resolve-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/resolve_return_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6BBCF651544D", "kind": "button", "line": 60, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
-  {"accessible_name": "Record decision", "destination": "/partner-oversight/resolve/submit", "destination_route": "/partner-oversight/resolve/submit", "evidence": "request-tested", "high_consequence": true, "id": "INT-65F22570B6C6", "kind": "button", "line": 61, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
+  {"accessible_name": "{{ value }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8DBD9D737F6E", "kind": "field", "line": 48, "method": "", "selector": "input[name=resolution]", "state_changing": false, "tag": "input", "template": "partials/oversight/resolve_return_drawer.html"},
+  {"accessible_name": "Choose a Partner… {{ partner.name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-390C0DD239C1", "kind": "field", "line": 58, "method": "", "selector": "#resolve-partner", "state_changing": false, "tag": "select", "template": "partials/oversight/resolve_return_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0CF83899BB28", "kind": "field", "line": 68, "method": "", "selector": "#resolve-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/resolve_return_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6BBCF651544D", "kind": "button", "line": 73, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
+  {"accessible_name": "Record decision", "destination": "                                                            ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-95C70ECA9721", "kind": "button", "line": 74, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/resolve_return_drawer.html"},
   {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                                      &{{ key }}={{ value }}            ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E1C8D2F65F68", "kind": "link", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Filters ({{ advanced|length }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-93469C93A6A9", "kind": "disclosure", "line": 25, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Export CSV", "destination": "/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                     &program_lead={{ program_lead }}                                                 &{{ key }}={{ value }}            ", "destination_route": "/team-planning-oversight/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-A3E223D2FC9F", "kind": "link", "line": 35, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Export Excel", "destination": "/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                     &program_lead={{ program_lead }}                                                 &{{ key }}={{ value }}            &format=xlsx", "destination_route": "/team-planning-oversight/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-674819392141", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Recovery plan Partner backlog Costing backlog", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-482E6AEC5599", "kind": "field", "line": 66, "method": "", "selector": "#team-issue", "state_changing": false, "tag": "select", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Send to PL", "destination": "/country-planning-oversight/send", "destination_route": "/country-planning-oversight/send", "evidence": "request-tested", "high_consequence": true, "id": "INT-95874CA40854", "kind": "button", "line": 71, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/team_country_workspace.html"},
-  {"accessible_name": "Choose a reason… {{ label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-AF038812D6E0", "kind": "field", "line": 118, "method": "", "selector": "#wd-reason-category", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "Why this work is being withdrawn and what happens next", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-047CE6B93AD9", "kind": "field", "line": 133, "method": "", "selector": "#wd-partner-reason", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "Staff only, never shown to the partner", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-41B1B1FFBADB", "kind": "field", "line": 145, "method": "", "selector": "#wd-internal-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-0FB6049B99FB", "kind": "field", "line": 154, "method": "", "selector": "#wd-disposition", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "Choose the partner taking this on… {{ p.name }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-602A057C3881", "kind": "field", "line": 168, "method": "", "selector": "#wd-replacement-partner", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-210125077553", "kind": "button", "line": 185, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/withdrawal_drawer.html"},
-  {"accessible_name": "Send request to Program Lead {{ preview.kind_label }}", "destination": "/partner-oversight/withdraw/submit", "destination_route": "/partner-oversight/withdraw/submit", "evidence": "none", "high_consequence": true, "id": "INT-BBDF43A17433", "kind": "button", "line": 186, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Choose a reason… {{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AF038812D6E0", "kind": "field", "line": 131, "method": "", "selector": "#wd-reason-category", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Why this work is being withdrawn and what happens next", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-047CE6B93AD9", "kind": "field", "line": 146, "method": "", "selector": "#wd-partner-reason", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Staff only, never shown to the partner", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-41B1B1FFBADB", "kind": "field", "line": 158, "method": "", "selector": "#wd-internal-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0FB6049B99FB", "kind": "field", "line": 167, "method": "", "selector": "#wd-disposition", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Choose the partner taking this on… {{ p.name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-602A057C3881", "kind": "field", "line": 181, "method": "", "selector": "#wd-replacement-partner", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-210125077553", "kind": "button", "line": 198, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/oversight/withdrawal_drawer.html"},
+  {"accessible_name": "Send request to Program Lead {{ preview.kind_label }}", "destination": "                                                             ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-A24BE968B3B9", "kind": "button", "line": 199, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/withdrawal_drawer.html"},
   {"accessible_name": "50% advance — planned work Balance — IA-cleared work", "destination": "/partner/invoices/new", "destination_route": "/partner/invoices/new", "evidence": "none", "high_consequence": false, "id": "INT-060B863D43DE", "kind": "field", "line": 23, "method": "GET", "selector": "#inv-instalment", "state_changing": false, "tag": "select", "template": "partials/partner/invoice_drawer.html"},
   {"accessible_name": "Week Month Quarter", "destination": "/partner/invoices/new", "destination_route": "/partner/invoices/new", "evidence": "none", "high_consequence": false, "id": "INT-73280A51BC0C", "kind": "field", "line": 32, "method": "GET", "selector": "#inv-period", "state_changing": false, "tag": "select", "template": "partials/partner/invoice_drawer.html"},
   {"accessible_name": "{{ anchor }}", "destination": "/partner/invoices/new", "destination_route": "/partner/invoices/new", "evidence": "none", "high_consequence": false, "id": "INT-920694E13496", "kind": "field", "line": 42, "method": "GET", "selector": "#inv-anchor", "state_changing": false, "tag": "input", "template": "partials/partner/invoice_drawer.html"},
@@ -11969,6 +12011,8 @@
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-BC14C730D870", "kind": "field", "line": 38, "method": "", "selector": "#project-filter-status", "state_changing": false, "tag": "select", "template": "partials/projects/filters_drawer.html"},
   {"accessible_name": "Reset", "destination": "/projects", "destination_route": "/projects", "evidence": "request-tested", "high_consequence": false, "id": "INT-3867CE9BBF98", "kind": "link", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/filters_drawer.html"},
   {"accessible_name": "Apply filters", "destination": "/projects/filter", "destination_route": "/projects/filter", "evidence": "request-tested", "high_consequence": false, "id": "INT-1E86EA2A3475", "kind": "button", "line": 55, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/filters_drawer.html"},
+  {"accessible_name": "Resolve", "destination": "{{ line.resolve_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-ED5795E0EC21", "kind": "button", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/monitoring_school_drawer.html"},
+  {"accessible_name": "{{ line.withdraw_label }}", "destination": "{{ line.withdraw_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CA5715E60688", "kind": "button", "line": 56, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/monitoring_school_drawer.html"},
   {"accessible_name": "View planning →", "destination": "/projects/planning", "destination_route": "/projects/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-39ABC828F594", "kind": "link", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/my_plan_activity_table.html"},
   {"accessible_name": "{{ row.action.text }} for {{ row.school }}", "destination": "{{ row.action.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-619D0D670087", "kind": "link", "line": 23, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/my_plan_activity_table.html"},
   {"accessible_name": "Export filtered project plan as CSV", "destination": "{{ export_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-07AB6438F600", "kind": "link", "line": 3, "method": "GET", "selector": "#sp-plan-export-link", "state_changing": false, "tag": "a", "template": "partials/projects/my_plan_workspace.html"},

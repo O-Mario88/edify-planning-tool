@@ -439,6 +439,9 @@ def _stop_future_work(school, closure, principal, effective_date) -> dict:
                     "disposition": WithdrawalDisposition.CANCEL_SUPPORT,
                 },
                 principal,
+                # The school has shut: its Special Project work stops too,
+                # which is not a project decision for the coordinator to make.
+                school_closure=True,
             )
             result["assignments"] += 1
         except Exception:  # noqa: BLE001

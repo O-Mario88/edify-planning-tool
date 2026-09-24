@@ -11,6 +11,11 @@ would be lying about what the button does.
 Everything under Impact is server-calculated from the same functions the
 service uses, so the amount shown here is the amount that will move. Nobody
 should confirm a budget change they have not seen.
+
+Special Project work is its Project Coordinator's to withdraw or reassign
+(owner, 2026-09-24): anyone else opening this drawer is told so and offered
+no form. Project Monitoring opens the same drawer for the coordinator and
+posts it to its own route (`submit_url`).
 {% endcomment %}
 
 {% block drawer_title %}{% if preview %}{{ preview.kind_label }}{% else %}Not available{% endif %}{% endblock %}
@@ -19,6 +24,14 @@ should confirm a budget change they have not seen.
 {% block drawer_body %}
 {% if not preview %}
 <p class="text-sm edify-text-muted">This assignment is not in your scope, or no longer exists.</p>
+{% elif project_locked %}
+<div class="space-y-3" data-project-locked>
+  <p class="text-sm">This school's work belongs to {% firstof item.project_name "a Special Project" %}.</p>
+  <p class="edify-text-caption edify-text-muted">
+    Only its Project Coordinator can withdraw it from {{ preview.partner }} or
+    reassign it to another partner. Follow it on Project Monitoring.
+  </p>
+</div>
 {% elif not preview.available %}
 {% comment %}
 Paid and closed work is deliberately unreachable here. Rewriting a settled
@@ -34,7 +47,7 @@ somebody to try.
   </p>
 </div>
 {% else %}
-<form hx-post="/partner-oversight/withdraw/submit"
+<form hx-post="{% firstof submit_url '/partner-oversight/withdraw/submit' %}"
       hx-target="#withdrawal-result"
       hx-swap="innerHTML"
       class="space-y-4 pr-1 edify-drawer-scroll">
