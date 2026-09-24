@@ -1110,3 +1110,61 @@ class OneDecisionPerApprovalStageTest(PDTestBase):
         req.refresh_from_db()
         self.assertEqual(req.hr_note, "Budget freeze")
         self.assertEqual(_decisions("pd_hr_reject", req.id), 1)
+
+
+class OneDecisionAtSignOffTest(PDTestBase):
+    """HR's return of a completion, read before a sign-off was written, must
+    re-read under the row lock sign_off takes and refuse, not reopen a closed
+    record whose CPD and skills were already credited."""
+
+    def _awaiting_signoff(self):
+        req = self._draft(self.cceo)
+        req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
+        req.save()
+        PDApprovalRoutingService.supervisor_approve(req.id, self.pl)
+        PDApprovalRoutingService.hr_approve(req.id, self.hr)
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
+        req.refresh_from_db()
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
+        req.save()
+        PDCourseTrackingService.mark_complete(
+            req.id,
+            self.cceo,
+            actual_completion_date=date.today(),
+            course_outcome="Done.",
+            skills_gained="Coaching",
+        )
+        PDCourseTrackingService.upload_certificate(req.id, self.cceo, _pdf())
+        PDCourseTrackingService.confirm_bamboohr(req.id, self.cceo)
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.AWAITING_HR_SIGNOFF)
+        return req
+
+    def test_a_return_that_lost_to_the_sign_off_leaves_the_record_closed(self):
+        from apps.hr.models import EmployeeSkill
+
+        req = self._awaiting_signoff()
+        stale = ProfessionalDevelopmentRequest.objects.get(id=req.id)
+        PDCourseTrackingService.sign_off(req.id, self.hr)
+
+        with _courtesy_read_returns(ProfessionalDevelopmentRequest, stale):
+            with self.assertRaises(BadRequest):
+                PDCourseTrackingService.hr_return_completion(
+                    req.id, self.hr2, "certificate_unreadable", "Blurry scan"
+                )
+
+        req.refresh_from_db()
+        self.assertEqual(req.status, PDStatus.COMPLETED_CLOSED)
+        self.assertEqual(req.signed_off_by, self.hr.id)
+        self.assertIsNotNone(req.signed_off_at)
+        self.assertEqual(
+            EmployeeSkill.objects.get(
+                staff_id=req.staff_id, skill__name="Coaching"
+            ).level,
+            2,
+        )
