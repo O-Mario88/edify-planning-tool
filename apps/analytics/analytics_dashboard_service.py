@@ -293,8 +293,12 @@ class AnalyticsDashboardService:
         _achieved = Q(status__in=ACHIEVED_STATUSES)
         _accepted = _achieved & Q(evidence_status="accepted")
 
+        # Aggregates over these querysets read `.values("id")` first. Scoped
+        # querysets are `.distinct()`, and de-duplicating on the primary key
+        # keeps exactly the same rows as de-duplicating all ~120 activity
+        # columns, at a fifth of the database cost on a country scope.
         def activity_kpis(qs):
-            return qs.aggregate(
+            return qs.values("id").aggregate(
                 accepted=Count("id", filter=_accepted),
                 teachers=Sum("teachers_attended", filter=_achieved),
                 leaders=Sum("leaders_attended", filter=_achieved),
@@ -995,13 +999,15 @@ class AnalyticsDashboardService:
         # 10. Impact Summary
         # Schools Improved: count schools with delta > +0.05 compared to prior year.
         # Two grouped queries (per-school averages for each FY) instead of 2×N.
-        all_school_ids = set(schools_qs.values_list("id", flat=True))
+        # The scope goes in as a subquery: reading a country's ~50,000 school
+        # ids back and sending them twice as IN lists cost ~1 s per rebuild.
+        scope_school_ids = schools_qs.values("id")
         prev_fy = str(int(fy) - 1)
 
         def _avg_by_school(target_fy):
             rows = (
                 SsaRecord.objects.filter(
-                    school_id__in=all_school_ids,
+                    school_id__in=scope_school_ids,
                     fy=target_fy,
                     verification_status="confirmed",
                 )
@@ -1028,56 +1034,48 @@ class AnalyticsDashboardService:
         }
 
         # 11. Activity Tracking Section
-        activity_tracking = {
-            "school_visits": curr_activities.filter(
-                activity_type__in=VISIT_TYPES
-            ).count(),
-            "cluster_trainings": curr_activities.filter(
-                activity_type__in=TRAINING_TYPES
-            ).count(),
-            "cluster_meetings": curr_activities.filter(
-                activity_type=CLUSTER_MEETING_TYPE
-            ).count(),
-            "ssa_support": curr_activities.filter(activity_type="ssa_activity").count(),
-            "partner_activities": curr_activities.filter(
-                delivery_type="partner"
-            ).count(),
-            "project_activities": curr_activities.filter(
-                activity_type="project_activity"
-            ).count(),
-        }
+        # One counting pass per section rather than a COUNT query per figure;
+        # each filter is the one its separate query used.
+        activity_tracking = curr_activities.values("id").aggregate(
+            school_visits=Count("id", filter=Q(activity_type__in=VISIT_TYPES)),
+            cluster_trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
+            cluster_meetings=Count("id", filter=Q(activity_type=CLUSTER_MEETING_TYPE)),
+            ssa_support=Count("id", filter=Q(activity_type="ssa_activity")),
+            partner_activities=Count("id", filter=Q(delivery_type="partner")),
+            project_activities=Count("id", filter=Q(activity_type="project_activity")),
+        )
 
         # 12. Staff & Partner Performance
+        _staff = Q(delivery_type="staff")
+        _partner = Q(delivery_type="partner")
+        channel_counts = activities_qs.values("id").aggregate(
+            staff_q1=Count("id", filter=Q(quarter="Q1") & _staff & _achieved),
+            staff_q2=Count("id", filter=Q(quarter="Q2") & _staff & _achieved),
+            partner_q1=Count("id", filter=Q(quarter="Q1") & _partner & _achieved),
+            partner_q2=Count("id", filter=Q(quarter="Q2") & _partner & _achieved),
+            staff_planned=Count("id", filter=_staff),
+            staff_achieved=Count("id", filter=_staff & _achieved),
+            partner_planned=Count("id", filter=_partner),
+            partner_achieved=Count("id", filter=_partner & _achieved),
+        )
         # Group achievements by Quarter
-        staff_q1 = activities_qs.filter(
-            quarter="Q1", delivery_type="staff", status__in=ACHIEVED_STATUSES
-        ).count()
-        staff_q2 = activities_qs.filter(
-            quarter="Q2", delivery_type="staff", status__in=ACHIEVED_STATUSES
-        ).count()
-        partner_q1 = activities_qs.filter(
-            quarter="Q1", delivery_type="partner", status__in=ACHIEVED_STATUSES
-        ).count()
-        partner_q2 = activities_qs.filter(
-            quarter="Q2", delivery_type="partner", status__in=ACHIEVED_STATUSES
-        ).count()
+        staff_q1 = channel_counts["staff_q1"]
+        staff_q2 = channel_counts["staff_q2"]
+        partner_q1 = channel_counts["partner_q1"]
+        partner_q2 = channel_counts["partner_q2"]
 
         # Overall achievement rate (achieved / planned) per delivery channel —
         # this is the real figure the bar comparison in the template renders.
-        staff_planned_total = activities_qs.filter(delivery_type="staff").count()
-        staff_achieved_total = activities_qs.filter(
-            delivery_type="staff", status__in=ACHIEVED_STATUSES
-        ).count()
+        staff_planned_total = channel_counts["staff_planned"]
+        staff_achieved_total = channel_counts["staff_achieved"]
         staff_pct = (
             round(staff_achieved_total / staff_planned_total * 100)
             if staff_planned_total > 0
             else 0
         )
 
-        partner_planned_total = activities_qs.filter(delivery_type="partner").count()
-        partner_achieved_total = activities_qs.filter(
-            delivery_type="partner", status__in=ACHIEVED_STATUSES
-        ).count()
+        partner_planned_total = channel_counts["partner_planned"]
+        partner_achieved_total = channel_counts["partner_achieved"]
         partner_pct = (
             round(partner_achieved_total / partner_planned_total * 100)
             if partner_planned_total > 0

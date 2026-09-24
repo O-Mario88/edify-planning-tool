@@ -1061,6 +1061,68 @@ def _calendar_periods(fy: str, anchor: date) -> dict[str, dict]:
     }
 
 
+# Everything budget_workspace and budget_groups read from a selected line.
+_LEDGER_LINE_FIELDS = (
+    "activity_id",
+    "responsible_user",
+    "amount",
+    "label",
+    "cost_setting_key",
+    "line_item_type",
+    "quantity",
+    "unit_cost",
+    "planned_date",
+    "partner_id",
+)
+_LEDGER_ACTIVITY_FIELDS = (
+    "id",
+    "activity_type",
+    "programme_activity_type",
+    "delivery_type",
+    "teachers_attended",
+    "leaders_attended",
+    "other_participants",
+    "expected_participants",
+)
+
+
+def cost_line_rows(lines, line_fields, activity_fields) -> list:
+    """Read schedule cost lines as plain rows rather than models.
+
+    Each row carries ``line_fields`` as attributes and ``row.activity`` carries
+    ``activity_fields``. A country month is ~7,000 lines, and building a full
+    cost line plus a 114-column Activity per line was most of the Budget
+    page's CPU. A read of an unlisted field raises AttributeError rather than
+    silently querying per row.
+    """
+    from collections import namedtuple
+
+    line_row = namedtuple("CostLineRow", (*line_fields, "activity"))
+    activity_row = namedtuple("CostLineActivity", activity_fields)
+    split = len(line_fields)
+    return [
+        line_row(*values[:split], activity_row(*values[split:]))
+        for values in lines.values_list(
+            *line_fields, *(f"activity__{field}" for field in activity_fields)
+        )
+    ]
+
+
+def _activity_choice_label(field_name: str, value) -> str:
+    """Activity.get_<field_name>_display() for a bare value, computed exactly
+    as Model._get_FIELD_display does, so plain rows get the same label."""
+    from django.utils.encoding import force_str
+    from django.utils.hashable import make_hashable
+
+    from apps.activities.models import Activity
+
+    field = Activity._meta.get_field(field_name)
+    return force_str(
+        dict(make_hashable(field.flatchoices)).get(make_hashable(value), value),
+        strings_only=True,
+    )
+
+
 def budget_groups(
     selected_lines,
     user_names,
@@ -1139,14 +1201,22 @@ def budget_groups(
                 scheduled_participants.get(activity.id, 0), int(line.quantity or 0)
             )
 
+    # One label lookup per activity type rather than per line: each lookup
+    # rebuilds the field's whole choices dict.
+    labels: dict[tuple, str] = {}
     groups: dict[str, dict] = {}
     for line in selected_lines:
         activity = line.activity
-        activity_label = (
-            activity.get_programme_activity_type_display()
-            if activity.programme_activity_type
-            else activity.get_activity_type_display()
-        )
+        label_key = (activity.programme_activity_type, activity.activity_type)
+        if label_key not in labels:
+            labels[label_key] = (
+                _activity_choice_label(
+                    "programme_activity_type", activity.programme_activity_type
+                )
+                if activity.programme_activity_type
+                else _activity_choice_label("activity_type", activity.activity_type)
+            )
+        activity_label = labels[label_key]
         group = groups.setdefault(
             activity_label,
             {
@@ -1302,7 +1372,7 @@ def weekly_request_budget(wfr):
     }
 
 
-def planned_lines_for_period(lines, start, end):
+def planned_period_q(start, end) -> Q:
     """Use actual cost dates; legacy month-only rows belong to whole months.
 
     A legacy monthly amount cannot be assigned to an invented week. Such rows
@@ -1317,10 +1387,14 @@ def planned_lines_for_period(lines, start, end):
         if start <= cursor and last <= end:
             months.append(cursor.month)
         cursor = last + timedelta(days=1)
-    return lines.filter(
-        Q(planned_date__range=(start, end))
-        | Q(planned_date__isnull=True, month__in=months)
+    return Q(planned_date__range=(start, end)) | Q(
+        planned_date__isnull=True, month__in=months
     )
+
+
+def planned_lines_for_period(lines, start, end):
+    """The cost lines planned in [start, end]; see planned_period_q."""
+    return lines.filter(planned_period_q(start, end))
 
 
 def budget_workspace(principal, query: dict) -> dict:
@@ -1429,7 +1503,6 @@ def budget_workspace(principal, query: dict) -> dict:
             | Q(activity__planned_date__isnull=False)
         )
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-        .select_related("activity", "partner")
     )
     if owner_ids is not None:
         base_lines = base_lines.filter(
@@ -1503,18 +1576,22 @@ def budget_workspace(principal, query: dict) -> dict:
             and period["start"] <= planned <= period["end"]
         )
 
-    def operational_total(period):
-        return int(
-            planned_lines_for_period(
-                base_lines, period["start"], period["end"]
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
+    # Every horizon's total in one pass over the lines, not one SUM query each.
+    # (Suffixed aliases: a bare "month" alias would shadow the month column
+    # the period filters read.)
+    operational_totals = base_lines.aggregate(
+        **{
+            f"{key}_total": Sum(
+                "amount", filter=planned_period_q(period["start"], period["end"])
+            )
+            for key, period in periods.items()
+        }
+    )
 
     comparison = []
     for key in ("week", "month", "quarter", "fy"):
         period = periods[key]
-        program_total = operational_total(period)
+        program_total = int(operational_totals[f"{key}_total"] or 0)
         admin_amount = admin_total(period)
         comparison.append(
             {
@@ -1526,8 +1603,10 @@ def budget_workspace(principal, query: dict) -> dict:
             }
         )
 
-    selected_lines = list(
-        planned_lines_for_period(base_lines, selected["start"], selected["end"])
+    selected_lines = cost_line_rows(
+        planned_lines_for_period(base_lines, selected["start"], selected["end"]),
+        _LEDGER_LINE_FIELDS,
+        _LEDGER_ACTIVITY_FIELDS,
     )
     user_names = dict(
         User.objects.filter(

@@ -216,9 +216,16 @@ class PLTeamTargetsService:
                 areas, [row for row in ledger_rows if row.area.key in area_keys]
             )
         metric_areas = list(metric_areas or areas)
-        pace = (
-            Cal.expected_pace_pct(m_start, m_end, today, user) if is_current_fy else 100
-        )
+        paces = {}
+
+        def expected_pace(start, end):
+            # Asked for every period of every area; the answer depends only on
+            # the period, and each ask walks every day of it.
+            if (start, end) not in paces:
+                paces[(start, end)] = Cal.expected_pace_pct(start, end, today, user)
+            return paces[(start, end)]
+
+        pace = expected_pace(m_start, m_end) if is_current_fy else 100
 
         def wpct(month_list, t_map=targets, a_map=achieved):
             """Delegates to the canonical weighted_period_pct (same formula as
@@ -254,7 +261,7 @@ class PLTeamTargetsService:
 
         def period_cell(key, label, months, start, end):
             pct, ach, target = wpct(months)
-            expected = Cal.expected_pace_pct(start, end, today, user)
+            expected = expected_pace(start, end)
             status, tone = team_status_for(pct, expected, today >= start, target > 0)
             status, tone = team_status_display(status, tone)
             return {
@@ -326,9 +333,7 @@ class PLTeamTargetsService:
                 target = sum(targets[area.key][mm - 1] for mm in spec["months"])
                 valid = sum(achieved[area.key][mm - 1] for mm in spec["months"])
                 pct = round(valid / target * 100) if target else None
-                expected = Cal.expected_pace_pct(
-                    spec["start"], spec["end"], today, user
-                )
+                expected = expected_pace(spec["start"], spec["end"])
                 period_status, period_tone = team_status_for(
                     pct,
                     expected,
@@ -456,44 +461,46 @@ class PLTeamTargetsService:
         # remain stable, while every metric below is calculated from the
         # selected reporting scope.
         staff_school = {}
-        district_of_school = {}
+        district_of_school = {}  # school pk -> district name
         school_names = {}
+        portfolio_codes = []  # the portfolio's School.school_id values
         if all_staff_ids:
+            from apps.geography.models import District
             from apps.schools.models import School
 
             # Only the columns this page reads (id, code, name, district name).
             # A country or regional roster is every school in scope, and full
             # rows were ~16,000 schools, districts and assignments instantiated
-            # per load (performance rescue, 2026-09-23).
-            assigns = list(
-                StaffSchoolAssignment.objects.filter(staff_id__in=all_staff_ids).only(
-                    "staff_id", "school_id"
-                )
-            )
-            school_pks = {a.school_id for a in assigns}
+            # per load (performance rescue, 2026-09-23). A country roster is
+            # now ~50,000 schools, so assignments are read as plain values,
+            # schools are selected by subquery rather than a 50,000-id IN list,
+            # and district names come from one small read instead of a joined
+            # District per school.
+            assigned = StaffSchoolAssignment.objects.filter(staff_id__in=all_staff_ids)
+            portfolio = School.objects.filter(id__in=assigned.values("school_id"))
+            portfolio_codes = portfolio.values("school_id")
             schools = {
                 s.id: s
-                for s in School.objects.filter(id__in=school_pks)
-                .select_related("district")
-                .only("id", "school_id", "name", "district_id", "district__name")
+                for s in portfolio.only("id", "school_id", "name", "district_id")
             }
-            for assignment in assigns:
-                school = schools.get(assignment.school_id)
+            district_names = dict(
+                District.objects.filter(
+                    id__in=portfolio.values("district_id")
+                ).values_list("id", "name")
+            )
+            # "id" keeps this the same read, in the same row order, as before.
+            for _, staff_id, school_pk in assigned.values_list(
+                "id", "staff_id", "school_id"
+            ):
+                school = schools.get(school_pk)
                 if not school:
                     continue
-                staff_school.setdefault(assignment.staff_id, []).append(school)
+                staff_school.setdefault(staff_id, []).append(school)
                 school_names[school.school_id] = school.name
                 if school.district_id:
-                    district_of_school[school.id] = school.district
+                    district_of_school[school.id] = district_names[school.district_id]
 
-        district_options = sorted(
-            {
-                school.district.name
-                for schools in staff_school.values()
-                for school in schools
-                if school.district_id
-            }
-        )
+        district_options = sorted(set(district_of_school.values()))
         district = district if district in district_options else ""
         valid_member_ids = {str(u.id) for u in all_team}
         team_member = str(team_member or "")
@@ -504,7 +511,7 @@ class PLTeamTargetsService:
             if team_member and str(user.id) != team_member:
                 continue
             if district and not any(
-                school.district_id and school.district.name == district
+                district_of_school.get(school.id) == district
                 for school in staff_school.get(user.staff_profile_id, [])
             ):
                 continue
@@ -513,7 +520,9 @@ class PLTeamTargetsService:
         # One ledger rebuild and one read of targets, profiles and validated
         # credit for the whole roster. Per member this was a rebuild (four
         # source reads and its writes) and three target reads on every load.
+        # Likewise one read of the roster's approved leave for the pacing.
         TargetAchievementService.rebuild_many(team, fy)
+        Cal.prime_leave_days([getattr(u, "staff_profile_id", None) for u in team])
         roster_area_keys = sorted(
             {
                 area.key
@@ -575,9 +584,9 @@ class PLTeamTargetsService:
             )
         for m in members:
             ds = {
-                s.district.name
+                district_of_school[s.id]
                 for s in staff_school.get(m["staff_id"], [])
-                if s.district_id
+                if s.id in district_of_school
             }
             m["districts"] = sorted(ds)
             m["district_label"] = ", ".join(sorted(ds)[:2]) or "—"
@@ -691,10 +700,9 @@ class PLTeamTargetsService:
         try:
             from apps.core_schools.models import CorePlan
 
-            team_school_sids = list(school_names.keys())
             fy_pace = Cal.expected_pace_pct(fy_s, fy_e, today) if is_current_fy else 100
             for plan in CorePlan.objects.filter(
-                school_id__in=team_school_sids, fy=fy
+                school_id__in=portfolio_codes, fy=fy
             ).exclude(status__in=["Cancelled", "cancelled"]):
                 done = (
                     (1 if plan.baseline_average is not None else 0)
@@ -924,8 +932,11 @@ class PLTeamTargetsService:
                 if s.id in seen_schools:
                     continue
                 seen_schools.add(s.id)
-                if s.district_id and s.district.name in by_district:
-                    by_district[s.district.name]["schools"] += 1
+                if (
+                    s.id in district_of_school
+                    and district_of_school[s.id] in by_district
+                ):
+                    by_district[district_of_school[s.id]]["schools"] += 1
         districts_behind = sorted(
             [
                 {**r, "pct": round(sum(r["pcts"]) / len(r["pcts"])) if r["pcts"] else 0}
