@@ -430,6 +430,57 @@ class AdminWorkspaceTests(AdminOpsTestBase):
         row = AdminTeamPlansService.get(self.admin, {})["rows"][0]
         self.assertEqual(row["status"], expected)
 
+    def test_team_plans_cost_does_not_grow_with_the_rows(self):
+        """Each row's next action reads its cost lines and their advances;
+        prefetched, the page is a fixed number of queries (it was two per row,
+        634 queries for 500 rows at production scale — 2026-09-24 A+ audit),
+        and rows tied on the date fields keep one order."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.fund_requests.models import AdvanceRequest
+
+        def costed_activity(n):
+            activity = self._activity()
+            line = ActivityScheduleCostLine.objects.create(
+                activity=activity,
+                cost_setting_key="school_visit_cost_per_school",
+                label="School visit cost",
+                unit_cost=1000,
+                quantity=1,
+                amount=1000,
+                fiscal_year=activity.fy,
+                month=activity.planned_date.month,
+                planned_date=activity.planned_date,
+                responsible_user=self.cceo_profile.id,
+            )
+            AdvanceRequest.objects.create(
+                activity=activity,
+                budget_line=line,
+                responsible_user_id=self.cceo.id,
+                fy=activity.fy,
+                quarter="Q1",
+                amount=1000,
+                status="disbursed" if n % 2 else "accountability_pending",
+                disbursed_amount=1000,
+            )
+
+        for n in range(3):
+            costed_activity(n)
+        with CaptureQueriesContext(connection) as few:
+            first = AdminTeamPlansService.get(self.admin, {})
+        for n in range(3, 12):
+            costed_activity(n)
+        with CaptureQueriesContext(connection) as many:
+            rows = AdminTeamPlansService.get(self.admin, {})["rows"]
+        self.assertEqual(len(first["rows"]), 3)
+        self.assertEqual(len(rows), 12)
+        self.assertLessEqual(len(many.captured_queries), len(few.captured_queries))
+        # Every row tied on the date fields: the order is the id order.
+        self.assertEqual([r["id"] for r in rows], sorted(r["id"] for r in rows))
+        self.assertTrue(all(r["nextAction"] for r in rows))
+
     def test_team_plans_excludes_terminal_activities_like_my_plan_does(self):
         self._activity(status="cancelled")
         self.assertEqual(AdminTeamPlansService.get(self.admin, {})["rows"], [])
