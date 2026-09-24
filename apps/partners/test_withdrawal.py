@@ -10,6 +10,7 @@ closed.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
@@ -20,6 +21,7 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -805,6 +807,84 @@ class RequestAndReviewTest(WithdrawalFixture):
         again = svc.review_request(w.id, {"decision": "approve"}, self.pl_user)
 
         self.assertEqual(again.state, WithdrawalState.REJECTED)
+
+
+class OneDecisionPerRequestTest(WithdrawalFixture):
+    """A request is decided once. Each test reads it the way a decision that
+    lost a race did (a double-click, two tabs): while it was still waiting.
+    That read is the courtesy check; the decision must re-read it under a
+    lock and report the decision already made instead of making another."""
+
+    def _requested(self):
+        a = self.assign()
+        act = self.schedule(a)
+        w = svc.request_withdrawal(
+            a.id,
+            self.payload(reason_category=WithdrawalReason.CAPACITY),
+            self.cceo_user,
+        )
+        return a, act, w
+
+    def _read_while_waiting(self, w):
+        return PartnerAssignmentWithdrawal.objects.select_related("assignment").get(
+            id=w.id
+        )
+
+    def _deciding_on(self, stale):
+        """Answer the review's unlocked read with the copy it was holding."""
+        rows = MagicMock()
+        rows.select_related.return_value = rows
+        rows.first.return_value = stale
+        return patch.object(
+            PartnerAssignmentWithdrawal.objects, "filter", return_value=rows
+        )
+
+    def _announcements(self, w):
+        return AuditLog.objects.filter(
+            action="partner.assignment_withdrawn", subject_id=w.id
+        ).count()
+
+    def test_a_second_approval_does_not_withdraw_the_work_again(self):
+        _a, _act, w = self._requested()
+        stale = self._read_while_waiting(w)
+        svc.review_request(w.id, {"decision": "approve"}, self.pl_user)
+
+        with self._deciding_on(stale):
+            again = svc.review_request(w.id, {"decision": "approve"}, self.pl_user)
+
+        self.assertEqual(again.state, WithdrawalState.RETURNED_TO_PLANNING)
+        self.assertEqual(self._announcements(w), 1)
+
+    def test_a_rejection_that_lost_to_an_approval_leaves_it_withdrawn(self):
+        _a, _act, w = self._requested()
+        stale = self._read_while_waiting(w)
+        svc.review_request(w.id, {"decision": "approve"}, self.pl_user)
+
+        with self._deciding_on(stale):
+            again = svc.review_request(
+                w.id, {"decision": "reject", "note": "Partner confirmed."}, self.pl_user
+            )
+
+        w.refresh_from_db()
+        self.assertEqual(w.state, WithdrawalState.RETURNED_TO_PLANNING)
+        self.assertEqual(again.state, WithdrawalState.RETURNED_TO_PLANNING)
+
+    def test_an_approval_that_lost_to_a_rejection_leaves_the_work_alone(self):
+        a, act, w = self._requested()
+        stale = self._read_while_waiting(w)
+        svc.review_request(
+            w.id, {"decision": "reject", "note": "Partner confirmed."}, self.pl_user
+        )
+
+        with self._deciding_on(stale):
+            again = svc.review_request(w.id, {"decision": "approve"}, self.pl_user)
+
+        a.refresh_from_db()
+        act.refresh_from_db()
+        self.assertEqual(again.state, WithdrawalState.REJECTED)
+        self.assertEqual(act.status, "partner_scheduled")
+        self.assertEqual(a.status, PartnerAssignment.STATUS_SCHEDULED)
+        self.assertEqual(self._announcements(w), 0)
 
 
 class PermissionGateTest(WithdrawalFixture):

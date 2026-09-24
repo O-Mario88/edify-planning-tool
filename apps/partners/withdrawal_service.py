@@ -965,22 +965,34 @@ def review_request(
     assert_may_withdraw(principal, withdrawal.assignment, withdrawal.kind)
 
     if decision == "reject":
-        withdrawal.state = WithdrawalState.REJECTED
-        withdrawal.approved_by = getattr(principal, "id", "") or ""
-        withdrawal.approved_at = timezone.now()
-        withdrawal.internal_note = (
-            f"{withdrawal.internal_note}\n\nRejected: "
-            f"{((data or {}).get('note') or '').strip()}"
-        ).strip()
-        withdrawal.save(
-            update_fields=[
-                "state",
-                "approved_by",
-                "approved_at",
-                "internal_note",
-                "updated_at",
-            ]
-        )
+        with transaction.atomic():
+            # The state check above read the request unlocked; it is the
+            # courtesy. Two decisions that both read "requested" (a
+            # double-click, two tabs) both applied: a second approval withdrew
+            # the work again, and a rejection could overwrite an approval that
+            # had already withdrawn it, or the reverse. Re-read under the lock
+            # and report the decision already made, as above.
+            withdrawal = PartnerAssignmentWithdrawal.objects.select_for_update().get(
+                pk=withdrawal.pk
+            )
+            if withdrawal.state != WithdrawalState.REQUESTED:
+                return withdrawal
+            withdrawal.state = WithdrawalState.REJECTED
+            withdrawal.approved_by = getattr(principal, "id", "") or ""
+            withdrawal.approved_at = timezone.now()
+            withdrawal.internal_note = (
+                f"{withdrawal.internal_note}\n\nRejected: "
+                f"{((data or {}).get('note') or '').strip()}"
+            ).strip()
+            withdrawal.save(
+                update_fields=[
+                    "state",
+                    "approved_by",
+                    "approved_at",
+                    "internal_note",
+                    "updated_at",
+                ]
+            )
         return withdrawal
 
     # Approving decides and performs in one transaction, so the queue can
@@ -998,6 +1010,14 @@ def review_request(
             .select_related("school", "partner", "scheduled_activity")
             .get(pk=withdrawal.assignment_id)
         )
+        # The same re-check as a rejection's, after the assignment lock that
+        # withdraw and request_withdrawal also take first. Without it a second
+        # approval waited on that lock for the first, then ran _perform again.
+        withdrawal = PartnerAssignmentWithdrawal.objects.select_for_update().get(
+            pk=withdrawal.pk
+        )
+        if withdrawal.state != WithdrawalState.REQUESTED:
+            return withdrawal
         activity = assignment.scheduled_activity
         if activity is not None:
             from apps.activities.models import Activity
