@@ -1,0 +1,33 @@
+{% comment %}
+Where this organisation works — every region, not one.
+
+Owner, 2026-09-23: "Can you make sure that partner can be assigned more than
+one region. Most of the partners operate in more than one region."
+
+One dropdown could hold one answer, so a partner working across the north and
+the east was recorded as working in one of them. This is a tick-list instead.
+The first ticked region is also kept in the single column older readers use.
+
+Expects `region_options` (names) and `selected_regions`.
+{% endcomment %}
+<fieldset class="partner-regions">
+  <legend class="block edify-text-caption font-semibold text-slate-600">Regions</legend>
+  <p class="edify-text-caption text-slate-500 mt-1">Tick every region it works in.</p>
+  <div class="partner-regions__list mt-2 grid grid-cols-2 gap-1.5">
+    {% for name in region_options %}
+    <label class="flex items-center gap-2 cursor-pointer rounded-control border border-[var(--edify-border)] px-3 py-2">
+      <input type="checkbox"
+             name="region_names"
+             value="{{ name }}"
+             {% if name in selected_regions %}checked{% endif %}
+             class="h-4 w-4 rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]">
+      <span class="text-[13px] font-semibold text-slate-800">{{ name }}</span>
+    </label>
+    {% empty %}
+    <p class="edify-note col-span-2" data-tone="info">
+      No regions are set up yet. Add the organisation now and record its
+      regions once they are.
+    </p>
+    {% endfor %}
+  </div>
+</fieldset>

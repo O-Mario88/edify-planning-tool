@@ -1546,7 +1546,7 @@ class PLTeamTargetsService:
                 {
                     "partner_id": pid,
                     "name": p_obj.name if p_obj else "Partner",
-                    "region": (p_obj.region_name or "—") if p_obj else "—",
+                    "region": (p_obj.region_label or "—") if p_obj else "—",
                     "assigned": r["assigned"],
                     "scheduled": r["scheduled"],
                     "valid": r["valid"],

@@ -18,7 +18,7 @@ from apps.core.permissions import (
 )
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_partner_ids
-from django.db.models import Q
+from django.db.models import CharField, F, Func, Q, Value
 from datetime import date
 from django.utils import timezone
 
@@ -45,6 +45,24 @@ STOPPED_ACTIVITY_STATUSES = ("cancelled", "deferred", "rejected")
 # The browser routes are ALL_ROLES for every staff role, so the restriction
 # has to be applied here rather than at the page-permission layer.
 PARTNER_ROLES = (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value)
+
+
+def _region_choices(stored=()) -> dict:
+    """The regions a partner can be ticked for, and which of them are ticked.
+
+    Options follow the Region list's order. A stored region is matched to its
+    Region row ignoring case, so it shows ticked under the list's spelling. One
+    the list no longer has (typed before the list existed, or renamed since) is
+    offered too, ticked, so saving the drawer for some other reason does not
+    silently drop it.
+    """
+    names = list(Region.objects.order_by("name").values_list("name", flat=True))
+    by_key = {name.casefold(): name for name in names}
+    selected = [by_key.get(name.casefold(), name) for name in stored]
+    return {
+        "region_options": names + [name for name in selected if name not in names],
+        "selected_regions": selected,
+    }
 
 
 @require_page_permission("partners")
@@ -116,10 +134,19 @@ def _partner_workspace(request):
         # least as often as "where is this partner". Name and region alone
         # could not answer the first, so the school a partner is assigned to
         # now reaches the partner, resolved through the assignment table so a
-        # partner with fifty schools still returns one row.
-        partners_qs = partners_qs.filter(
+        # partner with fifty schools still returns one row. Region matches any
+        # region the partner works in, not only the first.
+        partners_qs = partners_qs.annotate(
+            regions_text=Func(
+                F("region_names"),
+                Value(" "),
+                function="array_to_string",
+                output_field=CharField(),
+            )
+        ).filter(
             Q(name__icontains=search)
             | Q(region_name__icontains=search)
+            | Q(regions_text__icontains=search)
             | Q(
                 id__in=PartnerAssignment.objects.filter(
                     Q(school__name__icontains=search)
@@ -328,7 +355,12 @@ def _partner_workspace(request):
                 or query in row["purpose"].casefold()
                 or query in row["focus"].casefold()
             ]
-            if not partner_rows and query not in partner.name.casefold():
+            # The organisation itself matching — by name, or by any region it
+            # works in — keeps its card even when none of its rows do.
+            partner_matches = query in partner.name.casefold() or any(
+                query in region.casefold() for region in partner.regions
+            )
+            if not partner_rows and not partner_matches:
                 continue
         if selected_status:
             partner_rows = [
@@ -551,7 +583,9 @@ def create_partner_view(request):
         )
         payload = {
             "name": request.POST.get("name", "").strip(),
-            "regionName": request.POST.get("region_name", "").strip(),
+            # Ticked, not chosen from one dropdown: most partners work in
+            # more than one region (owner, 2026-09-23).
+            "regionNames": request.POST.getlist("region_names"),
             "contactPerson": request.POST.get("contact_person", "").strip(),
             "email": request.POST.get("email", "").strip(),
             "phone": request.POST.get("phone", "").strip(),
@@ -592,7 +626,7 @@ def create_partner_view(request):
         return redirect(target)
 
     context = {
-        "regions": Region.objects.order_by("name"),
+        **_region_choices(),
         "capability_groups": partner_capabilities.intervention_activity_options(),
         "selected_interventions": [],
         "selected_activities": [],
@@ -1002,7 +1036,7 @@ def partner_edit_drawer_view(request, partner_id):
         return {
             "partner": partner,
             "country_side": country_side,
-            "regions": Region.objects.order_by("name"),
+            **_region_choices(partner.regions),
             "capability_groups": partner_capabilities.intervention_activity_options(),
             "selected_interventions": chosen.get("ssa_interventions", stored),
             "selected_activities": chosen.get(
@@ -1040,7 +1074,8 @@ def partner_edit_drawer_view(request, partner_id):
                     drawer_context("Organisation name is required."),
                 )
             payload["name"] = name
-            payload["regionName"] = (request.POST.get("region_name") or "").strip()
+            # Every ticked region; none ticked clears them, which is an answer.
+            payload["regionNames"] = request.POST.getlist("region_names")
             chosen = partner_capabilities.selected_capabilities(
                 request.POST.getlist("ssa_interventions"),
                 request.POST.getlist("activity_codes"),

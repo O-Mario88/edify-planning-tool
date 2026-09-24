@@ -18,7 +18,7 @@ contract every profile page shares.
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Partner organisation</p>
 <h1 class="edify-page-title edify-page-header__title">{{ partner.name }}</h1>
-<p class="edify-page-header__description">{{ partner.ssa_intervention_label }}{% if partner.region_name %} · {{ partner.region_name }}{% endif %}</p>
+<p class="edify-page-header__description">{{ partner.ssa_intervention_label }}{% if partner.region_label %} · {{ partner.region_label }}{% endif %}</p>
 </div>
 <div class="edify-page-header__controls">
 <span class="edify-badge" data-tone="{% if partner.active_status %}success{% else %}warning{% endif %}">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
@@ -49,7 +49,7 @@ contract every profile page shares.
 <div><p class="edify-profile-field__label">Contact person</p><p class="edify-profile-field__value mt-0.5">{{ partner.contact_person|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Phone</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ partner.phone|default:"Not specified" }}</p></div>
 <div><p class="edify-profile-field__label">Email</p><p class="edify-profile-field__value mt-0.5">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}Not specified{% endif %}</p></div>
-<div><p class="edify-profile-field__label">Region</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_name|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Regions</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_label|default:"Not specified" }}</p></div>
 {% comment %}All of them, not the first (owner, 2026-09-22): an organisation
 running three kinds of work was described here by one.{% endcomment %}
 <div><p class="edify-profile-field__label">SSA interventions</p><p class="edify-profile-field__value mt-0.5">{% for item in partner.capabilities.interventions %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% empty %}{{ partner.ssa_intervention_label }}{% endfor %}</p></div>
