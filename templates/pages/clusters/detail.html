@@ -226,7 +226,6 @@ rather than vanishing without a reason.{% endcomment %}
 <th scope="col" class="px-4 py-2.5">Readiness</th>
 {% if support_rule %}
 <th scope="col" class="px-4 py-2.5 whitespace-nowrap">Responsible</th>
-<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Partner Workflow</th>
 {% endif %}
 {% if can_schedule %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Plan</th>{% endif %}
 {% if can_edit_cluster %}<th scope="col" class="px-4 py-2.5 text-right whitespace-nowrap w-px">Remove</th>{% endif %}
@@ -311,7 +310,7 @@ aria-label="Remove {{ s.name }} from this cluster"
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if support_rule %}{% if can_schedule and can_edit_cluster %}12{% elif can_schedule or can_edit_cluster %}11{% else %}10{% endif %}{% else %}{% if can_schedule and can_edit_cluster %}10{% elif can_schedule or can_edit_cluster %}9{% else %}8{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if support_rule %}{% if can_schedule and can_edit_cluster %}11{% elif can_schedule or can_edit_cluster %}10{% else %}9{% endif %}{% else %}{% if can_schedule and can_edit_cluster %}10{% elif can_schedule or can_edit_cluster %}9{% else %}8{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button

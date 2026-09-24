@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 679,
+  "titled_cards": 678,
   "templates": 249,
-  "distinct_titles": 647,
+  "distinct_titles": 646,
   "with_card_key": 13,
   "untitled_surfaces": 608,
   "untitled_chrome": 158,
@@ -558,7 +558,7 @@
   },
   {
    "template": "templates/pages/admin_ops/planning.html",
-   "line": 46,
+   "line": 65,
    "title": "Open Incidents",
    "heading_level": 2,
    "has_card_key": false,
@@ -567,7 +567,7 @@
   },
   {
    "template": "templates/pages/admin_ops/planning.html",
-   "line": 61,
+   "line": 80,
    "title": "Tickets Awaiting Triage",
    "heading_level": 2,
    "has_card_key": false,
@@ -924,7 +924,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 338,
+   "line": 337,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -933,7 +933,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 373,
+   "line": 372,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -942,7 +942,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 396,
+   "line": 395,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -4998,7 +4998,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/collaboration_view.html",
-   "line": 51,
+   "line": 58,
    "title": "Country Director",
    "heading_level": 2,
    "has_card_key": false,
@@ -5007,7 +5007,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/collaboration_view.html",
-   "line": 100,
+   "line": 103,
    "title": "Training partners",
    "heading_level": 2,
    "has_card_key": false,
@@ -5016,7 +5016,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/collaboration_view.html",
-   "line": 136,
+   "line": 139,
    "title": "Visit requests",
    "heading_level": 2,
    "has_card_key": false,
@@ -7502,7 +7502,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 59,
+   "line": 30,
    "title": "Your team today",
    "heading_level": 2,
    "has_card_key": false,
@@ -7513,39 +7513,39 @@
      0
     ],
     [
-     3,
+     2,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 122,
+   "line": 93,
    "title": "Today's route",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
    "branch_path": [
     [
-     9,
+     8,
      0
     ],
     [
-     13,
+     12,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 156,
-   "title": "Waiting for your confirmation",
+   "line": 135,
+   "title": "Your proposed week",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
    "branch_path": [
     [
-     9,
+     8,
      0
     ],
     [
@@ -7556,32 +7556,14 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 172,
-   "title": "Your proposed week",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
-   "branch_path": [
-    [
-     9,
-     0
-    ],
-    [
-     19,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/today/workbench.html",
-   "line": 216,
+   "line": 179,
    "title": "Day completion",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 sm:flex sm:items-center sm:justify-between sm:gap-4",
    "branch_path": [
     [
-     9,
+     8,
      0
     ]
    ]

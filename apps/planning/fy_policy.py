@@ -129,6 +129,39 @@ def next_open_fy(*, at=None, country: str | None = None) -> str | None:
     return policy.fy if policy else None
 
 
+def planning_horizon(fy, *, at=None, country: str | None = None) -> tuple[str, ...]:
+    """The fiscal years a "what has been planned" read covers for page year ``fy``.
+
+    Pages open on the operational year, but staff schedule forward into
+    whichever year the date lands (``assert_date_plannable``): in September
+    2026 nearly every new plan is dated October onward, which is FY2027.
+    Reading plans for the page year alone reported those schools as Not
+    Planned and the cluster meeting and training tables as empty while My Plan
+    listed the work (owner, 2026-09-23). So the operational year reads forward
+    through every later year the FY selector offers, and any year opened for
+    planning beyond it; any other year reads alone.
+    """
+    from apps.core.fy import fy_options
+
+    at = _as_datetime(at)
+    fy = str(fy)
+    if fy != get_operational_fy(at):
+        return (fy,)
+    ahead = [*fy_options(at), *plannable_fys(at=at, country=country)]
+    latest = max(int(fy), *(int(year) for year in ahead))
+    return tuple(str(year) for year in range(int(fy), latest + 1))
+
+
+def horizon_label(years) -> str:
+    """The years a page read, as it says them: FY 2026, or FY 2026–2027."""
+    years = sorted(str(y) for y in years)
+    if not years:
+        return ""
+    if len(years) == 1:
+        return f"FY {years[0]}"
+    return f"FY {years[0]}–{years[-1]}"
+
+
 def _format(day: date) -> str:
     return f"{day:%-d %B %Y}"
 

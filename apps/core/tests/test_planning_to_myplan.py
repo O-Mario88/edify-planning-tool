@@ -102,6 +102,9 @@ class PlanningToMyPlanFlowTest(TestCase):
         """Baseline: a CCEO with a StaffProfile schedules a visit → it's in My Plan."""
         user, profile = self._cceo_with_profile()
         fy = get_operational_fy()
+        # Dated with the local day. `timezone.now().date()` is the UTC day, and
+        # from 21:00 UTC that is yesterday in Kampala: the visit read as past
+        # and left every list this test looks in.
         activity = Activity.objects.create(
             activity_type="school_visit",
             school=self.school,
@@ -110,7 +113,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             responsible_staff_id=profile.id,
             status="scheduled",
             scheduled_date=timezone.now(),
-            planned_date=timezone.now().date(),
+            planned_date=timezone.localdate(),
             delivery_type="staff",
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
@@ -360,7 +363,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             responsible_staff_id=user.id,  # what create() now writes as fallback
             status="scheduled",
             scheduled_date=timezone.now(),
-            planned_date=timezone.now().date(),
+            planned_date=timezone.localdate(),
             delivery_type="staff",
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
@@ -387,7 +390,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             delivery_type="partner",
             status="assigned_to_partner",
             scheduled_date=timezone.now(),
-            planned_date=timezone.now().date(),
+            planned_date=timezone.localdate(),
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
         self.assertNotIn(
@@ -415,7 +418,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             delivery_type="partner",
             status="assigned_to_partner",
             scheduled_date=timezone.now(),
-            planned_date=timezone.now().date(),
+            planned_date=timezone.localdate(),
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
         self.assertIn(str(activity.id), _activity_ids(ctx))

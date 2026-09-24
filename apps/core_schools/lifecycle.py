@@ -69,11 +69,12 @@ def school_work(schools, fy):
 
 def programme_rows(schools, fy, *, user=None, readonly=True):
     from apps.core.scoping import may_plan_school, resolve_user_scope
+    from apps.planning.fy_policy import planning_horizon
     from apps.planning.school_planning_badges import SchoolPlanningBadgeService
 
     schools = list(schools)
     badges = SchoolPlanningBadgeService.get_for_schools(
-        [s.id for s in schools], financial_year=fy
+        [s.id for s in schools], financial_year=planning_horizon(fy)
     )
     work = school_work(schools, fy)
     scope = resolve_user_scope(user) if user and not readonly else None

@@ -11,7 +11,7 @@
     </label></td>
   <td data-label="School ID" class="school-plan-table__id">{{ school.schoolId }}</td>
   <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
-    <button type="button" class="school-plan-table__name-toggle" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'" aria-controls="planning-school-details-{{ school.id }}">
+    <button type="button" class="school-plan-table__name-toggle" title="{{ school.name }}" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'" aria-controls="planning-school-details-{{ school.id }}">
   {{ school.name }}
 </button>
 

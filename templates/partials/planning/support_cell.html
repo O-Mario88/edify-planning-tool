@@ -1,31 +1,18 @@
 {% comment %}
 The Responsible column of the Planning and Cluster School List tables, and
-ONLY theirs (owner, 2026-09-23): who supports the school — Staff · Name or
-Partner · Org — and, under a Partner, where the Partner's work stands. Values
-are SchoolSupportResponsibilityService's; the staff owner stays in the row's
-details (Staff Name), because a Partner supporting the school does not own
-it. The Partner Workflow state wears the same chip as the Visit and Training
-Status badges beside it, so one colour means one thing. Informational only:
+ONLY theirs (owner, 2026-09-23): who delivers the school's support, as one
+word — Staff for staff-planned support, Partner for Partner-planned support
+(owner, 2026-09-23: "responsible column should just have staff for staff
+planned and partner for partner planned"). The name is its title. Where the
+Partner's work stands (Evidence Submitted, Returned, ...) is on My Plan and
+the oversight pages, not here. Values are SchoolSupportResponsibilityService's;
+the staff owner stays in the row's details (Staff Name). Informational only:
 nothing here disables the row's actions.
 {% endcomment %}
 {% with r=school.responsible %}
 <td data-label="Responsible" class="school-plan-table__responsible" data-responsible="{{ r.responsibility_type }}">
-  <div class="planning-support-cell" data-planning-support>
-    <span class="planning-responsible" data-responsible="{{ r.responsibility_type }}" title="{{ r.label }}: {{ r.responsible_name }}">
-      <span class="planning-responsible__kind">{% if r.needs_review %}Multiple Partners{% elif r.is_partner %}Partner{% else %}Staff{% endif %}</span>
-      <span aria-hidden="true">·</span>
-      <span class="planning-responsible__name">{% if r.needs_review %}Review Required{% else %}{{ r.responsible_name }}{% endif %}</span>
-    </span>
-    {% if r.staff_action_required %}
-    <span class="planning-support-cell__workflow" data-partner-workflow="returned">
-      <span class="school-planning-badge" data-planning-tone="replan" title="{{ r.returned_partner_name }} returned this work{% if r.returned_reason %}: {{ r.returned_reason }}{% endif %}">{{ r.workflow_label }}</span>
-      {% if can_monitor_partners %}<a class="edify-primary-text font-semibold hover:underline" href="/partner-oversight/?partner={{ r.returned_partner_id }}&amp;status=returned">Resolve</a>{% endif %}
-    </span>
-    {% elif r.is_partner %}
-    <span class="planning-support-cell__workflow" data-partner-workflow="{{ r.partner_status|default:'review' }}">
-      <span class="school-planning-badge" data-planning-tone="{% if r.needs_review %}replan{% else %}awaiting{% endif %}">{{ r.workflow_label }}</span>
-    </span>
-    {% endif %}
-  </div>
+  <span class="planning-responsible" data-responsible="{{ r.responsibility_type }}" title="{{ r.label }}: {{ r.responsible_name|default:'Unassigned' }}">
+    <span class="planning-responsible__kind">{% if r.is_partner %}Partner{% else %}Staff{% endif %}</span>
+  </span>
 </td>
 {% endwith %}

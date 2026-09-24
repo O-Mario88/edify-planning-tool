@@ -409,3 +409,89 @@ def training_counts(school_ids, *, fy=None) -> dict[str, int]:
             if wanted is None or school_id in wanted:
                 counts[school_id] = counts.get(school_id, 0) + 1
     return counts
+
+
+# ── Invitations for sessions planned before they were recorded ──────────────
+#: Not yet delivered: the sessions whose invitation list is still the plan.
+#: A delivered session's register (who attended) is the record of what
+#: happened, and is never inferred.
+UNDELIVERED_SESSION_STATUSES = (
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "in_progress",
+    "completion_started",
+)
+
+
+def backfill_session_invitations(*, dry_run: bool = False) -> dict:
+    """Name the invited schools on cluster sessions planned before invitations
+    were recorded (owner, 2026-09-23: "backfill the invited schools for older
+    cluster sessions").
+
+    The drawers have written who was invited only since 2026-09-16, and a
+    school counts toward a cluster session only when it is named on the
+    session (school_planning_badges), so every session planned for the whole
+    cluster before then read "Not Planned" on each of its schools. Such a
+    session — live, not yet delivered, with no register row at all — is given
+    what the drawer invites by default today: the cluster's active member
+    schools, less the Partner-supported ones (partner_school_policy).
+
+    Only the invitation register is written. The session's head count and
+    cost are left exactly as they were priced; the Core package credit is run
+    as a save of the session would run it. A session that already names any
+    school, or has recorded attendance, is left alone, so running this twice
+    changes nothing.
+    """
+    from django.db.models import Exists, OuterRef
+
+    from apps.activities.models import Activity, ClusterActivityAttendance
+    from apps.clusters.services import active_schools
+    from apps.core_schools.cluster_credit import credit_cluster_session
+    from apps.planning.partner_school_policy import partner_supported_members
+    from apps.planning.school_planning_badges import CLUSTER_SESSION_TYPES
+
+    sessions = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            cluster_id__isnull=False,
+            activity_type__in=CLUSTER_SESSION_TYPES,
+            status__in=UNDELIVERED_SESSION_STATUSES,
+        )
+        .filter(
+            ~Exists(ClusterActivityAttendance.objects.filter(activity=OuterRef("pk")))
+        )
+        .exclude(attended_school_ids__len__gt=0)
+        .order_by("created_at")
+    )
+    report = {"sessions": 0, "invitations": 0, "without_members": 0}
+    for session in sessions:
+        members = [s.id for s in active_schools(session.cluster_id)]
+        supported = partner_supported_members(members)
+        invited = [school_id for school_id in members if school_id not in supported]
+        if not invited:
+            report["without_members"] += 1
+            continue
+        report["sessions"] += 1
+        report["invitations"] += len(invited)
+        if dry_run:
+            continue
+        with transaction.atomic():
+            ClusterActivityAttendance.objects.bulk_create(
+                [
+                    ClusterActivityAttendance(
+                        activity=session,
+                        school_id=school_id,
+                        invited=True,
+                        teachers=session.teachers_per_school,
+                        leaders=session.leaders_per_school,
+                        other=session.other_per_school,
+                        recorded_by="backfill",
+                    )
+                    for school_id in invited
+                ]
+            )
+            credit_cluster_session(session)
+    return report

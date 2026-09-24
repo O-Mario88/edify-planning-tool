@@ -388,6 +388,33 @@ class PLDashboardTest(TestCase):
         self.assertEqual(flag["tone"], "danger")
         self.assertEqual(flag["url"], "/quality-checks")
 
+    def test_country_director_items_are_one_table_with_an_action_each(self):
+        """Owner, 2026-09-23: the Collaboration lists became tables with the
+        action at the end of each row; the flag row opens Quality Flags."""
+        CdFlag.objects.create(
+            raised_by_user_id="cd-1",
+            raised_by_name="CD",
+            assigned_to_user_id=self.pl_a.id,
+            category="quality",
+            note="Check the returned evidence",
+            due_date=(timezone.localdate() - timedelta(days=1)).isoformat(),
+            status="open",
+        )
+        rows = self._dash(self.pl_a, view="collaboration")["collaboration"]["cd_rows"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["kind"], "Quality flag")
+        self.assertEqual(rows[0]["detail"], "Check the returned evidence")
+        self.assertTrue(rows[0]["danger"])
+        self.assertEqual(
+            (rows[0]["action_label"], rows[0]["href"]), ("Answer", "/quality-checks")
+        )
+        self.client.force_login(self.pl_a)
+        html = self.client.get(
+            "/dashboard", {"fy": FY, "view": "collaboration"}
+        ).content.decode()
+        self.assertIn("data-pl-cd-table", html)
+        self.assertIn('href="/quality-checks">Answer<', html)
+
     def test_attention_is_at_most_four_items_most_urgent_first(self):
         group = {"count": 2, "overdue": 1}
         ctx = SimpleNamespace(
