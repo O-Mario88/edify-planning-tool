@@ -143,6 +143,26 @@ best/worst name changed. `test_map_score_stability` pins a real case:
 `[6.6, 8.4, 8.1, 7.8]` averages to 7.7250000000000005 forwards and 7.725
 backwards, which plain rounding shows as 7.73 and 7.72.
 
+**R-4 The fiscal-year rollover ran inside a user's request
+(owner-approved).** When the scheduler had not yet rolled the year over,
+`FiscalYearRolloverMiddleware` ran the whole rollover (600–2,900 queries,
+9–12 s at 50,000 schools) inside the first signed-in request of each
+process, and other processes waited on its row lock. It now claims the
+rollover and runs it on a background thread in the same process, and every
+request, including the one that noticed, returns at its normal speed (a
+2-second stand-in rollover: the triggering request 2.00 s → 0.00 s). The
+guarantees are unchanged: one rollover per process at a time, the retry
+back-off after a failure, and no rerun once the year is done. The rollover
+is idempotent and commits all-or-nothing behind its `FiscalYearRollover`
+marker, so a process that stops mid-way rolls back and the next signed-in
+request, in any process, or the scheduler starts it again. One visible
+difference: pages loaded in the seconds while it runs show the year as it
+was before the rollover, where before the first user waited for it.
+`test_rollover_concurrency` covers the non-blocking claim, single run,
+back-off and anonymous requests, and a new `TransactionTestCase` runs the
+real rollover on the thread's own database connection and reads its
+committed marker back.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -426,7 +446,7 @@ brief's parity lock it needs an owner decision.
 |---|---|---|---|
 | F-A | **Fixed after owner approval (see §5, R-2).** Admin Team Plans never showed a next action | — | — |
 | F-B | **Fixed after owner approval (see §5, R-3).** Map metrics were not deterministic | — | — |
-| F-C | **The fiscal-year rollover can run inside a user request.** `FiscalYearRolloverMiddleware` performs the whole rollover (600–2,900 queries, 9–12 s at this scale) on the first signed-in request of a process when the scheduler has not done it; other processes wait on its row lock | observed on every fresh database copy | leave the self-heal to the scheduler and have the middleware only raise a System Health alarm, or enqueue it |
+| F-C | **Fixed after owner approval (see §5, R-4).** The fiscal-year rollover ran inside a user request | — | — |
 | F-D | **Leadership pages rebuild the achievement ledger on every load** (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
 | F-E | **Heavy country pages still take seconds.** Team and country planning oversight and their exports (4–6 s), SSA (≈3 s), IA learning (≈3 s), the Country Director's dashboard (2.7 MB of HTML, ≈8 s under load) for country roles at 50,000 schools; they build every item in the country in Python | profiles in §6 | per-lead lazy sections or read models, each needing a parity review |
 
