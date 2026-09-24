@@ -117,7 +117,9 @@ def ssa_performance_export_view(request):
     """Export the exact confirmed, filtered school set shown by the dashboard."""
     from apps.analytics.decision_engine import ssa_performance_dashboard
 
-    dashboard = ssa_performance_dashboard(request.user, request.GET.dict())
+    dashboard = ssa_performance_dashboard(
+        request.user, request.GET.dict(), export_only=True
+    )
     if not dashboard["scope"]["can_export"]:
         return HttpResponseForbidden("Your role cannot export SSA performance data.")
 

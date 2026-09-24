@@ -99,6 +99,17 @@ def safe_mean(values: Iterable[Any] | None) -> float | None:
             continue
         series, _ = _numeric(raw)
         return _round(series.mean()) if not series.empty else None
+    return mean_of_floats(floats)
+
+
+def mean_of_floats(floats: Sequence[float]) -> float | None:
+    """``safe_mean`` for a list its caller built from finite floats only.
+
+    The same NumPy float64 reduction and rounding ``safe_mean`` ends with (it
+    ends here), without re-checking each value. For callers that collect many
+    small lists in one pass over their rows: the SSA workspace's breakdowns
+    average ~25,000 of them for a country reader.
+    """
     if not floats:
         return None
     return _round(np.asarray(floats, dtype="float64").mean())
