@@ -24,14 +24,16 @@ from __future__ import annotations
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.db import IntegrityError, connection, connections, transaction
-from django.test import TransactionTestCase
+from django.test import TestCase, TransactionTestCase
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest
 from apps.evidence.models import EvidenceRecord
+from apps.fund_requests import advance_service
 from apps.fund_requests.finance_models import (
     NetSuiteExpenseRecord,
     PartnerPayment,
@@ -95,8 +97,9 @@ def _audit_count(action: str, subject_id: str) -> int:
     return AuditLog.objects.filter(action=action, subject_id=subject_id).count()
 
 
-class ConcurrentDisbursementTest(TransactionTestCase):
-    """The accountant's Disburse button, pressed six times at once."""
+class _DisbursableAdvance:
+    """One owner-confirmed advance on a line an approved weekly request
+    carries: everything advance_service.disburse needs to pay it."""
 
     def setUp(self):
         self.region = Region.objects.create(name="Race Region")
@@ -156,6 +159,10 @@ class ConcurrentDisbursementTest(TransactionTestCase):
             unit_cost=450_000,
             total_cost=450_000,
         )
+
+
+class ConcurrentDisbursementTest(_DisbursableAdvance, TransactionTestCase):
+    """The accountant's Disburse button, pressed six times at once."""
 
     def tearDown(self):
         connection.close()
@@ -221,6 +228,91 @@ class ConcurrentDisbursementTest(TransactionTestCase):
             )
         self.advance.refresh_from_db()
         self.assertEqual(self.advance.disbursed_amount, 450_000)
+
+
+class OwnerChoiceThatLostToTheDisbursementTest(_DisbursableAdvance, TestCase):
+    """The owner's funding choice racing the Accountant's Disburse.
+
+    Each test reads the advance the way the owner's request that lost did:
+    before the disbursement committed. That read is the courtesy check; the
+    choice itself must re-read under the row lock and refuse. Otherwise a paid
+    advance is rewritten as declined or self-funded (so no accountability is
+    owed), or as confirmed, which the funding guard reads as payable again.
+    The stale read fixes the interleaving, so no threads are needed."""
+
+    def setUp(self):
+        super().setUp()
+        self.owner = _Principal("race-owner", "CCEO")
+
+    def _read_before_the_disbursement(self):
+        return advance_service._get_for_owner(self.advance.id, self.owner)
+
+    def _courtesy_read_returns(self, stale):
+        read = advance_service._get_for_owner
+
+        def courtesy_read(advance_id, principal, for_update=False):
+            if for_update:
+                return read(advance_id, principal, for_update=True)
+            return stale
+
+        return patch.object(
+            advance_service, "_get_for_owner", side_effect=courtesy_read
+        )
+
+    def _pay(self, reference):
+        return disburse(
+            self.advance.id,
+            {"amount": 450_000, "method": "bank", "reference": reference},
+            _Principal("acct-1"),
+        )
+
+    def test_declining_funds_already_paid_out_is_refused(self):
+        stale = self._read_before_the_disbursement()
+        self._pay("REF-1")
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                advance_service.not_requested(self.advance.id, self.owner)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, AdvanceRequestStatus.DISBURSED)
+        self.assertNotEqual(self.advance.advance_type, "not_requested")
+
+    def test_self_funding_an_advance_already_paid_out_is_refused(self):
+        stale = self._read_before_the_disbursement()
+        self._pay("REF-1")
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                advance_service.self_funded(self.advance.id, self.owner)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, AdvanceRequestStatus.DISBURSED)
+        self.assertNotEqual(self.advance.advance_type, "self_funded")
+
+    def test_a_late_confirmation_cannot_make_a_paid_advance_payable_again(self):
+        # The owner's page still shows the line pending while it is approved
+        # (routed to the accountant) and paid.
+        AdvanceRequest.objects.filter(id=self.advance.id).update(
+            status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION
+        )
+        stale = self._read_before_the_disbursement()
+        AdvanceRequest.objects.filter(id=self.advance.id).update(
+            status=AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT
+        )
+        self._pay("REF-1")
+
+        with self._courtesy_read_returns(stale):
+            with self.assertRaises(BadRequest):
+                advance_service.confirm_advance(self.advance.id, self.owner)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, AdvanceRequestStatus.DISBURSED)
+        with self.assertRaises(BadRequest):
+            self._pay("REF-2")
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.disburse_reference, "REF-1")
+        self.assertEqual(_audit_count("advance_request.disburse", self.advance.id), 1)
 
 
 class ConcurrentReimbursementTest(TransactionTestCase):
