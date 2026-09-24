@@ -6,8 +6,11 @@ drafts, workflow-generated threads, archive/unread behaviour, attachments,
 and notification fan-out.
 """
 
+import shutil
+import tempfile
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
@@ -42,6 +45,23 @@ def _user(email, role, name):
 
 
 class MessagingBaseTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        # Each test uploads into a directory of its own. The default storage
+        # is the repository's media folder, which every parallel test worker
+        # shares: a file one test deleted could be re-created under the same
+        # name by another worker's upload before the first test asserted it
+        # was gone (CI, 2026-09-24).
+        media = tempfile.mkdtemp(prefix="edify-messaging-media-")
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        default = dict(settings.STORAGES["default"])
+        default["OPTIONS"] = {**default.get("OPTIONS", {}), "location": media}
+        private_media = self.settings(
+            STORAGES={**settings.STORAGES, "default": default}
+        )
+        private_media.enable()
+        self.addCleanup(private_media.disable)
+
     @classmethod
     def setUpTestData(cls):
         cls.admin = _user("admin@t.test", "Admin", "Admin One")
