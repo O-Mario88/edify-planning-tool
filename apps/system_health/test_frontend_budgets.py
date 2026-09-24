@@ -47,10 +47,12 @@ def _gzip_kb(data: bytes) -> float:
 def shell_assets() -> dict:
     """What base.html makes every page load, from its source."""
     text = BASE_TEMPLATE.read_text()
-    head_end = text.index("</head>")
+    head_end = text.lower().index("</head>")
     stylesheets, scripts = [], []
-    for match in re.finditer(r"<(link|script)\b[^>]*>", text):
+    # Case-insensitive, as HTML is: <SCRIPT> is a script too.
+    for match in re.finditer(r"<(link|script)\b[^>]*>", text, re.I):
         tag = match.group(0)
+        kind = match.group(1).lower()
         found = STATIC_TAG.search(tag)
         if not found:
             continue
@@ -63,16 +65,17 @@ def shell_assets() -> dict:
             "in_head": match.start() < head_end,
             "missing": path is None,
         }
-        if match.group(1) == "link" and 'rel="stylesheet"' in tag:
-            entry["render_blocking"] = "media=" not in tag
+        if kind == "link" and re.search(r'rel="stylesheet"', tag, re.I):
+            entry["render_blocking"] = not re.search(r"\bmedia=", tag, re.I)
             stylesheets.append(entry)
-        elif match.group(1) == "script":
+        elif kind == "script":
             entry["parser_blocking"] = entry["in_head"] and not re.search(
-                r"\b(defer|async)\b|type=\"module\"", tag
+                r"\b(defer|async)\b|type=\"module\"", tag, re.I
             )
             scripts.append(entry)
     inline = sum(
-        len(m.group(1)) for m in re.finditer(r"<script>(.*?)</script>", text, re.S)
+        len(m.group(1))
+        for m in re.finditer(r"<script\s*>(.*?)</script\s*>", text, re.S | re.I)
     )
     return {"stylesheets": stylesheets, "scripts": scripts, "inline_bytes": inline}
 
