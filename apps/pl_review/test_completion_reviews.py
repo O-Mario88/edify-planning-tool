@@ -11,15 +11,21 @@ Programme Lead alignment, 2026-09-13. Four things are pinned here:
   3. The queue is a register read in bulk: its cost does not grow with the
      number of completions waiting.
   4. A return carries a reason, refused visibly when it does not.
+  5. A completion is decided once. Two decisions that both read it as waiting
+     (a double-click, two tabs, two leads over one officer) used to both
+     apply: two approvals, or a return and an approval with the last writer
+     winning. The second is now refused under a row lock.
 """
 
 from __future__ import annotations
 
+import threading
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.contrib.messages import get_messages
-from django.db import connection
-from django.test import Client, TestCase, override_settings
+from django.db import connection, connections
+from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -31,6 +37,7 @@ from apps.accounts.models import (
 )
 from apps.activities.models import Activity, ActivityCompletionVerification
 from apps.activities.services import _serialize
+from apps.audit.models import AuditLog
 from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest
 from apps.core.permissions import RolePermissionService
@@ -512,3 +519,126 @@ class ReviewNotificationLandsOnTheCompletionTest(TestCase):
             "activity_submitted_for_review", "Activity", "act-42", "ImpactAssessment"
         )
         self.assertEqual(ia_route, "/ia/verification/act-42/")
+
+
+class OneDecisionPerCompletionTest(ReviewFixture):
+    """Each test reads the completion the way a request that lost a race did:
+    before the other decision was written. That read is the courtesy check;
+    the decision itself must re-read under a lock and refuse."""
+
+    def _read_before_the_other_decision(self, work):
+        return services._get_reviewable(work.id, self.pl_user)
+
+    def _decisions(self, work, action):
+        return AuditLog.objects.filter(action=action, subject_id=work.id).count()
+
+    def test_a_second_approval_is_refused_and_not_recorded_twice(self):
+        work = self._completion(self.james.id)
+        stale = self._read_before_the_other_decision(work)
+        services.confirm(work.id, self.pl_user)
+
+        with patch.object(services, "_get_reviewable", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.confirm(work.id, self.pl_user)
+
+        self.assertEqual(self._decisions(work, "pl_review_confirm"), 1)
+
+    def test_an_approval_that_lost_to_a_return_leaves_the_work_returned(self):
+        work = self._completion(self.james.id)
+        stale = self._read_before_the_other_decision(work)
+        services.return_activity(
+            work.id, {"reason": "Attendance sheet is blank"}, self.pl_user
+        )
+
+        with patch.object(services, "_get_reviewable", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.confirm(work.id, self.pl_user)
+
+        work.refresh_from_db()
+        self.assertEqual(work.status, "returned_by_pl")
+        self.assertNotEqual(work.evidence_status, "accepted")
+        self.assertEqual(self._decisions(work, "pl_review_confirm"), 0)
+
+    def test_a_return_that_lost_to_an_approval_leaves_the_work_verified(self):
+        work = self._completion(self.james.id)
+        stale = self._read_before_the_other_decision(work)
+        services.confirm(work.id, self.pl_user)
+
+        with patch.object(services, "_get_reviewable", return_value=stale):
+            with self.assertRaises(BadRequest):
+                services.return_activity(
+                    work.id, {"reason": "Attendance sheet is blank"}, self.pl_user
+                )
+
+        work.refresh_from_db()
+        self.assertEqual(work.status, "ia_verified")
+        self.assertEqual(self._decisions(work, "pl_review_return"), 0)
+
+
+class SimultaneousApprovalsTest(TransactionTestCase):
+    """The double-click, for real: two requests on two connections, both
+    through the courtesy read before either writes."""
+
+    reset_sequences = False
+
+    def setUp(self):
+        region = Region.objects.create(name="Race Region")
+        district = District.objects.create(name="Race District", region=region)
+        self.pl_user, pl = _staff(
+            "race-pl@t.test", "Race Lead", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        _officer_user, officer = _staff("race-cceo@t.test", "Race CCEO", EdifyRole.CCEO)
+        StaffSupervisorAssignment.objects.create(supervisee=officer, supervisor=pl)
+        school = School.objects.create(
+            school_id="RACE-1", name="Race Primary", region=region, district=district
+        )
+        StaffSchoolAssignment.objects.create(staff=officer, school_id=school.id)
+        self.work = Activity.objects.create(
+            activity_type="school_visit",
+            status="submitted_to_pl",
+            fy="2026",
+            quarter="Q4",
+            planned_date=date.today() - timedelta(days=3),
+            responsible_staff_id=officer.id,
+            school=school,
+        )
+
+    def test_two_simultaneous_approvals_apply_once(self):
+        workers = 2
+        both_have_read = threading.Barrier(workers)
+        read = services._get_reviewable
+        outcomes: list[str] = []
+
+        def read_then_wait(activity_id, principal):
+            activity = read(activity_id, principal)
+            both_have_read.wait(timeout=10)
+            return activity
+
+        def approve():
+            try:
+                services.confirm(self.work.id, self.pl_user)
+                outcomes.append("approved")
+            except BadRequest:
+                outcomes.append("refused")
+            except Exception as exc:  # pragma: no cover - the assertion reports it
+                outcomes.append(repr(exc))
+            finally:
+                for db_connection in connections.all():
+                    db_connection.close()
+
+        with patch.object(services, "_get_reviewable", side_effect=read_then_wait):
+            threads = [threading.Thread(target=approve) for _ in range(workers)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=30)
+
+        self.assertEqual(sorted(outcomes), ["approved", "refused"])
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="pl_review_confirm", subject_id=self.work.id
+            ).count(),
+            1,
+        )
+        self.work.refresh_from_db()
+        self.assertEqual(self.work.status, "ia_verified")
