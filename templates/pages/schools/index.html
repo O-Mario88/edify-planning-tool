@@ -219,11 +219,11 @@ hx-include="#filters-form"
 
 <div class="space-y-1">
 <label for="bulk-assign-cluster" class="block edify-text-caption font-semibold text-slate-600">Cluster <span class="text-rose-500">*</span></label>
-<select id="bulk-assign-cluster" aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select id="bulk-assign-cluster" data-lazy-options aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">Select a cluster</option>
-{% for c in clusters %}
+<template data-lazy-options>{% for c in clusters %}
 <option value="{{ c.id }}">{{ c.name }}</option>
-{% endfor %}
+{% endfor %}</template>
 </select>
 </div>
 
@@ -289,11 +289,11 @@ hx-include="#filters-form"
 
 <div class="space-y-1">
 <label for="bulk-match-staff" class="block edify-text-caption font-semibold text-slate-600">Staff (CCEO) <span class="text-rose-500">*</span></label>
-<select id="bulk-match-staff" aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select id="bulk-match-staff" data-lazy-options aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">Select a CCEO</option>
-{% for sp in staff_profiles %}
+<template data-lazy-options>{% for sp in staff_profiles %}
 <option value="{{ sp.id }}">{{ sp.user.name }}</option>
-{% endfor %}
+{% endfor %}</template>
 </select>
 </div>
 

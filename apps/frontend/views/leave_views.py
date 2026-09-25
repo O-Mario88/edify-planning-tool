@@ -674,6 +674,15 @@ def leave_tracker_view(request):
 @require_page_permission("leave_approvals")
 def leave_approvals_view(request):
     """Queue of leave requests awaiting review with comprehensive KPI metrics."""
+    # A read-only page that asks the approver rule of every pending leave in
+    # three loops; the reviewer's lookups are read once for all of them.
+    from apps.hr.leave_services import approval_lookups
+
+    with approval_lookups():
+        return _leave_approvals_page(request)
+
+
+def _leave_approvals_page(request):
     user = request.user
     role = get_user_role_slug(user)
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 from apps.activities.closure_services import _assert_may_close
 from apps.core.exceptions import Forbidden
 from apps.planning import visit_requests
-from apps.planning.test_visit_requests import VisitRequestFixture, _schedulable_date
+from apps.planning.test_visit_requests import VisitRequestFixture
 
 
 class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
@@ -49,15 +49,24 @@ class ApprovedVisitOnMyPlanTest(VisitRequestFixture):
         self.assertNotContains(page, "Owned Primary")
 
     def test_the_requester_may_close_their_own_visit_and_nobody_elses(self):
+        import datetime
+
         theirs = self._request(self.cd)
         theirs.refresh_from_db()
         # The Country Director closes on planning authority, as before.
         _assert_may_close(self.cd, theirs)
+        from apps.core.calendar_policy import SchedulingPolicyService
+
+        day = self.__class__.day
         for who in (self.ia, self.accountant):
             with self.subTest(role=who.active_role):
                 # One visit per person per day at a school; move the date to
-                # the next day the calendar allows (never a blocked Sunday).
-                self.day = _schedulable_date(after=self.day)
+                # the next day the calendar allows (a plain +1/+2 landed on a
+                # Sunday whenever the base day was a Friday).
+                day += datetime.timedelta(days=1)
+                while SchedulingPolicyService.check(None, day)["status"] == "blocked":
+                    day += datetime.timedelta(days=1)
+                self.day = day
                 # Each person's own visit at another school in the portfolio,
                 # so the one being closed is unambiguously theirs.
                 own = self._request(who, self._owned_school(who.active_role))

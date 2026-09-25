@@ -31,6 +31,19 @@ from datetime import date
 from apps.planning.oversight_service import resolve_oversight_scope
 
 
+#: What is read from each planned activity here, in `urgent_attention` and by
+#: `_StaffDirectory`, plus the school join.
+_ACTIVITY_FIELDS = (
+    "id",
+    "school",
+    "responsible_staff_id",
+    "monitored_by_staff_id",
+    "planned_date",
+    "activity_type",
+    "status",
+)
+
+
 def _month_bounds(fy: str, month: int):
     from apps.core.fy import get_fy_date_range
 
@@ -74,6 +87,11 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
         )
         .exclude(status__in=("cancelled", "rejected", "deferred"))
         .select_related("school", "school__district")
+        # The activity columns this module and the classifier read; the school
+        # and its district load whole. A country month is thousands of
+        # activities, and their ~120 columns each were most of this section's
+        # time (2026-09-24 A+ audit).
+        .only(*_ACTIVITY_FIELDS)
     )
     if not scope.is_country:
         # Owner, not geography. The same rule the rest of oversight uses, and

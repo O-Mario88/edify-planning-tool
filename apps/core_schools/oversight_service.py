@@ -89,7 +89,12 @@ def planned_core_work(principal, *, fy: str) -> list:
     from apps.planning.fy_policy import planning_horizon
     from apps.schools.lifecycle_models import OPERATING_STATUSES
 
-    items = planning.build_items(principal, fy=fy, fys=planning_horizon(fy))
+    # Narrowed in SQL to core-school work and school-less cluster trainings:
+    # the two lists below keep nothing else, and each item is built exactly
+    # as in the full list.
+    items = planning.build_items(
+        principal, fy=fy, fys=planning_horizon(fy), core_work_only=True
+    )
     package_types = set(VISIT_TYPES) | set(TRAINING_TYPES)
     activity_ids = [item.activity_id for item in items if item.activity_id]
 
@@ -231,7 +236,10 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
         if core_qs is None:
             core_qs = base.none()
 
-    schools = list(core_qs.order_by("name"))
+    # By name, then id: schools sharing a name came back in whatever order the
+    # plan produced, so two loads of the page could list an officer's schools
+    # differently (2026-09-24 A+ audit).
+    schools = list(core_qs.order_by("name", "id"))
     core_work = planned_core_work(principal, fy=fy)
     from apps.planning.fy_policy import horizon_label, planning_horizon
 

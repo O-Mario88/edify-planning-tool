@@ -595,15 +595,16 @@ def finance_return_action(request):
 @require_page_permission("consolidated_fund_allocation")
 def budget_overview_view(request):
     """Budget overview — CD/Accountant view."""
-    from apps.budget.services import fy_budget, monthly_budget
+    from apps.budget.services import fy_budget, monthly_budgets
 
     fy = get_operational_fy()
 
     fy_data = fy_budget({"fy": fy})
 
     monthly_data = []
-    for m in range(1, 13):
-        m_data = monthly_budget({"fy": fy, "month": m})
+    # The twelve months from one grouped rollup (`monthly_budgets`), each the
+    # dict `monthly_budget({"fy": fy, "month": m})` returns.
+    for m, m_data in enumerate(monthly_budgets(fy), start=1):
         if m_data["plannedBudget"] > 0 or m_data["requestedBudget"] > 0:
             # Add helper display name for the month-of-fy (1=October, 2=November, ...)
             months_names = {

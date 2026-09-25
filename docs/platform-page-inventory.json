@@ -169,7 +169,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4769,
+      "bytes": 5508,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -413,7 +413,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1413,
+      "bytes": 1893,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -1400,7 +1400,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6928,
+      "bytes": 7827,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4264,10 +4264,55 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 688,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Body Fill",
+      "purpose": "Reusable body fill interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/body_fill.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1139,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Body Loader",
+      "purpose": "Reusable body loader interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/body_loader.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7106,
+      "bytes": 7352,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5320,7 +5365,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 38170,
+      "bytes": 38512,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -8454,6 +8499,32 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 31061,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/team/<str:staff_id>",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Officer Panel Body",
+      "purpose": "Reusable  officer panel body interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 4,
+      "template": "partials/oversight/_officer_panel_body.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 1671,
       "deprecated_alternatives": [],
@@ -8530,7 +8601,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 34342,
+      "bytes": 4810,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8544,13 +8615,13 @@
       "kind": "application-partial",
       "name": "Cd Team Detail",
       "purpose": "Reusable cd team detail interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "selected",
         "open"
       ],
-      "tables": 4,
+      "tables": 0,
       "template": "partials/oversight/cd_team_detail.html",
       "variants": []
     },
@@ -8558,7 +8629,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13545,
+      "bytes": 14325,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8632,7 +8703,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8540,
+      "bytes": 10761,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -8657,7 +8728,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9864,
+      "bytes": 11979,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -8759,7 +8830,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5090,
+      "bytes": 5568,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8934,7 +9005,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4365,
+      "bytes": 5009,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -10959,7 +11030,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 669,
+      "bytes": 1056,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -11346,7 +11417,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21146,
+      "bytes": 21547,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -32940,8 +33011,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 1,
@@ -33514,6 +33585,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
+        "template:partials/dashboards/cd/body_fill.html",
         "template:partials/dashboards/cd/body.html",
         "template:pages/dashboards/cd.html",
         "template:pages/dashboards/rvp.html",
@@ -33606,6 +33678,7 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
+        "partials/dashboards/cd/body_fill.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "pages/dashboards/rvp.html",
@@ -97805,6 +97878,7 @@
       "route_name": "dashboard",
       "templates": [
         "partials/dashboards/_view_tabs.html",
+        "partials/dashboards/cd/body_fill.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "pages/dashboards/rvp.html",
@@ -106052,7 +106126,7 @@
     "activity_states": 24,
     "all_routes": 1301,
     "api_routes": 360,
-    "component_templates": 489,
+    "component_templates": 492,
     "full_pages": 260,
     "mobile_contract_pass": 537,
     "nonvisual_actions": 267,

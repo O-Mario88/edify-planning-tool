@@ -304,28 +304,6 @@ def _cycle_fys_uncached(school_ids, fy):
     return (fys[0] if fys else None), (fys[1] if len(fys) > 1 else None)
 
 
-def _refresh_target_ledger(cd: CDScope) -> None:
-    """Rebuild the TargetAchievementLedger for every CCEO in the resolved
-    scope before any CD/RVP-level rollup reads it. Without this, a CCEO
-    whose PL/self hasn't recently opened My/Team Targets shows stale
-    numbers at CD/RVP level — mirrors what My Targets / Team Targets
-    already do on their own page loads. Call once per page load (not per
-    section) since rebuild() is idempotent but not free.
-
-    Prefer `_prime_target_series(cd)` over this directly when the caller
-    will also read PL/CCEO-level target achievement afterwards — it does
-    this same rebuild AND caches the resulting series on `cd` so every
-    downstream _weighted_achievement() call reuses it instead of
-    re-fetching per PL/per CCEO."""
-    from apps.targets.my_targets import TargetAchievementService
-
-    if not cd.cceo_user_ids:
-        return
-    TargetAchievementService.rebuild_many(
-        User.objects.filter(id__in=cd.cceo_user_ids), cd.fy
-    )
-
-
 def _prime_pl_cceos(cd: CDScope) -> None:
     """Populate cd.pl_cceos for every Programme Lead in one go.
 
@@ -346,10 +324,10 @@ def _prime_pl_cceos(cd: CDScope) -> None:
 def _prime_target_series(cd: CDScope) -> None:
     """Populate the per-request derived data every CD surface shares.
 
-    cd.areas/cd.per_user_series: rebuilds every in-scope CCEO's ledger and
-    fetches their monthly target/achieved series exactly once each
-    (apps.targets.my_targets.per_user_monthly_series). Every
-    _weighted_achievement() call in this same request then pools from this
+    cd.areas/cd.per_user_series: fetches every in-scope CCEO's monthly
+    target/achieved series exactly once each (the ledger is kept current by
+    apps.targets.ledger_sync; apps.targets.my_targets.per_user_monthly_series).
+    Every _weighted_achievement() call in this same request then pools from this
     cached data (apps.targets.my_targets.pool_series — pure Python, no DB)
     instead of re-rebuilding + re-fetching per PL row AND again per CCEO row,
     which is what made target_by_pl_cceo/pl_oversight/kpis each independently
@@ -1234,8 +1212,13 @@ class CDAnalyticsService:
         )
 
     @staticmethod
-    def _area_achievement_rows(cd, user_ids):
-        """Verified progress per approved milestone, with each unit kept separate."""
+    def _area_achievement_rows(cd, user_ids, per_user_series=None):
+        """Verified progress per approved milestone, with each unit kept separate.
+
+        `per_user_series`, when given, is `per_user_monthly_series` over a
+        roster containing `user_ids` with `areas=cd.areas`: each person's
+        series depends on that person alone, so pooling a team from it is what
+        `pooled_monthly_series` over the team computes."""
         from apps.hr.accountability import allocation_priorities
 
         ids = StaffProfile.objects.filter(user_id__in=user_ids).values_list(
@@ -1283,10 +1266,9 @@ class CDAnalyticsService:
         months = (
             TCal.months_of_quarter(cd.quarter) if cd.quarter else list(range(1, 13))
         )
-        if cd.per_user_series:
-            targets, achieved = pool_series(
-                resolved_user_ids, cd.per_user_series, areas
-            )
+        series = cd.per_user_series or per_user_series
+        if series:
+            targets, achieved = pool_series(resolved_user_ids, series, areas)
         else:
             targets, achieved = pooled_monthly_series(
                 User.objects.filter(id__in=resolved_user_ids),
@@ -1946,15 +1928,34 @@ class CDAnalyticsService:
         # and folded per cluster below by that cluster's OWN membership (the
         # union described above), so the numbers are those the three queries a
         # cluster used to make produced — without making them per cluster.
+        #
+        # Read as plain rows, not model instances: a country is ~45,000
+        # records and ~360,000 prefetched scores, and building an object for
+        # each was ~4 s of a 5.6 s section (2026-09-24 A+ audit). Each record
+        # is (average_score, [(intervention, score), ...]) in the order the
+        # instances and their prefetched scores arrived in, so every list
+        # below is built in the same order from the same values.
         records_by_school: dict = {}
         if latest:
+            from apps.core.scoping import id_array
+
             all_member_ids = {sid for ids in cluster_school.values() for sid in ids}
-            for record in SsaRecord.objects.filter(
-                school_id__in=all_member_ids,
+            latest_records = SsaRecord.objects.filter(
+                school_id__in=id_array(all_member_ids),
                 verification_status="confirmed",
                 fy=latest,
-            ).prefetch_related("scores"):
-                records_by_school.setdefault(record.school_id, []).append(record)
+            )
+            scores_of: dict = {}
+            for record_id, intervention, score in SsaScore.objects.filter(
+                ssa_record_id__in=latest_records.values("id")
+            ).values_list("ssa_record_id", "intervention", "score"):
+                scores_of.setdefault(record_id, []).append((intervention, score))
+            for record_id, school_id, average_score in latest_records.values_list(
+                "id", "school_id", "average_score"
+            ):
+                records_by_school.setdefault(school_id, []).append(
+                    (average_score, scores_of.get(record_id, ()))
+                )
 
         rows = []
         for idx, cid in enumerate(sorted(cluster_school.keys()), start=1):
@@ -1966,16 +1967,14 @@ class CDAnalyticsService:
                     record for sid in c_ids for record in records_by_school.get(sid, [])
                 ]
                 averages = [
-                    r.average_score for r in records if r.average_score is not None
+                    average for average, _scores in records if average is not None
                 ]
                 avg = _ssa_score(sum(averages) / len(averages)) if averages else None
                 by_intervention: dict = {}
-                for record in records:
-                    for score in record.scores.all():
-                        if score.score is not None:
-                            by_intervention.setdefault(score.intervention, []).append(
-                                score.score
-                            )
+                for _average, record_scores in records:
+                    for intervention, score in record_scores:
+                        if score is not None:
+                            by_intervention.setdefault(intervention, []).append(score)
                 if by_intervention:
                     code, values = min(
                         by_intervention.items(),
@@ -2199,8 +2198,68 @@ class CDAnalyticsService:
         # own handful of queries — a cost that grew with the number of
         # Program Leads (test_the_cost_does_not_grow_with_the_number_of_program_leads).
         CDAnalyticsService._resolve_contract_empty(cd, pls=pls, staff_ids=all_staff)
-        for pl in CDAnalyticsService._pls():
-            cceos = CDAnalyticsService._pl_cceos(pl, cd)
+        # Three per-lead reads answered once for the whole country before the
+        # loop (2026-09-24 A+ audit: a query per lead each, and a pass over
+        # every activity in the country per lead):
+        # - which of every team's schools have no SSA done this year, so each
+        #   lead's count is an intersection rather than its own COUNT;
+        # - every team member's advance totals, warming `_pl_budget_by_user`'s
+        #   per-user memo, whose rows are per user whatever the batch;
+        # - the country's activity rows in a backlog status, so each lead's
+        #   backlog is counted over those rather than over every row.
+        from apps.core.scoping import id_array
+
+        _pending_statuses = {
+            "returned_by_pl",
+            "returned_by_ia",
+            "salesforce_id_required",
+            "awaiting_ia_verification",
+        }
+        lead_teams = [
+            (pl, CDAnalyticsService._pl_cceos(pl, cd))
+            for pl in CDAnalyticsService._pls()
+        ]
+        every_team_school = set()
+        for _pl, members in lead_teams:
+            for c in members:
+                every_team_school |= c["school_ids"]
+        ssa_not_done = (
+            set(
+                School.objects.filter(id__in=id_array(every_team_school))
+                .exclude(current_fy_ssa_status="done")
+                .values_list("id", flat=True)
+            )
+            if every_team_school
+            else set()
+        )
+        CDAnalyticsService._pl_budget_by_user(
+            cd.fy,
+            [c["user_id"] for _pl, members in lead_teams for c in members],
+        )
+        backlog_rows = [
+            row
+            for row in CDAnalyticsService._activity_rows(cd, acts)
+            if row[3] in _pending_statuses
+        ]
+        # Opened without the dashboard's primed series (the drilldown), each
+        # lead's area rows pooled their team with a ledger rebuild and three
+        # reads of their own — sixteen of each for a country, ~3 s. With no
+        # allocation contract every lead takes that path, so the series is
+        # read once for exactly the people those sixteen calls rebuilt.
+        team_series = None
+        if not cd.per_user_series and cd.contract_empty:
+            from apps.targets.my_targets import per_user_monthly_series
+
+            team_user_ids = {
+                c["user_id"] for _pl, members in lead_teams for c in members
+            } - {None, ""}
+            if team_user_ids:
+                team_series = per_user_monthly_series(
+                    User.objects.filter(id__in=team_user_ids),
+                    cd.fy,
+                    areas=cd.areas,
+                )
+        for pl, cceos in lead_teams:
             all_school_ids = set()
             for c in cceos:
                 all_school_ids |= c["school_ids"]
@@ -2218,30 +2277,22 @@ class CDAnalyticsService:
                 contract_known_empty=bool(cd.contract_empty),
             )
             area_rows = CDAnalyticsService._area_achievement_rows(
-                cd, [c["user_id"] for c in cceos if c["user_id"]]
+                cd,
+                [c["user_id"] for c in cceos if c["user_id"]],
+                per_user_series=team_series,
             )
-            schools_at_risk = (
-                School.objects.filter(id__in=all_school_ids)
-                .exclude(current_fy_ssa_status="done")
-                .count()
-            )
+            schools_at_risk = len(all_school_ids & ssa_not_done)
             resp_ids = set()
             for c in cceos:
                 resp_ids.add(c["staff_id"])
                 if c["user_id"]:
                     resp_ids.add(c["user_id"])
-            _pending_statuses = {
-                "returned_by_pl",
-                "returned_by_ia",
-                "salesforce_id_required",
-                "awaiting_ia_verification",
-            }
+            # `_team_rows(cd, acts, resp_ids, all_school_ids)` filtered to the
+            # backlog statuses: the same rows, counted once each.
             backlog = sum(
                 1
-                for row in CDAnalyticsService._team_rows(
-                    cd, acts, resp_ids, all_school_ids
-                )
-                if row[3] in _pending_statuses
+                for row in backlog_rows
+                if row[2] in resp_ids or row[1] in all_school_ids
             )
             budget_util = CDAnalyticsService._pl_budget(cceos, cd.fy)
             risk = CDAnalyticsService._pl_risk(
@@ -2342,12 +2393,17 @@ class CDAnalyticsService:
         cur_by_school = defaultdict(list)
         old_by_school = defaultdict(list)
         if latest and prev and all_school_ids:
+            from apps.core.scoping import id_array
+
+            # One array parameter: every CCEO's schools is the country, and
+            # compiling a placeholder per id cost more than the reads.
+            school_array = id_array(all_school_ids)
             for sid, sc in SsaRecord.objects.filter(
-                school_id__in=all_school_ids, verification_status="confirmed", fy=latest
+                school_id__in=school_array, verification_status="confirmed", fy=latest
             ).values_list("school_id", "average_score"):
                 cur_by_school[sid].append(sc)
             for sid, sc in SsaRecord.objects.filter(
-                school_id__in=all_school_ids, verification_status="confirmed", fy=prev
+                school_id__in=school_array, verification_status="confirmed", fy=prev
             ).values_list("school_id", "average_score"):
                 old_by_school[sid].append(sc)
 

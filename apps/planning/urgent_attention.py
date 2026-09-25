@@ -279,6 +279,15 @@ def monthly_urgent_schools(
         # The row reads school.district.name; without the join that was one
         # district fetch per planned school on every CCEO dashboard load.
         .select_related("school", "school__district")
+        # Only the activity columns the rows and the classifier read; the
+        # school and its district load whole.
+        .only(
+            "id",
+            "school",
+            "planned_date",
+            "activity_type",
+            "status",
+        )
         .order_by("planned_date")
     )
     by_school: dict[str, list] = {}

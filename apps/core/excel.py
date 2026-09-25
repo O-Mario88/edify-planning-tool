@@ -95,6 +95,7 @@ def style_body(sheet, number_formats: dict[int, str] | None = None) -> None:
     11-15 s for a 4,000-row Work Plan at 50,000 schools (2026-09-24 audit).
     """
     from openpyxl.styles import Alignment, Border, PatternFill, Side
+    from openpyxl.styles.cell_style import StyleArray
 
     fills = (
         PatternFill("solid", fgColor="FFFFFF"),
@@ -103,12 +104,33 @@ def style_body(sheet, number_formats: dict[int, str] | None = None) -> None:
     border = Border(bottom=Side(style="thin", color=ROW_RULE))
     alignment = Alignment(vertical="top", wrap_text=True)
     formats = number_formats or {}
+    # Assigning a style through the cell looks it up in the workbook's style
+    # list by hashing it, three times per cell: ~250,000 lookups and most of a
+    # 4,000-row export's time (2026-09-24 A+ audit). The first cell of each
+    # band still goes through the assignment, which registers the style in
+    # the order it always did; every later cell takes the same list indices
+    # directly, which is exactly what the assignment stores.
+    fill_ids: dict[bool, int] = {}
+    border_id = alignment_id = None
     for row_index, row in enumerate(sheet.iter_rows(min_row=2), start=2):
-        fill = fills[row_index % 2 == 0]
+        banded = row_index % 2 == 0
+        fill_id = fill_ids.get(banded)
         for cell in row:
-            cell.fill = fill
-            cell.border = border
-            cell.alignment = alignment
+            if fill_id is None:
+                cell.fill = fills[banded]
+                cell.border = border
+                cell.alignment = alignment
+                fill_id = fill_ids[banded] = cell._style.fillId
+                border_id = cell._style.borderId
+                alignment_id = cell._style.alignmentId
+                continue
+            style = cell._style
+            if not style:
+                # What openpyxl's style descriptor does for an unstyled cell.
+                style = cell._style = StyleArray()
+            style.fillId = fill_id
+            style.borderId = border_id
+            style.alignmentId = alignment_id
         for column, number_format in formats.items():
             sheet.cell(row_index, column).number_format = number_format
 

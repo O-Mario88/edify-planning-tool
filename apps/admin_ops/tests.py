@@ -430,6 +430,99 @@ class AdminWorkspaceTests(AdminOpsTestBase):
         row = AdminTeamPlansService.get(self.admin, {})["rows"][0]
         self.assertEqual(row["status"], expected)
 
+    def test_team_plans_cost_does_not_grow_with_the_rows(self):
+        """Each row's next action reads its cost lines and their advances;
+        prefetched, the page is a fixed number of queries (it was two per row,
+        634 queries for 500 rows at production scale — 2026-09-24 A+ audit),
+        and rows tied on the date fields keep one order."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.fund_requests.models import AdvanceRequest
+
+        def costed_activity(n):
+            # Verified, evidenced and past: the rows whose next action is
+            # decided by their money, which is where the cost lines are read.
+            activity = self._activity(
+                status="ia_verified",
+                evidence_status="accepted",
+                ia_verification_status="confirmed",
+                payment_status="disbursed",
+                salesforce_activity_id=f"SF-TP-{n}",
+                planned_date=timezone.localdate() - timedelta(days=3),
+            )
+            line = ActivityScheduleCostLine.objects.create(
+                activity=activity,
+                cost_setting_key="school_visit_cost_per_school",
+                label="School visit cost",
+                unit_cost=1000,
+                quantity=1,
+                amount=1000,
+                fiscal_year=activity.fy,
+                month=activity.planned_date.month,
+                planned_date=activity.planned_date,
+                responsible_user=self.cceo_profile.id,
+            )
+            AdvanceRequest.objects.create(
+                activity=activity,
+                budget_line=line,
+                responsible_user_id=self.cceo.id,
+                fy=activity.fy,
+                quarter="Q1",
+                amount=1000,
+                status="disbursed" if n % 2 else "accountability_pending",
+                disbursed_amount=1000,
+            )
+
+        for n in range(3):
+            costed_activity(n)
+        with CaptureQueriesContext(connection) as few:
+            first = AdminTeamPlansService.get(self.admin, {})
+        for n in range(3, 12):
+            costed_activity(n)
+        with CaptureQueriesContext(connection) as many:
+            rows = AdminTeamPlansService.get(self.admin, {})["rows"]
+        self.assertEqual(len(first["rows"]), 3)
+        self.assertEqual(len(rows), 12)
+        self.assertLessEqual(len(many.captured_queries), len(few.captured_queries))
+        # Every row tied on the date fields: the order is the id order.
+        self.assertEqual([r["id"] for r in rows], sorted(r["id"] for r in rows))
+        self.assertTrue(all(r["nextAction"] != "—" for r in rows))
+
+    def test_team_plans_shows_the_canonical_next_action(self):
+        """The Next Action column is the step My Plan offers the officer.
+
+        It read a key `compute_next_action` never returns, so every row
+        said "—" and the health tile counted every row as having no next
+        action. The default step ("View Details") is not an owner step, so
+        only rows that fall to it count there.
+        """
+        from apps.my_plan.services import compute_next_action
+
+        today = timezone.localdate()
+        started = self._activity(status="scheduled", planned_date=today)
+        waiting = self._activity(
+            status="scheduled", planned_date=today + timedelta(days=10)
+        )
+        rows = {r["id"]: r for r in AdminTeamPlansService.get(self.admin, {})["rows"]}
+        for activity in (started, waiting):
+            expected = compute_next_action(activity, today)
+            with self.subTest(activity=activity.id):
+                self.assertEqual(rows[activity.id]["nextAction"], expected["text"])
+                self.assertEqual(
+                    rows[activity.id]["nextActionKind"], expected["action"]
+                )
+        self.assertNotEqual(rows[started.id]["nextAction"], "—")
+        default_rows = sum(
+            1
+            for activity in (started, waiting)
+            if compute_next_action(activity, today)["action"] == "view"
+        )
+        health = AdminTeamPlansService.get(self.admin, {})["health"]
+        self.assertEqual(health["no_next_action"], default_rows)
+        self.assertLess(health["no_next_action"], health["total_active"])
+
     def test_team_plans_excludes_terminal_activities_like_my_plan_does(self):
         self._activity(status="cancelled")
         self.assertEqual(AdminTeamPlansService.get(self.admin, {})["rows"], [])

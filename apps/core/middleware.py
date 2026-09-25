@@ -225,12 +225,23 @@ class CanonicalHostMiddleware:
 
 
 class FiscalYearRolloverMiddleware:
-    """Self-heal a missed October 1 rollover on the first signed-in request.
+    """Self-heal a missed October 1 rollover, off the signed-in request.
 
     The dedicated scheduler remains the primary trigger.  This guard matters
     because a stopped worker must not leave the live website displaying the
     previous FY indefinitely.  Once successful it is a pure in-process branch
     for the rest of the FY, with no query on the request hot path.
+
+    The rollover itself runs on a background thread, not in the request that
+    noticed it was missing. It is one transaction of 600-2,900 queries (9-12 s
+    at 50,000 schools, 2026-09-24 A+ audit), and it used to run inside the
+    first signed-in request of each process while other processes waited on
+    its row lock. Handing it to a thread keeps that request (and everyone
+    else's) at its normal speed. Nothing is lost if the thread does not
+    finish: the rollover is idempotent and commits all-or-nothing behind its
+    `FiscalYearRollover` marker, so a process that stops mid-way rolls back
+    and the next signed-in request, in any process, or the scheduler, starts
+    it again.
     """
 
     RETRY_SECONDS = 300
@@ -238,8 +249,12 @@ class FiscalYearRolloverMiddleware:
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
         self.checked_fy = None
+        # Held from the moment a rollover is claimed until its thread ends,
+        # so one process never runs two at once.
         self._rollover_lock = threading.Lock()
         self.retry_after = 0.0
+        # The running (or last) rollover thread; tests join it.
+        self.worker: threading.Thread | None = None
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if not getattr(settings, "FISCAL_YEAR_ROLLOVER_ENABLED", True):
@@ -257,21 +272,45 @@ class FiscalYearRolloverMiddleware:
             and now >= self.retry_after
             and self._rollover_lock.acquire(blocking=False)
         ):
-            try:
-                # Recheck after acquiring: a preceding request may have completed
-                # between the optimistic check and acquiring this process's lock.
-                if self.checked_fy != fy and time.monotonic() >= self.retry_after:
-                    from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
-
-                    ensure_current_fiscal_year(initiated_by="web-self-heal")
-                    self.checked_fy = fy
-            except Exception:  # noqa: BLE001 — never take the website down
-                self.retry_after = time.monotonic() + self.RETRY_SECONDS
-                logger.exception("Fiscal-year rollover self-heal failed for FY%s", fy)
-            finally:
+            # Recheck after acquiring: a preceding rollover may have completed
+            # between the optimistic check and acquiring this process's lock.
+            if self.checked_fy != fy and time.monotonic() >= self.retry_after:
+                try:
+                    self.worker = threading.Thread(
+                        target=self._roll_over,
+                        args=(fy,),
+                        name=f"fy-rollover-{fy}",
+                        # A process exiting mid-rollover rolls the transaction
+                        # back; the next request or the scheduler redoes it.
+                        daemon=True,
+                    )
+                    self.worker.start()
+                except Exception:  # noqa: BLE001 — never take the website down
+                    self._rollover_lock.release()
+                    self.retry_after = time.monotonic() + self.RETRY_SECONDS
+                    logger.exception(
+                        "Could not start the fiscal-year rollover for FY%s", fy
+                    )
+            else:
                 self._rollover_lock.release()
 
         return self.get_response(request)
+
+    def _roll_over(self, fy) -> None:
+        from django.db import connections
+
+        try:
+            from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+
+            ensure_current_fiscal_year(initiated_by="web-self-heal")
+            self.checked_fy = fy
+        except Exception:  # noqa: BLE001 — never take the website down
+            self.retry_after = time.monotonic() + self.RETRY_SECONDS
+            logger.exception("Fiscal-year rollover self-heal failed for FY%s", fy)
+        finally:
+            # This thread's own connections; the request threads keep theirs.
+            connections.close_all()
+            self._rollover_lock.release()
 
 
 class AllExceptionsMiddleware:

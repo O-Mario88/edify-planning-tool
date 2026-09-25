@@ -12,6 +12,13 @@ django-cors-headers==4.9.0
 django-environ==0.14.0
 dj-database-url==3.1.2
 whitenoise==6.12.0
+# WhiteNoise writes a Brotli copy of every static file at collectstatic when
+# this is importable, and serves it to browsers that accept it. The CSS a page
+# waits for before its first paint is a third smaller than the gzip copy
+# (127 KB against 190 KB), about 0.2-0.4 s off a cold first paint on a
+# 1.6 Mbps link (2026-09-25 A+ audit, P-3). The files a browser decodes are
+# unchanged. 1.2.0 closes CVE-2025-6176.
+Brotli==1.2.0
 django-storages[s3]==1.14.6
 boto3==1.43.57
 drf-spectacular==0.30.0

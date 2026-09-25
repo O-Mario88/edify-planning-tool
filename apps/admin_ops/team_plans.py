@@ -177,9 +177,19 @@ class AdminTeamPlansService:
         rows = []
         # `Activity.project_id` is a plain CharField, not a relation -- there
         # is no `project` to select_related, and the id is shown as-is.
-        for a in qs.select_related("school", "school__district", "cluster").order_by(
-            "planned_date", "planned_month", "planned_week"
-        )[: PAGE_SIZE * 5]:
+        # `compute_next_action` reads each activity's cost lines and their
+        # advances through `.all()`; prefetched, as My Plan does, rather than
+        # two queries per row (634 queries for 500 rows, 2026-09-24 A+ audit).
+        for a in (
+            qs.select_related("school", "school__district", "cluster")
+            .prefetch_related("schedule_cost_lines__advance_requests")
+            # `id` last makes the order total: rows tied on the date fields
+            # came back in whatever order the plan produced, so under the
+            # slice two loads could show different activities.
+            .order_by("planned_date", "planned_month", "planned_week", "id")[
+                : PAGE_SIZE * 5
+            ]
+        ):
             label, status_class = get_activity_status_label_and_class(a, today)
             next_action = compute_next_action(a, today)
 
@@ -220,7 +230,12 @@ class AdminTeamPlansService:
                     "status": label,
                     "statusClass": status_class,
                     "rawStatus": a.status,
-                    "nextAction": next_action.get("label") or "—",
+                    # `compute_next_action` names its step "text", as My Plan
+                    # reads it. This read "label", which it never returns, so
+                    # every row said "—" and the health tile counted them all.
+                    "nextAction": next_action.get("text") or "—",
+                    # "view" is its default when no owner step applies.
+                    "nextActionKind": next_action.get("action") or "",
                     "executor": executor,
                     "managingStaff": monitor.get("name") or "—",
                     "budgetState": "Costed" if not a.cost_missing else "Cost missing",
@@ -259,7 +274,11 @@ class AdminTeamPlansService:
         each is computed from the rows already loaded, so the preview costs no
         extra queries.
         """
-        no_next_action = sum(1 for r in rows if r["nextAction"] in ("—", "", None))
+        # A row whose only action is the default "View Details" has no step
+        # for anybody to take, which is what this tile asks about.
+        no_next_action = sum(
+            1 for r in rows if r.get("nextActionKind", "") in ("", "view")
+        )
         overdue = sum(1 for r in rows if r["overdue"])
         cost_missing = sum(1 for r in rows if r["budgetState"] == "Cost missing")
         unassigned = sum(1 for r in rows if not r["userId"])

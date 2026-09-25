@@ -66,12 +66,24 @@ summary and the detail are the same numbers by construction.
     </div>
 
     {# ── Tab Panels for each Program Lead ──────────────────────────────── #}
+    {% firstof selected_lead groups.0.id "" as lead_fallback %}{% tab_initial groups "lead" lead_fallback as initial_lead %}
+    {% comment %}Only the panel the strip opens on is in the document; the others
+    stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+    Alpine creates one when its tab is picked; htmx is told about it then,
+    and micro-ux.js already dresses inserted content.{% endcomment %}
     {% for group in groups %}
+    {% if group.id|stringformat:"s" == initial_lead %}
     <div x-show="activeLead === '{{ group.id }}'"
-         x-cloak
          id="lead-panel-{{ forloop.counter }}"
          role="tabpanel"
          class="space-y-4">
+    {% else %}
+    <template x-if="activeLead === '{{ group.id }}'">
+    <div id="lead-panel-{{ forloop.counter }}"
+         role="tabpanel"
+         class="space-y-4"
+         x-init="window.htmx && htmx.process($el)">
+    {% endif %}
 
       {# ── Program Lead Executive KPI Bar & Action ──────────────────────── #}
       <div class="card p-4 edify-surface-raised border edify-border shadow-xs flex flex-wrap items-center justify-between gap-4">
@@ -177,7 +189,7 @@ summary and the detail are the same numbers by construction.
           <span class="text-sm font-medium">Opening {{ group.name }}'s team plan…</span>
         </div>
       </div>
-    </div>
+    </div>{% if not group.id|stringformat:"s" == initial_lead %}</template>{% endif %}
     {% endfor %}
   </div>
   {# ── Phone: one card per team, same numbers, same expansion ─────────── #}

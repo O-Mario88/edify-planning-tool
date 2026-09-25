@@ -104,9 +104,12 @@
         <table class="sp-matrix">
           <caption>Average confirmed intervention scores by district</caption>
           <thead><tr><th scope="col">District</th>{% for intervention in dashboard.interventions %}<th scope="col">{{ intervention.label }}</th>{% endfor %}</tr></thead>
-          <tbody>{% for row in dashboard.matrix %}<tr><th scope="row">{{ row.name }}</th>{% for cell in row.cells %}<td><span{% if cell.value != None %} style="color: {{ cell.band.color }}" title="{{ cell.band.label }}"{% endif %}>{% if cell.value != None %}{{ cell.value }}{% else %}—{% endif %}</span></td>{% endfor %}</tr>{% empty %}<tr><td colspan="9" class="sp-empty-cell">No intervention scores are available.</td></tr>{% endfor %}</tbody>
+          <tbody>{% paginate dashboard.matrix "dashboard_matrix_page" as dashboard_matrix_pager %}{% for row in dashboard_matrix_pager.rows %}<tr><th scope="row">{{ row.name }}</th>{% for cell in row.cells %}<td><span{% if cell.value != None %} style="color: {{ cell.band.color }}" title="{{ cell.band.label }}"{% endif %}>{% if cell.value != None %}{{ cell.value }}{% else %}—{% endif %}</span></td>{% endfor %}</tr>{% empty %}<tr><td colspan="9" class="sp-empty-cell">No intervention scores are available.</td></tr>{% endfor %}</tbody>
         </table>
       </div>
+      {% comment %}Paged like every other table on the page (P-5, owner-approved
+      2026-09-25): all 136 districts were 2,462 of the page's nodes.{% endcomment %}
+      {% include "components/table_pager.html" with pager=dashboard_matrix_pager param="dashboard_matrix_page" pagination_label="Districts" %}
     </section>
 
     <section class="sp-card sp-urgent-card" aria-labelledby="sp-urgent-title">

@@ -138,6 +138,7 @@
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/telemetry/middleware.py"
       ],
@@ -329,6 +330,7 @@
         "apps/core/concurrency.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
+        "apps/core/fy.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/permissions.py",
@@ -350,6 +352,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -540,6 +543,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -786,6 +790,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -914,6 +919,7 @@
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/clusters/membership_history.py",
+        "apps/core/audit_hash.py",
         "apps/core/calendar_policy.py",
         "apps/core/client_ip.py",
         "apps/core/concurrency.py",
@@ -950,6 +956,7 @@
         "apps/ssa/plan_alignment.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1199,6 +1206,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1446,6 +1454,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -1687,6 +1696,7 @@
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -2059,6 +2069,7 @@
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/targets/performance.py",
         "apps/telemetry/middleware.py"
@@ -2801,6 +2812,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -2942,6 +2954,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -3414,6 +3427,7 @@
         "apps/schools/models.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
@@ -3632,6 +3646,7 @@
         "apps/ssa/plan_alignment.py",
         "apps/ssa/signals.py",
         "apps/targets/apps.py",
+        "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
         "apps/telemetry/middleware.py"
       ],
@@ -3753,9 +3768,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "2ac823b6e35f8d019829f318b1ecdea24db9073285d8167eddc76ad81bc6c263",
-    "sources": "58cfb5bf93d94bbfeda873adcb9795d622e2ccb0bd48e32b4598e3524ef0caaa",
-    "sourceCount": 215,
+    "payload": "1f61200af6a909d65eacc71a95722de8b1ed1021b07991ed9127030e2edcd31e",
+    "sources": "69a7439385f079433cc2f05a85f4160988b131a704feac21431577ac84ef23f9",
+    "sourceCount": 216,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

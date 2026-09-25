@@ -52,8 +52,11 @@ its distribution table, then the region and district delivery table beneath.
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.planned_budget_label }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.disbursed_label }}</td>
         </tr>
+        {% comment %}A region's district rows exist only while it is open (P-5,
+        owner-approved 2026-09-25): hidden rows for every region on the page were
+        1,700 of the Country Director dashboard's nodes.{% endcomment %}
         {% for d in r.districts %}
-        <tr class="border-t border-slate-50 bg-slate-50" x-show="open" x-cloak>
+        <template x-if="open"><tr class="border-t border-slate-50 bg-slate-50">
           <td class="px-3 py-2 pl-9 text-slate-600"><a href="/analytics/country-director?fy={{ fy }}&district={{ d.id }}" class="hover:underline">{{ d.name }}</a></td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_planned|intcomma }}</td>
@@ -65,7 +68,7 @@ its distribution table, then the region and district delivery table beneath.
           <td class="px-3 py-2 text-right tabular-nums {% if d.backlog %}text-rose-700{% endif %}">{{ d.backlog|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.planned_budget_label }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.disbursed_label }}</td>
-        </tr>
+        </tr></template>
         {% endfor %}
       </tbody>
       {% endfor %}
