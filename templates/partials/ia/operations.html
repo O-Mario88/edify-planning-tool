@@ -220,7 +220,7 @@ Verification Quality tab has no Map view, so they belong here for it.
         <header class="ia-card-heading"><div><h3>CCEO and Program Lead performance</h3><p>Each Program Lead's team portfolio, opened into the CCEOs they supervise</p></div><span class="ia-count">{{ leadership_performance|length }}</span></header>
         <div class="ia-groups">
           {% for group in leadership_groups %}
-          <section class="ia-group" x-data="{ open: false }">
+          <section class="ia-group" x-data="{ open: false }" x-accordion:ia-leaders="open">
             <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-leader-group-{{ group.key }}">
               <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{% if group.role %}{{ group.role }} · {{ group.scope }} · {% endif %}{{ group.count }} CCEO{{ group.count|pluralize }}</small></span>
               <span class="ia-group__figures"><span>{{ group.schools_achieved|default:0 }} of {{ group.schools|default:0 }} schools achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.schools_pct|default:0 }}%"></i></span><b>{{ group.schools_pct|default:0 }}%</b></span>

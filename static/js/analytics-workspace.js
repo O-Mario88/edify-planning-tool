@@ -2,24 +2,6 @@
   "use strict";
 
   const ROOT_SELECTOR = "[data-analytics-enterprise]";
-  const STORAGE_PREFIX = "edify.analytics.disclosure.";
-
-  function safeStorageGet(key) {
-    try {
-      return window.localStorage.getItem(key);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function safeStorageSet(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (_) {
-      // Storage can be disabled by browser policy; the disclosure still works.
-    }
-  }
-
   function interaction(root, eventName, element) {
     window.dispatchEvent(new CustomEvent("edify:analytics-interaction", {
       detail: {
@@ -35,14 +17,16 @@
     if (root.dataset.analyticsInitialised === "true") return;
     root.dataset.analyticsInitialised = "true";
 
-    root.querySelectorAll("details[data-analytics-disclosure]").forEach(function (details, index) {
-      const disclosureId = details.dataset.analyticsId || details.id || String(index);
-      const key = STORAGE_PREFIX + window.location.pathname + "." + disclosureId;
-      const saved = safeStorageGet(key);
-      if (saved !== null) details.open = saved === "open";
-
+    /* Evidence disclosures start closed on every visit and one is open at a
+       time (owner, 2026-09-25: details expand only when their row is tapped,
+       and close when another is tapped or the same one is tapped again). A
+       remembered open state reopened them on load, so none is restored. */
+    const disclosures = Array.prototype.slice.call(root.querySelectorAll("details[data-analytics-disclosure]"));
+    disclosures.forEach(function (details) {
       details.addEventListener("toggle", function () {
-        safeStorageSet(key, details.open ? "open" : "closed");
+        if (details.open) {
+          disclosures.forEach(function (other) { if (other !== details && other.open) other.open = false; });
+        }
         interaction(root, details.open ? "disclosure_open" : "disclosure_close", details);
       });
     });

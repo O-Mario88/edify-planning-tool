@@ -12,7 +12,7 @@
         <header class="ia-card-heading"><div><h3>District monitoring</h3><p>Every district, including centrally planned activities assigned to it, grouped by sub-region</p></div><span class="ia-count">{{ district_performance|length }}</span></header>
         <div class="ia-groups">
           {% for group in district_groups %}
-          <section class="ia-group" x-data="{ open: false }">
+          <section class="ia-group" x-data="{ open: false }" x-accordion:ia-districts="open">
             <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-district-group-{{ group.key }}">
               <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{{ group.region }} · {{ group.count }} district{{ group.count|pluralize }}</small></span>
               <span class="ia-group__figures"><span>{{ group.schools_achieved }} of {{ group.schools }} schools achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.schools_pct }}%"></i></span><b>{{ group.schools_pct }}%</b></span>

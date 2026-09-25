@@ -228,7 +228,10 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn(":focus-visible", css)
         self.assertIn("prefers-reduced-motion", css)
         self.assertIn("content-visibility: auto", css)
-        self.assertIn("localStorage", script)
+        # Disclosures start closed and one is open at a time (owner,
+        # 2026-09-25): no remembered state reopens them on load.
+        self.assertNotIn("localStorage", script)
+        self.assertIn("other.open = false", script)
         self.assertIn("edify:analytics-interaction", script)
         self.assertIn('aria-label="Decision and data context"', decision_frame)
 

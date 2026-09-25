@@ -181,6 +181,35 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 
+  // One accordion item open at a time (owner, 2026-09-25: "the details should
+  // only expand when the item row is tapped and closes immediately another
+  // item is tapped or the same item row is tapped again").
+  //
+  // A list whose rows share one Alpine state (`openSchoolId`) already works
+  // that way. This is for items that each keep their own flag — a cluster
+  // card's `cardExpanded`, an IA group's `open`: `x-accordion:clusters=
+  // "cardExpanded"` names the group and the flag, and an item that opens
+  // closes every other open item of its group. The flag is still the item's,
+  // so tapping it again closes it as before.
+  Alpine.directive('accordion', (el, { value, expression }, { effect, evaluateLater, cleanup }) => {
+    const group = value || 'default';
+    const readOpen = evaluateLater(expression);
+    let open = false;
+    effect(() => readOpen((isOpen) => {
+      const opened = Boolean(isOpen) && !open;
+      open = Boolean(isOpen);
+      if (opened) {
+        window.dispatchEvent(new CustomEvent('edify-accordion-open', { detail: { group, el } }));
+      }
+    }));
+    const closeOthers = (event) => {
+      if (!open || event.detail.group !== group || event.detail.el === el) return;
+      Alpine.$data(el)[expression] = false;
+    };
+    window.addEventListener('edify-accordion-open', closeOthers);
+    cleanup(() => window.removeEventListener('edify-accordion-open', closeOthers));
+  });
+
   // Confirmation for an action that cannot be undone.
   //
   // Replaces window.confirm(), which sits outside the page: it cannot be

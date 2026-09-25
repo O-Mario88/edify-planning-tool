@@ -65,3 +65,71 @@ class DirectoryRowInteractionContractTests(SimpleTestCase):
         self.assertIn(':aria-expanded="cardExpanded.toString()"', card)
         self.assertIn('aria-controls="cluster-details-{{ cluster.id }}"', card)
         self.assertIn('id="cluster-details-{{ cluster.id }}"', card)
+
+
+class PlatformAccordionContractTests(SimpleTestCase):
+    """Every accordion starts closed, opens on its row, and holds one item
+    open at a time (owner, 2026-09-25)."""
+
+    def test_phone_metadata_rules_never_force_a_collapsed_row_open(self):
+        css = (ROOT / "static/css/components/interactions.css").read_text()
+        phone = css.split("Record metadata on a phone", 1)[1].split(
+            "PHONE RECORD ACTIONS", 1
+        )[0]
+
+        # Whether a row's details show is the accordion's call; a
+        # `display: grid !important` here once opened every row on a phone.
+        self.assertNotIn("display: grid", phone)
+        self.assertNotIn("repeat(2", phone)
+        # An opened record's details are one list, one pair per line.
+        self.assertIn("flex-direction: column !important", phone)
+        # The overview starts at the School ID's edge.
+        self.assertIn("grid-column: 1 / -1", phone)
+
+    def test_per_item_accordions_join_a_single_open_group(self):
+        script = (ROOT / "static/js/alpine-components.js").read_text()
+        self.assertIn("Alpine.directive('accordion'", script)
+
+        groups = {
+            "templates/partials/clusters/cluster_card.html": 'x-accordion:clusters="cardExpanded"',
+            "templates/partials/projects/project_card.html": 'x-accordion:projects="cardExpanded"',
+            "templates/partials/ia/operations.html": 'x-accordion:ia-leaders="open"',
+            "templates/partials/ia/_geography_cards.html": 'x-accordion:ia-districts="open"',
+            "templates/partials/clusters/oversight_workspace.html": 'x-accordion:cluster-groups="open"',
+            "templates/partials/dashboards/cd/map_view.html": 'x-accordion:cd-regions="open"',
+        }
+        for path, marker in groups.items():
+            with self.subTest(path=path):
+                self.assertIn(marker, (ROOT / path).read_text())
+
+    def test_native_disclosure_lists_start_closed_and_are_exclusive(self):
+        lists = {
+            "templates/partials/analytics/target_by_district.html": 'name="analytics-priority-groups"',
+            "templates/partials/oversight/portfolio_workspace.html": 'name="portfolio-leads"',
+            "templates/partials/targets/my_body.html": 'name="my-target-sections"',
+            "templates/partials/priorities/setting_view.html": 'name="priority-milestones"',
+            "templates/partials/priorities/team_view.html": 'name="team-delivery"',
+            "templates/partials/priorities/distribution_view.html": 'name="ia-mobile-details"',
+            "templates/partials/work_plan/detail_tables.html": 'name="work-plan-cost-breakdown"',
+        }
+        for path, marker in lists.items():
+            with self.subTest(path=path):
+                template = (ROOT / path).read_text()
+                self.assertIn(marker, template)
+                self.assertNotIn("{% if forloop.first %}open", template)
+                self.assertNotIn("{% if forloop.first %} open", template)
+                self.assertNotIn('<details class="edify-disclosure" open>', template)
+
+    def test_presence_groups_start_folded_and_open_one_at_a_time(self):
+        panel = (ROOT / "templates/partials/dashboards/_whos_online.html").read_text()
+        self.assertNotIn("group.open", panel)
+        self.assertIn('aria-expanded="false"', panel)
+        self.assertIn("if (other !== group) setOpen(other, false)", panel)
+
+    def test_escalation_row_opens_its_own_details(self):
+        table = (ROOT / "templates/pages/escalations/_table.html").read_text()
+        self.assertIn(
+            "closest('a, button, input, select, textarea, label')) "
+            "open = open === '{{ e.id }}' ? null",
+            table,
+        )

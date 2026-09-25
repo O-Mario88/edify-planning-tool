@@ -74,10 +74,11 @@ heading and its rows cannot disagree.
   {% if portfolio.leads %}
   <div class="space-y-3">
     {% for lead in portfolio.leads %}
-    {% comment %}The first lead opens; the rest are a click away. A country
-    with twenty leads and seven hundred schools is otherwise a page nobody can
+    {% comment %}Every lead starts closed and one opens at a time (owner,
+    2026-09-25: details expand only when their row is tapped). A country with
+    twenty leads and seven hundred schools is otherwise a page nobody can
     scan.{% endcomment %}
-    <details class="portfolio-lead"{% if forloop.first %} open{% endif %}>
+    <details class="portfolio-lead" name="portfolio-leads">
       <summary class="portfolio-lead__summary">
         <span class="portfolio-lead__name">{{ lead.name }}</span>
         <span class="portfolio-lead__facts">

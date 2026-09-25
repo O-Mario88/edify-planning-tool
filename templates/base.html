@@ -117,7 +117,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923settings1">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260925wrap1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260925accordion1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -166,7 +166,7 @@ other page was relying on them.
 
 <!-- Alpine.js Components -->
     <script src="{% static 'js/chart-standard.js' %}?v=20260923merge5"></script>
-    <script src="{% static 'js/alpine-components.js' %}?v=20260923swap1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260925accordion1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -1101,7 +1101,7 @@ data-edify-outbox-owner="{{ request.user|outbox_owner }}"
 
 {% block content %}{% endblock %}
 
-<script src="{% static 'js/analytics-workspace.js' %}?v=20260808enterprise1" defer></script>
+<script src="{% static 'js/analytics-workspace.js' %}?v=20260925accordion1" defer></script>
 
 <div id="edify-live-polite" class="edify-visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="edify-live-assertive" class="edify-visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>

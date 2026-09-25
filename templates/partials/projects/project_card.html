@@ -14,6 +14,7 @@
 class="cluster-card edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
 :class="{ 'is-expanded': cardExpanded }"
 x-data="{ cardExpanded: false, schoolsLoaded: false }"
+x-accordion:projects="cardExpanded"
 x-init="$watch('cardExpanded', value => { if (value && !schoolsLoaded) { htmx.trigger($refs.schoolsContainer, 'load-schools'); schoolsLoaded = true; } })"
 data-project-card="{{ row.id }}"
 >

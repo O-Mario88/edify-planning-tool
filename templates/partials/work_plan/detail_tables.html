@@ -42,7 +42,7 @@
           <td>{{ r.detail_venue|default:"Not recorded" }}</td>
           {% endif %}
           <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% endif %}
-            {% if r.cost_lines %}<details><summary class="edify-text-caption edify-primary-text">Breakdown</summary><ul>{% for line in r.cost_lines %}<li>{{ line.label }}: UGX {{ line.amount|intcomma }}</li>{% endfor %}</ul></details>{% endif %}
+            {% if r.cost_lines %}<details name="work-plan-cost-breakdown"><summary class="edify-text-caption edify-primary-text">Breakdown</summary><ul>{% for line in r.cost_lines %}<li>{{ line.label }}: UGX {{ line.amount|intcomma }}</li>{% endfor %}</ul></details>{% endif %}
           </td>
           {% if section.key != 'non_school' %}<td>{{ r.planned_period }}</td>{% endif %}
           <td>{% include "components/badge.html" with tone=r.delivery_status_tone label=r.delivery_status %}<small class="block edify-text-muted">{{ r.status_label }}</small></td>

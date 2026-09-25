@@ -38,7 +38,7 @@ its distribution table, then the region and district delivery table beneath.
         </tr>
       </thead>
       {% for r in geography_rows_pager.rows %}
-      <tbody x-data="{ open: false }">
+      <tbody x-data="{ open: false }" x-accordion:cd-regions="open">
         <tr class="border-t edify-border cursor-pointer hover:bg-slate-50" @click="open = !open" :aria-expanded="open.toString()">
           <td class="px-3 py-2.5 font-semibold text-slate-800"><span class="inline-block w-4 text-slate-400" x-text="open ? '−' : '+'">+</span>{{ r.name }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.schools|intcomma }}</td>
