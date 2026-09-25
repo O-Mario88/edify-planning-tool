@@ -165,8 +165,13 @@ class LensAccessTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f'<option value="{first.id}" selected>')
-        self.assertContains(response, f'<option value="{second.id}"')
+        # The Filters disclosure is gone from the page (owner, 2026-09-25), but
+        # a deep link still narrows by district and the choices are still
+        # built before it does, so the other district stays available.
+        self.assertEqual(response.context["advanced"].get("district_id"), first.id)
+        districts = {pair[0] for pair in response.context["filter_options"]["districts"]}
+        self.assertIn(first.id, districts)
+        self.assertIn(second.id, districts)
 
     def test_impact_assessment_reads_the_country_portfolio(self):
         self._sign_in("lens-ia@edify.org", "ImpactAssessment")

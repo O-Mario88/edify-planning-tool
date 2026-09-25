@@ -117,19 +117,25 @@ class TheExportsOfferBothFilesTest(SimpleTestCase):
         self.assertIn("{% querystring export='xlsx' %}", page)
 
     def test_every_oversight_workspace_offers_both_files(self):
+        """One header Export menu holds both files (owner, 2026-09-25), and
+        every planning workspace re-sends it when a period change swaps it."""
         from pathlib import Path
 
         root = Path(__file__).resolve().parents[3]
-        for name in (
-            "pl_workspace",  # Programme Lead, Impact Assessment, Regional Lead
-            "team_country_workspace",
-            "cd_workspace",  # Country Director
+        menu = (root / "templates/partials/oversight/_export_menu.html").read_text()
+        self.assertIn("Export CSV", menu)
+        self.assertIn("Export Excel", menu)
+        self.assertIn("format=xlsx", menu)
+        for path in (
+            "partials/oversight/pl_workspace",  # Programme Lead, IA, Regional Lead
+            "partials/oversight/team_country_workspace",
+            "partials/oversight/cd_workspace",  # Country Director
+            "pages/oversight/team_planning",
+            "pages/oversight/country_planning",
         ):
-            source = (root / f"templates/partials/oversight/{name}.html").read_text()
-            with self.subTest(workspace=name):
-                self.assertIn("Export CSV", source)
-                self.assertIn("Export Excel", source)
-                self.assertIn("format=xlsx", source)
+            source = (root / f"templates/{path}.html").read_text()
+            with self.subTest(template=path):
+                self.assertIn("partials/oversight/_export_menu.html", source)
 
 
 class WorkbookStylingCostTest(SimpleTestCase):

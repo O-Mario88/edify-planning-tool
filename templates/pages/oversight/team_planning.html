@@ -3,7 +3,7 @@
 
 {% block title %}Team Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260923responsive1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
@@ -13,6 +13,14 @@
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
       <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
+    {% if active_oversight_view == "planning" %}
+    {% comment %}CSV and Excel as one Export menu in the header (owner,
+    2026-09-25). The workspace re-sends it into this slot when a period change
+    swaps the rows.{% endcomment %}
+    <div id="oversight-export-slot" class="oversight-export-slot">
+      {% include "partials/oversight/_export_menu.html" with export_path="/team-planning-oversight/export" %}
+    </div>
+    {% endif %}
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
       <span class="tt-context-dot" aria-hidden="true"></span>

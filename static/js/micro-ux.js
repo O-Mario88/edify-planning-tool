@@ -1861,6 +1861,211 @@
     });
   }
 
+  /* One filter row, the School Directory's (owner, 2026-09-25): "fill the
+     whole width but not wrapped to the next line ... if filters are more the
+     last filter should be More filters".
+
+     A row of three or more filters is marked `edify-filter-row`, and on a
+     desktop interactions.css shares the whole width between its fields on one
+     line. A row holding more fields than it has slots keeps the first ones
+     and turns the last slot into "More filters": a button whose panel holds
+     the rest. The fields are moved, not copied, and stay inside their form,
+     so they post, trigger htmx and reset exactly as before.
+
+     Slots follow the width the row is drawn at: six on a wide desktop, as
+     the Directory has, five on a small one. Below a desktop the platform's
+     wrapping filter sheet is already the answer, so an automatic panel gives
+     its fields back. A page that renders its own "More filters"
+     (`data-edify-filter-more` in the template) keeps it at every width, and
+     a row can opt out with `data-edify-filter-row="off"`. The School
+     Directory is the reference and keeps its own grid; controls in a page
+     header and the compact oversight period bar keep theirs. */
+  var FILTER_ROW_MIN_FIELDS = 3;
+  var desktopFilterRows = window.matchMedia('(min-width: 64rem)');
+  var wideFilterRows = window.matchMedia('(min-width: 80rem)');
+  var filterMoreId = 0;
+
+  function filterRowSlots(row) {
+    var declared = parseInt(row.getAttribute('data-edify-filter-slots') || '', 10);
+    if (declared > 1) return declared;
+    return wideFilterRows.matches ? 6 : 5;
+  }
+
+  function filterControlShown(shell) {
+    return !shell.hidden && shell.style.display !== 'none' && !shell.hasAttribute('x-cloak');
+  }
+
+  function filterRowOf(bar) {
+    /* The row is the element holding most of the bar's field shells. Most
+       bars are their own row; some hold their fields in one inner wrapper.
+       Fields already inside a "More filters" panel, or inside a page's own
+       popover, dialog or collapsed section, are not the row's. */
+    var counts = new Map();
+    bar.querySelectorAll('select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])').forEach(function (control) {
+      var tucked = control.closest('[data-edify-filter-more-panel], dialog, details, [role="dialog"], [x-show], [hidden], template');
+      if (tucked && tucked !== bar && bar.contains(tucked)) return;
+      var shell = filterFieldShell(control);
+      var parent = shell.parentElement;
+      if (!parent || shell === bar) return;
+      var list = counts.get(parent) || [];
+      if (list.indexOf(shell) < 0) list.push(shell);
+      counts.set(parent, list);
+    });
+    var best = null;
+    counts.forEach(function (shells, parent) {
+      if (!best || shells.length > best.shells.length) best = { row: parent, shells: shells };
+    });
+    return best;
+  }
+
+  function filterMoreCount(more) {
+    var panel = more.querySelector('[data-edify-filter-more-panel]');
+    var count = 0;
+    /* Applied means moved off the field's first choice ("All", or the
+       page's default grouping), not merely holding a value. */
+    if (panel) panel.querySelectorAll('select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])').forEach(function (field) {
+      if (field.disabled) return;
+      var value = String(field.value || '').trim();
+      var applied = field.tagName === 'SELECT'
+        ? field.selectedIndex > 0 && value !== '' && value !== 'all' && value !== 'All'
+        : value !== '';
+      if (applied) count += 1;
+    });
+    var badge = more.querySelector('.edify-filter-more__count');
+    if (badge) {
+      badge.textContent = count ? String(count) : '';
+      badge.hidden = !count;
+    }
+  }
+
+  function buildFilterMore() {
+    filterMoreId += 1;
+    var panelId = 'edify-filter-more-' + filterMoreId;
+    var more = document.createElement('div');
+    more.className = 'edify-filter-more edify-filter-row__field';
+    more.setAttribute('data-edify-filter-more', 'auto');
+    more.innerHTML =
+      '<button type="button" class="edify-filter-more__toggle" aria-expanded="false" aria-controls="' + panelId + '">' +
+      '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg>' +
+      '<span>More filters</span><span class="edify-filter-more__count" hidden></span>' +
+      '<svg class="edify-filter-more__chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>' +
+      '</button>' +
+      '<div class="edify-filter-more__panel" id="' + panelId + '" role="group" aria-label="More filters" data-edify-filter-more-panel hidden></div>';
+    return more;
+  }
+
+  function restoreFilterRow(row) {
+    var more = row.querySelector(':scope > [data-edify-filter-more="auto"]');
+    if (!more) return;
+    var panel = more.querySelector('[data-edify-filter-more-panel]');
+    Array.from(panel ? panel.children : []).forEach(function (field) {
+      row.insertBefore(field, more);
+    });
+    more.remove();
+  }
+
+  function arrangeFilterRows(root) {
+    var scope = root === document ? document : root;
+    if (!scope.querySelectorAll) return;
+    elementsWithin(scope, FILTER_CONTAINERS).forEach(function (bar) {
+      if (bar.matches('.school-filters-form, .school-filter-canvas')) return;
+      if (bar.closest('.school-filter-canvas, .edify-page-header, .oversight-period-filter, [role="dialog"], .drawer-body, [data-edify-filter-row="off"]')) return;
+      var found = filterRowOf(bar);
+      if (!found) return;
+      var row = found.row;
+      if (row.getAttribute('data-edify-filter-row') === 'off') return;
+      var authored = row.querySelector(':scope > [data-edify-filter-more]:not([data-edify-filter-more="auto"])');
+      var auto = row.querySelector(':scope > [data-edify-filter-more="auto"]');
+      var slots = desktopFilterRows.matches ? filterRowSlots(row) : 0;
+      /* Moving a field is itself a mutation this file listens to; a row
+         already laid out for this width is left exactly as it is. */
+      if (auto && String(slots) === auto.getAttribute('data-edify-filter-slots-used')) return;
+      if (auto) {
+        restoreFilterRow(row);
+        found = filterRowOf(bar);
+        if (!found || found.row !== row) return;
+      }
+      var shells = found.shells.filter(function (shell) {
+        return shell.parentElement === row && !shell.matches('[data-edify-filter-more]') && filterControlShown(shell);
+      });
+      if (shells.length + (authored ? 1 : 0) < FILTER_ROW_MIN_FIELDS) return;
+      row.classList.add('edify-filter-row');
+      row.setAttribute('data-edify-filter-row', '');
+      shells.forEach(function (shell) { shell.classList.add('edify-filter-row__field'); });
+      if (authored) {
+        filterMoreCount(authored);
+        return;
+      }
+      if (!slots || shells.length <= slots) return;
+      /* A search box is what a reader types into first; it keeps its place. */
+      var movable = shells.filter(function (shell) {
+        return !shell.querySelector('input[type="search"]') && !shell.hasAttribute('data-edify-filter-pin');
+      });
+      var overflow = movable.slice(Math.max(0, movable.length - (shells.length - (slots - 1))));
+      if (!overflow.length) return;
+      var more = buildFilterMore();
+      more.setAttribute('data-edify-filter-slots-used', String(slots));
+      var kept = shells.filter(function (shell) { return overflow.indexOf(shell) < 0; });
+      var anchor = kept[kept.length - 1];
+      row.insertBefore(more, anchor ? anchor.nextSibling : row.firstChild);
+      var panel = more.querySelector('[data-edify-filter-more-panel]');
+      overflow.forEach(function (shell) { panel.appendChild(shell); });
+      filterMoreCount(more);
+    });
+  }
+
+  function closeFilterMore(more, focusToggle) {
+    var toggle = more.querySelector('.edify-filter-more__toggle');
+    var panel = more.querySelector('[data-edify-filter-more-panel]');
+    if (!toggle || !panel || panel.hidden) return;
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    more.classList.remove('is-open');
+    if (focusToggle) toggle.focus();
+  }
+
+  if (!window.__edifyFilterMoreBound) {
+    window.__edifyFilterMoreBound = true;
+    document.addEventListener('click', function (event) {
+      var toggle = event.target.closest && event.target.closest('.edify-filter-more__toggle');
+      document.querySelectorAll('[data-edify-filter-more].is-open').forEach(function (open) {
+        if (!open.contains(event.target)) closeFilterMore(open, false);
+      });
+      if (!toggle) return;
+      var more = toggle.closest('[data-edify-filter-more]');
+      var panel = more && more.querySelector('[data-edify-filter-more-panel]');
+      if (!panel) return;
+      if (!panel.hidden) { closeFilterMore(more, false); return; }
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      more.classList.add('is-open');
+      panel.querySelectorAll('select[data-lazy-options]').forEach(expandLazyOptions);
+      var first = panel.querySelector('select, input:not([type="hidden"])');
+      if (first) first.focus();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      var open = event.target.closest && event.target.closest('[data-edify-filter-more].is-open');
+      if (open) closeFilterMore(open, true);
+    });
+    document.addEventListener('change', function (event) {
+      var more = event.target.closest && event.target.closest('[data-edify-filter-more]');
+      if (more) filterMoreCount(more);
+    });
+    /* A form reset (Clear Filters) empties the panel's fields too. */
+    document.addEventListener('reset', function (event) {
+      var form = event.target;
+      window.setTimeout(function () {
+        if (form.querySelectorAll) form.querySelectorAll('[data-edify-filter-more]').forEach(filterMoreCount);
+      }, 0);
+    }, true);
+    [desktopFilterRows, wideFilterRows].forEach(function (query) {
+      var rearrange = function () { arrangeFilterRows(document); };
+      if (query.addEventListener) query.addEventListener('change', rearrange);
+      else if (query.addListener) query.addListener(rearrange);
+    });
+  }
+
   /* A field that holds a value says so.
 
      The owner's reference field (2026-09-06) is white when empty and tinted
@@ -1921,6 +2126,7 @@
     normalizeActionButtonTypes(root);
     markFilledFields(root);
     hideEmptyFilters(root);
+    arrangeFilterRows(root);
     enhanceTabs(root);
   }
 

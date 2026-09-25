@@ -1116,3 +1116,165 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
 .edify-view-switch > button:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: -3px; }
 
 .edify-view-toolbar > .edify-filter-bar { inline-size: auto; }
+
+/* ─── ONE FILTER ROW (owner, 2026-09-25) ─────────────────────────────────────
+   The School Directory's filter design, for every filter row on the
+   platform: on a desktop the fields share the whole width on one line, each
+   as wide as the next, and a row with more filters than slots ends in "More
+   filters" (micro-ux.js arranges the row; a page may author the control
+   itself). Below a desktop the platform's wrapping filter sheet is unchanged.
+
+   `#edify-filter-row` and `#edify-filter-field` name no element. They lift
+   these rules to the weight of the id-keyed filter contracts in
+   consistency.css, pages.css and responsive-system.css (the compact
+   short-value field among them), which they replace on a desktop and which
+   would otherwise win on specificity; this file loads last, so a tie is
+   ours. */
+@media (min-width: 64rem) {
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important;
+    gap: 0.75rem !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-row__field) {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.25rem !important;
+    inline-size: auto !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    margin: 0 !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-row__field)
+    :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])) {
+    field-sizing: fixed;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    text-overflow: ellipsis;
+  }
+
+  /* "More filters" takes a field's share but never less than its label. */
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-row__field).edify-filter-more {
+    min-inline-size: max-content !important;
+  }
+
+  /* Actions (Clear Filters, Apply, a toggle) close the row at their own
+     width rather than taking a field's share. */
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :not(.edify-filter-row__field) {
+    flex: 0 0 auto !important;
+    margin-block-end: 0 !important;
+  }
+}
+
+/* "More filters": the last slot of a full row. The button is the height of
+   the controls beside it; its panel opens under it, right-aligned, and holds
+   the remaining fields one per line. */
+.edify-filter-more {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-inline-size: 0;
+}
+
+.edify-filter-more__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  inline-size: 100%;
+  min-block-size: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--edify-control-border, var(--edify-border));
+  border-radius: var(--radius-control, 8px);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size, 0.75rem);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.edify-filter-more__toggle:hover,
+.edify-filter-more.is-open > .edify-filter-more__toggle {
+  border-color: var(--color-edify-primary);
+  color: var(--brand-primary-text, var(--color-edify-primary));
+}
+
+.edify-filter-more__toggle:focus-visible {
+  outline: 2px solid var(--color-edify-primary);
+  outline-offset: 2px;
+}
+
+.edify-filter-more__toggle > svg {
+  flex: 0 0 auto;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+}
+
+.edify-filter-more__chevron { transition: transform 0.16s ease; }
+.edify-filter-more.is-open .edify-filter-more__chevron { transform: rotate(180deg); }
+
+.edify-filter-more__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.15rem;
+  block-size: 1.15rem;
+  padding-inline: 0.3rem;
+  border-radius: 999px;
+  background: var(--color-edify-primary);
+  color: #fff;
+  font-size: var(--edify-text-micro-size, 0.6875rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.edify-filter-more__count[hidden] { display: none; }
+
+.edify-filter-more__panel {
+  position: absolute;
+  inset-block-start: calc(100% + 0.375rem);
+  inset-inline-end: 0;
+  z-index: 45;
+  display: grid;
+  gap: 0.75rem;
+  inline-size: min(18rem, calc(100vw - 2rem));
+  padding: 0.875rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg, 12px);
+  background: var(--edify-surface-raised, var(--edify-surface));
+  box-shadow: var(--edify-shadow-lg);
+}
+
+.edify-filter-more__panel[hidden] { display: none; }
+
+.edify-filter-more__panel > * {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0.25rem !important;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  max-inline-size: none !important;
+  margin: 0 !important;
+}
+
+.edify-filter-more__panel :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])) {
+  field-sizing: fixed;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  max-inline-size: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-filter-more__chevron { transition: none; }
+}

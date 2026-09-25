@@ -173,7 +173,6 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 [data-oversight-workspace] > .edify-page-header .oversight-period-filter { margin: 0; padding: 0; width: auto; flex: 0 1 auto; background: transparent; border: 0; }
 .oversight-workspace-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .oversight-workspace-toolbar > .oversight-entity-tabs { flex: 1 1 24rem; min-width: 0; margin: 0; }
-.oversight-workspace-toolbar > .oversight-filters { flex: 0 0 auto; }
 .oversight-selection-heading { padding-block: 0; margin-block: 0; min-height: 28px; }
 @media (max-width: 47.999rem) {
  [data-oversight-workspace] > .edify-page-header .oversight-period-filter { flex-basis: 100%; }
@@ -196,19 +195,6 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
   }
   #main-content [data-oversight-workspace] [data-team-send] :is(select, button) { min-height: 44px !important; }
   [data-oversight-workspace] [data-team-send] select { flex: 1 1 9rem; min-width: 0; }
-}
-
-/* The advanced Filters disclosure opens as a popover under its button. As an
-   in-flow flex item the <details> shrank to its summary's width, so the open
-   form was a 60px column of wrapped labels and squeezed selects, and it pushed
-   Export CSV to the middle of its height. */
-.oversight-filters { position: relative; }
-.oversight-filters > .card {
-  position: absolute;
-  inset-inline-start: 0;
-  z-index: 30;
-  inline-size: min(22rem, calc(100vw - 2rem));
-  box-shadow: var(--edify-shadow-lg) !important;
 }
 
 /* ─── THE COUNTRY PORTFOLIO LENS ─────────────────────────────────────────────
@@ -725,4 +711,82 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
 [data-oversight-workspace] .cluster-session-action--verify {
   border-color: var(--edify-success-border);
   color: var(--edify-success-text);
+}
+
+/* ─── ONE TAB ROW, ONE EXPORT MENU (owner, 2026-09-25) ──────────────────────
+   Team Oversight's people tabs and activity tabs share a row — people on the
+   left, the kind of work on the right — under one baseline rule. Each strip
+   still scrolls on its own when it outgrows its half; below a tablet they
+   stack, people first. */
+[data-oversight-workspace] .oversight-tab-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-inline-size: 0;
+  border-block-end: 1px solid var(--edify-border);
+}
+[data-oversight-workspace] .oversight-tab-row > .oversight-entity-tabs {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+}
+[data-oversight-workspace] .oversight-tab-row > .oversight-entity-tabs--end {
+  margin-inline-start: auto;
+}
+@media (max-width: 47.99rem) {
+  [data-oversight-workspace] .oversight-tab-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .25rem;
+  }
+  [data-oversight-workspace] .oversight-tab-row > .oversight-entity-tabs--end {
+    margin-inline-start: 0;
+  }
+}
+
+/* The header's Export: one button, CSV and Excel under it. */
+.oversight-export-slot { display: flex; align-items: center; flex: 0 0 auto; }
+.oversight-export { position: relative; }
+.oversight-export > summary { list-style: none; user-select: none; }
+.oversight-export > summary::-webkit-details-marker { display: none; }
+.oversight-export__chevron { transition: transform .16s ease; }
+.oversight-export[open] .oversight-export__chevron { transform: rotate(180deg); }
+.oversight-export__menu {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + .375rem);
+  z-index: 40;
+  display: grid;
+  min-inline-size: 12rem;
+  padding: .375rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control, 8px);
+  background: var(--edify-surface-raised, var(--edify-surface));
+  box-shadow: var(--edify-shadow-lg);
+}
+.oversight-export__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-block-size: 2.25rem;
+  padding: .4rem .65rem;
+  border-radius: calc(var(--radius-control, 8px) - 2px);
+  color: var(--edify-text);
+  font-size: .8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.oversight-export__item:hover,
+.oversight-export__item:focus-visible {
+  background: var(--edify-table-row-hover, color-mix(in srgb, var(--color-edify-primary) 8%, transparent));
+}
+.oversight-export__hint {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .oversight-export__chevron { transition: none; }
 }

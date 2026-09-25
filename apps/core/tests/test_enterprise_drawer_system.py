@@ -24,11 +24,10 @@ SUPPORTED_SURFACE_MARKERS = (
     "edify-form-dialog__surface",
 )
 
-# These two files are bodies rendered inside a shell owned by their calling
-# page; neither creates a floating surface itself.
+# This file is a body rendered inside a shell owned by its calling page; it
+# creates no floating surface itself.
 BODY_ONLY_DRAWER_PARTIALS = {
     TEMPLATES / "partials" / "leave" / "request_leave_drawer.html",
-    TEMPLATES / "partials" / "oversight" / "filter_drawer.html",
 }
 
 
