@@ -114,7 +114,7 @@ class PeriodMatrixContractTest(SimpleTestCase):
         # The table leads the page; the six period cards it replaces are gone
         self.assertNotIn("target-period-progression", my_body)
         self.assertIn("_period_matrix.html", my_body)
-        self.assertIn('<details class="edify-disclosure" name="my-target-sections">', my_body)
+        self.assertIn('<details class="edify-disclosure" open>', my_body)
         self.assertIn("Cumulative progress by time period", my_body)
         platform = _read("static/css/platform.css")
         self.assertIn("main .edify-disclosure > summary {", platform)

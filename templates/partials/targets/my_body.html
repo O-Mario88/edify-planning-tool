@@ -16,7 +16,7 @@
 
   {# ── Operational agreements + approved strategic allocations by period ─── #}
   {% if matrix_rows or strategic_milestones %}
-  <details class="edify-disclosure" name="my-target-sections">
+  <details class="edify-disclosure" open>
     <summary>
       <span>
         <h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>
@@ -34,7 +34,7 @@
   {% endif %}
 
   {% if contract_matrix.rows %}
-  <details class="edify-disclosure" name="my-target-sections">
+  <details class="edify-disclosure" open>
     <summary><span><h2>Distributed allocations by reporting period</h2><small>Approved allocations · verified delivery, including monitored partners.</small></span></summary>
     <div class="edify-disclosure__body overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Priority progress by reporting period">
       {% include "partials/targets/_period_matrix.html" with matrix_key="contract" rows=contract_matrix.rows heads=matrix_heads overall=contract_matrix.overall milestones=None drawer=None %}

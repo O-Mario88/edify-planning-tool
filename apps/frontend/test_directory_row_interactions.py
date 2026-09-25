@@ -106,7 +106,6 @@ class PlatformAccordionContractTests(SimpleTestCase):
         lists = {
             "templates/partials/analytics/target_by_district.html": 'name="analytics-priority-groups"',
             "templates/partials/oversight/portfolio_workspace.html": 'name="portfolio-leads"',
-            "templates/partials/targets/my_body.html": 'name="my-target-sections"',
             "templates/partials/priorities/setting_view.html": 'name="priority-milestones"',
             "templates/partials/priorities/team_view.html": 'name="team-delivery"',
             "templates/partials/priorities/distribution_view.html": 'name="ia-mobile-details"',
@@ -118,7 +117,6 @@ class PlatformAccordionContractTests(SimpleTestCase):
                 self.assertIn(marker, template)
                 self.assertNotIn("{% if forloop.first %}open", template)
                 self.assertNotIn("{% if forloop.first %} open", template)
-                self.assertNotIn('<details class="edify-disclosure" open>', template)
 
     def test_presence_groups_start_folded_and_open_one_at_a_time(self):
         panel = (ROOT / "templates/partials/dashboards/_whos_online.html").read_text()
@@ -133,3 +131,11 @@ class PlatformAccordionContractTests(SimpleTestCase):
             "open = open === '{{ e.id }}' ? null",
             table,
         )
+
+    def test_owner_chosen_panels_stay_open_by_default(self):
+        # The owner keeps these open (2026-09-25): My Target's sections and
+        # a message's Workflow Context are read first, not tapped open.
+        my_body = (ROOT / "templates/partials/targets/my_body.html").read_text()
+        context = (ROOT / "templates/partials/messages/context_panel.html").read_text()
+        self.assertEqual(my_body.count('<details class="edify-disclosure" open>'), 2)
+        self.assertIn('x-data="{ ctxOpen: true }"', context)
