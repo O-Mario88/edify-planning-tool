@@ -126,11 +126,38 @@ class CDDashboardService:
                 )
 
         return cached_role_dashboard(
-            "cd",
-            user,
-            (country_for(user), fy or get_operational_fy(), month, view),
-            build,
+            "cd", user, CDDashboardService._cache_parts(user, fy, month, view), build
         )
+
+    @staticmethod
+    def is_ready(user, fy: str | None = None, month: int | None = None, *, view="all"):
+        """Whether `get_dashboard` would answer now from its snapshot."""
+        from apps.core.cache_utils import role_dashboard_ready
+
+        return role_dashboard_ready(
+            "cd", user, CDDashboardService._cache_parts(user, fy, month, view)
+        )
+
+    @staticmethod
+    def _cache_parts(user, fy, month, view) -> tuple:
+        return (country_for(user), fy or get_operational_fy(), month, view)
+
+    @staticmethod
+    def scope_meta(user, fy: str | None = None, month: int | None = None) -> dict:
+        """The header's scope counts alone, for the page shell that paints
+        before the dashboard is built (P-2): the same figures `get_dashboard`
+        returns, from the same scope."""
+        fy = fy or get_operational_fy()
+        cd = resolve_cd_scope(fy, month=month, country=country_for(user))
+        return CDDashboardService._scope_meta(cd)
+
+    @staticmethod
+    def _scope_meta(cd) -> dict:
+        return {
+            "pl_count": len(CDAnalyticsService._pls()),
+            "cceo_count": len(cd.cceo_user_ids),
+            "school_count": len(cd.school_ids),
+        }
 
     @staticmethod
     def _get_dashboard(
@@ -162,11 +189,7 @@ class CDDashboardService:
             "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows, user),
             "leadership_attention": [c for c in attention if c["kind"] != "region"],
             "region_attention": [c for c in attention if c["kind"] == "region"],
-            "scope_meta": {
-                "pl_count": len(CDAnalyticsService._pls()),
-                "cceo_count": len(cd.cceo_user_ids),
-                "school_count": len(cd.school_ids),
-            },
+            "scope_meta": CDDashboardService._scope_meta(cd),
         }
         if view != "operations":
             data["geography"] = CDDashboardService.geography_breakdown(cd, acts)

@@ -8,7 +8,7 @@
 {% block shell_content %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
 
-  {% include "components/mobile_role_home.html" with eyebrow="Country leadership" headline="National decision digest" description="Resolve the highest country risk, then inspect execution and approval health." period_label="FY "|add:fy status_label=scope_meta.school_count primary_action=mobile_primary_action %}
+  {% include "components/mobile_role_home.html" with eyebrow="Country leadership" headline="National decision digest" description="Resolve the highest country risk, then inspect execution and approval health." period_label="FY "|add:fy status_label=scope_meta.school_count primary_action=mobile_primary_action primary_action_pending=deferred_body role_home_id="cd-role-home" %}
 
   <!-- Header — premium glass band -->
   <div class="edify-page-header mobile-home-hide">
@@ -47,7 +47,7 @@
 
   <!-- Body (HTMX swap target) -->
   <div id="cd-dashboard-body">
-    {% include "partials/dashboards/cd/body.html" %}
+    {% if deferred_body %}{% include "partials/dashboards/cd/body_loader.html" %}{% else %}{% include "partials/dashboards/cd/body.html" %}{% endif %}
   </div>
 </div>
 {% endblock %}

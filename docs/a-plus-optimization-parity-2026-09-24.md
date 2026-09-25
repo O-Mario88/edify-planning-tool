@@ -344,6 +344,38 @@ first, with the static files built exactly as production builds them
   under 1.2 s on 11 of 18 pages. The other seven wait on the server (TTFB),
   which P-1 and P-2 address.
 
+**R-10 The CD dashboard waited for every figure before its first byte (P-2,
+owner-approved 2026-09-25).** A cold build of the Map view takes 5–8 s at
+50,000 schools: KPI strip 2.5 s, map 1.9 s, Programme Lead table 1.0 s,
+geography 1.1 s.
+- **What changed.** When the dashboard's snapshot (and the map's, on the Map
+  view) is not built yet, the page renders its header, scope counts, filters
+  and phone header at once. The body then fetches itself from the same
+  address, by the path the filter form already uses. The phone header's
+  primary action is held as an invisible placeholder of the same size and
+  arrives with the body, swapped in place by id.
+- **What did not change.**
+  - A warm dashboard renders whole, byte for byte as before (test).
+  - The body that arrives is the one the filter form fetches (test).
+  - With caching off, which is how the test settings run, nothing is
+    deferred.
+- **What users see now.**
+  - On a cold load, a "Building the country dashboard…" placeholder sits
+    where the body will be. Nothing follows it on the page, so the body's
+    arrival moves nothing (CLS 0.000).
+  - Cold first paint fell from 10,128 ms to 2,028 ms under the throttle, and
+    from 9,736 ms to 444 ms unthrottled. The body still arrives 8–9 s after
+    the request, as before: this moves the wait, it does not remove it.
+    `browser_metrics.cjs` reports LCP when it settles at 2.5 s, so its cold
+    LCP for this page is the shell's, not the body's.
+- **Visual check.** The finished page, cold, against the baseline cold, in
+  800 px steps: Map view at 390 px identical; at 1280 px one 10 px
+  anti-aliasing speck. Operations view: the only differences are the live
+  "Who's Online" times.
+- **Not deferred.** `/analytics` and `/ia/dashboard/` do not have a snapshot
+  cache or a body swap path to reuse. Deferring them means building those
+  first, a larger change that has not been made.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the

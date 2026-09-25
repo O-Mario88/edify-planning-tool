@@ -479,6 +479,17 @@ def _regional_lead_dashboard(request):
     return response
 
 
+def _cd_dashboard_ready(user, fy, month, view) -> bool:
+    """Whether the CD dashboard's figures, and its map when the map is the
+    view, are already built, so the page can render whole without waiting."""
+    from apps.analytics.cd_dashboard_service import CDDashboardService
+    from apps.analytics.country_map_context import country_map_ready
+
+    if not CDDashboardService.is_ready(user, fy=fy, month=month, view=view):
+        return False
+    return view != "map" or country_map_ready(fy)
+
+
 @require_page_permission("dashboard")
 def dashboard_view(request):
     user = request.user
@@ -536,9 +547,26 @@ def dashboard_view(request):
         dashboard_view, view_explicit = resolve_dashboard_view(
             request, role_key="cd", default="map"
         )
-        data = CDDashboardService.get_dashboard(
-            request.user, fy=fy, month=month, view=dashboard_view
+        # A cold dashboard takes seconds to build. Paint the header and
+        # filters first and let the body fetch itself, as the filter form
+        # already does (P-2, owner-approved 2026-09-25). A warm one renders
+        # whole, exactly as before.
+        is_htmx = request.headers.get("HX-Request") == "true"
+        deferred_body = not is_htmx and not _cd_dashboard_ready(
+            request.user, fy, month, dashboard_view
         )
+        if deferred_body:
+            data = {
+                "fy": fy,
+                "month": month,
+                "scope_meta": CDDashboardService.scope_meta(
+                    request.user, fy=fy, month=month
+                ),
+            }
+        else:
+            data = CDDashboardService.get_dashboard(
+                request.user, fy=fy, month=month, view=dashboard_view
+            )
         _fy_months = [
             "Oct",
             "Nov",
@@ -560,7 +588,10 @@ def dashboard_view(request):
             "avatar_initials": avatar_initials,
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
-            "mobile_primary_action": {
+            "deferred_body": deferred_body,
+            "mobile_primary_action": None
+            if deferred_body
+            else {
                 # The most pressing card, wherever it is shown: the region
                 # card lives on the Operations view, the rest above the tabs.
                 "label": (
@@ -596,7 +627,9 @@ def dashboard_view(request):
                 ),
             ],
         )
-        if dashboard_view == "map":
+        if deferred_body:
+            pass  # the body brings its own map or presence when it arrives
+        elif dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context
 
             context.update(country_map_context(fy))
@@ -612,7 +645,9 @@ def dashboard_view(request):
                 "partials/dashboards/_view_tabs.html",
                 {**context, "dashboard_tabs_inner": True},
             )
-        elif request.headers.get("HX-Request") == "true":
+        elif is_htmx and request.GET.get("fill"):
+            response = render(request, "partials/dashboards/cd/body_fill.html", context)
+        elif is_htmx:
             response = render(request, "partials/dashboards/cd/body.html", context)
         else:
             response = render(request, "pages/dashboards/cd.html", context)

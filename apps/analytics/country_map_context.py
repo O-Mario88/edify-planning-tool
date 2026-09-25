@@ -62,10 +62,23 @@ def country_map_context(fy: str | None = None) -> dict[str, Any]:
     from apps.core.cache_utils import stampede_safe_get_or_compute
 
     return stampede_safe_get_or_compute(
-        f"country-map:v3:{fy or 'current'}",
+        _map_key(fy),
         lambda: _country_map_context_uncached(fy),
         timeout=settings.COUNTRY_MAP_CACHE_SECONDS,
     )
+
+
+def country_map_ready(fy: str | None = None) -> bool:
+    """Whether `country_map_context(fy)` would answer now without building."""
+    from django.conf import settings
+
+    from apps.core.cache_utils import snapshot_ready
+
+    return snapshot_ready(_map_key(fy), timeout=settings.COUNTRY_MAP_CACHE_SECONDS)
+
+
+def _map_key(fy: str | None) -> str:
+    return f"country-map:v3:{fy or 'current'}"
 
 
 def _country_map_context_uncached(fy: str | None = None) -> dict[str, Any]:

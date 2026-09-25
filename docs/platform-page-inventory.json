@@ -413,7 +413,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1413,
+      "bytes": 1893,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -4262,6 +4262,51 @@
       "variants": [
         "executive"
       ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 688,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Body Fill",
+      "purpose": "Reusable body fill interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/body_fill.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1139,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/dashboard"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Body Loader",
+      "purpose": "Reusable body loader interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/body_loader.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -33540,6 +33585,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
+        "template:partials/dashboards/cd/body_fill.html",
         "template:partials/dashboards/cd/body.html",
         "template:pages/dashboards/cd.html",
         "template:pages/dashboards/rvp.html",
@@ -33632,6 +33678,7 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
+        "partials/dashboards/cd/body_fill.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "pages/dashboards/rvp.html",
@@ -97831,6 +97878,7 @@
       "route_name": "dashboard",
       "templates": [
         "partials/dashboards/_view_tabs.html",
+        "partials/dashboards/cd/body_fill.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "pages/dashboards/rvp.html",
@@ -106078,7 +106126,7 @@
     "activity_states": 24,
     "all_routes": 1301,
     "api_routes": 360,
-    "component_templates": 490,
+    "component_templates": 492,
     "full_pages": 260,
     "mobile_contract_pass": 537,
     "nonvisual_actions": 267,

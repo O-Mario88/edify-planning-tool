@@ -75,21 +75,49 @@ def cached_role_dashboard(kind: str, user, parts, build):
     Zero timeout (the test settings) computes directly, so tests always see
     fresh figures.
     """
-    import hashlib
-
-    from django.conf import settings
-
-    timeout = int(getattr(settings, "DASHBOARD_CACHE_SECONDS", 0) or 0)
+    timeout = _dashboard_timeout()
     if timeout <= 0:
         return build()
+    return stampede_safe_get_or_compute(
+        _role_dashboard_key(kind, user, parts), build, timeout=timeout
+    )
+
+
+def role_dashboard_ready(kind: str, user, parts) -> bool:
+    """Whether `cached_role_dashboard` would answer now without building."""
+    return snapshot_ready(
+        _role_dashboard_key(kind, user, parts), timeout=_dashboard_timeout()
+    )
+
+
+def _dashboard_timeout() -> int:
+    from django.conf import settings
+
+    return int(getattr(settings, "DASHBOARD_CACHE_SECONDS", 0) or 0)
+
+
+def _role_dashboard_key(kind: str, user, parts) -> str:
     signature = hashlib.sha256(
         repr(
             (getattr(user, "id", ""), getattr(user, "active_role", ""), parts)
         ).encode()
     ).hexdigest()[:16]
-    return stampede_safe_get_or_compute(
-        f"dashboard:{kind}:{signature}", build, timeout=timeout
-    )
+    return f"dashboard:{kind}:{signature}"
+
+
+def snapshot_ready(key: str, *, timeout: int) -> bool:
+    """Whether `stampede_safe_get_or_compute(key, ...)` holds a snapshot now.
+
+    A page uses this to paint its shell first and fetch a slow panel after,
+    only when that panel would otherwise be built inside the request (P-2,
+    owner-approved 2026-09-25). True when caching is off or the backend cannot
+    be read: the build then runs inline, as it always did, so there is
+    nothing to gain by deferring it.
+    """
+    if timeout <= 0:
+        return True
+    backend_ok, value = _read(snapshot_key(key))
+    return not backend_ok or value is not _MISSING
 
 
 def snapshot_key(key: str) -> str:
