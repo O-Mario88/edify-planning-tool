@@ -88,7 +88,9 @@ def setup(query: dict, principal) -> list[dict]:
     ready_to_plan_list = (
         schools.filter(cluster_id__isnull=False)
         .exclude(cluster_id="")
-        .filter(current_fy_ssa_status="done", school_type="client")
+        .filter(
+            current_fy_ssa_status="done", school_type__in=["client", "core_trained"]
+        )
         .select_related("sub_county")
     )
     ready_to_plan_items = [_serialize_planning_school(s) for s in ready_to_plan_list]
@@ -96,7 +98,7 @@ def setup(query: dict, principal) -> list[dict]:
     core_school_list = (
         schools.filter(cluster_id__isnull=False)
         .exclude(cluster_id="")
-        .filter(school_type__in=["core", "champion"])
+        .filter(school_type="core")
         .select_related("sub_county")
     )
     core_school_items = [_serialize_planning_school(s) for s in core_school_list]

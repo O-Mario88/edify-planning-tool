@@ -551,7 +551,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2266,
+      "bytes": 2441,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3592,7 +3592,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2775,
+      "bytes": 3038,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools",
@@ -9569,7 +9569,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32008,
+      "bytes": 32159,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",

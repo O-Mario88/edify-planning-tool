@@ -30,6 +30,7 @@ from apps.core.fy import fy_options, get_operational_fy
 from apps.core.rbac import Permission
 from apps.core.scoping import cluster_queryset, resolve_user_scope
 from apps.geography.models import District, SubCounty
+from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary
 from apps.ssa.models import SsaRecord, SsaScore
@@ -835,6 +836,9 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     cluster = _scoped_cluster(cluster_id, principal)
     schools = (
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+        # Champion and Core Graduate schools have their own tables on Core
+        # Schools and take no cluster training (owner, 2026-09-25).
+        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
         .select_related("district", "sub_county", "parish")
         .prefetch_related(
             Prefetch(
@@ -1049,6 +1053,10 @@ def active_school_count(cluster_id: str) -> int:
     activity each counted schools their own way, the three would disagree by
     whole participants and the difference would land in money.
 
+    Champion and Core Graduate schools are not counted: they receive no
+    cluster training or meeting (owner, 2026-09-25), so none is invited or
+    priced.
+
     "Active" here means not soft-deleted AND still carrying the cluster link.
     Both conditions are needed, not one: School.cluster_id is a CharField
     rather than a foreign key, so a school can point at a cluster that no
@@ -1059,13 +1067,17 @@ def active_school_count(cluster_id: str) -> int:
 
     if not cluster_id:
         return 0
-    return School.objects.filter(
-        cluster_id=cluster_id,
-        cluster_status="clustered",
-        deleted_at__isnull=True,
-        # A closed school is no longer a member anyone can invite or price.
-        operational_status__in=OPERATING_STATUSES,
-    ).count()
+    return (
+        School.objects.filter(
+            cluster_id=cluster_id,
+            cluster_status="clustered",
+            deleted_at__isnull=True,
+            # A closed school is no longer a member anyone can invite or price.
+            operational_status__in=OPERATING_STATUSES,
+        )
+        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        .count()
+    )
 
 
 def active_schools(cluster_id: str):
@@ -1078,13 +1090,17 @@ def active_schools(cluster_id: str):
 
     if not cluster_id:
         return School.objects.none()
-    return School.objects.filter(
-        cluster_id=cluster_id,
-        cluster_status="clustered",
-        deleted_at__isnull=True,
-        # A closed school is no longer a member anyone can invite or price.
-        operational_status__in=OPERATING_STATUSES,
-    ).order_by("name")
+    return (
+        School.objects.filter(
+            cluster_id=cluster_id,
+            cluster_status="clustered",
+            deleted_at__isnull=True,
+            # A closed school is no longer a member anyone can invite or price.
+            operational_status__in=OPERATING_STATUSES,
+        )
+        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        .order_by("name")
+    )
 
 
 def cluster_detail(cluster_id: str, principal) -> dict:
@@ -1606,9 +1622,11 @@ class ClusterDashboardService:
         planning_map = {p["id"]: p for p in planning_list}
 
         cluster_ids = [c.id for c in clusters]
+        # The card counts the schools its list shows: Champion and Core
+        # Graduate schools are not on it (owner, 2026-09-25).
         cluster_schools_qs = School.objects.filter(
             cluster_id__in=cluster_ids, deleted_at__isnull=True
-        )
+        ).exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
 
         schools_count_by_cluster: dict[str, int] = {}
         staff_by_cluster: dict[str, set] = {}

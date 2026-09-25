@@ -1070,6 +1070,11 @@ def _assert_schedule_entitlement(
     """
     if not school:
         return
+    # A Champion or Core Graduate school is planned for a donor or story
+    # visit only, by any role and from any page (owner, 2026-09-25).
+    from apps.planning.visit_gate import assert_outreach_activity_allowed
+
+    assert_outreach_activity_allowed(school, activity_type)
     if activity_type in ("core_visit", "core_training"):
         if not core_slot_verified:
             raise BadRequest(

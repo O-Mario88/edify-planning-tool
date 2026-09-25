@@ -1,6 +1,7 @@
 from apps.core.metrics import PresentationKpi, render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.planning.owner_groups import group_label as _group_label
+from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import ActivityStatus, SsaIntervention
@@ -294,13 +295,16 @@ class PlanningDashboardService:
                 )
 
         # Tab-specific filters for the table view
+        # Core Trained schools are planned as client schools, without the
+        # Core package; Champion and Core Graduate schools are not planned
+        # here at all (owner, 2026-09-25; see the exclusion below).
         if active_tab == "client":
             table_schools_qs = _without_active_work(
-                schools_qs.filter(school_type="client")
+                schools_qs.filter(school_type__in=["client", "core_trained"])
             )
         elif active_tab == "core":
             table_schools_qs = _without_active_work(
-                schools_qs.filter(school_type__in=["core", "champion"])
+                schools_qs.filter(school_type="core")
             )
         elif active_tab == "partner" and support_rule:
             # The same live-support rule the Responsible column reads, so the
@@ -361,9 +365,16 @@ class PlanningDashboardService:
         # service; cluster_id is the relationship itself. Requiring both means
         # a stale mirror can hide a school from planning, but can never smuggle
         # an unclustered one in.
-        table_schools_qs = table_schools_qs.filter(
-            cluster_status="clustered", cluster_id__isnull=False
-        ).exclude(cluster_id="")
+        table_schools_qs = (
+            table_schools_qs.filter(
+                cluster_status="clustered", cluster_id__isnull=False
+            )
+            .exclude(cluster_id="")
+            # Champion and Core Graduate schools have their own tables on
+            # Core Schools, for donor and story visits only (owner,
+            # 2026-09-25), so no Planning tab lists them.
+            .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        )
 
         # 2. Pagination and query based on active tab
         try:
@@ -945,7 +956,7 @@ class PlanningDashboardService:
         informed_share = percentage(informed_plans, judged_plans)
 
         core_package_gaps_count = (
-            base_schools_qs.filter(school_type__in=["core", "champion"])
+            base_schools_qs.filter(school_type="core")
             .exclude(
                 activities__status__in=["completed", "ia_verified"], activities__fy=fy
             )
@@ -1134,7 +1145,7 @@ class PlanningDashboardService:
             )
 
         # 7. Core Schools Summary counts
-        core_schools_qs = schools_qs.filter(school_type__in=["core", "champion"])
+        core_schools_qs = schools_qs.filter(school_type="core")
         core_no_ssa = core_schools_qs.exclude(current_fy_ssa_status="done").count()
         core_1st_visit_pending = (
             core_schools_qs.exclude(

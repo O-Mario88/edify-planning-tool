@@ -710,8 +710,9 @@ class CoreVisitRequestTest(VisitRequestFixture):
             school_id=school.school_id, activity_type="visit", sequence_number=1
         )
 
-    def test_a_core_visit_by_the_accountant_waits_for_the_owner_at_every_stage(self):
-        for stage, school in self.core_schools.items():
+    def test_a_core_visit_by_the_accountant_waits_for_the_owner(self):
+        # The package is a Core school's alone (owner, 2026-09-25).
+        for stage, school in {"core": self.core_schools["core"]}.items():
             with self.subTest(stage=stage):
                 response = self._post_core_visit(
                     self.accountant,
@@ -729,8 +730,8 @@ class CoreVisitRequestTest(VisitRequestFixture):
                 self.assertEqual(slot.status, "Scheduled")
                 self.assertEqual(slot.activity_id, a.id)
 
-    def test_a_core_visit_by_a_lifted_role_is_scheduled_at_every_stage(self):
-        for stage, school in self.core_schools.items():
+    def test_a_core_visit_by_a_lifted_role_is_scheduled(self):
+        for stage, school in {"core": self.core_schools["core"]}.items():
             with self.subTest(stage=stage):
                 response = self._post_core_visit(self.cd, school)
                 self.assertEqual(response.status_code, 200, response.content[:300])
@@ -769,8 +770,23 @@ class CoreVisitRequestTest(VisitRequestFixture):
         self.assertFalse(Activity.objects.filter(school=school).exists())
         self.assertEqual(self._slot(school).status, "Planned")
 
+    def test_no_other_stage_takes_package_support(self):
+        # Owner, 2026-09-25: Core Trained is planned like a client school and
+        # Champion / Core Graduate only for donor and story visits, so none of
+        # them takes a Core package visit, whatever plan record remains.
+        for stage in ("core_trained", "champion", "core_graduate"):
+            school = self.core_schools[stage]
+            for who in (self.cd, self.accountant, self.cceo):
+                with self.subTest(stage=stage, role=who.active_role):
+                    response = self._post_core_visit(
+                        who, school, visit_justification="Package check"
+                    )
+                    self.assertEqual(response.status_code, 400)
+                    self.assertFalse(Activity.objects.filter(school=school).exists())
+                    self.assertEqual(self._slot(school).status, "Planned")
+
     def test_declining_hands_the_package_slot_back(self):
-        school = self.core_schools["core_trained"]
+        school = self.core_schools["core"]
         self._post_core_visit(
             self.accountant, school, visit_justification="Verification"
         )
@@ -783,7 +799,7 @@ class CoreVisitRequestTest(VisitRequestFixture):
         self.assertEqual(slot.owner, "unassigned")
 
     def test_approving_keeps_the_slot_and_schedules_the_visit(self):
-        school = self.core_schools["core_graduate"]
+        school = self.core_schools["core"]
         self._post_core_visit(
             self.accountant, school, visit_justification="Graduation review"
         )

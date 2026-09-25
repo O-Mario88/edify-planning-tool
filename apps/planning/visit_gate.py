@@ -97,6 +97,40 @@ PROGRAMME_SCHOOL_TYPES = ("core_trained", "core_graduate", "champion")
 CLIENT_RULE_SCHOOL_TYPES = ("client", *PROGRAMME_SCHOOL_TYPES)
 CORE_RULE_SCHOOL_TYPES = ("core",)
 
+# Owner, 2026-09-25, narrowing the 2026-09-21 rule for two of the three:
+# Champion and Core Graduate schools "don't receive training, assessments, and
+# the only visit they can be planned for are donor visits and content/story
+# collection visit". They leave the Planning page and the cluster lists (and
+# every cluster session's invitations) for their own tables on Core Schools.
+# Core Trained stays on the client rule and is planned like a client school.
+OUTREACH_ONLY_SCHOOL_TYPES = ("champion", "core_graduate")
+OUTREACH_ACTIVITY_TYPES = ("donor_visit", "story_gathering_visit")
+OUTREACH_VISIT_PURPOSES = ("donor_visit", "story_gathering")
+
+
+def outreach_only_refusal(school_name: str, school_type: str) -> str:
+    """The one sentence every refused Champion / Core Graduate plan reads."""
+    from apps.core.enums import SchoolType
+
+    label = dict(SchoolType.choices).get(school_type, "Programme")
+    return (
+        f"{school_name} is a {label} school: it receives no training or "
+        "assessment, and is planned only for a Donor Visit or a "
+        "Content/Story Collection visit."
+    )
+
+
+def assert_outreach_activity_allowed(school, activity_type: str) -> None:
+    """Refuse anything but a donor or story visit for a Champion / Core
+    Graduate school, wherever the plan comes from."""
+    from apps.core.exceptions import BadRequest
+
+    if school is None or school.school_type not in OUTREACH_ONLY_SCHOOL_TYPES:
+        return
+    if activity_type not in OUTREACH_ACTIVITY_TYPES:
+        raise BadRequest(outreach_only_refusal(school.name, school.school_type))
+
+
 DEAD_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
 # A visit request a country role has filed and the owner has not decided on
 # (apps.planning.visit_requests) is not a plan yet: it neither uses the

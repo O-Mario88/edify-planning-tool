@@ -194,12 +194,17 @@ class SchoolPlanningBadges:
 
     @property
     def training_chips(self) -> list[dict]:
-        return self.trainings.chips() or [{"label": "Not Planned", "tone": TONE_NONE}]
+        # A cluster meeting a school is invited to is training planned for
+        # it (owner, 2026-09-25): the badge reads "Not Planned" only when
+        # neither a group training nor a cluster meeting is planned.
+        if self.trainings.chips() or self.cluster_meetings.chips():
+            return self.trainings.chips()
+        return [{"label": "Not Planned", "tone": TONE_NONE}]
 
     @property
     def cluster_meeting_chips(self) -> list[dict]:
-        # Named precisely, and only when there is one: a cluster meeting is
-        # not a training and must never read as one.
+        # Named as a meeting, beside the training chips, so the reader sees
+        # which kind of session the training plan is.
         return self.cluster_meetings.chips(noun="Cluster Meeting")
 
     def as_dict(self) -> dict:

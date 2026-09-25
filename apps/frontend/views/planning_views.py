@@ -1179,6 +1179,17 @@ def schedule_modal_view(request):
         if package_locked_purposes
         else ""
     )
+    # A Champion or Core Graduate school is planned for a Donor Visit or a
+    # Content/Story Collection visit only (owner, 2026-09-25): the drawer
+    # offers just those two, and the service refuses anything else.
+    from apps.planning.visit_gate import (
+        OUTREACH_ACTIVITY_TYPES,
+        OUTREACH_ONLY_SCHOOL_TYPES,
+        OUTREACH_VISIT_PURPOSES,
+        outreach_only_refusal,
+    )
+
+    outreach_only = school.school_type in OUTREACH_ONLY_SCHOOL_TYPES
     project_id = request.GET.get("project_id", "")
     # Partner support (owner, 2026-09-23): the school stays plannable, but the
     # support a Partner delivers is theirs. The drawer names the Partner, shows
@@ -1201,6 +1212,9 @@ def schedule_modal_view(request):
     first_catalogue_item = (
         primary_catalogue_items[0] if primary_catalogue_items else None
     )
+    if outreach_only:
+        primary_catalogue_items, other_catalogue_items = [], []
+        first_catalogue_item = None
     if partner_support["locked_purposes"]:
         # The SSA's top pick is support the Partner now delivers. Pinning it
         # would override the whitelisted purpose the planner chooses, so the
@@ -1266,18 +1280,27 @@ def schedule_modal_view(request):
         ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
         ActivityType.SCHOOL_VISIT,
     }
+    if outreach_only:
+        school_activity_types = set(OUTREACH_ACTIVITY_TYPES)
     recommended_activity_type = (
         first_catalogue_item["workflowKind"]
         if first_catalogue_item
         else request.GET.get("recommended_activity_type", ActivityType.SCHOOL_VISIT)
     )
+    if outreach_only and recommended_activity_type not in school_activity_types:
+        recommended_activity_type = ActivityType.DONOR_VISIT
     if recommended_activity_type not in school_activity_types:
         recommended_activity_type = ActivityType.SCHOOL_VISIT
-    if school.current_fy_ssa_status != "done" and recommended_activity_type not in {
-        ActivityType.BASELINE_SSA_VISIT,
-        ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
-        ActivityType.SCHOOL_VISIT,
-    }:
+    if (
+        not outreach_only
+        and school.current_fy_ssa_status != "done"
+        and recommended_activity_type
+        not in {
+            ActivityType.BASELINE_SSA_VISIT,
+            ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+            ActivityType.SCHOOL_VISIT,
+        }
+    ):
         recommended_activity_type = ActivityType.BASELINE_SSA_VISIT
     recommended_activity_label = (
         first_catalogue_item["displayName"]
@@ -1292,7 +1315,7 @@ def schedule_modal_view(request):
     # story, or provide time-sensitive coaching before SSA is complete.
     selectable_activity_types = (
         school_activity_types
-        if school.current_fy_ssa_status != "done"
+        if school.current_fy_ssa_status != "done" or outreach_only
         else school_activity_types - ssa_collection_activity_types
     )
     activity_type_options = [
@@ -1323,10 +1346,12 @@ def schedule_modal_view(request):
         in_school_training_course_options,
     )
 
-    training_options = in_school_training_course_options(
-        school=school,
+    training_options = (
+        [] if outreach_only else in_school_training_course_options(school=school)
     )
-    follow_up_options = _school_training_follow_up_options(school)
+    follow_up_options = (
+        [] if outreach_only else _school_training_follow_up_options(school)
+    )
     # Who the drawer NAMES as responsible has to be who the POST files it
     # against — `schedule_action` resolves the same way, from the same helper.
     responsible_staff_id, responsible_staff_name = visit_owner_for(school, request.user)
@@ -1377,15 +1402,26 @@ def schedule_modal_view(request):
             ranked_need.priorities[0] if ranked_need.priorities else "", ""
         ),
         "ssa_stale": ranked_need.stale,
-        "staff_visit_purposes": STAFF_VISIT_PURPOSES,
+        "staff_visit_purposes": (
+            tuple(p for p in STAFF_VISIT_PURPOSES if p[0] in OUTREACH_VISIT_PURPOSES)
+            if outreach_only
+            else STAFF_VISIT_PURPOSES
+        ),
         # Drives which purposes stay selectable when delivery is Partner.
-        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
+        "partner_visit_purposes": () if outreach_only else PARTNER_VISIT_PURPOSES,
+        "outreach_only_note": (
+            outreach_only_refusal(school.name, school.school_type)
+            if outreach_only
+            else ""
+        ),
         "locked_visit_purposes": locked_visit_purposes,
         "locked_visit_reason": locked_visit_reason,
         "package_locked_purposes": package_locked_purposes,
         "package_locked_reason": package_locked_reason,
         "recommended_visit_purpose": (
-            ""
+            "donor_visit"
+            if outreach_only
+            else ""
             if recommended_visit_purpose
             in (
                 *locked_visit_purposes,
