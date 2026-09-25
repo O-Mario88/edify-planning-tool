@@ -1222,7 +1222,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   block-size: 0.875rem;
 }
 
-.edify-filter-more__chevron { transition: transform 0.16s ease; }
+.edify-filter-more__chevron { fill: none; stroke: currentColor; stroke-width: 2; transition: transform 0.16s ease; }
 .edify-filter-more.is-open .edify-filter-more__chevron { transform: rotate(180deg); }
 
 .edify-filter-more__count {
@@ -1277,4 +1277,233 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
 
 @media (prefers-reduced-motion: reduce) {
   .edify-filter-more__chevron { transition: none; }
+}
+
+/* ─── PHONE FILTER ROW (owner, 2026-09-25) ───────────────────────────────────
+   "Fit 3 filters in one row and the fourth is a button for more." The
+   filters that matter most (at most three; micro-ux.js sets how many in
+   --edify-filter-cols) share the row equally; More closes it at its own
+   width; Clear Filters and any Apply keep their look and sit under the row
+   at its end. Same id-weighted selectors as the desktop row. */
+@media (max-width: 47.999rem) {
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row] {
+    display: grid !important;
+    grid-template-columns: repeat(var(--edify-filter-cols, 3), minmax(0, 1fr)) auto !important;
+    align-items: end !important;
+    justify-content: stretch !important;
+    gap: 0.5rem !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-row__field) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.25rem !important;
+    inline-size: auto !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    grid-column: auto !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-row__field)
+    :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])) {
+    field-sizing: fixed;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    block-size: 2.5rem !important;
+    min-block-size: 2.5rem !important;
+    padding-inline: 0.5rem 1.5rem !important;
+    background-position: right 0.35rem center !important;
+    font-size: 0.75rem !important;
+    text-overflow: ellipsis;
+  }
+
+  /* More is the last slot: as wide as its label, never a field's share. */
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :is(#edify-filter-field, .edify-filter-more, .edify-filter-more-slot):is(.edify-filter-more, .edify-filter-more-slot) {
+    grid-column: -2 / -1 !important;
+    grid-row: 1 !important;
+    inline-size: auto !important;
+    min-inline-size: max-content !important;
+    margin: 0 !important;
+  }
+
+  main .edify-filter-row .edify-filter-more__toggle,
+  main .edify-filter-row .edify-filter-more-slot > :is(button, summary),
+  main .edify-filter-row > button.edify-filter-more-slot {
+    block-size: 2.5rem !important;
+    min-block-size: 2.5rem !important;
+    padding-inline: 0.625rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  main .edify-filter-row .edify-filter-more__long,
+  main .edify-filter-row .edify-filter-more-slot svg:not(.edify-filter-more__chevron):first-child { display: none !important; }
+
+  /* Everything else in the row (Clear Filters, Apply) goes under it, at the
+     end, keeping its own look. */
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row > :not(.edify-filter-row__field):not(.edify-filter-more-slot):not(input[type="hidden"]):not(template):not(dialog):not(script) {
+    grid-column: 1 / -1 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    inline-size: auto !important;
+    min-block-size: 2rem !important;
+    margin: 0 !important;
+  }
+
+  .edify-filter-more__panel { inline-size: min(17rem, calc(100vw - 2rem)); }
+}
+
+/* Filter labels read one way everywhere: the Directory's sentence-case
+   caption, not a mix of it and tracked capitals. */
+main .edify-filter-row > .edify-filter-row__field > :is(span, label):not(.sr-only):not(:has(select, input)),
+main .edify-filter-more__panel > * > :is(span, label):not(.sr-only):not(:has(select, input)) {
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+main .edify-filter-row > label.edify-filter-row__field {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ─── PHONE SECTION HEADS (owner, 2026-09-25) ────────────────────────────────
+   A card or section head that pairs a title (and its count) with one action
+   (micro-ux.js marks it). On a phone the title takes the room and wraps to at
+   most two lines, its count stays beside it, and the action keeps a compact
+   width of its own instead of squeezing the title into a column. */
+@media (max-width: 47.999rem) {
+  main .edify-section-head.edify-section-head {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+  }
+
+  /* The title runs as text with its icon and count inline, so it wraps as
+     a sentence and the count ends it rather than standing in a column. */
+  main .edify-section-head > :first-child {
+    display: block !important;
+    flex: 1 1 auto !important;
+    min-inline-size: 0 !important;
+    line-height: 1.3;
+  }
+
+  main .edify-section-head > :first-child > * {
+    display: inline !important;
+    vertical-align: middle;
+  }
+
+  main .edify-section-head > :first-child :is(h2, h3, h4) {
+    margin: 0 0.375rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+  }
+
+  main .edify-section-head > :first-child > :not(h2, h3, h4, div):not(:first-child) {
+    display: inline-flex !important;
+    white-space: nowrap;
+  }
+
+  main .edify-section-head > :last-child {
+    flex: 0 0 auto !important;
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  main .edify-section-head > :last-child:is(a, button),
+  main .edify-section-head > :last-child > :is(a, button) {
+    min-block-size: 2rem !important;
+    block-size: 2rem !important;
+    padding-inline: 0.625rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+  }
+}
+
+/* ─── PHONE RECORD ACTIONS (owner, 2026-09-25) ───────────────────────────────
+   A record row's actions (Schedule, Training, Assign, Project on Core
+   Schools) share the row as equal, compact buttons, so the fourth is never
+   cut off. Past three, the icons give way to the words. `#edify-record-action`
+   names no element; it outranks the table-action sizing in consistency.css. */
+@media (max-width: 47.999rem) {
+  :root main .school-record-row .school-record-row__actions.school-record-row__actions {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    gap: 0.375rem !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    justify-content: stretch !important;
+  }
+
+  :root main .school-record-row .school-record-row__actions > :is(#edify-record-action, a, button) {
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    padding-inline: 0.375rem !important;
+    gap: 0.25rem !important;
+    font-size: var(--edify-text-micro-size) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  :root main .school-record-row .school-record-row__actions:has(> :nth-child(4)) > * svg {
+    display: none !important;
+  }
+}
+
+/* ─── PHONE PAGE-HEADER ACTIONS (owner, 2026-09-25) ──────────────────────────
+   "Reduce the button sizes to fit perfectly." A page's actions are one row
+   of compact buttons at their own width, wrapping as whole buttons and
+   starting at the left edge, instead of half-width pairs and full-width bars
+   of mixed heights. Filters that live in a header keep their own layout. */
+@media (max-width: 47.999rem) {
+  main .edify-page-header > :not(.edify-page-header__lead):not(form):not(nav):not(details) {
+    display: flex !important;
+    flex-flow: row wrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.5rem !important;
+    inline-size: 100% !important;
+    margin: 0 !important;
+  }
+
+  main .edify-page-header > :not(.edify-page-header__lead):not(form):not(nav):not(details) > :is(#edify-header-action, a, button, .btn, .edify-action-button, details > summary),
+  main .edify-page-header > :is(#edify-header-action, a.btn, a.edify-action-button, button) {
+    flex: 0 0 auto !important;
+    inline-size: auto !important;
+    min-inline-size: 0 !important;
+    block-size: 2.25rem !important;
+    min-block-size: 2.25rem !important;
+    padding-block: 0 !important;
+    padding-inline: 0.75rem !important;
+    gap: 0.375rem !important;
+    font-size: 0.8125rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* An idle loading indicator holds no place in the row. */
+  main .edify-page-header .htmx-indicator:not(.htmx-request):not(.htmx-request .htmx-indicator) {
+    display: none !important;
+  }
+
+  main .edify-page-header > :not(.edify-page-header__lead) :is(a, button) > svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
 }

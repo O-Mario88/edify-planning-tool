@@ -363,7 +363,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4233,
+      "bytes": 4908,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -1400,7 +1400,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7827,
+      "bytes": 7872,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1442,7 +1442,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32202,
+      "bytes": 32588,
       "deprecated_alternatives": [],
       "example_pages": [
         "/impact"
@@ -2587,7 +2587,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4255,
+      "bytes": 4645,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/business-accounting-finance",
@@ -3038,7 +3038,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6386,
+      "bytes": 6380,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -3429,7 +3429,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6080,
+      "bytes": 6125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3498,7 +3498,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8171,
+      "bytes": 8521,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3772,7 +3772,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11246,
+      "bytes": 11636,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4857,7 +4857,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1772,
+      "bytes": 2158,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/pl-urgent-schools"
@@ -5710,7 +5710,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6865,
+      "bytes": 7251,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6760,7 +6760,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2976,
+      "bytes": 3378,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline",
@@ -7238,7 +7238,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 27139,
+      "bytes": 27184,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8043,7 +8043,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9621,
+      "bytes": 9652,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9648,7 +9648,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9960,
+      "bytes": 10019,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -10578,7 +10578,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12013,
+      "bytes": 12058,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -10629,7 +10629,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17642,
+      "bytes": 17687,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -11289,7 +11289,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7569,
+      "bytes": 8044,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"

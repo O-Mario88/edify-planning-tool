@@ -87,13 +87,13 @@
       <a href="?tab={{ active_tab }}&amp;page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
          hx-get="?tab={{ active_tab }}&amp;page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
          hx-target="#evidence-workspace" hx-swap="outerHTML" hx-push-url="true"
-         class="min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold">Previous</a>
+         class="edify-pagination__control--direction min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold" aria-label="Previous page"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></a>
       {% endif %}
       {% if page_obj.has_next %}
       <a href="?tab={{ active_tab }}&amp;page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
          hx-get="?tab={{ active_tab }}&amp;page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
          hx-target="#evidence-workspace" hx-swap="outerHTML" hx-push-url="true"
-         class="min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold">Next</a>
+         class="edify-pagination__control--direction min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold" aria-label="Next page"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></a>
       {% endif %}
     </div>
   </nav>

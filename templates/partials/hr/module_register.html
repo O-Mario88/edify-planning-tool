@@ -56,8 +56,8 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
     <nav class="edify-pagination-scope hcos-pagination" aria-label="Register pagination">
       <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
       <div>
-        {% if page_obj.has_previous %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
-        {% if page_obj.has_next %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        {% if page_obj.has_previous %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.previous_page_number }}" aria-label="Previous page" class="edify-pagination__control--direction"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></a>{% endif %}
+        {% if page_obj.has_next %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.next_page_number }}" aria-label="Next page" class="edify-pagination__control--direction"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></a>{% endif %}
       </div>
     </nav>
     {% endif %}

@@ -95,10 +95,9 @@
             hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
+            aria-label="Previous page"
             class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
-          >
-            &lt;
-          </button>
+          >‹</button>
         {% endif %}
 
         {% for p in pages_list %}
@@ -109,7 +108,8 @@
               hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
               hx-target="#schools-table-container"
               hx-swap="outerHTML"
-              class="h-7 w-7 rounded-control border flex items-center justify-center cursor-pointer {% if page == p %}edify-primary-border edify-primary-soft edify-primary-text font-bold{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
+              {% if page == p %}aria-current="page"{% endif %}
+              class="h-7 w-7 rounded-control border flex items-center justify-center cursor-pointer {% if page == p %}edify-primary-solid text-white font-bold{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
             >
               {{ p }}
             </button>
@@ -121,10 +121,9 @@
             hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&support={{ selected_support }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
+            aria-label="Next page"
             class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
-          >
-            &gt;
-          </button>
+          >›</button>
         {% endif %}
       </div>
 

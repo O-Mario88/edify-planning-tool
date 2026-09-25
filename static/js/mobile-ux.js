@@ -10,7 +10,6 @@
   var sessionStartedAt = performance.now();
   var reachedDepth = new Set();
   var dialogOpeners = new WeakMap();
-  var desktopFilterQuery = window.matchMedia('(min-width: 64rem)');
 
   function emit(name, detail) {
     var payload = Object.assign({
@@ -81,12 +80,12 @@
     });
   }
 
-  /* Render disclosures open for desktop/no-JavaScript access, then collapse
-     them on phones. Crossing the breakpoint keeps visible and semantic state
-     aligned instead of relying on CSS to imitate a closed details element. */
+  /* Filter disclosures stay open at every width: on a phone the filters are
+     one compact row — the three that matter most and More (owner,
+     2026-09-25) — rather than a collapsed sheet to open first. */
   function syncFamilyFilters(root) {
     root.querySelectorAll('details.mobile-family-filter').forEach(function (details) {
-      details.open = desktopFilterQuery.matches;
+      details.open = true;
     });
   }
 
@@ -147,10 +146,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     enhanceDialogs(document);
     syncFamilyFilters(document);
-    // The disclosures now have their final state: let their bodies back into
-    // the layout (base.html set this flag so a phone never paints them open
-    // and then collapses them under the reader).
-    document.documentElement.removeAttribute('data-filters-syncing');
     requestAnimationFrame(noteFirstAction);
   });
 
@@ -158,10 +153,6 @@
     enhanceDialogs(event.target);
     syncFamilyFilters(event.target);
     requestAnimationFrame(noteFirstAction);
-  });
-
-  desktopFilterQuery.addEventListener('change', function () {
-    syncFamilyFilters(document);
   });
 
   window.EdifyMobileUX = Object.freeze({

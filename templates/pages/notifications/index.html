@@ -51,7 +51,6 @@
 
         <!-- Filter: Status -->
         <div>
-          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Status</label>
           <span class="edify-filter-label">Status</span>
           <select aria-label="Status"
             name="status"
@@ -66,7 +65,6 @@
 
         <!-- Filter: Priority -->
         <div>
-          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Priority</label>
           <span class="edify-filter-label">Priority</span>
           <select aria-label="Priority"
             name="priority"
@@ -79,23 +77,25 @@
             <option value="urgent" {% if selected_priority == 'urgent' %}selected{% endif %}>Critical / Urgent</option>
           </select>
         </div>
+
+        <!-- Filter: Category -->
+        <div>
+          <span class="edify-filter-label">Category</span>
+          <select aria-label="Category"
+            name="category"
+            class="w-full h-10 px-3 edify-surface border border-slate-300 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none edify-primary-focus cursor-pointer"
+          >
+            <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-slate-100">
-        <!-- Filter: Category & Checkbox -->
+        <!-- Filter: action required -->
         <div class="flex items-center gap-5 flex-wrap">
-          <div>
-            <span class="edify-filter-label">Category</span>
-            <select aria-label="Category"
-              name="category"
-              class="h-9 px-3 edify-surface border border-slate-300 rounded-control text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
-            >
-              <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
-              {% for cat in categories %}
-                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat|title }}</option>
-              {% endfor %}
-            </select>
-          </div>
 
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input

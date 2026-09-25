@@ -152,7 +152,7 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertContains(filtered, "Leadership Growth Project")
         self.assertNotContains(filtered, "Reading project coaching")
         self.assertContains(filtered, f"/projects/my-plan?project={self.project_b.id}")
-        self.assertContains(filtered, "More filters")
+        self.assertContains(filtered, "More<span class=\"edify-filter-more__long\"> filters</span>")
 
         htmx = self.client.get("/projects/planning?tab=ready", HTTP_HX_REQUEST="true")
         self.assertEqual(htmx.status_code, 200)

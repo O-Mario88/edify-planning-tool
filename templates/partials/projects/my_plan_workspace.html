@@ -41,7 +41,7 @@
   </div>
   {% if districts or partners or activity_types or selected.district or selected.partner or selected.activity_type %}
   <details class="sp-more-filters" {% if selected.district or selected.partner or selected.activity_type %}open{% endif %}>
-    <summary>More filters{% if selected.district or selected.partner or selected.activity_type %} · active{% endif %}</summary>
+    <summary>More<span class="edify-filter-more__long"> filters</span>{% if selected.district or selected.partner or selected.activity_type %} · active{% endif %}</summary>
     <div class="sp-filter-grid">
     <label class="sp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
     <label class="sp-field"><span>Partner</span><select aria-label="Partner" name="partner"><option value="">All partners</option>{% for option in partners %}<option value="{{ option.id }}" {% if selected.partner == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>

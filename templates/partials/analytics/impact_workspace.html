@@ -181,17 +181,17 @@
     {% if dashboard.grouped_driver_pagination.total_pages > 1 %}
     <nav class="impact-group-pagination flex items-center justify-between gap-3 border-t border-slate-100 pt-3" aria-label="Portfolio comparison pages">
       {% if dashboard.grouped_driver_pagination.has_previous %}
-      <a class="min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
+      <a class="edify-pagination__control--direction min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
          href="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}"
          hx-get="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}"
-         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true">Previous</a>
+         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true" aria-label="Previous page"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></a>
       {% else %}<span></span>{% endif %}
       <span class="edify-text-caption font-semibold text-slate-500">Page {{ dashboard.grouped_driver_pagination.page }} of {{ dashboard.grouped_driver_pagination.total_pages }}</span>
       {% if dashboard.grouped_driver_pagination.has_next %}
-      <a class="min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
+      <a class="edify-pagination__control--direction min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
          href="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}"
          hx-get="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}"
-         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true">Next</a>
+         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true" aria-label="Next page"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></a>
       {% else %}<span></span>{% endif %}
     </nav>
     {% endif %}

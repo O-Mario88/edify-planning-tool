@@ -283,13 +283,14 @@ test.describe('Responsive contract — behaviours', () => {
       return { rows: [...rows.values()], clipped };
     }, selector);
 
-    // Partner Monitoring's View and FY share one row on the smallest phone.
+    // Partner Monitoring's filters are three and More on one row, even on the
+    // smallest phone (owner, 2026-09-25).
     {
       const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 320, height: 568 }, 'pl1@edify.org');
       try {
         await page.goto('/partner-oversight/');
         const { rows, clipped } = await rowsOf(page, 'form.oversight-period-filter');
-        expect(rows[0]).toBe(2);
+        expect(rows[0]).toBe(4);
         expect(clipped).toEqual([]);
       } finally {
         await context.close();

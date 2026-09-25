@@ -92,14 +92,17 @@ class FilterToolbarContractGuard(SimpleTestCase):
         for path in root.rglob("*.html"):
             yield str(path.relative_to(root)), path.read_text(errors="ignore")
 
-    def test_the_gold_standard_has_clear_filters_and_a_mobile_collapse(self):
+    def test_the_gold_standard_has_clear_filters_and_one_more_control(self):
+        """On a phone the row is three filters and More, never collapsed
+        behind a second Filter button (owner, 2026-09-25: "more than one more
+        filters ... remove the duplicates")."""
         root = Path(settings.BASE_DIR, "templates")
         filters = (root / "partials/my_plan/filters.html").read_text()
         page = (root / "pages/my_plan/index.html").read_text()
         self.assertIn('data-component="filter-toolbar"', filters)
         self.assertIn('data-component="clear-filters"', filters)
-        self.assertIn("max-lg:hidden", filters, "no mobile collapse")
-        self.assertIn('data-component="filter-trigger"', page)
+        self.assertNotIn("max-lg:hidden", filters)
+        self.assertNotIn('data-component="filter-trigger"', page)
 
     def test_no_filter_toolbar_floats_over_page_content(self):
         """§3: filters live in document flow — never absolute, never lifted
