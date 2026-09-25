@@ -27,6 +27,8 @@ from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
+    map_score,
+    score_order,
 )
 from apps.analytics.plan_progress import empty_progress, plan_progress_by_subcounty
 
@@ -166,7 +168,7 @@ def subcounty_insight(
     ):
         entry = entries.get(id_to_key.get(str(row["school__sub_county_id"]), ""))
         if entry:
-            entry["ssa_avg"] = round(float(row["avg"]), 2)
+            entry["ssa_avg"] = map_score(row["avg"])
             entry["ssa_n"] = int(row["n"])
             entry["ssa_done"] = int(row["assessed"])
 
@@ -178,7 +180,7 @@ def subcounty_insight(
     ):
         entry = entries.get(id_to_key.get(str(row["school__sub_county_id"]), ""))
         if entry:
-            entry["ssa_avg_cluster"] = round(float(row["avg"]), 2)
+            entry["ssa_avg_cluster"] = map_score(row["avg"])
 
     for row in (
         ssa_qs.filter(school__school_id__in=core_ids)
@@ -187,7 +189,7 @@ def subcounty_insight(
     ):
         entry = entries.get(id_to_key.get(str(row["school__sub_county_id"]), ""))
         if entry:
-            entry["ssa_avg_core"] = round(float(row["avg"]), 2)
+            entry["ssa_avg_core"] = map_score(row["avg"])
 
     delivered_activity_qs = (
         activities
@@ -247,8 +249,12 @@ def subcounty_insight(
     for sub_county_id, rows in score_groups.items():
         if sum(int(row["n"]) for row in rows) < MIN_SCORES_FOR_INTERVENTION_CALL:
             continue
-        top = max(rows, key=lambda row: float(row["avg"]))
-        bottom = min(rows, key=lambda row: float(row["avg"]))
+        # Ranked on the mean without its summation noise, and in intervention
+        # order, so two interventions that tie resolve the same way on every
+        # load rather than by the order the grouped rows came back in.
+        rows = sorted(rows, key=lambda row: row["intervention"])
+        top = max(rows, key=lambda row: score_order(row["avg"]))
+        bottom = min(rows, key=lambda row: score_order(row["avg"]))
         if top["intervention"] == bottom["intervention"]:
             continue
         entry = entries.get(id_to_key.get(sub_county_id, ""))
@@ -256,13 +262,13 @@ def subcounty_insight(
             continue
         entry["best"] = {
             "name": INTERVENTION_LABELS.get(top["intervention"], top["intervention"]),
-            "score": round(float(top["avg"]), 2),
+            "score": map_score(top["avg"]),
         }
         entry["worst"] = {
             "name": INTERVENTION_LABELS.get(
                 bottom["intervention"], bottom["intervention"]
             ),
-            "score": round(float(bottom["avg"]), 2),
+            "score": map_score(bottom["avg"]),
         }
 
     unassigned_by_district = {

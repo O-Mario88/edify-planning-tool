@@ -753,6 +753,121 @@ class CoreSchoolsPlanningTest(TestCase):
             "Intervention impact must aggregate by intervention, not query per row",
         )
 
+    def test_the_page_reads_shared_scores_once_with_the_same_answers(self):
+        """Intervention Impact and the staff/partner comparison total the same
+        scores, and the KPI strip and the benchmark ask the same average: a
+        request reads each once (2026-09-24 A+ audit), and every figure is
+        still the one the single-intervention definition gives."""
+        from apps.core.request_cache import scoped
+        from apps.core_schools.core_planning_services import (
+            CoreAssessmentService,
+            CoreInterventionImpactService,
+            CoreStaffPartnerPerformanceService,
+        )
+
+        # One partner-led school and one staff-led one, both assessed.
+        CoreActivitySlot.objects.filter(school_id=self.school.school_id).update(
+            owner="partner"
+        )
+        other = SsaRecord.objects.create(
+            school=self.other_school,
+            fy=FY,
+            quarter="Q1",
+            average_score=4.4,
+            verification_status="confirmed",
+            date_of_ssa=date(int(FY) - 1, 11, 6),
+            uploaded_by="test",
+        )
+        for code, score in SCORE_MAP.items():
+            SsaScore.objects.create(
+                ssa_record=other, intervention=code, score=score - 1.25
+            )
+        core_schools = School.objects.filter(school_type="core")
+        codes = list(core_schools.values_list("school_id", flat=True))
+        intervention_codes = set(
+            CoreActivitySlot.objects.values_list("intervention", flat=True)
+        )
+
+        splits = CoreInterventionImpactService.staff_partner_splits(core_schools, FY)
+        expected = {
+            code: CoreInterventionImpactService._staff_partner_split_for_intervention(
+                core_schools, FY, code, codes
+            )
+            for code in intervention_codes
+        }
+        self.assertTrue(any(pair != (None, None) for pair in expected.values()))
+        self.assertEqual(
+            {code: splits.get(code, (None, None)) for code in intervention_codes},
+            expected,
+        )
+        unshared = (
+            CoreInterventionImpactService.get_intervention_impact(core_schools, FY),
+            CoreStaffPartnerPerformanceService.get_staff_vs_partner_performance(
+                core_schools, FY
+            ),
+            CoreStaffPartnerPerformanceService.get_intervention_comparison_rows(
+                core_schools, FY
+            ),
+            CoreAssessmentService.get_average_score(core_schools),
+        )
+        with scoped(), CaptureQueriesContext(connection) as queries:
+            shared = (
+                CoreInterventionImpactService.get_intervention_impact(core_schools, FY),
+                CoreStaffPartnerPerformanceService.get_staff_vs_partner_performance(
+                    core_schools, FY
+                ),
+                CoreStaffPartnerPerformanceService.get_intervention_comparison_rows(
+                    core_schools, FY
+                ),
+                CoreAssessmentService.get_average_score(core_schools),
+            )
+        self.assertEqual(shared, unshared)
+        sql = [q["sql"] for q in queries.captured_queries]
+        self.assertEqual(sum('SUM("ssa_score"."score")' in q for q in sql), 1)
+        self.assertEqual(
+            sum(q.startswith('SELECT AVG("ssa_record"."average_score")') for q in sql),
+            1,
+        )
+
+    def test_core_school_lists_have_a_total_order(self):
+        """Schools created in the same instant (an import) and the Attention
+        Needed plans come back in one fixed order on every load (F-G)."""
+        from django.utils import timezone
+
+        from apps.core_schools.core_planning_services import (
+            CoreRecommendationService,
+            CoreSchoolsService,
+        )
+
+        extra = [
+            self._school(f"CORE-T{n}", f"Tied Core School {n}", self.cceo_sp)
+            for n in range(4)
+        ]
+        for school in extra:
+            self._plan(school)
+        stamp = timezone.now()
+        School.objects.filter(id__in=[s.id for s in extra]).update(created_at=stamp)
+
+        listed = list(
+            CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY}).values_list(
+                "id", "created_at"
+            )
+        )
+        tied = [school_id for school_id, created in listed if created == stamp]
+        self.assertTrue({s.id for s in extra} <= set(tied))
+        self.assertEqual(tied, sorted(tied))
+        self.assertEqual(
+            [created for _id, created in listed],
+            sorted((created for _id, created in listed), reverse=True),
+        )
+
+        card = CoreRecommendationService.get_recommendation_card(
+            School.objects.filter(school_type="core")
+        )
+        codes = [row["school_id"] for row in card["attention_needed"]]
+        self.assertEqual(codes, sorted(codes))
+        self.assertGreater(len(codes), 1)
+
     def test_four_weakest_interventions_are_recommended(self):
         from apps.core_schools.core_planning_services import (
             CoreInterventionRecommendationService,

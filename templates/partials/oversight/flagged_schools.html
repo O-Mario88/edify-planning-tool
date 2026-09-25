@@ -36,8 +36,13 @@ is the answer to half the questions this page gets asked.
   </header>
 
   {% if flagged_schools.groups %}
+  {% comment %}The staff groups are paged too (P-5, owner-approved 2026-09-25): a
+  country reader's list held every flagged officer's tables at once, 13,000
+  nodes of Team Oversight at 50,000 schools. Each group's own rows keep their
+  own pager as before.{% endcomment %}
+  {% paginate flagged_schools.groups "flagged-owners" 5 as owner_page %}
   <ul class="divide-y edify-border">
-    {% for group in flagged_schools.groups %}
+    {% for group in owner_page.rows %}
     <li class="p-4 space-y-2">
       {% paginate group.rows group.page_param as flagged_page %}
       <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -102,6 +107,7 @@ is the answer to half the questions this page gets asked.
     </li>
     {% endfor %}
   </ul>
+  {% include "components/table_pager.html" with pager=owner_page param="flagged-owners" pagination_label="Staff with flagged schools" %}
   {% else %}
   <p class="p-4 edify-text-caption edify-text-muted">
     No school planned this period is carrying an unresolved problem.

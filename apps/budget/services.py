@@ -1773,15 +1773,139 @@ def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)
 
 
+_REQUESTED_ADVANCE_STATUSES = [
+    "pending_responsible_confirmation",
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    "disbursed",
+    "accountability_pending",
+    "accounted",
+]
+_APPROVED_ADVANCE_STATUSES = [
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    "disbursed",
+    "accountability_pending",
+    "accounted",
+]
+_DISBURSED_ADVANCE_STATUSES = [
+    "disbursed",
+    "accountability_pending",
+    "accounted",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+    "reimbursed",
+]
+_ACCOUNTED_ADVANCE_STATUSES = ["accounted", "reimbursed"]
+
+
+def _rollup_base(fy: str):
+    """The FY's cost lines every budget rollup reads, before its period."""
+    from apps.activities.models import ActivityScheduleCostLine
+
+    return ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True, activity__fy=fy
+    ).exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
+
+
+def _rollup_sums():
+    """The aggregates of `get_budget_rollup`, as (fundable, money) kwargs."""
+    return (
+        {
+            "planned": Sum("amount"),
+            "requested": Sum(
+                "amount",
+                filter=Q(advance_requests__status__in=_REQUESTED_ADVANCE_STATUSES),
+            ),
+            "approved": Sum(
+                "amount",
+                filter=Q(advance_requests__status__in=_APPROVED_ADVANCE_STATUSES),
+            ),
+        },
+        {
+            "disbursed": Sum(
+                "advance_requests__disbursed_amount",
+                filter=Q(advance_requests__status__in=_DISBURSED_ADVANCE_STATUSES),
+            ),
+            "accounted": Sum(
+                "advance_requests__accounted_amount",
+                filter=Q(advance_requests__status__in=_ACCOUNTED_ADVANCE_STATUSES),
+            ),
+        },
+    )
+
+
+def _rollup_from(agg: dict, activity_count: int) -> dict:
+    planned = int(agg.get("planned") or 0)
+    requested = int(agg.get("requested") or 0)
+    approved = int(agg.get("approved") or 0)
+    disbursed = int(agg.get("disbursed") or 0)
+    accounted = int(agg.get("accounted") or 0)
+    cleared = accounted
+    pending = planned - cleared
+    variance = planned - cleared
+
+    return {
+        "planned": planned,
+        "requested": requested,
+        "approved": approved,
+        "disbursed": disbursed,
+        "accounted": accounted,
+        "cleared": cleared,
+        "pending": pending,
+        "variance": variance,
+        "activity_count": activity_count,
+    }
+
+
+def get_budget_rollups(fy: str, *, by: str) -> dict:
+    """`get_budget_rollup` for every month (``by="month"``, keyed by month of
+    FY 1..12) or every quarter (``by="quarter"``, keyed "Q1".."Q4") at once.
+
+    The same filters, joins and sums as one `get_budget_rollup(fy, month=m)`
+    or `(fy, quarter=q)` call, grouped by the column that call filters on, so
+    each group is exactly that call's rows. The budget overview made seventeen
+    of those calls, each scanning the year's cost lines three times: ~2.3 s of
+    SQL for a Country Director at production scale (2026-09-24 A+ audit).
+    Every sum is of whole amounts, so grouping cannot change a total.
+    """
+    from django.db.models import Count
+
+    if by == "month":
+        column = "month"
+        keys = {_calendar_month_of_fy(fy, m): m for m in range(1, 13)}
+    elif by == "quarter":
+        column = "activity__quarter"
+        keys = {q: q for q in ("Q1", "Q2", "Q3", "Q4")}
+    else:  # pragma: no cover - programming error
+        raise ValueError(f"unknown rollup grouping: {by}")
+
+    base = _rollup_base(fy)
+    qs = base.exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+    fundable_sums, money_sums = _rollup_sums()
+    grouped: dict = {key: {} for key in keys}
+    for row in qs.values(column).order_by().annotate(**fundable_sums):
+        if row[column] in grouped:
+            grouped[row[column]].update(row)
+    for row in base.values(column).order_by().annotate(**money_sums):
+        if row[column] in grouped:
+            grouped[row[column]].update(row)
+    counts = {
+        row[column]: row["n"]
+        for row in qs.values(column)
+        .order_by()
+        .annotate(n=Count("activity_id", distinct=True))
+    }
+    return {
+        label: _rollup_from(grouped[key], int(counts.get(key) or 0))
+        for key, label in keys.items()
+    }
+
+
 def get_budget_rollup(
     fy: str, *, quarter: str | None = None, month: int | None = None
 ) -> dict:
-    from django.db.models import Sum, Q
-    from apps.activities.models import ActivityScheduleCostLine
-
-    base = ActivityScheduleCostLine.objects.filter(
-        activity__deleted_at__isnull=True, activity__fy=fy
-    ).exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
+    base = _rollup_base(fy)
     if quarter:
         base = base.filter(activity__quarter=quarter)
     if month is not None:
@@ -1797,34 +1921,8 @@ def get_budget_rollup(
     # rejected and deferred activities leave those totals.
     qs = base.exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
 
-    agg = qs.aggregate(
-        planned=Sum("amount"),
-        requested=Sum(
-            "amount",
-            filter=Q(
-                advance_requests__status__in=[
-                    "pending_responsible_confirmation",
-                    "confirmed_for_advance",
-                    "submitted_to_accountant",
-                    "disbursed",
-                    "accountability_pending",
-                    "accounted",
-                ]
-            ),
-        ),
-        approved=Sum(
-            "amount",
-            filter=Q(
-                advance_requests__status__in=[
-                    "confirmed_for_advance",
-                    "submitted_to_accountant",
-                    "disbursed",
-                    "accountability_pending",
-                    "accounted",
-                ]
-            ),
-        ),
-    )
+    fundable_sums, money_sums = _rollup_sums()
+    agg = qs.aggregate(**fundable_sums)
     # DISBURSED/accounted describe money that actually left the account, so
     # they must NOT apply the status exclusion: cancelling an activity after
     # its advance was disbursed preserves the advance (it settles through
@@ -1833,47 +1931,8 @@ def get_budget_rollup(
     # under-reporting the 2026-08-12 audit flagged (H-3). Amounts come from
     # the AdvanceRequest ledger, not the planned line amount — a partial
     # disbursement previously showed as fully disbursed on every surface.
-    money_agg = base.aggregate(
-        disbursed=Sum(
-            "advance_requests__disbursed_amount",
-            filter=Q(
-                advance_requests__status__in=[
-                    "disbursed",
-                    "accountability_pending",
-                    "accounted",
-                    "reimbursement_submitted",
-                    "reimbursement_disbursed",
-                    "reimbursed",
-                ]
-            ),
-        ),
-        accounted=Sum(
-            "advance_requests__accounted_amount",
-            filter=Q(advance_requests__status__in=["accounted", "reimbursed"]),
-        ),
-    )
-    agg.update(money_agg)
-
-    planned = int(agg["planned"] or 0)
-    requested = int(agg["requested"] or 0)
-    approved = int(agg["approved"] or 0)
-    disbursed = int(agg["disbursed"] or 0)
-    accounted = int(agg["accounted"] or 0)
-    cleared = accounted
-    pending = planned - cleared
-    variance = planned - cleared
-
-    return {
-        "planned": planned,
-        "requested": requested,
-        "approved": approved,
-        "disbursed": disbursed,
-        "accounted": accounted,
-        "cleared": cleared,
-        "pending": pending,
-        "variance": variance,
-        "activity_count": qs.values("activity_id").distinct().count(),
-    }
+    agg.update(base.aggregate(**money_sums))
+    return _rollup_from(agg, qs.values("activity_id").distinct().count())
 
 
 def monthly_budget(query: dict) -> dict:
@@ -1882,9 +1941,18 @@ def monthly_budget(query: dict) -> dict:
     administrative portion."""
     fy = query.get("fy") or get_operational_fy()
     month = int(query.get("month") or 1)
+    return _monthly_budget_from(fy, month, get_budget_rollup(fy, month=month))
+
+
+def monthly_budgets(fy: str) -> list[dict]:
+    """`monthly_budget` for months 1..12 of the FY, from one grouped rollup."""
+    rollups = get_budget_rollups(fy, by="month")
+    return [_monthly_budget_from(fy, month, rollups[month]) for month in range(1, 13)]
+
+
+def _monthly_budget_from(fy: str, month: int, rollup: dict) -> dict:
     month_key = _month_key(fy, month)
     admin_total = _admin_lines_total(fy, month_key=month_key)
-    rollup = get_budget_rollup(fy, month=month)
     return {
         "fy": fy,
         "month": month,
@@ -1941,10 +2009,10 @@ def fy_budget(query: dict) -> dict:
     admin_total = _admin_lines_total(fy)
     rollup = get_budget_rollup(fy)
 
-    by_quarter = {}
-    for q in ("Q1", "Q2", "Q3", "Q4"):
-        q_rollup = get_budget_rollup(fy, quarter=q)
-        by_quarter[q] = q_rollup["planned"]
+    by_quarter = {
+        q: q_rollup["planned"]
+        for q, q_rollup in get_budget_rollups(fy, by="quarter").items()
+    }
 
     by_activity_type = {}
     type_qs = (

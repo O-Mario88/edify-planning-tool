@@ -466,9 +466,12 @@ def per_user_monthly_series(users, fy: str, areas=None) -> dict:
     if areas is None:
         areas = active_target_areas()
     users = list(users)
-    # One rebuild for the whole roster rather than one per head: the sources
-    # every rebuild reads are the same four tables.
-    TargetAchievementService.rebuild_many(users, fy)
+    # Rebuild only the people whose sources changed since their ledger was
+    # built (apps.targets.ledger_sync, F-D): this rebuilt the whole roster on
+    # every leadership load.
+    from apps.targets.ledger_sync import refresh_many
+
+    refresh_many(users, fy)
 
     # Three reads for the roster, not three per person. `series_areas` is
     # deliberately the full active set rather than the caller's `areas`: the

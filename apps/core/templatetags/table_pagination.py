@@ -102,6 +102,33 @@ def tab_values(rows, key="id"):
 
 
 @register.simple_tag(takes_context=True)
+def tab_initial(context, rows, param, fallback, key="id", suffix=""):
+    """The tab `tabState` will open on, decided on the server.
+
+    Exactly the browser's rule (alpine-components.js, `tabState`): the value
+    of `param` in the query when the strip offers it, else `fallback` when it
+    offers that, else its first tab. The panel it names can be rendered
+    without `x-cloak`, so the page paints with the panel Alpine will show
+    rather than growing by a whole panel when the scripts run (2026-09-24 A+
+    audit, P-4). `suffix` is appended to `param` for a strip whose parameter
+    carries its parent's id (`officer-<lead id>`).
+    """
+    param = f"{param}{suffix}"
+
+    def value(row):
+        if isinstance(row, dict):
+            return row.get(key)
+        return getattr(row, key, None)
+
+    values = [str(value(row)) for row in rows or []]
+    fallback = str(fallback)
+    first = fallback if fallback in values else (values[0] if values else fallback)
+    request = context.get("request")
+    requested = request.GET.get(param) if request is not None else None
+    return requested if requested is not None and requested in values else first
+
+
+@register.simple_tag(takes_context=True)
 def carry_query(context, *drop):
     """Every current query parameter except *drop*, as `&key=value` pairs.
 

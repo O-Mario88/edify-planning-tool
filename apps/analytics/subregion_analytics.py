@@ -26,6 +26,7 @@ from apps.analytics.plan_progress import (
     plan_progress_by_district,
     plan_progress_frame,
 )
+from apps.analytics.pl_analytics_service import map_score
 from apps.analytics.platform_engine import engine_metadata
 
 # SSA rows only count once a reviewer has confirmed them.
@@ -268,7 +269,7 @@ def weighted_ssa_mean(rows) -> float | None:
     if not weight:
         return None
     total = sum(float(row["ssa_avg"]) * row["ssa_n"] for row in measured)
-    return round(total / weight, 2)
+    return map_score(total / weight)
 
 
 #: Fields that simply add when several districts are combined.
@@ -397,7 +398,7 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
                 "schools": int(row["schools"]),
                 "clusters": int(row["clusters"]),
                 "ssa_n": int(row["ssa_n"]),
-                "ssa_avg": None if pd.isna(avg) else round(float(avg), 2),
+                "ssa_avg": None if pd.isna(avg) else map_score(avg),
                 "enrollment": int(row["enrollment"]),
                 "schools_visited": int(row["schools_visited"]),
                 "schools_trained": int(row["schools_trained"]),
@@ -442,7 +443,7 @@ def subregion_performance(
                     "schools": int(r["schools"]),
                     "clusters": int(r["clusters"]),
                     "ssa_n": int(r["ssa_n"]),
-                    "ssa_avg": None if pd.isna(avg) else round(float(avg), 2),
+                    "ssa_avg": None if pd.isna(avg) else map_score(avg),
                     "enrollment": int(r["enrollment"]),
                     "schools_visited": int(r["schools_visited"]),
                     "schools_trained": int(r["schools_trained"]),

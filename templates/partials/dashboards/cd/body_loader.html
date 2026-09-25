@@ -1,0 +1,17 @@
+{% comment %}
+The dashboard as it first paints when its figures are not built yet: the
+header and filters above are already real, and the body arrives from this same
+address a moment later, the way the filter form fetches it (P-2,
+owner-approved 2026-09-25). A warm dashboard never renders this.
+{% endcomment %}
+<div class="space-y-5" data-cd-dashboard-loader hx-get="/dashboard" hx-vals='{"fill": "1"}' hx-include="[aria-label='Country dashboard filters']" hx-trigger="load" hx-target="#cd-dashboard-body" hx-swap="innerHTML" aria-busy="true">
+  <p class="edify-text-caption font-semibold text-slate-500" role="status">Building the country dashboard…</p>
+  <div class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 space-y-2" aria-hidden="true">
+    <div class="h-3 w-32 rounded bg-slate-100"></div>
+    <div class="h-16 rounded-control bg-slate-50"></div>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 space-y-2 min-h-[460px]" aria-hidden="true">
+    <div class="h-3 w-40 rounded bg-slate-100"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+  </div>
+</div>

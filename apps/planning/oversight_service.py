@@ -31,7 +31,7 @@ from collections import namedtuple
 from dataclasses import dataclass, field
 from datetime import date
 
-from django.db.models import F, Q, Sum
+from django.db.models import F, Q, QuerySet, Sum
 
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -308,6 +308,7 @@ def build_items(
     fys: tuple[str, ...] | None = None,
     activity_types: tuple[str, ...] | None = None,
     cluster_work_only: bool = False,
+    core_work_only: bool = False,
 ) -> list[PlanningOversightItem]:
     """Every oversight item this principal may see for the period.
 
@@ -322,13 +323,18 @@ def build_items(
     lens that shows only part of the plan: Cluster Oversight built every item
     in the country to keep its cluster sessions (2026-09-24 audit). Each item
     is built exactly as it would be in the full list.
+
+    ``core_work_only`` keeps work at core schools and cluster trainings with
+    no school — a superset of what Core School Oversight lists, which built
+    every item in the country over two fiscal years to keep them (2026-09-24
+    A+ audit).
     """
     scope = resolve_oversight_scope(principal)
     if scope.kind == "pl" and not scope.team_ids:
         return []
 
     years = tuple(str(y) for y in fys) if fys else ((fy,) if fy else ())
-    activities = _activities_in_scope(
+    activity_qs = _activity_queryset(
         scope,
         fy=years,
         month=month,
@@ -337,7 +343,9 @@ def build_items(
         date_end=date_end,
         activity_types=activity_types,
         cluster_work_only=cluster_work_only,
+        core_work_only=core_work_only,
     )
+    activities = _activity_records_of(activity_qs)
     assignments = _unscheduled_assignments_in_scope(
         scope,
         fy=years,
@@ -347,10 +355,20 @@ def build_items(
         date_end=date_end,
         activity_types=activity_types,
         cluster_work_only=cluster_work_only,
+        core_work_only=core_work_only,
     )
 
     directory = _StaffDirectory(activities, assignments)
-    costs = _cost_by_activity([a.id for a in activities])
+    # The cost totals read the same activities through the same filter as a
+    # subquery, rather than binding every id just read as one literal array:
+    # the planner estimates an `= ANY(array)` element by element, and for a
+    # country's ~75,000 ids that was ~0.3 s of planning ahead of a few
+    # milliseconds of execution (2026-09-24 A+ audit).
+    costs = (
+        _cost_by_activity(activity_qs.values_list("id", flat=True))
+        if activities and activity_qs is not None
+        else {}
+    )
     partner_names = _partner_names([a.assigned_partner_id for a in activities])
 
     items = [_activity_item(a, directory, costs, partner_names) for a in activities]
@@ -665,6 +683,45 @@ def _activities_in_scope(
     activity_types=None,
     cluster_work_only=False,
 ):
+    return _activity_records_of(
+        _activity_queryset(
+            scope,
+            fy=fy,
+            month=month,
+            quarter=quarter,
+            date_start=date_start,
+            date_end=date_end,
+            activity_types=activity_types,
+            cluster_work_only=cluster_work_only,
+        )
+    )
+
+
+def _activity_records_of(qs) -> list[_ActivityRecord]:
+    """The records of `_activity_queryset`'s activities, in its order."""
+    if qs is None:
+        return []
+    return _activity_records(
+        qs.values_list(
+            *_ACTIVITY_COLUMNS, *_SCHOOL_COLUMNS, *_CLUSTER_COLUMNS, *_COURSE_COLUMNS
+        )
+    )
+
+
+def _activity_queryset(
+    scope: OversightScope,
+    *,
+    fy,
+    month,
+    quarter,
+    date_start=None,
+    date_end=None,
+    activity_types=None,
+    cluster_work_only=False,
+    core_work_only=False,
+):
+    """The activities this lens reads for the period, ordered; None for a
+    region lens with no region to read."""
     from apps.activities.models import Activity
 
     qs = Activity.objects.filter(
@@ -674,6 +731,15 @@ def _activities_in_scope(
         qs = qs.filter(activity_type__in=activity_types)
     if cluster_work_only:
         qs = qs.filter(cluster_id__isnull=False)
+    if core_work_only:
+        qs = qs.filter(
+            Q(school__school_type="core")
+            | Q(
+                school_id__isnull=True,
+                cluster_id__isnull=False,
+                activity_type__in=TRAINING_TYPES,
+            )
+        )
     if fy:
         qs = qs.filter(fy__in=_fy_tuple(fy))
     if month:
@@ -684,18 +750,14 @@ def _activities_in_scope(
         qs = qs.filter(_dated_between(date_start, date_end))
 
     if scope.is_region and not scope.region_ids:
-        return []
+        return None
     scope_q = _activity_scope_q(scope)
     if scope_q is not None:
         qs = qs.filter(scope_q)
     # The model's own order, made total: build_items sorts by date and
     # context, and ties keep this order, so a tie never reshuffles between
     # two loads of the same page.
-    return _activity_records(
-        qs.order_by("-created_at", "id").values_list(
-            *_ACTIVITY_COLUMNS, *_SCHOOL_COLUMNS, *_CLUSTER_COLUMNS, *_COURSE_COLUMNS
-        )
-    )
+    return qs.order_by("-created_at", "id")
 
 
 def _activity_scope_q(scope: OversightScope):
@@ -787,6 +849,7 @@ def _unscheduled_assignments_in_scope(
     date_end=None,
     activity_types=None,
     cluster_work_only=False,
+    core_work_only=False,
 ):
     """Partner assignments the partner has not scheduled yet.
 
@@ -847,6 +910,10 @@ def _unscheduled_assignments_in_scope(
         qs = qs.filter(expected_activity_type__in=activity_types)
     if cluster_work_only:
         qs = qs.filter(cluster_id__isnull=False)
+    if core_work_only:
+        # An assignment item is never a cluster session (it has no activity),
+        # so only its school decides.
+        qs = qs.filter(school__school_type="core")
     if scope.is_region and not scope.region_ids:
         return []
     scope_q = _assignment_scope_q(scope)
@@ -885,17 +952,20 @@ def _cost_by_activity(activity_ids) -> dict[str, int]:
     """
     from apps.activities.models import ActivityScheduleCostLine
 
-    if not activity_ids:
-        return {}
-    # One array parameter, not one bind parameter per activity: a country
-    # page passes every activity in the country.
-    from apps.core.scoping import any_id
+    if isinstance(activity_ids, QuerySet):
+        # The activities as a subquery: the same ids without a literal array.
+        # Never tested for truth, which would read every id in Python first.
+        lines = ActivityScheduleCostLine.objects.filter(activity_id__in=activity_ids)
+    else:
+        if not activity_ids:
+            return {}
+        # One array parameter, not one bind parameter per activity.
+        from apps.core.scoping import any_id
 
-    rows = (
-        ActivityScheduleCostLine.objects.filter(any_id("activity_id", activity_ids))
-        .values_list("activity_id")
-        .annotate(total=Sum("amount"))
-    )
+        lines = ActivityScheduleCostLine.objects.filter(
+            any_id("activity_id", activity_ids)
+        )
+    rows = lines.values_list("activity_id").annotate(total=Sum("amount"))
     return {activity_id: int(total or 0) for activity_id, total in rows}
 
 

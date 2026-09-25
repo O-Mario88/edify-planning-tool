@@ -73,7 +73,12 @@ class DomainEventLog(TimeStampedModel):
     id = CuidField()
     event_type = models.CharField(max_length=128)
     aggregate_type = models.CharField(max_length=64, null=True, blank=True)
-    aggregate_id = models.CharField(max_length=30, null=True, blank=True)
+    # As wide as the AuditLog.subject_id it is projected from. At 30, every
+    # audited subject with a longer id (a page name such as
+    # "team_planning_oversight_drawer") failed its projection: the audit row
+    # committed, the event-stream row and the realtime push were dropped with
+    # only a logged exception.
+    aggregate_id = models.CharField(max_length=128, null=True, blank=True)
     actor_id = models.CharField(max_length=30, null=True, blank=True)
     payload = models.JSONField(null=True, blank=True)
     processed_at = models.DateTimeField(null=True, blank=True)

@@ -126,11 +126,38 @@ class CDDashboardService:
                 )
 
         return cached_role_dashboard(
-            "cd",
-            user,
-            (country_for(user), fy or get_operational_fy(), month, view),
-            build,
+            "cd", user, CDDashboardService._cache_parts(user, fy, month, view), build
         )
+
+    @staticmethod
+    def is_ready(user, fy: str | None = None, month: int | None = None, *, view="all"):
+        """Whether `get_dashboard` would answer now from its snapshot."""
+        from apps.core.cache_utils import role_dashboard_ready
+
+        return role_dashboard_ready(
+            "cd", user, CDDashboardService._cache_parts(user, fy, month, view)
+        )
+
+    @staticmethod
+    def _cache_parts(user, fy, month, view) -> tuple:
+        return (country_for(user), fy or get_operational_fy(), month, view)
+
+    @staticmethod
+    def scope_meta(user, fy: str | None = None, month: int | None = None) -> dict:
+        """The header's scope counts alone, for the page shell that paints
+        before the dashboard is built (P-2): the same figures `get_dashboard`
+        returns, from the same scope."""
+        fy = fy or get_operational_fy()
+        cd = resolve_cd_scope(fy, month=month, country=country_for(user))
+        return CDDashboardService._scope_meta(cd)
+
+    @staticmethod
+    def _scope_meta(cd) -> dict:
+        return {
+            "pl_count": len(CDAnalyticsService._pls()),
+            "cceo_count": len(cd.cceo_user_ids),
+            "school_count": len(cd.school_ids),
+        }
 
     @staticmethod
     def _get_dashboard(
@@ -140,23 +167,12 @@ class CDDashboardService:
         cd = resolve_cd_scope(fy, month=month, country=country_for(user))
         acts = _country_activities(cd)
         # The KPI strip's "Country Target Progress" and the PL performance
-        # table's per-row target_pct both read the validated ledger — refresh
-        # it for the CCEOs in scope first so the two can never disagree
-        # because one side was staler than the other (mandate: never
-        # invoked proactively for CD/RVP rollups otherwise, unlike My/Team
-        # Targets which rebuild on every page load).
-        #
-        # _prime_target_series, not _refresh_target_ledger: it performs the
-        # exact same per-CCEO rebuild and ALSO caches each person's monthly
-        # series on `cd`, so every _weighted_achievement() below pools from
-        # that in pure Python instead of re-fetching per PL and again per
-        # CCEO. This is the substitution _refresh_target_ledger's own
-        # docstring prescribes for callers that read PL/CCEO rollups next —
-        # the analytics page has done it since the series cache was built;
-        # this dashboard was the caller that never got the memo. Measured
-        # here at 282 queries from _weighted_achievement alone on one
-        # render, most of the gap that put this page at 1.4s against an
-        # 800ms budget.
+        # table's per-row target_pct both read the validated ledger, from one
+        # series per CCEO cached on `cd` so every _weighted_achievement()
+        # below pools in Python instead of re-fetching per PL and again per
+        # CCEO (282 queries on one render before). The ledger itself is kept
+        # current by the writes that change it (apps.targets.ledger_sync,
+        # F-D), so this page no longer rebuilds it.
         _prime_target_series(cd)
 
         pl_rows = CDDashboardService.pl_performance(cd, acts)
@@ -173,11 +189,7 @@ class CDDashboardService:
             "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows, user),
             "leadership_attention": [c for c in attention if c["kind"] != "region"],
             "region_attention": [c for c in attention if c["kind"] == "region"],
-            "scope_meta": {
-                "pl_count": len(CDAnalyticsService._pls()),
-                "cceo_count": len(cd.cceo_user_ids),
-                "school_count": len(cd.school_ids),
-            },
+            "scope_meta": CDDashboardService._scope_meta(cd),
         }
         if view != "operations":
             data["geography"] = CDDashboardService.geography_breakdown(cd, acts)

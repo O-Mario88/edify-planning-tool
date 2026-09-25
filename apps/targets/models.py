@@ -269,6 +269,24 @@ class MSCSStatus(models.TextChoices):
     ARCHIVED = "archived", "Archived"
 
 
+class TargetLedgerDirty(models.Model):
+    """An officer and year whose ledger sources changed since the ledger was
+    last rebuilt (apps.targets.ledger_sync). Written in the same transaction
+    as the source; cleared by the page load that rebuilds it."""
+
+    owner_id = models.CharField(max_length=30)  # user or staff-profile id
+    fy = models.CharField(max_length=16)
+    marked_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "target_ledger_dirty"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner_id", "fy"], name="uniq_target_ledger_dirty"
+            )
+        ]
+
+
 class MostSignificantChangeStory(TimeStampedModel):
     """MSCS — a narrative impact story. Only APPROVED stories count toward the
     MSCS target, credited to the story date."""

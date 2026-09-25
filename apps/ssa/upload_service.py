@@ -595,6 +595,11 @@ def import_ssa_batch(batch, user) -> dict:
         if records:
             SsaRecord.objects.bulk_create(records, batch_size=1000)
             SsaScore.objects.bulk_create(scores, batch_size=2000)
+            # bulk_create sends no post_save: mark the collectors' ledgers for
+            # rebuild as a saved record would (apps.targets.ledger_sync).
+            from apps.targets.ledger_sync import mark_sources
+
+            mark_sources((r.collected_by_user_id, r.date_of_ssa) for r in records)
             # Imported rows are pending, so the confirmation events (Business
             # Transformation, recommendations, project measurement) fire when
             # a verifier confirms each one — `verify_record` saves the row and

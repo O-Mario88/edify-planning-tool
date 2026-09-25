@@ -31,6 +31,12 @@ class TargetsConfig(AppConfig):
             "targets", ensure_target_areas, target_areas_are_complete
         )
 
+        # The achievement ledger is rebuilt by the writes that change it,
+        # not by the leadership pages that read it (F-D).
+        from apps.targets import ledger_sync
+
+        ledger_sync.connect()
+
         request_started.connect(
             lambda sender, **kw: request_cache.begin(),
             dispatch_uid="edify_request_cache_begin",

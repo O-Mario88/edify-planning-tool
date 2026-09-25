@@ -331,16 +331,31 @@ def classify_pairs(rows, *, book: RuleBook, country_for=None) -> list[dict]:
     """
 
     country_for = country_for or (lambda _school_id: "")
+    # A portfolio is every school's eight domains: the rule depends only on
+    # (domain, country) and the interval only on the school's two dates, so
+    # each is decided once rather than per row (2026-09-24 A+ audit: 160,000
+    # rows on an IA dashboard at 50,000 schools). A pair whose dates are too
+    # close is NOT_COMPARABLE whatever its scores, as change_between rules.
+    rules: dict[tuple[str, str], dict] = {}
+    spans: dict[tuple, bool] = {}
     out = []
     for row in rows:
         intervention = row.get("intervention") or ""
+        country = country_for(row.get("school_id"))
+        rule = rules.get((intervention, country))
+        if rule is None:
+            rule = rules[(intervention, country)] = book.rule(intervention, country)
+        span = (row.get("window_start"), row.get("window_end"))
+        try:
+            far_enough = spans[span]
+        except KeyError:
+            far_enough = spans[span] = comparable(*span)
+        except TypeError:  # an unhashable date value: decide it directly
+            far_enough = comparable(*span)
+        if not far_enough:
+            continue
         result = change_between(
-            row.get("prev_score"),
-            row.get("curr_score"),
-            intervention,
-            rule=book.rule(intervention, country_for(row.get("school_id"))),
-            before_on=row.get("window_start"),
-            after_on=row.get("window_end"),
+            row.get("prev_score"), row.get("curr_score"), intervention, rule=rule
         )
         if result["classification"] == NOT_COMPARABLE:
             continue

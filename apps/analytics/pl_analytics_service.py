@@ -168,6 +168,24 @@ def _ssa_score(score: float | None) -> float | None:
     return round(round(score, 6), 1) if score is not None else None
 
 
+def map_score(score) -> float | None:
+    """An SSA mean for the maps' hover cards and tables, to two decimals.
+
+    The same absorption as `_ssa_score`, at the maps' precision. Their means
+    come from PostgreSQL's AVG, which adds floats in whatever order the plan
+    (a parallel aggregate, say) visits the rows, so a mean at a rounding edge
+    read 5.42 on one load and 5.43 on the next (2026-09-24 A+ audit: four of
+    2,560 sub-counties moved between two runs of the same code on the same
+    data). Rounding to six places first makes it a function of the data.
+    """
+    return round(round(float(score), 6), 2) if score is not None else None
+
+
+def score_order(score) -> float:
+    """The key to rank SSA means by without their summation noise."""
+    return round(float(score), 6)
+
+
 def _ssa_bar_pct(score: float | None) -> float:
     """Convert a score to bar width only; this value is never display copy."""
     return round(max(0.0, min(10.0, score or 0.0)) * 10, 1)

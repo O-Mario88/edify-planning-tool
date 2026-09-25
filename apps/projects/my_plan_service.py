@@ -570,14 +570,17 @@ def get_my_plan(principal, filters=None) -> dict:
             "school__region_id", flat=True
         )
     )
-    district_options = (
-        District.objects.filter(
-            Q(schools__activities__project_id__in=project_ids)
-            | Q(clusters__activities__project_id__in=project_ids)
-        )
-        .distinct()
-        .order_by("name")
-    )
+    # Districts reached by a project activity through its school or its
+    # cluster. Two `IN (subquery)` tests rather than joining district to every
+    # school, activity, cluster and activity again and de-duplicating the
+    # product: that join was 4 s of a 4.6 s page for a Programme Lead at
+    # 50,000 schools. The join ignored soft deletion on every table, so the
+    # subqueries read `all_objects` to keep exactly the same districts.
+    project_activities = Activity.all_objects.filter(project_id__in=project_ids)
+    district_options = District.objects.filter(
+        Q(id__in=project_activities.values("school__district_id"))
+        | Q(id__in=project_activities.values("cluster__district_id"))
+    ).order_by("name")
     if selected_region:
         district_options = district_options.filter(region_id=selected_region)
     regions = Region.objects.filter(id__in=region_ids).order_by("name")

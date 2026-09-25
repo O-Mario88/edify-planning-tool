@@ -1516,7 +1516,7 @@ def _leave_todos(principal, role):
         return []
     from apps.accounts.models import Leave
 
-    from apps.hr.leave_services import LeaveApprovalService
+    from apps.hr.leave_services import LeaveApprovalService, approval_lookups
 
     todos = []
     # Scoped with the SAME predicate the approvals page uses. Without it every
@@ -1531,11 +1531,16 @@ def _leave_todos(principal, role):
         .select_related("staff__user")
         .order_by("start_date")[:100]
     )
-    for lv in pending:
-        if not LeaveApprovalService.is_authorized_approver(principal, lv):
-            continue
-        if len(todos) >= 10:
-            break
+    # The approver rule is asked of up to 100 leaves; the reviewer's own
+    # lookups are read once for all of them.
+    with approval_lookups():
+        authorized = []
+        for lv in pending:
+            if len(authorized) >= 10:
+                break
+            if LeaveApprovalService.is_authorized_approver(principal, lv):
+                authorized.append(lv)
+    for lv in authorized:
         who = getattr(getattr(lv.staff, "user", None), "name", None) or "a staff member"
         todos.append(
             {

@@ -1,3 +1,8 @@
+{% comment %}Rendered as it settles once scripts run (2026-09-24 A+ audit, P-4): the
+fields the selected period does not use start hidden, as x-show would hide them,
+and every field already carries the edify-filter-field class micro-ux.js gives
+it. Painting all four and letting the scripts hide three moved the page below
+the bar up by 130px on a phone.{% endcomment %}
 <form class="edify-filter-bar oversight-period-filter"
       aria-label="{{ filter_label }}"
       x-data="{ period: '{{ period }}' }"
@@ -16,7 +21,7 @@
   {% if partner %}<input type="hidden" name="partner" value="{{ partner }}">{% endif %}
 
   {% if annual_only %}<input type="hidden" name="period" value="fy">{% else %}
-  <label class="edify-page-header-control">
+  <label class="edify-page-header-control edify-filter-field">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">View</span>
     <select name="period" x-model="period" aria-label="Time period">
       <option value="week">Week</option>
@@ -27,7 +32,7 @@
   </label>
   {% endif %}
 
-  <label class="edify-page-header-control">
+  <label class="edify-page-header-control edify-filter-field">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
     <select name="fy" aria-label="Financial year">
       {% for option in fy_options %}
@@ -37,12 +42,12 @@
   </label>
 
   {% if not annual_only %}
-  <label class="edify-page-header-control" x-show="period === 'week'">
+  <label class="edify-page-header-control edify-filter-field" x-show="period === 'week'"{% if period != "week" %} style="display: none"{% endif %}>
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Week</span>
     <input type="week" name="week" value="{{ week }}" aria-label="Week">
   </label>
 
-  <label class="edify-page-header-control" x-show="period === 'month'">
+  <label class="edify-page-header-control edify-filter-field" x-show="period === 'month'"{% if period != "month" %} style="display: none"{% endif %}>
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Month</span>
     <select name="month" aria-label="Month">
       <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
@@ -60,7 +65,7 @@
     </select>
   </label>
 
-  <label class="edify-page-header-control" x-show="period === 'quarter'">
+  <label class="edify-page-header-control edify-filter-field" x-show="period === 'quarter'"{% if period != "quarter" %} style="display: none"{% endif %}>
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Quarter</span>
     <select name="quarter" aria-label="Financial quarter">
       <option value="Q1" {% if selected_quarter == "Q1" %}selected{% endif %}>Q1 · Oct–Dec</option>

@@ -406,3 +406,87 @@ class AdminLinesTotalTests(TestCase):
 
         self.assertEqual(services._admin_lines_total(FY), 100_000)
         self.assertEqual(services._admin_lines_total(FY, month_key="2025-10"), 100_000)
+
+
+class GroupedRollupTests(_BaseData):
+    """`get_budget_rollups` is `get_budget_rollup` per period, read at once.
+
+    The budget overview asked for the year, four quarters and twelve months,
+    each a full scan of the year's cost lines (2026-09-24 A+ audit). The
+    grouped read must give each period exactly the single call's figures —
+    including the join to advances that counts a line once per advance, the
+    fundable-status exclusion that the disbursed and accounted money ignores,
+    and lines with no advance at all.
+    """
+
+    def test_every_month_and_quarter_equals_the_single_period_call(self):
+        from apps.fund_requests.models import AdvanceRequest
+
+        statuses = [
+            "pending_responsible_confirmation",
+            "confirmed_for_advance",
+            "submitted_to_accountant",
+            "disbursed",
+            "accountability_pending",
+            "accounted",
+            "reimbursement_submitted",
+            "reimbursed",
+        ]
+        plans = [
+            # (status, calendar month, quarter, planned date)
+            ("scheduled", 10, "Q1", date(2025, 10, 6)),
+            ("completed", 11, "Q1", date(2025, 11, 3)),
+            ("cancelled", 12, "Q1", date(2025, 12, 1)),
+            ("scheduled", 2, "Q2", date(2026, 2, 2)),
+            ("rejected", 4, "Q3", date(2026, 4, 6)),
+            ("scheduled", 9, "Q4", date(2026, 9, 7)),
+            ("scheduled", 9, "Q4", None),
+        ]
+        for index, (status, month, quarter, planned) in enumerate(plans):
+            activity = self._activity(
+                status=status, month=month, planned=planned, quarter=quarter
+            )
+            lines = [
+                self._line(
+                    activity,
+                    amount=(10_000 + 333 * offset) * (index + 1),
+                    month=month,
+                    key=f"line-{offset}",
+                )
+                for offset in range(3)
+            ]
+            # An advance (at most one per line) on some lines, none on others.
+            for offset, line in enumerate(lines):
+                if (index + offset) % 3 == 0:
+                    continue
+                AdvanceRequest.objects.create(
+                    activity=activity,
+                    budget_line=line,
+                    responsible_user_id="staff-aud-1",
+                    fy=FY,
+                    quarter=quarter,
+                    amount=line.amount,
+                    status=statuses[(index + offset) % len(statuses)],
+                    disbursed_amount=line.amount // 2,
+                    accounted_amount=line.amount // 3,
+                )
+
+        months = services.get_budget_rollups(FY, by="month")
+        self.assertEqual(sorted(months), list(range(1, 13)))
+        for month in range(1, 13):
+            with self.subTest(month=month):
+                self.assertEqual(
+                    months[month], services.get_budget_rollup(FY, month=month)
+                )
+        quarters = services.get_budget_rollups(FY, by="quarter")
+        for quarter in ("Q1", "Q2", "Q3", "Q4"):
+            with self.subTest(quarter=quarter):
+                self.assertEqual(
+                    quarters[quarter], services.get_budget_rollup(FY, quarter=quarter)
+                )
+        self.assertGreater(sum(r["planned"] for r in months.values()), 0)
+        self.assertGreater(sum(r["disbursed"] for r in months.values()), 0)
+        self.assertEqual(
+            services.monthly_budgets(FY),
+            [services.monthly_budget({"fy": FY, "month": m}) for m in range(1, 13)],
+        )

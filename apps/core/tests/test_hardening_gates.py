@@ -140,6 +140,11 @@ class QueryBudgetScalingTest(TestCase):
         client.get(url)  # warm caches (permissions, sessions)
         before = self._measure(client, url)
         self._grow(self.INCREMENT, self.INCREMENT)
+        # The first load after new work rebuilds the ledger of the officers
+        # that work marked (apps.targets.ledger_sync) — a fixed batch whatever
+        # the size, which the warm-up above also absorbed before `before`.
+        # Settle it the same way, so both sides measure the steady page.
+        client.get(url)
         after = self._measure(client, url)
         self.assertLessEqual(
             after,

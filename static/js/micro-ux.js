@@ -1846,7 +1846,9 @@
     bars.forEach(function (bar) {
       bar.querySelectorAll('select[name]').forEach(function (select) {
         var applied = select.value && select.value !== 'all' && select.value !== 'All';
-        var empty = select.options.length < 2 && !applied;
+        /* A list still inert in its template is a choice, not an empty control. */
+        var lazy = select.querySelector(':scope > template[data-lazy-options]');
+        var empty = select.options.length < 2 && !applied && !(lazy && lazy.content.childElementCount);
         var shell = filterFieldShell(select);
         if (empty) {
           shell.hidden = true;
@@ -2055,6 +2057,31 @@
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);
   });
+  /* A long option list can arrive inert, in <template data-lazy-options>
+     inside its select (thousands of sub-counties or clusters behind a
+     closed "More filters"), so it costs the page no nodes until someone can
+     reach it. It becomes the select's options, in the server's order and
+     with its choice kept, when the disclosure around it opens or the select
+     itself is focused or pressed (P-5, 2026-09-25). */
+  function expandLazyOptions(select) {
+    var lazy = select && select.querySelector(':scope > template[data-lazy-options]');
+    if (!lazy) return;
+    var value = select.value;
+    var first = select.options[0];
+    select.replaceChildren(first, lazy.content);
+    select.value = value;
+  }
+  document.addEventListener('toggle', function (event) {
+    if (!event.target.open || !event.target.querySelectorAll) return;
+    event.target.querySelectorAll('select[data-lazy-options]').forEach(expandLazyOptions);
+  }, true);
+  ['focusin', 'pointerdown', 'mousedown', 'touchstart'].forEach(function (type) {
+    document.addEventListener(type, function (event) {
+      var select = event.target.closest && event.target.closest('select[data-lazy-options]');
+      if (select) expandLazyOptions(select);
+    }, { capture: true, passive: true });
+  });
+
   document.addEventListener('change', function (event) {
     var choice = event.target.closest && event.target.closest('.edify-record-table input[type="checkbox"]');
     var row = choice && choice.closest('tbody tr');

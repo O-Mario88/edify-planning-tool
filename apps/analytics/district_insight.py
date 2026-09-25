@@ -55,6 +55,8 @@ from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
+    map_score,
+    score_order,
 )
 from apps.core.enums import SsaIntervention
 
@@ -316,26 +318,31 @@ def district_insight(
             # confident "strongest" and "weakest" from a single pair.
             if int(group["n"].sum()) < MIN_SCORES_FOR_INTERVENTION_CALL:
                 continue
-            top = group.loc[group["avg"].idxmax()]
-            bottom = group.loc[group["avg"].idxmin()]
+            # Ranked on the mean without its summation noise, and in
+            # intervention order, so a tie resolves the same way on every load
+            # rather than by the order the grouped rows came back in.
+            group = group.sort_values("intervention", kind="stable")
+            ranked = group["avg"].map(score_order)
+            top = group.loc[ranked.idxmax()]
+            bottom = group.loc[ranked.idxmin()]
             if top["intervention"] == bottom["intervention"]:
                 continue  # only one intervention scored; nothing to contrast
             best_worst[did] = (
                 (
                     INTERVENTION_LABELS.get(top["intervention"], top["intervention"]),
-                    round(float(top["avg"]), 2),
+                    map_score(top["avg"]),
                 ),
                 (
                     INTERVENTION_LABELS.get(
                         bottom["intervention"], bottom["intervention"]
                     ),
-                    round(float(bottom["avg"]), 2),
+                    map_score(bottom["avg"]),
                 ),
             )
 
     # ── assemble ─────────────────────────────────────────────────────────────
     def num(v):
-        return None if pd.isna(v) else round(float(v), 2)
+        return None if pd.isna(v) else map_score(v)
 
     out: dict[str, dict[str, Any]] = {}
     for _i, r in base.iterrows():

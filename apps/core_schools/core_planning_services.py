@@ -1,6 +1,7 @@
 import logging
 from datetime import date
 
+from django.core.exceptions import EmptyResultSet
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from apps.core.logging_filters import escape_control_characters
@@ -551,7 +552,11 @@ class CoreSchoolsService:
             elif partner_assigned == "unassigned":
                 core_schools_qs = core_schools_qs.exclude(id__in=assigned_ids)
 
-        return core_schools_qs
+        # Newest first, as School's default ordering, with `id` settling
+        # schools created in the same instant (imports and seeds share a
+        # timestamp): without it the rows on a page changed between loads
+        # (owner-approved, 2026-09-24 A+ audit F-G).
+        return core_schools_qs.order_by("-created_at", "id")
 
     @staticmethod
     def self_heal_plans(core_schools_qs, fy: str, user) -> int:
@@ -1322,23 +1327,54 @@ class CorePlanningService:
         return queue_data
 
 
+def _scope_key(queryset) -> str:
+    """A per-request memo key for a scoped queryset: its SQL and parameters.
+
+    Two helpers given the same scope share one read; any other scope, however
+    it was built, is a different key. A scope that can match nothing has no
+    SQL, and all such scopes share one key.
+    """
+    try:
+        sql, params = queryset.query.sql_with_params()
+    except EmptyResultSet:
+        return f"{queryset.model._meta.label}:empty"
+    return f"{sql} {params!r}"
+
+
 class CoreAssessmentService:
     @staticmethod
-    def get_average_score(core_schools_qs) -> float:
-        """Gets average Core Assessment score for the core schools in scope."""
-        latest_record_ids = list(
+    def _latest_records(core_schools_qs):
+        """Each scoped school's latest live SSA record, as a DISTINCT ON query."""
+        return (
             SsaRecord.objects.filter(
                 school__in=core_schools_qs, deleted_at__isnull=True
             )
             .order_by("school_id", "-date_of_ssa")
             .distinct("school_id")
-            .values_list("id", flat=True)
         )
 
-        avg = SsaRecord.objects.filter(id__in=latest_record_ids).aggregate(
-            avg=Avg("average_score")
-        )["avg"]
-        return round(avg, 2) if avg is not None else 0.0
+    @staticmethod
+    def get_average_score(core_schools_qs) -> float:
+        """Gets average Core Assessment score for the core schools in scope.
+
+        The Core Schools page asks this twice for the same scope (the KPI strip
+        and the staff/partner benchmark), so a request answers it once. The
+        latest records are a subquery rather than a literal list of every
+        scoped record id (2026-09-24 A+ audit).
+        """
+        from apps.core.request_cache import memoize
+
+        def compute():
+            avg = SsaRecord.objects.filter(
+                id__in=CoreAssessmentService._latest_records(core_schools_qs).values(
+                    "id"
+                )
+            ).aggregate(avg=Avg("average_score"))["avg"]
+            return round(avg, 2) if avg is not None else 0.0
+
+        return memoize(
+            ("core_schools.average_score", _scope_key(core_schools_qs)), compute
+        )
 
     @staticmethod
     def get_monthly_trend(core_schools_qs) -> list:
@@ -1372,6 +1408,34 @@ class CoreAssessmentService:
 
 
 class CoreInterventionImpactService:
+    @staticmethod
+    def _score_totals(core_schools_qs) -> list[tuple]:
+        """(school code, intervention, SUM(score), COUNT) over every live SSA
+        score of the scoped schools, read once per request.
+
+        Intervention Impact and the staff/partner comparison both total the
+        same scores per (school, intervention); the page read them twice
+        (320 ms of an IA load at 50,000 schools, 2026-09-24 A+ audit).
+        """
+        from apps.core.request_cache import memoize
+
+        return memoize(
+            ("core_schools.score_totals", _scope_key(core_schools_qs)),
+            lambda: list(
+                SsaScore.objects.filter(
+                    ssa_record__deleted_at__isnull=True,
+                    ssa_record__school__school_id__in=core_schools_qs.values(
+                        "school_id"
+                    ),
+                )
+                .values_list("ssa_record__school__school_id", "intervention")
+                .annotate(total=Sum("score"), count=Count("id"))
+                .values_list(
+                    "ssa_record__school__school_id", "intervention", "total", "count"
+                )
+            ),
+        )
+
     @staticmethod
     def staff_partner_splits(core_schools_qs, fy: str) -> dict[str, tuple]:
         """Staff-vs-partner average scores for every intervention at once.
@@ -1409,17 +1473,12 @@ class CoreInterventionImpactService:
         # Every live score, summed per (school, intervention): the averages
         # below are over score rows, exactly as a SQL AVG over the union.
         totals = {"staff": {}, "partner": {}}
-        for school_id, intervention, total, count in (
-            SsaScore.objects.filter(
-                ssa_record__deleted_at__isnull=True,
-                ssa_record__school__school_id__in=school_codes,
-            )
-            .values_list("ssa_record__school__school_id", "intervention")
-            .annotate(total=Sum("score"), count=Count("id"))
-            .values_list(
-                "ssa_record__school__school_id", "intervention", "total", "count"
-            )
-        ):
+        for (
+            school_id,
+            intervention,
+            total,
+            count,
+        ) in CoreInterventionImpactService._score_totals(core_schools_qs):
             for side in sides.get((school_id, intervention), ()):
                 running = totals[side].setdefault(intervention, [0.0, 0])
                 running[0] += total
@@ -1586,16 +1645,10 @@ class CoreInterventionImpactService:
         }
 
         score_totals = {
-            (row["intervention"], row["ssa_record__school__school_id"]): (
-                row["total"],
-                row["count"],
+            (intervention, school_code): (total, count)
+            for school_code, intervention, total, count in (
+                CoreInterventionImpactService._score_totals(core_schools_qs)
             )
-            for row in SsaScore.objects.filter(
-                ssa_record__school__school_id__in=school_ids,
-                ssa_record__deleted_at__isnull=True,
-            )
-            .values("intervention", "ssa_record__school__school_id")
-            .annotate(total=Sum("score"), count=Count("id"))
         }
 
         trends_by_code: dict[str, list[float]] = {}
@@ -1746,14 +1799,8 @@ class CoreStaffPartnerPerformanceService:
         )
         cohort_ids = [row[0] for row in cohort]
 
-        latest_ids = list(
-            SsaRecord.objects.filter(school_id__in=cohort_ids, deleted_at__isnull=True)
-            .order_by("school_id", "-date_of_ssa")
-            .distinct("school_id")
-            .values_list("id", flat=True)
-        )
         latest_by_school = dict(
-            SsaRecord.objects.filter(id__in=latest_ids).values_list(
+            CoreAssessmentService._latest_records(core_schools_qs).values_list(
                 "school_id", "average_score"
             )
         )
@@ -1914,9 +1961,16 @@ class CoreRecommendationService:
     def get_recommendation_card(core_schools_qs) -> dict:
         """Prepares strategy, attention needed, and playbook data for right panel."""
         fy = get_operational_fy()
-        plans = CorePlan.objects.filter(
-            school_id__in=core_schools_qs.values_list("school_id", flat=True), fy=fy
-        ).prefetch_related("slots")
+        # Ordered by school code so the Attention Needed list is the same on
+        # every load (it followed the table's physical order; F-G).
+        plans = (
+            CorePlan.objects.filter(
+                school_id__in=core_schools_qs.values_list("school_id", flat=True),
+                fy=fy,
+            )
+            .order_by("school_id", "id")
+            .prefetch_related("slots")
+        )
 
         # Count over the prefetched slot lists in Python (a .filter() here would
         # re-query per plan) and bulk-load the schools once.

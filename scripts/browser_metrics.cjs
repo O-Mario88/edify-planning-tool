@@ -85,18 +85,25 @@ async function visit(context, path) {
   await page.waitForTimeout(SETTLE_MS);
 
   // One read-only interaction, the kind INP is made of.
+  // A page that opens a dialog on arrival covers both targets; the visit's
+  // paint and layout figures still stand, so the interaction is recorded as
+  // blocked rather than failing the visit.
   let interaction = 'none';
-  const search = page.locator('input[type="search"]:visible, input[name="q"]:visible').first();
-  if (await search.count()) {
-    await search.click();
-    await page.keyboard.type('pri', { delay: 60 });
-    interaction = 'type-search';
-  } else {
-    const heading = page.locator('h1:visible').first();
-    if (await heading.count()) {
-      await heading.click();
-      interaction = 'click-heading';
+  try {
+    const search = page.locator('input[type="search"]:visible, input[name="q"]:visible').first();
+    if (await search.count()) {
+      await search.click({ timeout: 5000 });
+      await page.keyboard.type('pri', { delay: 60 });
+      interaction = 'type-search';
+    } else {
+      const heading = page.locator('h1:visible').first();
+      if (await heading.count()) {
+        await heading.click({ timeout: 5000 });
+        interaction = 'click-heading';
+      }
     }
+  } catch (err) {
+    interaction = 'blocked';
   }
   await page.waitForTimeout(1200);
 
