@@ -189,8 +189,6 @@ class FiltersAndTotalsTest(MonitoringFixture):
     def setUp(self):
         super().setUp()
         past = date.today() - timedelta(days=3)
-        self.awaiting = self.assign()
-        self.overdue = self.assign(school=self.second_school, scheduled_date=past)
         self.scheduled = self.assign()
         self.schedule(self.scheduled)
         self.submitted = self.assign(school=self.second_school)
@@ -222,6 +220,10 @@ class FiltersAndTotalsTest(MonitoringFixture):
             return_reason_category="capacity",
             return_reason="No facilitator free this term.",
         )
+        # The two still waiting come last: a school waits on the same partner
+        # once at a time, so they cannot sit open while the others are made.
+        self.awaiting = self.assign()
+        self.overdue = self.assign(school=self.second_school, scheduled_date=past)
         self.items = svc.build_items(self.pl_user, fy=self.fy)
 
     def matching(self, key):

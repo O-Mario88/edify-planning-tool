@@ -216,7 +216,9 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
             school=cls.school,
             partner=cls.partner,
             focus_intervention=SsaIntervention.GOVERNMENT_REQUIREMENT,
-            status=PartnerAssignment.STATUS_ASSIGNED,
+            # Scheduled: the school already waits on this partner above, and
+            # a school is assigned to the same partner once at a time.
+            status=PartnerAssignment.STATUS_SCHEDULED,
         )
         cls.cceo = User.objects.create_user(
             email="bt-portfolio-cceo@example.org",

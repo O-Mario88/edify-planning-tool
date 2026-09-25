@@ -508,17 +508,16 @@ def special_projects_bulk_partner_view(request):
             fallback_activity_type=catalogue_item.workflow_kind,
         )
         created = 0
+        skipped = 0
         with transaction.atomic():
             for assignment in assignments:
                 recommendation = by_assignment[assignment.id][catalogue_item_id]
-                duplicate = PartnerAssignment.objects.filter(
-                    school=assignment.school,
-                    partner=partner,
-                    project_id=assignment.project_id,
-                    catalogue_item=catalogue_item,
-                    status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
-                ).exists()
-                if duplicate:
+                # A school the partner already has waiting is not handed to
+                # it again, from this project or any other (owner,
+                # 2026-09-24). Skipped rather than refused, so one such school
+                # does not cost the rest of the selection.
+                if PartnerAssignment.has_open_assignment(assignment.school, partner):
+                    skipped += 1
                     continue
                 partner_services.create_assignment(
                     school=assignment.school,
@@ -542,8 +541,14 @@ def special_projects_bulk_partner_view(request):
                     notes=f"Project: {assignment.project.name}",
                 )
                 created += 1
+        message = f"Assigned {created} project school activities to {partner.name}."
+        if skipped:
+            message += (
+                f" {skipped} school{'s were' if skipped != 1 else ' was'} "
+                f"already assigned to {partner.name} and left as they were."
+            )
         return _saved_without_leaving(
-            f"Assigned {created} project school activities to {partner.name}.",
+            message,
             plan_url="/projects/my-plan",
             plan_link_label="Open My Plan",
         )
@@ -2497,11 +2502,13 @@ def bulk_action_view(request):
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
         )
-        dedup_window = timezone.timedelta(seconds=15)
-
         try:
             with transaction.atomic():
                 for s in schools:
+                    # Already waiting with this partner: skipped, not
+                    # assigned a second time (owner, 2026-09-24).
+                    if PartnerAssignment.has_open_assignment(s, partner):
+                        continue
                     result = recommend_activities(
                         school=s,
                         principal=request.user,
@@ -2513,14 +2520,6 @@ def bulk_action_view(request):
                             f"No Partner-deliverable Catalogue Activity is eligible for {s.name}."
                         )
                     recommendation = result["primary"][0]
-                    if PartnerAssignment.objects.filter(
-                        school=s,
-                        partner=partner,
-                        assigning_staff_id=monitored_by_staff_id,
-                        catalogue_item_id=recommendation["catalogueItemId"],
-                        created_at__gte=timezone.now() - dedup_window,
-                    ).exists():
-                        continue
                     from apps.activity_catalogue.models import ActivityCatalogueItem
 
                     item = ActivityCatalogueItem.objects.get(

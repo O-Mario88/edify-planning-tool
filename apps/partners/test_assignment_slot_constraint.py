@@ -54,7 +54,11 @@ class PartnerSlotFixture(TestCase):
             "assigning_staff_id": "cceo-1",
             "monitoring_staff_id": "cceo-1",
             "expected_activity_type": "school_visit",
-            "status": PartnerAssignment.STATUS_ASSIGNED,
+            # Scheduled, not open: a second OPEN handover of a school to the
+            # same partner is refused by PartnerAssignment.save before the
+            # database sees it (test_open_assignment_once covers that). These
+            # tests are about the slot index, which holds for every live row.
+            "status": PartnerAssignment.STATUS_SCHEDULED,
         }
         fields.update(over)
         return PartnerAssignment.objects.create(**fields)
@@ -100,6 +104,9 @@ class PartnerSlotConstraintTest(PartnerSlotFixture):
         """A clash needs a slot. Support slots are a Core-package concept;
         ordinary handovers name none, and two of those at one school are two
         different pieces of work — the same carve-out the health check makes.
+
+        Once scheduled, that is. While one is still waiting on the partner a
+        second is refused (owner, 2026-09-24; test_open_assignment_once).
         """
         first = self.assign()
         second = self.assign()
