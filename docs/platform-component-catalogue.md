@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **489**
+Components and application partials: **490**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -351,10 +351,11 @@ Components and application partials: **489**
 | `partials/oversight/_core_schools_table.html` | application-partial | Reusable  core schools table interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /core-schools-oversight/ | 0 |
 | `partials/oversight/_core_work_table.html` | application-partial | Reusable  core work table interface primitive | {{ item.session_tone }}; default, empty | explicit responsive contract | accessible name and label | /core-schools-oversight/ | 0 |
 | `partials/oversight/_lens_tabs.html` | application-partial | Reusable  lens tabs interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/oversight/_officer_panel_body.html` | application-partial | Reusable  officer panel body interface primitive | canonical; default | explicit responsive contract | accessible name and label | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_partner_view_button.html` | application-partial | Reusable  partner view button interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/_row_actions.html` | application-partial | Reusable  row actions interface primitive | canonical; default, open | inherits containing page contract | inherits semantic parent contract | /cluster-oversight/<br>/country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/allowance_grant_drawer.html` | application-partial | Reusable allowance grant drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner-oversight/allowance-drawer | 0 |
-| `partials/oversight/cd_team_detail.html` | application-partial | Reusable cd team detail interface primitive | canonical; default, selected, open | explicit responsive contract | accessible name and label | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/oversight/cd_team_detail.html` | application-partial | Reusable cd team detail interface primitive | canonical; default, selected, open | inherits containing page contract | accessible name and label | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/cd_workspace.html` | application-partial | Reusable cd workspace interface primitive | executive; default, selected, open | explicit responsive contract | accessible name and label | /country-planning-oversight/ | 0 |
 | `partials/oversight/cluster_activity_table.html` | application-partial | Reusable cluster activity table interface primitive | {{ item.session_tone }}; default, empty | explicit responsive contract | accessible name and label | /cluster-oversight/ | 0 |
 | `partials/oversight/cluster_member_work.html` | application-partial | Reusable cluster member work interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /cluster-oversight/ | 0 |

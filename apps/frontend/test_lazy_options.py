@@ -56,4 +56,4 @@ class LazyOptionsTest(SimpleTestCase):
         self.assertIn("function expandLazyOptions(select)", script)
         self.assertIn("select.replaceChildren(first, lazy.content)", script)
         # A select whose list is still inert is not an empty filter.
-        self.assertIn("lazy.content.childElementCount", script)
+        self.assertIn("!(lazy && lazy.content.childElementCount)", script)

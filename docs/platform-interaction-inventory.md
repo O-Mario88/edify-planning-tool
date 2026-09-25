@@ -6,7 +6,7 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 534 |
+| Templates with controls | 535 |
 | Control declarations | 3411 |
 | State-changing | 411 |
 | High-consequence (state-changing) | 182 |

@@ -1846,9 +1846,9 @@
     bars.forEach(function (bar) {
       bar.querySelectorAll('select[name]').forEach(function (select) {
         var applied = select.value && select.value !== 'all' && select.value !== 'All';
+        /* A list still inert in its template is a choice, not an empty control. */
         var lazy = select.querySelector(':scope > template[data-lazy-options]');
-        var count = select.options.length + (lazy ? lazy.content.childElementCount : 0);
-        var empty = count < 2 && !applied;
+        var empty = select.options.length < 2 && !applied && !(lazy && lazy.content.childElementCount);
         var shell = filterFieldShell(select);
         if (empty) {
           shell.hidden = true;
