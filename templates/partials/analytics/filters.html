@@ -57,17 +57,24 @@ tiles and the panel move together and can never describe different scopes.{% end
 
         <label class="analytics-filter-field">
           <span class="edify-filter-label">Sub-county</span>
-          <select aria-label="Sub-County" name="sub_county">
+          {% comment %}The two long lists (every sub-county and cluster in scope, ~2,500
+          options each) are handed to the page inert, in a <template>, and become
+          options when More filters opens or the select is reached (micro-ux.js).
+          Until then the select holds "All" and the chosen value, so what it shows
+          and what the form sends are unchanged (P-5, owner-approved 2026-09-25).{% endcomment %}
+          <select aria-label="Sub-County" name="sub_county" data-lazy-options>
             <option value="">All sub-counties</option>
-            {% for sc in sub_counties %}<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>{% endfor %}
+            {% for sc in sub_counties %}{% if filters.selected_sub_county == sc.id %}<option value="{{ sc.id }}" selected>{{ sc.district.name }} · {{ sc.name }}</option>{% endif %}{% endfor %}
+            <template data-lazy-options>{% for sc in sub_counties %}<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>{% endfor %}</template>
           </select>
         </label>
 
         <label class="analytics-filter-field">
           <span class="edify-filter-label">Cluster</span>
-          <select aria-label="Cluster" name="cluster">
+          <select aria-label="Cluster" name="cluster" data-lazy-options>
             <option value="">All clusters</option>
-            {% for c in clusters %}<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+            {% for c in clusters %}{% if filters.selected_cluster == c.id %}<option value="{{ c.id }}" selected>{{ c.name }}</option>{% endif %}{% endfor %}
+            <template data-lazy-options>{% for c in clusters %}<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</template>
           </select>
         </label>
 

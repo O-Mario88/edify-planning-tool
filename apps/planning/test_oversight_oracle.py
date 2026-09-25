@@ -2159,7 +2159,17 @@ class PageOracleTest(OracleFixture):
         partial instead of asking again per row; the old rows, restored from
         the live file, must draw the same page."""
         path = settings.BASE_DIR / "templates/partials/oversight/cd_team_detail.html"
-        live_source = path.read_text()
+        # The rows live in the officer panel body since P-5 (2026-09-25); it is
+        # inlined where the detail includes it, so both variants below differ
+        # only in the row condition.
+        body_path = (
+            settings.BASE_DIR / "templates/partials/oversight/_officer_panel_body.html"
+        )
+        body_source = body_path.read_text()
+        include = '{% include "partials/oversight/_officer_panel_body.html" %}'
+        detail_source = path.read_text()
+        self.assertEqual(detail_source.count(include), 2)
+        live_source = detail_source.replace(include, body_source)
         new_row = (
             "{% if item.activity_id and can_open_activity_record and "
             'request.user.active_role != "Accountant" %}'
@@ -2168,7 +2178,7 @@ class PageOracleTest(OracleFixture):
             '{% if item.activity_id and request.user|can_open:"/activities/0" and '
             'request.user.active_role != "Accountant" %}'
         )
-        self.assertEqual(live_source.count(new_row), 2)
+        self.assertEqual(body_source.count(new_row), 2)
         engine = engines["django"]
         live_template = engine.from_string(live_source)
         old_template = engine.from_string(live_source.replace(new_row, old_row))

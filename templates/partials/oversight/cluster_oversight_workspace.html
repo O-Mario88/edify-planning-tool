@@ -38,15 +38,20 @@
       {% endfor %}
     </nav>
     {% tab_initial cceo_tabs "officer" "my-clusters" as initial_officer %}
+    {% comment %}Only the panel the strip opens on is in the document; the others
+    stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+    Alpine creates one when its tab is picked; htmx is told about it then,
+    and micro-ux.js already dresses inserted content.{% endcomment %}
+
     {% for officer in cceo_tabs %}
-    <section x-show="activeOfficer === '{{ officer.id }}'"{% if officer.id|stringformat:"s" != initial_officer %} x-cloak{% endif %} id="cluster-officer-panel-{{ officer.id }}" role="tabpanel" class="card p-0 overflow-hidden">
+    {% if officer.id|stringformat:"s" == initial_officer %}<section x-show="activeOfficer === '{{ officer.id }}'" id="cluster-officer-panel-{{ officer.id }}" role="tabpanel" class="card p-0 overflow-hidden">{% else %}<template x-if="activeOfficer === '{{ officer.id }}'"><section id="cluster-officer-panel-{{ officer.id }}" role="tabpanel" class="card p-0 overflow-hidden" x-init="window.htmx && htmx.process($el)">{% endif %}
       <header class="edify-table-titlebar flex flex-wrap items-center gap-2 px-4 py-3">
         <h3>{{ officer.name }}{% if officer.id != 'my-clusters' %}'s Clusters{% endif %}</h3>
         <span>{{ officer.count }} clusters · {{ officer.schools }} member schools</span>
       </header>
       {% include "partials/oversight/_cluster_table.html" with clusters=officer.clusters page_param="cl-"|add:officer.id %}
       {% include "partials/oversight/cluster_member_work.html" with member=officer %}
-    </section>
+    </section>{% if not officer.id|stringformat:"s" == initial_officer %}</template>{% endif %}
     {% endfor %}
   </div>
   {% elif leads %}
@@ -73,8 +78,13 @@
 
     {# Level 2: CCEO Tabs under each PL #}
     {% firstof selected_program_lead leads.0.id as lead_fallback %}{% tab_initial leads "lead" lead_fallback as initial_lead %}
+    {% comment %}Only the panel the strip opens on is in the document; the others
+    stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+    Alpine creates one when its tab is picked; htmx is told about it then,
+    and micro-ux.js already dresses inserted content.{% endcomment %}
+
     {% for lead in leads %}
-    <div x-show="activeLead === '{{ lead.id }}'"{% if lead.id|stringformat:"s" != initial_lead %} x-cloak{% endif %} id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
+    {% if lead.id|stringformat:"s" == initial_lead %}<div x-show="activeLead === '{{ lead.id }}'" id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">{% else %}<template x-if="activeLead === '{{ lead.id }}'"><div id="cluster-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4" x-init="window.htmx && htmx.process($el)">{% endif %}
       {% if lead.cceo_tabs %}
       <div x-data="tabState('activeOfficer', 'officer-{{ lead.id }}', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
         <div class="oversight-team-selector">
@@ -100,8 +110,13 @@
         </div>
 
         {% tab_initial lead.cceo_tabs "officer-" lead.cceo_tabs.0.id suffix=lead.id as initial_officer %}
+        {% comment %}Only the panel the strip opens on is in the document; the others
+        stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+        Alpine creates one when its tab is picked; htmx is told about it then,
+        and micro-ux.js already dresses inserted content.{% endcomment %}
+
         {% for cceo in lead.cceo_tabs %}
-        <div x-show="activeOfficer === '{{ cceo.id }}'"{% if cceo.id|stringformat:"s" != initial_officer %} x-cloak{% endif %} id="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
+        {% if cceo.id|stringformat:"s" == initial_officer %}<div x-show="activeOfficer === '{{ cceo.id }}'" id="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">{% else %}<template x-if="activeOfficer === '{{ cceo.id }}'"><div id="cluster-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3" x-init="window.htmx && htmx.process($el)">{% endif %}
           <div class="card p-0 overflow-hidden shadow-xs border edify-border">
             <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
               <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
@@ -113,7 +128,7 @@
             {% include "partials/oversight/_cluster_table.html" with clusters=cceo.clusters page_param="cl-"|add:cceo.id %}
             {% include "partials/oversight/cluster_member_work.html" with member=cceo %}
           </div>
-        </div>
+        </div>{% if not cceo.id|stringformat:"s" == initial_officer %}</template>{% endif %}
         {% endfor %}
       </div>
       {% else %}
@@ -121,7 +136,7 @@
         No clusters assigned under this Program Lead.
       </div>
       {% endif %}
-    </div>
+    </div>{% if not lead.id|stringformat:"s" == initial_lead %}</template>{% endif %}
     {% endfor %}
   </div>
   {% else %}

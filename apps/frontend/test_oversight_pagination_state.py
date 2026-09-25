@@ -278,8 +278,9 @@ class CountryTeamFragmentTests(SimpleTestCase):
             "partials/oversight/cd_workspace.html",
             {**self._context(groups, "G1"), "groups": groups},
         )
-        # What the panel compares against, and what the strip offers, agree.
-        self.assertIn("x-show=\"activeLead === 'None'\"", body)
+        # What the panel compares against, and what the strip offers, agree
+        # (an unopened panel is an x-if template since P-5, the open one x-show).
+        self.assertIn("activeLead === 'None'\"", body)
         self.assertIn("&quot;None&quot;", body)
 
     def _body(self, url, selected_lead):

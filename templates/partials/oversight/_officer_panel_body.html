@@ -1,0 +1,450 @@
+{% load frontend_filters table_pagination school_identity %}
+{% comment %}One officer's four tables, for cd_team_detail.html (the open panel is
+rendered in place, the others inside a <template>). Reads the loop's `group`
+and `forloop` from the including context.{% endcomment %}
+    {# ── Officer Header Summary ───────────────────────────────────────── #}
+    <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border edify-border">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full edify-avatar-neutral text-slate-800 dark:text-slate-100 flex items-center justify-center font-bold text-xs">
+          {{ group.name|slice:":2"|upper }}
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {% if group.id %}<a href="/staff/{{ group.id }}" class="hover:underline edify-primary-text-hover">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}
+            <span class="pill pill-neutral text-xs">Field Plan</span>
+          </h4>
+          <p class="edify-text-caption edify-text-muted">
+            {% firstof group.summary.total_planned group.items|length "0" %} planned activities · UGX {{ group.summary.planned_budget|default:0|intcomma }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="pill pill-info font-medium">{% firstof group.summary.total_planned group.items|length "0" %} planned</span>
+        <span class="pill pill-neutral">{{ group.client_school_visits|length }} client visits</span>
+        <span class="pill pill-neutral">{{ group.core_school_visits|length }} core visits</span>
+        <span class="pill pill-neutral">{{ group.cluster_meetings|length }} meetings</span>
+        <span class="pill pill-neutral">{{ group.planned_trainings|length }} trainings</span>
+        <span class="font-bold tabular-nums text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+          UGX {{ group.summary.planned_budget|default:0|intcomma }}
+        </span>
+        {% if group.summary.at_risk %}
+        <span class="pill pill-danger font-bold">{{ group.summary.at_risk }} at risk</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── TABLE 1: Client School Visits ────────────────────────────────── #}
+    <section class="card p-0 overflow-hidden shadow-xs border edify-border" aria-labelledby="heading-client-visits-{{ forloop.counter }}">
+      <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="w-6 h-6 rounded edify-avatar-neutral flex items-center justify-center font-bold text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h5 id="heading-client-visits-{{ forloop.counter }}" class="font-bold text-sm text-slate-900 dark:text-white">
+            1. Client School Visits
+          </h5>
+          <span class="pill pill-info text-xs font-semibold">{{ group.client_school_visits|length }}</span>
+        </div>
+        <span class="edify-text-caption edify-text-muted">Standard support, coaching, follow-ups</span>
+      </div>
+
+      {% if group.client_school_visits %}
+      <div class="overflow-x-auto">
+        {% paginate group.client_school_visits group.page_param|add:"-cv" as cv_pager %}
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y edify-border text-sm">
+            {% for item in cv_pager.rows %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
+                {% firstof item.school_code item.school_id "—" %}
+              </td>
+              <td class="px-4 py-2.5 font-semibold min-w-[240px]">
+                {% if item.school_id %}
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{{ item.school_name|default:"—" }}</a>
+                {% else %}
+                <span class="text-slate-800 dark:text-slate-200">{{ item.school_name|default:"—" }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
+                <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
+                {% else %}
+                <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"School Visit" }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
+                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.is_partner_work %}
+                <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                {% else %}
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
+                {{ item.purpose_of_visit|default:"—" }}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.target_intervention %}
+                <span class="pill pill-neutral text-xs font-medium">{{ item.target_intervention|status_label }}</span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
+                <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
+                  {{ item.activity_status|status_label }}
+                </span>
+                {% endif %}
+              </td>
+              {% include "partials/oversight/_row_actions.html" %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=cv_pager param=group.page_param|add:"-cv" pagination_label="Client school visits" %}
+      </div>
+      {% else %}
+      <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
+        No client school visits scheduled for this officer in the selected period.
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── TABLE 2: Core School Visits ─────────────────────────────────── #}
+    <section class="card p-0 overflow-hidden shadow-xs border edify-border" aria-labelledby="heading-core-visits-{{ forloop.counter }}">
+      <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h5 id="heading-core-visits-{{ forloop.counter }}" class="font-bold text-sm text-slate-900 dark:text-white">
+            2. Core School Visits
+          </h5>
+          <span class="pill pill-success text-xs font-semibold">{{ group.core_school_visits|length }}</span>
+        </div>
+        <span class="edify-text-caption edify-text-muted">Core package visit slots (4/year targeted)</span>
+      </div>
+
+      {% if group.core_school_visits %}
+      <div class="overflow-x-auto">
+        {% paginate group.core_school_visits group.page_param|add:"-kv" as kv_pager %}
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Activity</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y edify-border text-sm">
+            {% for item in kv_pager.rows %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
+                {% firstof item.school_code item.school_id "—" %}
+              </td>
+              <td class="px-4 py-2.5 font-semibold min-w-[240px]">
+                {% if item.school_id %}
+                <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{{ item.school_name|default:"—" }}</a>
+                {% else %}
+                <span class="text-slate-800 dark:text-slate-200">{{ item.school_name|default:"—" }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                {{ item.district_name|default:"—" }}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
+                <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|status_label }}</a>
+                {% else %}
+                <span class="font-medium text-slate-800 dark:text-slate-200">{{ item.activity_type|status_label|default:"Core Visit" }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
+                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.is_partner_work %}
+                <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                {% else %}
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
+                {{ item.purpose_of_visit|default:"—" }}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.target_intervention %}
+                <span class="pill pill-neutral text-xs font-medium">{{ item.target_intervention|status_label }}</span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
+                <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
+                  {{ item.activity_status|status_label }}
+                </span>
+                {% endif %}
+              </td>
+              {% include "partials/oversight/_row_actions.html" %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=kv_pager param=group.page_param|add:"-kv" pagination_label="Core school visits" %}
+      </div>
+      {% else %}
+      <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
+        No core school visits scheduled for this officer in the selected period.
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── TABLE 3: Cluster Meetings ────────────────────────────────────── #}
+    <section class="card p-0 overflow-hidden shadow-xs border edify-border" aria-labelledby="heading-meetings-{{ forloop.counter }}">
+      <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="w-6 h-6 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h5 id="heading-meetings-{{ forloop.counter }}" class="font-bold text-sm text-slate-900 dark:text-white">
+            3. Cluster Meetings
+          </h5>
+          <span class="pill pill-warn text-xs font-semibold">{{ group.cluster_meetings|length }}</span>
+        </div>
+        <span class="edify-text-caption edify-text-muted">Cluster leader convening and SSA reviews</span>
+      </div>
+
+      {% if group.cluster_meetings %}
+      <div class="overflow-x-auto">
+        {% paginate group.cluster_meetings group.page_param|add:"-cm" as cm_pager %}
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Cluster Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose (Meeting Topic)</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]">Participants</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y edify-border text-sm">
+            {% for item in cm_pager.rows %}
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="px-4 py-2.5 font-semibold min-w-[200px]">
+                {% if item.cluster_id %}
+                <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white">{% firstof item.cluster_name item.context_label %}</a>
+                {% else %}
+                <span class="text-slate-800 dark:text-slate-200">{% firstof item.cluster_name item.context_label %}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400">
+                {{ item.district_name|default:"—" }}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
+                {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-800 dark:text-slate-200">
+                {% firstof item.executor_name group.name %}
+              </td>
+              <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
+                {% firstof item.purpose_of_visit item.operational_rationale "Cluster Meeting" %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.target_intervention %}
+                <span class="pill pill-neutral text-xs font-medium">{{ item.target_intervention|status_label }}</span>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap text-center tabular-nums font-semibold text-slate-800 dark:text-slate-200" data-label="Participants">
+                {{ item.participants|default:"—" }}
+              </td>
+              <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
+                {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if item.is_awaiting_partner_schedule %}
+                <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% else %}
+                <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
+                  {{ item.activity_status|status_label }}
+                </span>
+                {% endif %}
+              </td>
+              {% include "partials/oversight/_row_actions.html" %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=cm_pager param=group.page_param|add:"-cm" pagination_label="Cluster meetings" %}
+      </div>
+      {% else %}
+      <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
+        No cluster meetings scheduled for this officer in the selected period.
+      </div>
+      {% endif %}
+    </section>
+
+    {# ── TABLE 4: Schools with Planned Training ───────────────────────── #}
+    <section class="card p-0 overflow-hidden shadow-xs border edify-border" aria-labelledby="heading-trainings-{{ forloop.counter }}">
+      <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="w-6 h-6 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h5 id="heading-trainings-{{ forloop.counter }}" class="font-bold text-sm text-slate-900 dark:text-white">
+            4. Schools with Planned Training
+          </h5>
+          <span class="pill pill-info text-xs font-semibold">{{ group.planned_trainings|length }}</span>
+        </div>
+        <span class="edify-text-caption edify-text-muted">In-school and group/cluster training sessions</span>
+      </div>
+
+      {% if group.planned_trainings %}
+      <div class="overflow-x-auto">
+        {% paginate group.planned_trainings group.page_param|add:"-pt" as pt_pager %}
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[240px]">School Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Cluster Planned From</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Executor</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[170px]">Training Name</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Planned Date</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[90px]">Participants</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Delivery Type</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y edify-border text-sm">
+              {% for item in pt_pager.rows %}
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
+                  {% if item.school_code and item.school_code != '—' %}{{ item.school_code }}{% elif item.school_id %}{{ item.school_id }}{% else %}—{% endif %}
+                </td>
+                <td class="px-4 py-2.5 font-semibold min-w-[240px]">
+                  {% if item.school_id %}
+                  <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}{% firstof item.school_code item.school_id %}{% endif %}</a>
+                  {% else %}
+                  <span class="text-slate-800 dark:text-slate-200">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}—{% endif %}</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-2.5">
+                  {% if item.cluster_planned_from == "School Visit" %}
+                  <span class="pill pill-neutral text-xs font-semibold">School Visit</span>
+                  {% elif item.cluster_id %}
+                  <a href="/clusters/{{ item.cluster_id }}" class="hover:underline font-medium text-slate-800 dark:text-slate-200">{{ item.cluster_planned_from }}</a>
+                  {% else %}
+                  <span class="text-slate-700 dark:text-slate-300">{{ item.cluster_planned_from }}</span>
+                  {% endif %}
+                  {% if item.is_cluster_invited %}
+                  <span class="pill pill-info text-xs py-0 px-1.5 font-bold ml-1">Invited</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-2.5">
+                  {% if item.is_partner_work %}
+                  <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                  {% else %}
+                  <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-2.5 font-medium text-slate-900 dark:text-white">
+                  {% firstof item.training_name|status_label item.activity_type|status_label %}
+                </td>
+                <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
+                  {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+                </td>
+                <td class="px-4 py-2.5">
+                  {% if item.target_intervention %}
+                  <span class="pill pill-neutral text-xs font-medium">{{ item.target_intervention|status_label }}</span>
+                  {% else %}
+                  <span class="text-slate-400">—</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-2.5 text-center font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+                  {{ item.participants }}
+                </td>
+                <td class="px-4 py-2.5">
+                  <span class="pill {% if item.delivery_type == 'in-school' %}pill-neutral{% else %}pill-info{% endif %} text-xs font-semibold">
+                    {{ item.delivery_type|default:"group" }}
+                  </span>
+                </td>
+                <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
+                  {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
+                </td>
+                <td class="px-4 py-2.5">
+                  {% if item.is_awaiting_partner_schedule %}
+                  <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                  {% else %}
+                  <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
+                    {{ item.activity_status|status_label }}
+                  </span>
+                  {% endif %}
+                </td>
+                {% include "partials/oversight/_row_actions.html" %}
+              </tr>
+              {% endfor %}
+          </tbody>
+        </table>
+        {% include "components/table_pager.html" with pager=pt_pager param=group.page_param|add:"-pt" pagination_label="Planned trainings" %}
+      </div>
+      {% else %}
+      <div class="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50/30">
+        No schools with planned training for this officer in the selected period.
+      </div>
+      {% endif %}
+    </section>

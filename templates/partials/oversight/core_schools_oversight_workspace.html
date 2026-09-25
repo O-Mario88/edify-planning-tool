@@ -39,8 +39,13 @@
       </div>
 
       {% tab_initial cceo_tabs "cceo" cceo_tabs.0.id as initial_cceo %}
+      {% comment %}Only the panel the strip opens on is in the document; the others
+      stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+      Alpine creates one when its tab is picked; htmx is told about it then,
+      and micro-ux.js already dresses inserted content.{% endcomment %}
+
       {% for cceo in cceo_tabs %}
-      <div x-show="activeCceo === '{{ cceo.id }}'"{% if cceo.id|stringformat:"s" != initial_cceo %} x-cloak{% endif %} id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3">
+      {% if cceo.id|stringformat:"s" == initial_cceo %}<div x-show="activeCceo === '{{ cceo.id }}'" id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3">{% else %}<template x-if="activeCceo === '{{ cceo.id }}'"><div id="core-officer-panel-{{ cceo.id }}" role="tabpanel" class="space-y-3" x-init="window.htmx && htmx.process($el)">{% endif %}
         <div class="card p-0 overflow-hidden shadow-xs border edify-border">
           <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
             <h3 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
@@ -53,7 +58,7 @@
           {% include "partials/oversight/_core_work_table.html" with work=cceo.core_work owner_name=cceo.name page_param="cw-"|add:cceo.id %}
           {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
         </div>
-      </div>
+      </div>{% if not cceo.id|stringformat:"s" == initial_cceo %}</template>{% endif %}
       {% endfor %}
     </div>
     {% else %}
@@ -89,8 +94,13 @@
 
       {# Level 2: CCEO Tabs under each PL #}
       {% tab_initial leads "lead" leads.0.id as initial_lead %}
+      {% comment %}Only the panel the strip opens on is in the document; the others
+      stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+      Alpine creates one when its tab is picked; htmx is told about it then,
+      and micro-ux.js already dresses inserted content.{% endcomment %}
+
       {% for lead in leads %}
-      <div x-show="activeLead === '{{ lead.id }}'"{% if lead.id|stringformat:"s" != initial_lead %} x-cloak{% endif %} id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">
+      {% if lead.id|stringformat:"s" == initial_lead %}<div x-show="activeLead === '{{ lead.id }}'" id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4">{% else %}<template x-if="activeLead === '{{ lead.id }}'"><div id="core-lead-panel-{{ lead.id }}" role="tabpanel" class="space-y-4" x-init="window.htmx && htmx.process($el)">{% endif %}
         {% if lead.cceo_tabs %}
         <div x-data="tabState('activeOfficer', 'officer', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
           <div class="oversight-team-selector">
@@ -116,8 +126,13 @@
           </div>
 
           {% tab_initial lead.cceo_tabs "officer" lead.cceo_tabs.0.id as initial_officer %}
+          {% comment %}Only the panel the strip opens on is in the document; the others
+          stay inert in a <template> until chosen (P-5, owner-approved 2026-09-25).
+          Alpine creates one when its tab is picked; htmx is told about it then,
+          and micro-ux.js already dresses inserted content.{% endcomment %}
+
           {% for cceo in lead.cceo_tabs %}
-          <div x-show="activeOfficer === '{{ cceo.id }}'"{% if cceo.id|stringformat:"s" != initial_officer %} x-cloak{% endif %} id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">
+          {% if cceo.id|stringformat:"s" == initial_officer %}<div x-show="activeOfficer === '{{ cceo.id }}'" id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3">{% else %}<template x-if="activeOfficer === '{{ cceo.id }}'"><div id="core-cceo-panel-{{ lead.id }}-{{ cceo.id }}" role="tabpanel" class="space-y-3" x-init="window.htmx && htmx.process($el)">{% endif %}
             <div class="card p-0 overflow-hidden shadow-xs border edify-border">
               <div class="edify-table-titlebar px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b edify-border flex flex-wrap items-center justify-between">
                 <h4 class="font-bold text-sm text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
@@ -130,7 +145,7 @@
               {% include "partials/oversight/_core_work_table.html" with work=cceo.core_work owner_name=cceo.name page_param="cw-"|add:lead.id|add:"-"|add:cceo.id %}
               {% include "partials/core_schools/programme_sections.html" with programme_sections=cceo.programme_sections %}
             </div>
-          </div>
+          </div>{% if not cceo.id|stringformat:"s" == initial_officer %}</template>{% endif %}
           {% endfor %}
         </div>
         {% else %}
@@ -138,7 +153,7 @@
           No core schools assigned under this Program Lead.
         </div>
         {% endif %}
-      </div>
+      </div>{% if not lead.id|stringformat:"s" == initial_lead %}</template>{% endif %}
       {% endfor %}
     </div>
     {% else %}

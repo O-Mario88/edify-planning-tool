@@ -97,7 +97,8 @@
                   {% csrf_token %}
                   <select name="status" required class="w-full text-sm">{% for value, label in application.allowed_status_choices %}<option value="{{ value }}" {% if application.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
                   <input name="nextFollowUpOn" type="date" value="{{ application.next_follow_up_on|date:'Y-m-d' }}" class="w-full text-sm" aria-label="Next follow-up date">
-                  <select name="linkedLoanId" class="w-full text-sm" aria-label="Linked processed loan"><option value="">No linked loan</option>{% for loan in loans %}<option value="{{ loan.id }}" {% if application.linked_loan_id == loan.id %}selected{% endif %}>{% school_identity loan.school.name loan.school.id %} · {{ loan.external_loan_reference }}</option>{% endfor %}</select>
+                  {% comment %}Every processed loan, in every row: handed over inert and made options
+                  when this follow-up opens (micro-ux.js, P-5, owner-approved 2026-09-25).{% endcomment %}<select name="linkedLoanId" class="w-full text-sm" aria-label="Linked processed loan" data-lazy-options><option value="">No linked loan</option>{% for loan in loans %}{% if application.linked_loan_id == loan.id %}<option value="{{ loan.id }}" selected>{% school_identity loan.school.name loan.school.id %} · {{ loan.external_loan_reference }}</option>{% endif %}{% endfor %}<template data-lazy-options>{% for loan in loans %}<option value="{{ loan.id }}" {% if application.linked_loan_id == loan.id %}selected{% endif %}>{% school_identity loan.school.name loan.school.id %} · {{ loan.external_loan_reference }}</option>{% endfor %}</template></select>
                   <textarea name="note" required rows="2" class="w-full text-sm" placeholder="Follow-up note"></textarea>
                   <button type="submit" class="btn btn-primary h-8 w-full">Save follow-up</button>
                 </form>
