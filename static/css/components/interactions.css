@@ -1199,7 +1199,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   border-radius: var(--radius-control, 8px);
   background: var(--edify-surface);
   color: var(--edify-text);
-  font-size: var(--edify-text-label-size, 0.75rem);
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -1234,7 +1234,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   border-radius: 999px;
   background: var(--color-edify-primary);
   color: #fff;
-  font-size: var(--edify-text-micro-size, 0.6875rem);
+  font-size: var(--edify-text-micro-size);
   font-variant-numeric: tabular-nums;
 }
 
