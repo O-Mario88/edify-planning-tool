@@ -1381,58 +1381,95 @@ main .edify-filter-row > label.edify-filter-row__field {
   letter-spacing: normal;
 }
 
-/* ─── PHONE SECTION HEADS (owner, 2026-09-25) ────────────────────────────────
-   A card or section head that pairs a title (and its count) with one action
-   (micro-ux.js marks it). On a phone the title takes the room and wraps to at
-   most two lines, its count stays beside it, and the action keeps a compact
-   width of its own instead of squeezing the title into a column. */
+/* ─── PHONE HEADING ROWS (owner, 2026-09-25) ─────────────────────────────────
+   "Put all the wrapping headings on its own row above and the other items
+   below." A heading and what shares its row (micro-ux.js marks the pair)
+   wraps as whole items: the heading keeps its natural width, up to a full
+   line, so a short one keeps its count or action beside it and a long one
+   takes the line and sends the rest to the row below — never a title
+   folded into a narrow column beside a button. */
 @media (max-width: 47.999rem) {
-  main .edify-section-head.edify-section-head {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 0.75rem !important;
+  main .edify-head-row.edify-head-row {
+    flex-wrap: wrap !important;
+    row-gap: 0.5rem !important;
   }
 
-  /* The title runs as text with its icon and count inline, so it wraps as
-     a sentence and the count ends it rather than standing in a column. */
-  main .edify-section-head > :first-child {
-    display: block !important;
-    flex: 1 1 auto !important;
+  /* The title grows into the line (beside a leading icon or avatar) and
+     leaves the line to its items only when they fit beside it. */
+  main .edify-head-row > .edify-head-row__title.edify-head-row__title {
+    flex: 0 1 auto !important;
+    max-inline-size: 100% !important;
     min-inline-size: 0 !important;
-    line-height: 1.3;
   }
 
-  main .edify-section-head > :first-child > * {
-    display: inline !important;
-    vertical-align: middle;
+  main .edify-head-row--action > .edify-head-row__title.edify-head-row__title {
+    flex-grow: 1 !important;
   }
 
-  main .edify-section-head > :first-child :is(h2, h3, h4) {
-    margin: 0 0.375rem 0 0;
-    font-size: 0.9375rem;
-    line-height: 1.3;
+  main .edify-head-row--flex > .edify-head-row__title.edify-head-row__title:not(:first-child) {
+    max-inline-size: calc(100% - 3.5rem) !important;
   }
 
-  main .edify-section-head > :first-child > :not(h2, h3, h4, div):not(:first-child) {
-    display: inline-flex !important;
-    white-space: nowrap;
+  /* Items keep their width and a real box: the touch-target rule's negative
+     margins made a wrapped action overlap the line above it. */
+  main .edify-head-row > :not(.edify-head-row__title) {
+    flex-shrink: 0 !important;
+    max-inline-size: 100% !important;
+    margin-block: 0 !important;
   }
 
-  main .edify-section-head > :last-child {
-    flex: 0 0 auto !important;
-    display: flex;
-    gap: 0.375rem;
+  /* Short labels read on one line: status pills, badges, chips, buttons
+     and column headings. A long one ends in an ellipsis inside its box. */
+  main :is(.pill, .rounded-pill, .edify-status-badge, .edify-cell-pill, .btn, .edify-action-button, .school-record-action, [role="tab"]) {
+    white-space: nowrap !important;
   }
 
-  main .edify-section-head > :last-child:is(a, button),
-  main .edify-section-head > :last-child > :is(a, button) {
-    min-block-size: 2rem !important;
-    block-size: 2rem !important;
-    padding-inline: 0.625rem !important;
-    font-size: 0.75rem !important;
-    white-space: nowrap;
+  main table thead th,
+  main table.core-lifecycle-table.edify-record-table thead th {
+    white-space: nowrap !important;
+    text-wrap-mode: nowrap !important;
+  }
+
+  /* Label/value metadata is a two-column sheet: the label above its value,
+     rather than pairs flowing and breaking across ragged lines. */
+  main dl.school-record-row__metadata.school-record-row__metadata {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem 1rem !important;
+    inline-size: 100%;
+  }
+
+  main dl.school-record-row__metadata > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.125rem !important;
+    min-inline-size: 0;
+    margin: 0 !important;
+  }
+
+  main dl.school-record-row__metadata > div > dt {
+    color: var(--edify-text-muted) !important;
+    font-size: var(--edify-text-micro-size) !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    overflow-wrap: anywhere;
+  }
+
+  main dl.school-record-row__metadata > div > dd {
+    max-inline-size: 100%;
+    margin: 0 !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere;
+  }
+
+  /* A status chip in a cell stays inside it, ending in an ellipsis on the
+     narrowest phones. */
+  main dl.school-record-row__metadata > div > dd > :is(span, a) {
+    max-inline-size: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

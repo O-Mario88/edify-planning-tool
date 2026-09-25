@@ -186,15 +186,21 @@
       });
     });
 
-    /* A title (with its count) beside one action; interactions.css
-       balances it on a phone (owner, 2026-09-25, My Plan). */
-    elementsWithin(root, 'main .justify-between').forEach(function (head) {
-      var kids = head.children;
-      if (kids.length !== 2 || head.closest('table, form, nav, [role="tablist"]')) return;
-      var title = kids[0], action = kids[1];
-      var titled = title.matches('h2, h3, h4') || title.querySelector(':scope > :is(h2, h3, h4), :scope > div > :is(h2, h3, h4)');
-      var acting = action.matches('a, button') || (action.children.length && action.children.length <= 2 && !action.querySelector('select, input, h2, h3, h4') && action.querySelector('a, button'));
-      if (titled && acting && !title.querySelector('a.btn, button, select, input')) head.classList.add('edify-section-head');
+    /* Heading rows wrap on a phone (owner, 2026-09-25; interactions.css). */
+    var HEAD_ACTION = 'a, button, select, form';
+    elementsWithin(root, 'main :is(h1, h2, h3, h4, h5, p[class*="font-bold"], p[class*="font-semibold"])').forEach(function (heading) {
+      for (var title = heading, i = 0; i < 3 && title.parentElement; i++, title = title.parentElement) {
+        var row = title.parentElement, kids = Array.from(row.children);
+        if (row.childElementCount > 6 || row.matches('main, section, article, form, ul, ol, td, th') || row.closest('table, nav, [role="tablist"], .edify-page-header, svg')) return;
+        var mates = kids.filter(function (child) { return child !== title && child.matches(HEAD_ACTION + ', p, span, div') && child.textContent.trim(); });
+        if (!mates.length) continue;
+        row.classList.add('edify-head-row');
+        row.classList.toggle('edify-head-row--flex', row.classList.contains('flex') && !row.classList.contains('flex-col'));
+        title.classList.add('edify-head-row__title');
+        var acts = mates.some(function (child) { return child.matches(HEAD_ACTION) || child.querySelector(HEAD_ACTION); });
+        row.classList.toggle('edify-head-row--action', acts);
+        if (acts) return;
+      }
     });
 
     /* A cell whose direct children are two or more stacked blocks (a name
@@ -1872,18 +1878,14 @@
     });
   }
 
-  /* One filter row, the School Directory's (owner, 2026-09-25; layout in
-     interactions.css). Past its slots (6 wide, 5 narrow, 3 + More on a
-     phone) fields move into one More panel, still in their form: the
-     template's own `data-edify-filter-more`, else an automatic one that also
-     takes in any other "More filters" the page draws. */
+  /* Filter rows (owner, 2026-09-25; see interactions.css): past its slots a
+     row's fields move into one More panel, still inside their form. */
   var desktopFilterRows = window.matchMedia('(min-width: 64rem)');
   var wideFilterRows = window.matchMedia('(min-width: 80rem)');
   var phoneFilterRows = window.matchMedia('(max-width: 47.999rem)');
   var filterMoreId = 0;
   var FILTER_CONTROL = 'select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])';
 
-  /* The row: the parent of most field shells outside panels and dialogs. */
   function filterRowOf(bar) {
     var counts = new Map(), best = null;
     bar.querySelectorAll(FILTER_CONTROL).forEach(function (control) {
@@ -1899,7 +1901,6 @@
     return best;
   }
 
-  /* Applied: a select off its "All" choice (one without is a setting). */
   function filterMoreCount(more) {
     var count = 0, badge = more.querySelector('.edify-filter-more__count');
     var all = function (v) { return !v || v.toLowerCase() === 'all'; };
@@ -1916,9 +1917,7 @@
       if (bar.closest('.edify-page-header, [role="dialog"], .drawer-body, [data-edify-filter-row="off"]')) return;
       var found = filterRowOf(bar), row = found && found.row;
       if (!row) return;
-      /* The Directory's grid and the period bar keep their own above a phone. */
       var own = desktopFilterRows.matches && bar.closest('.school-filters-form, .school-filter-canvas') || !phone && bar.closest('.oversight-period-filter');
-      /* Moving a field is a mutation we observe: a laid-out row stays. */
       if (!own && row.dataset.edifyFilterSlots === String(slots)) return;
       var more = row.querySelector(':scope > [data-edify-filter-more]');
       if (more) {
@@ -1930,7 +1929,6 @@
         found = filterRowOf(bar);
         if (!found || found.row !== row) return;
       }
-      /* A bare control with a loose caption is no field. */
       if (own || found.shells.some(function (shell) { return shell.matches(FILTER_CONTROL); })) {
         row.classList.remove('edify-filter-row');
         row.removeAttribute('data-edify-filter-row');
@@ -1951,7 +1949,6 @@
       shells.forEach(function (shell) { shell.classList.add('edify-filter-row__field'); });
       var fields = more || foreign || shells.length > (phone ? 3 : slots) ? slots - 1 : slots;
       row.style.setProperty('--edify-filter-cols', String(Math.min(shells.length, fields)));
-      /* A search box keeps its place; the last other fields move. */
       var movable = shells.filter(function (shell) { return !shell.querySelector('input[type="search"]'); });
       var overflow = shells.length > fields ? movable.slice(Math.max(0, movable.length - shells.length + fields)) : [];
       if (overflow.length && !more) {
