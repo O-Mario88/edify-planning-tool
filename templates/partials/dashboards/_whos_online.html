@@ -45,7 +45,7 @@
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="presence-group__row">
           <td colspan="6">
-            <button type="button" class="presence-group__toggle" aria-expanded="false" aria-controls="presence-group-{{ forloop.counter }}">
+            <button type="button" class="presence-group__toggle" data-presence-toggle aria-expanded="false" aria-controls="presence-group-{{ forloop.counter }}">
               <span class="presence-group__chevron" aria-hidden="true"></span>
               <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
               <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
@@ -71,12 +71,12 @@
         table.setAttribute('data-presence-bound', '');
         var groups = Array.prototype.slice.call(table.querySelectorAll('tbody.presence-group'));
         function setOpen(group, open) {
-          var toggle = group.querySelector('.presence-group__toggle');
+          var toggle = group.querySelector('[data-presence-toggle]');
           if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           group.toggleAttribute('data-collapsed', !open);
         }
         groups.forEach(function (group) {
-          var toggle = group.querySelector('.presence-group__toggle');
+          var toggle = group.querySelector('[data-presence-toggle]');
           if (!toggle) return;
           setOpen(group, false);
           toggle.addEventListener('click', function () {
