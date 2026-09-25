@@ -164,11 +164,16 @@ def filter_queryset(qs, key: str | None, *, fy: str, principal=None):
         )
     if key == "visit_not_planned":
         return qs.exclude(_counted(VISITS, COUNTED_STATUSES, fy=fy))
+    # A cluster meeting the school is invited to is training planned for it
+    # (owner, 2026-09-25), exactly as the Training badge reads.
     if key == "training_not_planned":
-        return qs.exclude(_counted(TRAININGS, COUNTED_STATUSES, fy=fy))
+        return qs.exclude(_counted(TRAININGS, COUNTED_STATUSES, fy=fy)).exclude(
+            _counted(CLUSTER_MEETINGS, COUNTED_STATUSES, fy=fy)
+        )
     if key == "both_planned":
         return qs.filter(_counted(VISITS, COUNTED_STATUSES, fy=fy)).filter(
             _counted(TRAININGS, COUNTED_STATUSES, fy=fy)
+            | _counted(CLUSTER_MEETINGS, COUNTED_STATUSES, fy=fy)
         )
     if key == "awaiting_verification":
         return qs.filter(_counted(None, AWAITING_VERIFICATION_STATUSES, fy=fy))

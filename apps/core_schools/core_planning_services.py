@@ -243,6 +243,14 @@ class CorePackageSchedulingService:
         """
         if activity_type not in {"visit", "training"}:
             raise BadRequest("Core support must be a visit or a training.")
+        if school.school_type != "core":
+            # The package is a Core school's alone (owner, 2026-09-25): a
+            # Core Trained school is planned like a client school, from the
+            # Planning page, whatever plan record an earlier stage left.
+            raise BadRequest(
+                f"{school.name} is not a Core school, so it takes no Core "
+                "package support. Plan its work from the Planning page."
+            )
 
         if is_partner_delivery and activity_type == "visit":
             # The partner side of the package is two visits, the mirror of

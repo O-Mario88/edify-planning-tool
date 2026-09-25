@@ -301,6 +301,9 @@ its costing on, so the costing link is derived server-side and never asked for.
     <option value="{{ value }}" {% if value in partner_locked_purposes %}disabled data-purpose-locked="partner"{% elif value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in partner_locked_purposes %} — delivered by the Partner{% elif value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
     {% endfor %}
   </select>
+  {% if outreach_only_note %}
+  <p class="edify-text-caption text-slate-600" data-outreach-only role="note">{{ outreach_only_note }}</p>
+  {% endif %}
   {% if locked_visit_reason %}
   <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} In-school training, donor and social visits can still be scheduled.</p>
   {% endif %}

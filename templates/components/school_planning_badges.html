@@ -10,16 +10,20 @@
   where it is, whatever the counts say.
 
   Usage: {% include "components/school_planning_badges.html" with badges=row.planningBadges %}
-  Optional: layout="cells" renders two <td>s for a table instead of <dl> rows.
+  Optional: layout="cells" renders two <td>s for a table instead of <dl> rows;
+  visits_only=True leaves the Training cell out, for Champion and Core
+  Graduate schools, which receive no training (owner, 2026-09-25).
 {% endcomment %}
 {% if badges %}
 {% if layout == "cells" %}
 <td class="px-4 py-3" data-label="Visit Plan Status" data-planning-badges="visits">
   <span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span>
 </td>
+{% if not visits_only %}
 <td class="px-4 py-3" data-label="Training Plan Status" data-planning-badges="trainings">
   <span class="school-planning-badges">{% for chip in badges.training_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% for chip in badges.cluster_meeting_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}" data-cluster-meeting>{{ chip.label }}</span>{% endfor %}</span>
 </td>
+{% endif %}
 {% else %}
 <div data-planning-badges="visits"><dt>Visit Status:</dt><dd><span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span></dd></div>
 <div data-planning-badges="trainings"><dt>Training Status:</dt><dd><span class="school-planning-badges">{% for chip in badges.training_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% for chip in badges.cluster_meeting_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}" data-cluster-meeting>{{ chip.label }}</span>{% endfor %}</span></dd></div>

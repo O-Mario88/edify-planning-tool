@@ -150,7 +150,7 @@ def schedulable_members(cluster, principal) -> BulkSelection:
     """
     from apps.schools.lifecycle_models import OPERATING_STATUSES
     from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
-    from apps.planning.visit_gate import visit_gates
+    from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES, visit_gates
     from apps.schools.models import School
 
     members = list(
@@ -160,6 +160,9 @@ def schedulable_members(cluster, principal) -> BulkSelection:
             deleted_at__isnull=True,
             operational_status__in=OPERATING_STATUSES,
         )
+        # Champion and Core Graduate schools are planned from their own
+        # tables, for donor and story visits only (owner, 2026-09-25).
+        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
         .select_related("district")
         .order_by("name")
     )
