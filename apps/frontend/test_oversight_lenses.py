@@ -169,7 +169,9 @@ class LensAccessTest(TestCase):
         # a deep link still narrows by district and the choices are still
         # built before it does, so the other district stays available.
         self.assertEqual(response.context["advanced"].get("district_id"), first.id)
-        districts = {pair[0] for pair in response.context["filter_options"]["districts"]}
+        districts = {
+            pair[0] for pair in response.context["filter_options"]["districts"]
+        }
         self.assertIn(first.id, districts)
         self.assertIn(second.id, districts)
 
