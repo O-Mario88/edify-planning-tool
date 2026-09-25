@@ -2423,7 +2423,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6295,
+      "bytes": 6277,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2886,7 +2886,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6299,
+      "bytes": 6335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -3152,7 +3152,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4113,
+      "bytes": 4147,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3957,7 +3957,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4864,
+      "bytes": 5413,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4313,7 +4313,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7352,
+      "bytes": 7382,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7048,7 +7048,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4386,
+      "bytes": 4418,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -7204,7 +7204,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 24944,
+      "bytes": 24974,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -9063,7 +9063,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9522,
+      "bytes": 9578,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -9864,7 +9864,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31938,
+      "bytes": 31963,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -9981,7 +9981,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 17692,
+      "bytes": 17719,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
@@ -10013,7 +10013,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 14308,
+      "bytes": 14329,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution/team"
@@ -10686,7 +10686,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4538,
+      "bytes": 4574,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -12188,7 +12188,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6569,
+      "bytes": 6601,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",

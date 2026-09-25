@@ -45,7 +45,7 @@
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="presence-group__row">
           <td colspan="6">
-            <button type="button" class="presence-group__toggle" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="presence-group-{{ forloop.counter }}">
+            <button type="button" class="presence-group__toggle" data-presence-toggle aria-expanded="false" aria-controls="presence-group-{{ forloop.counter }}">
               <span class="presence-group__chevron" aria-hidden="true"></span>
               <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
               <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
@@ -63,16 +63,27 @@
   </div>
   <script>
     (function () {
-      /* Groups with nobody online start folded; the toggle is plain DOM so
-         the table works with or without Alpine on the page. */
-      document.querySelectorAll('[data-admin-presence] tbody.presence-group').forEach(function (group) {
-        var toggle = group.querySelector('.presence-group__toggle');
-        if (!toggle) return;
-        if (toggle.getAttribute('aria-expanded') !== 'true') group.setAttribute('data-collapsed', '');
-        toggle.addEventListener('click', function () {
-          var open = toggle.getAttribute('aria-expanded') !== 'true';
-          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      /* Every group starts folded and one opens at a time (owner,
+         2026-09-25: details expand only when their row is tapped, and close
+         when another is tapped or the same one is tapped again). The toggle
+         is plain DOM so the table works with or without Alpine on the page. */
+      document.querySelectorAll('[data-admin-presence]:not([data-presence-bound])').forEach(function (table) {
+        table.setAttribute('data-presence-bound', '');
+        var groups = Array.prototype.slice.call(table.querySelectorAll('tbody.presence-group'));
+        function setOpen(group, open) {
+          var toggle = group.querySelector('[data-presence-toggle]');
+          if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           group.toggleAttribute('data-collapsed', !open);
+        }
+        groups.forEach(function (group) {
+          var toggle = group.querySelector('[data-presence-toggle]');
+          if (!toggle) return;
+          setOpen(group, false);
+          toggle.addEventListener('click', function () {
+            var open = toggle.getAttribute('aria-expanded') !== 'true';
+            groups.forEach(function (other) { if (other !== group) setOpen(other, false); });
+            setOpen(group, open);
+          });
         });
       });
     })();

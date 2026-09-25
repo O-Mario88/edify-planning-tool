@@ -152,7 +152,7 @@ styled only the view you happened to enter from.{% endcomment %}
 
         {% for item in milestones_pager.rows %}
           {% with milestone=item.milestone priority=item.priority %}
-          <details class="priority-record-row priority-milestone-record">
+          <details class="priority-record-row priority-milestone-record" name="priority-milestones">
             <summary class="priority-record-summary priority-record-columns" role="row" aria-label="{{ milestone.title }} details">
               <span class="priority-record-number" role="cell">{{ milestone.source_order }}</span>
               <span class="priority-record-name" role="cell" id="milestone-{{ milestone.id }}">{{ milestone.title }}</span>

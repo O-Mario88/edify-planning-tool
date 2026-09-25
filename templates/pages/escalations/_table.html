@@ -22,7 +22,7 @@ reader); `key` keeps element ids unique when the page renders several lists.
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% for e in escalation_rows_pager.rows %}
-<tr class="hover:bg-slate-50/60 transition-colors">
+<tr class="hover:bg-slate-50/60 transition-colors cursor-pointer" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) open = open === '{{ e.id }}' ? null : '{{ e.id }}'">
 <td class="px-5 py-2" data-label="Severity">
 <span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill {% if e.severity == 'critical' %}bg-rose-50 text-rose-700{% elif e.severity == 'high' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ e.severity|upper }}</span>
 </td>

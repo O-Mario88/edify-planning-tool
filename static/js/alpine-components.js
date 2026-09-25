@@ -181,6 +181,21 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 
+  // x-accordion:group="flag": one open item per group.
+  Alpine.directive('accordion', (el, { value, expression }, { effect, evaluateLater, cleanup }) => {
+    const read = evaluateLater(expression);
+    let open = false;
+    effect(() => read((now) => {
+      if (now && !open) window.dispatchEvent(new CustomEvent('edify-accordion', { detail: [value, el] }));
+      open = Boolean(now);
+    }));
+    const close = ({ detail: [group, opener] }) => {
+      if (open && group === value && opener !== el) Alpine.$data(el)[expression] = false;
+    };
+    window.addEventListener('edify-accordion', close);
+    cleanup(() => window.removeEventListener('edify-accordion', close));
+  });
+
   // Confirmation for an action that cannot be undone.
   //
   // Replaces window.confirm(), which sits outside the page: it cannot be

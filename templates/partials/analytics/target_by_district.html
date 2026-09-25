@@ -40,8 +40,7 @@ and without the counts and the empty state below that read as a broken control
 
   <div class="analytics-priority-groups">
     {% for group in target_by_district_groups %}
-    <details class="analytics-priority-group"
-             {% if forloop.first %}open{% endif %}
+    <details class="analytics-priority-group" name="analytics-priority-groups"
              x-show="filter === 'all' || (filter === 'critical' && {{ group.critical_count }} > 0) || (filter === 'attention' && {{ group.critical_count|add:group.watch_count }} > 0)">
       <summary>
         <span class="analytics-priority-group__identity">

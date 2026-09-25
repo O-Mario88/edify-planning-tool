@@ -6,6 +6,7 @@ x-data="{
 cardExpanded: false,
 subTableLoaded: false
 }"
+x-accordion:clusters="cardExpanded"
 x-init="$watch('cardExpanded', value => { if (value && !subTableLoaded) { htmx.trigger($refs.schoolsContainer, 'load-schools'); subTableLoaded = true; } })"
 >
 <div
