@@ -225,6 +225,72 @@ differs.
 | PL `/team-planning-oversight/` 412 px / 1280 px | 0.171 / 0.427 | 0.024 / 0.009 |
 | CD `/core-schools-oversight/`, `/cluster-oversight/` 1280 px | — | 0.004 / 0.007 |
 
+R-7 also had a spacing side effect, found by the scrolled comparison below
+and fixed in `2262994`. The inline strip check was a `<script>` after the
+strip; inside a `space-y` card that made the strip no longer the last child,
+so the card grew by 16 px. The check now sits inside the strip's own
+navigation.
+
+**R-8 Pages shipped content no one could see yet (P-5, owner-approved
+2026-09-25).** Four changes, each rendering the page in the state it had
+before:
+- Oversight tab strips render only the panel `tabState` opens on. Every
+  other panel is an Alpine `<template x-if>`, created when its tab is picked,
+  then `htmx.process`'d. `micro-ux.js` already dresses inserted content
+  through its MutationObserver.
+- Long selects carry their options in `<template data-lazy-options>`.
+  `micro-ux.js` expands them when their disclosure opens or the select is
+  focused or pressed, keeping the server's order and the chosen value. Until
+  then the select holds its first and chosen options, so it reads and
+  submits as before, and an inert list does not count as an empty filter.
+  This covers Analytics sub-county and cluster, the Loans follow-up's linked
+  loan, and the Schools sub-county and bulk pickers.
+- The CD dashboard's district rows exist only while their region is open.
+- Two tables are now paged, as the other tables on their pages already are.
+  These are the only visible changes: Team Oversight's staff with flagged
+  schools (5 per page) and SSA's intervention gaps by district (10 per page).
+
+| Page (1280 px, first load) | Nodes before | Nodes after |
+|---|---:|---:|
+| Cluster Oversight (CD) | 33,123 | 2,061 |
+| Core School Oversight (CD) | 28,492 | 2,317 |
+| Team Oversight (PL / CD) | 22,406 / 14,988 | 3,201 / 3,037 |
+| Loans (BT) | 9,332 | 1,342 |
+| Analytics (CD) | 8,670 | 3,536 |
+| SSA (IA) | 4,406 | 2,148 |
+| Schools (CCEO) | 3,653 | 2,823 |
+| CD dashboard | 5,238 | 3,606 |
+| Cluster Oversight (PL) | 5,077 | 5,077 |
+
+Still over 3,000 nodes, with the reason:
+- CD dashboard and Analytics: a script-drawn SVG map (2,175 nodes), one path
+  per area, which its hover depends on.
+- PL Cluster Oversight: eight ApexCharts families (about 480 SVG nodes
+  each). Drawing charts only near the viewport was tried and reverted: the
+  plot height held for an undrawn chart is not the height ApexCharts
+  draws, so card rows changed height.
+- Team Oversight: 37–201 nodes over. The rest of the page is one open
+  officer's tables and the shell, which renders the sidebar twice (phone
+  drawer and desktop rail, about 260 nodes each).
+
+**Visual verification (2026-09-25).** Every page in the browser set was
+compared as screenshots. The shell scrolls `<main>`, not the document, so
+each page was stepped through in 800 px screens rather than one full-page
+shot. That is 18 pages × 390 and 1280 px, 138 screen pairs, previous build
+against this one, on copies of the same 50,000-school database.
+- 94 pairs identical.
+- 44 differ, every difference explained:
+  - The two paged tables above.
+  - The Core Schools order (R-5).
+  - One count on Team Targets (67 → 49 core packages). This is data drift
+    between the two database copies, not code: `/core-schools` creates up
+    to 100 missing core plans per page load, and the two servers had served
+    different numbers of those loads (800 and 600 plans since the pristine
+    copy's 0). See finding F-H.
+  - 1–9-level anti-aliasing specks of 2–50 px near text edges.
+- Switching officer tabs and opening every lazy select drew the same rows,
+  options and table styling as the previous build.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -539,6 +605,7 @@ brief's parity lock it needs an owner decision.
 | F-C | **Fixed after owner approval (see §5, R-4).** The fiscal-year rollover ran inside a user request | — | — |
 | F-D | **Fixed after owner approval (see §5, R-6).** Leadership pages rebuilt the achievement ledger on every load (write on read): Team Targets and CD analytics rebuild every officer's ledger (~2 s for 150 officers) | profile of `/team-targets/` | move the rebuild to the source workflows or a scheduled job; changes freshness |
 | F-G | **Fixed after owner approval (see §5, R-5).** Core Schools lists had no total order. The main list orders by `-created_at` only (seeded and imported schools share timestamps) and the Attention Needed card lists plans in heap order, so the rows shown change between loads of the *baseline* (two baseline captures differ on 20 of 90 `/core-schools` responses, exactly as baseline vs release does) | baseline-vs-baseline capture | end both orderings with `id` (as F-9/F-11 did); a user may then see a different but stable first page |
+| F-H | **`/core-schools` writes on read.** Every load of the page creates up to 100 missing core plans for the reader's scope (`self_heal_plans`), so what the Team Targets core-package gap shows depends on how many times someone has opened Core Schools | two database copies from one pristine copy: 0 → 800 and 0 → 600 plans after a day of page loads | create core plans when a school becomes core (the write path) or in a scheduled job, as R-6 did for the ledger; changes when plans appear |
 | F-E | **Heavy country pages still take seconds.** Team and country planning oversight and their exports (4–6 s), SSA (≈3 s), IA learning (≈3 s), the Country Director's dashboard (2.7 MB of HTML, ≈8 s under load) for country roles at 50,000 schools; they build every item in the country in Python | profiles in §6 | per-lead lazy sections or read models, each needing a parity review |
 
 ### Proposals that needed approval
@@ -546,8 +613,8 @@ brief's parity lock it needs an owner decision.
 The 2026-09-24 order says: where an optimization cannot be completed without
 a visible or behavioural change, stop, document the constraint, explain the
 change, and do not implement it without approval. The owner approved all six
-on 2026-09-25. P-4 and P-6 are implemented (§5, R-5 to R-7); P-1, P-2, P-3 and
-P-5 are in progress and each will be verified against the page's final
+on 2026-09-25. P-4, P-5 and P-6 are implemented (§5, R-5 to R-8); P-1, P-2 and
+P-3 are in progress and each will be verified against the page's final
 rendered state before it is claimed.
 
 | # | Gate it serves | Technical constraint | Proposed change | What would change for users | Expected result |
