@@ -291,6 +291,59 @@ against this one, on copies of the same 50,000-school database.
 - Switching officer tabs and opening every lazy select drew the same rows,
   options and table styling as the previous build.
 
+**R-9 Render-blocking bytes (P-3, owner-approved 2026-09-25).** Measured
+first, with the static files built exactly as production builds them
+(hashed and compressed by `collectstatic`). Throttle: 150 ms round trip,
+1.6 Mbps, 4× CPU slowdown.
+- **Request count is not the constraint.** The browser discovers all 17
+  stylesheets and 3 head scripts at about 190 ms and fetches them together.
+  The link is full, so first paint waits on bytes: 229 KB must arrive before
+  any paint on the smallest page.
+- **Controlled experiment.** One captured page, served by one server in
+  each variant, median of 5 cold loads:
+
+  | Variant | Blocking KB | First paint |
+  |---|---:|---:|
+  | As shipped (gzip) | 229 | 2,008 ms |
+  | Stylesheets bundled in cascade order (gzip) | 218 | 2,112 ms |
+  | Bundled, head scripts deferred (gzip) | 186 | 1,976 ms |
+  | As shipped, Brotli | 184 | 1,808 ms |
+  | Bundled, Brotli | 152 | 1,728 ms |
+  | Bundled, deferred, Brotli | 124 | 1,620 ms |
+  | Floor: Brotli CSS only, no font preload, no scripts | 124 | 1,248 ms |
+
+- **Implemented: Brotli.** Only Brotli helps without changing a decoded
+  byte. With the `Brotli` package installed, WhiteNoise writes a `.br` copy
+  of every static file at `collectstatic` (734 files, build 18.6 s) and
+  serves it to browsers that accept it.
+  - All 734 decompress to their source byte for byte, and the hashed names
+    are unchanged.
+  - Across the 18 pages, cold transfer fell 59–106 KB per page (about 13 %).
+  - First paint improved on 15 of 18 pages, typically by 100–490 ms. The
+    other three are single samples on pages whose server time dominates.
+  - `test_collectstatic_writes_brotli_copies` fails if the package goes
+    missing. `pip-audit --strict` is clean; 1.2.0 closes CVE-2025-6176.
+- **Not implemented: bundling.** It saved nothing measurable (+104 ms, within
+  noise). One large file also loses the per-file cache on a stylesheet
+  change. The proposal's premise, that round trips were the cost, did not
+  hold.
+- **Not implemented: deferring `htmx`, `chart-standard.js` and
+  `alpine-components.js`.** Worth about 100 ms. Page templates call
+  `htmx.ajax`, `EdifyChartSystem` and `Alpine.data` from their own scripts,
+  and the `feature_head_js` block runs page scripts in the head. Deferring
+  would change when those run, a behavioural risk out of proportion to the
+  gain.
+- **Cold first paint ≤ 1.2 s cannot be reached at this throttle** without
+  removing CSS. Even the floor variant, which drops the font preload and every
+  script, paints at 1,248 ms. The render-blocking CSS decodes to 1.3 MB with
+  about 11,000 selectors, most unused on any one page. Meeting the gate cold
+  needs per-page critical CSS or a pruned stylesheet set. That can change
+  rendering on some page, so it would need its own approval and a full visual
+  pass.
+- **Warm loads (files cached, the usual case for staff).** First paint is
+  under 1.2 s on 11 of 18 pages. The other seven wait on the server (TTFB),
+  which P-1 and P-2 address.
+
 ## 6. Response-time results (7.3, 9)
 
 **Method.** The cohort is every route × role pair that took over 1 s in the
@@ -613,7 +666,7 @@ brief's parity lock it needs an owner decision.
 The 2026-09-24 order says: where an optimization cannot be completed without
 a visible or behavioural change, stop, document the constraint, explain the
 change, and do not implement it without approval. The owner approved all six
-on 2026-09-25. P-4, P-5 and P-6 are implemented (§5, R-5 to R-8); P-1, P-2 and
+on 2026-09-25. P-3 (Brotli), P-4, P-5 and P-6 are implemented (§5, R-5 to R-9); P-1, P-2 and
 P-3 are in progress and each will be verified against the page's final
 rendered state before it is claimed.
 

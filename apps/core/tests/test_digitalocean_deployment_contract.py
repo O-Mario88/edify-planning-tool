@@ -55,6 +55,7 @@ class DigitalOceanDeploymentContractTest(SimpleTestCase):
             "psycopg[binary]==",
             "dj-database-url==",
             "whitenoise==",
+            "Brotli==",
             "django-storages[s3]==",
             "boto3==",
         ):
@@ -474,6 +475,14 @@ class BuildTimeStaticCollectionTest(SimpleTestCase):
         )
         self.assertIn('"BACKEND": STATICFILES_STORAGE_BACKEND', prod)
         self.assertIn("STATICFILES_STORAGE_BACKEND", build)
+
+    def test_collectstatic_writes_brotli_copies(self):
+        """WhiteNoise writes and serves `.br` files only when Brotli imports.
+        Without it every page's render-blocking CSS is a third larger on the
+        wire, and nothing fails (2026-09-25 A+ audit, P-3)."""
+        from whitenoise.compress import Compressor
+
+        self.assertTrue(Compressor().use_brotli)
 
 
 class MigrationOwnershipTest(SimpleTestCase):
