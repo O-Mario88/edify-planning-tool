@@ -6,12 +6,23 @@ isolated environment built for this session. No request, load or write was
 sent to production or staging; neither was available to this session.
 
 **Decision: NO-GO** (§12). The branch removes the measured freezes and N+1
-queries listed in §4 without changing a single rendered byte that the change
-did not deliberately make deterministic (§3), and it is safe to merge and
-deploy as an improvement. It does **not** clear the release gates of the
-brief: the production web service is one instance on one vCPU, and the 2-hour
-sustained test, 8-hour soak, fault injection, restore, rollback and canary
-gates could not be run here.
+queries listed in §4 with identical output (§3). It also carries the changes
+the owner approved on 2026-09-25 (§5, R-5 to R-10):
+- ledger rebuilds moved off page loads;
+- a total order for Core Schools;
+- reserved space for late content;
+- unseen panels and long option lists kept out of the page;
+- Brotli for static files;
+- the CD dashboard painting its shell first.
+
+It is safe to merge and deploy as an improvement. It does **not** clear the
+brief's gates:
+- the production web service is one instance on one vCPU;
+- the heavy country pages still take seconds on the server (P-1 is not
+  built; §9);
+- cold first paint on a slow link needs less CSS (R-9);
+- the 2-hour sustained test, 8-hour soak, fault injection, restore, rollback
+  and canary gates could not be run here.
 
 ## 1. Environment and baseline record (28, 8.1)
 
@@ -20,11 +31,11 @@ gates could not be run here.
 | Repository / branch | `O-Mario88/edify-planning-tool` / `claude/nifty-pasteur-7xolto` |
 | Baseline commit | `086b498` (a `git worktree` of it ran beside the branch for every before/after pair) |
 | Release candidate | the head of this branch; the measured code is `8ca581b` (later commits add this report only) |
-| Migration state | baseline `audit.0007`; release adds `audit.0008` (one column widened, §5) |
+| Migration state | baseline `audit.0007`, `targets.0006`; release adds `audit.0008` (one column widened, §5) and `targets.0007` (the ledger's dirty marks, R-6) |
 | Runtime | Python 3.13.12, Django 5.2.17, PostgreSQL 16, Redis 7 (local), openpyxl 3.1.5 |
 | Settings | `config.settings.dev` for the route sweep and golden master (the repository's convention), `config.settings.loadtest` (`DEBUG=False`) for load |
-| Templates, CSS, JavaScript, service worker | **unchanged** — `git diff 086b498 -- templates static assets '*.js' '*.css'` is empty |
-| Dependencies | unchanged — no package added or removed |
+| Templates, CSS, JavaScript, service worker | unchanged by the parity work (§3, §4). Changed only by the owner-approved items R-7 to R-10, each verified by screenshots; the service worker is unchanged |
+| Dependencies | one added: `Brotli==1.2.0` (R-9); `pip-audit --strict` clean |
 | Realistic dataset | demo seed grown with `scripts/scale_local_domains.py people` → `scale_local_dataset.py --schools 49300` → `scale_local_domains.py domains` → `salesforce`: **50,000 schools, 150 CCEOs, 16 Programme Leads**, 74,210 activities, 65,096 SSA records, 520,768 SSA scores, 115,862 cost lines, 115,602 advances, 79,866 evidence records, 35,832 notifications, loans, BT cases, leave (≈3× production's school count; ≈330 schools per officer, which is production's shape) |
 | Demo dataset | `seed --demo` (700 schools), for the whole-surface golden master |
 | Roles | 15 accounts: CCEO, PL, CD, IA, Accountant, HR, Project Coordinator, Partner Admin, Partner Field Officer, Business Transformation, MFI Admin, MFI Officer, Regional Programme Lead, RVP, Admin |
@@ -670,8 +681,8 @@ below 42 % CPU with 15–17 connections and no lock waits.
 
 | Check | Result |
 |---|---|
-| Full Django suite (`manage.py test --parallel 3 --exclude-tag=scale`, as CI) | 8,924 tests; the only failures were two generated manifests whose source line numbers moved (KPI inventory, traceability fingerprint). Regenerated with `build_kpi_inventory` / `build_traceability_matrix`; the traceability **payload hash is unchanged**, and the 64 manifest tests then pass |
-| New tests | 7 (leave queue ×3, grouped budget rollups, matrix equivalence and flatness, Team Plans flatness, workbook bytes); the matrix and Team Plans tests were run against the previous code and fail there |
+| Full Django suite (`manage.py test --parallel 3 --exclude-tag=scale`, as CI) | **8,961 tests, OK** at `0570c32` plus the report (2026-09-25). Earlier rounds failed only on generated manifests whose line numbers moved; they are regenerated with their build commands in each commit that moves them |
+| New tests | Parity work: 7 (leave queue ×3, grouped budget rollups, matrix equivalence and flatness, Team Plans flatness, workbook bytes); the matrix and Team Plans tests fail on the previous code. Approved items: ledger sync (5), Core Schools order, tab_initial (4), lazy options (3), CD shell (5), Brotli contract, SSA batch and classify equivalence |
 | Oversight oracle (frozen copy of the pre-change code) | 16/16 pass |
 | `ruff check` / `ruff format --check` | clean |
 | `makemigrations --check` | no changes |
@@ -698,9 +709,31 @@ brief's parity lock it needs an owner decision.
 The 2026-09-24 order says: where an optimization cannot be completed without
 a visible or behavioural change, stop, document the constraint, explain the
 change, and do not implement it without approval. The owner approved all six
-on 2026-09-25. P-3 (Brotli), P-4, P-5 and P-6 are implemented (§5, R-5 to R-9); P-1, P-2 and
-P-3 are in progress and each will be verified against the page's final
-rendered state before it is claimed.
+on 2026-09-25. Status:
+- **Implemented:** P-4, P-5 and P-6 (§5, R-5 to R-8).
+- **Partly implemented:**
+  - P-3: Brotli only. Bundling was measured and gave no gain (R-9).
+  - P-2: the CD dashboard only (R-10).
+- **Not implemented:** P-1.
+
+**P-1: why it is not built.** An exact read model has to change in the same
+transaction as every write to its sources. For `/ssa` alone those sources
+are SSA records and scores, schools, geography and staff assignments, and
+several write paths are bulk updates that skip model signals (imports,
+upload, verification sampling). Only a database trigger catches every such
+write.
+- **Trigger bumping a version row.** Serialises concurrent writers to that
+  table until commit. It can deadlock two transactions that write two
+  source tables in opposite order. That is a change to write latency and
+  failure modes that the proposal did not describe.
+- **Insert-only change log.** Avoids the lock, but reads cannot tell a late
+  commit from an early one without extra bookkeeping.
+- **Event-fed model.** The proposal's other variant. It lags writes by
+  seconds, which the order's rule that no result may outlive its valid
+  state forbids.
+
+The choice between these is the owner's. Until then the country pages keep
+their exact per-request build.
 
 | # | Gate it serves | Technical constraint | Proposed change | What would change for users | Expected result |
 |---|---|---|---|---|---|
@@ -727,16 +760,50 @@ and is the owner's decision.
 | Expected cost | Not verifiable here: the provider's price list is blocked by this environment's network policy. The owner should price two dedicated-CPU instances of the size above plus the smallest managed Redis node from the current App Platform and Managed Databases price lists. |
 | Expected result | Measured at the 2 vCPU / 4-worker / Redis shape (§7): 50 users with **p50 0.77 s** (was 4.4 s), **zero refusals** (was 0.9 %), p95 5.7 s, web CPU 67 %. So the capacity change is necessary. It is **not sufficient** for the p95 ≤ 400 ms gate: the tail is the heavy country pages (F-E), which need the read models in §9 whatever the size of the tier. |
 
-## 11. Gates the brief requires that were not run here
+## 11. Gates against the 2026-09-24 order
 
-| Gate | Status |
+**Browser gates.** Measured with `scripts/browser_metrics.cjs`: Chromium, a
+150 ms round trip, 1.6 Mbps, 4× CPU slowdown, 1280 px. Static files were
+built as production builds them, and each build ran on its own copy of the
+50,000-school database. "Cold" is an empty browser cache, "warm" a reload.
+Values are baseline → release in ms. CLS is the worse of the two visits. DOM
+is nodes at first load.
+
+| Role | Page | FCP cold | LCP cold | FCP warm | LCP warm | CLS | DOM |
+|---|---|---:|---:|---:|---:|---:|---:|
+| CCEO | `/dashboard` | 2,412 → 2,172 | 2,412 → 2,172 | 796 → 668 | 796 → 668 | 0.153 → 0.009 | 1,363 → 1,364 |
+| CCEO | `/planning` | 2,980 → 2,528 | 2,980 → 2,528 | 1,260 → 968 | 1,260 → 968 | 0.354 → 0.010 | 2,825 → 2,826 |
+| CCEO | `/projects/my-plan` | 2,008 → 1,896 | 2,008 → 1,896 | 548 → 508 | 548 → 508 | 0.000 → 0.000 | 638 → 638 |
+| CCEO | `/schools` | 2,604 → 1,900 | 2,604 → 1,900 | 700 → 676 | 700 → 676 | 0.178 → 0.004 | 3,656 → 2,827 |
+| CCEO | `/todos` | 2,672 → 2,308 | 2,672 → 2,308 | 472 → 508 | 472 → 508 | 0.000 → 0.000 | 915 → 916 |
+| PL | `/dashboard` | 3,164 → 3,084 | 3,164 → 3,084 | 708 → 684 | 708 → 684 | 0.003 → 0.010 | 1,755 → 1,757 |
+| PL | `/team-planning-oversight/` | 3,672 → 3,728 | 3,672 → 3,728 | 2,000 → 1,940 | 2,000 → 2,040 | 0.171 → 0.024 | 22,499 → 3,203 |
+| PL | `/team-targets` | 2,724 → 2,172 | 2,724 → 2,172 | 1,008 → 764 | 1,008 → 764 | 0.031 → 0.031 | 1,331 → 1,332 |
+| CD | `/dashboard` (R-10: cold is the shell) | 11,848 → 2,028 | 11,848 → 2,028 | 872 → 820 | 872 → 820 | 0.041 → 0.031 | 5,238 → 3,607 |
+| CD | `/analytics` | 5,000 → 5,004 | 5,000 → 5,004 | 1,176 → 1,320 | 1,176 → 1,320 | 0.182 → 0.012 | 8,670 → 3,537 |
+| CD | `/core-schools` | 4,504 → 3,532 | 4,504 → 3,532 | 3,060 → 2,240 | 3,060 → 2,240 | 0.062 → 0.069 | 3,777 → 3,769 |
+| IA | `/ia/dashboard/` | 3,804 → 3,320 | 3,804 → 3,320 | 2,392 → 1,944 | 2,392 → 1,944 | 0.070 → 0.009 | 1,480 → 1,483 |
+| IA | `/ssa` | 6,480 → 6,464 | 6,736 → 6,464 | 5,788 → 3,268 | 5,788 → 3,268 | 0.037 → 0.009 | 4,396 → 2,141 |
+| Accountant | `/budget` | 2,980 → 3,000 | 2,980 → 3,000 | 1,416 → 1,436 | 1,416 → 1,436 | 0.002 → 0.002 | 782 → 783 |
+| Accountant | `/fund-requests/weekly` | 2,472 → 2,412 | 2,472 → 2,412 | 1,116 → 972 | 1,116 → 972 | 0.003 → 0.003 | 1,117 → 1,118 |
+| HR | `/leave/approvals` | 2,868 → 1,964 | 2,868 → 1,964 | 1,512 → 604 | 1,512 → 604 | 0.000 → 0.000 | 804 → 805 |
+| Partner | `/partner/evidence` | 2,160 → 1,944 | 2,160 → 1,944 | 564 → 444 | 564 → 744 | 0.000 → 0.000 | 468 → 468 |
+| BT | `/loans` | 2,596 → 2,696 | 2,956 → 2,696 | 1,076 → 1,324 | 1,076 → 1,324 | 0.048 → 0.048 | 9,332 → 1,343 |
+
+Single samples. Differences under about 250 ms on pages with unchanged code
+are noise. INP was 16–120 ms on every page (gate ≤ 150 ms: met).
+
+| Gate | Result |
 |---|---|
-| 2-hour 50-user sustained test, 8-hour soak | not run (session time); §7 is a staged run |
-| Fault injection (web instance, Redis, worker, scheduler, integrations, storage, DNS, DB connection) | not run — no staging |
-| Backup restore, migration rehearsal, rollback rehearsal | not run — no staging (`scripts/backup_restore_rehearsal.sh`, `scripts/rollback_rehearsal.sh` exist) |
-| Canary, production smoke | not run — no production access |
-| Browser-measured FCP/LCP/INP/CLS and 100-navigation chart memory | not run in this session |
-| Screenshot visual regression at the 10 breakpoints × themes | not run; replaced for this change by byte-identical HTML with no template/CSS/JS change (§3) |
+| FCP ≤ 1.2 s | **Failed cold on every page**: the render-blocking CSS alone needs about 1.25 s at this throttle (R-9). Met warm on 11 of 18 pages; the other 7 wait on the server. |
+| LCP ≤ 2 s | **Failed cold** on 14 of 18 pages (met on `/projects/my-plan`, `/schools`, `/leave/approvals`, `/partner/evidence`). Met warm on 15 of 18; not met warm on `/core-schools`, `/ssa` and PL `/team-planning-oversight/`, all server-bound. |
+| CLS ≤ 0.05 | **Met on 17 of 18** (baseline 11 of 18). Not met: CD `/core-schools`, 0.062–0.069 in both builds; its source has not been fixed. CD `/dashboard` measured 0.076 once before R-10 and 0.000–0.031 after. |
+| INP ≤ 150 ms | Met. |
+| DOM ≤ 3,000 | Met on 14 of 18. Over: CD dashboard 3,607 and analytics 3,537 (the SVG map), team oversight 3,203, CD core-schools 3,769. Outside this set, PL cluster oversight is 5,077 (charts, R-8). The 75f1f66 commit message's 2,611 for PL cluster oversight was measured with a chart deferral that was then reverted; 5,077 is correct. |
+| Compressed HTML ≤ 120 KB (200 KB dashboards) | Met on 17 of 18. PL `/team-planning-oversight/` is 190 KB: its unopened officer panels are inert `<template>`s, out of the DOM but still in the HTML (R-8). The full CD dashboard is 185 KB. |
+| Server P50/P95/P99 ≤ 150/400/900 ms | **Failed** for the heavy country pages (§6, F-E). P-1 is not built (§9). |
+| Load, soak, faults, restore, rollback, canary, smoke | **Not run.** Needs staging or production access (§7, §10). |
+| Screenshot regression at the 10 breakpoints × themes | Partly run: the 18-page scrolled comparison at 390 and 1280 px (R-8, R-10). The other widths and the dark and blue themes were not compared. |
 
 ## 12. Release decision
 
@@ -745,12 +812,20 @@ not authorized for production rollout.**
 
 | Failed gate | Route or workflow | Baseline | Final | Risk | Required correction | Required retest |
 |---|---|---|---|---|---|---|
-| Common-page P95 ≤ 500 ms / heavy analytics ≤ 2.5 s | country-role oversight, analytics and exports (F-E) | cohort p95 5,647 ms | cohort p95 4,602 ms | slow pages for leadership roles | F-E work, each with a parity review | cohort re-timing (§6 method) |
-| 50/100/150/200-user load at production shape | whole platform | 50 users: p95 18.1 s, 1.38 % refused | 50 users: p95 17.8 s, 0.91 % refused | queueing and failed requests at peak on one vCPU | the §10 capacity change | `scripts/load_test.py --mix spec50` on the resized staging service, then a 2-hour sustained run and an 8-hour soak |
+| Server P95 ≤ 400 ms, P99 ≤ 900 ms | country-role oversight, SSA, analytics, IA and exports (F-E) | cohort p95 5,647 ms | cohort p95 4,602 ms | slow pages for leadership roles; the load tail | P-1 read models. The approved in-transaction variant needs a write-path decision (§9, P-1 note) | cohort re-timing (§6 method) |
+| FCP ≤ 1.2 s / LCP ≤ 2 s, cold | every page | FCP 2.0–11.8 s | FCP 1.9–6.5 s (CD shell 2.0 s) | slow first visit on a poor link | per-page critical CSS or a pruned stylesheet set (R-9), then P-1 for the server-bound pages | `browser_metrics.cjs` at the same throttle |
+| DOM ≤ 3,000 | CD dashboard, analytics, PL cluster oversight, team oversight, CD core-schools | 3,777–22,499 | 3,203–5,077 | slower interaction on large pages | map paths and chart families drawn on demand, without changing card heights (R-8) | DOM count and scrolled screenshots |
+| Compressed HTML ≤ 120 KB | PL `/team-planning-oversight/` | 186 KB | 190 KB | slow first load on a poor link | fetch officer panels when opened rather than shipping them inert | payload size, oversight oracle |
+| 50/100/150/200-user load at production shape | whole platform | 50 users: p95 18.1 s, 1.38 % refused | 50 users: p95 17.8 s, 0.91 % refused | queueing and failed requests at peak on one vCPU | the §10 capacity change, then P-1 | `scripts/load_test.py --mix spec50` on the resized staging service, then a 2-hour sustained run and an 8-hour soak |
 | Single point of failure | web service | 1 instance | 1 instance | outage on any restart or instance loss | §10 | failover drill |
 | Staging, restore, rollback, canary, smoke | release process | not run | not run | unrehearsed recovery | run the repository's rehearsal scripts against staging | rehearsal logs, smoke report |
 
-What this branch is safe to do now: merge and deploy as an improvement. It
-changes no template, style, script, route, permission, workflow state,
-calculation or export definition; its one migration only widens a column; and
-rolling back is redeploying the previous image.
+**What this branch is safe to do now:** merge and deploy as an improvement.
+- **Parity work (§3, §4).** It changes no rendered output, route,
+  permission, workflow state, calculation or export definition.
+- **Owner-approved items (R-2 to R-10).** Each changes only what its entry
+  describes.
+- **Migrations.** One widens a column. The other adds the ledger's
+  dirty-mark table and marks every ledger for one rebuild.
+- **Rollback.** Redeploy the previous image. The previous code ignores the
+  new table.
