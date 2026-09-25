@@ -59,12 +59,13 @@
       <span class="context-metrics__range" aria-live="polite" aria-atomic="true"></span>
       <button type="button" class="context-metrics__next">Swipe for more <span aria-hidden="true">→</span></button>
     </div>
+    {% comment %}Decide the navigation now, while the page is still being parsed: it
+    ships hidden and kpi-strips.js (deferred) shows it when the facts overflow,
+    which pushed everything below the strip down by its height after the first
+    paint (2026-09-24 A+ audit, P-4). The same test kpi-strips.js makes; it then
+    mounts over this and keeps it current. Inside the navigation, so it is never
+    a sibling that a container's `space-y` spacing would count.{% endcomment %}
+    <script>(function (n) { var s = n.closest('.context-metrics'), r = s && s.querySelector('.context-metrics__sentence'); if (r && r.clientWidth && r.scrollWidth > r.clientWidth + 2) n.hidden = false; })(document.currentScript.parentElement);</script>
   </div>
 </section>
-{% comment %}Decide the navigation now, while the page is still being parsed: it
-ships hidden and kpi-strips.js (deferred) shows it when the facts overflow,
-which pushed everything below the strip down by its height after the first
-paint (2026-09-24 A+ audit, P-4). The same test kpi-strips.js makes; it then
-mounts over this and keeps it current.{% endcomment %}
-<script>(function (s) { var r = s && s.querySelector('.context-metrics__sentence'), n = s && s.querySelector('.context-metrics__navigation'); if (r && n && r.clientWidth && r.scrollWidth > r.clientWidth + 2) n.hidden = false; })(document.currentScript.previousElementSibling);</script>
 {% endif %}
