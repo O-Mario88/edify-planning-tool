@@ -62,7 +62,7 @@
       </select>
     </label>
     <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.debriefAdvancedFilters.showModal()">
-      More filters{% if risk_level %} · Applied{% endif %}
+      More<span class="edify-filter-more__long"> filters</span>{% if risk_level %} · Applied{% endif %}
     </button>
     <dialog x-ref="debriefAdvancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="debrief-advanced-filter-title">
       <header class="edify-filter-drawer__header">

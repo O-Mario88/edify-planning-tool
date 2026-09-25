@@ -21,7 +21,7 @@
     <div class="spp-filter-reset"><span id="spp-updating" class="htmx-indicator">Updating…</span><a href="/projects/planning">{% include "partials/projects/planning_icon.html" with name="reset" %} Clear filters</a></div>
   </div>
   <details class="spp-more-filters" {% if selected.district or selected.staff or selected.project_type or selected.partner_type or selected.activity_type %}open{% endif %}>
-    <summary>More filters{% if selected.district or selected.staff or selected.project_type or selected.partner_type or selected.activity_type %} · active{% endif %}</summary>
+    <summary>More<span class="edify-filter-more__long"> filters</span>{% if selected.district or selected.staff or selected.project_type or selected.partner_type or selected.activity_type %} · active{% endif %}</summary>
     <div class="spp-filter-grid spp-filter-grid--advanced">
       <label class="spp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
       <label class="spp-field"><span>Project Lead</span><select aria-label="Staff" name="staff"><option value="">All project leads</option>{% for option in staff_options %}<option value="{{ option.id }}" {% if selected.staff == option.id|stringformat:'s' %}selected{% endif %}>{{ option.user.name }}</option>{% endfor %}</select></label>

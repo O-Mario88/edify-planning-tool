@@ -363,7 +363,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4233,
+      "bytes": 4908,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -1400,7 +1400,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7827,
+      "bytes": 7872,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1442,7 +1442,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32202,
+      "bytes": 32588,
       "deprecated_alternatives": [],
       "example_pages": [
         "/impact"
@@ -2587,7 +2587,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4255,
+      "bytes": 4645,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/business-accounting-finance",
@@ -3038,7 +3038,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6654,
+      "bytes": 6380,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -3051,7 +3051,8 @@
       "purpose": "Reusable filters interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "open"
       ],
       "tables": 0,
       "template": "partials/clusters/filters.html",
@@ -3428,7 +3429,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6080,
+      "bytes": 6125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3497,7 +3498,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8171,
+      "bytes": 8521,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3771,7 +3772,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11246,
+      "bytes": 11636,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4856,7 +4857,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1772,
+      "bytes": 2158,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/pl-urgent-schools"
@@ -5709,7 +5710,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6865,
+      "bytes": 7251,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6759,7 +6760,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2976,
+      "bytes": 3378,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline",
@@ -7237,7 +7238,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 27139,
+      "bytes": 27184,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8042,7 +8043,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9621,
+      "bytes": 9652,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8476,6 +8477,32 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 2572,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Export Menu",
+      "purpose": "Reusable  export menu interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_export_menu.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 980,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -8502,7 +8529,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 31061,
+      "bytes": 31194,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8601,7 +8628,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4810,
+      "bytes": 5156,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8629,7 +8656,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14325,
+      "bytes": 13201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8800,32 +8827,6 @@
       ],
       "tables": 1,
       "template": "partials/oversight/detail_drawer.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 5958,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Filter Drawer",
-      "purpose": "Reusable filter drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/filter_drawer.html",
       "variants": []
     },
     {
@@ -9035,7 +9036,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6280,
+      "bytes": 5020,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9119,7 +9120,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5168,
+      "bytes": 4124,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9647,7 +9648,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9960,
+      "bytes": 10019,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -10577,7 +10578,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12013,
+      "bytes": 12058,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -10628,7 +10629,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17642,
+      "bytes": 17687,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -11288,7 +11289,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7569,
+      "bytes": 8044,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -32689,7 +32690,7 @@
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:pages/oversight/country_planning.html",
         "template:partials/oversight/cd_workspace.html",

@@ -22,12 +22,6 @@ inset themselves — see components/mobile-shell.css.
 <script>
   (function() {
     var html = document.documentElement;
-    // Phones keep filter disclosures closed from the first paint; mobile-ux.js
-    // clears this once it has set their state (see the mobile patterns sheet).
-    html.setAttribute('data-filters-syncing', '');
-    window.addEventListener('load', function () {
-      html.removeAttribute('data-filters-syncing');
-    });
     var allowed = ['system', 'light', 'blue', 'dark'];
     var pref = 'system';
 
@@ -80,16 +74,16 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260923sweep2">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260925wrap1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260923responsive1">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260923sweep2">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260925wrap1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260923responsive1">
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260925cls2">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260925wrap1">
 <link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260923bars3">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
@@ -106,13 +100,13 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260923sweep2">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260923sweep2">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260925wrap1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260923merge1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260925lazy1">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260925wrap1">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260925wrap1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -123,7 +117,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923settings1">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260923sweep2">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260925wrap1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -235,9 +229,9 @@ controller exists by the time a drawer's x-init runs.
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
-<script defer src="{% static 'js/mobile-ux.js' %}?v=20260925cls1"></script>
+<script defer src="{% static 'js/mobile-ux.js' %}?v=20260925wrap1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260925lazy1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260925wrap1"></script>
 
 {% comment %}
 A paginated link keeps the tab the reader chose. Oversight puts one person's

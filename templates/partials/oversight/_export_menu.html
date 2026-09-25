@@ -1,0 +1,32 @@
+{% comment %}
+The planning-oversight export, as one header control (owner, 2026-09-25:
+"merge export buttons and place it in the header"). CSV and Excel are the same
+rows, filters and scope — only the file differs — so they are two items under
+one Export button rather than two buttons beside the tabs.
+
+`export_path` is the lens's export route. The query follows whichever period,
+tab and deep-link filters the page is showing, exactly as the two buttons did.
+
+Rendered in the page header on a full load. When htmx swaps the workspace
+(a period change), the workspace sends this again out of band into the same
+slot, so the export never describes a period the page has left.
+{% endcomment %}
+<details class="oversight-export" data-oversight-export x-data @click.outside="$el.removeAttribute('open')" @keydown.escape="$el.removeAttribute('open')">
+  <summary class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 cursor-pointer">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    <span>Export</span>
+    <svg class="h-3.5 w-3.5 oversight-export__chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+  </summary>
+  <div class="oversight-export__menu" role="menu" aria-label="Export format">
+    <a role="menuitem" class="oversight-export__item"
+       href="{{ export_path }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
+      <span class="oversight-export__label">Export CSV</span>
+      <span class="oversight-export__hint">.csv</span>
+    </a>
+    <a role="menuitem" class="oversight-export__item"
+       href="{{ export_path }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx">
+      <span class="oversight-export__label">Export Excel</span>
+      <span class="oversight-export__hint">.xlsx</span>
+    </a>
+  </div>
+</details>

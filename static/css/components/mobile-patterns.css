@@ -186,23 +186,9 @@
   display: none;
 }
 
-/* Filter disclosures render open, for desktop and no-JavaScript readers, and
-   mobile-ux.js closes them on phones at DOMContentLoaded. Painting them open
-   first moved everything below by the filter's height once they closed
-   (layout shift 0.35 on Planning; 2026-09-24 A+ audit, P-4). While the head
-   script's flag is set, their body stays out of a phone's layout, so the
-   first paint is already the closed disclosure. The flag is only set when
-   JavaScript runs, and the page's load event clears it if mobile-ux.js never
-   does. The form inside is laid out by `display: … !important` rules keyed
-   on its id (components.css) and on shared filter classes (consistency.css),
-   so this one is !important too and carries an id's weight (`:not(#_)`)
-   to outrank them for the moment the flag is set. */
-@media (max-width: 63.999rem) {
-  html[data-filters-syncing] .mobile-family-filter > :not(summary):not(#_) {
-    display: none !important;
-  }
-}
-
+/* Filter disclosures stay open at every width (owner, 2026-09-25): a phone
+   shows the filters as one compact row, three and More, never a collapsed
+   sheet, so the summary that toggled it is not drawn. */
 @media (min-width: 64rem) {
   .mobile-family-filter:not([open]) > :not(summary) {
     display: block;
@@ -655,44 +641,6 @@
     border: 1px solid var(--edify-border);
     border-radius: var(--edify-radius-md);
     background: var(--edify-surface);
-  }
-
-  .mobile-family-filter > summary {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    min-block-size: 2.75rem;
-    align-items: center;
-    gap: 0.1rem 0.75rem;
-    padding: 0.65rem 0.8rem;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .mobile-family-filter > summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .mobile-family-filter > summary > span:first-child {
-    color: var(--edify-text);
-    font-size: var(--edify-text-label-size);
-    font-weight: 740;
-  }
-
-  .mobile-family-filter > summary > small {
-    grid-column: 1;
-    color: var(--edify-text-muted);
-    font-size: var(--edify-text-micro-size);
-  }
-
-  .mobile-family-filter > summary > span:last-child {
-    grid-column: 2;
-    grid-row: 1 / 3;
-    color: var(--edify-accent-text);
-    transition: rotate var(--edify-transition-fast);
-  }
-
-  .mobile-family-filter[open] > summary > span:last-child {
-    rotate: 180deg;
   }
 
   .mobile-family-filter > :not(summary) {

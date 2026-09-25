@@ -19,17 +19,24 @@ Hidden at lg and above, where the static sidebar takes over.
   aria-label="Primary"
   x-data="{
     keyboardOpen: false,
-    onFocus(e) {
-      /* The bar is fixed to the bottom, which on Android is exactly where the
-         software keyboard lands. Yielding to a focused field keeps it off the
-         input being typed into, and off the Submit beneath it. */
-      if (e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable]')) {
-        this.keyboardOpen = true
-      }
+    check() {
+      /* The bar is fixed to the bottom, which is exactly where a phone's
+         software keyboard lands, so it yields while one is open over a field
+         being typed into. Only then (owner, 2026-09-25: the menu vanished
+         after using a filter): a select opens no keyboard, and a focused
+         field an htmx swap or navigation removed never sends focusout. The
+         visual viewport is what shrinks when a keyboard is up. */
+      const el = document.activeElement;
+      const typing = el && el.isConnected && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=range]):not([type=file]):not([type=date]):not([type=week]):not([type=month]):not([type=color]), textarea, [contenteditable]');
+      const vv = window.visualViewport;
+      this.keyboardOpen = Boolean(typing && (!vv || vv.height < window.innerHeight * 0.85));
     },
   }"
-  @focusin.window="onFocus($event)"
-  @focusout.window="keyboardOpen = false"
+  x-init="window.visualViewport && window.visualViewport.addEventListener('resize', () => check())"
+  @focusin.window="$nextTick(() => check())"
+  @focusout.window="setTimeout(() => check(), 0)"
+  @htmx:after-settle.window="check()"
+  @pageshow.window="check()"
   :class="keyboardOpen ? 'edify-bottom-nav--hidden' : ''"
 >
   <ul class="edify-bottom-nav__list">

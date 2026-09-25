@@ -178,15 +178,29 @@ class ScopeTest(OversightPageFixture):
                 self.assertNotIn(removed, body)
 
     def test_selecting_a_cceo_opens_staff_and_partner_work_they_manage(self):
-        body = (
-            self.as_user(self.pl_user)
-            .get(PL_URL, {"owner": self.james.id})
-            .content.decode()
-        )
+        response = self.as_user(self.pl_user).get(PL_URL, {"owner": self.james.id})
+        body = response.content.decode()
 
-        self.assertIn("Selected owner", body)
+        # The team tab is the officer choice; the rows are that officer's one
+        # panel, with no second officer strip under it (owner, 2026-09-25).
+        panels = response.context["panel_groups"]
+        self.assertEqual([str(group["id"]) for group in panels], [str(self.james.id)])
+        self.assertNotIn("team-officer-tab", body)
         self.assertIn("Alpha Primary", body)
         self.assertNotIn("Rival Primary", body)
+
+    def test_the_whole_team_is_one_panel_and_the_tabs_share_a_row(self):
+        response = self.as_user(self.pl_user).get(PL_URL)
+        body = response.content.decode()
+
+        self.assertEqual(len(response.context["panel_groups"]), 1)
+        self.assertEqual(response.context["panel_groups"][0]["name"], "Whole team")
+        self.assertIn("Alpha Primary", body)
+        self.assertNotIn("team-officer-tab", body)
+        self.assertIn('class="oversight-tab-row"', body)
+        # No Filters disclosure; one Export menu, in the page header.
+        self.assertNotIn("oversight-filters", body)
+        self.assertEqual(body.count("data-oversight-export"), 1)
 
     def test_period_control_offers_week_month_quarter_and_fy(self):
         body = self.as_user(self.pl_user).get(PL_URL).content.decode()

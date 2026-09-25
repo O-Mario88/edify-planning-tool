@@ -88,7 +88,7 @@ Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.pa
 
 <div class="flex items-center gap-1.5">
 <!-- Rows per page info selector mirroring mockup -->
-<div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
+<div class="edify-pagination__page-size flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
 <span>Rows per page:</span>
 <select
 aria-label="Rows per page"
@@ -105,10 +105,8 @@ class="h-7 px-1 rounded-control border border-slate-200 text-[12px] edify-surfac
 <button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
->
-Previous
-</button>
+class="edify-pagination__control--direction h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+ aria-label="Previous page"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></button>
 {% endif %}
 
 <!-- List page numbers -->
@@ -117,7 +115,7 @@ Previous
 {% if num == "..." or num == "…" %}
 <span class="w-8 text-center text-slate-400 font-bold" aria-hidden="true">…</span>
 {% elif num == page_obj.number %}
-<span class="h-8 w-8 rounded-pill btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm edify-primary-solid">{{ num }}</span>
+<span aria-current="page" aria-label="Page {{ num }}, current page" class="h-8 w-8 rounded-control btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm edify-primary-solid">{{ num }}</span>
 {% else %}
 <button
 type="button"
@@ -134,10 +132,8 @@ class="h-8 w-8 rounded-control hover:bg-slate-100 text-slate-700 font-bold flex 
 <button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
->
-Next
-</button>
+class="edify-pagination__control--direction h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+ aria-label="Next page"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></button>
 {% endif %}
 </div>
 </div>

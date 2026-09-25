@@ -4,10 +4,10 @@
   "templates": 245,
   "distinct_titles": 642,
   "with_card_key": 13,
-  "untitled_surfaces": 591,
+  "untitled_surfaces": 588,
   "untitled_chrome": 152,
   "untitled_nested": 232,
-  "untitled_headless": 207,
+  "untitled_headless": 204,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -6412,7 +6412,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 38,
+   "line": 39,
    "title": "1. Client School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6421,7 +6421,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 139,
+   "line": 140,
    "title": "2. Core School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6430,7 +6430,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 244,
+   "line": 245,
    "title": "3. Cluster Meetings",
    "heading_level": 5,
    "has_card_key": false,
@@ -6439,7 +6439,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 337,
+   "line": 338,
    "title": "4. Schools with Planned Training",
    "heading_level": 5,
    "has_card_key": false,

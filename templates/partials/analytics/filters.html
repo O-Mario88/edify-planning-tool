@@ -43,7 +43,7 @@ tiles and the panel move together and can never describe different scopes.{% end
              {% if filters.selected_district or filters.selected_sub_county or filters.selected_cluster or filters.selected_staff or filters.selected_partner or filters.selected_school_type and filters.selected_school_type != 'All' or filters.selected_activity_type and filters.selected_activity_type != 'All' %}open{% endif %}>
       <summary>
         <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 5h14M5.5 10h9M8 15h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-        More filters
+        More<span class="edify-filter-more__long"> filters</span>
         <span aria-hidden="true">7</span>
       </summary>
       <div class="analytics-more-filters__panel">

@@ -14,6 +14,11 @@ and level 3 (4 distinct tables per staff member:
      x-data="tabState('activeOfficer', 'officer', {% tab_values owner_groups %}, '{% if default_officer %}{{ default_officer }}{% else %}{{ owner_groups.0.id }}{% endif %}')">
 
   {# ── Secondary Tabs: CCEOs / Officers under this Program Lead ───────── #}
+  {% comment %}Team Oversight's team lens already chooses the person in its
+  own tabs, so it passes hide_officer_strip and one panel (owner, 2026-09-25:
+  "team officer is not necessary"). The country lens still needs the strip:
+  its tabs choose a Programme Lead, not an officer.{% endcomment %}
+  {% if not hide_officer_strip %}
   <div class="oversight-team-selector">
     <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-2 border-b edify-border mb-1.5">
       <div class="flex flex-wrap items-center gap-2">
@@ -49,6 +54,7 @@ and level 3 (4 distinct tables per staff member:
       {% endfor %}
     </nav>
   </div>
+  {% endif %}
 
   {# ── Officer Panels with 4 Tables Each ───────────────────────────────── #}
   {% comment %}The panel tabState opens on is not cloaked, so the page paints with

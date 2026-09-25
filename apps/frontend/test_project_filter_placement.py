@@ -46,7 +46,8 @@ class ProjectFilterPlacementTests(TestCase):
         self.assertEqual(form.count('class="edify-filter-label"'), 3)
         for label in ("Financial year", "Project type", "Status"):
             self.assertIn(label, form)
-        self.assertIn("More filters", form)
+        # "filters" hides on a phone, where the row's last slot reads "More".
+        self.assertIn('More<span class="edify-filter-more__long"> filters</span>', form)
         self.assertIn('hx-push-url="false"', form)
 
     def test_directory_mobile_rules_cannot_stack_project_filters(self):

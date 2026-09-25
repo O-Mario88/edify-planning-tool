@@ -1125,7 +1125,16 @@ def team_planning_oversight_view(request):
             else _team_roster(request.user, selected)
         ),
     )
-    _partition_owner_groups_by_stream(owner_groups, request.user)
+    if country_lens:
+        _partition_owner_groups_by_stream(owner_groups, request.user)
+        panel_groups = owner_groups
+    else:
+        # The team lens's own tabs choose the person, so the rows for the
+        # chosen tab are one panel rather than a second strip of the same
+        # people (owner, 2026-09-25). `groups` keeps the per-person filing.
+        panel_groups = _partition_owner_groups_by_stream(
+            [_tab_panel_group(tabs, owner_groups, visible, summary)], request.user
+        )
     context = {
         **period,
         "country_lens": country_lens,
@@ -1150,8 +1159,12 @@ def team_planning_oversight_view(request):
         and not _resolve_user_scope(request.user).region_assigned,
         "visible_summary": summary,
         "groups": owner_groups,
+        "panel_groups": panel_groups,
         "default_officer": _default_officer(owner_groups),
         "activity_tabs": activity_tabs,
+        # A period change swaps only the workspace; the header's Export menu
+        # comes back out of band so it follows the new period.
+        "export_oob": request.headers.get("HX-Request") == "true",
         "activity_family": activity_family,
         "advanced": advanced,
         "filter_options": _filter_options(available_items),
@@ -1192,6 +1205,25 @@ def team_planning_oversight_view(request):
         )
         return render(request, template, context)
     return render(request, "pages/oversight/team_planning.html", context)
+
+
+def _tab_panel_group(tabs, owner_groups, items, summary) -> dict:
+    """The chosen team tab's work as one panel.
+
+    One person keeps their own group, so the panel still links to their staff
+    record. Whole team is everyone's rows together under the tab's name; each
+    row already names its executor.
+    """
+    if len(owner_groups) == 1:
+        return owner_groups[0]
+    label = next((tab["label"] for tab in tabs if tab.get("is_active")), "")
+    return {
+        "id": "",
+        "name": label,
+        "items": list(items),
+        "summary": summary,
+        "page_param": "g1_page",
+    }
 
 
 def _team_roster(user, selected: str) -> list[dict] | None:
@@ -1350,6 +1382,8 @@ def country_planning_oversight_view(request):
         # The RVP reads this page for oversight and does not
         # delegate from it.
         "may_delegate": may_delegate(request.user, country=True),
+        # The header's Export menu follows a period change out of band.
+        "export_oob": request.headers.get("HX-Request") == "true",
     }
 
     if request.headers.get("HX-Request") == "true":

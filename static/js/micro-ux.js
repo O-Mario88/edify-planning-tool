@@ -186,6 +186,23 @@
       });
     });
 
+    /* Heading rows wrap on a phone (owner, 2026-09-25; interactions.css). */
+    var HEAD_ACTION = 'a, button, select, form';
+    elementsWithin(root, 'main :is(h1, h2, h3, h4, h5, p[class*="font-bold"], p[class*="font-semibold"])').forEach(function (heading) {
+      for (var title = heading, i = 0; i < 3 && title.parentElement; i++, title = title.parentElement) {
+        var row = title.parentElement, kids = Array.from(row.children);
+        if (row.childElementCount > 6 || row.matches('main, section, article, form, ul, ol, td, th') || row.closest('table, nav, [role="tablist"], .edify-page-header, svg')) return;
+        var mates = kids.filter(function (child) { return child !== title && child.matches(HEAD_ACTION + ', p, span, div') && child.textContent.trim(); });
+        if (!mates.length) continue;
+        row.classList.add('edify-head-row');
+        row.classList.toggle('edify-head-row--flex', row.classList.contains('flex') && !row.classList.contains('flex-col'));
+        title.classList.add('edify-head-row__title');
+        var acts = mates.some(function (child) { return child.matches(HEAD_ACTION) || child.querySelector(HEAD_ACTION); });
+        row.classList.toggle('edify-head-row--action', acts);
+        if (acts) return;
+      }
+    });
+
     /* A cell whose direct children are two or more stacked blocks (a name
        over an id, a value over a caption) is marked so consistency.css can
        lay them on one 32px line. Flex and grid wrappers keep their layout. */
@@ -1861,6 +1878,140 @@
     });
   }
 
+  /* Filter rows (owner, 2026-09-25; see interactions.css): past its slots a
+     row's fields move into one More panel, still inside their form. */
+  var desktopFilterRows = window.matchMedia('(min-width: 64rem)');
+  var wideFilterRows = window.matchMedia('(min-width: 80rem)');
+  var phoneFilterRows = window.matchMedia('(max-width: 47.999rem)');
+  var filterMoreId = 0;
+  var FILTER_CONTROL = 'select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])';
+
+  function filterRowOf(bar) {
+    var counts = new Map(), best = null;
+    bar.querySelectorAll(FILTER_CONTROL).forEach(function (control) {
+      var tucked = control.closest('[data-edify-filter-more-panel], dialog, details, [role="dialog"], [x-show], [hidden]');
+      var shell = filterFieldShell(control), list = counts.get(shell.parentElement) || [];
+      if ((tucked && tucked !== bar && bar.contains(tucked)) || shell === bar) return;
+      if (list.indexOf(shell) < 0) list.push(shell);
+      counts.set(shell.parentElement, list);
+    });
+    counts.forEach(function (shells, row) {
+      if (!best || shells.length > best.shells.length) best = { row: row, shells: shells };
+    });
+    return best;
+  }
+
+  function filterMoreCount(more) {
+    var count = 0, badge = more.querySelector('.edify-filter-more__count');
+    var all = function (v) { return !v || v.toLowerCase() === 'all'; };
+    more.querySelectorAll('[data-edify-filter-more-panel] :is(' + FILTER_CONTROL + ')').forEach(function (field) {
+      if (!field.disabled && !all(String(field.value).trim()) && (field.tagName !== 'SELECT' || Array.from(field.options).some(function (o) { return all(o.value); }))) count += 1;
+    });
+    if (badge) { badge.textContent = count || ''; badge.hidden = !count; }
+  }
+
+  function arrangeFilterRows(root) {
+    if (!root.querySelectorAll) return;
+    var phone = phoneFilterRows.matches, slots = phone ? 4 : wideFilterRows.matches ? 6 : 5;
+    elementsWithin(root, FILTER_CONTAINERS).forEach(function (bar) {
+      if (bar.closest('.edify-page-header, [role="dialog"], .drawer-body, [data-edify-filter-row="off"]')) return;
+      var found = filterRowOf(bar), row = found && found.row;
+      if (!row) return;
+      var own = desktopFilterRows.matches && bar.closest('.school-filters-form, .school-filter-canvas') || !phone && bar.closest('.oversight-period-filter');
+      if (!own && row.dataset.edifyFilterSlots === String(slots)) return;
+      var more = row.querySelector(':scope > [data-edify-filter-more]');
+      if (more) {
+        more.querySelectorAll('[data-edify-filter-moved]').forEach(function (moved) {
+          moved.removeAttribute('data-edify-filter-moved');
+          row.insertBefore(moved, more);
+        });
+        if (more.getAttribute('data-edify-filter-more') === 'auto') { more.remove(); more = null; }
+        found = filterRowOf(bar);
+        if (!found || found.row !== row) return;
+      }
+      if (own || found.shells.some(function (shell) { return shell.matches(FILTER_CONTROL); })) {
+        row.classList.remove('edify-filter-row');
+        row.removeAttribute('data-edify-filter-row');
+        delete row.dataset.edifyFilterSlots;
+        return;
+      }
+      var shells = found.shells.filter(function (shell) {
+        return shell.parentElement === row && !shell.hasAttribute('data-edify-filter-more') && !shell.hidden && shell.style.display !== 'none';
+      });
+      var foreign = more ? null : Array.from(row.children).find(function (child) {
+        return shells.indexOf(child) < 0 && /\bmore filters\b/i.test(child.textContent) && child.matches('button, details, div, a');
+      });
+      if (foreign) foreign.classList.add('edify-filter-more-slot');
+      if (shells.length + (more || foreign ? 1 : 0) < (phone ? 2 : 3)) return;
+      row.classList.add('edify-filter-row');
+      row.setAttribute('data-edify-filter-row', '');
+      row.dataset.edifyFilterSlots = String(slots);
+      shells.forEach(function (shell) { shell.classList.add('edify-filter-row__field'); });
+      var fields = more || foreign || shells.length > (phone ? 3 : slots) ? slots - 1 : slots;
+      row.style.setProperty('--edify-filter-cols', String(Math.min(shells.length, fields)));
+      var movable = shells.filter(function (shell) { return !shell.querySelector('input[type="search"]'); });
+      var overflow = shells.length > fields ? movable.slice(Math.max(0, movable.length - shells.length + fields)) : [];
+      if (overflow.length && !more) {
+        var id = 'edify-filter-more-' + (++filterMoreId);
+        more = document.createElement('div');
+        more.className = 'edify-filter-more edify-filter-row__field';
+        more.setAttribute('data-edify-filter-more', 'auto');
+        more.innerHTML = '<button type="button" class="edify-filter-more__toggle" data-edify-filter-more-toggle aria-expanded="false" aria-controls="' + id + '">'
+          + '<span>More<span class="edify-filter-more__long"> filters</span></span><span class="edify-filter-more__count" hidden></span>'
+          + '<svg class="edify-filter-more__chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg></button>'
+          + '<div class="edify-filter-more__panel" id="' + id + '" role="group" aria-label="More filters" data-edify-filter-more-panel hidden></div>';
+        row.insertBefore(more, overflow[0]);
+        overflow = overflow.concat(foreign ? [foreign] : []);
+      }
+      if (!more) return;
+      var panel = more.querySelector('[data-edify-filter-more-panel]'), before = panel.firstChild;
+      overflow.forEach(function (field) {
+        field.setAttribute('data-edify-filter-moved', '');
+        panel.insertBefore(field, field === foreign ? null : before);
+      });
+      filterMoreCount(more);
+    });
+  }
+
+  function toggleFilterMore(more, open) {
+    var panel = more.querySelector('[data-edify-filter-more-panel]');
+    more.querySelector('[data-edify-filter-more-toggle]').setAttribute('aria-expanded', String(open));
+    more.classList.toggle('is-open', open);
+    panel.hidden = !open;
+    if (open) {
+      panel.querySelectorAll('select[data-lazy-options]').forEach(expandLazyOptions);
+      if (panel.querySelector(FILTER_CONTROL)) panel.querySelector(FILTER_CONTROL).focus();
+    }
+  }
+
+  if (!window.__edifyFilterMoreBound) {
+    window.__edifyFilterMoreBound = true;
+    document.addEventListener('click', function (event) {
+      var toggle = event.target.closest && event.target.closest('[data-edify-filter-more-toggle]');
+      document.querySelectorAll('[data-edify-filter-more].is-open').forEach(function (open) {
+        if (!open.contains(event.target)) toggleFilterMore(open, false);
+      });
+      if (toggle) toggleFilterMore(toggle.parentElement, toggle.getAttribute('aria-expanded') !== 'true');
+    });
+    document.addEventListener('keydown', function (event) {
+      var open = event.key === 'Escape' && event.target.closest && event.target.closest('[data-edify-filter-more].is-open');
+      if (!open) return;
+      toggleFilterMore(open, false);
+      open.querySelector('[data-edify-filter-more-toggle]').focus();
+    });
+    ['change', 'reset'].forEach(function (type) {
+      document.addEventListener(type, function (event) {
+        setTimeout(function () {
+          var scope = event.target.closest && (event.target.closest('[data-edify-filter-more]') || event.target.closest('form'));
+          if (scope) elementsWithin(scope, '[data-edify-filter-more]').forEach(filterMoreCount);
+        });
+      }, true);
+    });
+    [desktopFilterRows, wideFilterRows, phoneFilterRows].forEach(function (query) {
+      query.addEventListener('change', function () { arrangeFilterRows(document); });
+    });
+  }
+
   /* A field that holds a value says so.
 
      The owner's reference field (2026-09-06) is white when empty and tinted
@@ -1921,6 +2072,7 @@
     normalizeActionButtonTypes(root);
     markFilledFields(root);
     hideEmptyFilters(root);
+    arrangeFilterRows(root);
     enhanceTabs(root);
   }
 

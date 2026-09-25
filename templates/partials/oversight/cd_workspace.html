@@ -17,27 +17,9 @@ summary and the detail are the same numbers by construction.
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
   {% team_chart team_progress "name" "total_planned,scheduled_total,completed,awaiting_verification" "Planned,Scheduled,Completed,Awaiting verification" "Planning and delivery progress by Programme Lead" "Each Lead's team · "|add:period_label %}
 
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <details class="oversight-filters">
-      <summary class="btn btn-ghost h-9 inline-flex items-center cursor-pointer">
-        Filters{% if advanced %} ({{ advanced|length }}){% endif %}
-      </summary>
-      <div class="card p-4 mt-2 max-w-md">
-        {% include "partials/oversight/filter_drawer.html" with target_url="/country-planning-oversight/" target_id="#country-workspace" %}
-      </div>
-    </details>
-    {% comment %}Excel beside CSV (owner, 2026-09-22): the plan a Lead sends on
-    is read in Excel, and a CSV argues with it about dates and money. Same rows,
-    same filters, same scope — only the file differs.{% endcomment %}
-    <a class="btn btn-ghost h-8 inline-flex items-center"
-       href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
-      Export CSV
-    </a>
-    <a class="btn btn-ghost h-8 inline-flex items-center"
-       href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx">
-      Export Excel
-    </a>
-  </div>
+  {% comment %}One Export menu in the page header; no Filters disclosure —
+  the Lead tabs narrow the rows (owner, 2026-09-25).{% endcomment %}
+  {% if export_oob %}<div id="oversight-export-slot" class="oversight-export-slot" hx-swap-oob="true">{% include "partials/oversight/_export_menu.html" with export_path="/country-planning-oversight/export" %}</div>{% endif %}
 
   {% if groups %}
   <div x-data="tabState('activeLead', 'lead', {% tab_values groups %}, '{% firstof selected_lead groups.0.id "" %}')" class="space-y-4">

@@ -885,7 +885,11 @@ main #filters-form .school-filter-grid > * {
   }
 }
 
-@media (max-width: 36rem) {
+/* A phone pages the way Clusters does (owner, 2026-09-25: "smaller buttons
+   and more square ... on the lower right ... cluster page as the gold
+   standard"): the count on the left, small square page buttons at the right,
+   arrows instead of Prev/Next, and no rows-per-page choice to crowd them. */
+@media (max-width: 47.999rem) {
   .edify-workspace :is(
     .edify-pagination,
     .edify-pagination-scope,
@@ -896,24 +900,93 @@ main #filters-form .school-filter-grid > * {
     .school-directory-pagination
   ) {
     --edify-pagination-control-size: 1.75rem;
+    display: flex !important;
+    flex-flow: row wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.375rem 0.5rem !important;
+    padding: 0.5rem 0.625rem !important;
+    text-align: start !important;
   }
 
-  .edify-workspace .edify-pagination {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    gap: 0.375rem !important;
-    padding: 0.425rem 0.5rem !important;
+  .edify-workspace :is(
+    .edify-pagination,
+    .edify-pagination-scope,
+    nav[aria-label$=" pages" i],
+    nav[aria-label*=" pagination" i],
+    .pagination,
+    .pager,
+    .school-directory-pagination
+  ) > :first-child:not(:last-child) {
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    margin: 0 !important;
+    color: var(--edify-text-muted);
+    font-size: var(--edify-text-micro-size) !important;
+    white-space: nowrap;
   }
 
-  .edify-pagination__summary {
-    text-align: center;
+  .edify-workspace :is(
+    .edify-pagination,
+    .edify-pagination-scope,
+    nav[aria-label$=" pages" i],
+    nav[aria-label*=" pagination" i],
+    .pagination,
+    .pager,
+    .school-directory-pagination
+  ) > :last-child,
+  .edify-workspace :is(.edify-pagination-scope, .school-directory-pagination) > :last-child :where(div, ol, ul) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.25rem !important;
+    margin: 0 0 0 auto !important;
   }
 
-  .edify-pagination__controls {
-    max-inline-size: 100%;
-    justify-content: center;
-    gap: 0.125rem !important;
+  .edify-workspace :is(
+    .edify-pagination,
+    .edify-pagination-scope,
+    nav[aria-label$=" pages" i],
+    nav[aria-label*=" pagination" i],
+    .pagination,
+    .pager,
+    .school-directory-pagination
+  ) :is(a, button, [aria-current="page"]) {
+    inline-size: var(--edify-pagination-control-size) !important;
+    min-inline-size: var(--edify-pagination-control-size) !important;
+    block-size: var(--edify-pagination-control-size) !important;
+    min-block-size: var(--edify-pagination-control-size) !important;
+    max-block-size: var(--edify-pagination-control-size) !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+  }
+
+  /* Every page is a bordered square, the current one filled. */
+  .edify-workspace :is(
+    .edify-pagination,
+    .edify-pagination-scope,
+    nav[aria-label$=" pages" i],
+    nav[aria-label*=" pagination" i],
+    .pagination,
+    .pager,
+    .school-directory-pagination
+  ) :is(a, button):not([aria-current]) {
+    border: 1px solid var(--edify-border) !important;
+    background: var(--edify-surface) !important;
+    color: var(--edify-text) !important;
+  }
+
+  .edify-workspace :is(
+    .edify-pagination,
+    .edify-pagination-scope,
+    nav[aria-label$=" pages" i],
+    nav[aria-label*=" pagination" i],
+    .pagination,
+    .pager,
+    .school-directory-pagination
+  ) :is(select, label, .edify-pagination__page-size, .core-school-matrix__page-size) {
+    display: none !important;
   }
 
   .edify-pagination__control--direction {
@@ -923,7 +996,7 @@ main #filters-form .school-filter-grid > * {
   }
 
   .edify-pagination__direction-label {
-    display: none;
+    display: none !important;
   }
 
   .edify-pagination__direction-symbol {
@@ -932,14 +1005,5 @@ main #filters-form .school-filter-grid > * {
 
   .edify-pagination__ellipsis {
     inline-size: 0.5rem;
-  }
-
-  .school-directory-pagination > :last-child {
-    justify-content: center;
-    gap: 0.25rem !important;
-  }
-
-  .school-directory-pagination > :last-child > :first-child {
-    margin-inline-end: 0.25rem !important;
   }
 }

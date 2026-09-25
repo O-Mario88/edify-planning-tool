@@ -38,7 +38,7 @@
   hx-swap="innerHTML"
   hx-push-url="true"
   hx-trigger="change, submit"
-  class="max-lg:hidden flex flex-wrap items-end gap-2.5 edify-surface p-2.5 sm:p-3 border border-slate-200 rounded-surface shadow-sm"
+  class="flex flex-wrap items-end gap-2.5 edify-surface p-2.5 sm:p-3 border border-slate-200 rounded-surface shadow-sm"
   >
 {% comment %}Only a period the caller actually asked for travels with the form.
 An explicit ?period= (the CSV export, a deep link) must survive a filter change;
@@ -93,7 +93,7 @@ month; picking a month goes straight there.{% endcomment %}
 <button type="button" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50 self-end transition-all" aria-haspopup="dialog"
         @click="$refs.advancedFilters.showModal()">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-More filters{% if advanced_filters_active %} · Applied{% endif %}
+More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_active %} · Applied{% endif %}
 </button>
 
 <dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="my-plan-advanced-filter-title">

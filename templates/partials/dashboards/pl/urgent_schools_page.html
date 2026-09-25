@@ -13,7 +13,7 @@
        hx-get="/dashboard/pl-urgent-schools?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.previous_page }}"
        hx-target="#urgent-schools-content"
        hx-swap="innerHTML"
-       class="rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline border edify-border edify-text-muted">Previous</a>
+       class="edify-pagination__control--direction rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline border edify-border edify-text-muted" aria-label="Previous page"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></a>
     {% endif %}
     <span class="px-1 text-[12px] font-semibold tabular-nums edify-text-subtle">
       {{ urgent_pagination.page }} / {{ urgent_pagination.page_count }}
@@ -23,7 +23,7 @@
        hx-get="/dashboard/pl-urgent-schools?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.next_page }}"
        hx-target="#urgent-schools-content"
        hx-swap="innerHTML"
-       class="rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline border edify-border edify-text-muted">Next</a>
+       class="edify-pagination__control--direction rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline border edify-border edify-text-muted" aria-label="Next page"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></a>
     {% endif %}
   </div>
   {% endif %}

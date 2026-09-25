@@ -14,79 +14,53 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
   {# ── Headline numbers, folded from the full item list ─────────────────── #}
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Team planning context" %}
 
-  {# ── Narrowing and taking the view away with you ──────────────────────── #}
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <details class="oversight-filters">
-      <summary class="btn btn-ghost h-9 inline-flex items-center cursor-pointer">
-        Filters{% if advanced %} ({{ advanced|length }}){% endif %}
-      </summary>
-      <div class="card p-4 mt-2 max-w-md">
-        {% include "partials/oversight/filter_drawer.html" with target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
-      </div>
-    </details>
-    {% comment %}Excel beside CSV (owner, 2026-09-22): the plan a Lead sends on
-    is read in Excel, and a CSV argues with it about dates and money. Same rows,
-    same filters, same scope — only the file differs.{% endcomment %}
-    <a class="btn btn-ghost h-8 inline-flex items-center"
-       href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
-      Export CSV
-    </a>
-    <a class="btn btn-ghost h-8 inline-flex items-center"
-       href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}&amp;format=xlsx">
-      Export Excel
-    </a>
+  {% comment %}Owner, 2026-09-25: the export is one Export menu in the page
+  header, and the advanced Filters disclosure is gone — the people tabs and the
+  activity tabs already narrow the rows. On an htmx swap the menu is re-sent
+  out of band so it follows the new period.{% endcomment %}
+  {% if export_oob %}<div id="oversight-export-slot" class="oversight-export-slot" hx-swap-oob="true">{% include "partials/oversight/_export_menu.html" with export_path="/team-planning-oversight/export" %}</div>{% endif %}
+
+  {% comment %}People and kind of work on one row: the team tabs on the left,
+  the activity tabs on the right (owner, 2026-09-25). They are two independent
+  narrowings of the same rows, so each link keeps the other's choice.
+
+  Owner, 2026-09-17: "a table for planned school visits, a separate table for
+  planned cluster meeting and a separate table for planned group training ...
+  grouped by CCEOs in tabs". All Activities stays first and stays the default:
+  programme events, SSA and partner work belong to none of the three, and a
+  strip of only three would drop them from the page. Each tab carries the count
+  it will show, folded from the same rows the table draws.{% endcomment %}
+  <div class="oversight-tab-row">
+    <nav class="oversight-entity-tabs" aria-label="Team members">
+      {% for entry in tabs %}
+      <a href="?owner={{ entry.key }}&activity={{ activity_family }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+         class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         {% if entry.is_active %}aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    <nav class="oversight-entity-tabs oversight-entity-tabs--end" aria-label="Activity type">
+      {% for entry in activity_tabs %}
+      <a href="?owner={{ owner }}&activity={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+         class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         {% if entry.is_active %}aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
   </div>
 
-  {# ── People are the navigation; workflow status stays in the rows. ───── #}
-  <nav class="oversight-entity-tabs" aria-label="Team members">
-    {% for entry in tabs %}
-    <a href="?owner={{ entry.key }}&activity={{ activity_family }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
-       class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
-       {% if entry.is_active %}aria-current="page"{% endif %}>
-      <span>{{ entry.label }}</span>
-      <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
-    </a>
-    {% endfor %}
-  </nav>
-
-  {# ── What kind of work, within that person's plan ───────────────────── #}
-  {% comment %}Owner, 2026-09-17: "a table for planned school visits, a
-  separate table for planned cluster meeting and a separate table for planned
-  group training ... grouped by CCEOs in tabs". A visit, a cluster convening
-  and a training are planned differently and read for different questions; one
-  mixed table made a lead hunt for the rows that answered theirs.
-
-  All Activities stays first and stays the default: programme events, SSA and
-  partner work belong to none of the three, and a strip of only three would
-  drop them from the page. Each tab carries the count it will show, folded
-  from the same rows the table draws.
-
-  `{% templatetag openvariable %}#  #}` is a SINGLE-LINE comment in Django —
-  a multi-line one renders as text on the page, which is exactly what this
-  block did before it was written as a comment tag.{% endcomment %}
-  <nav class="oversight-entity-tabs" aria-label="Activity type">
-    {% for entry in activity_tabs %}
-    <a href="?owner={{ owner }}&activity={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
-       class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
-       {% if entry.is_active %}aria-current="page"{% endif %}>
-      <span>{{ entry.label }}</span>
-      <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
-    </a>
-    {% endfor %}
-  </nav>
-
-  <div class="oversight-selection-heading">
-    <div>
-      <p class="edify-page-eyebrow">Selected owner</p>
-      <h2 class="edify-section-heading">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
-    </div>
-    <span class="pill pill-neutral">{{ period_label }}</span>
-  </div>
+  <h2 class="sr-only">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
 
   {# ── The rows, grouped by the person answerable for them ──────────────── #}
   {% if groups %}
   <div class="space-y-4" data-mobile-table="scroll">
-    {% include "partials/oversight/cd_team_detail.html" with owner_groups=groups %}
+    {% comment %}No officer strip here: the team tabs above already choose the
+    person, so the rows for the chosen tab are one panel (owner, 2026-09-25).{% endcomment %}
+    {% include "partials/oversight/cd_team_detail.html" with owner_groups=panel_groups default_officer=panel_groups.0.id hide_officer_strip=True %}
   </div>
   {% else %}
   {% include "components/empty_state.html" with title="Nothing planned in this period" message="When you or a supervised CCEO plans work for this financial year, it appears here with its executor, cost and workflow state." %}

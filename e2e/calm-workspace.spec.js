@@ -16,8 +16,8 @@ test('populated oversight and finance remain compact, readable and interactive',
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
     await expect(page.locator('body')).toHaveCSS('background-image','none');
     if(route.includes('team-planning')){
-     const filterBackground=await page.locator('.oversight-filters > summary').evaluate(e=>getComputedStyle(e).backgroundColor);
-     await expect(page.getByRole('link',{name:'Export CSV',exact:true})).toHaveCSS('background-color',filterBackground);
+     // One Export in the page header, CSV and Excel under it (owner, 2026-09-25).
+     await expect(page.locator('.edify-page-header [data-oversight-export] > summary')).toBeVisible();
     }
     for(const header of await page.locator('main .edify-page-header:visible').all())await expect(header).toHaveCSS('box-shadow','none');
    }
@@ -36,11 +36,12 @@ test('populated oversight and finance remain compact, readable and interactive',
     expect(['right','end']).toContain(await page.getByRole('columnheader',{name:'Cost',exact:true}).first().evaluate(e=>getComputedStyle(e).textAlign));
    }
    if(route.includes('team-planning')&&(width===390||width===1048)){
-    const filters=page.locator('.oversight-filters');
-    await filters.locator('summary').click();
-    await expect(filters.locator('form')).toBeVisible();
+    const exportMenu=page.locator('[data-oversight-export]');
+    await exportMenu.locator('summary').click();
+    await expect(exportMenu.getByRole('menuitem',{name:/Export CSV/})).toBeVisible();
+    await expect(exportMenu.getByRole('menuitem',{name:/Export Excel/})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
-    await filters.locator('summary').click();
+    await exportMenu.locator('summary').click();
    }
    if(width===390||width===1048)await page.screenshot({path:info.outputPath(route.replaceAll('/','_')+width+'.png')});
   }

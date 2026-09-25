@@ -264,16 +264,18 @@ test.describe('Responsive contract — behaviours', () => {
     }
   });
 
-  test('filters are as wide as what they hold and share a row when they fit', async ({ browser, baseURL, browserName, isMobile }) => {
+  test('filters share one row on a desktop and several to a row on a phone', async ({ browser, baseURL, browserName, isMobile }) => {
     onlyChromiumDesktop({ browserName, isMobile });
+    // A row is the fields whose controls end on one line: "More filters" is a
+    // button without a label above it, bottom-aligned with the selects.
     const rowsOf = (page, selector) => page.evaluate(sel => {
       const form = document.querySelector(sel);
       const rows = new Map();
       [...form.children]
         .filter(field => field.querySelector('select') && field.getBoundingClientRect().width)
         .forEach(field => {
-          const top = Math.round(field.getBoundingClientRect().top);
-          rows.set(top, (rows.get(top) || 0) + 1);
+          const bottom = Math.round(field.getBoundingClientRect().bottom);
+          rows.set(bottom, (rows.get(bottom) || 0) + 1);
         });
       const clipped = [...form.querySelectorAll('select')]
         .filter(select => select.getBoundingClientRect().width && select.scrollWidth > select.clientWidth + 1)
@@ -281,26 +283,30 @@ test.describe('Responsive contract — behaviours', () => {
       return { rows: [...rows.values()], clipped };
     }, selector);
 
-    // Partner Monitoring's View and FY share one row on the smallest phone.
+    // Partner Monitoring's filters are three and More on one row, even on the
+    // smallest phone (owner, 2026-09-25).
     {
       const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 320, height: 568 }, 'pl1@edify.org');
       try {
         await page.goto('/partner-oversight/');
         const { rows, clipped } = await rowsOf(page, 'form.oversight-period-filter');
-        expect(rows[0]).toBe(2);
+        expect(rows[0]).toBe(4);
         expect(clipped).toEqual([]);
       } finally {
         await context.close();
       }
     }
-    // Planning's eight filters: one row on a desktop, several to a row on a phone.
+    // Planning's eight filters: one full-width row on a desktop — five fields
+    // and "More filters" holding the other three, the School Directory's six
+    // slots (owner, 2026-09-25) — and several to a row on a phone.
     {
       const { context, page } = await openAs(browser, baseURL, DESKTOP_CONTEXT, { width: 1440, height: 900 }, 'cceo@edify.org');
       try {
         await page.goto('/planning');
         const { rows, clipped } = await rowsOf(page, '#filters-form');
-        expect(rows).toEqual([8]);
+        expect(rows).toEqual([6]);
         expect(clipped).toEqual([]);
+        await expect(page.locator('#filters-form [data-edify-filter-more-panel] select')).toHaveCount(3);
       } finally {
         await context.close();
       }

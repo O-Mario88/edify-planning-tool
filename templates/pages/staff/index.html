@@ -130,7 +130,7 @@ Admin & Support
 {% if page_obj.has_other_pages %}
 <div class="flex items-center gap-1.5">
 {% if page_obj.has_previous %}
-<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" rel="prev" aria-label="Previous staff page" class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Previous</a>
+<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" rel="prev" aria-label="Previous staff page" class="edify-pagination__control--direction h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></a>
 {% endif %}
 <div class="flex items-center gap-1 text-[12px]">
 {% for num in pages_list %}
@@ -144,7 +144,7 @@ Admin & Support
 {% endfor %}
 </div>
 {% if page_obj.has_next %}
-<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}" rel="next" aria-label="Next staff page" class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Next</a>
+<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}" rel="next" aria-label="Next staff page" class="edify-pagination__control--direction h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></a>
 {% endif %}
 </div>
 {% endif %}

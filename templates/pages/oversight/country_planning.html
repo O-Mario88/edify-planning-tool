@@ -4,7 +4,7 @@
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block title %}Country Planning Oversight · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260923responsive1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
@@ -15,6 +15,13 @@
       <h1 class="edify-page-title edify-page-header__title">Country Planning Oversight</h1>
       <p class="edify-page-header__description">{% if active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
     </div>
+    {% if active_oversight_view == "planning" %}
+    {% comment %}CSV and Excel as one Export menu in the header (owner,
+    2026-09-25).{% endcomment %}
+    <div id="oversight-export-slot" class="oversight-export-slot">
+      {% include "partials/oversight/_export_menu.html" with export_path="/country-planning-oversight/export" %}
+    </div>
+    {% endif %}
   </header>
 
   {% comment %}The same lens strip Team Oversight draws, so a reader who works

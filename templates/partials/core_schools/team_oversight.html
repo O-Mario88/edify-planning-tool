@@ -135,7 +135,7 @@ that ask is re-derived server-side before it is written.
         {% if page_obj.has_previous %}
           <button type="button" rel="prev"
             @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-            class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Prev</button>
+            class="edify-pagination__control--direction min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center" aria-label="Previous page"><span class="edify-pagination__direction-label">Prev</span><span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span></button>
         {% endif %}
         <div class="core-school-matrix__page-numbers">
           {% for num in pages_list %}
@@ -153,7 +153,7 @@ that ask is re-derived server-side before it is written.
         {% if page_obj.has_next %}
           <button type="button" rel="next"
             @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-            class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Next</button>
+            class="edify-pagination__control--direction min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center" aria-label="Next page"><span class="edify-pagination__direction-label">Next</span><span class="edify-pagination__direction-symbol" aria-hidden="true">›</span></button>
         {% endif %}
       {% endif %}
     </div>
