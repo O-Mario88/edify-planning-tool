@@ -11,7 +11,6 @@ from datetime import date, timedelta
 
 from django.test import Client, TestCase
 from django.utils import timezone
-from freezegun import freeze_time
 
 from apps.accounts.models import StaffSupervisorAssignment
 from apps.activities.models import Activity
@@ -139,10 +138,6 @@ class OnlyTheLeadMaySendTest(_Fixture):
         self.assertEqual(response.status_code, 403)
 
 
-# "Today" is a mid-year Monday: the reschedule below goes to tomorrow, and on
-# a Saturday tomorrow is a Sunday, which the calendar refuses ("Scheduling on
-# Sundays is blocked", 2026-09-26).
-@freeze_time("2026-07-27")
 class WorkingOnItClosesItTest(_Fixture):
     def _send(self):
         self.client_for(self.pl_user).post(
@@ -174,16 +169,16 @@ class WorkingOnItClosesItTest(_Fixture):
             context_id=meeting.id,
             source_event_type=past_due_service.OVERDUE_REMINDER_EVENT,
         )
+        ahead = timezone.localdate() + timedelta(days=1)
+        if ahead.weekday() == 6:  # the calendar policy blocks Sundays
+            ahead += timedelta(days=1)
         with self.captureOnCommitCallbacks(execute=True):
             reschedule(
                 meeting.id,
                 {
                     # Ahead, and inside this fiscal year: a reschedule never
                     # carries work across the year boundary.
-                    "scheduledDate": min(
-                        timezone.localdate() + timedelta(days=1),
-                        date(int(self.fy), 9, 30),
-                    ).isoformat(),
+                    "scheduledDate": min(ahead, date(int(self.fy), 9, 30)).isoformat(),
                     "reason": "School closed for exams",
                 },
                 self.cceo_user,

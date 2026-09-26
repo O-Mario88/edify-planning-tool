@@ -164,11 +164,17 @@ test.describe('Responsive contract — behaviours', () => {
       await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
       for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
         await page.setViewportSize({ width, height });
+        // The sheet re-lays out a frame or two after the resize: at 320x568 it
+        // measured 3px off at once and 0 within 200ms locally, and 6px on a CI
+        // runner. Read the bottom edge once it has settled.
+        await expect.poll(async () => {
+          const settling = await sheet.boundingBox();
+          return Math.abs(settling.y + settling.height - height);
+        }).toBeLessThanOrEqual(3);
         const box = await sheet.boundingBox();
         // Edge to edge and flush with the bottom, within emulation rounding.
         expect(Math.abs(box.x)).toBeLessThan(1);
         expect(Math.abs(box.width - width)).toBeLessThan(2);
-        expect(Math.abs(box.y + box.height - height)).toBeLessThanOrEqual(3);
         expect(box.y).toBeGreaterThanOrEqual(8);
         expect(await sheet.evaluate(e => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(2);
         const submit = sheet.locator('button[type="submit"]').last();

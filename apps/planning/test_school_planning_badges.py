@@ -19,7 +19,6 @@ from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
-from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import (
@@ -547,10 +546,6 @@ class PagesTest(BadgeFixture):
         )
 
 
-# "Today" is a mid-year Monday: three visits on consecutive days from today + 3
-# must all fall in this fiscal year, and in the last days of September the
-# third lands on 1 October and out of this year's count (2 != 3 on 2026-09-26).
-@freeze_time("2026-07-27")
 class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
     """Through the real scheduling service: the badge refuses nothing."""
 
@@ -562,9 +557,9 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
             scheduledDate=_at(day).isoformat(),
         )
 
-    def _counts(self):
+    def _counts(self, year=None):
         return SchoolPlanningBadgeService.get_for_schools(
-            [self.school.id], financial_year=get_operational_fy()
+            [self.school.id], financial_year=year or get_operational_fy()
         )[self.school.id]
 
     def _next_day(self, day):
@@ -574,13 +569,14 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         return day
 
     def test_a_school_with_planned_visits_can_receive_another(self):
-        day = _schedulable_date()
+        day = _schedulable_date(room=7)
+        year = get_operational_fy(day)
         self._visit(day)
-        self.assertEqual(self._counts().visits.planned_count, 1)
+        self.assertEqual(self._counts(year).visits.planned_count, 1)
         day = self._next_day(day)
         self._visit(day)
         self._visit(self._next_day(day))
-        self.assertEqual(self._counts().visits.planned_count, 3)
+        self.assertEqual(self._counts(year).visits.planned_count, 3)
 
     def test_a_school_with_completed_training_can_receive_another(self):
         Activity.objects.create(

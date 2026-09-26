@@ -1,17 +1,10 @@
-"""My Plan's own tables show the whole period, not a page of it.
+"""My Plan's tables show twenty rows and page the rest.
 
-The owner's decision (2026-09-16, recorded in
-apps/system_health/test_table_inventory.py): the School Visits, Trainings,
-Cluster Meetings and Programme Activities cards show a person's plan arranged
-by month, and a pager puts the thing the page exists for behind "Next". They
-are bounded by what one officer can do in a year.
-
-The 2026-09-24 audit paged them at ten after measuring 3.0 MB of HTML for one
-officer — on a stress estate that gave each of twenty officers ~2,500 schools.
-On the realistic estate (~330 schools and ~490 planned activities per
-officer) the unpaged page is 174 KB, smaller than the paged one, so the pager
-bought nothing real and overrode the owner. It is gone again; these tests pin
-the owner's design.
+The owner's decision (2026-09-26) replaces the 2026-09-16 one that left the
+School Visits, Trainings, Cluster Meetings and Programme Activities cards
+unpaged: every table on My Plan now shows twenty rows with the rest behind the
+shared table pager. The CSV export is unaffected and still carries the whole
+period.
 """
 
 from __future__ import annotations
@@ -30,10 +23,11 @@ from apps.schools.models import School
 User = get_user_model()
 
 FY = "2027"
-VISITS = 13
+VISITS = 25
+PAGE_SIZE = 20
 
 
-class MyPlanShowsTheWholePeriodTest(TestCase):
+class MyPlanPagesItsTablesAtTwentyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         region = Region.objects.create(name="MPP Region")
@@ -74,14 +68,23 @@ class MyPlanShowsTheWholePeriodTest(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_every_visit_of_the_period_is_drawn_without_a_pager(self):
+    def _drawn(self, body):
+        return [n for n in range(1, VISITS + 1) if f"Paged visit {n:02d}" in body]
+
+    def test_the_first_page_draws_twenty_visits_and_a_pager(self):
         response = self.client.get(f"/my-plan?fy={FY}")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        drawn = [n for n in range(1, VISITS + 1) if f"Paged visit {n:02d}" in body]
-        self.assertEqual(len(drawn), VISITS)
-        self.assertNotIn('aria-label="School visit pages"', body)
-        self.assertNotIn("school_visits_page=", body)
+        self.assertEqual(len(self._drawn(body)), PAGE_SIZE)
+        self.assertIn('aria-label="School visit pages"', body)
+        self.assertIn("school_visits_page=2", body)
+
+    def test_the_second_page_draws_the_rest(self):
+        response = self.client.get(f"/my-plan?fy={FY}&school_visits_page=2")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            len(self._drawn(response.content.decode())), VISITS - PAGE_SIZE
+        )
 
     def test_the_export_still_carries_every_visit(self):
         response = self.client.get(f"/my-plan?fy={FY}&export=csv")

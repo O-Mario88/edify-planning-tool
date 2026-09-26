@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from freezegun import freeze_time
-
 from apps.activities.models import Activity
 from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden
@@ -33,11 +31,6 @@ from apps.planning.test_standard_support_scheduling import (
 )
 
 
-# "Today" is a mid-year Monday. The follow-ups below are booked on consecutive
-# days from today + 3, and in the last days of September that run crosses
-# 1 October into the next fiscal year, where this year's gate no longer counts
-# them (2 != 3 on 2026-09-26).
-@freeze_time("2026-07-27")
 class FollowUpWithoutTrainingTest(StandardSupportBase):
     def follow_up(self, **extra):
         return self.schedule(
@@ -93,7 +86,10 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
 
         # Distinct dates: two identical visits on one day are refused by the
         # duplicate-activity guard, which is a different rule from this one.
-        day = _schedulable_date()
+        from apps.core.fy import get_operational_fy
+
+        day = _schedulable_date(room=2 * (CLIENT_VISIT_CAP + 1))
+        year = get_operational_fy(day)
         for _ in range(CLIENT_VISIT_CAP):
             while day.weekday() == 6:
                 day += datetime.timedelta(days=1)
@@ -105,7 +101,9 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
 
         from apps.planning.visit_gate import visit_gate
 
-        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1)
+        self.assertEqual(
+            visit_gate(self.school, year).total_visits, CLIENT_VISIT_CAP + 1
+        )
 
     def test_an_out_of_portfolio_school_is_scheduled_all_the_same(self):
         """The portfolio stopped gating the visit on 2026-09-21: a CCEO
