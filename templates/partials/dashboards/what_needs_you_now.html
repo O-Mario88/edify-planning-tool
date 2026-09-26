@@ -11,7 +11,7 @@ in the initial state (activeCategory 'all'), so the server's render is already
 what Alpine settles on. Cloaking them held the list back until the scripts
 ran and then pushed the dashboard below it down (layout shift 0.15 on the
 CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
-<section class="space-y-4" data-section="what-needs-you-now"
+<section id="what-needs-you-now" class="space-y-4 scroll-mt-20" data-section="what-needs-you-now"
          x-data="{
            activeScope: 'all',
            activeCategory: 'all',
@@ -140,6 +140,8 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <th scope="col" class="px-3 py-2.5">Purpose of Visit</th>
               <th scope="col" class="px-3 py-2.5">Focus Intervention</th>
               <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
+              <th scope="col" class="px-3 py-2.5">Evidence</th>
               <th scope="col" class="px-3 py-2.5">Status</th>
               <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
             </tr>
@@ -184,6 +186,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
                 UGX {{ row.budget_total|default:0|intcomma }}
               </td>
+              {% include "components/completion_cells.html" with row=row completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
               <td class="px-3 py-2.5 whitespace-nowrap">
                 <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">
                   {{ row.status_label }}
@@ -237,6 +240,9 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                             class="row-menu__item" role="menuitem">
                       View Details
                     </button>
+                    {% comment %}Talk it through in the daily debrief, which
+                    opens with this activity as its subject.{% endcomment %}
+                    <a href="{{ row.discuss_url }}" class="row-menu__item" role="menuitem">Discuss this activity</a>
                   </div>
                 </div>
                 {% else %}
@@ -262,7 +268,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="10" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due school visits.</td></tr>
+            <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due school visits.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -301,6 +307,8 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
               <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
               <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
+              <th scope="col" class="px-3 py-2.5">Evidence</th>
               <th scope="col" class="px-3 py-2.5">Status</th>
               <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
             </tr>
@@ -346,6 +354,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
                 UGX {{ row.budget_total|default:0|intcomma }}
               </td>
+              {% include "components/completion_cells.html" with row=row completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
               <td class="px-3 py-2.5 whitespace-nowrap">
                 <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">
                   {{ row.status_label }}
@@ -399,6 +408,9 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                             class="row-menu__item" role="menuitem">
                       View Details
                     </button>
+                    {% comment %}Talk it through in the daily debrief, which
+                    opens with this activity as its subject.{% endcomment %}
+                    <a href="{{ row.discuss_url }}" class="row-menu__item" role="menuitem">Discuss this activity</a>
                   </div>
                 </div>
                 {% else %}
@@ -424,7 +436,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="11" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due trainings.</td></tr>
+            <tr><td colspan="13" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due trainings.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -462,6 +474,8 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <th scope="col" class="px-3 py-2.5">SSA Intervention</th>
               <th scope="col" class="px-3 py-2.5 text-center">Participants</th>
               <th scope="col" class="px-3 py-2.5 text-right">Cost</th>
+              <th scope="col" class="px-3 py-2.5">Salesforce ID</th>
+              <th scope="col" class="px-3 py-2.5">Evidence</th>
               <th scope="col" class="px-3 py-2.5">Status</th>
               <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
             </tr>
@@ -506,6 +520,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               <td class="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-100 whitespace-nowrap">
                 UGX {{ row.budget_total|default:0|intcomma }}
               </td>
+              {% include "components/completion_cells.html" with row=row completion_cell_class="px-3 py-2.5 whitespace-nowrap" %}
               <td class="px-3 py-2.5 whitespace-nowrap">
                 <span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold {{ row.status_class }}">
                   {{ row.status_label }}
@@ -559,6 +574,9 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                             class="row-menu__item" role="menuitem">
                       View Details
                     </button>
+                    {% comment %}Talk it through in the daily debrief, which
+                    opens with this activity as its subject.{% endcomment %}
+                    <a href="{{ row.discuss_url }}" class="row-menu__item" role="menuitem">Discuss this activity</a>
                   </div>
                 </div>
                 {% else %}
@@ -584,7 +602,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="10" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due cluster meetings.</td></tr>
+            <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No past due cluster meetings.</td></tr>
             {% endfor %}
           </tbody>
         </table>

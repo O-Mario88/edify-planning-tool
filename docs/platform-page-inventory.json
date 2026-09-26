@@ -171,11 +171,11 @@
         "/cluster-oversight/",
         "/core-schools-oversight/",
         "/country-planning-oversight/team/<str:staff_id>",
+        "/dashboard",
         "/my-plan",
         "/partner-oversight/",
         "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
+        "/team-targets"
       ],
       "findings": [],
       "forms": 0,
@@ -4202,8 +4202,29 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1149,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "This Week",
+      "purpose": "Reusable this week interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cceo/this_week.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 321,
+      "bytes": 381,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4224,22 +4245,20 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12911,
+      "bytes": 1216,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Week",
       "purpose": "Reusable week interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty",
-        "open"
+        "default"
       ],
-      "tables": 3,
+      "tables": 0,
       "template": "partials/dashboards/cceo/week.html",
       "variants": []
     },
@@ -4563,7 +4582,9 @@
       ],
       "bytes": 4467,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 6,
@@ -4585,9 +4606,11 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5258,
+      "bytes": 5513,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -4613,7 +4636,9 @@
       "accessibility_requirements": [],
       "bytes": 346,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4632,7 +4657,9 @@
       "accessibility_requirements": [],
       "bytes": 488,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4652,9 +4679,11 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4492,
+      "bytes": 4786,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4680,9 +4709,11 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3967,
+      "bytes": 4451,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -4707,7 +4738,9 @@
       "accessibility_requirements": [],
       "bytes": 841,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4724,9 +4757,11 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 14725,
+      "bytes": 15243,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5114,9 +5149,11 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3775,
+      "bytes": 3914,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 4,
@@ -5627,7 +5664,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 38512,
+      "bytes": 40151,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -12181,7 +12218,9 @@
       ],
       "bytes": 820,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -33916,6 +33955,7 @@
         "template:pages/dashboards/rvp.html",
         "template:partials/dashboards/hr/body.html",
         "template:pages/dashboards/hr.html",
+        "template:partials/dashboards/pl/week_panel.html",
         "template:pages/dashboards/cceo.html",
         "template:pages/dashboards/special_projects.html",
         "template:pages/dashboards/main.html",
@@ -33929,7 +33969,11 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /dashboard",
-        "GET /rvp/approvals?fy={{ fy }}"
+        "GET /rvp/approvals?fy={{ fy }}",
+        "GET /dashboard?{{ week.previous_query }}",
+        "GET /dashboard?{{ week.current_query }}",
+        "GET /dashboard?{{ week.next_query }}",
+        "GET /dashboard?{{ tab.query }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 5 contextual summary/summaries",
@@ -33943,6 +33987,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/components/presence.css",
+        "css/components/pl-week.css",
         "css/admin-dashboard.css"
       ],
       "permission_key": "dashboard",
@@ -33998,8 +34043,8 @@
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
@@ -34009,6 +34054,7 @@
         "pages/dashboards/rvp.html",
         "partials/dashboards/hr/body.html",
         "pages/dashboards/hr.html",
+        "partials/dashboards/pl/week_panel.html",
         "pages/dashboards/cceo.html",
         "pages/dashboards/special_projects.html",
         "pages/dashboards/main.html"
@@ -98396,6 +98442,7 @@
         "pages/dashboards/rvp.html",
         "partials/dashboards/hr/body.html",
         "pages/dashboards/hr.html",
+        "partials/dashboards/pl/week_panel.html",
         "pages/dashboards/cceo.html",
         "pages/dashboards/special_projects.html",
         "pages/dashboards/main.html"
@@ -106664,7 +106711,7 @@
     "activity_states": 24,
     "all_routes": 1303,
     "api_routes": 360,
-    "component_templates": 505,
+    "component_templates": 506,
     "full_pages": 260,
     "mobile_contract_pass": 538,
     "nonvisual_actions": 268,

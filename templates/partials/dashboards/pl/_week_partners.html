@@ -61,7 +61,7 @@ disagree; every card opens that partner there, where reminders are sent.
   </section>
   {% empty %}
   {% if not partners.failed %}
-  {% include "components/empty_state.html" with message="No partner work this week, and nothing late from before it." hint="Partner work your officers monitor appears here on the day it is scheduled, and stays here while it is late." compact="true" %}
+  {% if week.solo %}{% include "components/empty_state.html" with message="No partner work this week, and nothing late from before it." hint="Partner work on the schools you assigned appears here on the day it is scheduled, and stays here while it is late." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No partner work this week, and nothing late from before it." hint="Partner work your officers monitor appears here on the day it is scheduled, and stays here while it is late." compact="true" %}{% endif %}
   {% endif %}
   {% endfor %}
 </div>

@@ -36,7 +36,7 @@ team fits on one page.
           </div>
           <div role="cell" class="plwk-board__carried" data-label="Overdue from last week"{% if not person.overdue_count %} data-empty{% endif %}>
             {% if person.overdue_count %}
-            <a class="plwk-count" data-tone="danger" href="/dashboard?{{ person.overdue_query }}" hx-get="/dashboard?{{ person.overdue_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" title="Open {{ person.name }}'s overdue work to follow up">{{ person.overdue_count }}<span class="sr-only"> overdue, open {{ person.name }}'s overdue work</span></a>
+            {% if week.solo %}<a class="plwk-count" data-tone="danger" href="#what-needs-you-now" title="Your past-due work, of any age, is listed above">{% else %}<a class="plwk-count" data-tone="danger" href="/dashboard?{{ person.overdue_query }}" hx-get="/dashboard?{{ person.overdue_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" title="Open {% if person.is_me %}your{% else %}{{ person.name }}'s{% endif %} overdue work to follow up">{% endif %}{{ person.overdue_count }}<span class="sr-only"> overdue, open {% if person.is_me %}your{% else %}{{ person.name }}'s{% endif %} overdue work</span></a>
             {% else %}
             <span class="plwk-none"><span aria-hidden="true">&mdash;</span><span class="sr-only">None</span></span>
             {% endif %}

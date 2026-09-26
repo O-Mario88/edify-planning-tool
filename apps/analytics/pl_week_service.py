@@ -54,7 +54,7 @@ from apps.core.activity_types import (
     VISIT_TYPES,
 )
 from apps.my_plan import past_due_service
-from apps.my_plan.past_due_service import PastDueRows, activity_rows, reminder_sent_on
+from apps.my_plan.past_due_service import activity_rows, reminder_sent_on
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +224,11 @@ def week_status(
     }
 
 
+#: The one's own completion waits on their lead, not on them: what "Awaiting
+#: your verification" says on an officer's row reads this on their own.
+OWN_AWAITING_LABEL = "Awaiting your Programme Lead's verification"
+
+
 def kind_of(activity_type: str) -> str:
     """What the week board calls a piece of work."""
     if activity_type in VISIT_TYPES:
@@ -303,16 +308,18 @@ def table_rows(activity_ids, *, own_ids, today: date, send_until: date) -> list[
     rows = activity_rows(activity_ids, own_ids=own_ids, today=today)
     ids = [r["id"] for r in rows]
     sent_on = reminder_sent_on(ids)
-    columns = completion_columns((r["id"], r["activity_type"]) for r in rows)
     for row in rows:
         # The two halves of completing (apps.activities.completion_columns):
-        # the Salesforce ID and the uploaded form. Blank reads "Not in SF"
-        # and "No Evidence Uploaded" in the tables.
-        row_columns = columns.get(row["id"], EMPTY_COLUMNS)
-        row.update(row_columns)
+        # the Salesforce ID and the uploaded form, which the past-due rows
+        # already carry. Blank reads "Not in SF" and "No Evidence Uploaded".
+        row_columns = {key: row.get(key, value) for key, value in EMPTY_COLUMNS.items()}
         day = row["planned_date"]
         state = week_status(row["status"], day, today, row_columns)
-        row["status_label"] = state["label"]
+        row["status_label"] = (
+            OWN_AWAITING_LABEL
+            if row["is_own"] and state["key"] == "awaiting_you"
+            else state["label"]
+        )
         row["status_class"] = state["css"]
         # Overdue: past its day and not yet verified — drawn red, whoever
         # it now waits on (owner, 2026-09-26: "all overdue activities").
@@ -377,7 +384,15 @@ def team_week_activity(user, activity_id: str):
 
 # ── The week ─────────────────────────────────────────────────────────────────
 class PLWeek:
-    """Everything the This Week view draws, for one lead, week and tab."""
+    """Everything the This Week view draws, for one lead, week and tab.
+
+    `solo` is the field officer's own week (owner, 2026-09-26: the CCEO
+    dashboard "like the redesigned PL dashboard, but only the CCEO's
+    activities, schools, and the partners they assigned schools to"): one
+    person — the officer — whose rows keep their own actions (Complete,
+    Reschedule, Cancel), their day board, and Partner Monitoring's items in
+    the officer's own scope. It opens on the officer's lists.
+    """
 
     def __init__(
         self,
@@ -388,21 +403,34 @@ class PLWeek:
         week=None,
         today=None,
         listing: str = "",
+        solo: bool = False,
+        past_due_total: int | None = None,
     ):
-        from apps.analytics.pl_dashboard_service import DashboardContext
-
         self.user = user
+        # The officer's past-due count, when the page has read it already.
+        self._past_due_total = past_due_total
         self.fy = fy
+        self.solo = solo
         self.listing = (listing or "").strip()
         self.today = today or timezone.localdate()
         self.start = resolve_week(week, self.today)
         self.end = self.start + timedelta(days=6)
         self.previous_start = self.start - timedelta(days=7)
-        self.ctx = DashboardContext(user, fy, today=self.today)
+        if solo:
+            self.ctx = None
+            self.own_ids = {
+                i for i in (user.id, getattr(user, "staff_profile_id", None)) if i
+            }
+        else:
+            from apps.analytics.pl_dashboard_service import DashboardContext
+
+            self.ctx = DashboardContext(user, fy, today=self.today)
+            self.own_ids = self.ctx.own_ids
         self.people = self._people()
         keys = {p["key"] for p in self.people}
         who = (who or "").strip()
-        self.who = who if who in keys or who == PARTNERS else EVERYONE
+        default = ME if solo else EVERYONE
+        self.who = who if who in keys or who in (PARTNERS, EVERYONE) else default
 
     # ── Who ──────────────────────────────────────────────────────────────────
     def _people(self) -> list[dict]:
@@ -421,6 +449,8 @@ class PLWeek:
                 "is_me": True,
             }
         ]
+        if self.solo:
+            return people
         for officer in self.ctx.team:
             ids = {officer["staff_id"]}
             if officer.get("user_id"):
@@ -499,6 +529,9 @@ class PLWeek:
             if key is None:
                 continue
             row = _row(activity, self.today, columns.get(activity.id, EMPTY_COLUMNS))
+            if key == ME and row["state"] == "awaiting_you":
+                row["state_label"] = OWN_AWAITING_LABEL
+                row["awaiting_you"] = False
             day = row["day"]
             if day and day >= self.start:
                 this_week[key].append(row)
@@ -508,6 +541,17 @@ class PLWeek:
                 overdue[key].append(row)
 
         leave = self._leave()
+        # The officer's overdue work of any age is the past-due table above
+        # the week on their dashboard ("What needs you now", which also holds
+        # done-but-incomplete work): the week counts it, and does not list it
+        # a second time.
+        past_due_total = 0
+        if self.solo:
+            past_due_total = self._past_due_total
+            if past_due_total is None:
+                past_due_total = past_due_service.get_past_due_dashboard_context(
+                    self.user
+                ).get("past_due_total_count", 0)
         days = [self.start + timedelta(days=i) for i in range(7)]
         weekend_used = any(
             r["day"] and r["day"].weekday() >= 5
@@ -529,7 +573,7 @@ class PLWeek:
                     "url": self.url(who=person["key"]),
                     "query": self.query(who=person["key"]),
                     "overdue_query": self.query(who=person["key"], listing=OVERDUE),
-                    "overdue_count": len(late),
+                    "overdue_count": past_due_total if self.solo else len(late),
                     "planned": len(rows),
                     "done": sum(1 for r in rows if r["done"]),
                     "closed": sum(1 for r in rows if not r["open"]),
@@ -537,7 +581,10 @@ class PLWeek:
                     "awaiting_you": awaiting,
                     # What asks the lead to act: last week's open work, and
                     # this week's that is behind or waiting on verification.
-                    "needs_you": 0
+                    # On the officer's own week, what is theirs to finish.
+                    "needs_you": past_due_total
+                    if self.solo
+                    else 0
                     if person["is_me"]
                     else len(late) + behind + awaiting,
                     "cells": [
@@ -555,6 +602,7 @@ class PLWeek:
         is_current = self.start == monday_of(self.today)
         data = {
             "who": self.who,
+            "solo": self.solo,
             "fy": self.fy,
             "start": self.start,
             "end": self.end,
@@ -608,19 +656,29 @@ class PLWeek:
         # Completed work leaves the lists: verified, or with Impact
         # Assessment, there is nothing left to follow up.
         week_rows = [r for r in week_rows if r["open"]]
+        if self.solo:
+            # Overdue is the dashboard's past-due table; the week is this
+            # week's work alone.
+            overdue_rows = []
         lists = {OVERDUE: overdue_rows, DUE_THIS_WEEK: week_rows}
         chosen = self.listing if self.listing in lists else ""
         if not chosen:
             chosen = OVERDUE if overdue_rows else DUE_THIS_WEEK
         rows = lists[chosen]
-        own_ids = self.ctx.own_ids
+        own_ids = self.own_ids
         send_until = monday_of(timezone.localdate()) + timedelta(days=6)
 
-        def build(ids):
-            return table_rows(
-                ids, own_ids=own_ids, today=self.today, send_until=send_until
+        # One week of one person's work: built in one pass for the three
+        # tables, rather than three reads of the same rows.
+        built = {
+            row["id"]: row
+            for row in table_rows(
+                [r["id"] for r in rows],
+                own_ids=own_ids,
+                today=self.today,
+                send_until=send_until,
             )
-
+        }
         tables = []
         for key, title in TABLES:
             ids = [r["id"] for r in rows if r["table"] == key]
@@ -628,7 +686,7 @@ class PLWeek:
                 {
                     "key": key,
                     "title": title,
-                    "rows": PastDueRows(ids, build),
+                    "rows": [built[i] for i in ids if i in built],
                     "count": len(ids),
                     "page_param": f"wk_{key}_page",
                 }
@@ -637,14 +695,20 @@ class PLWeek:
             **person,
             "listing": chosen,
             "listing_is_overdue": chosen == OVERDUE,
-            "lists": [
-                {
-                    "key": OVERDUE,
-                    "label": overdue_label,
-                    "count": len(overdue_rows),
-                    "query": self.query(who=person["key"], listing=OVERDUE),
-                    "active": chosen == OVERDUE,
-                },
+            "lists": (
+                []
+                if self.solo
+                else [
+                    {
+                        "key": OVERDUE,
+                        "label": overdue_label,
+                        "count": len(overdue_rows),
+                        "query": self.query(who=person["key"], listing=OVERDUE),
+                        "active": chosen == OVERDUE,
+                    }
+                ]
+            )
+            + [
                 {
                     "key": DUE_THIS_WEEK,
                     "label": "Due this week",
@@ -717,7 +781,8 @@ class PLWeek:
         week = week or self.start
         if week != monday_of(self.today):
             query["week"] = week.isoformat()
-        if who and who != EVERYONE:
+        default = ME if self.solo else EVERYONE
+        if who and who != default:
             query["who"] = who
         if listing:
             query["list"] = listing
@@ -727,6 +792,33 @@ class PLWeek:
         return f"/dashboard?{self.query(who=who, week=week, listing=listing)}"
 
     def tabs(self, people: list[dict]) -> list[dict]:
+        if self.solo:
+            me = people[0]
+            tabs = [
+                {
+                    "key": ME,
+                    "label": "My activities",
+                    # What is the officer's to finish: overdue, or past its
+                    # day this week.
+                    "count": me["needs_you"] or None,
+                    "query": self.query(who=ME),
+                },
+                {
+                    "key": EVERYONE,
+                    "label": "My week",
+                    "count": None,
+                    "query": self.query(who=EVERYONE),
+                },
+                {
+                    "key": PARTNERS,
+                    "label": "My partners",
+                    "count": None,
+                    "query": self.query(who=PARTNERS),
+                },
+            ]
+            for tab in tabs:
+                tab["active"] = tab["key"] == self.who
+            return tabs
         tabs = [
             {
                 "key": EVERYONE,
@@ -851,6 +943,23 @@ def _partner_totals(rows: list[dict]) -> dict:
 
 
 def build_week(
-    user, *, fy: str, who: str = "", week=None, today=None, listing: str = ""
+    user,
+    *,
+    fy: str,
+    who: str = "",
+    week=None,
+    today=None,
+    listing: str = "",
+    solo: bool = False,
+    past_due_total: int | None = None,
 ) -> dict:
-    return PLWeek(user, fy=fy, who=who, week=week, today=today, listing=listing).build()
+    return PLWeek(
+        user,
+        fy=fy,
+        who=who,
+        week=week,
+        today=today,
+        listing=listing,
+        solo=solo,
+        past_due_total=past_due_total,
+    ).build()

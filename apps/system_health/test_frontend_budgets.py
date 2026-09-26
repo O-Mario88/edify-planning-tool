@@ -158,8 +158,14 @@ class PagePayloadBudgetTest(TestCase):
 
     #: (url, max KB of HTML, max elements). Measured 2026-09-24 on this
     #: fixture plus ~10 %; ratchet, not target.
+    #:
+    #: /dashboard was 310 KB / 1250. Raised on 2026-09-26 (measured 333 KB /
+    #: 1590) for the officer's This Week: the week's own visits drawn in the
+    #: page — where the Today view drew a loader and then fetched /today/panel
+    #: (287 elements) — and the Salesforce ID, Evidence and Discuss cells on
+    #: every past-due row. Empty week tables are not drawn.
     CCEO_PAGES = (
-        ("/dashboard", 310, 1250),
+        ("/dashboard", 365, 1750),
         ("/my-plan", 265, 1760),
         ("/schools", 265, 2270),
         ("/planning", 175, 950),

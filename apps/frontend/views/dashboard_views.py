@@ -252,6 +252,23 @@ def _pl_map_context(user, fy, filters) -> dict:
     return {"pl_map_rows": table_rows}
 
 
+def _cceo_week(request, user, *, past_due_total: int | None = None) -> dict:
+    """The officer's This Week (apps.analytics.pl_week_service, solo). The
+    page passes the past-due count it has already read."""
+    from apps.analytics.pl_week_service import build_week
+    from apps.core.fy import get_operational_fy
+
+    return build_week(
+        user,
+        fy=get_operational_fy(),
+        who=(request.GET.get("who") or "").strip(),
+        week=request.GET.get("week"),
+        listing=request.GET.get("list") or "",
+        solo=True,
+        past_due_total=past_due_total,
+    )
+
+
 def _program_lead_dashboard(request, avatar_initials: str):
     """The Program Lead dashboard.
 
@@ -861,6 +878,18 @@ def dashboard_view(request):
         return response
 
     elif role == "CCEO":
+        # The officer's This Week (owner, 2026-09-26): the Programme Lead's
+        # week in its solo mode — the officer's own overdue and due work,
+        # their days, and the partners they assigned schools to. Its own tabs
+        # and arrows ask for the panel alone, before the dashboard's reads.
+        if request.headers.get("HX-Target") == "pl-week-panel":
+            from apps.core.fy import get_operational_fy
+
+            return render(
+                request,
+                "partials/dashboards/pl/week_panel.html",
+                {"week": _cceo_week(request, user), "fy": get_operational_fy()},
+            )
         # CCEO Field Officer Dashboard Context — all figures are scoped to
         # this CCEO's own activities/fund requests, no fabricated fallbacks.
         today = timezone.now().date()
@@ -1189,12 +1218,21 @@ def dashboard_view(request):
         # for an HX-Request to ask for.
         # Today and Dashboard are one page; Today opens first (owner,
         # 2026-09-14).
+        # This Week opens the dashboard, as the Programme Lead's does; "today"
+        # (bookmarks, notifications, a remembered tab) is the week's My
+        # activities tab, which opens with the officer's Today workbench.
         dashboard_view, view_explicit = resolve_dashboard_view(
             request,
             role_key="cceo",
-            default="today",
-            allowed=("today", "operations", "map"),
+            default="week",
+            allowed=("week", "today", "operations", "map"),
         )
+        if dashboard_view == "today":
+            dashboard_view = "week"
+        if dashboard_view == "week":
+            context["week"] = _cceo_week(
+                request, user, past_due_total=context.get("past_due_total_count")
+            )
         context["dashboard_view"] = dashboard_view
         context["dashboard_tabs"] = dashboard_view_tabs(
             request,
@@ -1203,14 +1241,15 @@ def dashboard_view(request):
             view_template="partials/dashboards/cceo/view.html",
             tabs=[
                 (
-                    "today",
-                    "Today",
-                    "Your route, the next action and what waits on you",
+                    "week",
+                    "This Week",
+                    "Your overdue and this week's work, your days and your "
+                    "partners' week",
                 ),
                 (
                     "operations",
-                    "Week",
-                    "Urgent schools, this week's plan and overdue work",
+                    "Urgent schools",
+                    "Schools needing urgent attention this month",
                 ),
                 ("map", "Map", "The country map and its distribution table"),
             ],

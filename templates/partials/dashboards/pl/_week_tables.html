@@ -22,7 +22,14 @@ it leaves the table the moment it is verified (owner, 2026-09-26). A row past
 its day is overdue and drawn red, links and status included, bright red in
 the dark themes (static/css/components/pl-week.css).
 {% endcomment %}
+{% comment %}The officer's own week draws only the tables that hold work
+(owner, 2026-09-26: polish): an empty one is one line fewer to read past.
+{% endcomment %}
+{% if week.solo and not person.tables.0.count and not person.tables.1.count and not person.tables.2.count %}
+{% include "components/empty_state.html" with message="Nothing left to complete this week." hint="Past-due work, of any age, is listed above in What needs you now." compact="true" %}
+{% endif %}
 {% for table in person.tables %}
+{% if table.count or not week.solo %}
 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}">
   <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
     <div class="flex items-center gap-2">
@@ -186,4 +193,5 @@ the dark themes (static/css/components/pl-week.css).
     {% include "components/table_pager.html" with pager=table_pager param=table.page_param %}
   </div>
 </div>
+{% endif %}
 {% endfor %}

@@ -256,13 +256,26 @@ class DashboardViewRenderTest(TestCase):
                 self.assertIn("subregionMap()", html)
                 self.assertIn('id="subregion-distribution-rows"', html)
 
+    def test_the_field_officer_opens_on_this_week_with_the_map_beside_it(self):
+        # Owner, 2026-09-26: the CCEO dashboard looks like the Programme
+        # Lead's — This Week first, the officer's own work alone.
+        response = self._get(self.cceo, "/dashboard")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("data-pl-week-panel", html)
+        self.assertNotIn("subregionMap()", html)
+        selected = re.findall(
+            r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"', html
+        )
+        self.assertEqual(selected, ["week"])
+        self.assertLess(html.index(">This Week</a>"), html.index(">Urgent schools</a>"))
+        html = self._get(self.cceo, "/dashboard?view=map").content.decode()
+        self.assertIn("subregionMap()", html)
+
     def test_the_field_roles_open_on_today_with_their_work_and_the_map_beside_it(self):
         # Today and Dashboard are one page (owner, 2026-09-14). The Program
-        # Lead opens on This Week instead (next test).
-        for user, work in (
-            (self.cceo, "Week"),
-            (self.coordinator, "Operations"),
-        ):
+        # Lead and the CCEO open on This Week instead (their own tests).
+        for user, work in ((self.coordinator, "Operations"),):
             with self.subTest(role=user.active_role):
                 response = self._get(user, "/dashboard")
                 self.assertEqual(response.status_code, 200)

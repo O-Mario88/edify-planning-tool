@@ -4,23 +4,23 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 750,
-   "none": 355,
-   "page-tested": 1254,
-   "request-tested": 1074
+   "none": 345,
+   "page-tested": 1263,
+   "request-tested": 1070
   },
   "by_kind": {
-   "button": 1130,
+   "button": 1127,
    "disclosure": 68,
    "field": 1178,
-   "link": 990,
+   "link": 988,
    "tab": 67
   },
-  "controls": 3433,
+  "controls": 3428,
   "high_consequence": 185,
   "state_changing": 413,
-  "templates_scanned": 543,
+  "templates_scanned": 542,
   "unresolved_destinations": 0,
-  "untested": 355,
+  "untested": 345,
   "untested_state_changing": 24
  },
  "templates": {
@@ -835,6 +835,7 @@
     "/cost-settings",
     "/country-planning-oversight/",
     "/coverage",
+    "/dashboard",
     "/dashboard/past-due-popup",
     "/dashboard/pl-drilldown",
     "/disbursements",
@@ -5711,10 +5712,6 @@
    "pages": [],
    "roles": []
   },
-  "partials/dashboards/cceo/week.html": {
-   "pages": [],
-   "roles": []
-  },
   "partials/dashboards/cd/_attention_card.html": {
    "pages": [
     "/dashboard",
@@ -5801,24 +5798,109 @@
    ]
   },
   "partials/dashboards/pl/_week_action.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/_week_everyone.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/_week_partners.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/_week_person.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/_week_tables.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/approval_queue.html": {
    "pages": [
@@ -5912,8 +5994,25 @@
    ]
   },
   "partials/dashboards/pl/week_panel.html": {
-   "pages": [],
-   "roles": []
+   "pages": [
+    "/dashboard"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
   },
   "partials/dashboards/pl/week_view.html": {
    "pages": [],
@@ -10774,16 +10873,6 @@
   {"accessible_name": "Schedule Activity", "destination": "/planning", "destination_route": "/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-255219ECB79E", "kind": "link", "line": 214, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/operations.html"},
   {"accessible_name": "Create Cluster", "destination": "/clusters", "destination_route": "/clusters", "evidence": "request-tested", "high_consequence": false, "id": "INT-BB39E6B52FC4", "kind": "link", "line": 215, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/operations.html"},
   {"accessible_name": "New Request", "destination": "/fund-requests/weekly", "destination_route": "/fund-requests/weekly", "evidence": "request-tested", "high_consequence": false, "id": "INT-3F510661F82C", "kind": "link", "line": 216, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/operations.html"},
-  {"accessible_name": "View Calendar", "destination": "/calendar", "destination_route": "/calendar", "evidence": "request-tested", "high_consequence": false, "id": "INT-CB22FE750657", "kind": "link", "line": 25, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "View all →", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-F4CBB9132BF2", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "Actions for {{ r.activity }} at {{ r.where }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FF747B5BC430", "kind": "button", "line": 62, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "Complete", "destination": "{{ r.complete_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-4F95F75B1BE5", "kind": "button", "line": 72, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "Reschedule", "destination": "{{ r.reschedule_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-658273DF70E7", "kind": "button", "line": 75, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "Discuss this activity", "destination": "{{ r.discuss_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-B18F65C1E9FD", "kind": "link", "line": 78, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "View all →", "destination": "/planning", "destination_route": "/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-B972D1C312D9", "kind": "link", "line": 99, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "{{ r.action_label }}", "destination": "{{ r.action_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-2C20029682C4", "kind": "link", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "View all →", "destination": "/planning", "destination_route": "/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-C3A33B1F724C", "kind": "link", "line": 133, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
-  {"accessible_name": "{{ r.action_label }}", "destination": "{{ r.action_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FA60F8716C1F", "kind": "link", "line": 148, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cceo/week.html"},
   {"accessible_name": "{{ c.action }} →", "destination": "{{ c.link }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1B836EEE3A97", "kind": "link", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/_attention_card.html"},
   {"accessible_name": "Open impact reports →", "destination": "/ia/impact-reports/", "destination_route": "/ia/impact-reports/", "evidence": "request-tested", "high_consequence": false, "id": "INT-C16EE8D85C27", "kind": "link", "line": 16, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/_impact_findings.html"},
   {"accessible_name": "{{ impact_findings.latest.title }}", "destination": "/ia/impact-reports/{{ impact_findings.latest.report_id }}/", "destination_route": "/ia/impact-reports/<str:report_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-2AC7BBCEAAEB", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/_impact_findings.html"},
@@ -10837,19 +10926,21 @@
   {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-D613F6D41831", "kind": "button", "line": 41, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/pl/_past_due_popup_table.html"},
   {"accessible_name": "{{ person.first_name }} completed this — review the evidence and Salesforce ID, then verify or return it", "destination": "/pl/review-queue/{{ row.id }}/drawer", "destination_route": "/pl/review-queue/<str:activity_id>/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-B4B51ECC7EB7", "kind": "button", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "Remind {{ row.owner }} to complete this: upload the evidence and enter the Salesforce ID", "destination": "/dashboard/pl-week-send/{{ row.id }}/", "destination_route": "/dashboard/pl-week-send/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-F02D39EFC730", "kind": "button", "line": 18, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
-  {"accessible_name": "Reminder sent to {{ row.owner }} on {{ row.sent_on|date:'D j M' }} ; it stays until they complete, reschedule or cancel this", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-4DBFA1505487", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
-  {"accessible_name": "Actions for", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-19CAE69B5979", "kind": "button", "line": 37, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
+  {"accessible_name": "Reminder sent to {{ row.owner }} on {{ row.sent_on|date:'D j M' }} ; it stays until they complete, reschedule or cancel this", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4DBFA1505487", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
+  {"accessible_name": "Actions for", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-19CAE69B5979", "kind": "button", "line": 37, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "Complete Activity", "destination": "/my-plan/{{ row.id }}/complete-drawer", "destination_route": "/my-plan/<str:activity_id>/complete-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FD9C2D0B635", "kind": "button", "line": 47, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "Reschedule Activity", "destination": "/my-plan/{{ row.id }}/reschedule-drawer", "destination_route": "/my-plan/<str:activity_id>/reschedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-127D35236383", "kind": "button", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "Cancel Activity", "destination": "/my-plan/{{ row.id }}/cancel-drawer", "destination_route": "/my-plan/<str:activity_id>/cancel-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-9EE46D7E2E5D", "kind": "button", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "View Details", "destination": "/my-plan/{{ row.id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-D20176E113FC", "kind": "button", "line": 50, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/_week_action.html"},
   {"accessible_name": "{{ person.name }}", "destination": "/dashboard?{{ person.query }}", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-362830F397C1", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_everyone.html"},
-  {"accessible_name": "Open {{ person.name }}'s overdue work to follow up", "destination": "/dashboard?{{ person.overdue_query }}", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-3D5A704DF78B", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_everyone.html"},
+  {"accessible_name": "Your past-due work, of any age, is listed above", "destination": "#what-needs-you-now", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6219280ECD40", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_everyone.html"},
+  {"accessible_name": "Open your {{ person.name }}'s overdue work to follow up", "destination": "/dashboard?{{ person.overdue_query }}", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-DE2952583CC0", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_everyone.html"},
   {"accessible_name": "Partner Monitoring →", "destination": "/partner-oversight/                         ?partner={{ group.partner_id|urlencode }}           ", "destination_route": "/partner-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-591F2BE2137E", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_partners.html"},
-  {"accessible_name": "{{ item.label }} {{ item.count }}", "destination": "/dashboard?{{ item.query }}", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-8CEE40DE32B4", "kind": "tab", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_person.html"},
-  {"accessible_name": "{{ row.school_name|default:\"—\" }}", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-7B397F999EA9", "kind": "link", "line": 73, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
-  {"accessible_name": "", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-B46D5ABBA893", "kind": "link", "line": 119, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
-  {"accessible_name": "{{ row.cluster_name }}", "destination": "/clusters/{{ row.cluster_id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-D3B82FDD59F1", "kind": "link", "line": 164, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
+  {"accessible_name": "{{ person.overdue_count }} past due, any age", "destination": "#what-needs-you-now", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F870FB359F0E", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_person.html"},
+  {"accessible_name": "{{ item.label }} {{ item.count }}", "destination": "/dashboard?{{ item.query }}", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-8CEE40DE32B4", "kind": "tab", "line": 53, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_person.html"},
+  {"accessible_name": "{{ row.school_name|default:\"—\" }}", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7B397F999EA9", "kind": "link", "line": 80, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
+  {"accessible_name": "", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B46D5ABBA893", "kind": "link", "line": 126, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
+  {"accessible_name": "{{ row.cluster_name }}", "destination": "/clusters/{{ row.cluster_id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-D3B82FDD59F1", "kind": "link", "line": 171, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/_week_tables.html"},
   {"accessible_name": "{{ r.action_label }}", "destination": "{{ r.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3650E8BF6CC4", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/approval_queue.html"},
   {"accessible_name": "View performance details for {{ c.name }}", "destination": "/analytics/program-lead/drilldown?drill=cceo&id={{ c.staff_id }}&fy={{ fy }}", "destination_route": "/analytics/program-lead/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-CDB0F9FB09A1", "kind": "button", "line": 60, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/pl/cceo_performance.html"},
   {"accessible_name": "Coaching log →", "destination": "{{ coaching_links.coaching }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-922321C0726B", "kind": "link", "line": 18, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/pl/coaching_view.html"},
@@ -10958,30 +11049,33 @@
   {"accessible_name": "School Visits ({{ past_due_visits_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E4D0460E9AC0", "kind": "button", "line": 80, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
   {"accessible_name": "Trainings ({{ past_due_trainings_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6EE0F50DC587", "kind": "button", "line": 86, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
   {"accessible_name": "Cluster Meetings ({{ past_due_meetings_count }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D1BF0C73097D", "kind": "button", "line": 92, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "{{ row.school_name|default:\"—\" }}", "destination": "/schools/{{ row.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-639934EC296F", "kind": "link", "line": 154, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Actions for {{ row.school_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0696CBFDE8B5", "kind": "button", "line": 198, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F3F8A2BE5BC8", "kind": "button", "line": 208, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-58A88C491898", "kind": "button", "line": 216, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4654DDD7D72D", "kind": "button", "line": 224, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-927B19011E20", "kind": "button", "line": 232, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6572FC69A542", "kind": "button", "line": 245, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-172E6E503115", "kind": "button", "line": 252, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-948C23E14047", "kind": "link", "line": 315, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Actions for {{ row.activity_type_label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DBDBFF5C19B1", "kind": "button", "line": 360, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1319B56D4542", "kind": "button", "line": 370, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C6844574D2C7", "kind": "button", "line": 378, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-304201514A49", "kind": "button", "line": 386, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EBC9165479D2", "kind": "button", "line": 394, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F1C829568733", "kind": "button", "line": 407, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-0B596FE08ABD", "kind": "button", "line": 414, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "{{ row.cluster_name }}", "destination": "/clusters/{{ row.cluster_id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-80E29DED803C", "kind": "link", "line": 475, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Actions for {{ row.cluster_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FEB72265FDE6", "kind": "button", "line": 520, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3D200BC3D986", "kind": "button", "line": 530, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E94CE08F6AA8", "kind": "button", "line": 538, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-472B3365902D", "kind": "button", "line": 546, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8905EFDD9D26", "kind": "button", "line": 554, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6447933BC804", "kind": "button", "line": 567, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
-  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-7EC763AE6AF3", "kind": "button", "line": 574, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "{{ row.school_name|default:\"—\" }}", "destination": "/schools/{{ row.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-639934EC296F", "kind": "link", "line": 156, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Actions for {{ row.school_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0696CBFDE8B5", "kind": "button", "line": 201, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F3F8A2BE5BC8", "kind": "button", "line": 211, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-58A88C491898", "kind": "button", "line": 219, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4654DDD7D72D", "kind": "button", "line": 227, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-927B19011E20", "kind": "button", "line": 235, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Discuss this activity", "destination": "{{ row.discuss_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1CD71C0EE05D", "kind": "link", "line": 245, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6572FC69A542", "kind": "button", "line": 251, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-172E6E503115", "kind": "button", "line": 258, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "", "destination": "{{ row.place_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-948C23E14047", "kind": "link", "line": 323, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Actions for {{ row.activity_type_label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DBDBFF5C19B1", "kind": "button", "line": 369, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1319B56D4542", "kind": "button", "line": 379, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C6844574D2C7", "kind": "button", "line": 387, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-304201514A49", "kind": "button", "line": 395, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EBC9165479D2", "kind": "button", "line": 403, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Discuss this activity", "destination": "{{ row.discuss_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1A156B0A65B4", "kind": "link", "line": 413, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F1C829568733", "kind": "button", "line": 419, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-0B596FE08ABD", "kind": "button", "line": 426, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "{{ row.cluster_name }}", "destination": "/clusters/{{ row.cluster_id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-80E29DED803C", "kind": "link", "line": 489, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Actions for {{ row.cluster_name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FEB72265FDE6", "kind": "button", "line": 535, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Complete Activity", "destination": "{{ row.complete_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3D200BC3D986", "kind": "button", "line": 545, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reschedule Activity", "destination": "{{ row.reschedule_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E94CE08F6AA8", "kind": "button", "line": 553, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Cancel Activity", "destination": "{{ row.cancel_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-472B3365902D", "kind": "button", "line": 561, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "View Details", "destination": "{{ row.details_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8905EFDD9D26", "kind": "button", "line": 569, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Discuss this activity", "destination": "{{ row.discuss_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2B38CF81AC06", "kind": "link", "line": 579, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Reminder already sent to {{ row.owner }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6447933BC804", "kind": "button", "line": 585, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
+  {"accessible_name": "Notify {{ row.owner }} to complete, reschedule, or cancel this activity", "destination": "/dashboard/notify-past-due/{{ row.id }}/", "destination_route": "/dashboard/notify-past-due/<str:activity_id>/", "evidence": "request-tested", "high_consequence": true, "id": "INT-7EC763AE6AF3", "kind": "button", "line": 592, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/what_needs_you_now.html"},
   {"accessible_name": "Assign to me", "destination": "/data-quality/issue/{{ issue.id }}/action", "destination_route": "/data-quality/issue/<str:issue_id>/action", "evidence": "request-tested", "high_consequence": false, "id": "INT-AF98F772D655", "kind": "button", "line": 23, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/data_quality/issue_row.html"},
   {"accessible_name": "Resolve", "destination": "/data-quality/issue/{{ issue.id }}/action", "destination_route": "/data-quality/issue/<str:issue_id>/action", "evidence": "request-tested", "high_consequence": false, "id": "INT-EF1C22429FF0", "kind": "button", "line": 28, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/data_quality/issue_row.html"},
   {"accessible_name": "View Action Center →", "destination": "/debriefs?tab=escalated", "destination_route": "/debriefs", "evidence": "request-tested", "high_consequence": false, "id": "INT-B6BFD76AF382", "kind": "link", "line": 104, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/debriefs/dashboard_body.html"},

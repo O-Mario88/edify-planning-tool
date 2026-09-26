@@ -1,3 +1,4 @@
-{% comment %}The chosen view: today, the week or the map.{% endcomment %}
-{% if dashboard_view == "today" %}{% include "partials/today/dashboard_loader.html" %}
+{% comment %}The chosen view: This Week (the officer's own week, owner 2026-09-26),
+the urgent schools, or the map.{% endcomment %}
+{% if dashboard_view == "week" %}{% include "partials/dashboards/cceo/this_week.html" %}
 {% elif dashboard_view == "map" %}{% include "partials/dashboards/cceo/map_view.html" %}{% else %}{% include "partials/dashboards/cceo/week.html" %}{% endif %}

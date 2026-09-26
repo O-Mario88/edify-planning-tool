@@ -8,7 +8,7 @@ and the content swap as one unit so the selected tab can never go stale.
 <div class="plwk-head">
   <div class="plwk-head__lead">
     <h2 class="rpl-section-title plwk-head__name">{% if week.is_current %}This week{% elif week.is_past %}Week of {{ week.start|date:"j M" }}{% else %}Coming week{% endif %} <span class="plwk-head__range">· {{ week.range_label }}</span></h2>
-    <p class="rpl-card__subtitle">Where you and your officers are working, what is overdue from the {{ week.previous_label }}, and what the partners did.</p>
+    <p class="rpl-card__subtitle">{% if week.solo %}Your work this week, what is overdue from the {{ week.previous_label }}, and what your partners did.{% else %}Where you and your officers are working, what is overdue from the {{ week.previous_label }}, and what the partners did.{% endif %}</p>
   </div>
   <nav class="plwk-arrows" aria-label="Choose the week">
     <a class="plwk-arrow" href="/dashboard?{{ week.previous_query }}" hx-get="/dashboard?{{ week.previous_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" rel="prev"><span aria-hidden="true">&lsaquo;</span> Previous week</a>

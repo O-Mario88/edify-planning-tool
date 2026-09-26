@@ -73,7 +73,9 @@ class RowActionsMenuContractTests(SimpleTestCase):
         for template in (
             "templates/partials/my_plan/activity_row.html",
             "templates/partials/today/queue_row.html",
-            "templates/partials/dashboards/cceo/week.html",
+            # The officer's own rows on This Week (the CCEO dashboard's
+            # overdue and due lists since 2026-09-26).
+            "templates/partials/dashboards/pl/_week_action.html",
         ):
             body = _read(template)
             self.assertIn('x-data="rowMenu"', body, template)
