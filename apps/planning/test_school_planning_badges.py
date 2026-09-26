@@ -19,6 +19,7 @@ from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import (
@@ -546,6 +547,10 @@ class PagesTest(BadgeFixture):
         )
 
 
+# "Today" is a mid-year Monday: three visits on consecutive days from today + 3
+# must all fall in this fiscal year, and in the last days of September the
+# third lands on 1 October and out of this year's count (2 != 3 on 2026-09-26).
+@freeze_time("2026-07-27")
 class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
     """Through the real scheduling service: the badge refuses nothing."""
 

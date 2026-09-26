@@ -11,6 +11,7 @@ from datetime import date, timedelta
 
 from django.test import Client, TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffSupervisorAssignment
 from apps.activities.models import Activity
@@ -138,6 +139,10 @@ class OnlyTheLeadMaySendTest(_Fixture):
         self.assertEqual(response.status_code, 403)
 
 
+# "Today" is a mid-year Monday: the reschedule below goes to tomorrow, and on
+# a Saturday tomorrow is a Sunday, which the calendar refuses ("Scheduling on
+# Sundays is blocked", 2026-09-26).
+@freeze_time("2026-07-27")
 class WorkingOnItClosesItTest(_Fixture):
     def _send(self):
         self.client_for(self.pl_user).post(

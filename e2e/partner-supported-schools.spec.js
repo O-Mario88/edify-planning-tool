@@ -158,9 +158,15 @@ test.describe('Partner-supported schools — journeys', () => {
     }
     expect(facts.assignments).toBe(1);
 
-    await page.goto(`/my-plan?q=${encodeURIComponent(hope.name)}`);
-    for (const activity of staffWork) {
-      await expect(activityControls(page, activity.id).first()).toBeAttached();
+    // My Plan shows one fiscal year at a time, a month of it by default. In
+    // the last days of September the planned dates run past 1 October, so the
+    // work is read year by year, the whole year at once.
+    const years = [...new Set(staffWork.map(a => a.fy))].sort();
+    for (const fy of years) {
+      await page.goto(`/my-plan?q=${encodeURIComponent(hope.name)}&fy=${fy}&period=fy`);
+      for (const activity of staffWork.filter(a => a.fy === fy)) {
+        await expect(activityControls(page, activity.id).first()).toBeAttached();
+      }
     }
     await shoot(page, 'j2-my-plan', testInfo);
   });

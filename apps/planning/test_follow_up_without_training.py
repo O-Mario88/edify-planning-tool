@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from freezegun import freeze_time
+
 from apps.activities.models import Activity
 from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden
@@ -31,6 +33,11 @@ from apps.planning.test_standard_support_scheduling import (
 )
 
 
+# "Today" is a mid-year Monday. The follow-ups below are booked on consecutive
+# days from today + 3, and in the last days of September that run crosses
+# 1 October into the next fiscal year, where this year's gate no longer counts
+# them (2 != 3 on 2026-09-26).
+@freeze_time("2026-07-27")
 class FollowUpWithoutTrainingTest(StandardSupportBase):
     def follow_up(self, **extra):
         return self.schedule(

@@ -25,6 +25,7 @@ from django.db import connection
 from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffSchoolAssignment, User
 from apps.activities.models import (
@@ -695,6 +696,11 @@ class ClusterPlanningTest(PartnerSchoolFixture):
 
 
 # ── My Plan ─────────────────────────────────────────────────────────────────
+# "Today" is a mid-year Monday: the staff work below is planned on consecutive
+# days from today + 3, and in the last days of September that run crosses
+# 1 October, filing an activity under the next fiscal year where this year's
+# My Plan does not list it (seen on 2026-09-26).
+@freeze_time("2026-07-27")
 class MyPlanRoutingTest(PartnerSchoolFixture):
     def setUp(self):
         super().setUp()
