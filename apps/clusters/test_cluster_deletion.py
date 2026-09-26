@@ -150,6 +150,26 @@ class ClusterDeletionSurfaceTest(TestCase):
         self.assertContains(response, f'hx-post="/clusters/{self.cluster.id}/delete"')
         self.assertNotContains(response, "data-cluster-delete-blocked")
 
+    def test_the_profile_header_buttons_are_grouped(self):
+        """Separate buttons, organised (owner, 2026-09-26: "keep them up as
+        separate buttons but organize them in a professional way"). They were
+        five buttons with three solid fills, wrapping on a tablet: now one
+        primary, outline buttons for the rest, a hairline between planning and
+        the record, and Delete last. Adding schools and a day of visits sit on
+        the schools table, once."""
+        body = self.client.get(f"/clusters/{self.cluster.id}").content.decode()
+        controls = body.split('class="edify-page-header__controls"', 1)[1].split(
+            'id="cluster-delete-errors"', 1
+        )[0]
+        self.assertNotIn("data-row-actions", controls)
+        self.assertLessEqual(controls.count('class="edify-action-button primary'), 1)
+        self.assertLess(
+            controls.index("Edit Details"), controls.index("Delete cluster")
+        )
+        self.assertNotIn("Add Schools to Cluster", controls)
+        schools = body.split("Schools in This Cluster", 1)[1].split("<table", 1)[0]
+        self.assertEqual(schools.count("Add Schools to Cluster"), 1)
+
     def test_the_profile_explains_why_a_working_cluster_cannot_be_deleted(self):
         Activity.objects.create(
             activity_type="cluster_training",

@@ -371,6 +371,11 @@ def cluster_list_view(request):
     context["can_create_clusters"] = (
         Permission.CLUSTER_ASSIGN.value in resolve_user_scope(request.user).permissions
     )
+    # Add Schools in a card's Actions menu: the check the bulk-assign drawer
+    # itself makes (the Planning page), not the stricter planning one above.
+    context["can_add_cluster_schools"] = RolePermissionService.can_view_page(
+        request.user, "planning"
+    )
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/clusters/htmx_response.html", context)

@@ -46,11 +46,15 @@ offered Schedule to every oversight role, whose click the drawer answered
 with 403. `can_plan_clusters` is the permission the drawer itself enforces,
 so the menu and the endpoint cannot disagree however many roles exist.
 
-One Actions menu rather than two buttons (owner, 2026-09-26): on a tablet
-Schedule and Assign wrapped onto two lines.
+One Actions menu for everything done to the cluster (owner, 2026-09-26:
+"Check all clusters action buttons"): on a tablet Schedule and Assign
+wrapped onto two lines, and the open card then offered Schedule a Day of
+Visits and Add Schools as two more buttons above its schools. Add Schools is
+the bulk-assign drawer's own check (the Planning page), so a role that may
+add schools but not plan sessions still gets the menu, with that one item.
 {% endcomment %}
-{% if can_plan_clusters %}
 {% row_actions cluster.name %}
+{% if can_plan_clusters %}
 <button
 type="button"
 class="row-menu__item"
@@ -59,7 +63,25 @@ hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&action=training"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 aria-label="Schedule Group Training for {{ cluster.name }}"
->Schedule</button>
+>Schedule Group Training</button>
+<button
+type="button"
+class="row-menu__item"
+role="menuitem"
+hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&action=meeting"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Schedule a Cluster Meeting for {{ cluster.name }}"
+>Schedule Cluster Meeting</button>
+<button
+type="button"
+class="row-menu__item"
+role="menuitem"
+hx-get="/clusters/{{ cluster.id }}/bulk-schedule-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Schedule a day of visits across {{ cluster.name }}"
+>Schedule a Day of Visits</button>
 <button
 type="button"
 class="row-menu__item"
@@ -69,8 +91,19 @@ hx-target="#drawer-container"
 hx-swap="innerHTML"
 aria-label="Assign staff to {{ cluster.name }}"
 >Assign</button>
-{% endrow_actions %}
 {% endif %}
+{% if can_add_cluster_schools %}
+<button
+type="button"
+class="row-menu__item"
+role="menuitem"
+hx-get="/clusters/{{ cluster.id }}/bulk-assign-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Add schools to {{ cluster.name }}"
+>Add Schools</button>
+{% endif %}
+{% endrow_actions %}
 
 
 </div>

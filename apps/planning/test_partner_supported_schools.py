@@ -851,17 +851,32 @@ class PlanningBadgesOnPartnerSchoolsTest(PartnerSchoolFixture):
         self.assertEqual(self.labels(self.badges().visit_chips), ["1 Needs Replanning"])
 
     def test_several_legitimate_activities_are_all_counted(self):
-        self.staff_activity("STANDARD_DONOR_VISIT")
+        # Two days in one financial year: in the last days of September the
+        # run starts on 1 October and the badges count that year.
+        first = _schedulable_date(room=3)
+        second = first + datetime.timedelta(days=1)
+        while second.weekday() == 6:
+            second += datetime.timedelta(days=1)
+        fy = get_operational_fy(first)
+        self.staff_activity(
+            "STANDARD_DONOR_VISIT", scheduledDate=_at(first).isoformat()
+        )
         self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_STORY_GATHERING_VISIT").id,
-            scheduledDate=_at(_later_date(1)).isoformat(),
+            scheduledDate=_at(second).isoformat(),
         )
-        self.partner_activity(status="ia_verified", ia_verification_status="confirmed")
+        self.partner_activity(
+            status="ia_verified",
+            ia_verification_status="confirmed",
+            planned_date=first,
+            fy=fy,
+        )
 
-        self.assertEqual(
-            self.labels(self.badges().visit_chips), ["2 Planned", "1 Complete"]
-        )
+        badges = SchoolPlanningBadgeService.get_for_schools(
+            [self.school.id], financial_year=fy
+        )[self.school.id]
+        self.assertEqual(self.labels(badges.visit_chips), ["2 Planned", "1 Complete"])
 
     def test_the_badges_never_block_further_planning(self):
         self.hand_to_partner()

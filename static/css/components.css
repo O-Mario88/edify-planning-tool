@@ -823,6 +823,46 @@ main .budget-grand-total .budget-grand-total__meta {
   gap: 0.5rem;
 }
 
+/* Header buttons in groups (owner, 2026-09-26: "keep them up as separate
+   buttons but organize them in a professional way"): a hairline between
+   planning and record actions. A phone wraps the buttons as whole buttons,
+   where a rule would land at the start or end of a line, so it goes. */
+.edify-page-header__sep {
+  align-self: center;
+  flex: 0 0 1px;
+  block-size: 1.5rem;
+  margin-inline: 0.25rem;
+  background: var(--edify-border);
+}
+
+@media (max-width: 47.999rem) {
+  .edify-page-header__sep { display: none; }
+}
+
+/* A destructive header action at rest: an outline button with danger ink,
+   the same height as its neighbours, filled only on hover. The solid
+   `.danger` fill is for a confirm step, not a page header. */
+.edify-action-button.edify-destructive-outline {
+  background-color: var(--edify-surface-raised);
+  border-color: var(--edify-border);
+  color: var(--edify-danger-text);
+}
+
+.edify-action-button.edify-destructive-outline:hover:not(:disabled) {
+  background-color: var(--edify-danger-light);
+  border-color: var(--edify-danger);
+}
+
+/* Refused (a cluster with a record of work is kept): muted, so it does not
+   read as a live control beside its neighbours; the reason is its title. */
+.edify-action-button.edify-destructive-outline:disabled {
+  background-color: var(--edify-surface-muted);
+  border-color: var(--edify-border);
+  color: var(--edify-text-subtle);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 /* Controls sit on a firmer surface than the band behind them. The header may
    be quiet; the things you can click must not be. */
 .edify-page-header-control {
