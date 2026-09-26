@@ -18,7 +18,9 @@ for (const width of [390,768,1600]) {
     await page.route('http://tabs.test/**', route => {
       const file = path.join(root,new URL(route.request().url()).pathname);
       if(fs.existsSync(file)&&fs.statSync(file).isFile()) return route.fulfill({path:file});
-      const rails = families.map(([rail,control,tag])=>`<nav class="${rail}">${['First','Middle','Last'].map((label,i)=>`<${tag} class="${control} ${i===0?'is-active active':''}"${i===0?' aria-pressed="true"':''} href="#" data-test-tab>${label}</${tag}>`).join('')}<span hidden>Updating</span></nav>`).join('');
+      // Every family twice: once with its first segment selected, once with
+      // its middle one.
+      const rails = [0,1].map((active)=>families.map(([rail,control,tag])=>`<nav class="${rail}">${['First','Middle','Last'].map((label,i)=>`<${tag} class="${control} ${i===active?'is-active active':''}"${i===active?' aria-pressed="true"':''} href="#" data-test-tab>${label}</${tag}>`).join('')}<span hidden>Updating</span></nav>`).join('')).join('');
       return route.fulfill({contentType:'text/html',body:`<html class="theme-light"><head>${sheets.map(s=>`<link rel="stylesheet" href="/static/css/${s}">`).join('')}</head><body><main>${rails}</main></body></html>`});
     });
     await page.goto('http://tabs.test/');
@@ -27,13 +29,13 @@ for (const width of [390,768,1600]) {
       const corners = await page.locator('[data-test-tab]').evaluateAll(els=>els.map(el=>{
         const s=getComputedStyle(el);return [s.borderTopLeftRadius,s.borderTopRightRadius,s.borderBottomRightRadius,s.borderBottomLeftRadius];
       }));
-      expect(corners).toHaveLength(families.length*3);
+      expect(corners).toHaveLength(families.length*6);
       const radius = await page.locator('main').evaluate(el => `${parseFloat(getComputedStyle(el).getPropertyValue('--edify-radius-sm')) - 2}px`);
-      // The active segment reads as a pill in every theme since 2026-09-20
-      // (interactions.css; the inbox marks it with aria-pressed, the rest with
-      // is-active); the rail's inactive ends still round only outward and the
-      // middle stays square.
-      for(const [i,radii] of corners.entries()) expect(radii, families[Math.floor(i/3)][0] + ":" + i).toEqual(i%3===0 ? ["9999px","9999px","9999px","9999px"] : i%3===2 ? ["0px",radius,radius,"0px"] : ["0px","0px","0px","0px"]);
+      // Selected or not, a segment keeps the rail's shape (owner, 2026-09-26:
+      // "the straight line in the middle and curves on the curved edges"):
+      // the ends round only outward and the middle is square. The selected
+      // segment was a 9999px pill from 2026-09-20 to 2026-09-26.
+      for(const [i,radii] of corners.entries()) expect(radii, families[Math.floor(i/3)%families.length][0] + ":" + i).toEqual(i%3===0 ? [radius,"0px","0px",radius] : i%3===2 ? ["0px",radius,radius,"0px"] : ["0px","0px","0px","0px"]);
     }
   });
 }

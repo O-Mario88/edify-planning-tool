@@ -16,12 +16,19 @@ submit (apps.planning.cluster_bulk_scheduling):
     In-school Training is not among them, because it pairs a governed course
     with a companion visit and the course is a per-school choice;
   * a school the visit gate has locked cannot be ticked at all, and says why.
+
+And one SSA intervention for the whole day, chosen here (owner, 2026-09-26):
+every school ticked is planned against it. An SSA Support day collects the
+assessment and names none, as the per-school drawer shows it.
 {% endcomment %}
 <div
 class="space-y-4 text-[12px] text-slate-600"
 x-data="{
 maximum: {{ maximum_schools }},
 selected: [],
+purpose: '{{ posted.purposeOfVisit|default:''|escapejs }}',
+focusIntervention: '{{ selected_focus|default:''|escapejs }}',
+get collectsTheSsa() { return this.purpose === '{{ collects_the_ssa|escapejs }}'; },
 get overflow() { return Math.max(0, this.selected.length - this.maximum); },
 get ready() { return this.selected.length > 0 && this.overflow === 0; },
 toggleAll(checked) {
@@ -75,6 +82,7 @@ class="space-y-4"
 <select
 id="cluster_bulk_purpose"
 name="purpose_of_visit"
+x-model="purpose"
 required
 aria-describedby="cluster-bulk-purpose-help"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -86,6 +94,45 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text
 </select>
 <p id="cluster-bulk-purpose-help" class="edify-text-caption text-slate-500">In-school Training is scheduled one school at a time, from that school&rsquo;s own drawer.</p>
 </div>
+
+{% comment %}One intervention for the day, not one per school. `x-if`, not
+`x-show`: an SSA Support day must not post the select it no longer shows,
+and the service drops one again if a browser sends it anyway.{% endcomment %}
+<template x-if="!collectsTheSsa">
+<div class="space-y-1" data-day-focus>
+<label for="cluster_bulk_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">SSA intervention <span class="text-rose-500">*</span></label>
+<select
+id="cluster_bulk_focus_intervention"
+name="focus_intervention"
+x-model="focusIntervention"
+required
+aria-describedby="cluster-bulk-focus-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+>
+<option value="">Select an intervention…</option>
+{% for code, label, need in day_focus_options %}
+<option value="{{ code }}">{{ label }}{% if need %} · avg {{ need.average }}/10{% endif %}</option>
+{% endfor %}
+</select>
+<p id="cluster-bulk-focus-help" class="edify-text-caption text-slate-500">Every school ticked for this day is planned against this one intervention.{% if suggested_focus %} Suggested from the weakest verified average across the open schools; change it if the day is aimed elsewhere.{% endif %}</p>
+</div>
+</template>
+{% comment %}Read-only and unnamed, so it is announced as a field and never
+posted.{% endcomment %}
+<template x-if="collectsTheSsa">
+<div class="space-y-1" data-day-focus>
+<label for="cluster_bulk_focus_collected" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</label>
+<input
+type="text"
+id="cluster_bulk_focus_collected"
+value="Data Gathering"
+readonly
+aria-describedby="cluster-bulk-focus-collected-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 text-[13px] font-semibold text-slate-700"
+>
+<p id="cluster-bulk-focus-collected-help" class="edify-text-caption text-slate-500">An SSA Support day collects the assessment, so no intervention is named at any school.</p>
+</div>
+</template>
 
 <div class="space-y-1">
 <label for="cluster_bulk_date" class="block edify-text-caption font-semibold text-slate-600">Visit date <span class="text-rose-500">*</span></label>

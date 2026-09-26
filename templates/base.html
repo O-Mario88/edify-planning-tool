@@ -106,12 +106,12 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260926district1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260926district1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260926datepick1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/form-refinement.css' %}?v=20260923sweep2">
+<link rel="stylesheet" href="{% static 'css/form-refinement.css' %}?v=20260926datepick3">
 <!-- The responsive system: one-line controls, scrolling tables with a sticky
      identity column, the workspace overflow guard and the phone page header.
      After every layout layer, so none of them can re-open what it closes;
@@ -231,7 +231,8 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260926district1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260926datepick1"></script>
+<script defer src="{% static 'js/date-picker.js' %}?v=20260926datepick2"></script>
 
 {% comment %}
 A paginated link keeps the tab the reader chose. Oversight puts one person's

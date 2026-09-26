@@ -2763,7 +2763,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8238,
+      "bytes": 10768,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-schedule-drawer"
