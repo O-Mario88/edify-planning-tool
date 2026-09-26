@@ -188,9 +188,13 @@ class PartnerOversightItem:
     resolution: str = ""
     resolution_label: str = ""
     # The staff member named as the Partner activity's monitor — the one person
-    # besides IA who may record its Salesforce entry (owner, 2026-09-12).
+    # besides IA who may confirm or return it (owner, 2026-09-12).
     monitor_id: str | None = None
-    can_enter_salesforce: bool = False
+    # Set by the Partner Monitoring view for the reader: whether they may
+    # Verify & Confirm or Return this work (owner, 2026-09-26), and whether
+    # it is SSA Support, whose confirmation is its own scores drawer.
+    can_review: bool = False
+    review_is_ssa: bool = False
 
     risks: list[dict] = field(default_factory=list)
     next_action_owner: str = ""

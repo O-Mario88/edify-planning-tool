@@ -20,6 +20,7 @@ from .views import (
     ownership_views,
     visit_request_views,
     oversight_views,
+    partner_review_views,
     budget_views,
     my_plan_views,
     analytics_views,
@@ -657,6 +658,28 @@ urlpatterns = [
         "partner-oversight/withdraw/review",
         oversight_views.partner_withdrawal_review_view,
         name="partner_withdrawal_review",
+    ),
+    # Verify & Confirm, and Return, for Partner work (owner, 2026-09-26). GETs
+    # open the drawers and change nothing; the two POSTs are the decisions.
+    path(
+        "partner-oversight/verify",
+        partner_review_views.partner_verify_drawer_view,
+        name="partner_verify_drawer",
+    ),
+    path(
+        "partner-oversight/verify/submit",
+        partner_review_views.partner_verify_submit_view,
+        name="partner_verify_submit",
+    ),
+    path(
+        "partner-oversight/return",
+        partner_review_views.partner_return_drawer_view,
+        name="partner_work_return_drawer",
+    ),
+    path(
+        "partner-oversight/return/submit",
+        partner_review_views.partner_return_submit_view,
+        name="partner_work_return_submit",
     ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),

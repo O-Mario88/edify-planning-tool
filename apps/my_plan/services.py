@@ -193,16 +193,21 @@ def staff_my_plan_q(staff_ids, principal=None) -> Q:
     staff on Partner Monitoring, so it is not put on the monitoring staff
     member's list as work they could start, complete or reschedule.
 
-    While the Partner-supported school rule is off for the reader, the
-    previous membership (owned work plus monitored Partner work) is restored
-    unchanged.
+    This no longer waits on the Partner-supported school rollout flag (owner,
+    2026-09-26): "leave the My Plan page with only activities planned by the
+    staff". Readers outside the pilot used to get monitored Partner work back,
+    in a "Partner Planned — Monitoring" card. Every school assigned to a
+    Partner and everything a Partner schedules now lives on Partner
+    Monitoring, for every reader. The two statuses only a Partner's work
+    carries are excluded as well, so a legacy row with a staff delivery type
+    cannot bring it back.
     """
-    from apps.partners.support_responsibility import visibility_enabled
-
     owned = Q(responsible_staff_id__in=staff_ids)
-    if visibility_enabled(principal):
-        return owned & ~Q(delivery_type="partner")
-    return owned | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
+    return (
+        owned
+        & ~Q(delivery_type="partner")
+        & ~Q(status__in=("assigned_to_partner", "partner_scheduled"))
+    )
 
 
 def get(principal, query: dict) -> dict:

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 {% comment %}
 One row of Partner Monitoring's Schools assigned table, and its details
 (owner, 2026-09-24): School ID, School Name, Staff Name, Training, Purpose of
@@ -13,7 +13,7 @@ Special Project work is shown and never decided here: its withdrawal and
 hand-back decisions are the project's coordinator's (`item.project_locked`).
 {% endcomment %}
 <tr class="partner-plan-row" data-assignment="{{ item.partner_assignment_id }}"{% if item.awaits_staff_decision %} data-returned{% endif %}{% if item.project_id %} data-project="{{ item.project_id }}"{% endif %}
-    @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+    @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
     :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
   <td data-label="School ID"><span class="partner-plan-table__code">{{ item.school_code|default:"—" }}</span></td>
   <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
@@ -33,24 +33,34 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="Activity date" data-activity-date>{% if item.activity_date %}{{ item.activity_date|date:"j M Y" }}{% elif item.stage == "awaiting_schedule" %}Awaiting scheduling{% else %}—{% endif %}</td>
-  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
-    {% if item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
+  <td data-label="Actions" class="school-plan-table__actions">
+    {% comment %}
+    A school whose Partner work waits for verification offers its reviewer
+    View, Verify & Confirm and Return (owner, 2026-09-26). Otherwise: Resolve
+    Exception on a hand-back, or View and the withdrawal the record permits.
+    Two or more actions are one Actions menu (owner, 2026-09-26); a row with
+    one keeps its one button.
+    {% endcomment %}
+    {% if item.can_review %}
+    {% row_actions item.school_name %}
+    {% include "partials/oversight/_partner_view_button.html" with menu=True %}
+    {% include "partials/oversight/_partner_review_items.html" %}
+    {% endrow_actions %}
+    {% elif item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
+    <div class="school-record-row__actions">
     <button type="button" class="school-record-action school-record-action--schedule"
             hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
             hx-target="#drawer-container" hx-swap="innerHTML">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
       <span>Resolve Exception</span>
     </button>
-    {% else %}{% include "partials/oversight/_partner_view_button.html" %}{% endif %}
-    {% if item.can_enter_salesforce %}
-    <button type="button" class="school-record-action school-record-action--assign"
-            hx-get="/activities/{{ item.partner_activity_id }}/salesforce-id"
-            hx-target="#drawer-container" hx-swap="innerHTML">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4.5l-2 15M17 4.5l-2 15M4.5 9h15M4 15h15"/></svg>
-      <span>Enter Salesforce ID</span>
-    </button>
+    </div>
+    {% elif item.withdrawal_label %}
+    {% row_actions item.school_name %}{% include "partials/oversight/_partner_view_button.html" with menu=True %}{% endrow_actions %}
+    {% else %}
+    <div class="school-record-row__actions">{% include "partials/oversight/_partner_view_button.html" %}</div>
     {% endif %}
-  </div></td>
+  </td>
 </tr>
 <tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
   <td aria-hidden="true"></td>

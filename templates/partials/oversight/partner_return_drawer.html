@@ -1,0 +1,50 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Return Partner work for correction, from Partner Monitoring (owner,
+2026-09-26: "Return in case they have not uploaded the evidence or uploaded
+the wrong file as evidence ... they should return with a reason").
+
+The reasons start with the two the owner named, then the ones every other
+return offers (apps.activities.return_notes). The written explanation is
+required here and again in apps.activities.services.return_partner_work, which
+composes both into the note the Partner reads on its evidence page, headed by
+who sent the work back.
+{% endcomment %}
+{% block drawer_title %}{% if a %}Return {% firstof a.school.name a.cluster.name "Partner work" %} for correction{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if a %}To {{ partner_name }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if refusal %}
+<p class="text-sm edify-text-muted" role="alert" data-review-refusal>{{ refusal }}</p>
+{% else %}
+<form hx-post="/partner-oversight/return/submit" hx-target="#partner-return-result" hx-swap="innerHTML"
+      hx-disabled-elt="find button[type=submit]" class="space-y-4" data-partner-return>
+  {% csrf_token %}
+  <input type="hidden" name="activity_id" value="{{ a.id }}">
+  <div id="partner-return-result" aria-live="polite"></div>
+
+  <fieldset class="space-y-1.5">
+    <legend class="block edify-text-caption font-semibold text-slate-600">What is wrong</legend>
+    {% for reason in reasons %}
+    <label class="flex items-center gap-2 text-[13px] font-medium text-slate-700">
+      <input type="checkbox" name="reasons" value="{{ reason }}">
+      <span>{{ reason }}</span>
+    </label>
+    {% endfor %}
+  </fieldset>
+
+  <div class="space-y-1">
+    <label for="partner-return-comment" class="block edify-text-caption font-semibold text-slate-600">Reason for returning <span class="text-rose-500">*</span></label>
+    <textarea id="partner-return-comment" name="comment" rows="3" required maxlength="1000"
+              placeholder="Exactly what {{ partner_name }} must fix before resubmitting" class="w-full"></textarea>
+  </div>
+
+  <p class="edify-text-caption text-slate-500">{{ partner_name }} is told, corrects the evidence and resubmits from the same evidence page.</p>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-danger h-8">Return to Partner</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

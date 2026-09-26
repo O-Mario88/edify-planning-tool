@@ -118,76 +118,10 @@ Waiting on Approval
 </div>
 {% endif %}
 
-<!-- 3. Partner Planned — Monitoring (indigo, read-only; staff monitors only) -->
-{% if partner_monitoring and not viewer_is_partner %}
-<div class="card overflow-hidden edify-primary-border" data-card="partner-planned-monitoring">
-
-<!-- Card Header -->
-<div class="px-5 py-4 border-b edify-primary-border edify-primary-soft-alpha-60 flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
-<h2 class="text-[15px] font-semibold edify-primary-text tracking-tight">
-Partner Planned — Monitoring
-</h2>
-<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">
-{{ partner_monitoring|length }}
-</span>
-</div>
-<span class="edify-text-caption font-bold uppercase tracking-wider edify-primary-text">Read-only</span>
-</div>
-
-<!-- Table Section -->
-<div class="overflow-x-auto edify-record-table-wrap">
-{% paginate partner_monitoring "partner_monitoring_page" 20 as partner_monitoring_pager %}
-<table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
-<thead>
-<tr>
-<th>Partner</th>
-<th>School / Cluster</th>
-<th>Type</th>
-<th>Planned Date</th>
-<th>Focus</th>
-<th>Evidence</th>
-<th class="text-center">SF ID</th>
-<th>PL Status</th>
-<th>Payment</th>
-<th class="text-right"></th>
-</tr>
-</thead>
-<tbody>
-{% for row in partner_monitoring_pager.rows %}
-<tr>
-<td class="font-bold edify-primary-text" data-record-title>{{ row.partner_name }}</td>
-<td class="font-semibold text-slate-800 text-[13px]" data-label="School / Cluster">
-{% if row.school_name and row.school_name != 'Unknown School' %}
-  {% if row.school_id %}
-  <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name }}</a>
-  {% else %}
-  <span>{{ row.school_name }}</span>
-  {% endif %}
-{% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}
-</td>
-<td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
-<td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td class="text-slate-600 font-semibold" data-label="Focus">{{ row.focus_intervention }}</td>
-<td class="text-slate-600 font-semibold" data-label="Evidence">{{ row.evidence_status|default:"—" }}</td>
-<td class="text-center font-bold {% if row.salesforce_activity_id %}text-emerald-600{% else %}text-slate-400{% endif %}" data-label="SF ID">
-{% if row.salesforce_activity_id %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}—{% endif %}
-</td>
-<td class="text-slate-600 font-semibold" data-label="PL Status">{{ row.ia_verification_status|default:"—" }}</td>
-<td class="text-slate-600 font-semibold" data-label="Payment">{{ row.payment_status|default:"—" }}</td>
-<td class="text-right" data-record-action>
-<a href="/my-plan/{{ row.id }}" class="btn btn-ghost h-8 edify-text-caption shadow-sm">View</a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-{% include "components/table_pager.html" with pager=partner_monitoring_pager param="partner_monitoring_page" %}
-</div>
-
-</div>
-{% endif %}
+{% comment %}The "Partner Planned — Monitoring" card left My Plan on 2026-09-26
+(owner: "leave the My Plan page with only activities planned by the staff").
+Partner work is followed on Partner Monitoring, where staff verify, confirm or
+return it; apps.my_plan.services.staff_my_plan_q keeps it off this page.{% endcomment %}
 
 <!-- 4. Finance / Accountability Pending -->
 {% if finance_pending %}
