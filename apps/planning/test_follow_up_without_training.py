@@ -86,7 +86,10 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
 
         # Distinct dates: two identical visits on one day are refused by the
         # duplicate-activity guard, which is a different rule from this one.
-        day = _schedulable_date()
+        from apps.core.fy import get_operational_fy
+
+        day = _schedulable_date(room=2 * (CLIENT_VISIT_CAP + 1))
+        year = get_operational_fy(day)
         for _ in range(CLIENT_VISIT_CAP):
             while day.weekday() == 6:
                 day += datetime.timedelta(days=1)
@@ -98,7 +101,9 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
 
         from apps.planning.visit_gate import visit_gate
 
-        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1)
+        self.assertEqual(
+            visit_gate(self.school, year).total_visits, CLIENT_VISIT_CAP + 1
+        )
 
     def test_an_out_of_portfolio_school_is_scheduled_all_the_same(self):
         """The portfolio stopped gating the visit on 2026-09-21: a CCEO

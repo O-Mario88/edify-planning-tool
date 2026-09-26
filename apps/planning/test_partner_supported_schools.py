@@ -149,10 +149,12 @@ class PartnerSchoolFixture(StandardSupportBase):
         )
         return {row["schoolId"]: row for row in data["schools"]}
 
-    def my_plan_queryset_ids(self, principal=None):
+    def my_plan_queryset_ids(self, principal=None, fy=None):
         from apps.my_plan import services as my_plan
 
-        feed = my_plan.get(principal or self.user, {"fy": self.fy, "period": "fy"})
+        feed = my_plan.get(
+            principal or self.user, {"fy": fy or self.fy, "period": "fy"}
+        )
         return {row["id"] for row in feed["items"]}
 
 
@@ -744,7 +746,13 @@ class MyPlanRoutingTest(PartnerSchoolFixture):
                 )["id"]
             )
 
-        mine = self.my_plan_queryset_ids()
+        # Each activity is read on its own year's plan: in the last days of
+        # September the later dates fall in the next financial year, and a
+        # single-year feed would miss them.
+        years = set(
+            Activity.objects.filter(id__in=planned).values_list("fy", flat=True)
+        )
+        mine = set().union(*(self.my_plan_queryset_ids(fy=fy) for fy in years))
         for activity_id in planned:
             with self.subTest(activity=activity_id):
                 self.assertIn(activity_id, mine)

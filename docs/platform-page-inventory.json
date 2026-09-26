@@ -7747,7 +7747,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9742,
+      "bytes": 9745,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -7823,7 +7823,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 12165,
+      "bytes": 12177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7871,7 +7871,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4597,
+      "bytes": 4859,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -7892,7 +7892,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6761,
+      "bytes": 7021,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8134,7 +8134,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3739,
+      "bytes": 4024,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8225,7 +8225,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4483,
+      "bytes": 4727,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -11003,7 +11003,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11505,
+      "bytes": 12476,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"

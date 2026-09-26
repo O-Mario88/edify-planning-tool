@@ -63,6 +63,15 @@ route's, so one constant URL answers it for every row.
           <div><dt>Training:</dt><dd class="{% if school.training_count %}is-positive{% else %}is-attention{% endif %}">{{ school.training_count }}</dd></div>
         </dl>
       </div>
+
+      {% comment %}District as its own column (owner, 2026-09-26), so the list
+      can be scanned by place without opening each record. Same links as the
+      District pair in the metadata above.{% endcomment %}
+      <div class="school-directory-row__district" data-directory-district>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>
+        <span class="sr-only">District: </span>
+        {% if school.district_id %}<a href="/districts/{{ school.district_id }}">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}">{{ school.district }}</a>{% else %}<span>—</span>{% endif %}
+      </div>
     </div>
 
     {% if not directory_read_only %}
@@ -92,6 +101,7 @@ route's, so one constant URL answers it for every row.
         <button
           type="button"
           class="school-record-action school-record-action--assign"
+          data-cluster-action
           aria-label="Add {{ school.school_name }} to a cluster"
           hx-get="/schools/{{ school.id }}/add-to-cluster"
           hx-target="#drawer-container"
@@ -111,13 +121,14 @@ route's, so one constant URL answers it for every row.
           hx-target="#drawer-container"
           hx-swap="innerHTML"
           data-change-cluster
+          data-cluster-action
         >
           {% include "partials/schools/_cluster_action_icon.html" %}
           <span class="school-record-action__label--full">Change Cluster</span>
           <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
         </button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign{% if school.is_clustered %} school-record-action--clustered{% endif %}" aria-label="Add {{ school.school_name }} to a cluster unavailable{% if school.disabled_reasons.add_to_cluster %}: {{ school.disabled_reasons.add_to_cluster }}{% endif %}" title="{{ school.disabled_reasons.add_to_cluster }}" disabled>
+        <button type="button" class="school-record-action school-record-action--assign{% if school.is_clustered %} school-record-action--clustered{% endif %}" aria-label="Add {{ school.school_name }} to a cluster unavailable{% if school.disabled_reasons.add_to_cluster %}: {{ school.disabled_reasons.add_to_cluster }}{% endif %}" title="{{ school.disabled_reasons.add_to_cluster }}" disabled data-cluster-action>
           {% include "partials/schools/_cluster_action_icon.html" %}
           <span class="school-record-action__label--full">Add to Cluster</span>
           <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>

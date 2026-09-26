@@ -2,7 +2,7 @@
 {% for section in programme_school_work %}
 <section class="card overflow-hidden">
   <h2 class="edify-section-heading px-4 py-3">{{ section.label }} School Visits and Trainings Planned ({{ section.rows|length }})</h2>
-  {% paginate section.rows section.kind 10 as pager %}
+  {% paginate section.rows section.kind 20 as pager %}
   <div class="overflow-x-auto">
     <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} school plans">
       <thead><tr><th>School ID</th><th>School name</th><th>Activity</th><th>Planned date</th><th>Status</th><th>Actions</th></tr></thead>

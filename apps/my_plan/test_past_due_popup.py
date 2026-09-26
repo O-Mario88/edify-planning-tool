@@ -169,16 +169,16 @@ class WorkingOnItClosesItTest(_Fixture):
             context_id=meeting.id,
             source_event_type=past_due_service.OVERDUE_REMINDER_EVENT,
         )
+        ahead = timezone.localdate() + timedelta(days=1)
+        if ahead.weekday() == 6:  # the calendar policy blocks Sundays
+            ahead += timedelta(days=1)
         with self.captureOnCommitCallbacks(execute=True):
             reschedule(
                 meeting.id,
                 {
                     # Ahead, and inside this fiscal year: a reschedule never
                     # carries work across the year boundary.
-                    "scheduledDate": min(
-                        timezone.localdate() + timedelta(days=1),
-                        date(int(self.fy), 9, 30),
-                    ).isoformat(),
+                    "scheduledDate": min(ahead, date(int(self.fy), 9, 30)).isoformat(),
                     "reason": "School closed for exams",
                 },
                 self.cceo_user,
