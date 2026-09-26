@@ -15,6 +15,8 @@ CD's `planning` permission entitles them to.
 
 from __future__ import annotations
 
+import re
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -75,6 +77,48 @@ class CountryDirectorClusterDirectoryTest(TestCase):
         cceo_response = self.client.get("/clusters")
         self.assertEqual(cceo_response.status_code, 200)
         self.assertTemplateUsed(cceo_response, "partials/clusters/cluster_list.html")
+
+    def test_the_page_header_buttons_are_grouped(self):
+        """Separate buttons, organised (owner, 2026-09-26: "keep them up as
+        separate buttons but organize them in a professional way"): one
+        primary action, outline buttons for the rest, and a hairline before
+        Export. Each role gets the buttons its drawers would open for."""
+
+        def header(user):
+            self.client.force_login(user)
+            body = self.client.get("/clusters").content.decode()
+            return body.split('class="edify-page-header__controls"', 1)[1].split(
+                "<!-- Messages notifications wrapper -->", 1
+            )[0]
+
+        def labels(markup):
+            return [
+                re.sub(r"<[^>]+>", "", label).strip()
+                for label in re.findall(
+                    r'class="edify-action-button [^"]*"[^>]*>(.*?)</(?:a|button)>',
+                    markup,
+                    re.S,
+                )
+            ]
+
+        cceo = header(self.cceo)
+        self.assertNotIn("data-row-actions", cceo)
+        self.assertEqual(
+            labels(cceo),
+            [
+                "Create Cluster",
+                "Schedule Group Training",
+                "Schedule Cluster Meeting",
+                "Export",
+            ],
+        )
+        self.assertEqual(cceo.count('class="edify-action-button primary'), 1)
+        self.assertLess(
+            cceo.index("Schedule Cluster Meeting"),
+            cceo.index("edify-page-header__sep"),
+        )
+        self.assertLess(cceo.index("edify-page-header__sep"), cceo.index("Export"))
+        self.assertEqual(labels(header(self.cd)), ["Create Cluster", "Export"])
 
     def test_cd_filter_refresh_returns_the_same_cards(self):
         self.client.force_login(self.cd)
