@@ -11,7 +11,8 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
   {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="schedule-activity"]'},
   {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="schedule-activity"]',nested:'[hx-get*="schedule-visit?"]'},
   {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="assign-partner"]'},
-  {url:'/clusters',selector:'[hx-get="/clusters/create-drawer"]'}
+  // Create Cluster is an entry in the Clusters page's one Actions menu.
+  {url:'/clusters',row:'main .edify-page-header',selector:'[role="menuitem"][hx-get="/clusters/create-drawer"]'}
  ]){
   await page.goto(flow.url);
   if(flow.row){const row=page.locator(flow.row).filter({has:page.locator(flow.selector)}).first();await row.locator('.row-menu__trigger').click();await row.locator(flow.selector).click();}

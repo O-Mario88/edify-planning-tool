@@ -15,6 +15,8 @@ CD's `planning` permission entitles them to.
 
 from __future__ import annotations
 
+import re
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -75,6 +77,33 @@ class CountryDirectorClusterDirectoryTest(TestCase):
         cceo_response = self.client.get("/clusters")
         self.assertEqual(cceo_response.status_code, 200)
         self.assertTemplateUsed(cceo_response, "partials/clusters/cluster_list.html")
+
+    def test_the_page_header_is_one_actions_menu(self):
+        """Create Cluster, Schedule Group Training, Schedule Cluster Meeting
+        and Export were four header buttons (owner, 2026-09-26: "put the
+        Clusters page header buttons in one Actions menu too"). Each role gets
+        the items its drawers would open for."""
+
+        def header_items(user):
+            self.client.force_login(user)
+            body = self.client.get("/clusters").content.decode()
+            header = body.split('class="edify-page-header__controls"', 1)[1].split(
+                "<!-- Messages notifications wrapper -->", 1
+            )[0]
+            self.assertEqual(header.count("data-row-actions"), 1)
+            self.assertNotIn("edify-action-button", header)
+            return re.findall(r'role="menuitem"[^>]*>([^<]+)<', header)
+
+        self.assertEqual(
+            header_items(self.cceo),
+            [
+                "Create Cluster",
+                "Schedule Group Training",
+                "Schedule Cluster Meeting",
+                "Export",
+            ],
+        )
+        self.assertEqual(header_items(self.cd), ["Create Cluster", "Export"])
 
     def test_cd_filter_refresh_returns_the_same_cards(self):
         self.client.force_login(self.cd)

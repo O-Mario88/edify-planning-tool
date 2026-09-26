@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 
 {% block title %}Clusters Dashboard - Edify Planning Tool{% endblock %}
 
@@ -24,58 +24,30 @@ data-mobile-family="directory"
 <p class="edify-page-header__description">Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.</p>
 </div>
 
-<!-- Action buttons -->
+<!-- Actions -->
 <div class="edify-page-header__controls">
 {% comment %}
-All three open drawers behind the `planning` permission. An oversight role
-reads this page in full but does not schedule field work, so rendering them
-unconditionally offered controls that answered 403 on click. Gated on the
-permission the drawers themselves enforce — the same way the cluster detail
-page gates its edit button — so a control is present exactly when it works.
-The server check stays where it is; this is the other half of it, not a
-replacement for it.
+One Actions menu for the page (owner, 2026-09-26: "put the Clusters page
+header buttons in one Actions menu too"), as every cluster card and cluster
+profile has.
+
+Create Cluster and the two Schedule items open drawers, each gated on the
+permission the drawer itself enforces, so an item is on the menu exactly when
+it works; the server check stays where it is. Creating a cluster is registry
+work behind CLUSTER_ASSIGN. Cluster meetings and trainings are the cluster
+owner's programme, so an oversight role that reads this page in full is not
+offered them. Export carries the current filters.
 {% endcomment %}
+{% row_actions %}
 {% if can_create_clusters %}
-<button
-hx-get="/clusters/create-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button primary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-Create Cluster
-</button>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/clusters/create-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Create Cluster</button>
 {% endif %}
 {% if can_plan_clusters %}
-<button
-hx-get="/planning/schedule-modal?action=training"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Schedule Group Training
-</button>
-
-<button
-hx-get="/planning/schedule-modal?action=meeting"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-Schedule Cluster Meeting
-</button>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/schedule-modal?action=training" hx-target="#drawer-container" hx-swap="innerHTML">Schedule Group Training</button>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/schedule-modal?action=meeting" hx-target="#drawer-container" hx-swap="innerHTML">Schedule Cluster Meeting</button>
 {% endif %}
-
-<!-- Export button using current filters -->
-<a
-href="{% querystring export='csv' %}"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export
-</a>
+<a href="{% querystring export='csv' %}" class="row-menu__item" role="menuitem">Export</a>
+{% endrow_actions %}
 </div>
 </div>
 

@@ -2909,7 +2909,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5844,
+      "bytes": 7016,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -2917,7 +2917,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 6,
       "kind": "application-partial",
       "name": "Cluster Card",
       "purpose": "Reusable cluster card interface primitive",
@@ -2979,14 +2979,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10023,
+      "bytes": 8564,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 8,
+      "htmx_controls": 6,
       "kind": "application-partial",
       "name": "Cluster Schools Table",
       "purpose": "Reusable cluster schools table interface primitive",
@@ -26878,12 +26878,12 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /clusters/{{ cluster.id }}/edit-drawer",
+        "GET /clusters/{{ cluster.id }}/bulk-schedule-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
+        "GET /clusters/{{ cluster.id }}/edit-drawer",
         "POST /clusters/{{ cluster.id }}/delete",
         "GET /clusters/{{ cluster.id }}/catchment-drawer",
         "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
-        "GET /clusters/{{ cluster.id }}/bulk-schedule-drawer",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
@@ -26901,7 +26901,7 @@
       "page_type": "record-detail",
       "per_page_css": [],
       "permission_key": "cluster_detail",
-      "primary_action": "Edit Details",
+      "primary_action": "Add Schools to Cluster",
       "primary_user_decision": "What is the correct next action for this record?",
       "purpose": "District: &bull; Sub-county:",
       "remediation": "No automated remediation outstanding",
@@ -61970,13 +61970,12 @@
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /clusters/{{ cluster_id }}/bulk-schedule-drawer",
-        "GET /clusters/{{ cluster_id }}/bulk-assign-drawer",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
         "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster_id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster_id }}&amp;action=training&amp;school_id={{ s.schoolId }}",
-        "POST /clusters/{{ cluster_id }}/schools/{{ s.id }}/remove"
+        "POST /clusters/{{ cluster_id }}/schools/{{ s.id }}/remove",
+        "GET /clusters/{{ cluster_id }}/bulk-assign-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",

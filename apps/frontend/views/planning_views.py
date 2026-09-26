@@ -859,6 +859,11 @@ def planning_dashboard_view(request):
         # Cluster meetings and trainings are the cluster owner's programme;
         # the request-only country roles schedule school visits only.
         "can_plan_clusters": RolePermissionService.can_schedule_activity(request.user),
+        # Add Schools in a cluster card's Actions menu: the bulk-assign
+        # drawer's own check.
+        "can_add_cluster_schools": RolePermissionService.can_view_page(
+            request.user, "planning"
+        ),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         "planning_priority": planning_priority,
         "priority_allocation_id": priority_allocation_id,
