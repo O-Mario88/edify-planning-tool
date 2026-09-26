@@ -122,3 +122,53 @@ class PlanningRowIsOneMenuTest(SimpleTestCase):
         )
         self.assertIn('aria-disabled="true"', locked)
         self.assertNotIn("hx-get", locked)
+
+
+class ClusterActionsAreOneMenuTest(SimpleTestCase):
+    """A cluster's actions are one menu too (owner, 2026-09-26: "Check all
+    clusters action buttons. The one action button with options should be
+    implemented in all the platform"). The card offered Schedule and Assign
+    in its menu and then, once opened, Schedule a Day of Visits and Add
+    Schools as two more buttons above its schools."""
+
+    CLUSTER = {"id": "c1", "name": "Cluster A", "risk": "healthy", "planning": {}}
+
+    def _card(self, **flags):
+        return render_to_string(
+            "partials/clusters/cluster_card.html", {"cluster": self.CLUSTER, **flags}
+        )
+
+    def _items(self, html):
+        return re.findall(r'role="menuitem"[^>]*>([^<]+)<', html)
+
+    def test_a_planner_gets_every_cluster_action_in_the_card_menu(self):
+        html = self._card(can_plan_clusters=True, can_add_cluster_schools=True)
+        self.assertEqual(html.count("data-row-actions"), 1)
+        self.assertEqual(
+            self._items(html),
+            [
+                "Schedule Group Training",
+                "Schedule Cluster Meeting",
+                "Schedule a Day of Visits",
+                "Assign",
+                "Add Schools",
+            ],
+        )
+        self.assertIn('hx-get="/clusters/c1/bulk-schedule-drawer"', html)
+        self.assertIn('hx-get="/clusters/c1/bulk-assign-drawer"', html)
+
+    def test_a_role_that_may_only_add_schools_gets_that_one_item(self):
+        html = self._card(can_plan_clusters=False, can_add_cluster_schools=True)
+        self.assertEqual(self._items(html), ["Add Schools"])
+
+    def test_a_role_with_neither_gets_no_menu(self):
+        self.assertNotIn("data-row-actions", self._card())
+
+    def test_the_schools_table_no_longer_carries_its_own_buttons(self):
+        html = render_to_string(
+            "partials/clusters/cluster_schools_table.html",
+            {"schools": [], "cluster_id": "c1", "can_bulk_schedule": True},
+        )
+        header = html.split("Schools in Cluster", 1)[1].split("This cluster has no", 1)[0]
+        self.assertNotIn("<button", header)
+        self.assertNotIn("bulk-schedule-drawer", html)

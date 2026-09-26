@@ -4,35 +4,9 @@
     <h4 class="text-[12px] font-semibold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
     <p class="edify-text-caption text-slate-400 mt-0.5">Click a school to see its SSA intervention scores.</p>
   </div>
-  <div class="flex items-center gap-2">
-    {% if can_bulk_schedule %}
-    {% comment %}The one door to bulk scheduling (owner, 2026-09-21): a day of
-    visits across five or more of this cluster's schools. The drawer itself
-    says why it cannot be used when the cluster has too few schools open, so
-    the control stays visible rather than disappearing without explanation.{% endcomment %}
-    <button
-      type="button"
-      hx-get="/clusters/{{ cluster_id }}/bulk-schedule-drawer"
-      hx-target="#drawer-container"
-      hx-swap="innerHTML"
-      aria-label="Schedule a day of visits across this cluster's schools"
-      class="h-7 px-3 border edify-border edify-text-caption font-bold rounded-control shadow-sm flex items-center gap-1.5 transition-colors"
-    >
-      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>
-      Schedule a Day of Visits
-    </button>
-    {% endif %}
-    <button
-      type="button"
-      hx-get="/clusters/{{ cluster_id }}/bulk-assign-drawer"
-      hx-target="#drawer-container"
-      hx-swap="innerHTML"
-      class="h-7 px-3 btn-premium-primary text-white edify-text-caption font-bold rounded-control shadow-sm flex items-center gap-1.5 transition-colors"
-    >
-      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-      Add Schools
-    </button>
-  </div>
+  {% comment %}Schedule a Day of Visits and Add Schools were two buttons here;
+  they are items in the cluster card's one Actions menu now (owner,
+  2026-09-26), above this table.{% endcomment %}
 </div>
 
 {% if schools %}

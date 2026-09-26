@@ -17,92 +17,50 @@ District: {% if cluster.district.id %}<a href="/districts/{{ cluster.district.id
 </p>
 </div>
 
-<!-- Actions buttons -->
+<!-- Actions -->
 <div class="edify-page-header__controls">
-{% if can_edit_cluster %}
 {% comment %}
-A cluster profile is editable for the same reason a school profile is: the
-record has a name, a type, boundaries and a responsible person, and all of
-them change. The drawer already existed at /clusters/<id>/edit-drawer with
-nothing on this page opening it.
+One Actions menu for the cluster (owner, 2026-09-26: "Check all clusters
+action buttons. The one action button with options should be implemented in
+all the platform"). These were five buttons that wrapped onto two lines on a
+tablet, and the schools section below carried Schedule a Day of Visits and
+Add Schools to Cluster again.
 
-Gated on can_edit_cluster — the permission the drawer itself enforces —
-rather than on a role string, so the button cannot offer what the endpoint
-would refuse.
+Each item keeps the gate of the endpoint behind it, so the menu never offers
+what would answer 403:
+* Group Training and Cluster Meeting open `/planning/schedule`, which reads
+  both `action` and `cluster` — never `/planning`, the dashboard, which reads
+  neither (owner, §12). Cluster sessions are the cluster owner's programme.
+* A day of visits (owner, 2026-09-21): one purpose, one day, at five or more
+  of this cluster's schools. A planner's act, not a requester's; the drawer
+  says why when too few schools are open, so the item stays offered.
+* Add Schools, Edit Details and Delete are can_edit_cluster, the check the
+  edit drawer enforces. A cluster that has hosted a meeting or training is
+  kept (owner, 2026-09-11): Delete then stays on the list, greyed, with the
+  reason under it, rather than being discovered after the press.
 {% endcomment %}
-<button
-type="button"
-hx-get="/clusters/{{ cluster.id }}/edit-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-aria-label="Edit {{ cluster.name }} cluster details"
-class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
->
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
-</button>
-<button
-type="button"
-hx-get="/clusters/{{ cluster.id }}/bulk-assign-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-aria-label="Add schools to {{ cluster.name }}"
-class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
->
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add Schools to Cluster
-</button>
-{% comment %}
-Deleting a cluster (owner, 2026-09-11). Allowed until the cluster has hosted a
-meeting or training — a record of work stays — and its schools are released
-to "unclustered", ready for a new cluster. When it is refused, the reason is
-on the button itself rather than discovered after the press.
-{% endcomment %}
+{% row_actions cluster.name %}
+{% if can_plan_clusters %}
+<a href="/planning/schedule?action=training&cluster={{ cluster.id }}" class="row-menu__item" role="menuitem">Schedule Group Training</a>
+<a href="/planning/schedule?action=meeting&cluster={{ cluster.id }}" class="row-menu__item" role="menuitem">Schedule Cluster Meeting</a>
+{% endif %}
+{% if can_bulk_schedule %}
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/clusters/{{ cluster.id }}/bulk-schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule a day of visits across {{ cluster.name }}">Schedule a Day of Visits</button>
+{% endif %}
+{% if can_edit_cluster %}
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/clusters/{{ cluster.id }}/bulk-assign-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Add schools to {{ cluster.name }}">Add Schools to Cluster</button>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/clusters/{{ cluster.id }}/edit-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Edit {{ cluster.name }} cluster details">Edit Details</button>
 {% if delete_block %}
-<button
-type="button"
-disabled
-aria-disabled="true"
-title="{{ delete_block }}"
-data-cluster-delete-blocked
-class="flex items-center gap-1.5 px-3 py-1.5 edify-text-caption font-bold rounded-control border border-slate-200 text-slate-400 cursor-not-allowed"
->
-Delete cluster
-</button>
+<button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-cluster-delete-blocked aria-label="Delete {{ cluster.name }} cluster unavailable: {{ delete_block }}">Delete cluster<span class="row-menu__reason">{{ delete_block }}</span></button>
 {% else %}
-<form
-method="post"
-action="/clusters/{{ cluster.id }}/delete"
-hx-post="/clusters/{{ cluster.id }}/delete"
-hx-target="#cluster-delete-errors"
-hx-swap="innerHTML"
-hx-confirm="Delete {{ cluster.name }}? Its schools are released and can be added to a new cluster."
-class="contents"
->
+<form method="post" action="/clusters/{{ cluster.id }}/delete" hx-post="/clusters/{{ cluster.id }}/delete" hx-target="#cluster-delete-errors" hx-swap="innerHTML" hx-confirm="Delete {{ cluster.name }}? Its schools are released and can be added to a new cluster." class="contents">
 {% csrf_token %}
-<button
-type="submit"
-aria-label="Delete {{ cluster.name }} cluster"
-class="flex items-center gap-1.5 px-3 py-1.5 edify-text-caption font-bold rounded-control border border-rose-200 text-rose-700 hover:bg-rose-50"
->
-Delete cluster
-</button>
+<button type="submit" class="row-menu__item row-menu__item--danger" role="menuitem" aria-label="Delete {{ cluster.name }} cluster">Delete cluster</button>
 </form>
 {% endif %}
-<div id="cluster-delete-errors" class="basis-full"></div>
 {% endif %}
-{% if can_plan_clusters %}
-{% comment %}
-These opened `/planning`, the dashboard, which reads neither `action` nor
-`cluster`: the button promised a scheduling form and delivered a list, so a
-cluster meeting could not be started from the cluster it belongs to. The
-scheduling surface is `/planning/schedule`, and it reads both (owner, §12).
-{% endcomment %}
-<a href="/planning/schedule?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
-Schedule Group Training
-</a>
-<a href="/planning/schedule?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
-Schedule Cluster Meeting
-</a>
-{% endif %}
+{% endrow_actions %}
+{% if can_edit_cluster %}<div id="cluster-delete-errors" class="basis-full"></div>{% endif %}
 </div>
 </div>
 </div>
@@ -178,34 +136,6 @@ Approve the district, or move the school to a cluster serving it: {% for s in ca
 <p class="mt-0.5 edify-text-caption font-semibold text-slate-500">Open a school profile or schedule support directly from this cluster.</p>
 </div>
 <div class="flex flex-wrap items-center gap-2">
-{% if can_bulk_schedule %}
-{% comment %}The one door to bulk scheduling (owner, 2026-09-21): one purpose,
-one day, at five or more of this cluster's schools. The drawer says why it
-cannot be used when too few schools are open, so the control stays visible
-rather than vanishing without a reason.{% endcomment %}
-<button
-  type="button"
-  hx-get="/clusters/{{ cluster.id }}/bulk-schedule-drawer"
-  hx-target="#drawer-container"
-  hx-swap="innerHTML"
-  aria-label="Schedule a day of visits across {{ cluster.name }}"
-  class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
->
-  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 3.5v4M16 3.5v4M4 10h16"/></svg> Schedule a Day of Visits
-</button>
-{% endif %}
-{% if can_edit_cluster %}
-<button
-  type="button"
-  hx-get="/clusters/{{ cluster.id }}/bulk-assign-drawer"
-  hx-target="#drawer-container"
-  hx-swap="innerHTML"
-  aria-label="Add schools to {{ cluster.name }}"
-  class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
->
-  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add Schools to Cluster
-</button>
-{% endif %}
 <span class="px-2.5 py-1 rounded-control edify-text-caption font-semibold bg-slate-100 text-slate-700 border border-slate-200">{{ schools|length }} Schools</span>
 <span class="px-2.5 py-1 rounded-control edify-text-caption font-semibold bg-sky-50 text-sky-700 border border-sky-200 tabular-nums">{{ cluster.studentImpact|intcomma }} Students Impacted</span>
 </div>

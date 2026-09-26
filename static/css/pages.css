@@ -4057,6 +4057,16 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   }
 }
 
+/* A link item outside a table met mobile-micro-ux.css's link floor
+   (`.edify-shell a[href]:not(:is(td, th) *)`, which outranks the two-class
+   rule above): in the cluster profile's header menu the two Schedule links
+   stood 40px tall between 34px buttons on a tablet. */
+.row-menu__list a.row-menu__item[href] { min-block-size: 2.125rem !important; }
+
+@media (max-width: 48rem), (pointer: coarse) {
+  .row-menu__list a.row-menu__item[href] { min-block-size: 2.75rem !important; }
+}
+
 /* An action this record cannot take stays on the list, greyed, with the
    reason under it (owner, 2026-09-26: every row's actions in one menu). The
    buttons it replaced said why in a tooltip; a menu has room to say it. */
