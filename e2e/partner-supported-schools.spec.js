@@ -343,7 +343,14 @@ test.describe('Partner-supported schools — journeys', () => {
       await expect(page.locator('[data-partner-monitoring-table]')).toHaveCount(3);
       const schools = page.locator('[data-partner-monitoring-table="assignment"]').first();
       await expect(schools).toContainText(handover.name);
-      await expect(schools).toContainText(data.cceo_name);
+      // Open work reads oldest date first (owner, 2026-09-26), so a Partner
+      // with older assignments lists the handover past the first page: find
+      // its own row, page by page.
+      const row = schools.locator(`tr[data-assignment="${handover.assignment_id}"]`);
+      for (let n = 2; n <= 20 && !(await row.count()); n += 1) {
+        await page.goto(`/partner-oversight/?partner=${handover.partner_id}&partner_schools_page=${n}`);
+      }
+      await expect(row).toContainText(data.cceo_name);
       for (const other of data.handovers.filter(h => h.partner_id !== handover.partner_id)) {
         await expect(page.locator(`tr[data-assignment="${other.assignment_id}"]`)).toHaveCount(0);
       }

@@ -43,56 +43,57 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
     </div>
 
     <!-- Filter Pills: Scope & Category -->
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
       {% if is_pl and past_due_total_count %}
       <!-- PL Scope Segmented Control: All | My Plans | Team Plans -->
-      <div class="inline-flex items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+      <div class="inline-flex max-w-full overflow-x-auto items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
         <button type="button"
                 @click="activeScope = 'all'"
                 :class="activeScope === 'all' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           All ({{ past_due_total_count }})
         </button>
         <button type="button"
                 @click="activeScope = 'own'"
                 :class="activeScope === 'own' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           My Plans ({{ pl_own_past_due_count }})
         </button>
         <button type="button"
                 @click="activeScope = 'team'"
                 :class="activeScope === 'team' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           Team Plans ({{ pl_team_past_due_count }})
         </button>
       </div>
       {% endif %}
 
-      <!-- Category Filter Pills -->
+      <!-- Category Filter Pills. On a phone the row scrolls inside itself
+           rather than pushing the workspace sideways (responsive contract). -->
       {% if past_due_total_count %}
-      <div class="inline-flex items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+      <div class="inline-flex max-w-full overflow-x-auto items-center rounded-control bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
         <button type="button"
                 @click="activeCategory = 'all'"
                 :class="activeCategory === 'all' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           All Categories
         </button>
         <button type="button"
                 @click="activeCategory = 'visits'"
                 :class="activeCategory === 'visits' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           School Visits ({{ past_due_visits_count }})
         </button>
         <button type="button"
                 @click="activeCategory = 'trainings'"
                 :class="activeCategory === 'trainings' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           Trainings ({{ past_due_trainings_count }})
         </button>
         <button type="button"
                 @click="activeCategory = 'meetings'"
                 :class="activeCategory === 'meetings' ? 'edify-surface-raised text-slate-900 dark:text-slate-100 shadow-2xs' : 'hover:text-slate-900 dark:hover:text-slate-100'"
-                class="px-2.5 py-1 rounded-control transition-colors cursor-pointer">
+                class="shrink-0 whitespace-nowrap px-2.5 py-1 rounded-control transition-colors cursor-pointer">
           Cluster Meetings ({{ past_due_meetings_count }})
         </button>
       </div>
