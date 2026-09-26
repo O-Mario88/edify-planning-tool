@@ -158,7 +158,10 @@ test.describe('Responsive contract — behaviours', () => {
     const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'cceo@edify.org');
     try {
       await page.goto('/clusters');
-      await page.locator('[hx-get="/clusters/create-drawer"]').first().click();
+      // Create Cluster is an entry in the page's one Actions menu.
+      const header = page.locator('main .edify-page-header');
+      await header.locator('.row-menu__trigger').click();
+      await header.locator('[role="menuitem"][hx-get="/clusters/create-drawer"]').click();
       const sheet = page.locator('.drawer-surface.active');
       await expect(sheet).toBeVisible();
       await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
