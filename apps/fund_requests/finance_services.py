@@ -8,6 +8,12 @@ from apps.activities.closure_services import (
     ActivityClosureService,
     ClosureEligibilityService,
 )
+from apps.activities.facilitation import (
+    PARTNER_FEE_LINES,
+    is_facilitated,
+    paid_partner_id,
+    partner_lines,
+)
 from apps.activities.models import Activity
 from apps.fund_requests.models import (
     MONEY_MOVED_ADVANCE_STATUSES,
@@ -529,6 +535,11 @@ class PartnerPaymentService:
             raise BadRequest(f"Unknown partner payment type '{payment_type}'.")
 
         is_advance = payment_type == PartnerPayment.TYPE_ADVANCE
+        # A partner-facilitated training (owner, 2026-09-26) is staff work
+        # whose facilitation fee alone is the partner's: the instalments are
+        # of that fee, and the activity's own payment state, advances and
+        # closure stay with the staff side (apps.activities.facilitation).
+        facilitated = activity.delivery_type != "partner" and is_facilitated(activity)
         if is_advance:
             # The MOU advance is paid BEFORE the work happens, so the
             # execution blockers (IA verification, evidence) do not apply —
@@ -541,7 +552,7 @@ class PartnerPaymentService:
                     "The MOU advance cannot be paid on cancelled, deferred or "
                     "rejected work."
                 )
-            if not activity.schedule_cost_lines.exists():
+            if not partner_lines(activity).exists():
                 raise BadRequest(
                     "The MOU advance needs the activity's costed budget lines "
                     "— schedule and cost the activity first."
@@ -563,11 +574,10 @@ class PartnerPaymentService:
         # (activity, payment_type) stays as the last line of defence for any
         # writer that reaches the table without taking the lock.
         if (
-            activity.payment_status == "paid"
-            or PartnerPayment.objects.filter(
-                activity=activity, payment_type=PartnerPayment.TYPE_CLEARANCE
-            ).exists()
-        ):
+            activity.payment_status == "paid" and not facilitated
+        ) or PartnerPayment.objects.filter(
+            activity=activity, payment_type=PartnerPayment.TYPE_CLEARANCE
+        ).exists():
             raise BadRequest(
                 "Partner payment already recorded for this activity — a further "
                 "payout would double-count the money."
@@ -583,9 +593,7 @@ class PartnerPaymentService:
                 "a second advance would double-count the money."
             )
 
-        planned_total = (
-            activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
-        )
+        planned_total = partner_lines(activity).aggregate(s=Sum("amount"))["s"] or 0
         paid_so_far = (
             PartnerPayment.objects.filter(activity=activity).aggregate(
                 s=Sum("amount_paid")
@@ -618,9 +626,14 @@ class PartnerPaymentService:
         # Cross-channel guard: a partner activity whose staff advance already
         # moved money must not ALSO be partner-paid against the same cost
         # lines (the advance and partner channels had no mutual exclusion).
-        if activity.advance_requests.filter(
+        # For a facilitated training the officer's advances fund the staff
+        # lines, rightly; only an advance on the partner's fee would clash.
+        moved = activity.advance_requests.filter(
             status__in=MONEY_MOVED_ADVANCE_STATUSES
-        ).exists():
+        )
+        if facilitated:
+            moved = moved.filter(budget_line__in=partner_lines(activity))
+        if moved.exists():
             raise BadRequest(
                 "This activity already has money released through the advance "
                 "channel — settle that accountability instead of issuing a "
@@ -661,8 +674,11 @@ class PartnerPaymentService:
 
             # 50% advance out → "disbursed" (money moved, accountability
             # open); clearance → "paid" (the terminal partner state).
-            activity.payment_status = "disbursed" if is_advance else "paid"
-            activity.save(update_fields=["payment_status", "updated_at"])
+            # Not for a facilitated training: its payment state is the
+            # officer's, and the fee's instalments are its PartnerPayment rows.
+            if not facilitated:
+                activity.payment_status = "disbursed" if is_advance else "paid"
+                activity.save(update_fields=["payment_status", "updated_at"])
 
             FinanceAuditService.log_finance_event(
                 activity=activity,
@@ -692,7 +708,7 @@ class PartnerPaymentService:
             # checklist now that payment_status and the NetSuite record are
             # in place, and produces the CompletedActivitySnapshot the direct
             # write used to skip.
-            if ClosureEligibilityService.is_eligible(activity):
+            if not facilitated and ClosureEligibilityService.is_eligible(activity):
                 # `system=True` (CLOSE-01): closure here is the automatic
                 # CONSEQUENCE of a finance act whose own authority check has
                 # already cleared this actor — an Accountant, who deliberately
@@ -716,7 +732,7 @@ class PartnerPaymentService:
                     )
 
                     p = (
-                        _Partner.objects.filter(id=act.assigned_partner_id)
+                        _Partner.objects.filter(id=paid_partner_id(act))
                         .select_related("user")
                         .first()
                     )
@@ -839,9 +855,11 @@ class AccountabilityService:
             if variance != 0:
                 VarianceReview.objects.create(
                     activity=activity,
-                    budgeted_amount=activity.schedule_cost_lines.aggregate(
-                        s=Sum("amount")
-                    )["s"]
+                    # The staff budget: a facilitating partner's fee is
+                    # paid through its invoice, not this advance.
+                    budgeted_amount=activity.schedule_cost_lines.exclude(
+                        PARTNER_FEE_LINES
+                    ).aggregate(s=Sum("amount"))["s"]
                     or 0,
                     disbursed_amount=disbursed,
                     actual_spend=actual_spend,

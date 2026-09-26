@@ -303,14 +303,14 @@ id="delivery_type"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
-<option value="certified_partner_agency">Certified Partner Agency</option>
+{% if action == 'meeting' %}<option value="certified_partner_agency">Certified Partner Agency</option>{% else %}<option value="certified_partner_agency">CCEO, facilitated by a partner agency</option>{% endif %}
 </select>
 <input type="hidden" name="executor_type" :value="executorType">
 <input type="hidden" name="delivery_type" :value="isAgency ? 'partner' : 'staff'">
 
 <template x-if="isAgency">
 <div class="mt-3 space-y-1">
-<label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">Certified partner agency <span class="text-rose-500">*</span></label>
+<label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">{% if action == 'meeting' %}Certified partner agency{% else %}Facilitating partner agency{% endif %} <span class="text-rose-500">*</span></label>
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
@@ -323,7 +323,14 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focu
 {% endfor %}
 </select>
 {% if certified_agencies %}
+{% if action == 'meeting' %}
 <p class="edify-text-caption text-slate-500">The booking lands dated on the agency&rsquo;s My&nbsp;Plan; they do not schedule it again.</p>
+{% else %}
+{% comment %} A group training stays the CCEO's work: the agency facilitates
+and is paid the facilitation fee (owner, 2026-09-26;
+apps.activities.facilitation). {% endcomment %}
+<p class="edify-text-caption text-slate-500">The CCEO runs the training and completes it with the attendance and the Salesforce ID. The agency facilitates and invoices the facilitation fee; it is told the date.</p>
+{% endif %}
 {% else %}
 <p class="edify-text-caption text-amber-700" role="status">No certified agency is available for this cluster. Choose Internal Field Staff, or ask the Country Director to certify one.</p>
 {% endif %}

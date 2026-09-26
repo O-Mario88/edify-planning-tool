@@ -14,6 +14,7 @@ paid through the PartnerPayment workflow, never through a staff channel.
 
 from __future__ import annotations
 
+from apps.activities.facilitation import PARTNER_FEE_LINES
 from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from .models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequestStatus
 
@@ -75,6 +76,9 @@ def fundable_lines(qs):
         .exclude(amount=0)
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(activity__delivery_type="partner")
+        # A partner-facilitated training's fee is the partner's, paid through
+        # its invoice (apps.activities.facilitation), never staff money.
+        .exclude(PARTNER_FEE_LINES)
         .exclude(vendor_direct_filter())
         .exclude(advance_requests__status__in=NON_REQUESTABLE_ADVANCE_STATUSES)
     )

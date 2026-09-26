@@ -255,6 +255,15 @@ class Activity(SoftDeleteModel):
         choices=ExecutorType.choices,
         default=ExecutorType.STAFF,
     )
+    # The partner that facilitates a staff-run group training and is paid its
+    # facilitation fee (owner, 2026-09-26). The work stays staff work — the
+    # officer completes it with the attendance and the Salesforce ID, and the
+    # Programme Lead verifies it — so delivery_type stays "staff" and
+    # assigned_partner_id stays empty; only the facilitation-fee cost lines
+    # are the partner's. See apps.activities.facilitation.
+    facilitating_partner_id = models.CharField(
+        max_length=30, null=True, blank=True, db_index=True
+    )
     cluster_slot = models.CharField(
         max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True
     )

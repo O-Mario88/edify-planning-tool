@@ -482,8 +482,18 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
 
     from apps.activities.services import _serialize
 
+    from apps.activities.return_notes import compose
+
     _get_reviewable(activity_id, principal)
-    reason = str((data or {}).get("reason") or "").strip()
+    # The reasons ticked (return_notes.COMMON_REASONS) and what the lead
+    # wrote, as one note the officer reads (owner, 2026-09-26). "reason"
+    # alone, the written part, is how every door has sent it until now.
+    data = data or {}
+    reasons = data.get("reasons") or []
+    if isinstance(reasons, str):
+        reasons = [reasons]
+    written = str(data.get("comment") or data.get("reason") or "").strip()
+    reason = compose(reasons, written)
     if not reason:
         # The officer is told why in the notification below; a return with no
         # reason arrives as "fix this" with nothing to fix. The form marks the

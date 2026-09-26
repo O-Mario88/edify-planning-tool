@@ -6987,7 +6987,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4454,
+      "bytes": 5335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline/<str:application_id>",
@@ -9218,7 +9218,33 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6274,
+      "bytes": 5325,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Partner Trainings Table",
+      "purpose": "Reusable partner trainings table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/oversight/partner_trainings_table.html",
+      "variants": [
+        "{{ item.status_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6293,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9270,7 +9296,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11696,
+      "bytes": 11805,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9829,7 +9855,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25200,
+      "bytes": 25857,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -26973,6 +26999,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -30263,6 +30290,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33039,6 +33067,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33125,6 +33154,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33208,6 +33238,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -33292,6 +33323,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63457,6 +63489,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63552,6 +63585,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63645,6 +63679,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63737,6 +63772,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63826,6 +63862,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -63918,6 +63955,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -64009,6 +64047,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -64096,6 +64135,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -64188,6 +64228,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -64280,6 +64321,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -64367,6 +64409,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -68645,7 +68688,7 @@
       "permission_key": "pl_review_queue",
       "primary_action": "Pl Return Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Return: the reason is required, and the officer reads it as written.",
+      "purpose": "Return: the reasons ticked and what the lead writes, at least one of them, read by the officer as written (owner, 2026-09-26: \"add a field for reasons, especially if the Salesforce ID is entered but there are no participants in Salesforce\").",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -82795,6 +82838,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -82892,6 +82936,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -82980,6 +83025,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -83066,6 +83112,7 @@
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
+        "apps.pl_review.services",
         "apps.schools.models"
       ],
       "shared_layout": [
@@ -106617,7 +106664,7 @@
     "activity_states": 24,
     "all_routes": 1303,
     "api_routes": 360,
-    "component_templates": 504,
+    "component_templates": 505,
     "full_pages": 260,
     "mobile_contract_pass": 538,
     "nonvisual_actions": 268,

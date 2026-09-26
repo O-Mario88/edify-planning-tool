@@ -1,0 +1,77 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+The group trainings this Partner facilitates (owner, 2026-09-26): "All
+trainings assigned to partners should be under Partner Oversight as well,
+and the cost is the training fee." Each is the officer's work — the officer
+completes it with the attendance and the Salesforce ID — with the Partner
+facilitating and paid the facilitation fee (apps.activities.facilitation).
+
+Columns as the owner listed them: Cluster Name, District, Training Name, SSA
+Intervention, Training Date, Salesforce ID, Evidence, Status, Cost (the
+facilitation fee) and Action. Status reads Upcoming until the officer
+completes it and Completed once the attendance and the Salesforce ID are in
+(both columns green); Verified once the Programme Lead confirms it.
+
+Action, once completed: Confirm Verification (the review drawer, whose
+Verified completes the training) or Return (the reasons drawer). Both open a
+drawer, so this page stays read-only (no write from the table itself).
+{% endcomment %}
+{% paginate facilitated_trainings "partner_trainings_page" as page %}
+<section class="partner-plan-group" aria-labelledby="partner-plan-trainings">
+  <h3 id="partner-plan-trainings" class="partner-plan-group__title" data-no-titlebar>Trainings facilitated ({{ facilitated_trainings|length }})</h3>
+  <div class="school-plan-table-scroll">
+    <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-trainings-table>
+      <caption class="sr-only">Group trainings {{ active_partner.name }} facilitates{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
+      <thead><tr>
+        <th scope="col">Cluster Name</th>
+        <th scope="col">District</th>
+        <th scope="col">Training Name</th>
+        <th scope="col">SSA Intervention</th>
+        <th scope="col">Training Date</th>
+        <th scope="col">Salesforce ID</th>
+        <th scope="col">Evidence</th>
+        <th scope="col">Status</th>
+        <th scope="col" class="text-right">Cost</th>
+        <th scope="col" class="school-plan-table__actions">Action</th>
+      </tr></thead>
+      <tbody>{% for item in page.rows %}
+        <tr class="partner-plan-row" data-facilitated-training="{{ item.activity_id }}"{% if item.is_overdue %} data-overdue{% endif %}>
+          <td data-label="Cluster Name">{{ item.cluster_name|default:"—" }}</td>
+          <td data-label="District">{{ item.district|default:"—" }}</td>
+          <td data-label="Training Name">{{ item.training_name|default:"Group training" }}</td>
+          <td data-label="SSA Intervention">{{ item.intervention_label|default:"—" }}</td>
+          <td data-label="Training Date">{{ item.training_date|date:"j M Y"|default:"Not dated" }}</td>
+          {% include "components/completion_cells.html" with row=item %}
+          <td data-label="Status"><span class="partner-status-chip" data-tone="{{ item.status_tone }}"{% if item.completion_gap %} data-completion-gap{% endif %}>{{ item.status_label }}</span></td>
+          <td class="text-right tabular-nums" data-label="Cost">UGX {{ item.fee|intcomma }}</td>
+          <td data-label="Action" class="school-plan-table__actions"><div class="school-record-row__actions" data-record-action>
+            {% if item.awaits_review and item.can_review %}
+            {% if item.is_complete %}
+            <button type="button" class="school-record-action school-record-action--schedule"
+                    hx-get="/pl/review-queue/{{ item.activity_id }}/drawer?from=partner-trainings"
+                    hx-target="#drawer-container" hx-swap="innerHTML">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
+              <span>Confirm Verification</span>
+            </button>
+            {% endif %}
+            <button type="button" class="school-record-action school-record-action--assign"
+                    hx-get="/pl/review-queue/{{ item.activity_id }}/return-drawer"
+                    hx-target="#drawer-container" hx-swap="innerHTML">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
+              <span>Return</span>
+            </button>
+            {% elif item.with_ia %}
+            <span class="edify-text-caption edify-text-muted">With Impact Assessment</span>
+            {% else %}
+            <a class="school-record-action school-record-action--assign" href="/activities/{{ item.activity_id }}">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+              <span>View activity</span>
+            </a>
+            {% endif %}
+          </div></td>
+        </tr>
+      {% empty %}<tr><td colspan="10" class="partner-plan-table__empty">No trainings facilitated by this Partner for the selected team.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=page param="partner_trainings_page" pagination_label="Trainings facilitated" %}
+</section>

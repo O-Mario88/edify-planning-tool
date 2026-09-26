@@ -24,7 +24,7 @@ journeys and the Resolve drawer address it by.
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}">{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
-  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
+  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions" data-record-action>
     {% if item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
     <button type="button" class="school-record-action school-record-action--schedule"
             hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
