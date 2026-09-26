@@ -20,7 +20,6 @@ page shares. A row with no action to offer renders nothing at all.
 
 from django import template
 from django.template.loader import get_template
-from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -31,12 +30,15 @@ class RowActionsNode(template.Node):
         self.name = name
 
     def render(self, context):
+        # The caller's items, rendered (and autoescaped) in the caller's own
+        # context: NodeList.render already returns them as a SafeString, so
+        # the shell prints them as they are without marking anything safe.
         items = self.nodelist.render(context)
         if not items.strip():
             return ""
         name = self.name.resolve(context) if self.name is not None else ""
         return get_template("components/row_actions.html").render(
-            {"items": mark_safe(items), "name": name}
+            {"items": items, "name": name}
         )
 
 
