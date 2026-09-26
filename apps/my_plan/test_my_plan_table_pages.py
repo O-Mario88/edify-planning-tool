@@ -82,7 +82,9 @@ class MyPlanPagesItsTablesAtTwentyTest(TestCase):
     def test_the_second_page_draws_the_rest(self):
         response = self.client.get(f"/my-plan?fy={FY}&school_visits_page=2")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(self._drawn(response.content.decode())), VISITS - PAGE_SIZE)
+        self.assertEqual(
+            len(self._drawn(response.content.decode())), VISITS - PAGE_SIZE
+        )
 
     def test_the_export_still_carries_every_visit(self):
         response = self.client.get(f"/my-plan?fy={FY}&export=csv")

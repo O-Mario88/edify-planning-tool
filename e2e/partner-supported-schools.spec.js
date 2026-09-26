@@ -75,6 +75,32 @@ function activityControls(page, id) {
   return page.locator(`[href*="${id}"], [hx-get*="/${id}"]`);
 }
 
+// Whether an activity is anywhere on a My Plan. The plan is read for the
+// activity's own financial year (late in September the later dates fall in
+// the next one), and its tables show twenty rows a page (owner, 2026-09-26),
+// so every table's pager is walked forward together until the row is drawn
+// or no table has a next page.
+async function onMyPlan(page, activity, query = '') {
+  await page.goto(`/my-plan?fy=${activity.fy}${query ? `&${query}` : ''}`);
+  for (let turn = 0; turn < 50; turn += 1) {
+    if (await activityControls(page, activity.id).count()) return true;
+    const next = await page.locator('nav.edify-pagination a[rel="next"]').evaluateAll(links => {
+      if (!links.length) return null;
+      const current = new URL(location.href).searchParams;
+      const url = new URL(location.href);
+      for (const link of links) {
+        for (const [key, value] of new URL(link.href).searchParams) {
+          if (current.get(key) !== value) url.searchParams.set(key, value);
+        }
+      }
+      return url.pathname + url.search;
+    });
+    if (!next) return false;
+    await page.goto(next);
+  }
+  return false;
+}
+
 async function noPageOverflow(page) {
   return page.evaluate(() => {
     const main = document.querySelector('main') || document.body;
@@ -158,9 +184,8 @@ test.describe('Partner-supported schools — journeys', () => {
     }
     expect(facts.assignments).toBe(1);
 
-    await page.goto(`/my-plan?q=${encodeURIComponent(hope.name)}`);
     for (const activity of staffWork) {
-      await expect(activityControls(page, activity.id).first()).toBeAttached();
+      expect(await onMyPlan(page, activity, `q=${encodeURIComponent(hope.name)}`), activity.type).toBe(true);
     }
     await shoot(page, 'j2-my-plan', testInfo);
   });
@@ -243,8 +268,7 @@ test.describe('Partner-supported schools — journeys', () => {
     expect(partnerWork).toBeTruthy();
     expect(partnerWork.staff_fundable).toBe(false);
 
-    await page.goto('/my-plan');
-    await expect(activityControls(page, partnerWork.id).first()).toBeAttached();
+    expect(await onMyPlan(page, partnerWork)).toBe(true);
     await shoot(page, 'j5-partner-my-plan', testInfo);
 
     // Staff: the badge moves, the work stays off their My Plan.
@@ -256,8 +280,7 @@ test.describe('Partner-supported schools — journeys', () => {
     // Partner Monitoring, below (owner, 2026-09-23).
     await expect(row.locator('[data-partner-workflow]')).toHaveCount(0);
     await expect(row.locator('.planning-responsible[data-responsible="partner"]')).toHaveText('Partner');
-    await page.goto('/my-plan');
-    await expect(activityControls(page, partnerWork.id)).toHaveCount(0);
+    expect(await onMyPlan(page, partnerWork)).toBe(false);
     // Partner Monitoring reads one financial year; the Partner dated this work
     // into the year its activity carries.
     await page.goto(`/partner-oversight/?partner=${hope.partner_id}&fy=${partnerWork.fy}`);

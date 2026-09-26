@@ -523,7 +523,7 @@ class FrontendViewsTestCase(TestCase):
         self.school.save(update_fields=["account_owner_id"])
         self.client.force_login(self.cceo_user)
         html = self.client.get("/schools").content.decode()
-        start = html.index('data-directory-district')
+        start = html.index("data-directory-district")
         cell = html[start : html.index("</div>", start)]
         self.assertIn("District: ", cell)
         self.assertIn(f'href="/districts/{self.district.id}"', cell)
