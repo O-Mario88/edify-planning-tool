@@ -68,6 +68,14 @@ class PartnerAndClusterFlowTest(APITestCase):
     """Proves Demo Flows 4 + 6 (and DOCX evidence) against authenticated API calls."""
 
     def setUp(self):
+        self._build_fixture()
+
+    def _build_fixture(self):
+        # Other suites reuse this fixture by borrowing this method, never
+        # setUp: @freeze_time wraps setUp to start a freeze that only this
+        # class's tearDown stops, so a borrowed setUp leaves one running and
+        # every later test in that worker runs on 24 June 2026.
+        #
         # Partner and cluster work is costed work; establish the CD-published
         # catalogue required by the real scheduling API before testing flow.
         CostCatalogue.objects.get_or_create(
