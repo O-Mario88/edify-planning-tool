@@ -130,8 +130,10 @@ class PlMyPlanTest(TestCase):
 
         self.assertNotIn(mine_to_manage.id, self.plan_ids(self.pl_user))
 
-    def test_the_carve_out_returns_with_the_rule_switched_off(self):
-        """Disabling the flag restores the previous display, records untouched."""
+    def test_partner_work_stays_off_with_the_rule_switched_off(self):
+        """My Plan is the staff's own planned work for every reader (owner,
+        2026-09-26); the rollout flag no longer brings monitored Partner work
+        back onto it."""
         from django.test import override_settings
 
         mine_to_manage = self._activity(
@@ -145,7 +147,7 @@ class PlMyPlanTest(TestCase):
         with override_settings(
             PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED=False
         ):
-            self.assertIn(mine_to_manage.id, self.plan_ids(self.pl_user))
+            self.assertNotIn(mine_to_manage.id, self.plan_ids(self.pl_user))
 
     def test_an_unscheduled_partner_assignment_is_never_in_any_plan(self):
         """It has no activity, so there is nothing anyone can do on a day."""

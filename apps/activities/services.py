@@ -4072,13 +4072,83 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     if deadline:
         note += f" · Deadline: {deadline}"
 
+    # Partner-delivered work returns on its own status (§15.1 "Returned by
+    # IA") so the partner surfaces can speak plainly; staff work keeps the
+    # historic "returned" value every existing pin expects.
+    status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
+    return _return_for_correction(a, note, status, reason)
+
+
+#: What a reviewer's role reads as in a Partner's return note.
+_REVIEWER_ROLE_LABELS = {
+    "CCEO": "CCEO",
+    "Program Lead": "Programme Lead",
+    "ProjectCoordinator": "Project Coordinator",
+}
+
+
+def return_partner_work(activity_id: str, data: dict, principal) -> dict:
+    """Send a Partner's submission back for correction, with the reason.
+
+    Owner, 2026-09-26: "Staff (PL and CCEO, IA) action buttons should have
+    Verify and Confirm, Return in case they have not uploaded the evidence or
+    uploaded the wrong file as evidence ... they should return with a reason."
+
+    Until then only Impact Assessment could return Partner work. The people
+    who may confirm it may now return it, and nobody else:
+    ``can_confirm_partner_activity`` (Impact Assessment, or the staff member
+    named as the activity's monitor, owner 2026-09-12). A supervisor who can
+    merely see the school still cannot.
+
+    The written reason is required here, in the service, not only in the
+    form. The picked reasons and the explanation become the note the Partner
+    reads on its evidence page, headed by who sent it back. Impact
+    Assessment's return keeps "Returned by IA"; a monitor's is "Returned".
+    The Partner's pages read both as "Returned for Correction", and the
+    Partner corrects and resubmits either from the same evidence page.
+    """
+    a = _get_in_scope(activity_id, principal)
+    from apps.core.permissions import RolePermissionService
+
+    if a.delivery_type != "partner":
+        raise BadRequest("Only Partner-delivered work is returned from here.")
+    if not RolePermissionService.can_confirm_partner_activity(principal, a):
+        raise Forbidden(
+            "Only Impact Assessment or this activity's monitoring staff "
+            "member may return Partner work."
+        )
+    if a.status != "awaiting_ia_verification":
+        raise BadRequest("This work is not waiting for verification.")
+
+    from apps.activities.return_notes import compose
+
+    reasons = [str(r).strip() for r in (data.get("reasons") or []) if str(r).strip()]
+    comment = str(data.get("comment") or "").strip()
+    if not comment:
+        raise BadRequest(
+            "Say why the work is going back, so the Partner knows what to fix."
+        )
+    by_ia = RolePermissionService.can_verify_ia(principal, a)
+    role = (
+        "Impact Assessment"
+        if by_ia
+        else _REVIEWER_ROLE_LABELS.get(getattr(principal, "active_role", ""), "Staff")
+    )
+    name = (getattr(principal, "name", "") or "").strip()
+    who = f"{name} ({role})" if name else role
+    reason = compose(reasons, comment)
+    note = f"Returned by {who}: {reason}"
+    return _return_for_correction(
+        a, note, "returned_by_ia" if by_ia else "returned", reason
+    )
+
+
+def _return_for_correction(a, note: str, status: str, reason: str) -> dict:
+    """The return itself, shared by Impact Assessment's and a monitor's."""
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
         a = _lock_awaiting_ia_verification(a.id)
-        # Partner-delivered work returns on its own status (§15.1 "Returned by
-        # IA") so the partner surfaces can speak plainly; staff work keeps the
-        # historic "returned" value every existing pin expects.
-        a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
+        a.status = status
         a.ia_verification_status = "returned"
         # The instruction has no length limit on the form; the column holds
         # 512. Cut to fit with a marker rather than failing the return at save.

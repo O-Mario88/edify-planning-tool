@@ -1995,26 +1995,33 @@ def partner_oversight_view(request):
     items.sort(
         key=lambda i: (not i.awaits_staff_decision, not i.is_overdue, i.school_name)
     )
-    # The approved Salesforce authority is unchanged (owner, 2026-09-12): the
-    # activity's named monitor records the entry that completes Partner work.
-    # Partner work no longer sits on that person's My Plan (owner,
-    # 2026-09-23), so the door is offered here, on the row, to exactly them.
-    from apps.core.scoping import owner_ids
+    # Verify & Confirm and Return (owner, 2026-09-26: "Staff (PL and CCEO, IA)
+    # action buttons should have Verify and Confirm, Return"). Offered to
+    # exactly the people the approved authority names (owner, 2026-09-12):
+    # Impact Assessment or the activity's monitor — one permission, asked of
+    # the activities waiting for verification in a single read. SSA Support is
+    # confirmed through its own drawer, which also records the scores.
+    from apps.activities.models import Activity
+    from apps.activities.services import is_partner_ssa_support_activity
 
-    mine = set(owner_ids(request.user))
-    monitors = request.user.active_role in (
-        "CCEO",
-        "Program Lead",
-        "ProjectCoordinator",
-    )
+    waiting = {
+        item.partner_activity_id
+        for item in items
+        if item.partner_activity_id
+        and item.activity_status == "awaiting_ia_verification"
+    }
+    reviewable = {}
+    if waiting:
+        for activity in Activity.objects.filter(
+            id__in=waiting, deleted_at__isnull=True, delivery_type="partner"
+        ):
+            if RolePermissionService.can_confirm_partner_activity(
+                request.user, activity
+            ):
+                reviewable[activity.id] = is_partner_ssa_support_activity(activity)
     for item in items:
-        item.can_enter_salesforce = bool(
-            monitors
-            and item.partner_activity_id
-            and item.monitor_id in mine
-            and item.activity_status == "awaiting_ia_verification"
-            and item.salesforce_status != "recorded"
-        )
+        item.can_review = item.partner_activity_id in reviewable
+        item.review_is_ssa = reviewable.get(item.partner_activity_id, False)
     _lock_project_work(request.user, items)
     summary = partner_oversight.summarize(items)
     partner_group = None

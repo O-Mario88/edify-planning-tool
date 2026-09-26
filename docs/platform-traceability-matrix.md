@@ -18,7 +18,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-01` | Priority to verified performance | ✓ | 2 | 108 | 33 | 2 | 2 | 6 | 19 | 55 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 41 | 10 | 1 | 11 | 0 | 0 | 19 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 101 | 36 | 3 | 8 | 10 | 26 | 55 |
-| `journey-04` | Cluster training | ✓ | 1 | 57 | 17 | 1 | 2 | 0 | 1 | 51 |
+| `journey-04` | Cluster training | ✓ | 1 | 58 | 17 | 1 | 2 | 0 | 1 | 51 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 50 | 27 | 2 | 2 | 1 | 4 | 66 |
 | `journey-06` | Special Project | ✓ | 1 | 103 | 31 | 3 | 5 | 6 | 18 | 55 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 78 | 30 | 4 | 10 | 9 | 23 | 55 |
@@ -27,7 +27,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 95 | 35 | 2 | 2 | 7 | 25 | 55 |
 | `journey-11` | Professional Development | ✓ | 1 | 41 | 8 | 0 | 0 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 36 | 12 | 0 | 0 | 1 | 10 | 5 |
-| `journey-13` | PIP | ✓ | 1 | 38 | 7 | 0 | 0 | 0 | 3 | 1 |
+| `journey-13` | PIP | ✓ | 1 | 39 | 7 | 0 | 0 | 0 | 3 | 1 |
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 53 | 14 | 0 | 0 | 2 | 3 | 15 |
 | `journey-15` | Financial Health | ✓ | 1 | 53 | 17 | 2 | 4 | 1 | 6 | 19 |
 | `journey-16` | Government Requirements | ✓ | 1 | 52 | 17 | 2 | 4 | 1 | 5 | 19 |
@@ -113,7 +113,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Permissions checked | `cluster.catchmentManage` |
 | Page gates checked | `cluster_detail`, `planning` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activities/training_history.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+47 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activities/training_history.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+48 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
@@ -293,7 +293,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Permissions checked | — |
 | Page gates checked | `performance_console`, `recovery_plans` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/client_ip.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py` _+28 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/client_ip.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py` _+29 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `hr.pip_activated`, `hr.pip_outcome`, `hr.pip_recommended` |

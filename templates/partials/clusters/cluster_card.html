@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 <div
 class="cluster-card edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
 :class="{ 'is-expanded': cardExpanded }"
@@ -10,7 +10,7 @@ x-accordion:clusters="cardExpanded"
 x-init="$watch('cardExpanded', value => { if (value && !subTableLoaded) { htmx.trigger($refs.schoolsContainer, 'load-schools'); subTableLoaded = true; } })"
 >
 <div
-@click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) cardExpanded = !cardExpanded"
+@click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button], .row-menu')) cardExpanded = !cardExpanded"
 class="cluster-card__summary"
 data-row-disclosure-summary
 >
@@ -40,38 +40,36 @@ aria-controls="cluster-details-{{ cluster.id }}"
 
 <div class="cluster-card__actions">
 {% comment %}
-Was a list of role names this button did NOT want to see. That list only
+Was a list of role names this menu did NOT want to see. That list only
 ever grows, and it was already wrong: it named the two partner roles and so
 offered Schedule to every oversight role, whose click the drawer answered
 with 403. `can_plan_clusters` is the permission the drawer itself enforces,
-so the button and the endpoint cannot disagree however many roles exist.
+so the menu and the endpoint cannot disagree however many roles exist.
+
+One Actions menu rather than two buttons (owner, 2026-09-26): on a tablet
+Schedule and Assign wrapped onto two lines.
 {% endcomment %}
 {% if can_plan_clusters %}
+{% row_actions cluster.name %}
 <button
+type="button"
+class="row-menu__item"
+role="menuitem"
 hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&action=training"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="school-record-action school-record-action--schedule"
 aria-label="Schedule Group Training for {{ cluster.name }}"
->
-<svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-</svg>
-<span class="cluster-card__action-label">Schedule</span>
-</button>
-
+>Schedule</button>
 <button
+type="button"
+class="row-menu__item"
+role="menuitem"
 hx-get="/planning/assign-partner-modal?cluster_id={{ cluster.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="school-record-action school-record-action--assign"
 aria-label="Assign staff to {{ cluster.name }}"
->
-<svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m12-11a4 4 0 10-8 0 4 4 0 008 0zm4 1v6m3-3h-6" />
-</svg>
-<span class="cluster-card__action-label">Assign</span>
-</button>
+>Assign</button>
+{% endrow_actions %}
 {% endif %}
 
 

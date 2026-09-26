@@ -1,9 +1,10 @@
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% comment %}
 Development requests waiting at the supervisor stage that the viewer may
 decide now (HRPDDashboardService.supervisor_queue — the approval service's
-rule, resolved in bulk). Approve posts in place; Return opens the one-column
-drawer that asks for the reason. Program Lead alignment, 2026-09-13.
+rule, resolved in bulk). Each row's Actions menu offers Approve, which posts
+in place, and Return, which opens the one-column drawer that asks for the
+reason. Program Lead alignment, 2026-09-13.
 
 `queue_always` renders the heading and an empty state when nothing waits (the
 team view); HR's page includes this only when a request waits on the viewer.
@@ -43,14 +44,17 @@ team view); HR's page includes this only when a request waits on the viewer.
             {% if r.conflict == "major_conflict" %}Schedule conflict{% elif r.waited is None %}—{% else %}{{ r.waited }} day{{ r.waited|pluralize }}{% endif %}
           </td>
           <td class="py-2.5 text-right whitespace-nowrap" data-record-action>
-            <form method="post" action="/cpd-learning/action" class="inline">
+            {% comment %}One Actions menu rather than two buttons (owner,
+            2026-09-26).{% endcomment %}
+            {% row_actions r.staff_name %}
+            <form role="none" method="post" action="/cpd-learning/action">
               {% csrf_token %}
               <input type="hidden" name="action" value="supervisor_approve">
               <input type="hidden" name="request_id" value="{{ r.request_id }}">
-              <button type="submit" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold edify-primary-solid edify-primary-on-solid">Approve</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Approve</button>
             </form>
-            <button type="button" hx-get="/cpd-learning/return?request_id={{ r.request_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Return</button>
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="/cpd-learning/return?request_id={{ r.request_id }}" hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
+            {% endrow_actions %}
           </td>
         </tr>
         {% endfor %}

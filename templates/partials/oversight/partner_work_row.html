@@ -1,11 +1,11 @@
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 {% comment %}
 One row of a Partner Monitoring table, and its details. `row_id` is unique on
 the page ("a-<assignment>" or "p-<activity>"); the row keeps the ids the
 journeys and the Resolve drawer address it by.
 {% endcomment %}
 <tr class="partner-plan-row" {% if table.kind == 'activity' %}data-partner-activity="{{ item.partner_activity_id }}"{% else %}data-assignment="{{ item.partner_assignment_id }}"{% endif %}{% if item.awaits_staff_decision %} data-returned{% endif %}
-    @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+    @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
     :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
   <td data-label="{% if item.school_name %}School{% else %}Cluster{% endif %}" class="school-plan-table__name"><span class="partner-plan-table__identity">
     <button type="button" class="school-plan-table__name-toggle"
@@ -22,29 +22,43 @@ journeys and the Resolve drawer address it by.
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}">{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
-  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
-    {% if item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
+  <td data-label="Actions" class="school-plan-table__actions">
+    {% comment %}
+    Work waiting for verification offers its reviewer View, Verify & Confirm
+    and Return (owner, 2026-09-26). Otherwise: Resolve Exception on a hand-back,
+    or View and the withdrawal the record permits. Two or more actions are one
+    Actions menu (owner, 2026-09-26); a row with one keeps its one button.
+    {% endcomment %}
+    {% firstof item.school_name item.cluster_name as record_name %}
+    {% if item.can_review %}
+    {% row_actions record_name %}
+    {% if item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" with menu=True %}{% else %}<a class="row-menu__item" role="menuitem" href="/activities/{{ item.partner_activity_id }}">View activity</a>{% endif %}
+    {% include "partials/oversight/_partner_review_items.html" %}
+    {% endrow_actions %}
+    {% elif item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
+    <div class="school-record-row__actions">
     <button type="button" class="school-record-action school-record-action--schedule"
             hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
             hx-target="#drawer-container" hx-swap="innerHTML">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
       <span>Resolve Exception</span>
     </button>
-    {% elif item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" %}{% else %}
+    </div>
+    {% elif item.partner_assignment_id %}
+    {% if item.withdrawal_label %}
+    {% row_actions record_name %}{% include "partials/oversight/_partner_view_button.html" with menu=True %}{% endrow_actions %}
+    {% else %}
+    <div class="school-record-row__actions">{% include "partials/oversight/_partner_view_button.html" %}</div>
+    {% endif %}
+    {% else %}
+    <div class="school-record-row__actions">
     <a class="school-record-action school-record-action--assign" href="/activities/{{ item.partner_activity_id }}">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
       <span>View activity</span>
     </a>
+    </div>
     {% endif %}
-    {% if item.can_enter_salesforce %}
-    <button type="button" class="school-record-action school-record-action--assign"
-            hx-get="/activities/{{ item.partner_activity_id }}/salesforce-id"
-            hx-target="#drawer-container" hx-swap="innerHTML">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4.5l-2 15M17 4.5l-2 15M4.5 9h15M4 15h15"/></svg>
-      <span>Enter Salesforce ID</span>
-    </button>
-    {% endif %}
-  </div></td>
+  </td>
 </tr>
 <tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
   <td aria-hidden="true"></td>

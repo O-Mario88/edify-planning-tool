@@ -111,6 +111,24 @@ class ProjectPartnerHandoverTest(TestCase):
             f"/projects/planning/bulk-partner?assignments={self.enrolment.id}",
         )
 
+    def test_the_row_offers_schedule_and_assign_in_one_actions_menu(self):
+        """Owner, 2026-09-26: the row's Schedule and Partner buttons wrapped
+        on a tablet; "switch to Action button with options to schedule and
+        assign"."""
+        self.client.force_login(self.coord_user)
+        response = self.client.get("/projects/planning", {"fy": self.fy})
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('aria-label="Actions for Handover Primary"', html)
+        self.assertIn(
+            'role="menuitem" hx-get="/projects/planning/bulk-partner?assignments='
+            f'{self.enrolment.id}"',
+            html,
+        )
+        self.assertIn(">Schedule</button>", html)
+        self.assertIn(">Assign</button>", html)
+        self.assertNotIn('class="spp-row-actions"', html)
+
     def test_a_handover_from_the_row_carries_the_project_and_moves_the_row(self):
         self.client.force_login(self.coord_user)
         drawer = self.client.get(self._row()["partner_url"])

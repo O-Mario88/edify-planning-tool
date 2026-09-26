@@ -4,13 +4,18 @@ test.use({video:'off',trace:'off',serviceWorkers:'block'});
 test('scheduling, assignment and cluster creation stay contained: a sheet on a phone, a centred card wider',async({page})=>{
  test.setTimeout(180000);
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
+ // A Core School row's Schedule and Assign are entries in its one Actions
+ // menu (owner, 2026-09-26): `row` flows open the menu of the first row that
+ // offers the entry, then choose it.
  for(const flow of [
-  {url:'/core-schools',selector:'.school-record-action[hx-get*="schedule-activity"]'},
-  {url:'/core-schools',selector:'.school-record-action[hx-get*="schedule-activity"]',nested:'[hx-get*="schedule-visit?"]'},
-  {url:'/core-schools',selector:'.school-record-action[hx-get*="assign-partner"]'},
+  {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="schedule-activity"]'},
+  {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="schedule-activity"]',nested:'[hx-get*="schedule-visit?"]'},
+  {url:'/core-schools',row:'.core-school-row',selector:'[role="menuitem"][hx-get*="assign-partner"]'},
   {url:'/clusters',selector:'[hx-get="/clusters/create-drawer"]'}
  ]){
-  await page.goto(flow.url);await page.locator(flow.selector).first().click();
+  await page.goto(flow.url);
+  if(flow.row){const row=page.locator(flow.row).filter({has:page.locator(flow.selector)}).first();await row.locator('.row-menu__trigger').click();await row.locator(flow.selector).click();}
+  else await page.locator(flow.selector).first().click();
   let surface=page.locator('.drawer-surface.active');await expect(surface).toBeVisible();
   if(flow.nested){await surface.locator(flow.nested).first().click();surface=page.locator('.drawer-surface.active');await expect(surface.locator('form')).toBeVisible();}
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});

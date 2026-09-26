@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% block title %}Performance Cycle Console · Edify{% endblock %}
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" data-mobile-family="performance">
@@ -109,63 +109,91 @@
           <span class="edify-badge {% if row.approved %}data-tone-success{% endif %}"
                 {% if row.approved %}data-tone="success"{% endif %}>{{ row.stage_label }}</span>
         </td>
-        <td class="px-3 py-3" data-record-action>
-          <div class="flex items-center justify-end gap-2">
-            <a href="/performance-conversation?staff={{ row.review.staff_id }}" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Open conversation</a>
+        {% comment %}
+        One Actions menu rather than up to four buttons and two disclosures
+        (owner, 2026-09-26). The steps that post with nothing to ask sit on
+        the menu as one-button forms. Return, Confirm rating and Recommend PIP
+        need an answer first, so their forms stay in the row, hidden, and the
+        menu item opens the one it names: `reveal` shows the form, opens the
+        shared reason disclosure inside it (so the reason field is on screen,
+        not a second trigger to press) and moves focus to the field once
+        x-show has drawn it. Escape puts the row back.
+        {% endcomment %}
+        <td class="px-3 py-3 text-right" data-record-action
+            x-data="{
+              rowForm: '',
+              reveal(name, fieldId) {
+                this.rowForm = name;
+                const field = document.getElementById(fieldId);
+                this.$nextTick(() => requestAnimationFrame(() => field && field.focus()));
+              }
+            }">
+          {% row_actions row.name %}
+            <a class="row-menu__item" role="menuitem" href="/performance-conversation?staff={{ row.review.staff_id }}">Open conversation</a>
             {% if not row.approved %}
-            <form method="post" action="/hr/performance-cycle/action">
+            <form role="none" method="post" action="/hr/performance-cycle/action">
               {% csrf_token %}
               <input type="hidden" name="action" value="approve">
               <input type="hidden" name="fy" value="{{ fy }}">
               <input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Approve &amp; lock</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Approve &amp; lock</button>
             </form>
             {% else %}
-            {% comment %}The reason was collected by window.prompt() from an
-            inline onsubmit handler and written into a hidden input —
-            unlabelled, unreviewable before sending, and silent to a screen
-            reader. It is a real field now.{% endcomment %}
-            <form method="post" action="/hr/performance-cycle/action">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="return">
-              <input type="hidden" name="fy" value="{{ fy }}">
-              <input type="hidden" name="review_id" value="{{ row.review.id }}">
-              {% include "partials/components/reason_disclosure.html" with uid=row.review.id trigger_label="Return" field_label="Reason for returning this agreement" submit_label="Return agreement" placeholder="Say what needs changing, so the employee and their manager can act on it." %}
-            </form>
+            <button type="button" class="row-menu__item" role="menuitem" aria-controls="return-form-{{ row.review.id }}" @click="reveal('return', 'reason-{{ row.review.id }}')">Return</button>
             {% endif %}
 
             {# Year-end calibration chain (§14) — the next step, driven by stage #}
             {% if is_year_end %}
             {% if row.stage == "hr_quality_review" or row.stage == "manager_assessment" %}
-            <form method="post" action="/hr/performance-cycle/action">
+            <form role="none" method="post" action="/hr/performance-cycle/action">
               {% csrf_token %}<input type="hidden" name="action" value="submit_calibration"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <button type="submit" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Ready for SLT</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Ready for SLT</button>
             </form>
             {% elif row.stage == "ready_for_slt_calibration" %}
-            <form method="post" action="/hr/performance-cycle/action">
+            <form role="none" method="post" action="/hr/performance-cycle/action">
               {% csrf_token %}<input type="hidden" name="action" value="calibrate"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}"><input type="hidden" name="result" value="confirmed">
-              <button type="submit" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Record calibration</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Record calibration</button>
             </form>
             {% elif row.stage == "slt_calibrated" %}
-            <form method="post" action="/hr/performance-cycle/action" class="flex items-center gap-1">
-              {% csrf_token %}<input type="hidden" name="action" value="confirm_rating"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <select aria-label="Rating" name="rating" class="rounded-md border border-slate-200 px-2 py-1 text-[12px]">{% for val, label in ratings %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
-              <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Confirm rating</button>
-            </form>
+            <button type="button" class="row-menu__item" role="menuitem" aria-controls="rating-form-{{ row.review.id }}" @click="reveal('rating', 'rating-{{ row.review.id }}')">Confirm rating</button>
             {% elif row.stage == "employee_acknowledged" %}
-            <form method="post" action="/hr/performance-cycle/action">
+            <form role="none" method="post" action="/hr/performance-cycle/action">
               {% csrf_token %}<input type="hidden" name="action" value="archive"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Sign &amp; archive</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Sign &amp; archive</button>
             </form>
             {% endif %}
             {% endif %}
 
             {# Risk escalation (§15) — always deliberate, never automatic #}
-            <form method="post" action="/hr/performance-cycle/action">
-              {% csrf_token %}<input type="hidden" name="action" value="recommend_pip"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="staff_id" value="{{ row.review.staff_id }}">
-              {% include "partials/components/reason_disclosure.html" with uid="pip-"|add:row.review.staff_id trigger_label="Recommend PIP" tone="danger" field_label="Why a formal performance improvement plan is warranted" submit_label="Recommend PIP" placeholder="This starts a formal process. Set out what has been observed and over what period." rows=4 %}
-            </form>
-          </div>
+            <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" aria-controls="pip-form-{{ row.review.id }}" @click="reveal('pip', 'reason-pip-{{ row.review.staff_id|escapejs }}')">Recommend PIP</button>
+          {% endrow_actions %}
+
+          {% if row.approved %}
+          {% comment %}The reason was collected by window.prompt() from an
+          inline onsubmit handler and written into a hidden input —
+          unlabelled, unreviewable before sending, and silent to a screen
+          reader. It is a real field now.{% endcomment %}
+          <form id="return-form-{{ row.review.id }}" method="post" action="/hr/performance-cycle/action" x-show="rowForm === 'return'" x-cloak @keydown.escape="rowForm = ''">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="return">
+            <input type="hidden" name="fy" value="{{ fy }}">
+            <input type="hidden" name="review_id" value="{{ row.review.id }}">
+            {% include "partials/components/reason_disclosure.html" with uid=row.review.id trigger_label="Return" field_label="Reason for returning this agreement" submit_label="Return agreement" placeholder="Say what needs changing, so the employee and their manager can act on it." open_panel=True %}
+          </form>
+          {% endif %}
+
+          {% if is_year_end and row.stage == "slt_calibrated" %}
+          <form id="rating-form-{{ row.review.id }}" method="post" action="/hr/performance-cycle/action" class="flex items-center justify-end gap-1 mt-2" x-show="rowForm === 'rating'" x-cloak @keydown.escape="rowForm = ''">
+            {% csrf_token %}<input type="hidden" name="action" value="confirm_rating"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
+            <select id="rating-{{ row.review.id }}" aria-label="Rating" name="rating" class="rounded-md border border-slate-200 px-2 py-1 text-[12px]">{% for val, label in ratings %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+            <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Confirm rating</button>
+          </form>
+          {% endif %}
+
+          <form id="pip-form-{{ row.review.id }}" method="post" action="/hr/performance-cycle/action" x-show="rowForm === 'pip'" x-cloak @keydown.escape="rowForm = ''">
+            {% csrf_token %}<input type="hidden" name="action" value="recommend_pip"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="staff_id" value="{{ row.review.staff_id }}">
+            {% include "partials/components/reason_disclosure.html" with uid="pip-"|add:row.review.staff_id trigger_label="Recommend PIP" tone="danger" field_label="Why a formal performance improvement plan is warranted" submit_label="Recommend PIP" placeholder="This starts a formal process. Set out what has been observed and over what period." rows=4 open_panel=True %}
+          </form>
         </td>
       </tr>
       {% empty %}

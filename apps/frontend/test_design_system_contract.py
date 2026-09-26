@@ -334,8 +334,10 @@ class DesignSystemContractTest(SimpleTestCase):
             "{{ school.scheduled_training_count }}/{{ school.trainings_target }}", row
         )
         self.assertNotIn("4 visits and 4 trainings", row)
-        self.assertIn(">Schedule</span>", row)
-        self.assertIn(">Assign</span>", row)
+        # Entries in the row's one Actions menu (owner, 2026-09-26).
+        self.assertIn("{% row_actions school.name %}", row)
+        self.assertIn(">Schedule</button>", row)
+        self.assertIn(">Assign</button>", row)
         self.assertNotIn("Schedule Now", row)
 
     def test_core_school_actions_share_the_school_name_row(self):

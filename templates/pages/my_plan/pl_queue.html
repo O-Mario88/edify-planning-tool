@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 
 {% block title %}Completion Reviews · Edify{% endblock %}
 
@@ -14,6 +14,8 @@ The lead holds two decisions, named the same on every surface (owner,
 2026-09-24): Verified confirms the completion and marks it complete, and
 Return sends it back with a reason the officer reads on their My Plan.
 The register takes the Regional Programme Lead dashboard's table grammar.
+Open, Verified and Return are one Actions menu rather than three buttons
+(owner, 2026-09-26).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-completion-reviews>
   <div class="edify-page-header">
@@ -77,13 +79,15 @@ The register takes the Regional Programme Lead dashboard's table grammar.
             <td data-label="Salesforce ID">{% if row.salesforce_id %}{{ row.salesforce_id }}{% else %}<span data-tone="warning">Not entered</span>{% endif %}</td>
             <td class="is-num" data-label="Days waiting">{% if row.wait_tone %}<span data-tone="{{ row.wait_tone }}">{{ row.days_waiting }}</span>{% else %}{{ row.days_waiting }}{% endif %}</td>
             <td class="is-end" data-record-action data-label="Actions">
-              <button type="button" class="rpl-row-link rounded-control" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the completion from {{ row.cceo }}">Open</button>
-              <form method="post" action="{{ queue_url }}/{{ row.id }}/confirm" class="inline">
+              {% row_actions row.cceo %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the completion from {{ row.cceo }}">Open</button>
+              <form role="none" method="post" action="{{ queue_url }}/{{ row.id }}/confirm">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="rpl-row-link rounded-control" aria-label="Verify the completion from {{ row.cceo }}">Verified</button>
+                <button type="submit" class="row-menu__item" role="menuitem" aria-label="Verify the completion from {{ row.cceo }}">Verified</button>
               </form>
-              <button type="button" class="rpl-row-link rounded-control" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ queue_url }}/{{ row.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {{ row.cceo }}">Return</button>
+              {% endrow_actions %}
             </td>
           </tr>
           {% empty %}

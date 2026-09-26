@@ -262,6 +262,26 @@ document.addEventListener('alpine:init', () => {
     close() {
       this.open = false;
     },
+    /* Keyboard for components/row_actions.html: focus an item by index
+       (negative counts from the end), step through them, and put focus back
+       on the button when the list is dismissed. */
+    items() {
+      return this.$refs.list ? Array.from(this.$refs.list.querySelectorAll('[role="menuitem"]')) : [];
+    },
+    focusItem(index) {
+      this.$nextTick(() => {
+        const items = this.items();
+        if (items.length) { items[(index + items.length) % items.length].focus({ preventScroll: true }); }
+      });
+    },
+    move(step) {
+      const at = this.items().indexOf(document.activeElement);
+      this.focusItem(at < 0 ? (step > 0 ? 0 : -1) : at + step);
+    },
+    dismiss() {
+      this.close();
+      if (this.$refs.trigger) { this.$refs.trigger.focus(); }
+    },
     reposition() {
       if (this.open) { this.place(); }
     },

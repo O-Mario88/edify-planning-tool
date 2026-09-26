@@ -730,10 +730,13 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "(7/10)")
         self.assertContains(response, "(6/10)")
         self.assertContains(response, "Schedule")
+        # The card's Schedule and Assign share one Actions menu (owner,
+        # 2026-09-26), rather than two buttons that wrapped on a tablet.
+        self.assertContains(response, "data-row-actions")
         self.assertContains(
-            response,
-            'class="school-record-action school-record-action--assign"',
+            response, f'aria-label="Assign staff to {self.cluster.name}"'
         )
+        self.assertContains(response, ">Assign</button>")
         self.assertNotContains(response, "Cluster Intervention Scores")
 
         cluster_card = next(

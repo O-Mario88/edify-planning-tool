@@ -196,6 +196,21 @@ class PartnerDirectoryManagementTests(TestCase):
             # PartnerLifecycleTests.
             self.assertContains(response, "Deactivate")
             self.assertNotContains(response, "Remove Partner")
+            # The row's actions are one Actions menu (owner, 2026-09-26), and
+            # Deactivate reads as destructive before it is chosen.
+            self.assertContains(
+                response, 'aria-label="Actions for Visible Directory Partner"'
+            )
+            self.assertContains(
+                response,
+                'class="row-menu__item row-menu__item--danger" role="menuitem" '
+                'aria-label="Deactivate Visible Directory Partner"',
+            )
+            # A deleted organisation has one action at most (the Admin's
+            # Delete), so it keeps a button rather than a one-item menu.
+            self.assertNotContains(
+                response, 'aria-label="Actions for Gone Directory Partner"'
+            )
             # The organisation's name opens its profile.
             self.assertContains(response, '<a href="/partners/')
 

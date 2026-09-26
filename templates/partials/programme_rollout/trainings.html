@@ -1,4 +1,4 @@
-{% load table_pagination frontend_filters %}
+{% load table_pagination frontend_filters row_actions %}
 {% comment %}
 Trainings (Programme Rollout, owner 2026-09-13): the year's team trainings by
 SSA intervention (Christlike Behaviour and the Word of God first), by governed
@@ -139,8 +139,15 @@ apps.analytics.programme_rollout_service.trainings_rollout.
           <td class="is-num" data-label="Staff · partner">{{ row.by_staff }} · {{ row.by_partner }}</td>
           <td data-label="Next training">{% if row.next_training %}{{ row.next_training|date:"j M Y" }}{% else %}<span class="rpl-muted">None scheduled</span>{% endif %}</td>
           <td class="is-end" data-record-action data-label="Actions">
-            {% if row.schools_untrained %}<a href="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not yet trained</a>{% endif %}
+            {% comment %}Not yet trained and Oversight are one Actions menu rather than two buttons (owner, 2026-09-26); an officer with only Oversight keeps the link.{% endcomment %}
+            {% if row.schools_untrained %}
+            {% row_actions row.name %}
+            <a class="row-menu__item" role="menuitem" href="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML">Not yet trained</a>
+            <a class="row-menu__item" role="menuitem" href="{{ row.oversight_url }}">Oversight</a>
+            {% endrow_actions %}
+            {% else %}
             <a href="{{ row.oversight_url }}" class="rpl-row-link rounded-control">Oversight</a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}
