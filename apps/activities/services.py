@@ -2562,6 +2562,19 @@ def create(
                     "target on this date. Reschedule or edit the existing "
                     "activity instead of creating a duplicate."
                 )
+            # And a client school takes one copy of a visit a day, whoever
+            # plans it (owner, 2026-09-26; apps.activities.duplicate_visits).
+            from apps.activities.duplicate_visits import (
+                assert_not_duplicate_client_visit,
+            )
+
+            assert_not_duplicate_client_visit(
+                school,
+                activity_type=activity_type,
+                day=planned_date,
+                catalogue_item=catalogue_item,
+                purpose_type=p_type,
+            )
         # §1/§21: every activity names the planning workflow that authorized
         # it, so every budget row can identify its dated plan source.
         if non_school:
@@ -4336,6 +4349,16 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # lost the increment anyway.
         a = Activity.objects.select_for_update().get(pk=a.pk)
         old_date = a.scheduled_date
+        from apps.activities.duplicate_visits import assert_not_duplicate_client_visit
+
+        assert_not_duplicate_client_visit(
+            a.school,
+            activity_type=a.activity_type,
+            day=planned_date,
+            catalogue_item=a.catalogue_item,
+            purpose_type=a.purpose_type,
+            exclude_activity_id=a.pk,
+        )
         # A multi-day activity keeps its duration when it moves: the end date
         # shifts by the same delta as the start (an explicit endDate in the
         # payload overrides, validated against the new start).
@@ -4749,6 +4772,18 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 assert_partner_may_schedule_visit(
                     pa.school, fy, exclude_activity_id=pa.scheduled_activity_id
                 )
+            from apps.activities.duplicate_visits import (
+                assert_not_duplicate_client_visit,
+            )
+
+            assert_not_duplicate_client_visit(
+                pa.school,
+                activity_type=_sched_activity_type,
+                day=planned_date,
+                catalogue_item=catalogue_item,
+                purpose_type=pa.purpose_of_visit,
+                exclude_activity_id=pa.scheduled_activity_id,
+            )
         # The school's own staff member where the handoff recorded one; the
         # assigner otherwise, which is what every pre-existing row resolves to.
         monitored_by_staff_id = _canonical_staff_identity(
@@ -5039,6 +5074,16 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         a.fy = get_operational_fy(new_date)
         a.quarter = get_quarter_for_date(new_date)
         planned_date, planned_month, planned_week = _schedule_period(new_date, data)
+        from apps.activities.duplicate_visits import assert_not_duplicate_client_visit
+
+        assert_not_duplicate_client_visit(
+            a.school,
+            activity_type=a.activity_type,
+            day=planned_date,
+            catalogue_item=a.catalogue_item,
+            purpose_type=a.purpose_type,
+            exclude_activity_id=a.pk,
+        )
         a.planned_date = planned_date
         a.planned_month = planned_month
         a.planned_week = planned_week
