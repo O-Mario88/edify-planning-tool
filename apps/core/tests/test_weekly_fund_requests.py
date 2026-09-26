@@ -41,6 +41,7 @@ class WeeklyFundRequestsTest(APITestCase):
             ("lunch_per_day", 12000),
             ("tot_trainings_meals", 12000),
             ("cluster_meetings_trainings_meals", 8000),
+            ("group_training_meals", 8000),
             ("group_training_venue_cost", 200000),
             ("group_training_facilitation_fee", 150000),
             ("partner_visit_rate", 80000),
@@ -216,13 +217,13 @@ class WeeklyFundRequestsTest(APITestCase):
 
         # A cluster meeting: its own rate, the ten participants fed at the
         # cluster meals rate (owner, 2026-09-15), the venue and the staff
-        # day's TRANSPORT. No pages were stated, so there is no printing or
-        # photocopying line (materials are by the page since 2026-09-15), and
-        # no staff lunch: a day that feeds the room buys none (2026-09-17).
-        # 0 + 10 x 8,000 + 200,000 + 50,000 = 330,000
+        # day's transport and lunch (session costing spec, 2026-09-26). No
+        # pages were stated, so there is no printing or photocopying line
+        # (materials are by the page since 2026-09-15).
+        # 0 + 10 x 8,000 + 200,000 + 50,000 + 12,000 = 342,000
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
-        self.assertEqual(cm_lines.count(), 4)
-        self.assertEqual(sum(l.amount for l in cm_lines), 330000)
+        self.assertEqual(cm_lines.count(), 5)
+        self.assertEqual(sum(l.amount for l in cm_lines), 342000)
         self.assertEqual(
             cm_lines.get(cost_setting_key="cluster_meetings_trainings_meals").amount,
             80000,
@@ -232,10 +233,10 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         # 3. Schedule a Group Training (15 participants): venue=200000,
-        # facilitation=150000, no materials stated, and the staff day at
-        # transport 50,000 + lunch 12,000. Participant meals are a cluster
-        # MEETING cost since 2026-09-20 (staff-day-v2), so a training feeds
-        # its staff member and no one per head. Total = 412,000
+        # facilitation=150000, no materials stated, the fifteen fed at the
+        # group training meals rate (15 x 8,000 = 120,000; session costing
+        # spec, 2026-09-26) and the staff day at transport 50,000 + lunch
+        # 12,000. Total = 532,000
         # ACCOUNTING_FINANCIAL_MANAGEMENT is the cluster_training item for
         # financial_health, the second-weakest verified intervention →
         # also a primary cluster recommendation.
@@ -252,7 +253,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         gt_lines = ActivityScheduleCostLine.objects.filter(activity_id=gt["id"])
-        self.assertEqual(sum(l.amount for l in gt_lines), 412000)
+        self.assertEqual(sum(l.amount for l in gt_lines), 532000)
         self.assertEqual(
             Activity.objects.get(id=gt["id"]).expected_participants,
             15,
@@ -261,6 +262,7 @@ class WeeklyFundRequestsTest(APITestCase):
             {line.cost_setting_key for line in gt_lines},
             {
                 "cluster_meetings_trainings",
+                "group_training_meals",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
                 "lunch_per_day",
@@ -269,9 +271,8 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
-        # 62,000 visit + 330,000 meeting + 412,000 training = 804,000 UGX, less
-        # the visit's 50,000 vendor-direct transport. The visit's day keeps its
-        # lunch: nothing on it feeds the staff member.
+        # 62,000 visit + 342,000 meeting + 532,000 training = 936,000 UGX, less
+        # the visit's 50,000 vendor-direct transport.
         wfr_data = self._post(
             "/api/fund-requests/weekly/generate",
             {
@@ -281,7 +282,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 754000)  # transport is vendor-direct
+        self.assertEqual(wfr_data["totalAmount"], 886000)  # transport is vendor-direct
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail

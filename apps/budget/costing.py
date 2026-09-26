@@ -7,6 +7,12 @@ missing, the activity is flagged costMissing and must not enter a budget / fund
 request until the CD resolves it (spec §10).
 
 This is the SINGLE source of truth for activity cost on the backend.
+
+The cluster meeting and group training recipes follow the session costing
+spec of 2026-09-26, whose executable form is apps.budget.session_costing:
+the session's own lines plus the day away, which the Daily Visit Batch shares
+across every session run on it. apps/budget/test_session_costing_parity.py
+proves this engine and those calculators agree to the shilling.
 """
 
 from __future__ import annotations
@@ -62,7 +68,15 @@ CLUSTER_MEETING_RATE_KEY = "cluster_meeting"
 # Meeting participant meals are exclusive to meetings. The legacy rate key
 # is retained for compatibility with rate cards and saved budget lines.
 CLUSTER_MEALS_RATE_KEY = "cluster_meetings_trainings_meals"
-MEALS_RATE_KEYS = (TOT_MEALS_RATE_KEY, CLUSTER_MEALS_RATE_KEY)
+# A group training feeds its participants per head at its own rate (session
+# costing spec, 2026-09-26), priced apart from a meeting's snack as the two
+# session rates are.
+GROUP_TRAINING_MEALS_RATE_KEY = "group_training_meals"
+MEALS_RATE_KEYS = (
+    TOT_MEALS_RATE_KEY,
+    CLUSTER_MEALS_RATE_KEY,
+    GROUP_TRAINING_MEALS_RATE_KEY,
+)
 # School work that is SSA work: it carries the SSA Support rate.
 SSA_WORK_TYPES = {
     "baseline_ssa_visit",
@@ -165,10 +179,22 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
       whose reason is OneTest fetches the OneTest rate instead.
     * A group session is venue and facilitation per day, the materials it
       states (printing by the page, photocopying by the page and the copy;
-      none stated, none charged), the staff day, and the session's own rate:
-      Cluster Meetings/Trainings (which feed their participants per head at
-      the cluster meals rate, owner 2026-09-15), TOT trainings (fed at the
-      TOT meals rate), Student or Proprietor Conference.
+      none stated, none charged), the day away, and the session's own rate:
+      Cluster Meetings/Trainings, TOT trainings, Student or Proprietor
+      Conference. A cluster meeting feeds its participants per head at the
+      cluster meals rate (owner, 2026-09-15); a group training, staff-run or
+      partner-run, at the group training meals rate and a TOT training at
+      the TOT meals rate (session costing spec, 2026-09-26). A meeting has
+      no facilitator.
+    * The day away always carries its meal. The participants' meals are the
+      session's own line and the staff member's lunch is the day's, and the
+      Daily Visit Batch shares that day across every session run on it. A
+      catered session used to drop the lunch (owner, 2026-09-17); the spec
+      prices the two apart.
+    * A partner-run group training is the same session — its participants
+      fed, the facilitator, the room, the materials and the day — rather
+      than the Partner Meetings lump sum, which still prices a partner
+      meeting or a partner/project activity.
     * A field event is a visit day for every day away.
 
     A rate the owner's list ADDED (see ``OPTIONAL_RATE_KEYS``) is charged only
@@ -206,20 +232,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             return
         add(RATE_LABELS.get(key, key), key, qty)
 
-    def add_staff_visit_day(
-        days: int = 1,
-        nights: int | None = None,
-        skip_keys: tuple[str, ...] = (),
-    ) -> None:
-        """One staff day away from base — the ONLY recipe for one.
+    def add_staff_visit_day(days: int = 1, nights: int | None = None) -> None:
+        """One day away from base — the ONLY recipe for one: transport and
+        lunch, and in a secondary district breakfast, dinner and a night's
+        accommodation.
 
         `nights` exists because a visit day charges accommodation per NIGHT
         (one by default, the activity may say otherwise) while a multi-day
         trip carries the full per-diem set per day.
-
-        `skip_keys` is for a day whose meal is already bought elsewhere on the
-        same activity — see `add_staff_day`. It never drops transport or the
-        overnight set, only what would be paid for twice.
         """
         from apps.daily_visit_batches.pricing import (
             KEY_LABELS,
@@ -230,8 +250,6 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         profile = "secondary" if is_secondary else "primary"
         nights = days if nights is None else nights
         for key in REQUIRED_KEYS[profile] + OPTIONAL_KEYS[profile]:
-            if key in skip_keys:
-                continue
             if key in OPTIONAL_KEYS[profile] and key not in rates:
                 continue
             qty = nights if key == "secondary_accommodation_per_night" else days
@@ -239,20 +257,25 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 continue
             add(KEY_LABELS[key], key, qty)
 
-    def add_staff_day(days: int = 1, fed: bool = False) -> None:
-        """The staff day inside a group session — the partner's rate already
-        covers their own travel, so partner delivery adds none.
+    def add_staff_day(days: int = 1) -> None:
+        """The staff member's day inside a group session: the whole allowance,
+        whether or not the session caters.
 
-        `fed` is the session's own catering. A cluster training fetched two
-        meals for the same lunchtime: the participants' meal per head, and
-        the staff visit day's `lunch_per_day` on top (owner, 2026-09-17 —
-        5,000 and 12,000 side by side). The person running a session that is
-        feeding everyone in the room eats in that room, so the day keeps its
-        transport, and its overnight set in a secondary district, and drops
-        the lunch it would otherwise buy twice."""
+        Until 2026-09-26 a session that fed the room dropped the day's lunch
+        (owner, 2026-09-17: a cluster training had fetched the participants'
+        meal per head and the staff day's lunch on top). The session costing
+        spec prices the two apart — the participants' meals are the
+        session's line, the staff member's lunch is the day's — so the day
+        is transport and lunch, and its overnight set in a secondary
+        district, every time.
+
+        Partner delivery adds no day here: the Partner Meetings rate covers a
+        partner's travel to a meeting or a partner/project activity. A
+        partner-run group training is the one exception, and says so with
+        `add_group_session(travel=True)`."""
         if is_partner:
             return
-        add_staff_visit_day(days, skip_keys=("lunch_per_day",) if fed else ())
+        add_staff_visit_day(days)
 
     def add_materials() -> None:
         """Printed and photocopied training materials, by the page.
@@ -269,36 +292,40 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         if photocopying:
             add_rate("photocopying_training_materials", photocopying)
 
-    def add_meals(meals_key: str, days: int) -> bool:
+    def add_meals(meals_key: str, days: int) -> None:
         """Participants fed per head per day. The TOT meals rate is a
-        required rate; the cluster meals rate was added on 2026-09-15 and is
-        charged only on a card that carries it, like the other added rates.
-        A session priced with meals but no headcount is unfundable (see the
+        required rate; the cluster meals rate (2026-09-15) and the group
+        training meals rate (2026-09-26) were added later and are charged
+        only on a card that carries them, like the other added rates. A
+        session priced with meals but no headcount is unfundable (see the
         expectedParticipants check at the end), never priced for nobody.
-
-        Returns whether a meal line was actually booked, which is what decides
-        whether the staff member delivering the session eats from it.
         """
         if meals_key in OPTIONAL_RATE_KEYS and meals_key not in rates:
-            return False
+            return
         add(RATE_LABELS[meals_key], meals_key, _participants_of(a, 0) * days)
-        return True
 
     def add_group_session(
-        days: int, rate_key: str | None, meals_key: str | None = None
+        days: int,
+        rate_key: str | None,
+        meals_key: str | None = None,
+        *,
+        travel: bool | None = None,
     ) -> None:
         """The one group-session recipe: the session's own rate, participants
-        fed when the session feeds them (TOT trainings, cluster sessions),
-        someone facilitates, the room costs money, materials are printed and
-        copied, and the staff member travels."""
+        fed when the session feeds them, someone facilitates, the room costs
+        money, materials are printed and copied, and whoever delivers it
+        travels.
+
+        `travel` is who pays for that journey. Left unsaid, the staff member
+        travels and a partner does not (the Partner Meetings rate covers a
+        partner's travel). A group training says True: it carries the day
+        whoever runs it (session costing spec, 2026-09-26), because a
+        partner-run training is priced as the session rather than as the
+        lump sum."""
         if rate_key:
             add_rate(rate_key)
-        # fed is whether a participant-meal line was actually BOOKED, not
-        # whether this kind of session has a meals rate at all. A card that
-        # has not set its cluster meals rate feeds nobody, so the staff member
-        # delivering the session still needs their own lunch; reading the
-        # intent instead of the outcome dropped it from an unfed session.
-        fed = bool(meals_key) and add_meals(meals_key, days)
+        if meals_key:
+            add_meals(meals_key, days)
         add(
             RATE_LABELS["group_training_facilitation_fee"],
             "group_training_facilitation_fee",
@@ -306,7 +333,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
-        add_staff_day(days, fed=fed)
+        if travel is None:
+            add_staff_day(days)
+        elif travel:
+            add_staff_visit_day(days)
 
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
@@ -348,16 +378,43 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # A cluster meeting: its own rate (owner, 2026-09-17 — it used to take
         # the one the trainings were priced on, so the two could never differ),
         # the participants fed per head (owner, 2026-09-15), the room, the
-        # materials and the staff day. Nobody facilitates a meeting.
+        # materials and the staff day with its lunch (session costing spec,
+        # 2026-09-26). Nobody facilitates a meeting.
         days = _days_of(a)
         add_rate(CLUSTER_MEETING_RATE_KEY)
         add_meals(CLUSTER_MEALS_RATE_KEY, days)
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
-        add_staff_day(days, fed=True)
+        add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        add_group_session(_days_of(a), "cluster_meetings_trainings")
+        add_group_session(
+            _days_of(a),
+            "cluster_meetings_trainings",
+            meals_key=GROUP_TRAINING_MEALS_RATE_KEY,
+            travel=True,
+        )
+
+    elif activity_type in TRAINING_TYPES and not is_in_school_training:
+        # Every group training is the same session, staff-run or partner-run
+        # (session costing spec, 2026-09-26): the participants fed per head,
+        # the facilitator, the room, the materials and the day. A TOT
+        # training also has its own rate and feeds at the TOT meals rate. An
+        # in-school training is a school mission and prices below as one.
+        if kind == "tot":
+            add_group_session(
+                _days_of(a),
+                "tot_trainings",
+                meals_key=TOT_MEALS_RATE_KEY,
+                travel=True,
+            )
+        else:
+            add_group_session(
+                _days_of(a),
+                None,
+                meals_key=GROUP_TRAINING_MEALS_RATE_KEY,
+                travel=True,
+            )
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
@@ -373,10 +430,9 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             # SSA Support is a partner school visit and costs as one.
             key = "core_partner_visit" if is_core else "client_partner_visit"
             basis = "per activity"
-        elif activity_type in TRAINING_TYPES:
-            key = "partner_meetings"
-            basis = "per training"
         else:
+            # A partner meeting or a partner/project activity. A partner-run
+            # group training no longer lands here: it is the session above.
             key = "partner_meetings"
             basis = "per meeting"
         add(f"{RATE_LABELS[key]} [Rate basis: {basis}]", key)
@@ -393,15 +449,6 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             nights = 1
         add_mission_rate()
         add_staff_visit_day(1, nights=nights)
-    elif activity_type in TRAINING_TYPES:
-        # Every group training is the same session; a TOT training also has
-        # its own rate and feeds its participants.
-        if kind == "tot":
-            add_group_session(
-                _days_of(a), "tot_trainings", meals_key=TOT_MEALS_RATE_KEY
-            )
-        else:
-            add_group_session(_days_of(a), None)
     elif activity_type in ("partner_activity", "project_activity"):
         add(
             f"{RATE_LABELS['partner_meetings']} [Rate basis: per meeting]",
@@ -443,6 +490,7 @@ __all__ = [
     "ActivityCost",
     "TOT_MEALS_RATE_KEY",
     "CLUSTER_MEALS_RATE_KEY",
+    "GROUP_TRAINING_MEALS_RATE_KEY",
     "MEALS_RATE_KEYS",
     "CLUSTER_MEETING_TYPES",
     "CLUSTER_TRAINING_TYPES",

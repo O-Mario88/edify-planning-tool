@@ -162,16 +162,18 @@ class DualRateCardSecurityTest(APITestCase):
             reference_lines["tot_trainings_meals"]["amount"],
             220_000,
         )
-        # A TOT training feeds its participants, so its staff day carries
-        # transport and not a second lunch (owner, 2026-09-17) — 8,000 less
-        # than the 218,000 this read when the day bought both.
-        self.assertEqual(payload["operationalCost"], 210_000)
+        # The participants' meals and the staff member's lunch are priced
+        # apart (session costing spec, 2026-09-26): 120,000 meals + 30,000
+        # facilitation + 40,000 venue + 20,000 transport + 8,000 lunch. From
+        # 2026-09-17 until then a session that fed the room dropped the
+        # lunch, and this read 210,000.
+        self.assertEqual(payload["operationalCost"], 218_000)
         # The reference copy adds 100 to every operational line, including
         # the TOT rate at its 0 default. No pages were stated, so there is
-        # no printing or photocopying line on either card. It drops the same
-        # second lunch the operational card does — the rule is the recipe's,
-        # not one card's — hence 12,000 below the 387,100 it read before.
-        self.assertEqual(payload["referenceCost"], 375_100)
+        # no printing or photocopying line on either card. It carries the
+        # same lunch the operational card does — the rule is the recipe's,
+        # not one card's.
+        self.assertEqual(payload["referenceCost"], 387_100)
         self.assertNotIn("printing_training_materials", reference_lines)
         self.assertNotIn("photocopying_training_materials", reference_lines)
 

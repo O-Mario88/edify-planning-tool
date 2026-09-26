@@ -18,7 +18,7 @@ from __future__ import annotations
 
 # The Country Cost Catalogue (owner, 2026-09-06: "these are the list of
 # activities to put in the cost catalog; remove the ones you have now").
-# Twenty-two rows in four groups: the per-activity rates, the partner rates,
+# Twenty-three rows in four groups: the per-activity rates, the partner rates,
 # the group-session components and the travel per-diems. A key is the stable
 # handle the recipes read (`apps/budget/costing.py`); the label is what the
 # Country Director sees. Where the owner's list renamed a rate the platform
@@ -48,6 +48,13 @@ GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
     # that adds it copies the retired per-head snack rate where a catalogue
     # still carries one, so a rate the CD had set is not reset.
     ("cluster_meetings_trainings_meals", "Cluster Meeting - Participant Meals", 5000),
+    # A group training feeds its participants per head too (session costing
+    # spec, 2026-09-26: participant_meals_total = participants x meal rate,
+    # for a staff-run or a partner-run training). Its own row, so the Country
+    # Director prices a training's meal apart from a meeting's snack, as the
+    # meeting and training session rates were split on 2026-09-17. A TOT
+    # training keeps its own meals row.
+    ("group_training_meals", "Group Training - Participant Meals", 5000),
     ("student_conference", "Student Conference", 0),
     ("proprietor_conference", "Proprietor Conference", 0),
     ("printing_training_materials", "Printing training materials", 0),
@@ -75,6 +82,7 @@ RATE_UNITS: dict[str, str] = {
     "tot_trainings": "per training",
     "tot_trainings_meals": "per participant per day",
     "cluster_meetings_trainings_meals": "per participant per day",
+    "group_training_meals": "per participant per day",
     "student_conference": "per event",
     "proprietor_conference": "per event",
     "printing_training_materials": "per page",
@@ -104,6 +112,7 @@ OPTIONAL_RATE_KEYS = frozenset(
         "cluster_meeting",
         "tot_trainings",
         "cluster_meetings_trainings_meals",
+        "group_training_meals",
         "student_conference",
         "proprietor_conference",
         "printing_training_materials",

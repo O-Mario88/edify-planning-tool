@@ -592,7 +592,7 @@ def _recalculate_and_write_lines(
     # Each member's own recipe, computed ONCE here because the day's pool
     # depends on it and the loop below needs it again.
     from apps.activities.services import _costing_input
-    from apps.budget.costing import MEALS_RATE_KEYS, cost_for_activity
+    from apps.budget.costing import cost_for_activity
     from apps.budget.costing_service import _profiled_input, _with_linked_rates
 
     recipes: dict[str, tuple[dict, ActivityCost]] = {}
@@ -610,27 +610,13 @@ def _recalculate_and_write_lines(
             ),
         )
 
-    # If ANY session on this day feeds the room, the day buys no staff lunch
-    # (owner, 2026-09-17, asked which way this should fall and chose this one).
-    #
-    # The engine already drops the second meal from a catered session's own
-    # recipe — that is what `add_staff_day(fed=True)` does — but the shared day
-    # is priced from the district's per-diem keys and knew nothing about its
-    # members, then replaced the recipe's staff lines with its own. So the
-    # preview showed one meal and the SAVED lines charged two: exactly the
-    # double the owner reported, surviving on the persisted side.
-    #
-    # The trade this makes, stated because it is real: a day holding one
-    # catered cluster meeting and one ordinary school visit now buys no lunch,
-    # so the visit's lunch is not paid either. The owner chose that over
-    # paying twice, and the alternative (keep the lunch unless EVERY session
-    # caters) is one predicate away if it turns out to bite.
-    if any(
-        line.key in MEALS_RATE_KEYS
-        for _input, recipe in recipes.values()
-        for line in recipe.lines
-    ):
-        pool.pop("lunch_per_day", None)
+    # The day always carries its lunch (session costing spec, 2026-09-26):
+    # the participants' meals are each session's own line, the staff
+    # member's lunch is the day's, and the two are priced apart. From
+    # 2026-09-17 until then a day holding any catered session bought no
+    # lunch at all — the owner's answer to a cluster training that had
+    # fetched two meals for one lunchtime — which also took the lunch off an
+    # ordinary school visit sharing that day.
 
     batch.cost_catalogue = catalogue
     batch.catalogue_version = catalogue.version if catalogue else None

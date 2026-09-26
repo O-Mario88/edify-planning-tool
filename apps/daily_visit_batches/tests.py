@@ -640,16 +640,14 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         self.assertTrue(all(36665 <= value <= 36669 for value in minimums.values()))
 
     def test_visit_training_and_two_meetings_share_the_daily_transport(self):
-        """The day's transport is bought once and shared; its LUNCH is not
-        bought at all, because sessions on this day feed the room.
+        """The day's transport and lunch are bought once and shared across
+        the visit, the training and the two meetings; each session's
+        participants are fed on its own line.
 
-        Until 2026-09-17 the shared day always carried a lunch, so a catered
-        session was charged the participants' meal AND a staff lunch on top —
-        the double the owner reported, which the engine had already stopped
-        putting in a session's own recipe but the shared day put back. Asked
-        which way it should fall on a day holding both a catered session and
-        an ordinary visit, the owner chose: if any session that day caters,
-        the day buys no lunch.
+        Session costing spec, 2026-09-26: the participants' meals and the
+        staff member's lunch are priced apart. From 2026-09-17 until then a
+        day holding any catered session bought no lunch at all, which also
+        took the lunch off the ordinary visit sharing that day.
         """
         from django.db.models import Sum
         from apps.fund_requests.models import WeeklyFundRequest
@@ -668,11 +666,12 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             )["total"],
             280000,
         )
-        # Not a shilling of staff lunch anywhere on the day.
-        self.assertIsNone(
+        # One lunch for the day, shared like the transport.
+        self.assertEqual(
             lines.filter(cost_setting_key="lunch_per_day").aggregate(
                 total=Sum("amount")
-            )["total"]
+            )["total"],
+            30000,
         )
         self.assertEqual(
             lines.filter(cost_setting_key="group_training_venue_cost").aggregate(
@@ -691,7 +690,8 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
                 cost_setting_key="group_training_facilitation_fee"
             ).exists()
         )
-        # Only the two meetings feed 8 + 4 participants at the meeting rate.
+        # The two meetings feed 8 + 4 participants at the meeting rate; the
+        # training feeds its 12 at the group training rate, not the TOT one.
         self.assertFalse(
             training.schedule_cost_lines.filter(
                 cost_setting_key="tot_trainings_meals"
@@ -704,10 +704,16 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             12 * 5000,
         )
         self.assertEqual(
-            # 610,000: the day's 30,000 staff lunch is no longer bought at
-            # all, because the sessions on it feed the room (2026-09-17).
+            training.schedule_cost_lines.get(
+                cost_setting_key="group_training_meals"
+            ).amount,
+            12 * 5000,
+        )
+        self.assertEqual(
+            # 280,000 transport + 30,000 lunch + 210,000 venue + 60,000
+            # facilitation + 60,000 meeting meals + 60,000 training meals.
             sum(activities.values_list("est_cost_cents", flat=True)),
-            610000,
+            700000,
         )
         # Transport may be paid directly to a vendor: request only staff-payable lines.
         from apps.fund_requests.fundable import vendor_direct_filter
@@ -724,7 +730,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         # whole day, with meeting meals charged only to the two meetings.
         self.assertEqual(
             TransportPayment.objects.get(batch_id=result["batchId"]).amount + payable,
-            610000,
+            700000,
         )
 
     def test_participant_edit_reprices_session_but_does_not_duplicate_daily_pool(self):
@@ -737,9 +743,16 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         result = patch_activity(
             training.id, {"expectedParticipants": 20}, self.principal
         )
-        # Group training keeps its shared staff lunch and never takes the
-        # meeting-only participant meal rate, regardless of headcount.
-        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000)
+        # Group training keeps its shared staff lunch, feeds its twenty at
+        # the group training meals rate (session costing spec, 2026-09-26)
+        # and never takes the meeting or TOT meal rates.
+        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000 + 20 * 5000)
+        self.assertEqual(
+            training.schedule_cost_lines.get(
+                cost_setting_key="group_training_meals"
+            ).amount,
+            20 * 5000,
+        )
         self.assertFalse(
             training.schedule_cost_lines.filter(
                 cost_setting_key__in=[
@@ -943,9 +956,11 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["success"])
-        # Group training: shared transport + lunch, venue and facilitation;
-        # no meeting-only meal cost is added for its participants.
-        self.assertEqual(response.context["preview"]["amount"], 105001)
+        # Group training at the minimum rates: a third of the day's transport
+        # and lunch (33,334 + 6,667), venue 35,000, facilitation 30,000, and
+        # the twelve participants fed at the group training meals minimum
+        # (12 x 5,000; session costing spec, 2026-09-26).
+        self.assertEqual(response.context["preview"]["amount"], 165001)
         self.assertContains(response, "3 planned activities")
         self.assertNotContains(response, "280,000")
 
@@ -1183,3 +1198,60 @@ class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
             [122500] * 4,
         )
         self.assertFalse(batch_needs_repricing(batch))
+
+
+class DailyVisitBatchAgreesWithTheSessionCalculatorsTest(DailyVisitBatchTestCase):
+    """Sessions scheduled by one staff member on one day, through the real
+    scheduling path, cost what apps.budget.session_costing says they cost.
+
+    The calculators are the executable form of the session costing spec
+    (2026-09-26); the batch is where the day is actually shared. The
+    fixture's card: transport 280,000, lunch 30,000, venue 70,000,
+    facilitation 60,000, and the meals rows at their seeded 5,000 default.
+    """
+
+    # The same scheduling path as the one-mission-per-day tests above.
+    _session = OneMissionCostPerDayTest._session
+
+    def test_four_cluster_meetings_share_one_day(self):
+        from apps.budget.session_costing import cost_primary_cluster_meeting
+
+        day = date(2026, 8, 12)
+        meetings = [
+            self._session("cluster_meeting", day, participants=20) for _ in range(4)
+        ]
+        spec = cost_primary_cluster_meeting(
+            20,
+            4,
+            snack_rate=5000,
+            venue_fee=70000,
+            daily_transport=280000,
+            daily_meals=30000,
+        )
+        costs = [Activity.objects.get(id=m.id).est_cost_cents for m in meetings]
+        # 100,000 snacks + 70,000 venue, and a quarter of the 310,000 day.
+        self.assertEqual(costs, [247500] * 4)
+        self.assertEqual(costs, [spec.totals.total_cost_per_meeting] * 4)
+        self.assertEqual(sum(costs), spec.totals.total_day_cost)
+
+    def test_two_cluster_trainings_share_one_day(self):
+        from apps.budget.session_costing import cost_primary_group_training
+
+        day = date(2026, 8, 13)
+        trainings = [
+            self._session("cluster_training", day, participants=12) for _ in range(2)
+        ]
+        spec = cost_primary_group_training(
+            12,
+            2,
+            meal_rate_per_participant=5000,
+            venue_fee=70000,
+            facilitation_fee=60000,
+            daily_transport=280000,
+            daily_staff_lunch=30000,
+        )
+        costs = [Activity.objects.get(id=t.id).est_cost_cents for t in trainings]
+        # 60,000 meals + 70,000 venue + 60,000 facilitation, and half the day.
+        self.assertEqual(costs, [345000] * 2)
+        self.assertEqual(costs, [spec.totals.cost_per_training] * 2)
+        self.assertEqual(sum(costs), spec.totals.total_day_cost)
