@@ -15,7 +15,9 @@ const DRAWERS = [];
 // project drawer; #122 the scheduling drawers and the cluster planner, whose
 // planned_date_field.html it removed). Its value is a calendar-day string the
 // browser shows as-is and never turns into an instant, so no zone can move it
-// to another month — as long as no script comes back to parse it.
+// to another month. The one script that reads it is the shared Edify calendar
+// (static/js/date-picker.js, 2026-09-26), which reads it as calendar parts;
+// tests/js/date-picker.test.cjs checks that in every zone.
 const NATIVE_DATE_DRAWERS = [
   ['templates/partials/schools/assign_to_project_drawer.html', 'start_date'],
   ['templates/partials/planning/schedule_drawer.html', 'scheduled_date'],
