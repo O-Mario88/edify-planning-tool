@@ -27,6 +27,14 @@ ledger that must sum to the shilling should use
 
 Every calculator raises :class:`CostingValidationError` for a zero or negative
 session count (the divisor) and for any negative count or rate.
+
+These calculators are the executable form of the session costing spec
+(2026-09-26). The engine that prices a scheduled session from the Cost
+Catalogue, :func:`apps.budget.costing.cost_for_activity`, follows the same
+recipe for a staff-run cluster meeting and for a group training whether
+staff-run or partner-run, and the Daily Visit Batch shares the day across
+the sessions run on it; apps/budget/test_session_costing_parity.py and the
+batch parity tests prove the two agree to the shilling.
 """
 
 from __future__ import annotations

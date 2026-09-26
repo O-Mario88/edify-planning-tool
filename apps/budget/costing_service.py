@@ -175,6 +175,7 @@ _KEY_LABEL = {
     "tot_trainings": "TOT trainings",
     "tot_trainings_meals": "TOT trainings - Meals",
     "cluster_meetings_trainings_meals": "Cluster Meeting - Participant Meals",
+    "group_training_meals": "Group Training - Participant Meals",
     "student_conference": "Student Conference",
     "proprietor_conference": "Proprietor Conference",
     "printing_training_materials": "Printing training materials",
@@ -213,15 +214,15 @@ COSTING_PROFILE_CHOICES = tuple(_COSTING_PROFILES)
 # What a person calls each recipe, for the catalogue's New activity form.
 COSTING_PROFILE_LABELS = {
     "IN_SCHOOL_TRAINING": "In-school training (a visit day)",
-    "CLUSTER_TRAINING": "Cluster training (session + room + facilitator)",
-    "CLUSTER_MEETING": "Cluster meeting (session + room)",
-    "ONLINE_TRAINING": "Online training (room + facilitator)",
+    "CLUSTER_TRAINING": "Cluster training (session + meals + room + facilitator)",
+    "CLUSTER_MEETING": "Cluster meeting (session + meals + room)",
+    "ONLINE_TRAINING": "Online training (meals + room + facilitator)",
     "STAFF_SCHOOL_VISIT": "Client school visit (visit day shared across the day's schools)",
     "CORE_SCHOOL_VISIT": "Core school visit (visit day shared across the day's schools)",
     "ONETEST": "OneTest (visit day + OneTest)",
     "ADMIN_PARTNER_MEETING": "Partner meeting (Partner Meetings)",
     "SSA_DATA_GATHERING": "SSA data gathering (a visit day; partner-run, the partner visit rate)",
-    "GROUP_YOUTH_CAMP": "Youth camp (room + facilitator)",
+    "GROUP_YOUTH_CAMP": "Youth camp (meals + room + facilitator)",
     "TOT_TRAINING": "TOT training (session + meals + room + facilitator)",
     "PROGRAMME_EVENT": "Programme event (room + facilitator)",
     "STUDENT_CONFERENCE": "Student conference (event + room + facilitator)",
@@ -732,6 +733,7 @@ def _line_item_type(key: str) -> str:
         "group_training_participant_meal_cost_per_head",
         "tot_trainings_meals",
         "cluster_meetings_trainings_meals",
+        "group_training_meals",
     ):
         return "participant_meals"
     if key in ("printing_training_materials", "photocopying_training_materials"):

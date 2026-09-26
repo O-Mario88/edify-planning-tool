@@ -805,15 +805,21 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
         from apps.budget.models import CostSetting
 
         act_obj_lookup = {a.id: a for a in Activity.objects.filter(id__in=act_ids)}
-        active_meal_cs = CostSetting.objects.filter(
-            key="cluster_meetings_trainings_meals",
-            catalogue__is_active=True,
-        ).first()
-        meal_unit_rate = (
-            int(active_meal_cs.unit_cost)
-            if (active_meal_cs and active_meal_cs.unit_cost)
-            else 5000
+        # A cluster meeting feeds its participants at the cluster meals rate
+        # and a cluster training at the group training meals rate (session
+        # costing spec, 2026-09-26); each defaults to the seeded 5,000.
+        active_meal_rates = {
+            rate.key: int(rate.unit_cost)
+            for rate in CostSetting.objects.filter(
+                key__in=["cluster_meetings_trainings_meals", "group_training_meals"],
+                catalogue__is_active=True,
+            )
+            if rate.unit_cost
+        }
+        meeting_meal_rate = active_meal_rates.get(
+            "cluster_meetings_trainings_meals", 5000
         )
+        training_meal_rate = active_meal_rates.get("group_training_meals", 5000)
 
         for group in owner_groups:
             new_planned_trainings = []
@@ -856,6 +862,11 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         pps = max(1, total_p // len(target_schools))
                     else:
                         pps = 2
+                meal_unit_rate = (
+                    meeting_meal_rate
+                    if act_obj and act_obj.activity_type in CLUSTER_MEETING_TYPES
+                    else training_meal_rate
+                )
                 per_school_meal_cost = pps * meal_unit_rate
 
                 if target_schools:

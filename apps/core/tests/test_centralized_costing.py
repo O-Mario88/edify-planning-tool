@@ -261,9 +261,9 @@ class CentralizedCostingTest(APITestCase):
 
     # ── C. Group training ────────────────────────────────────────────────────
     def test_a_tot_training_includes_venue_facilitation_materials_and_meals(self):
-        """Only a TOT training feeds its participants (owner's catalogue,
-        2026-09-06); every group session carries the room, the facilitator,
-        the printed and copied materials and the staff day."""
+        """A TOT training feeds its participants at the TOT meals rate;
+        every group session carries the room, the facilitator, the printed
+        and copied materials and the staff day."""
         _seed_rates(
             group_training_facilitation_fee=60000,
             group_training_venue_cost=30000,
@@ -292,9 +292,10 @@ class CentralizedCostingTest(APITestCase):
         self.assertTrue(prev["canSchedule"], prev)
         # Session components plus one day of staff transport and lunch; the
         # TOT trainings rate itself is 0 until the Country Director sets it.
-        # No staff lunch in the sum: a TOT training feeds its participants and
-        # the staff member delivering it eats from that (owner, 2026-09-17).
-        expected = 60000 + 30000 + (6000 * 20) + 4000 + 1000 + 15000
+        # The staff lunch is in the sum beside the participants' meals
+        # (session costing spec, 2026-09-26); from 2026-09-17 until then a
+        # session that fed the room dropped it.
+        expected = 60000 + 30000 + (6000 * 20) + 4000 + 1000 + 15000 + 8000
         self.assertEqual(prev["amount"], expected)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
@@ -306,6 +307,7 @@ class CentralizedCostingTest(APITestCase):
                 "printing_training_materials",
                 "photocopying_training_materials",
                 "primary_transport_per_day",
+                "lunch_per_day",
             },
         )
         self.assertEqual(
@@ -318,6 +320,7 @@ class CentralizedCostingTest(APITestCase):
                 "Printing training materials",
                 "Photocopying training materials",
                 "Transport Primary District",
+                "Lunch",
             },
         )
         labels = {l["lineItemType"] for l in prev["lines"]}
@@ -356,14 +359,11 @@ class CentralizedCostingTest(APITestCase):
         self.assertTrue(prev["canSchedule"], prev)
         # The meeting's own rate, the twelve participants fed at the cluster
         # meals rate (owner, 2026-09-15), the room, the materials (by the
-        # page, 0 until the rates are set) and the staff member's transport.
-        #
-        # No staff lunch: the session feeds its participants and the staff
-        # member delivering it eats from that (owner, 2026-09-17, on a cluster
-        # session fetching two meal costs — "make sure that it fetches only 1
-        # meals"). A session whose meals rate is unset still pays the staff
-        # lunch; see test_cluster_training_never_falls_back_to_retired_rate_keys.
-        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000)
+        # page, 0 until the rates are set) and the staff member's day:
+        # transport and lunch. The lunch sits beside the participants' meals
+        # (session costing spec, 2026-09-26); from 2026-09-17 until then a
+        # session that fed the room dropped it.
+        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
             {
@@ -373,6 +373,7 @@ class CentralizedCostingTest(APITestCase):
                 "printing_training_materials",
                 "photocopying_training_materials",
                 "primary_transport_per_day",
+                "lunch_per_day",
             },
         )
         self.assertEqual(prev["lines"][0]["label"], "Cluster Meeting")
@@ -390,12 +391,13 @@ class CentralizedCostingTest(APITestCase):
                 "venue",
                 "materials",
                 "transport",
+                "lunch",
             },
         )
         self.assertIn("venue", labels)
         self.assertNotIn("facilitation", labels)
-        # The staff lunch is not a line at all on a session that feeds them.
-        self.assertNotIn("lunch", labels)
+        # The staff lunch is its own line beside the participants' meals.
+        self.assertIn("lunch", labels)
         # The retired legacy snack key never prices a new meeting.
         self.assertNotIn(
             "meals_per_participant", {line["key"] for line in prev["lines"]}
