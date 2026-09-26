@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **502**
+Components and application partials: **504**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -16,6 +16,7 @@ Components and application partials: **502**
 | `components/context_metrics.html` | shared-component | Reusable context metrics interface primitive | {{ item.tone }}, {{ trend_tone }}; default | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /accounts<br>/accounts/<br>/admin-ops/incidents/<str:incident_id><br>/admin-ops/planning<br>/admin-ops/support<br>/admin-ops/team-plans<br>/admin-panel/data-quality-center<br>/analytics/country-director | 0 |
 | `components/drawers/base_drawer.html` | shared-component | Reusable base drawer interface primitive | canonical; default, error, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id><br>/activities/<str:activity_id>/attendance<br>/activities/<str:activity_id>/complete<br>/activities/<str:activity_id>/evidence<br>/activities/<str:activity_id>/partner-ssa-complete<br>/activities/<str:activity_id>/salesforce-id<br>/activities/<str:activity_id>/ssa-upload<br>/activities/<str:activity_id>/start | 0 |
 | `components/empty_state.html` | shared-component | Reusable empty state interface primitive | {{ tone }}; default, empty | inherits containing page contract | inherits semantic parent contract | /accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/advances<br>/accounts/advances/<br>/accounts/approval-history<br>/accounts/approval-history/ | 0 |
+| `components/evidence_pages_state.html` | shared-component | Reusable evidence pages state interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id>/evidence<br>/offline/evidence-drawer | 0 |
 | `components/form_field.html` | shared-component | Reusable form field interface primitive | canonical; default | inherits containing page contract | accessible name and label | /loan-applications/apply | 0 |
 | `components/kpi_strip.html` | shared-component | Reusable kpi strip interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/meter.html` | shared-component | Reusable meter interface primitive | {{ progress.classification.tone|default:; default | inherits containing page contract | accessible name and label | /my-performance<br>/my-performance/development<br>/my-performance/documents<br>/my-performance/values<br>/priorities/master<br>/strategic-priorities<br>/target-distribution | 0 |
@@ -345,6 +346,7 @@ Components and application partials: **502**
 | `partials/my_plan/evidence_drawer.html` | application-partial | Reusable evidence drawer interface primitive | success, warning; default, empty, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/evidence | 0 |
 | `partials/my_plan/filters.html` | application-partial | Reusable filters interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan | 0 |
 | `partials/my_plan/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/offline_evidence_drawer.html` | application-partial | Reusable offline evidence drawer interface primitive | warning; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /offline/evidence-drawer | 0 |
 | `partials/my_plan/partner_ssa_completion_drawer.html` | application-partial | Reusable partner ssa completion drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/partner-ssa-complete | 0 |
 | `partials/my_plan/period_breakdown.html` | application-partial | Reusable period breakdown interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/programme_activities.html` | application-partial | Reusable programme activities interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |

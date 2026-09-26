@@ -1,53 +1,51 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load frontend_filters %}
 
-{% block drawer_title %}Upload evidence{% if act.school %} for {{ act.school.name }}{% elif act.cluster %} for {{ act.cluster.name }}{% endif %}{% endblock %}
+{% block drawer_title %}Upload evidence{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
 {% comment %}
-THE evidence drawer — one for every role (staff and partner alike; the view
-route is /activities/<id>/evidence, scoped by can_view_record). The two-form
-law applies: a school visit needs its Visit Form, a training or cluster
-session its Training Attendance form.
+The upload drawer without signal (owner, 2026-09-26: "make the upload drawer
+open offline too").
 
-One form, one Submit (owner, 2026-09-26): it saves every form's pages and,
-on staff work, the Salesforce ID, so the Evidence and Salesforce ID columns
-fill in together. Each form may be several pages: every photo taken and file
-chosen joins its list (components/evidence_pages_state.html), posted as
-evidence_file_<kind>, and the server joins them into one PDF in that order.
+The service worker keeps this one copy, precached at install beside the
+offline page, and serves it for /activities/<id>/evidence when the network
+cannot answer, with __EDIFY_ACTIVITY_ID__ replaced by the id the person
+tapped (sw.js checks the id's shape first). It is made for nobody: no user,
+no activity, no CSRF token — the same rule as the offline page, because it
+is shown to whoever holds the phone. So it cannot know the activity's form
+or whether it is partner work, and asks only for what it can:
 
-Partner work never shows the Salesforce ID here (asks_salesforce_id): the
-partner uploads, and staff complete the work in the Salesforce ID drawer.
+* the form's pages, posted as `evidence_file` with no kind, which the server
+  files as the form the activity still needs (resolve_evidence_kind);
+* the Salesforce ID, shown only when the signed-in person is staff
+  (data-edify-field-role on <body>) and not required here: the server
+  applies the rules when the saved request is sent, and ignores it on
+  partner work.
+
+Submit goes to the field outbox (field-outbox.js), which sends it, pages and
+all, once the phone is back online; a refusal is kept there with its reason.
 {% endcomment %}
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
 
-  {% if google_drive_folder_url %}
-  <p class="edify-text-caption text-slate-500">
-    Shared documentation:
-    <a href="{{ google_drive_folder_url }}" target="_blank" rel="noopener noreferrer" class="font-semibold edify-primary-text hover:underline">Open team Google Drive</a>
+  <p class="edify-note edify-text-caption font-medium" data-tone="warning">
+    No signal: this upload is saved on your phone and sent when you are back online.
   </p>
-  {% endif %}
 
-  <form id="evidence-form" hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
+  <form id="evidence-form" hx-post="/activities/__EDIFY_ACTIVITY_ID__/evidence/action" hx-encoding="multipart/form-data"
         hx-request='{"timeout":120000}'
         hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
-        x-data="{ preparing: 0 }"
+        x-data="{ preparing: 0, staff: document.body.dataset.edifyFieldRole === 'staff' }"
         @evidence-pages-busy="preparing = Math.max(0, preparing + ($event.detail ? 1 : -1))"
         class="space-y-4">
-    {% csrf_token %}
 
-    {% for item in evidence_checklist %}
     <section x-data="{% include 'components/evidence_pages_state.html' %}"
-             aria-labelledby="ev-label-{{ item.kind }}"
-             class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
-      <div class="flex items-center justify-between gap-3">
-        <div class="space-y-1">
-          <p id="ev-label-{{ item.kind }}" class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
-          <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
-        </div>
-        {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
+             aria-labelledby="ev-label-offline"
+             class="space-y-3 rounded-control border border-slate-200 p-3">
+      <div class="space-y-1">
+        <p id="ev-label-offline" class="text-[13px] font-semibold text-slate-800">Visit form or attendance form <span class="text-rose-500">*</span></p>
+        <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
       </div>
 
       <!-- The camera, the file picker, and the input the form posts -->
@@ -55,7 +53,7 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
              @change="add($event)">
       <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" multiple class="hidden"
              @change="add($event)">
-      <input type="file" name="evidence_file_{{ item.kind }}" x-ref="mainInput" multiple
+      <input type="file" name="evidence_file" x-ref="mainInput" multiple
              accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
              class="hidden" @change="add($event)">
 
@@ -77,9 +75,8 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
         </button>
       </div>
 
-      <!-- The pages so far, in order -->
       <div x-show="pages.length" x-cloak class="space-y-1">
-        <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="{{ item.label }} pages to submit">
+        <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="Pages to submit">
           <template x-for="(p, i) in pages" :key="p.id">
             <li class="flex items-center justify-between gap-2 px-3 py-2">
               <div class="flex items-center gap-2 min-w-0 text-emerald-700">
@@ -103,45 +100,20 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
       <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
       <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
     </section>
-    {% empty %}
-    <p class="text-slate-500">This activity type declares no required form, so upload is optional.</p>
-    {% endfor %}
 
-    {% if asks_salesforce_id %}
-    {% comment %} Required for staff — their upload carries its Salesforce
-    entry (owner, 2026-08-19). Partner work never shows it: staff record it
-    in the Salesforce ID drawer, which completes that work. {% endcomment %}
-    <div class="space-y-1">
-      <label for="ev-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>
-      <input id="ev-sf" name="salesforce_id" type="text" maxlength="30" required
-             {% if act.salesforce_activity_id %}value="{{ act.salesforce_activity_id }}"{% endif %}
+    <div x-show="staff" x-cloak class="space-y-1">
+      <label for="ev-sf-offline" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID</label>
+      <input id="ev-sf-offline" name="salesforce_id" type="text" maxlength="30" :disabled="!staff"
              placeholder="The activity's Salesforce entry ID"
+             aria-describedby="ev-sf-offline-help"
              class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <p id="ev-sf-offline-help" class="edify-text-caption text-slate-500">Needed with your form unless it is already entered.</p>
     </div>
-    {% endif %}
 
     <div class="drawer-footer">
       <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
       <button type="submit" class="btn btn-primary h-8" :disabled="preparing > 0">Submit</button>
     </div>
   </form>
-
-  {% if evidence_list %}
-  <div class="space-y-1">
-    <p class="edify-text-caption font-semibold text-slate-600">Already uploaded</p>
-    <div class="divide-y divide-slate-100 rounded-control border border-slate-200">
-      {% for ev in evidence_list %}
-      <div class="flex items-center justify-between gap-3 px-3 py-2">
-        <a href="/api/evidence/{{ ev.id }}/file" target="_blank" rel="noopener" class="font-semibold text-slate-700 truncate hover:edify-primary-text">{{ ev.original_name }}</a>
-        <span class="flex items-center gap-2 shrink-0">
-          <span class="edify-text-caption text-slate-500 font-semibold">{{ ev.kind }}</span>
-          <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-semibold edify-primary-text hover:underline">Download</a>
-        </span>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
 </div>
 {% endblock %}

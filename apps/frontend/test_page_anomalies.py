@@ -42,6 +42,8 @@ class PageAnomalyTest(SimpleTestCase):
                 "templates/base.html",
                 "templates/pages/offline.html",
                 "static/js/field-outbox.js",
+                "templates/partials/my_plan/offline_evidence_drawer.html",
+                "templates/components/evidence_pages_state.html",
             ]
             for name in sources:
                 file = root / name

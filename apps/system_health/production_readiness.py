@@ -240,6 +240,10 @@ _EXEMPT_VIEW_NAMES = {
     # The precached offline fallback: no user data, served to whoever the
     # worker is protecting when the network is gone.
     "offline",
+    # Its upload drawer, precached beside it on the same terms: made for
+    # nobody, holding no user, activity or token (owner, 2026-09-26). Every
+    # rule applies when its saved upload reaches the server.
+    "offline_evidence_drawer",
     "service_worker_view",
     "service_worker",
     "offline_view",

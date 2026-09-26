@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **830**
-- All registered routes: **1302**
+- Routed product surfaces: **831**
+- All registered routes: **1303**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **502**
+- Shared component templates: **504**
 - Full pages: **260**
-- Partials and drawers: **274**
+- Partials and drawers: **275**
 - Permission-gated surfaces: **815**
-- Referenced by automated tests: **723**
+- Referenced by automated tests: **724**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -585,6 +585,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-62A35A018A | /offboarding/new | Offboarding Start Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8D06EDDD8A | /offboarding/start | Offboarding Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-08B3C226D4 | /offline | Offline | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8FC9361881 | /offline/evidence-drawer | Offline Evidence Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-99A6BD1230 | /onboarding | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3DFE6D3724 | /onboarding/<str:plan_id> | Onboarding Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1E22EB77D2 | /onboarding/<str:plan_id>/record | Onboarding Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

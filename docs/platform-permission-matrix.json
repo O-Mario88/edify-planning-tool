@@ -18130,8 +18130,8 @@
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
   "routes_guarded": 1109,
-  "routes_total": 1302,
-  "routes_unguarded": 193,
+  "routes_total": 1303,
+  "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -19317,6 +19317,13 @@
    "route": "/offline",
    "route_name": "offline",
    "view": "apps.frontend.views.pwa_views.offline"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/offline/evidence-drawer",
+   "route_name": "offline_evidence_drawer",
+   "view": "apps.frontend.views.pwa_views.offline_evidence_drawer"
   },
   {
    "page_permission": "",

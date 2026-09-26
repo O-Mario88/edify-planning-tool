@@ -223,8 +223,13 @@ def _scan_upload(path: str) -> tuple[str, str | None]:
         return "skipped", None
 
 
-def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
-    """Secure multipart upload. Validates extension + MIME + magic-byte sniff."""
+def record_upload(
+    *, principal, activity_id: str, kind: str, file_obj, max_size: int | None = None
+) -> dict:
+    """Secure multipart upload. Validates extension + MIME + magic-byte sniff.
+
+    `max_size` widens the size ceiling for a merged multi-page file
+    (record_pages_upload); every page was held to the normal limit first."""
     if not file_obj:
         raise BadRequest("A file is required.")
     if kind not in VALID_KINDS:
@@ -242,7 +247,11 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     size = file_obj.tell()
     file_obj.seek(0)
     ext = assert_safe_upload(
-        original_name=original_name, mime_type=mime_type, head=head, size=size
+        original_name=original_name,
+        mime_type=mime_type,
+        head=head,
+        size=size,
+        max_size=max_size,
     )
 
     # Governed forms: Visit Form or Training Attendance.
@@ -562,6 +571,81 @@ def _try_office_to_pdf(record: EvidenceRecord) -> bool:
     return False
 
 
+#: The file types a page of a multi-page upload may be.
+PAGE_EXTENSIONS = (".pdf", ".jpg", ".jpeg", ".png", ".webp")
+
+
+def record_pages_upload(*, principal, activity_id: str, kind: str, files) -> dict:
+    """Upload one evidence form from one or more files (owner, 2026-09-26).
+
+    One file takes the usual path, unchanged. Several — the pages of one
+    form, photographed or chosen together — are each validated and scanned
+    like any upload, then merged in order into one PDF with exactly those
+    pages (apps.evidence.pages), which is stored as the one record."""
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    from apps.evidence import pages
+
+    files = [f for f in (files or []) if f]
+    if not files:
+        raise BadRequest("A file is required.")
+    if len(files) == 1:
+        return record_upload(
+            principal=principal, activity_id=activity_id, kind=kind, file_obj=files[0]
+        )
+    if len(files) > pages.MAX_PAGES:
+        raise BadRequest(f"One upload holds at most {pages.MAX_PAGES} pages.")
+    if kind not in VALID_KINDS:
+        raise BadRequest(f"Invalid evidence kind: {kind}")
+    activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
+    if not activity:
+        raise NotFoundError("Activity not found")
+    _assert_activity_in_scope(activity, principal)
+
+    for upload in files:
+        name = getattr(upload, "name", "upload")
+        head = upload.read(512)
+        upload.seek(0, os.SEEK_END)
+        size = upload.tell()
+        upload.seek(0)
+        ext = assert_safe_upload(
+            original_name=name,
+            mime_type=getattr(upload, "content_type", "") or "",
+            head=head,
+            size=size,
+        )
+        if ext not in PAGE_EXTENSIONS:
+            raise BadRequest(
+                f"{name}: each page must be a PDF or a photo (JPG, PNG, WebP)."
+            )
+        with tempfile.NamedTemporaryFile(suffix=ext) as tmp:
+            for chunk in upload.chunks():
+                tmp.write(chunk)
+            tmp.flush()
+            scan_status, threat_name = _scan_upload(tmp.name)
+        upload.seek(0)
+        if scan_status == "infected":
+            raise BadRequest(
+                f"{name} was flagged as a security threat by the malware scanner "
+                "and the upload was rejected. Contact IT if you believe this is "
+                "an error."
+            )
+
+    merged, count = pages.merge_pages(files)
+    label = {"visit_form": "Visit Form", "attendance_form": "Attendance"}.get(
+        kind, kind.replace("_", " ").title()
+    )
+    return record_upload(
+        principal=principal,
+        activity_id=activity_id,
+        kind=kind,
+        file_obj=SimpleUploadedFile(
+            f"{label} ({count} pages).pdf", merged, content_type="application/pdf"
+        ),
+        max_size=pages.MERGED_MAX_SIZE,
+    )
+
+
 # Kept under its historical name for any external callers/tests.
 _try_docx_to_pdf = _try_office_to_pdf
 
@@ -576,7 +660,9 @@ def _try_image_to_pdf(record: EvidenceRecord) -> bool:
     on a crisp white A4 page, automatically handling EXIF camera rotation.
     """
     try:
-        from PIL import Image, ImageOps
+        from PIL import Image
+
+        from apps.evidence.pages import a4_page
 
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
         with (
@@ -585,33 +671,8 @@ def _try_image_to_pdf(record: EvidenceRecord) -> bool:
         ):
             dest = os.path.join(tmp_dir, "preview.pdf")
             with Image.open(src) as raw_img:
-                img = ImageOps.exif_transpose(raw_img)
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
-
-                target_dpi = 150.0
-                is_landscape = img.width > img.height
-                if is_landscape:
-                    a4_w, a4_h = 1754, 1240
-                else:
-                    a4_w, a4_h = 1240, 1754
-
-                margin = 40
-                avail_w = max(100, a4_w - (2 * margin))
-                avail_h = max(100, a4_h - (2 * margin))
-
-                scale = min(avail_w / img.width, avail_h / img.height)
-                new_w = max(1, int(img.width * scale))
-                new_h = max(1, int(img.height * scale))
-
-                resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-
-                canvas = Image.new("RGB", (a4_w, a4_h), color=(255, 255, 255))
-                offset_x = (a4_w - new_w) // 2
-                offset_y = (a4_h - new_h) // 2
-                canvas.paste(resized, (offset_x, offset_y))
-
-                canvas.save(dest, "PDF", resolution=target_dpi)
+                # The same A4 page a multi-page upload draws for each photo.
+                a4_page(raw_img).save(dest, "PDF", resolution=150.0)
 
             save_local_file(EVIDENCE_NAMESPACE, pdf_name, dest)
         _save_rendition(record, pdf_name)
