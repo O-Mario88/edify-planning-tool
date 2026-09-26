@@ -9,9 +9,16 @@
 THE evidence drawer — one for every role (staff and partner alike; the view
 route is /activities/<id>/evidence, scoped by can_view_record). The two-form
 law applies: a school visit needs its Visit Form, a training or cluster
-session its Training Attendance form — both as PDF. The Salesforce ID is
-optional here for staff and never shown to partners: IA records it for
-partner work at Confirm Salesforce Entry.
+session its Training Attendance form.
+
+One form, one Submit (owner, 2026-09-26): it saves every form's pages and,
+on staff work, the Salesforce ID, so the Evidence and Salesforce ID columns
+fill in together. Each form may be several pages: every photo taken and file
+chosen joins its list (components/evidence_pages_state.html), posted as
+evidence_file_<kind>, and the server joins them into one PDF in that order.
+
+Partner work never shows the Salesforce ID here (asks_salesforce_id): the
+partner uploads, and staff complete the work in the Salesforce ID drawer.
 {% endcomment %}
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
@@ -23,98 +30,101 @@ partner work at Confirm Salesforce Entry.
   </p>
   {% endif %}
 
-  {% for item in evidence_checklist %}
-  {% comment %} One form may be several pages (owner, 2026-09-26): every photo
-  taken and file chosen joins one list (components/evidence_pages_state.html),
-  all of it is posted as evidence_file, and the server joins the pages into
-  one PDF, in the order added. {% endcomment %}
-  <form hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
+  <form id="evidence-form" hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
         hx-request='{"timeout":120000}'
         hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
-        x-data="{% include 'components/evidence_pages_state.html' %}"
-        class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
+        x-data="{ preparing: 0 }"
+        @evidence-pages-busy="preparing = Math.max(0, preparing + ($event.detail ? 1 : -1))"
+        class="space-y-4">
     {% csrf_token %}
-    <input type="hidden" name="evidence_kind" value="{{ item.kind }}">
-    <div class="flex items-center justify-between gap-3">
-      <div class="space-y-1">
-        <p class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
-        <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
+
+    {% for item in evidence_checklist %}
+    <section x-data="{% include 'components/evidence_pages_state.html' %}"
+             aria-labelledby="ev-label-{{ item.kind }}"
+             class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
+      <div class="flex items-center justify-between gap-3">
+        <div class="space-y-1">
+          <p id="ev-label-{{ item.kind }}" class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
+          <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
+        </div>
+        {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
       </div>
-      {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
-    </div>
 
-    <!-- The camera, the file picker, and the input the form posts -->
-    <input type="file" x-ref="cameraInput" accept="image/*" capture="environment" class="hidden"
-           @change="add($event)">
-    <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" multiple class="hidden"
-           @change="add($event)">
-    <input type="file" name="evidence_file" x-ref="mainInput" required multiple
-           accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
-           class="hidden" @change="add($event)">
+      <!-- The camera, the file picker, and the input the form posts -->
+      <input type="file" x-ref="cameraInput" accept="image/*" capture="environment" class="hidden"
+             @change="add($event)">
+      <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" multiple class="hidden"
+             @change="add($event)">
+      <input type="file" name="evidence_file_{{ item.kind }}" x-ref="mainInput" multiple
+             accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
+             class="hidden" @change="add($event)">
 
-    <div class="grid grid-cols-2 gap-2" data-keep-columns>
-      <button type="button" @click="$refs.cameraInput.click()" :disabled="busy"
-              class="btn btn-secondary min-h-11 w-full gap-2">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-          <circle cx="12" cy="13" r="3"/>
-        </svg>
-        <span x-text="pages.length ? 'Photo next page' : 'Take photo'">Take photo</span>
-      </button>
-      <button type="button" @click="$refs.storageInput.click()" :disabled="busy"
-              class="btn btn-secondary min-h-11 w-full gap-2">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-        <span x-text="pages.length ? 'Add files' : 'Choose files'">Choose files</span>
-      </button>
-    </div>
+      <div class="grid grid-cols-2 gap-2" data-keep-columns>
+        <button type="button" @click="$refs.cameraInput.click()" :disabled="busy"
+                class="btn btn-secondary min-h-11 w-full gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+          <span x-text="pages.length ? 'Photo next page' : 'Take photo'">Take photo</span>
+        </button>
+        <button type="button" @click="$refs.storageInput.click()" :disabled="busy"
+                class="btn btn-secondary min-h-11 w-full gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span x-text="pages.length ? 'Add files' : 'Choose files'">Choose files</span>
+        </button>
+      </div>
 
-    <!-- The pages so far, in order -->
-    <div x-show="pages.length" x-cloak class="space-y-1">
-      <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="Pages to upload">
-        <template x-for="(p, i) in pages" :key="p.id">
-          <li class="flex items-center justify-between gap-2 px-3 py-2">
-            <div class="flex items-center gap-2 min-w-0 text-emerald-700">
-              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>
-              <div class="min-w-0">
-                <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
-                <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
+      <!-- The pages so far, in order -->
+      <div x-show="pages.length" x-cloak class="space-y-1">
+        <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="{{ item.label }} pages to submit">
+          <template x-for="(p, i) in pages" :key="p.id">
+            <li class="flex items-center justify-between gap-2 px-3 py-2">
+              <div class="flex items-center gap-2 min-w-0 text-emerald-700">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                <div class="min-w-0">
+                  <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
+                  <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
+                </div>
               </div>
-            </div>
-            <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
-                    class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
-              Remove
-            </button>
-          </li>
-        </template>
-      </ol>
-      <p class="edify-text-caption text-slate-500" x-show="pages.length > 1" x-text="pages.length + ' pages will be uploaded as one PDF.'"></p>
-    </div>
-    <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
-    <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
+              <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
+                      class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
+                Remove
+              </button>
+            </li>
+          </template>
+        </ol>
+        <p class="edify-text-caption text-slate-500" x-text="pages.length > 1 ? pages.length + ' pages will be saved as one PDF.' : '1 page will be saved.'"></p>
+      </div>
+      <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
+      <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
+    </section>
+    {% empty %}
+    <p class="text-slate-500">This activity type declares no required form, so upload is optional.</p>
+    {% endfor %}
 
-    {% if not is_partner_viewer %}
+    {% if asks_salesforce_id %}
     {% comment %} Required for staff — their upload carries its Salesforce
-    entry. Partners never see this field: IA records theirs at Confirm
-    Salesforce Entry (§12). {% endcomment %}
+    entry (owner, 2026-08-19). Partner work never shows it: staff record it
+    in the Salesforce ID drawer, which completes that work. {% endcomment %}
     <div class="space-y-1">
-      <label for="ev-sf-{{ item.kind }}" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>
-      <input id="ev-sf-{{ item.kind }}" name="salesforce_id" type="text" maxlength="30" required
+      <label for="ev-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>
+      <input id="ev-sf" name="salesforce_id" type="text" maxlength="30" required
              {% if act.salesforce_activity_id %}value="{{ act.salesforce_activity_id }}"{% endif %}
              placeholder="The activity's Salesforce entry ID"
              class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
     </div>
     {% endif %}
-    <button type="submit" class="btn btn-primary h-8" :disabled="busy || !pages.length">
-      <span x-text="pages.length > 1 ? 'Upload {{ item.label|escapejs }} (' + pages.length + ' pages)' : 'Upload {{ item.label|escapejs }}'">Upload {{ item.label }}</span>
-    </button>
+
+    <div class="drawer-footer">
+      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+      <button type="submit" class="btn btn-primary h-8" :disabled="preparing > 0">Submit</button>
+    </div>
   </form>
-  {% empty %}
-  <p class="text-slate-500">This activity type declares no required form, so upload is optional.</p>
-  {% endfor %}
 
   {% if evidence_list %}
   <div class="space-y-1">
@@ -133,8 +143,5 @@ partner work at Confirm Salesforce Entry.
   </div>
   {% endif %}
 
-  <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Done</button>
-  </div>
 </div>
 {% endblock %}

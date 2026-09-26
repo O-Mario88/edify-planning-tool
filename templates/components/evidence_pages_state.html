@@ -10,6 +10,9 @@ outbox, which serialises the form as it stands) carries every page. The
 server checks each page and joins them into one PDF with exactly those
 pages (apps/evidence/pages.py).
 
+While a photo is being prepared it dispatches `evidence-pages-busy` (true,
+then false), so the form can hold its Submit until every page is in.
+
 The camera and picker inputs are emptied after each pick, so the next photo
 fires `change` again. A browser without the DataTransfer constructor keeps
 the last pick only: one page, as before.
@@ -42,6 +45,7 @@ The text below sits inside a double-quoted attribute: no double quotes.
     }
     input.value = '';
     this.busy = true;
+    this.$dispatch('evidence-pages-busy', true);
     try {
       for (const file of picked) {
         if (this.pages.length >= this.maxPages) {
@@ -53,6 +57,7 @@ The text below sits inside a double-quoted attribute: no double quotes.
     } finally {
       this.busy = false;
       this.sync();
+      this.$dispatch('evidence-pages-busy', false);
     }
   },
   remove(index) {

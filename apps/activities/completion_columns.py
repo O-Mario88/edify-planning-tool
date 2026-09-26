@@ -22,8 +22,8 @@ An activity is complete only when its status says the officer finished it
 2026-09-26: "the action and status are only complete if the Salesforce
 column has the Salesforce ID and the Evidence column has the upload, and are
 both green"). A status that says done over a missing half reads what is
-missing instead ("Missing Salesforce ID", "Missing evidence") and never
-offers the complete action.
+missing instead ("Missing Salesforce ID", "Missing evidence", or "Not
+Complete" when neither is in) and never offers the complete action.
 
 And one order: work that is not complete first, by planned date oldest
 first (undated last among it); complete work at the bottom, in the same
@@ -56,7 +56,8 @@ NOT_IN_SF = "Not in SF"
 NO_EVIDENCE = "No Evidence Uploaded"
 MISSING_SF = "Missing Salesforce ID"
 MISSING_EVIDENCE = "Missing evidence"
-MISSING_BOTH = "Missing Salesforce ID and evidence"
+#: Neither half in (owner, 2026-09-26: reads "Not Complete").
+MISSING_BOTH = "Not Complete"
 
 _ATTENDANCE_TYPES = frozenset((*TRAINING_TYPES, *CLUSTER_MEETING_TYPES))
 

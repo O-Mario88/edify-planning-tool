@@ -188,10 +188,7 @@ class RecordPagesUploadTest(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             f"/activities/{self.activity.id}/evidence/action",
-            {
-                "evidence_kind": "visit_form",
-                "evidence_file": [photo("p1.jpg"), photo("p2.jpg")],
-            },
+            {"evidence_file_visit_form": [photo("p1.jpg"), photo("p2.jpg")]},
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200, response.content)
@@ -208,5 +205,5 @@ class RecordPagesUploadTest(TestCase):
         self.assertIn('capture="environment"', html)
         self.assertIn("Take photo", html)
         self.assertIn("Choose files", html)
-        main = html.split('name="evidence_file"', 1)[1].split(">", 1)[0]
+        main = html.split('name="evidence_file_visit_form"', 1)[1].split(">", 1)[0]
         self.assertIn("multiple", main)

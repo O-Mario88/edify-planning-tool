@@ -8419,7 +8419,7 @@
    "audit_id": "KPI-SOURCE-466",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2427,
+   "line": 2463,
    "label": null,
    "keys": [
     "count",
@@ -8437,7 +8437,7 @@
    "audit_id": "KPI-SOURCE-467",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2538,
+   "line": 2580,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",

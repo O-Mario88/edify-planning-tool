@@ -9,7 +9,7 @@ Static scan of every template control (button, link, input, select, textarea, su
 | Templates with controls | 541 |
 | Control declarations | 3418 |
 | State-changing | 412 |
-| High-consequence (state-changing) | 183 |
+| High-consequence (state-changing) | 184 |
 | No automated evidence | 355 |
 | State-changing with no automated evidence | 24 |
 | Destination path that resolves to no route | 0 |

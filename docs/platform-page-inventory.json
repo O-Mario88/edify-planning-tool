@@ -297,7 +297,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4201,
+      "bytes": 4447,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -8273,7 +8273,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8418,
+      "bytes": 8721,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -17252,7 +17252,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "1 ? 'Upload (' + pages.length + ' pages)' : 'Upload '\">Upload",
+      "primary_action": "0\">Submit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",

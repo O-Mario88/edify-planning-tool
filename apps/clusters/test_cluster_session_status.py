@@ -121,7 +121,7 @@ class ClusterSessionStatusTest(TestCase):
         expected = {
             awaiting_pl.id: ("PL Pending", "pending"),
             verified.id: ("Complete", "complete"),
-            unfinished.id: ("Missing Salesforce ID and evidence", "pending"),
+            unfinished.id: ("Not Complete", "pending"),
             awaiting_ia.id: ("IA Pending", "pending"),
             planned.id: ("Scheduled", "open"),
             returned.id: ("Returned by PL", "returned"),

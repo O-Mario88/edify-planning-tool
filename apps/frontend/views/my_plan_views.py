@@ -1774,6 +1774,7 @@ def evidence_upload_drawer_view(request, activity_id):
     # Partners are never asked for a Salesforce ID — IA records it for their
     # work at Confirm Salesforce Entry (§12).
     context["is_partner_viewer"] = bool(resolve_partner_ids(request.user))
+    context["asks_salesforce_id"] = _asks_salesforce_id(request.user, a)
 
     # Look up Google Drive folder URL (from staff member or supervising Program Lead)
     google_drive_url = None
@@ -1792,6 +1793,45 @@ def evidence_upload_drawer_view(request, activity_id):
     return render(request, "partials/my_plan/evidence_drawer.html", context)
 
 
+#: The two governed forms: a staff upload of either carries its Salesforce ID.
+GOVERNED_FORM_KINDS = ("visit_form", "attendance_form")
+
+
+def _asks_salesforce_id(user, activity) -> bool:
+    """Whether the upload drawer carries the Salesforce ID: on staff work,
+    for staff. Partner work never (owner, 2026-09-26): the partner uploads,
+    and staff complete it with the Salesforce ID drawer."""
+    from apps.core.scoping import resolve_partner_ids
+
+    return activity.delivery_type != "partner" and not resolve_partner_ids(user)
+
+
+def _posted_evidence(request, activity) -> list[tuple[str, list]]:
+    """[(kind, files)] posted by the upload drawer: each form's pages as
+    `evidence_file_<kind>`, in form order; or one form as `evidence_file`
+    with `evidence_kind` (older drawers, and requests the field outbox saved
+    before this change)."""
+    from apps.evidence.services import VALID_KINDS
+
+    uploads = []
+    prefix = "evidence_file_"
+    for key in request.FILES:
+        kind = key[len(prefix) :] if key.startswith(prefix) else ""
+        files = request.FILES.getlist(key) if kind in VALID_KINDS else []
+        if files:
+            uploads.append((kind, files))
+    legacy = request.FILES.getlist("evidence_file")
+    if legacy:
+        # What the person selected, else what this activity still needs, else
+        # the file's shape. Inference alone can only say "pdf" or "photo",
+        # which no requirement asks for.
+        kind = resolve_evidence_kind(
+            legacy[0], activity=activity, asserted=request.POST.get("evidence_kind")
+        )
+        uploads.append((kind, legacy))
+    return uploads
+
+
 @require_page_permission("my_plan")
 def evidence_upload_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
@@ -1803,48 +1843,65 @@ def evidence_upload_action(request, activity_id):
         return forbidden
 
     if request.method == "POST":
-        # One file, or the pages of one form — photographed or chosen
-        # together — which are merged into one PDF (owner, 2026-09-26;
-        # apps.evidence.services.record_pages_upload).
-        evidence_files = request.FILES.getlist("evidence_file")
-        evidence_file = evidence_files[0] if evidence_files else None
-        if evidence_file:
-            try:
-                # A STAFF upload of a governed form carries its Salesforce
-                # entry — required (owner, 2026-08-19). Partners are exempt:
-                # IA records theirs at Confirm Salesforce Entry.
-                from apps.core.scoping import resolve_partner_ids as _rpi
+        # One Submit saves the drawer (owner, 2026-09-26): each form's pages
+        # and, on staff work, the Salesforce ID — so the Evidence and
+        # Salesforce ID columns fill in together. The ID is saved first: if
+        # an upload then fails, submitting again does not upload twice.
+        from apps.core.exceptions import BadRequest
 
-                _posted_kind = request.POST.get("evidence_kind") or ""
-                _posted_sf = (request.POST.get("salesforce_id") or "").strip()
-                if (
-                    _posted_kind in ("visit_form", "attendance_form")
-                    and not _posted_sf
-                    and not a.salesforce_activity_id
-                    and not _rpi(request.user)
-                ):
-                    from apps.core.exceptions import BadRequest as _BadRequest
-
-                    raise _BadRequest(
-                        "Enter the Salesforce ID with your form upload — it "
-                        "is required for staff-delivered work."
+        uploads = _posted_evidence(request, a)
+        asks_sf = _asks_salesforce_id(request.user, a)
+        sf_id = (request.POST.get("salesforce_id") or "").strip() if asks_sf else ""
+        new_sf = bool(sf_id) and sf_id != (a.salesforce_activity_id or "")
+        try:
+            if not uploads and not sf_id:
+                raise BadRequest(
+                    "Add the form (take a photo or choose files)"
+                    + (" or enter the Salesforce ID" if asks_sf else "")
+                    + ", then Submit."
+                )
+            # A STAFF upload of a governed form carries its Salesforce entry —
+            # required (owner, 2026-08-19). Partners are exempt: staff record
+            # theirs in the Salesforce ID drawer, completing the work.
+            if (
+                asks_sf
+                and not sf_id
+                and not a.salesforce_activity_id
+                and any(kind in GOVERNED_FORM_KINDS for kind, _ in uploads)
+            ):
+                raise BadRequest(
+                    "Enter the Salesforce ID with your form upload — it "
+                    "is required for staff-delivered work."
+                )
+            if new_sf:
+                if a.ia_verification_status == "confirmed":
+                    raise BadRequest(
+                        "The Salesforce ID is locked after IA confirmation. Ask "
+                        "IA to return the activity to make a correction."
                     )
+                # reserve_salesforce_id is the single write path: format,
+                # uniqueness and idempotency all hold here too.
+                from apps.activities.services import sf_kind_for_activity
+
+                kind = sf_kind_for_activity(a)
+                if kind is not None:
+                    reserve_salesforce_id(
+                        activity=a,
+                        raw_value=sf_id,
+                        kind=kind,
+                        principal=request.user,
+                        entry_source=ENTRY_SOURCE_STAFF_SELF,
+                    )
+            for kind, files in uploads:
+                # One file, or the pages of one form — photographed or chosen
+                # together — merged into one PDF (owner, 2026-09-26;
+                # apps.evidence.services.record_pages_upload).
                 record_pages_upload(
                     principal=request.user,
                     activity_id=activity_id,
-                    # What the person selected, else what this activity still
-                    # needs, else the file's shape. Inference alone can only say
-                    # "pdf" or "photo", which no requirement asks for -- so
-                    # completion was unreachable for every activity type that
-                    # declares one.
-                    kind=resolve_evidence_kind(
-                        evidence_file,
-                        activity=a,
-                        asserted=request.POST.get("evidence_kind"),
-                    ),
-                    files=evidence_files,
+                    kind=kind,
+                    files=files,
                 )
-
                 audit_log(
                     action="upload_evidence",
                     subject_kind="Activity",
@@ -1854,36 +1911,10 @@ def evidence_upload_action(request, activity_id):
                     success=True,
                     reason="Evidence file uploaded",
                 )
-
-                # Optional Salesforce ID alongside the upload — staff only
-                # (partners never carry it; IA records theirs at Confirm).
-                # reserve_salesforce_id is the single write path: format,
-                # uniqueness and idempotency all hold here too.
-                sf_id = (request.POST.get("salesforce_id") or "").strip()
-                from apps.core.scoping import resolve_partner_ids
-
-                if (
-                    sf_id
-                    and sf_id != (a.salesforce_activity_id or "")
-                    and not resolve_partner_ids(request.user)
-                ):
-                    from apps.activities.services import sf_kind_for_activity
-                    from apps.activities.salesforce import (
-                        ENTRY_SOURCE_STAFF_SELF,
-                        reserve_salesforce_id,
-                    )
-
-                    kind = sf_kind_for_activity(a)
-                    if kind is not None:
-                        reserve_salesforce_id(
-                            activity=a,
-                            raw_value=sf_id,
-                            kind=kind,
-                            principal=request.user,
-                            entry_source=ENTRY_SOURCE_STAFF_SELF,
-                        )
-            except Exception as e:
-                return error_fragment(e, status=400)
+        except DuplicateSalesforceId as e:
+            return error_fragment(e, status=409)
+        except Exception as e:
+            return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")
@@ -1898,6 +1929,11 @@ def salesforce_id_drawer_view(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
+    # This drawer is for completing partner work (owner, 2026-09-26). Staff
+    # enter the Salesforce ID for their own work in the upload drawer, with
+    # the form, so a link here for staff work opens that drawer.
+    if a.delivery_type != "partner":
+        return evidence_upload_drawer_view(request, activity_id)
 
     context = {
         "act": a,
@@ -2479,9 +2515,15 @@ def evidence_center_view(request):
                 "drawer": True,
             }
         elif active_tab == "sf_missing":
+            # Staff enter their own work's ID in the upload drawer; the
+            # Salesforce ID drawer is for completing partner work.
             action = {
                 "label": "Enter SF ID",
-                "url": f"/activities/{activity.id}/salesforce-id",
+                "url": (
+                    f"/activities/{activity.id}/salesforce-id"
+                    if activity.delivery_type == "partner"
+                    else f"/activities/{activity.id}/evidence"
+                ),
                 "drawer": True,
             }
         elif active_tab == "verified":
