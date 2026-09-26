@@ -169,6 +169,8 @@ class ClusterActionsAreOneMenuTest(SimpleTestCase):
             "partials/clusters/cluster_schools_table.html",
             {"schools": [], "cluster_id": "c1", "can_bulk_schedule": True},
         )
-        header = html.split("Schools in Cluster", 1)[1].split("This cluster has no", 1)[0]
+        header = html.split("Schools in Cluster", 1)[1].split("This cluster has no", 1)[
+            0
+        ]
         self.assertNotIn("<button", header)
         self.assertNotIn("bulk-schedule-drawer", html)

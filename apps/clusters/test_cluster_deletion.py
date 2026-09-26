@@ -163,7 +163,9 @@ class ClusterDeletionSurfaceTest(TestCase):
         )[0]
         self.assertNotIn("data-row-actions", controls)
         self.assertLessEqual(controls.count('class="edify-action-button primary'), 1)
-        self.assertLess(controls.index("Edit Details"), controls.index("Delete cluster"))
+        self.assertLess(
+            controls.index("Edit Details"), controls.index("Delete cluster")
+        )
         self.assertNotIn("Add Schools to Cluster", controls)
         schools = body.split("Schools in This Cluster", 1)[1].split("<table", 1)[0]
         self.assertEqual(schools.count("Add Schools to Cluster"), 1)
