@@ -5652,3 +5652,20 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .school-plan-table__details .school-record-row__metadata { margin: 0 0 .75rem; }
 .school-plan-table__group th { background: var(--edify-surface-muted, var(--edify-surface)); }
 .school-plan-table tbody > tr:not(.school-plan-table__details):hover { background: var(--edify-hover); }
+
+/* ── Pinned actions ─────────────────────────────────────────────────────
+   A planned activities table carries every column its page needs, plus the
+   Salesforce ID and Evidence (owner, 2026-09-26), so on a laptop it is
+   wider than its card and the Actions column fell behind a sideways scroll,
+   where it read as missing. A table that opts in with data-pinned-actions
+   keeps its last column on the right edge of its scroll region, as Core
+   School Oversight's Send to does (platform.css, .core-oversight-table). The
+   plain-table rules give every cell an opaque surface, so the columns
+   scrolling beneath it stay hidden. At every width: a record table stays a
+   table that scrolls sideways on a phone too (mobile-shell.css, "Record
+   tables stay tables"), which is where the actions most need holding. */
+table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([colspan]) {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 1;
+}

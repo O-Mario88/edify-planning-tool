@@ -1636,7 +1636,7 @@
    "audit_id": "KPI-SOURCE-084",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 762,
+   "line": 731,
    "label": "Everyone",
    "keys": [
     "count",
@@ -1655,7 +1655,7 @@
    "audit_id": "KPI-SOURCE-085",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 780,
+   "line": 749,
    "label": "Partners",
    "keys": [
     "count",
@@ -1674,7 +1674,7 @@
    "audit_id": "KPI-SOURCE-086",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 672,
+   "line": 641,
    "label": null,
    "keys": [
     "active",
@@ -1694,7 +1694,7 @@
    "audit_id": "KPI-SOURCE-087",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 679,
+   "line": 648,
    "label": "Due this week",
    "keys": [
     "active",
@@ -1714,7 +1714,7 @@
    "audit_id": "KPI-SOURCE-088",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 771,
+   "line": 740,
    "label": null,
    "keys": [
     "count",
@@ -8573,7 +8573,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1945,
+   "line": 1974,
    "label": null,
    "keys": [
     "count",
@@ -8648,7 +8648,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1973,
+   "line": 2002,
    "label": "All team members",
    "keys": [
     "count",
@@ -8666,7 +8666,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1975,
+   "line": 2004,
    "label": null,
    "keys": [
     "count",
@@ -10848,7 +10848,7 @@
    "audit_id": "KPI-SOURCE-598",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1526,
+   "line": 1537,
    "label": "All Activities",
    "keys": [
     "count",
@@ -10867,7 +10867,7 @@
    "audit_id": "KPI-SOURCE-599",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1535,
+   "line": 1546,
    "label": null,
    "keys": [
     "count",

@@ -33,6 +33,9 @@ COLUMNS = (
     "SSA Intervention",
     "Participants",
     "Cost",
+    # Every planned activities table's completion columns (owner, 2026-09-26).
+    "Salesforce ID",
+    "Evidence",
     "Status",
     "Actions",
 )
@@ -69,8 +72,11 @@ class ClusterSessionStatusTest(TestCase):
         self.fy = get_operational_fy()
         self.day = date(int(self.fy) - 1, 11, 4)
 
-    def _session(self, kind, status, owner, **kw):
-        return Activity.objects.create(
+    def _session(self, kind, status, owner, *, complete=False, **kw):
+        """A session; `complete` gives it its TS- Salesforce ID and its
+        attendance, which Complete needs besides a verified status (owner,
+        2026-09-26)."""
+        session = Activity.objects.create(
             activity_type=kind,
             cluster=self.cluster,
             responsible_staff_id=owner.staff_profile.id,
@@ -79,6 +85,18 @@ class ClusterSessionStatusTest(TestCase):
             status=status,
             **kw,
         )
+        if complete:
+            from apps.evidence.models import EvidenceRecord
+
+            session.salesforce_activity_id = f"TS-{session.id[-10:].upper()}"
+            session.save(update_fields=["salesforce_activity_id"])
+            EvidenceRecord.objects.create(
+                activity=session,
+                kind="attendance_form",
+                uri="attendance.pdf",
+                uploaded_by="u",
+            )
+        return session
 
     def _page(self, user):
         self.client.force_login(user)
@@ -88,7 +106,11 @@ class ClusterSessionStatusTest(TestCase):
 
     def test_status_reads_where_the_work_stands(self):
         awaiting_pl = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
-        verified = self._session("cluster_training", "ia_verified", self.cceo)
+        verified = self._session(
+            "cluster_training", "ia_verified", self.cceo, complete=True
+        )
+        # Verified, but neither the Salesforce ID nor the attendance is in.
+        unfinished = self._session("cluster_training", "ia_verified", self.cceo)
         awaiting_ia = self._session(
             "cluster_meeting", "awaiting_ia_verification", self.pl
         )
@@ -99,6 +121,7 @@ class ClusterSessionStatusTest(TestCase):
         expected = {
             awaiting_pl.id: ("PL Pending", "pending"),
             verified.id: ("Complete", "complete"),
+            unfinished.id: ("Missing Salesforce ID and evidence", "pending"),
             awaiting_ia.id: ("IA Pending", "pending"),
             planned.id: ("Scheduled", "open"),
             returned.id: ("Returned by PL", "returned"),
@@ -119,7 +142,9 @@ class ClusterSessionStatusTest(TestCase):
         self.assertEqual(html.count("data-cluster-sessions"), 4)
 
     def test_the_lead_verifies_a_cceo_completion_and_it_reads_complete(self):
-        session = self._session("cluster_training", "submitted_to_pl", self.cceo)
+        session = self._session(
+            "cluster_training", "submitted_to_pl", self.cceo, complete=True
+        )
         confirm = f'action="/pl/review-queue/{session.id}/confirm"'
 
         response = self._page(self.pl)

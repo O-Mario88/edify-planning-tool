@@ -23,7 +23,7 @@ Open Work Plan
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate programme_activities "programme_activities_page" 20 as programme_activities_pager %}
 {% if programme_activities %}
-<table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
 <th class="min-w-[90px]">Venue ID</th>
@@ -32,6 +32,8 @@ Open Work Plan
 <th class="min-w-[110px]">Date</th>
 <th class="min-w-[120px]">Budget status</th>
 <th class="min-w-[120px]">Verification</th>
+<th class="min-w-[130px]">Salesforce ID</th>
+<th class="min-w-[160px]">Evidence</th>
 <th class="min-w-[110px]">Status</th>
 <th class="min-w-[80px]"></th>
 </tr>
@@ -57,6 +59,7 @@ Open Work Plan
 <td data-label="Verification" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.verification_color|default:'purple' }}">{{ row.verification_status|default:'—' }}</span>
 </td>
+{% include "components/completion_cells.html" %}
 <td data-label="Status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label|default:'—' }}</span>
 </td>
