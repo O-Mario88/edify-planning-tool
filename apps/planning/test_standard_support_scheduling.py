@@ -52,9 +52,19 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
 
-def _schedulable_date():
-    """The next date the calendar policy will accept (Sundays are blocked)."""
+def _schedulable_date(room=0):
+    """The next date the calendar policy will accept (Sundays are blocked).
+
+    ``room`` asks for that many more days in the same financial year after
+    it. A test that plans a run of days and counts them for one year would
+    otherwise split across 30 September; near the end of the year the run
+    starts on 1 October instead, and the test counts that year.
+    """
     day = timezone.localdate() + datetime.timedelta(days=3)
+    if room:
+        year_end = datetime.date(day.year + (day.month >= 10), 9, 30)
+        if (year_end - day).days < room:
+            day = year_end + datetime.timedelta(days=1)
     while day.weekday() == 6:
         day += datetime.timedelta(days=1)
     return day
