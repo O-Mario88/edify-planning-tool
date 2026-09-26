@@ -882,6 +882,17 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         district_type = district_type_for_staff(
             activity.responsible_staff_id, activity.school.district
         )
+    elif activity.cluster_id and activity.cluster.district_id:
+        # A cluster session is priced where the cluster is (owner,
+        # 2026-09-26: "look at the district where the cluster is located"):
+        # the day batch already did this; a session priced outside it — a
+        # multi-day training, or one the batch cannot pool — did not, and
+        # read as primary wherever it was.
+        from apps.daily_visit_batches.districts import district_type_for_staff
+
+        district_type = district_type_for_staff(
+            activity.responsible_staff_id, activity.cluster.district
+        )
     # Field events derive the travel profile from the owner's PRIMARY (home)
     # district vs the event's destination district — the MOU per-diem rule.
     # An explicit districtType in the form is a recorded override and wins.
@@ -2155,6 +2166,22 @@ def create(
                 responsible_staff_id, school.district
             ),
         }
+    elif not is_partner and school is None and cluster_id:
+        # A cluster session is priced where the cluster is (owner,
+        # 2026-09-26), primary or secondary for the officer running it.
+        from apps.clusters.models import Cluster
+        from apps.daily_visit_batches.districts import district_type_for_staff
+
+        session_cluster = (
+            Cluster.objects.select_related("district").filter(pk=cluster_id).first()
+        )
+        if session_cluster is not None and session_cluster.district_id:
+            data = {
+                **data,
+                "districtType": district_type_for_staff(
+                    responsible_staff_id, session_cluster.district
+                ),
+            }
 
     monitored_by_staff_id = principal_owner_id if is_partner else None
 

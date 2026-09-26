@@ -608,6 +608,15 @@ def preview(
                 line.allocation_index = 0
                 line.label = KEY_LABELS[line.key]
         cost.amount = sum(line.amount for line in cost.lines)
+    # Every line is named as the CD Cost Catalogue names it (owner,
+    # 2026-09-26: "everything should be fetched from the database"): the
+    # rate and its label come from the same row; the code's label is kept
+    # only for a line the card does not carry.
+    _rates, settings = _rate_card(catalogue)
+    for line in cost.lines:
+        setting = settings.get(line.key)
+        if setting is not None and (setting.label or "").strip():
+            line.label = setting.label.strip()
     missing = cost.missing_items
     blockers = [
         (

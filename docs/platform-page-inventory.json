@@ -3229,7 +3229,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3767,
+      "bytes": 3875,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -9855,14 +9855,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 25857,
+      "bytes": 28035,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 6,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Schedule Cluster Drawer",
       "purpose": "Reusable schedule cluster drawer interface primitive",

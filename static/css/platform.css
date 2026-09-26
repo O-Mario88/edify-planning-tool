@@ -3986,6 +3986,27 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-ssa-group__score { font-weight: 800; white-space: nowrap; }
 
+/* The group training and cluster meeting drawer lists the cluster's
+   recommended interventions in this same format (owner, 2026-09-26). On the
+   dark and Edify blue themes the danger text token is a soft salmon or pink;
+   the owner asked for bright red there, as the week's overdue rows use. */
+:root.theme-dark [data-cluster-ssa-need] .school-ssa-group--danger { color: #ff5252; }
+:root.theme-blue [data-cluster-ssa-need] .school-ssa-group--danger { color: #ff6b6b; }
+[data-cluster-ssa-need] .school-ssa-group ul { gap: .375rem; }
+/* The planner's help text wraps to two or three lines; the caption token's
+   1rem line is for single-line labels (owner, 2026-09-26: "fix the text
+   spacing"). */
+#cluster-planner-form p.edify-text-caption { line-height: 1.45 !important; }
+/* The drawer paints its spans in the body text colour; the score and its
+   dot belong to the group's colour, as on the school record. */
+[data-cluster-ssa-need] .school-ssa-group li :is(.school-ssa-group__score, .school-ssa-group__dot, strong) {
+  color: inherit;
+}
+[data-cluster-ssa-need] .school-ssa-group li .school-ssa-group__dot {
+  background-color: currentColor;
+}
+
+
 .school-ssa-group__empty {
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-micro-size) !important;
