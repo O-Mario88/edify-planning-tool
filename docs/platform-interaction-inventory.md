@@ -7,27 +7,27 @@ Static scan of every template control (button, link, input, select, textarea, su
 | Measure | Count |
 |---|---:|
 | Templates with controls | 535 |
-| Control declarations | 3398 |
+| Control declarations | 3400 |
 | State-changing | 411 |
 | High-consequence (state-changing) | 182 |
-| No automated evidence | 350 |
-| State-changing with no automated evidence | 24 |
+| No automated evidence | 343 |
+| State-changing with no automated evidence | 23 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
 | button | 1115 |
 | disclosure | 67 |
-| field | 1171 |
+| field | 1173 |
 | link | 980 |
 | tab | 65 |
 
 | Evidence | Count |
 |---|---:|
 | browser-rendered | 750 |
-| none | 350 |
-| page-tested | 1243 |
-| request-tested | 1055 |
+| none | 343 |
+| page-tested | 1249 |
+| request-tested | 1058 |
 
 ## State-changing controls with no automated evidence
 
@@ -39,7 +39,6 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-50C5EA35C587 | partials/business_transformation/loan_drawer.html | 35 | Confirm & complete | `POST /loans/{{ loan.id }}/salesforce-confirmation` |
 | INT-18330D9DA127 | partials/business_transformation/loan_drawer.html | 54 | Submit IA decision | `POST /loans/{{ loan.id }}/ia-validation` |
 | INT-ED7F98B5F13D | partials/catalogue/new_activity_drawer.html | 87 | Add activity | `POST /settings/activity-catalogue/new` |
-| INT-0431ED443AC0 | partials/clusters/bulk_schedule_drawer.html | 180 | Schedule the day | `POST /clusters/{{ cluster.id }}/bulk-schedule-drawer` |
 | INT-5ECC5BA5D5F4 | partials/core_schools/champion_review_drawer.html | 127 | Reject candidacy | `POST                                                             ` |
 | INT-574FE8F3BDA9 | partials/core_schools/champion_review_drawer.html | 131 | Graduate school | `POST                                                              ` |
 | INT-3791C26399DE | partials/cost_settings/add_drawer.html | 52 | Add cost | `POST /cost-settings/add` |
