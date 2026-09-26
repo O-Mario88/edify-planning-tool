@@ -1,0 +1,451 @@
+/* The Programme Lead's This Week view (owner, 2026-09-26).
+   templates/partials/dashboards/pl/week_*.html and _week_*.html. Cards take
+   the platform surface (edify-surface, rounded-surface, border, shadow-sm);
+   these rules lay the week out and tone it. Every colour is a semantic token,
+   so light, dark and blue themes resolve without a rule of their own. */
+
+.plwk {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Tones: one vocabulary for chips, states, facts and counts. */
+.plwk [data-tone],
+.plwk-backlog [data-tone] {
+  --plw-ink: var(--edify-text-muted);
+  --plw-fill: var(--edify-surface-muted);
+  --plw-line: var(--edify-border);
+}
+.plwk [data-tone="success"] {
+  --plw-ink: var(--edify-success-text);
+  --plw-fill: var(--edify-success-light);
+  --plw-line: var(--edify-success-border);
+}
+.plwk [data-tone="warning"] {
+  --plw-ink: var(--edify-warning-text);
+  --plw-fill: var(--edify-warning-light);
+  --plw-line: var(--edify-warning-border);
+}
+.plwk [data-tone="danger"] {
+  --plw-ink: var(--edify-danger-text);
+  --plw-fill: var(--edify-danger-light);
+  --plw-line: var(--edify-danger-border);
+}
+.plwk [data-tone="info"] {
+  --plw-ink: var(--edify-info-text);
+  --plw-fill: var(--edify-info-light);
+  --plw-line: var(--edify-info-border);
+}
+
+/* ── Heading and week arrows ─────────────────────────────────────────── */
+.plwk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.plwk-head__lead {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.plwk-head__name {
+  margin-block-end: 0;
+}
+.plwk-head__range {
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-body-weight);
+}
+.plwk-arrows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+.plwk-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: 2.25rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  white-space: nowrap;
+}
+.plwk-arrow:hover,
+.plwk-arrow:focus-visible {
+  background: var(--edify-surface-hover);
+}
+
+.plwk-rail {
+  min-inline-size: 0;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.plwk-box {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.plwk-box__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.875rem 1.25rem 0.625rem;
+}
+.plwk-box__header--split {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.plwk-box__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+.plwk-box__name[data-tone] {
+  color: var(--plw-ink);
+}
+.plwk-box__hint {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.4;
+}
+.plwk-box__hint [data-tone],
+.plwk-board__sub [data-tone] {
+  color: var(--plw-ink);
+  font-weight: var(--edify-text-label-weight);
+}
+
+/* ── Figures ─────────────────────────────────────────────────────────── */
+.plwk-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.plwk-fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--plw-line, var(--edify-border));
+  border-radius: var(--radius-pill);
+  background: var(--plw-fill, var(--edify-surface));
+  color: var(--plw-ink, var(--edify-text-muted));
+  font-size: var(--edify-text-label-size);
+}
+.plwk-fact strong {
+  color: var(--plw-ink, var(--edify-text));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Everyone's week: a board of people by days ─────────────────────── */
+.plwk-board-scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.plwk-board {
+  --plw-day-columns: repeat(5, minmax(8rem, 1fr));
+  min-inline-size: 54rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+}
+.plwk-board[data-days="7"] {
+  --plw-day-columns: repeat(7, minmax(7.5rem, 1fr));
+  min-inline-size: 70rem;
+}
+.plwk-board__row {
+  display: grid;
+  grid-template-columns: 11rem 6.5rem var(--plw-day-columns);
+  border-block-end: 1px solid var(--edify-divider);
+}
+.plwk-board > [role="rowgroup"]:last-child > .plwk-board__row:last-child {
+  border-block-end: 0;
+}
+.plwk-board__row > * {
+  min-inline-size: 0;
+  padding: 0.5rem;
+}
+.plwk-board__head .plwk-board__row {
+  border-block: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+}
+.plwk-board__head [role="columnheader"] {
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.plwk-board__head [role="columnheader"][data-today] {
+  color: var(--edify-accent-text);
+}
+.plwk-board [role="cell"][data-today] {
+  background: var(--edify-surface-selected, var(--edify-surface-muted));
+}
+.plwk-board__date {
+  display: block;
+  font-weight: var(--edify-text-body-weight);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.plwk-board__who {
+  padding-inline-start: 1.25rem !important;
+}
+.plwk-board__carried {
+  text-align: center;
+}
+.plwk-person {
+  display: block;
+  color: var(--edify-accent-text);
+  font-weight: var(--edify-text-title-weight);
+}
+.plwk-person:hover,
+.plwk-person:focus-visible {
+  text-decoration: underline;
+}
+.plwk-board__sub {
+  display: block;
+  margin-block-start: 0.125rem;
+  color: var(--edify-text-muted);
+}
+.plwk-count {
+  display: inline-flex;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--plw-line);
+  border-radius: var(--radius-pill);
+  background: var(--plw-fill);
+  color: var(--plw-ink);
+  font-weight: var(--edify-text-title-weight);
+  font-variant-numeric: tabular-nums;
+}
+.plwk-count:hover,
+.plwk-count:focus-visible {
+  text-decoration: underline;
+}
+.plwk-none {
+  color: var(--edify-text-subtle, var(--edify-text-muted));
+}
+.plwk-leave {
+  display: block;
+  margin-block-end: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px dashed var(--edify-warning-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning-text);
+  font-weight: var(--edify-text-label-weight);
+}
+
+/* A chip: what kind of work, and where. The left rule carries the tone. */
+.plwk-slot {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  margin-block-end: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--plw-line);
+  border-inline-start-width: 3px;
+  border-radius: var(--radius-control);
+  background: var(--plw-fill);
+  color: var(--edify-text);
+  line-height: 1.3;
+}
+.plwk-slot[data-tone="neutral"] {
+  background: var(--edify-surface);
+}
+.plwk-slot:last-child {
+  margin-block-end: 0;
+}
+.plwk-slot__kind {
+  color: var(--plw-ink);
+  font-size: var(--edify-text-micro-size, var(--edify-text-label-size));
+  font-weight: var(--edify-text-title-weight);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+/* Two lines of a long school name before it clips; the chip's title holds
+   the whole of it. */
+.plwk-slot__where {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-weight: var(--edify-text-label-weight);
+  overflow-wrap: anywhere;
+}
+
+.plwk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  padding: 0.625rem 1.25rem 0.875rem;
+  border-block-start: 1px solid var(--edify-divider);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+.plwk-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.plwk-legend__item::before {
+  content: "";
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 1px solid var(--plw-line);
+  border-inline-start-width: 3px;
+  border-radius: 0.1875rem;
+  background: var(--plw-fill);
+}
+
+/* ── Overdue rows: red, links and status included ─────────────────────
+   Owner, 2026-09-26: "the font color for all overdue activities should be
+   RED", Edify blue included, and bright red in dark mode. Light mode uses
+   the platform's danger ink. The dark themes' own danger ink is a soft
+   salmon (theme-dark) or pink (theme-blue), so they get a brighter red of
+   their own; each holds 4.5:1 on its theme's surfaces.
+
+   Two rules, because the platform recolours table content twice. The first
+   outranks the record-table rules (row headers, links, cell utilities).
+   The second outranks consistency.css's plain-table rule, which paints
+   every piece of cell content micro-ux.js marks .edify-table-plain-content
+   as ink (0,6,1) — status labels included; it mirrors that selector with
+   the overdue row in it. The row's action buttons are .edify-table-action,
+   never plain content, so they keep their own colours: they are controls,
+   not the record. */
+.plwk {
+  --plwk-overdue: var(--edify-danger-text);
+}
+:root.theme-dark .plwk {
+  --plwk-overdue: #ff5252;
+}
+:root.theme-blue .plwk {
+  --plwk-overdue: #ff6b6b;
+}
+:root .plwk .edify-record-table tr[data-overdue] > :is(td, th),
+:root .plwk .edify-record-table tr[data-overdue] > :is(td, th) :is(a, span, div, strong):not(.row-menu, .row-menu *) {
+  color: var(--plwk-overdue) !important;
+}
+:root .plwk table.edify-plain-table.edify-plain-table.edify-plain-table
+  tr[data-overdue] .edify-table-plain-content:not(.row-menu, .row-menu *) {
+  color: var(--plwk-overdue) !important;
+}
+
+/* ── The action stays on screen ──────────────────────────────────────
+   The three tables keep "What needs you now"'s full columns, so on a
+   laptop, or beside the side panel, they are wider than their card, and the
+   Actions column — Verify, Send to <officer> — fell behind a sideways
+   scroll where it read as missing (owner, 2026-09-26). The platform's Core
+   School Oversight answer (platform.css, .core-oversight-table): pin the
+   last column to the right edge of the scroll region. The plain-table rules
+   already give every cell an opaque surface, so the columns scrolling under
+   it stay hidden. */
+.plwk [data-pl-week-table] .edify-record-table :is(th, td):last-child {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 1;
+}
+
+/* ── The partners' tables ────────────────────────────────────────────
+   Record tables: the platform flattens a cell's stacked pair onto one line
+   ("Hill School · Mukono", consistency.css), so these rules only tone it. */
+.plwk-table tbody th {
+  font-weight: var(--edify-text-label-weight);
+}
+.plwk-table__wrap {
+  min-inline-size: 12rem;
+  white-space: normal !important;
+}
+.plwk-state {
+  display: inline-flex;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--plw-line);
+  border-radius: var(--radius-pill);
+  background: var(--plw-fill);
+  color: var(--plw-ink);
+  font-weight: var(--edify-text-label-weight);
+  white-space: nowrap;
+}
+
+/* ── All overdue plans, folded under the week ────────────────────────── */
+.plwk-backlog__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 2.75rem;
+  padding: 0.625rem 1.25rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  cursor: pointer;
+}
+.plwk-backlog__count {
+  display: inline-flex;
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid var(--edify-danger-border);
+  border-radius: var(--radius-pill);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger-text);
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+.plwk-backlog__body {
+  padding: 0.25rem 1rem 1rem;
+}
+
+/* ── Phones: each person becomes a card, empty days drop away ────────── */
+@media (max-width: 47.999rem) {
+  .plwk-board-scroll {
+    overflow-x: visible;
+  }
+  .plwk-board,
+  .plwk-board[data-days="7"] {
+    min-inline-size: 0;
+  }
+  .plwk-board__head {
+    display: none;
+  }
+  .plwk-board__row {
+    display: block;
+    padding-block: 0.5rem;
+  }
+  .plwk-board__row > * {
+    padding: 0.25rem 1rem !important;
+  }
+  .plwk-board [data-empty] {
+    display: none;
+  }
+  .plwk-board [role="cell"][data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-block-end: 0.25rem;
+    color: var(--edify-text-muted);
+    font-weight: var(--edify-text-label-weight);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .plwk-board__carried {
+    text-align: start;
+  }
+  .plwk-box__header--split {
+    flex-direction: column;
+  }
+}

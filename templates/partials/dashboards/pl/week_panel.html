@@ -1,0 +1,64 @@
+{% comment %}
+The This Week panel: whose week (Everyone, Me, one tab per officer, Partners),
+which week, and that tab's content. `week` is
+apps.analytics.pl_week_service.build_week. Rendered inside #pl-week-panel on
+the dashboard, and alone when one of its tabs or arrows asks for it; the rail
+and the content swap as one unit so the selected tab can never go stale.
+{% endcomment %}
+<div class="plwk-head">
+  <div class="plwk-head__lead">
+    <h2 class="rpl-section-title plwk-head__name">{% if week.is_current %}This week{% elif week.is_past %}Week of {{ week.start|date:"j M" }}{% else %}Coming week{% endif %} <span class="plwk-head__range">· {{ week.range_label }}</span></h2>
+    <p class="rpl-card__subtitle">Where you and your officers are working, what is overdue from the {{ week.previous_label }}, and what the partners did.</p>
+  </div>
+  <nav class="plwk-arrows" aria-label="Choose the week">
+    <a class="plwk-arrow" href="/dashboard?{{ week.previous_query }}" hx-get="/dashboard?{{ week.previous_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" rel="prev"><span aria-hidden="true">&lsaquo;</span> Previous week</a>
+    {% if not week.is_current %}<a class="plwk-arrow" href="/dashboard?{{ week.current_query }}" hx-get="/dashboard?{{ week.current_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true">This week</a>{% endif %}
+    <a class="plwk-arrow" href="/dashboard?{{ week.next_query }}" hx-get="/dashboard?{{ week.next_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" rel="next">Next week <span aria-hidden="true">&rsaquo;</span></a>
+  </nav>
+</div>
+
+{% comment %}Whose week. The tab answers the press at once, as the dashboard's
+own rail does; the server's rail arrives with the content a moment later.
+A count on a tab is how much of that person's work waits on you: overdue
+from last week, past its day this week, or completed and awaiting your
+verification.{% endcomment %}
+<nav class="edify-section-nav plwk-rail" aria-label="Whose week">
+  <div class="edify-section-nav__inner" role="tablist" aria-label="Whose week"
+       @click="
+         const tab = $event.target.closest('[role=tab]');
+         if (!tab) return;
+         [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+           const chosen = other === tab;
+           other.classList.toggle('is-active', chosen);
+           other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+           other.setAttribute('tabindex', chosen ? '0' : '-1');
+         });
+       "
+       x-data>
+    {% for tab in week.tabs %}
+    <a href="/dashboard?{{ tab.query }}"
+       id="pl-week-tab-{{ tab.key }}"
+       role="tab"
+       aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
+       aria-controls="pl-week-content"
+       tabindex="{% if tab.active %}0{% else %}-1{% endif %}"
+       class="edify-section-nav__link{% if tab.active %} is-active{% endif %}"
+       data-pl-week-tab="{{ tab.key }}"
+       hx-get="/dashboard?{{ tab.query }}"
+       hx-target="#pl-week-panel"
+       hx-swap="innerHTML"
+       hx-sync="closest [role=tablist]:replace"
+       hx-push-url="true">{{ tab.label }}{% if tab.count %} <span data-edify-tab-count>{{ tab.count }}</span>{% endif %}</a>
+    {% endfor %}
+  </div>
+</nav>
+
+<div id="pl-week-content" role="tabpanel" tabindex="0" aria-labelledby="pl-week-tab-{{ week.who }}" data-pl-week-who="{{ week.who }}">
+  {% if week.who == "everyone" %}
+    {% include "partials/dashboards/pl/_week_everyone.html" %}
+  {% elif week.who == "partners" %}
+    {% include "partials/dashboards/pl/_week_partners.html" with partners=week.partners %}
+  {% else %}
+    {% include "partials/dashboards/pl/_week_person.html" with person=week.person %}
+  {% endif %}
+</div>

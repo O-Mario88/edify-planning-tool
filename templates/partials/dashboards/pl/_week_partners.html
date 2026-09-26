@@ -1,0 +1,67 @@
+{% load table_pagination %}
+{% comment %}
+The partners' week, for strict monitoring (owner, 2026-09-26): partner work
+your team monitors that was dated this week and where it stands, then work
+still late from before the week — exceptions first, one card per partner,
+the partner with the most exceptions on top. Read from Partner Monitoring's
+own items (apps.planning.partner_oversight_service), so the two cannot
+disagree; every card opens that partner there, where reminders are sent.
+{% endcomment %}
+<div class="space-y-4" data-pl-week-partners>
+  <div class="plwk-facts" role="list" aria-label="The partners' week in figures">
+    <span class="plwk-fact" role="listitem" data-tone="success"><strong>{{ partners.done }}</strong> evidence submitted</span>
+    <span class="plwk-fact" role="listitem"{% if partners.started %} data-tone="warning"{% endif %}><strong>{{ partners.started }}</strong> in progress</span>
+    <span class="plwk-fact" role="listitem"{% if partners.not_delivered %} data-tone="danger"{% endif %}><strong>{{ partners.not_delivered }}</strong> not delivered</span>
+    <span class="plwk-fact" role="listitem"{% if partners.late_before %} data-tone="danger"{% endif %}><strong>{{ partners.late_before }}</strong> still late from before</span>
+    <span class="plwk-fact" role="listitem"><strong>{{ partners.upcoming }}</strong> still to come</span>
+  </div>
+
+  {% if partners.failed %}
+  {% include "components/empty_state.html" with message="Partner work could not be read just now." hint="Partner Monitoring has the full record." compact="true" %}
+  {% endif %}
+
+  {% for group in partners.groups %}
+  <section class="plwk-box edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" aria-labelledby="plwk-partner-{{ forloop.counter }}-title" data-pl-week-partner="{{ group.partner_id }}">
+    <header class="plwk-box__header plwk-box__header--split">
+      <div>
+        <h3 id="plwk-partner-{{ forloop.counter }}-title" class="plwk-box__name">{{ group.partner_name }}</h3>
+        <p class="plwk-box__hint">{{ group.done }} submitted · {{ group.started }} in progress · {% if group.exceptions %}<span data-tone="danger">{{ group.not_delivered }} not delivered · {{ group.late_before }} late from before</span>{% else %}nothing late{% endif %} · {{ group.upcoming }} to come</p>
+      </div>
+      <a class="rpl-card__link" href="/partner-oversight/{% if group.partner_id %}?partner={{ group.partner_id|urlencode }}{% endif %}">Partner Monitoring <span aria-hidden="true">&rarr;</span></a>
+    </header>
+    {% paginate group.rows group.page_param week.rows_per_page as partner_pager %}
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ group.partner_name }}'s work">
+      <table class="rpl-table plwk-table" data-mobile-table="scroll">
+        <caption class="sr-only">{{ group.partner_name }}'s work this week and anything still late from before it, most urgent first.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Day</th>
+            <th scope="col">Where</th>
+            <th scope="col">Activity</th>
+            <th scope="col">Officer</th>
+            <th scope="col">Status</th>
+            <th scope="col">Next step</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in partner_pager.rows %}
+          <tr data-state="{{ row.state }}">
+            <td data-label="Day">{{ row.date_label }}</td>
+            <th scope="row" data-label="Where" data-record-title><span>{{ row.where }}</span>{% if row.district %}<span>{{ row.district }}</span>{% endif %}</th>
+            <td data-label="Activity">{{ row.activity }}</td>
+            <td data-label="Officer">{{ row.officer|default:"—" }}</td>
+            <td data-label="Status"><span class="plwk-state" data-tone="{{ row.tone }}">{{ row.state_label }}</span></td>
+            <td data-label="Next step" class="plwk-table__wrap">{{ row.next_action|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=partner_pager param=group.page_param %}
+  </section>
+  {% empty %}
+  {% if not partners.failed %}
+  {% include "components/empty_state.html" with message="No partner work this week, and nothing late from before it." hint="Partner work your officers monitor appears here on the day it is scheduled, and stays here while it is late." compact="true" %}
+  {% endif %}
+  {% endfor %}
+</div>

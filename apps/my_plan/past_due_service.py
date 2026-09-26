@@ -223,6 +223,14 @@ class PastDueRows(Sequence):
         return iter(self._build(self._ids))
 
 
+def activity_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
+    """The School Visits / Trainings / Cluster Meetings table rows for these
+    activities, in the order given — the same rows "What needs you now"
+    draws, for the Programme Lead's week (apps.analytics.pl_week_service),
+    which tables the same work with the same columns."""
+    return _build_rows(activity_ids, own_ids=own_ids, today=today)
+
+
 def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
     """The display rows for these activities, in the order given."""
     if not activity_ids:
@@ -391,6 +399,28 @@ def _reminded_activity_ids(activity_ids) -> set[str]:
             resolved_at__isnull=True,
         ).values_list("context_id", flat=True)
     )
+
+
+def reminder_sent_on(activity_ids) -> dict[str, Any]:
+    """When each activity's live overdue reminder was sent, one query: the
+    Programme Lead's week says "Followed up Tue" rather than offering the
+    same reminder twice."""
+    if not activity_ids:
+        return {}
+    sent: dict[str, Any] = {}
+    for context_id, created_at in Notification.objects.filter(
+        source_event_type=OVERDUE_REMINDER_EVENT,
+        context_id__in=list(activity_ids),
+        resolved_at__isnull=True,
+    ).values_list("context_id", "created_at"):
+        if created_at and (context_id not in sent or created_at > sent[context_id]):
+            sent[context_id] = created_at
+    return {
+        context_id: timezone.localtime(moment).date()
+        if timezone.is_aware(moment)
+        else moment.date()
+        for context_id, moment in sent.items()
+    }
 
 
 def team_past_due_activity(user, activity_id: str):

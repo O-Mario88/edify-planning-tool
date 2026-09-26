@@ -1,0 +1,9 @@
+{% comment %}
+The Salesforce ID and Evidence cells of the week's tables (owner,
+2026-09-26): the two halves of completing an activity. The stored Salesforce
+ID as entered — SVE- for a school visit, TS- for a group training or cluster
+meeting, validated at entry (apps.activities.salesforce) — or "Not in SF";
+the uploaded form — Visit Form, or Attendance — or "No Evidence Uploaded".
+{% endcomment %}
+<td class="px-3 py-2.5 whitespace-nowrap" data-salesforce-id>{% if row.salesforce_id %}<span class="font-mono">{{ row.salesforce_id }}</span>{% else %}<span class="text-slate-400">Not in SF</span>{% endif %}</td>
+<td class="px-3 py-2.5 whitespace-nowrap" data-evidence>{% if row.evidence_label %}{{ row.evidence_label }}{% else %}<span class="text-slate-400">No Evidence Uploaded</span>{% endif %}</td>

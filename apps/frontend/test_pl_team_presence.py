@@ -34,12 +34,13 @@ class ProgrammeLeadTeamPresenceTest(SimpleTestCase):
         block = source.split("def _program_lead_dashboard", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("presence_summary(only_user_ids=team_user_ids(user))", block)
         # Built for the views that show it, not on every tab the Lead opens.
-        self.assertIn('if view in ("today", "team"):', block)
+        self.assertIn('if view in ("week", "team"):', block)
         self.assertNotIn("presence_summary()", block)
 
     def test_the_main_dashboard_draws_the_team_panel(self):
-        """Owner, 2026-09-24: Who's Online on the Lead's main dashboard."""
-        source = (ROOT / "templates/partials/dashboards/pl/today_view.html").read_text()
+        """Owner, 2026-09-24: Who's Online on the Lead's main dashboard, whose
+        first view is This Week since 2026-09-26."""
+        source = (ROOT / "templates/partials/dashboards/pl/week_view.html").read_text()
         self.assertIn('{% include "partials/dashboards/_whos_online.html" %}', source)
         self.assertIn("{% if presence %}", source)
 

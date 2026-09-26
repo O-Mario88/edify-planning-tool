@@ -1,0 +1,71 @@
+{% load table_pagination %}
+{% comment %}
+Everyone's week at a glance: one row per person (you first, then your
+officers), how much is overdue from last week, then a column per day holding
+where each is working — the school, cluster or venue, tagged Visit, Training,
+Meeting or Other and toned by where it stands. Weekend columns appear only when
+someone has work on them.
+
+A board, not a record table: a day holds several places, one under another,
+which the platform's record-table rule (one line per row, consistency.css)
+would flatten into one. So it is drawn as an ARIA table of divs, read by
+assistive technology as rows and columns. On a phone each row becomes that
+person's card and empty days drop away. Rows page with the shared pager; a
+team fits on one page.
+{% endcomment %}
+<div class="plwk-box edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-pl-week-everyone>
+  {% paginate week.people "week_people_page" as people_pager %}
+  <div class="plwk-board-scroll" tabindex="0" aria-label="Everyone's week, scrolls sideways">
+    <div class="plwk-board" role="table" aria-describedby="plwk-board-caption" data-days="{{ week.days|length }}">
+      <p id="plwk-board-caption" class="sr-only">Where you and each officer are working each day of the week of {{ week.range_label }}, and how much is overdue from the {{ week.previous_label }}.</p>
+      <div role="rowgroup" class="plwk-board__head">
+        <div role="row" class="plwk-board__row">
+          <div role="columnheader" class="plwk-board__who">Person</div>
+          <div role="columnheader" class="plwk-board__carried">Overdue</div>
+          {% for d in week.days %}
+          <div role="columnheader"{% if d.is_today %} data-today aria-current="date"{% endif %}>{{ d.label }} <span class="plwk-board__date">{{ d.number }}</span></div>
+          {% endfor %}
+        </div>
+      </div>
+      <div role="rowgroup">
+        {% for person in people_pager.rows %}
+        <div role="row" class="plwk-board__row" data-person="{{ person.key }}">
+          <div role="rowheader" class="plwk-board__who">
+            <a class="plwk-person" href="/dashboard?{{ person.query }}" hx-get="/dashboard?{{ person.query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true">{{ person.name }}</a>
+            <span class="plwk-board__sub">{% if person.planned %}{{ person.closed }} of {{ person.planned }} verified{% else %}Nothing planned{% endif %}{% if person.behind %} · <span data-tone="danger">{{ person.behind }} behind</span>{% endif %}</span>
+          </div>
+          <div role="cell" class="plwk-board__carried" data-label="Overdue from last week"{% if not person.overdue_count %} data-empty{% endif %}>
+            {% if person.overdue_count %}
+            <a class="plwk-count" data-tone="danger" href="/dashboard?{{ person.overdue_query }}" hx-get="/dashboard?{{ person.overdue_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" title="Open {{ person.name }}'s overdue work to follow up">{{ person.overdue_count }}<span class="sr-only"> overdue, open {{ person.name }}'s overdue work</span></a>
+            {% else %}
+            <span class="plwk-none"><span aria-hidden="true">&mdash;</span><span class="sr-only">None</span></span>
+            {% endif %}
+          </div>
+          {% for cell in person.cells %}
+          <div role="cell" data-label="{{ cell.day|date:'D j M' }}"{% if not cell.rows and not cell.on_leave %} data-empty{% endif %}{% if cell.is_today %} data-today{% endif %}>
+            {% if cell.on_leave %}<span class="plwk-leave">On leave</span>{% endif %}
+            {% for row in cell.rows %}
+            <span class="plwk-slot" data-kind="{{ row.kind }}" data-tone="{{ row.tone }}" title="{{ row.type_label }}{% if row.detail %} — {{ row.detail }}{% endif %} · {{ row.where }}{% if row.district %}, {{ row.district }}{% endif %} · {{ row.state_label }}">
+              <span class="plwk-slot__kind">{% if row.kind == "visit" %}Visit{% elif row.kind == "training" %}Training{% elif row.kind == "meeting" %}Meeting{% else %}Other{% endif %}</span>
+              <span class="plwk-slot__where">{{ row.where }}</span>
+              <span class="sr-only">{{ row.type_label }}, {{ row.state_label }}</span>
+            </span>
+            {% endfor %}
+            {% if not cell.rows and not cell.on_leave %}<span class="plwk-none"><span aria-hidden="true">&middot;</span><span class="sr-only">Nothing planned</span></span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% include "components/table_pager.html" with pager=people_pager param="week_people_page" pagination_label="People pages" %}
+  <p class="plwk-legend">
+    <span class="sr-only">Colours:</span>
+    <span class="plwk-legend__item" data-tone="success">Verified</span>
+    <span class="plwk-legend__item" data-tone="info">Completed, awaiting verification</span>
+    <span class="plwk-legend__item" data-tone="warning">Started, or evidence or Salesforce ID missing</span>
+    <span class="plwk-legend__item" data-tone="danger">Past its day, or returned</span>
+    <span class="plwk-legend__item" data-tone="neutral">Scheduled</span>
+  </p>
+</div>

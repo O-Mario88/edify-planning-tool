@@ -1,0 +1,9 @@
+{% comment %}The Planned Date cell of the week's tables: a clock once the day has passed and the work is not yet verified, as "What needs you now" draws a past-due date. The row's red comes from pl-week.css (tr[data-overdue]).{% endcomment %}
+{% if row.is_overdue %}
+<span class="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+  <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+  {{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}
+</span>
+{% else %}
+<span class="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</span>
+{% endif %}

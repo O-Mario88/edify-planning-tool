@@ -4505,6 +4505,210 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4467,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 6,
+      "kind": "application-partial",
+      "name": " Week Action",
+      "purpose": "Reusable  week action interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_action.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 812,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Completion Cells",
+      "purpose": "Reusable  week completion cells interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_completion_cells.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 5258,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Week Everyone",
+      "purpose": "Reusable  week everyone interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_everyone.html",
+      "variants": [
+        "danger",
+        "info",
+        "neutral",
+        "success",
+        "warning",
+        "{{ row.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 346,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Executor",
+      "purpose": "Reusable  week executor interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_executor.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 488,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Intervention",
+      "purpose": "Reusable  week intervention interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_intervention.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 4492,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Partners",
+      "purpose": "Reusable  week partners interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/pl/_week_partners.html",
+      "variants": [
+        "danger",
+        "success",
+        "warning",
+        "{{ row.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 3967,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Week Person",
+      "purpose": "Reusable  week person interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "selected"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_person.html",
+      "variants": [
+        "danger",
+        "info",
+        "success",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 841,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Planned Date",
+      "purpose": "Reusable  week planned date interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_week_planned_date.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 14542,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Week Tables",
+      "purpose": "Reusable  week tables interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/pl/_week_tables.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 1411,
       "deprecated_alternatives": [],
@@ -4528,7 +4732,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 457,
+      "bytes": 461,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4762,12 +4966,12 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10212,
+      "bytes": 8962,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Team View",
       "purpose": "Reusable team view interface primitive",
@@ -4780,30 +4984,6 @@
       "variants": [
         "danger",
         "{% if group.overdue %}danger{% else %}warning{% endif %}"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 3179,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Today View",
-      "purpose": "Reusable today view interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "error"
-      ],
-      "tables": 0,
-      "template": "partials/dashboards/pl/today_view.html",
-      "variants": [
-        "{{ a.tone }}"
       ]
     },
     {
@@ -4878,7 +5058,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1069,
+      "bytes": 1109,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4894,6 +5074,53 @@
       "tables": 0,
       "template": "partials/dashboards/pl/view.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 3775,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Week Panel",
+      "purpose": "Reusable week panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "selected"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/week_panel.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4335,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Week View",
+      "purpose": "Reusable week view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/week_view.html",
+      "variants": [
+        "{{ a.tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -11881,7 +12108,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1420,
+      "bytes": 1567,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today/panel",
@@ -12044,7 +12271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11468,
+      "bytes": 11652,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -34549,6 +34776,99 @@
       "typography_exceptions": [
         "text-[12px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.pl_week_send_reminder",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6756CED269",
+      "page_title": "Dashboard Pl Week Send",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Dashboard Pl Week Send",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "This Week's \"Send to <officer>\" (owner, 2026-09-26): remind an officer to complete work they have not completed \u2014 upload the evidence and enter the Salesforce ID \u2014 whether it is past its day or due later this week.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/dashboard/pl-week-send/<str:activity_id>/",
+      "route_name": "dashboard_pl_week_send",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.admin_ops.services",
+        "apps.cce_leadership.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.notifications.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -98013,6 +98333,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.dashboard_views.pl_week_send_reminder",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/dashboard/pl-week-send/<str:activity_id>/",
+      "route_name": "dashboard_pl_week_send",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.dashboard_views.planning_progress_fragment_view",
       "kind": "partial",
       "methods": [
@@ -106125,28 +106457,28 @@
   "summary": {
     "accessibility_contract_pass": 537,
     "activity_states": 24,
-    "all_routes": 1301,
+    "all_routes": 1302,
     "api_routes": 360,
-    "component_templates": 492,
+    "component_templates": 502,
     "full_pages": 260,
     "mobile_contract_pass": 537,
-    "nonvisual_actions": 267,
+    "nonvisual_actions": 268,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 541,
+      "interaction-fragment": 542,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
     "partials_and_drawers": 274,
-    "permission_gated": 814,
+    "permission_gated": 815,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 829,
+    "routed_surfaces": 830,
     "scheduled_jobs": 31,
     "severity_counts": {
       "critical": 0,
@@ -106155,7 +106487,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 537,
-    "test_referenced": 722,
+    "test_referenced": 723,
     "theme_contract_pass": 537
   }
 }

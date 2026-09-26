@@ -163,24 +163,24 @@ class DashboardViewSourceTest(TestCase):
 class DashboardViewRenderTest(TestCase):
     """What each role gets on their home dashboard."""
 
-    def test_pl_today_owns_attention_and_ignores_saved_tabs(self):
+    def test_pl_this_week_owns_attention_and_ignores_saved_tabs(self):
         self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "map"
         response = self._get(self.pl, "/dashboard")
-        self.assertEqual(response.context["dashboard_view"], "today")
+        self.assertEqual(response.context["dashboard_view"], "week")
         self.assertContains(response, "data-pl-attention")
         self.assertContains(response, 'data-section="what-needs-you-now"')
         other = self._get(self.pl, "/dashboard?view=team")
         self.assertNotContains(other, "data-pl-attention")
         self.assertNotContains(other, 'data-section="what-needs-you-now"')
         self.client.force_login(self.pl)
-        today = self.client.get(
-            "/dashboard?view=today",
+        week = self.client.get(
+            "/dashboard?view=week",
             HTTP_HX_REQUEST="true",
             HTTP_HX_TARGET="pl-dashboard-view-shell",
         )
-        self.assertContains(today, "data-pl-attention")
-        self.assertContains(today, 'data-section="what-needs-you-now"')
-        self.assertIn("leadership_attention", today.context)
+        self.assertContains(week, "data-pl-attention")
+        self.assertContains(week, 'data-section="what-needs-you-now"')
+        self.assertIn("leadership_attention", week.context)
 
     def setUp(self):
         self.cd = _user("cd.view@edify.test", "CountryDirector")
@@ -198,8 +198,8 @@ class DashboardViewRenderTest(TestCase):
         return self.client.get(url, **headers)
 
     def test_leadership_dashboards_open_on_the_map(self):
-        # The Program Lead's dashboard opens on Today since Today and Dashboard
-        # became one page (owner, 2026-09-14); Map is its first own view.
+        # The Program Lead's dashboard opens on This Week (owner, 2026-09-26;
+        # Today from 2026-09-14); Map is the next of its views.
         for user, url in (
             (self.cd, "/dashboard"),
             (self.pl, "/dashboard?view=map"),
@@ -257,10 +257,10 @@ class DashboardViewRenderTest(TestCase):
                 self.assertIn('id="subregion-distribution-rows"', html)
 
     def test_the_field_roles_open_on_today_with_their_work_and_the_map_beside_it(self):
-        # Today and Dashboard are one page (owner, 2026-09-14).
+        # Today and Dashboard are one page (owner, 2026-09-14). The Program
+        # Lead opens on This Week instead (next test).
         for user, work in (
             (self.cceo, "Week"),
-            (self.pl, "Map"),
             (self.coordinator, "Operations"),
         ):
             with self.subTest(role=user.active_role):
@@ -277,6 +277,33 @@ class DashboardViewRenderTest(TestCase):
                 self.assertLess(html.index(">Today</a>"), html.index(f">{work}</a>"))
                 html = self._get(user, "/dashboard?view=map").content.decode()
                 self.assertIn("subregionMap()", html)
+
+    def test_the_program_lead_opens_on_this_week_with_today_as_the_me_tab(self):
+        # Owner, 2026-09-26: the lead's default is what they and their CCEOs
+        # are working on this week. Their Today workbench is the week's Me
+        # tab, where /today and "Open Today" links still lead.
+        response = self._get(self.pl, "/dashboard")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        selected = re.findall(
+            r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"', html
+        )
+        self.assertEqual(selected, ["week"])
+        self.assertLess(html.index(">This Week</a>"), html.index(">Map</a>"))
+        self.assertNotIn("subregionMap()", html)
+        self.assertIn('data-pl-week-who="everyone"', html)
+        self.assertNotIn("data-dashboard-today", html)
+
+        self.assertRedirects(
+            self._get(self.pl, "/today"),
+            "/dashboard?view=today",
+            fetch_redirect_response=False,
+        )
+        html = self._get(self.pl, "/dashboard?view=today").content.decode()
+        self.assertIn('data-pl-week-who="me"', html)
+        self.assertIn("data-dashboard-today", html)
+        self.assertIn('hx-get="/today/panel"', html)
+        self.assertIn("today_section", html)
 
     def test_the_operations_view_carries_the_work(self):
         html = self._get(self.cd, "/dashboard?view=operations").content.decode()

@@ -1,0 +1,69 @@
+{% comment %}
+One person's week (owner, 2026-09-26): two lists behind a secondary tab —
+Overdue from last week, and Due this week — each drawn as the three tables
+"What needs you now" draws: School Visits, Group Trainings and Cluster
+Meetings, with the same columns, and an action per row: Verify when the
+officer has completed it, Send to <officer> when they have not. Completed
+work is off both lists; the figures above still count it.
+
+The lead's own tab (Me) opens with their Today workbench — the to-do list
+that used to open the dashboard — and sends today_section=own with every
+request made inside it, so the workbench leaves out the team, whose weeks
+have their own tabs.
+{% endcomment %}
+<div class="space-y-4" data-pl-week-person="{{ person.key }}">
+  <div class="plwk-facts" role="list" aria-label="{% if person.is_me %}Your week{% else %}{{ person.name }}'s week{% endif %} in figures">
+    <span class="plwk-fact" role="listitem"><strong>{{ person.planned }}</strong> planned this week</span>
+    <span class="plwk-fact" role="listitem" data-tone="success" title="Verified, or with Impact Assessment: done, and off the lists"><strong>{{ person.closed }}</strong> verified</span>
+    {% if not person.is_me %}<span class="plwk-fact" role="listitem"{% if person.awaiting_you %} data-tone="info"{% endif %}><strong>{{ person.awaiting_you }}</strong> awaiting your verification</span>{% endif %}
+    <span class="plwk-fact" role="listitem"{% if person.behind %} data-tone="danger"{% endif %}><strong>{{ person.behind }}</strong> past their day, not completed</span>
+    <span class="plwk-fact" role="listitem"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> overdue from last week</span>
+  </div>
+
+  {% if person.leave %}
+  <p class="rpl-card__footnote" data-tone="warning" data-pl-week-leave>On approved leave {{ person.leave|join:", " }}.</p>
+  {% endif %}
+
+  {% if person.is_me %}
+  <div class="plwk-today" hx-vals='{"today_section": "own"}' data-pl-week-today>
+    {% include "partials/today/dashboard_loader.html" %}
+  </div>
+  {% endif %}
+
+  {% comment %}Overdue or Due this week. Each is a real URL (?list=), so a
+  refresh, the back button and the tables' pagers keep the list.{% endcomment %}
+  <nav class="edify-section-nav plwk-rail" aria-label="{% if person.is_me %}Your lists{% else %}{{ person.name }}'s lists{% endif %}">
+    <div class="edify-section-nav__inner" role="tablist" aria-label="Overdue or due this week"
+         @click="
+           const tab = $event.target.closest('[role=tab]');
+           if (!tab) return;
+           [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+             const chosen = other === tab;
+             other.classList.toggle('is-active', chosen);
+             other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+             other.setAttribute('tabindex', chosen ? '0' : '-1');
+           });
+         "
+         x-data>
+      {% for item in person.lists %}
+      <a href="/dashboard?{{ item.query }}"
+         id="pl-week-list-{{ item.key }}"
+         role="tab"
+         aria-selected="{% if item.active %}true{% else %}false{% endif %}"
+         aria-controls="pl-week-list"
+         tabindex="{% if item.active %}0{% else %}-1{% endif %}"
+         class="edify-section-nav__link{% if item.active %} is-active{% endif %}"
+         data-pl-week-list-tab="{{ item.key }}"
+         hx-get="/dashboard?{{ item.query }}"
+         hx-target="#pl-week-panel"
+         hx-swap="innerHTML"
+         hx-sync="closest [role=tablist]:replace"
+         hx-push-url="true">{{ item.label }} <span data-edify-tab-count>{{ item.count }}</span></a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <div id="pl-week-list" role="tabpanel" tabindex="0" aria-labelledby="pl-week-list-{{ person.listing }}" class="space-y-4" data-pl-week-list="{{ person.listing }}">
+    {% include "partials/dashboards/pl/_week_tables.html" %}
+  </div>
+</div>
