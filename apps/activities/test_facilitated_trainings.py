@@ -19,6 +19,7 @@ from datetime import date
 
 from django.test import override_settings
 from freezegun import freeze_time
+from freezegun.api import freeze_factories
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import StaffSchoolAssignment
@@ -46,8 +47,9 @@ _flow = PartnerAndClusterFlowTest
 @freeze_time("2026-06-24")
 class FacilitatedTrainingTest(APITestCase):
     # The cluster-flow fixture: catalogue, region, IA, a CCEO under a PL, and
-    # the cluster-training rate card (facilitation fee 50,000 a day).
-    setUp_flow = _flow.setUp
+    # the cluster-training rate card (facilitation fee 50,000 a day). This
+    # class's own @freeze_time holds the clock while it builds.
+    _build_flow_fixture = _flow._build_fixture
     _user = _flow._user
     _school = _flow._school
     _ssa = _flow._ssa
@@ -56,7 +58,7 @@ class FacilitatedTrainingTest(APITestCase):
     _post = _flow._post
 
     def setUp(self):
-        self.setUp_flow()
+        self._build_flow_fixture()
         self.partner_user = self._user(
             "facilitator@flow.test", EdifyRole.PARTNER_FIELD_OFFICER.value
         )
@@ -112,6 +114,18 @@ class FacilitatedTrainingTest(APITestCase):
     def _fee_line(self, activity) -> ActivityScheduleCostLine:
         return ActivityScheduleCostLine.objects.get(
             activity=activity, line_item_type=FEE_LINE_TYPE
+        )
+
+    # -- the fixture ---------------------------------------------------------
+
+    def test_the_borrowed_fixture_starts_no_freeze_of_its_own(self):
+        # Borrowing the flow's setUp started a second freeze that no tearDown
+        # stopped, so every later test in the worker ran on 24 June 2026.
+        self.assertEqual(
+            len(freeze_factories),
+            1,
+            "a freeze besides this class's own is running: a borrowed setUp, "
+            "or an earlier test in this process, started one it never stopped",
         )
 
     # -- who owns it --------------------------------------------------------
