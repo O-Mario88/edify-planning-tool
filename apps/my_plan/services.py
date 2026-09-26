@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from apps.activities.completion_columns import (
+    EMPTY as EMPTY_COLUMNS,
+    completed_last_key,
+    completion_columns,
+    completion_fields,
+)
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
     PROGRAMME_EVENT_TYPES,
@@ -1935,10 +1941,42 @@ def get_frontend_context(principal, query: dict) -> dict:
     if _base_query:
         _base_query += "&"
 
+    # Every planned activities table: the Salesforce ID and Evidence columns,
+    # and open work first by planned date, completed work at the bottom
+    # (owner, 2026-09-26; apps.activities.completion_columns). Sorted here,
+    # before the templates page the lists, so page one holds the oldest open
+    # work; in place, so the counts and the CSV export read the same order.
+    _plan_tables = [
+        school_visits_list,
+        cluster_trainings_list,
+        cluster_meetings_list,
+        core_school_visits_list,
+        core_school_trainings_list,
+        programme_activities_list,
+        *programme_school_work.values(),
+    ]
+    _columns = completion_columns(
+        (row["id"], row["activity_type"]) for rows in _plan_tables for row in rows
+    )
+    for rows in _plan_tables:
+        for row in rows:
+            row.update(
+                completion_fields(row["status"], _columns.get(row["id"], EMPTY_COLUMNS))
+            )
+            if row["completion_gap"]:
+                # Complete only with both columns green: a status that says
+                # done over a missing half says what is missing instead.
+                row["status_label"] = row["completion_gap"]
+                row["status_class"] = "bg-amber-50 text-amber-700 border-amber-200"
+                row["status_tone"] = "amber"
+        rows.sort(
+            key=lambda row: completed_last_key(row["is_complete"], row["planned_date"])
+        )
+
     # The cards no longer page ten rows at a time. Ten rows out of a year is
     # the shape of a week, and hiding the rest behind "Next" is what made the
     # plan unreadable as a plan. Every row the selected period holds is
-    # rendered, oldest first.
+    # rendered, open work first by date and completed work last.
     return {
         "live": True,
         "period": period,

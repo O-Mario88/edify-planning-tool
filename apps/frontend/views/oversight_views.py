@@ -939,6 +939,26 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             for data in grouped_dict.values()
         ]
 
+    # The Salesforce ID and Evidence columns, and open work first by planned
+    # date with the officer's completed work at the bottom, in every one of
+    # the four tables (owner, 2026-09-26; apps.activities.completion_columns).
+    # Sorted before the templates page them, so page one is the oldest open
+    # work.
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    streams = (
+        "client_school_visits",
+        "core_school_visits",
+        "cluster_meetings",
+        "planned_trainings",
+    )
+    annotate(item for group in owner_groups for key in streams for item in group[key])
+    for group in owner_groups:
+        for key in streams:
+            sort_completed_last(group[key])
+        for training_group in group["planned_trainings_grouped"]:
+            sort_completed_last(training_group["items"])
+
     return owner_groups
 
 
@@ -1100,6 +1120,12 @@ def team_planning_oversight_view(request):
                 request, "partials/oversight/coverage_workspace.html", context
             )
         return render(request, "pages/oversight/team_planning.html", context)
+    # Partner work stays on Partner Monitoring (owner, 2026-09-26: "partner
+    # visits should remain on the partner oversight"): the planned activities
+    # tables here, their counts and their filters are the team's own work.
+    # The coverage lens above still counts a school a Partner will visit.
+    available_items = [i for i in available_items if not i.is_partner_work]
+    items = [i for i in items if not i.is_partner_work]
     # Both the country lens and the Regional Programme Lead's region lens read
     # many Programme Leads, so both are organised in Lead tabs; only the copy
     # and the headline tiles differ (owner, 2026-09-12).
@@ -1845,6 +1871,9 @@ def country_planning_team_view(request, staff_id: str):
     items = oversight.build_items(
         request.user, program_lead_id=staff_id, **_service_period(period)
     )
+    # Partner work stays on Partner Monitoring (owner, 2026-09-26), as on
+    # Team Oversight: these are the team's own planned activities.
+    items = [i for i in items if not i.is_partner_work]
 
     program_lead_name = next(
         (i.supervising_pl_name for i in items if i.supervising_pl_name), ""
@@ -1990,11 +2019,7 @@ def partner_oversight_view(request):
         member_items, activity_type=activity_type
     )
     items = partner_oversight.filter_workspace(typed_items, status=status)
-    # Waiting-on-staff first: a hand-back nobody has decided on is the one row
-    # somebody here has to act on.
-    items.sort(
-        key=lambda i: (not i.awaits_staff_decision, not i.is_overdue, i.school_name)
-    )
+    partner_oversight.order_for_monitoring(items)
     # The approved Salesforce authority is unchanged (owner, 2026-09-12): the
     # activity's named monitor records the entry that completes Partner work.
     # Partner work no longer sits on that person's My Plan (owner,

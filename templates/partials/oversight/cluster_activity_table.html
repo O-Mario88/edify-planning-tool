@@ -13,7 +13,7 @@ two decisions (owner, 2026-09-24): Verified, or Return with a reason.
 <section>
   <h3 class="edify-section-heading">{{ heading }} <span class="edify-text-caption">({{ activities|length }})</span></h3>
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-left whitespace-nowrap" aria-label="{{ heading }}" data-mobile-table="scroll" data-cluster-sessions>
+    <table class="edify-record-table w-full text-left whitespace-nowrap" aria-label="{{ heading }}" data-mobile-table="scroll" data-cluster-sessions data-pinned-actions>
       <thead>
         <tr>
           <th scope="col" class="min-w-[180px]">Cluster Name</th>
@@ -24,6 +24,8 @@ two decisions (owner, 2026-09-24): Verified, or Return with a reason.
           <th scope="col" class="min-w-[140px]">SSA Intervention</th>
           <th scope="col" class="text-center min-w-[100px]">Participants</th>
           <th scope="col" class="text-right min-w-[110px]">Cost</th>
+          <th scope="col" class="min-w-[130px]">Salesforce ID</th>
+          <th scope="col" class="min-w-[160px]">Evidence</th>
           <th scope="col" class="min-w-[120px]">Status</th>
           <th scope="col" class="text-right min-w-[90px]">Actions</th>
         </tr>
@@ -39,6 +41,7 @@ two decisions (owner, 2026-09-24): Verified, or Return with a reason.
           <td data-label="SSA Intervention">{% if item.intervention_label %}<span class="pill pill-neutral text-xs font-medium">{{ item.intervention_label }}</span>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
           <td class="text-center tabular-nums" data-label="Participants">{{ item.participants|default:"—" }}</td>
           <td class="text-right tabular-nums" data-label="Cost">{% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}</td>
+          {% include "components/completion_cells.html" with row=item %}
           <td data-label="Status"><span class="cluster-session-status" data-status-tone="{{ item.session_tone }}">{{ item.session_status }}</span></td>
           {% if item.pl_verify %}
           <td class="text-right" data-record-action data-label="Actions">
@@ -67,7 +70,7 @@ two decisions (owner, 2026-09-24): Verified, or Return with a reason.
           {% include "partials/oversight/_row_actions.html" %}
           {% endif %}
         </tr>
-        {% empty %}<tr><td colspan="10">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="12">No {{ heading|lower }} in {% firstof plan_period_label "this financial year" %}.</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>

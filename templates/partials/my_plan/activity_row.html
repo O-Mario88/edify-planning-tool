@@ -12,7 +12,9 @@ shared partial, so every My Plan table gets the same thumb-height control
 rather than four separate opinions about it.
 {% endcomment %}
 <td class="px-3 py-2.5 text-right whitespace-nowrap" data-record-action>
-  {% if row.is_completed or row.status == 'completed' or row.status == 'ia_verified' or row.status == 'accountant_confirmed' or row.status == 'closed' %}
+  {% comment %}Complete only with the Salesforce ID and the form both in
+  (owner, 2026-09-26): apps.activities.completion_columns.{% endcomment %}
+  {% if row.shows_complete %}
   <button type="button"
           hx-get="/my-plan/{{ row.id }}"
           hx-target="#drawer-container"

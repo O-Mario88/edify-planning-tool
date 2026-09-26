@@ -163,6 +163,17 @@ class PartnerOversightItem:
     activity_status: str = ""
     evidence_status: str = ""
     salesforce_status: str = ""
+    # The Salesforce ID and Evidence columns (owner, 2026-09-26), set by
+    # apps.activities.completion_columns.annotate where the tables show them.
+    salesforce_id: str = ""
+    evidence_label: str = ""
+    salesforce_ok: bool = False
+    evidence_ok: bool = False
+    # Complete only with both columns green; a done status over a missing
+    # half reads completion_gap instead, and never shows_complete.
+    is_complete: bool = False
+    completion_gap: str = ""
+    shows_complete: bool = False
     ia_status: str = ""
     payment_status: str = ""
     # When the partner's completion entered the Impact Assessment queue. The
@@ -1595,6 +1606,26 @@ def filter_workspace(items, *, member="", activity_type="", status=""):
         and (not activity_type or item.activity_type == activity_type)
         and (not status or item.delivery_phase == status)
     ]
+
+
+def order_for_monitoring(items: list) -> list:
+    """Partner Monitoring's order, in place, with the Salesforce ID and
+    Evidence columns set (apps.activities.completion_columns).
+
+    Waiting-on-staff first: a hand-back nobody has decided on is the one row
+    somebody here has to act on. Then, as every planned activities table
+    reads (owner, 2026-09-26), open work by its activity date, oldest first —
+    so overdue work leads — undated last among it, and work the Partner has
+    completed (evidence and Salesforce ID in) at the bottom. School name
+    orders rows that share a date.
+    """
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    annotate(items, id_attr="partner_activity_id")
+    items.sort(key=lambda i: i.school_name or "")
+    sort_completed_last(items, date_attr="scheduled_date")
+    items.sort(key=lambda i: not i.awaits_staff_decision)
+    return items
 
 
 def workspace_tables(items):

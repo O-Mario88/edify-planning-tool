@@ -4,7 +4,9 @@ Role-aware Actions control for planning and oversight tables.
 - For owners (CCEO or owning PL): Actions dropdown with View, Complete, Reschedule, Cancel.
 {% endcomment %}
 <td class="px-3 py-2.5 text-right whitespace-nowrap" data-record-action>
-  {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' or item.activity_status == 'accountant_confirmed' or item.activity_status == 'closed' %}
+  {% comment %}Complete only with the Salesforce ID and the form both in
+  (owner, 2026-09-26): apps.activities.completion_columns.{% endcomment %}
+  {% if item.shows_complete %}
   <button type="button"
           class="inline-flex items-center gap-1 font-semibold text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
           hx-get="{% if item.activity_id %}/team-planning-oversight/detail?activity_id={{ item.activity_id }}{% else %}/team-planning-oversight/detail?assignment_id={{ item.partner_assignment_id }}{% endif %}"

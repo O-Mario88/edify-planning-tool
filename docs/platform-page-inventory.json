@@ -164,6 +164,37 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 1721,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cluster-oversight/",
+        "/core-schools-oversight/",
+        "/country-planning-oversight/team/<str:staff_id>",
+        "/my-plan",
+        "/partner-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Completion Cells",
+      "purpose": "Reusable completion cells interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/completion_cells.html",
+      "variants": [
+        "success",
+        "warning"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
@@ -4528,25 +4559,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 812,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Week Completion Cells",
-      "purpose": "Reusable  week completion cells interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/dashboards/pl/_week_completion_cells.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
@@ -4690,7 +4702,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 14542,
+      "bytes": 14725,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8003,7 +8015,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6242,
+      "bytes": 6266,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8098,7 +8110,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4859,
+      "bytes": 5013,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8119,7 +8131,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7021,
+      "bytes": 7175,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8194,7 +8206,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5661,
+      "bytes": 5815,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8215,7 +8227,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5632,
+      "bytes": 5786,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8361,7 +8373,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4024,
+      "bytes": 4178,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8384,7 +8396,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1125,
+      "bytes": 1232,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8452,7 +8464,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4727,
+      "bytes": 4881,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8678,7 +8690,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3644,
+      "bytes": 3966,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -8756,7 +8768,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 31194,
+      "bytes": 33228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -8801,7 +8813,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5169,
+      "bytes": 5174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -8910,7 +8922,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6817,
+      "bytes": 7039,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -9127,7 +9139,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6033,
+      "bytes": 6259,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9147,6 +9159,7 @@
       "template": "partials/oversight/partner_school_row.html",
       "variants": [
         "danger",
+        "warning",
         "{{ item.status_tone }}"
       ]
     },
@@ -9154,7 +9167,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6049,
+      "bytes": 6274,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9174,6 +9187,7 @@
       "template": "partials/oversight/partner_work_row.html",
       "variants": [
         "danger",
+        "warning",
         "{{ item.status_tone }}"
       ]
     },
@@ -9181,7 +9195,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4207,
+      "bytes": 4486,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"

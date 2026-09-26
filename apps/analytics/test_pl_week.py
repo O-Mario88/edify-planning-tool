@@ -169,8 +169,19 @@ class PLWeekTest(TestCase):
         )
 
     def _act(
-        self, staff, school, day, *, atype="school_visit", status="scheduled", **extra
+        self,
+        staff,
+        school,
+        day,
+        *,
+        atype="school_visit",
+        status="scheduled",
+        complete=None,
+        **extra,
     ):
+        """An activity. Verified-status work gets its Salesforce ID and form
+        unless `complete=False`: complete means both are in (owner,
+        2026-09-26), and a fixture that says verified means complete."""
         values = {
             "school": school,
             "activity_type": atype,
@@ -181,7 +192,30 @@ class PLWeekTest(TestCase):
             "planned_date": day,
         }
         values.update(extra)
-        return Activity.objects.create(**values)
+        activity = Activity.objects.create(**values)
+        if complete is None:
+            complete = status in (
+                "ia_verified",
+                "accountant_confirmed",
+                "completed",
+                "closed",
+                "awaiting_ia_verification",
+            )
+        if complete:
+            from apps.activities.completion_columns import expected_evidence
+            from apps.evidence.models import EvidenceRecord
+
+            kind = expected_evidence(atype)[0]
+            if not activity.salesforce_activity_id:
+                prefix = "SVE" if kind == "visit_form" else "TS"
+                activity.salesforce_activity_id = (
+                    f"{prefix}-{activity.id[-10:].upper()}"
+                )
+                activity.save(update_fields=["salesforce_activity_id"])
+            EvidenceRecord.objects.create(
+                activity=activity, kind=kind, uri=f"{kind}.pdf", uploaded_by="u"
+            )
+        return activity
 
     def _week(self, who="", week=None, today=THURSDAY, listing=""):
         return build_week(
@@ -364,8 +398,15 @@ class PLWeekTest(TestCase):
         self.assertEqual(person["lists"][1]["count"], 1)
         self.assertEqual((person["planned"], person["closed"]), (3, 2))
         # Verifying one takes it off the list on the next read.
+        # Verified, with its Salesforce ID and visit form: complete.
         open_.status = "ia_verified"
-        open_.save(update_fields=["status"])
+        open_.salesforce_activity_id = "SVE-OPEN"
+        open_.save(update_fields=["status", "salesforce_activity_id"])
+        from apps.evidence.models import EvidenceRecord
+
+        EvidenceRecord.objects.create(
+            activity=open_, kind="visit_form", uri="v.pdf", uploaded_by="u"
+        )
         person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
         self.assertEqual(self._table(person, "visits"), [])
         # The week board still shows where the work was done.
@@ -416,6 +457,25 @@ class PLWeekTest(TestCase):
         # quarantined file is not evidence, as completion counts it.
         self.assertEqual(rows[bare.id], ("", ""))
         self.assertEqual(rows[hidden.id], ("", ""))
+
+    def test_verified_without_both_halves_stays_and_says_what_is_missing(self):
+        # Complete only with both columns green (owner, 2026-09-26).
+        half = self._act(
+            self.a1_sp,
+            self.s1,
+            MONDAY,
+            status="ia_verified",
+            complete=False,
+            salesforce_activity_id="SVE-HALF",
+        )
+        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
+        rows = {r["id"]: r for r in self._table(person, "visits")}
+        self.assertIn(half.id, rows)
+        self.assertEqual(rows[half.id]["status_label"], "Missing evidence")
+        self.assertEqual(rows[half.id]["action"], "none")
+        self.assertTrue(rows[half.id]["salesforce_ok"])
+        self.assertFalse(rows[half.id]["evidence_ok"])
+        self.assertEqual(person["closed"], 0)
 
     def test_every_row_past_its_day_is_overdue_whoever_it_waits_on(self):
         late = self._act(self.a1_sp, self.s1, MONDAY)
@@ -675,18 +735,19 @@ class PLWeekTest(TestCase):
     def test_the_actions_column_is_pinned_so_it_is_never_scrolled_away(self):
         from pathlib import Path
 
-        css = (
-            Path(__file__).resolve().parents[2] / "static/css/components/pl-week.css"
-        ).read_text()
+        root = Path(__file__).resolve().parents[2]
+        css = (root / "static/css/components.css").read_text()
         rule = css.split(
-            ".plwk [data-pl-week-table] .edify-record-table :is(th, td):last-child {", 1
+            "table[data-pinned-actions] :is(thead, tbody) > tr > "
+            ":is(th, td):last-child:not([colspan]) {",
+            1,
         )[1].split("}", 1)[0]
         self.assertIn("position: sticky;", rule)
         self.assertIn("inset-inline-end: 0;", rule)
         tables = (
-            Path(__file__).resolve().parents[2]
-            / "templates/partials/dashboards/pl/_week_tables.html"
+            root / "templates/partials/dashboards/pl/_week_tables.html"
         ).read_text()
+        self.assertEqual(tables.count("data-pinned-actions"), 3)
         # Actions is the last column of every table.
         for head in tables.split("<thead")[1:]:
             last = head.split("</tr>", 1)[0].rstrip().rsplit("<th", 1)[1]

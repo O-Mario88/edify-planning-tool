@@ -156,6 +156,17 @@ def session_status(item) -> tuple[str, str]:
     return _words(status, ActivityStatus) or "—", TONE_OPEN
 
 
+def hold_complete_to_both_columns(items) -> None:
+    """A session reads Complete only with its Salesforce ID and attendance
+    both in (owner, 2026-09-26): a verified status over a missing half reads
+    what is missing instead. Items must be annotated
+    (apps.activities.completion_columns.annotate) first."""
+    for item in items:
+        if item.session_tone == TONE_COMPLETE and not item.is_complete:
+            item.session_status = item.completion_gap
+            item.session_tone = TONE_PENDING
+
+
 def _words(value: str, choices) -> str:
     """A stored token as its choice label, or plainly spaced when unknown."""
     if not value:
@@ -461,6 +472,14 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         or (uses_member_tabs and item.operational_owner_id in allowed_people)
     ]
     _decorate_sessions(principal, cluster_work)
+    # The Salesforce ID and Evidence columns, and open sessions first by
+    # planned date with the officer's completed sessions at the bottom (owner,
+    # 2026-09-26). Every tab's lists are filled in this list's order below.
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    annotate(cluster_work)
+    hold_complete_to_both_columns(cluster_work)
+    sort_completed_last(cluster_work)
 
     # One directory for the people holding clusters and the people running
     # the sessions. A person's work is filed by the same profile and the same

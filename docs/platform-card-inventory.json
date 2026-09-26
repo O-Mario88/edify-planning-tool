@@ -6421,7 +6421,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 140,
+   "line": 145,
    "title": "2. Core School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6430,7 +6430,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 245,
+   "line": 255,
    "title": "3. Cluster Meetings",
    "heading_level": 5,
    "has_card_key": false,
@@ -6439,7 +6439,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 338,
+   "line": 353,
    "title": "4. Schools with Planned Training",
    "heading_level": 5,
    "has_card_key": false,

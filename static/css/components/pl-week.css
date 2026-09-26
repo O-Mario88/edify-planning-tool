@@ -330,7 +330,8 @@
    as ink (0,6,1) — status labels included; it mirrors that selector with
    the overdue row in it. The row's action buttons are .edify-table-action,
    never plain content, so they keep their own colours: they are controls,
-   not the record. */
+   not the record. A Salesforce ID or form that is in stays green
+   (data-tone="success"): which half is done is what the follow-up is about. */
 .plwk {
   --plwk-overdue: var(--edify-danger-text);
 }
@@ -341,27 +342,12 @@
   --plwk-overdue: #ff6b6b;
 }
 :root .plwk .edify-record-table tr[data-overdue] > :is(td, th),
-:root .plwk .edify-record-table tr[data-overdue] > :is(td, th) :is(a, span, div, strong):not(.row-menu, .row-menu *) {
+:root .plwk .edify-record-table tr[data-overdue] > :is(td, th) :is(a, span, div, strong):not(.row-menu, .row-menu *, [data-tone="success"]) {
   color: var(--plwk-overdue) !important;
 }
 :root .plwk table.edify-plain-table.edify-plain-table.edify-plain-table
-  tr[data-overdue] .edify-table-plain-content:not(.row-menu, .row-menu *) {
+  tr[data-overdue] .edify-table-plain-content:not(.row-menu, .row-menu *, [data-tone="success"]) {
   color: var(--plwk-overdue) !important;
-}
-
-/* ── The action stays on screen ──────────────────────────────────────
-   The three tables keep "What needs you now"'s full columns, so on a
-   laptop, or beside the side panel, they are wider than their card, and the
-   Actions column — Verify, Send to <officer> — fell behind a sideways
-   scroll where it read as missing (owner, 2026-09-26). The platform's Core
-   School Oversight answer (platform.css, .core-oversight-table): pin the
-   last column to the right edge of the scroll region. The plain-table rules
-   already give every cell an opaque surface, so the columns scrolling under
-   it stay hidden. */
-.plwk [data-pl-week-table] .edify-record-table :is(th, td):last-child {
-  position: sticky;
-  inset-inline-end: 0;
-  z-index: 1;
 }
 
 /* ── The partners' tables ────────────────────────────────────────────

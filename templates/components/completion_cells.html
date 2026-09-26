@@ -1,0 +1,20 @@
+{% comment %}
+The Salesforce ID and Evidence cells of every planned activities table
+(owner, 2026-09-26): the two halves of completing an activity, from
+apps.activities.completion_columns. Green when in — the stored Salesforce ID
+as entered (SVE- for a school visit, TS- for a group training or cluster
+meeting, validated at entry), and the Visit Form or Attendance — and an
+activity is complete only when both are green. Other evidence reads amber:
+it is there, but it is not the form. Otherwise "Not in SF" and "No Evidence
+Uploaded".
+
+The tone rides on data-tone, which the plain-table rules colour in every
+theme (consistency.css); the utility classes hold it before micro-ux.js
+marks the table.
+
+Context: `row` with `salesforce_id`, `salesforce_ok`, `evidence_label` and
+`evidence_ok`; optional `completion_cell_class`, the host table's cell
+classes.
+{% endcomment %}
+<td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Salesforce ID" data-salesforce-id>{% if row.salesforce_id %}<span class="font-mono font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.salesforce_id }}</span>{% else %}<span class="text-slate-400">Not in SF</span>{% endif %}</td>
+<td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Evidence" data-evidence>{% if row.evidence_ok %}<span class="font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.evidence_label }}</span>{% elif row.evidence_label %}<span class="text-amber-700" data-tone="warning" title="Uploaded, but not the form this activity is completed with">{{ row.evidence_label }}</span>{% else %}<span class="text-slate-400">No Evidence Uploaded</span>{% endif %}</td>

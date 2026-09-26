@@ -41,6 +41,12 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
+from apps.activities.completion_columns import (
+    EMPTY as EMPTY_COLUMNS,
+    completion_columns,
+    completion_gap,
+    is_complete,
+)
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
     COMPLETED_WORK_STATUSES,
@@ -147,7 +153,9 @@ def _day_label(day: date | None) -> str:
 
 
 # ── One activity, in words ───────────────────────────────────────────────────
-def week_status(status: str, day: date | None, today: date) -> dict:
+def week_status(
+    status: str, day: date | None, today: date, columns: dict | None = None
+) -> dict:
     """Where an activity stands, and what it asks of the lead.
 
     `action` is "verify" when the officer has completed it (evidence and
@@ -191,6 +199,20 @@ def week_status(status: str, day: date | None, today: date) -> dict:
         key, label, tone, action = "today", "Due today", "neutral", "send"
     else:
         key, label, tone, action = "scheduled", "Scheduled", "neutral", "send"
+    if (
+        columns is not None
+        and key in ("verified", "with_ia")
+        and not is_complete(status, columns)
+    ):
+        # Complete only with both columns green (owner, 2026-09-26): a
+        # verified status over a missing half stays on the lists and says
+        # what is missing.
+        key, label, tone, action = (
+            "incomplete",
+            completion_gap(status, columns),
+            "warning",
+            "none",
+        )
     return {
         "key": key,
         "label": label,
@@ -242,10 +264,10 @@ def _place(activity) -> tuple[str, str, str]:
     return "No place recorded", "", ""
 
 
-def _row(activity, today: date) -> dict:
+def _row(activity, today: date, columns: dict) -> dict:
     """One activity as the week board draws it."""
     day = activity_day(activity)
-    state = week_status(activity.status, day, today)
+    state = week_status(activity.status, day, today, columns)
     where, district, place_url = _place(activity)
     title = activity.get_activity_type_display()
     detail = (activity.activity_name_snapshot or "").strip()
@@ -281,17 +303,15 @@ def table_rows(activity_ids, *, own_ids, today: date, send_until: date) -> list[
     rows = activity_rows(activity_ids, own_ids=own_ids, today=today)
     ids = [r["id"] for r in rows]
     sent_on = reminder_sent_on(ids)
-    salesforce, evidence = _completion_records(ids)
+    columns = completion_columns((r["id"], r["activity_type"]) for r in rows)
     for row in rows:
-        # The two halves of completing (owner, 2026-09-26): the Salesforce
-        # ID, and the uploaded form. Blank here reads "Not in SF" and "No
-        # Evidence Uploaded" in the tables.
-        row["salesforce_id"] = salesforce.get(row["id"], "")
-        row["evidence_label"] = _evidence_label(
-            table_of(row["activity_type"]), evidence.get(row["id"], set())
-        )
+        # The two halves of completing (apps.activities.completion_columns):
+        # the Salesforce ID and the uploaded form. Blank reads "Not in SF"
+        # and "No Evidence Uploaded" in the tables.
+        row_columns = columns.get(row["id"], EMPTY_COLUMNS)
+        row.update(row_columns)
         day = row["planned_date"]
-        state = week_status(row["status"], day, today)
+        state = week_status(row["status"], day, today, row_columns)
         row["status_label"] = state["label"]
         row["status_class"] = state["css"]
         # Overdue: past its day and not yet verified — drawn red, whoever
@@ -309,58 +329,6 @@ def table_rows(activity_ids, *, own_ids, today: date, send_until: date) -> list[
         row["action"] = action
         row["sent_on"] = sent_on.get(row["id"])
     return rows
-
-
-#: The form each table's work is completed with (owner, 2026-09-26): the
-#: visit form for a school visit, the attendance register for a group
-#: training or a cluster meeting.
-EXPECTED_EVIDENCE = {
-    "visits": ("visit_form", "Visit Form"),
-    "trainings": ("attendance_form", "Attendance"),
-    "meetings": ("attendance_form", "Attendance"),
-}
-
-
-def _completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
-    """Each activity's Salesforce ID, and the kinds of evidence uploaded for
-    it — two queries for a page of rows. Evidence counts as uploaded the way
-    completion counts it: any record not quarantined."""
-    if not activity_ids:
-        return {}, {}
-    from apps.evidence.models import EvidenceRecord
-
-    salesforce = {
-        activity_id: (value or "").strip()
-        for activity_id, value in Activity.objects.filter(
-            id__in=activity_ids
-        ).values_list("id", "salesforce_activity_id")
-    }
-    evidence: dict[str, set] = defaultdict(set)
-    for activity_id, kind in EvidenceRecord.objects.filter(
-        activity_id__in=activity_ids, quarantined=False
-    ).values_list("activity_id", "kind"):
-        evidence[activity_id].add(kind)
-    return salesforce, evidence
-
-
-def _evidence_label(table: str, kinds: set) -> str:
-    """ "Visit Form" or "Attendance" once the table's form is uploaded; the
-    kinds that were uploaded when it is some other evidence, so the cell is
-    never "No Evidence Uploaded" over a file that is there; else blank."""
-    if not kinds:
-        return ""
-    expected, label = EXPECTED_EVIDENCE[table]
-    if expected in kinds:
-        return label
-    from apps.core.enums import EvidenceKind
-
-    names = []
-    for kind in sorted(kinds):
-        try:
-            names.append(EvidenceKind(kind).label)
-        except ValueError:
-            names.append(kind.replace("_", " ").capitalize())
-    return ", ".join(names)
 
 
 def team_week_activity(user, activity_id: str):
@@ -522,6 +490,7 @@ class PLWeek:
     def build(self) -> dict:
         activities = self._activities()
         owner_of = {i: p["key"] for p in self.people for i in p["ids"]}
+        columns = completion_columns((a.id, a.activity_type) for a in activities)
 
         this_week: dict[str, list[dict]] = defaultdict(list)
         overdue: dict[str, list[dict]] = defaultdict(list)
@@ -529,7 +498,7 @@ class PLWeek:
             key = owner_of.get(activity.responsible_staff_id)
             if key is None:
                 continue
-            row = _row(activity, self.today)
+            row = _row(activity, self.today, columns.get(activity.id, EMPTY_COLUMNS))
             day = row["day"]
             if day and day >= self.start:
                 this_week[key].append(row)

@@ -27,9 +27,11 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
   <td data-label="Training">{{ item.training_name|default:"—" }}</td>
   <td data-label="Purpose of Assignment">{{ item.purpose_label|default:"—" }}</td>
   <td data-label="SSA Intervention">{{ item.intervention_label|default:"—" }}</td>
+  {% include "components/completion_cells.html" with row=item %}
   <td data-label="Status"><span class="partner-plan-table__status">
+    {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
     <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"
-          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{{ item.status_label }}</span>
+          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{{ item.status_label }}</span>{% endif %}
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="Activity date" data-activity-date>{% if item.activity_date %}{{ item.activity_date|date:"j M Y" }}{% elif item.stage == "awaiting_schedule" %}Awaiting scheduling{% else %}—{% endif %}</td>
@@ -54,7 +56,7 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
 </tr>
 <tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="8">
+  <td colspan="10">
     <dl class="school-record-row__metadata">
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
       {% if item.stage == "awaiting_schedule" and item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}

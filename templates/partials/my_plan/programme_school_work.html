@@ -4,12 +4,12 @@
   <h2 class="edify-section-heading px-4 py-3">{{ section.label }} School Visits and Trainings Planned ({{ section.rows|length }})</h2>
   {% paginate section.rows section.kind 20 as pager %}
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} school plans">
-      <thead><tr><th>School ID</th><th>School name</th><th>Activity</th><th>Planned date</th><th>Status</th><th>Actions</th></tr></thead>
+    <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} school plans" data-pinned-actions>
+      <thead><tr><th>School ID</th><th>School name</th><th>Activity</th><th>Planned date</th><th>Salesforce ID</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>{% for row in pager.rows %}<tr>
         <td>{{ row.school_id }}</td><td><a href="{{ row.place_url }}" class="font-semibold hover:underline">{{ row.school_name }}</a></td>
         <td>{{ row.activity_type_label }}</td><td>{{ row.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
-        <td>{{ row.status_label }}</td>{% include "partials/my_plan/activity_row.html" %}
+        {% include "components/completion_cells.html" %}<td>{{ row.status_label }}</td>{% include "partials/my_plan/activity_row.html" %}
       </tr>{% endfor %}</tbody>
     </table>
   </div>
