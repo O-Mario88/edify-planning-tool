@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("activities", "0057_backfill_cluster_session_invitations"),
+        ("activities", "0058_remove_duplicate_client_visits"),
     ]
 
     operations = [
