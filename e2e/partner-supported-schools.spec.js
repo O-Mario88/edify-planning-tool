@@ -53,6 +53,15 @@ async function planningRow(page, school, fy) {
   return row;
 }
 
+// A school row's actions are one Actions menu (owner, 2026-09-26): open it
+// and return the named item, still inside the row it belongs to.
+async function rowAction(row, name) {
+  await row.locator('.row-menu__trigger').click();
+  const item = row.getByRole('menuitem', { name });
+  await expect(item).toBeVisible();
+  return item;
+}
+
 // A Partner Monitoring row's details, opened from the school's name as on
 // Planning: where the Partner is sending and where the work stands.
 async function monitoringDetails(page, assignmentId) {
@@ -144,7 +153,9 @@ test.describe('Partner-supported schools — journeys', () => {
     // details, which the name opens.
     await row.locator('.school-plan-table__name-toggle').click();
     await expect(page.locator(`#planning-school-details-${hope.school_pk}`)).toContainText(data.cceo_name);
-    await expect(row.getByRole('button', { name: `Schedule activity for ${hope.name}` })).toBeEnabled();
+    const schedule = await rowAction(row, `Schedule activity for ${hope.name}`);
+    await expect(schedule).not.toHaveAttribute('aria-disabled', 'true');
+    await page.keyboard.press('Escape');
     // The shared Visit and Training Status badges, beside the school's name.
     await expect(row.locator('[data-planning-badges="visits"] .school-planning-badge').first()).toBeVisible();
     await expect(row.locator('[data-planning-badges="trainings"] .school-planning-badge').first()).toBeVisible();
@@ -161,7 +172,7 @@ test.describe('Partner-supported schools — journeys', () => {
     const planned = [];
     for (const [index, purpose] of ['donor_visit', 'story_gathering', 'ssa_support'].entries()) {
       const row = await planningRow(page, hope);
-      await row.getByRole('button', { name: `Schedule activity for ${hope.name}` }).click();
+      await (await rowAction(row, `Schedule activity for ${hope.name}`)).click();
       const drawer = page.locator('#drawer-container');
       await expect(drawer.locator('[data-partner-support-notice]')).toContainText(hope.partner);
       await drawer.locator('#purpose_of_visit').selectOption(purpose);
@@ -194,7 +205,7 @@ test.describe('Partner-supported schools — journeys', () => {
     const [hope] = data.handovers;
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope);
-    await row.getByRole('button', { name: `Schedule activity for ${hope.name}` }).click();
+    await (await rowAction(row, `Schedule activity for ${hope.name}`)).click();
     const drawer = page.locator('#drawer-container');
     await expect(drawer.locator('[data-partner-lock-reason]')).toContainText(
       'Staff may directly plan Data Gathering, Content Gathering, or Donor Visits',
@@ -228,7 +239,9 @@ test.describe('Partner-supported schools — journeys', () => {
     const row = page.locator(`tr:has([hx-get$="school_id=${hope.school_id}"])`);
     await expect(row).toBeVisible({ timeout: 15_000 });
     await expect(row.locator('[data-responsible="partner"]').first()).toBeVisible();
-    await row.locator('[data-add-to-cluster="meeting"]').click();
+    // Add to Meeting is an entry in the row's one Actions menu (2026-09-26).
+    await row.locator('.row-menu__trigger').click();
+    await row.getByRole('menuitem', { name: `Add ${hope.name} to a Cluster Meeting` }).click();
 
     const drawer = page.locator('#drawer-container');
     await expect(drawer.locator(`input[name="invited_school_ids"][value="${hope.school_pk}"]`)).toBeChecked();

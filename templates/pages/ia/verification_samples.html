@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity row_actions %}
 
 {% block title %}Sample Checks · Edify{% endblock %}
 
@@ -7,9 +7,16 @@
 {% comment %}
 Sample checks (apps/frontend/views/ia_views.py ia_samples_view). Verified
 activities and confirmed SSA records drawn for a second look, per country
-(IA review, 2026-09-13). Plain-text states with a tone; row actions are forms
-and links in the action cell. A field back-check opens the schedule drawer,
-which files an owner-approved visit request — nothing is scheduled here.
+(IA review, 2026-09-13). Plain-text states with a tone. A sample waiting for
+its second look has one Actions menu rather than three buttons (owner,
+2026-09-26): Confirm, Dispute, and Field back-check or Request visit. A field
+back-check opens the schedule drawer, which files an owner-approved visit
+request — nothing is scheduled here.
+
+Confirm and Dispute carry what the checker found, so a menu item never
+submits them: each opens the row's note form under the menu, whose one submit
+sends the decision chosen. A disputed sample's Resolve needs the correction
+written, and is the row's only action, so its form stays in the cell.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-ia-samples>
 
@@ -87,21 +94,28 @@ which files an owner-approved visit request — nothing is scheduled here.
             <td data-label="Drawn" class="tabular-nums">{{ s.sampled_at|date:"d M Y" }}</td>
             <td data-label="Check">{{ s.method }}</td>
             <td data-label="Outcome"><span data-tone="{{ s.tone }}">{{ s.status }}</span>{% if s.outcome_note %} · {{ s.outcome_note|linebreaksbr }}{% endif %}{% if s.checked_by %} · by {{ s.checked_by }}, {{ s.checked_at|date:"d M" }}{% endif %}</td>
-            <td class="is-end" data-record-action data-label="Actions">
+            <td class="is-end" data-record-action data-label="Actions"{% if s.may_grade %} x-data="{ grade: '' }"{% endif %}>
               {% if s.may_grade %}
-              <form method="post" action="/ia/samples/{{ s.id }}/outcome" class="ia-sample-form">{% csrf_token %}
-                <label class="sr-only" for="note-{{ s.id }}">What you found</label>
-                <input id="note-{{ s.id }}" type="text" name="note" placeholder="What you found" class="rounded-control ia-sample-form__note">
-                <button type="submit" name="status" value="confirmed" class="rpl-row-link rounded-control">Confirm</button>
-                <button type="submit" name="status" value="disputed" class="rpl-row-link rounded-control">Dispute</button>
-              </form>
+              {% row_actions s.school %}
+              <button type="button" class="row-menu__item" role="menuitem" aria-controls="grade-{{ s.id }}" @click="grade = 'confirmed'; $nextTick(() => document.getElementById('note-{{ s.id }}').focus())">Confirm</button>
+              <button type="button" class="row-menu__item" role="menuitem" aria-controls="grade-{{ s.id }}" @click="grade = 'disputed'; $nextTick(() => document.getElementById('note-{{ s.id }}').focus())">Dispute</button>
               {% if s.may_field_check and s.method_key != "field" %}
-              <form method="post" action="/ia/samples/{{ s.id }}/field-check" class="ia-sample-form">{% csrf_token %}
-                <button type="submit" class="rpl-row-link rounded-control">Field back-check</button>
+              <form role="none" method="post" action="/ia/samples/{{ s.id }}/field-check">{% csrf_token %}
+                <button type="submit" class="row-menu__item" role="menuitem">Field back-check</button>
               </form>
               {% elif s.may_field_check %}
-              <a href="/ia/samples/?status=pending&amp;visit={{ s.school_code|urlencode }}" class="rpl-row-link rounded-control">Request visit</a>
+              <a class="row-menu__item" role="menuitem" href="/ia/samples/?status=pending&amp;visit={{ s.school_code|urlencode }}">Request visit</a>
               {% endif %}
+              {% endrow_actions %}
+              {% comment %}One submit, sending the decision the menu chose: two
+              submits, one of them hidden, would let Enter in the note send the
+              hidden one.{% endcomment %}
+              <form id="grade-{{ s.id }}" method="post" action="/ia/samples/{{ s.id }}/outcome" class="ia-sample-form" x-show="grade" x-cloak data-sample-grade>{% csrf_token %}
+                <label class="sr-only" for="note-{{ s.id }}">What you found</label>
+                <input id="note-{{ s.id }}" type="text" name="note" placeholder="What you found" class="rounded-control ia-sample-form__note">
+                <button type="submit" name="status" :value="grade" class="rpl-row-link rounded-control" x-text="grade === 'disputed' ? 'Dispute' : 'Confirm'">Confirm</button>
+                <button type="button" class="rpl-row-link rounded-control" @click="grade = ''">Cancel</button>
+              </form>
               {% elif s.may_resolve %}
               <form method="post" action="/ia/samples/{{ s.id }}/resolve" class="ia-sample-form">{% csrf_token %}
                 <label class="sr-only" for="resolve-{{ s.id }}">What was corrected</label>

@@ -536,7 +536,12 @@ class ClusterMembershipEditingTest(TestCase):
         roster = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
         self.assertEqual(roster.status_code, 200)
         self.assertContains(roster, f"/clusters/{self.cluster.id}/schools/sch-2/remove")
-        self.assertContains(roster, "school-record-action--danger")
+        # Remove is the destructive entry in the row's one Actions menu
+        # (owner, 2026-09-26), and reads as destructive before it is clicked.
+        self.assertContains(roster, "data-row-actions")
+        self.assertContains(
+            roster, 'class="row-menu__item row-menu__item--danger" role="menuitem"'
+        )
 
     def test_a_plain_remove_redirects_to_a_fixed_destination(self):
         """Without htmx the view redirects: to the profile of the cluster

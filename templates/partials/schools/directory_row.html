@@ -1,4 +1,5 @@
 {% load can_open from frontend_filters %}
+{% load row_actions %}
 {% comment %}
 The school name and the cluster name link only for a role their pages let in.
 The Regional Programme Lead reads the directory but opens neither profile, and
@@ -9,7 +10,7 @@ route's, so one constant URL answers it for every row.
   <div
     class="school-record-row__summary{% if not directory_read_only %} school-record-row__summary--selectable{% endif %}"
     data-row-disclosure-summary
-    @click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
+    @click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button], .row-menu')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
   >
     {% if not directory_read_only %}
     <label class="school-record-row__select" for="select-school-{{ school.id }}">
@@ -82,39 +83,40 @@ route's, so one constant URL answers it for every row.
       plan from the school directory"): IA reads every school in the country
       here and does its own field work, so this is where its visits start.
       The drawer refuses anyone else anyway — this is the door, not the guard.
+
+      One Actions menu rather than up to four buttons (owner, 2026-09-26:
+      "School directory actions are add to cluster and Add to project"). An
+      action this school cannot take stays on the list, greyed, with its
+      reason under it.
       {% endcomment %}
+      {% row_actions school.school_name %}
       {% if can_plan_from_directory %}
         <button
           type="button"
-          class="school-record-action school-record-action--schedule"
+          class="row-menu__item"
+          role="menuitem"
           hx-get="/planning/schedule-modal?school_id={{ school.id }}"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
           aria-label="Schedule activity for {{ school.school_name }}"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
-          <span class="school-record-action__label--full">Schedule</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Plan</span>
-        </button>
+        >Schedule</button>
       {% endif %}
       {% if "add_to_cluster" in school.available_actions %}
         <button
           type="button"
-          class="school-record-action school-record-action--assign"
+          class="row-menu__item"
+          role="menuitem"
           data-cluster-action
           aria-label="Add {{ school.school_name }} to a cluster"
           hx-get="/schools/{{ school.id }}/add-to-cluster"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
-        >
-          {% include "partials/schools/_cluster_action_icon.html" %}
-          <span class="school-record-action__label--full">Add to Cluster</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
-        </button>
+        >Add to Cluster</button>
       {% elif "change_cluster" in school.available_actions %}
         <button
           type="button"
-          class="school-record-action school-record-action--assign school-record-action--clustered"
+          class="row-menu__item"
+          role="menuitem"
           aria-label="Change the cluster of {{ school.school_name }}"
           title="In {{ school.cluster_name }}"
           hx-get="/schools/{{ school.id }}/add-to-cluster"
@@ -122,17 +124,9 @@ route's, so one constant URL answers it for every row.
           hx-swap="innerHTML"
           data-change-cluster
           data-cluster-action
-        >
-          {% include "partials/schools/_cluster_action_icon.html" %}
-          <span class="school-record-action__label--full">Change Cluster</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
-        </button>
+        >Change Cluster</button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign{% if school.is_clustered %} school-record-action--clustered{% endif %}" aria-label="Add {{ school.school_name }} to a cluster unavailable{% if school.disabled_reasons.add_to_cluster %}: {{ school.disabled_reasons.add_to_cluster }}{% endif %}" title="{{ school.disabled_reasons.add_to_cluster }}" disabled data-cluster-action>
-          {% include "partials/schools/_cluster_action_icon.html" %}
-          <span class="school-record-action__label--full">Add to Cluster</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
-        </button>
+        <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" aria-label="Add {{ school.school_name }} to a cluster unavailable{% if school.disabled_reasons.add_to_cluster %}: {{ school.disabled_reasons.add_to_cluster }}{% endif %}" data-cluster-action>Add to Cluster{% if school.disabled_reasons.add_to_cluster %}<span class="row-menu__reason">{{ school.disabled_reasons.add_to_cluster }}</span>{% endif %}</button>
       {% endif %}
 
       {% if "reassign_owner" in school.available_actions %}
@@ -141,38 +135,29 @@ route's, so one constant URL answers it for every row.
       anything is confirmed, and the school's geography is never touched.{% endcomment %}
       <button
         type="button"
-        class="school-record-action school-record-action--assign"
+        class="row-menu__item"
+        role="menuitem"
         aria-label="Reassign the owner of {{ school.school_name }}"
         hx-get="/schools/{{ school.school_id }}/transfer-owner"
         hx-target="#drawer-container"
         hx-swap="innerHTML"
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 1.5 0 2.75.37 3.7 1.05M15 16.5h6m0 0-2.2-2.2M21 16.5l-2.2 2.2"/></svg>
-        <span class="school-record-action__label--full">Reassign Owner</span>
-        <span class="school-record-action__label--compact" aria-hidden="true">Owner</span>
-      </button>
+      >Reassign Owner</button>
       {% endif %}
 
       {% if "assign_to_project" in school.available_actions %}
         <button
           type="button"
-          class="school-record-action school-record-action--assign"
+          class="row-menu__item"
+          role="menuitem"
           aria-label="Add {{ school.school_name }} to a project"
           hx-get="/schools/{{ school.id }}/assign-to-project"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
-        >
-          {% include "partials/schools/_project_action_icon.html" %}
-          <span class="school-record-action__label--full">Add to Project</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Project</span>
-        </button>
+        >Add to Project</button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" aria-label="Add {{ school.school_name }} to a project unavailable" disabled>
-          {% include "partials/schools/_project_action_icon.html" %}
-          <span class="school-record-action__label--full">Add to Project</span>
-          <span class="school-record-action__label--compact" aria-hidden="true">Project</span>
-        </button>
+        <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" aria-label="Add {{ school.school_name }} to a project unavailable">Add to Project</button>
       {% endif %}
+      {% endrow_actions %}
     </div>
     {% endif %}
   </div>

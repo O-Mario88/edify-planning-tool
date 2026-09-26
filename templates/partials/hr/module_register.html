@@ -1,3 +1,4 @@
+{% load row_actions %}
 {% comment %}
 The HR module's live register — one copy, included by the module page and by
 the People Analytics tab of the Analytics workspace (2026-09-05).
@@ -28,6 +29,20 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
             {% endfor %}
             {% if has_row_actions %}
             <td class="hcos-table__actions" data-record-action data-label="Actions">
+              {% comment %}Two or more actions are one Actions menu rather
+              than a row of buttons (owner, 2026-09-26); a record with one
+              action keeps its button.{% endcomment %}
+              {% if row.actions|length > 1 %}
+              {% row_actions row.cells.0.value %}
+              {% for action in row.actions %}
+              {% if action.href %}
+              <a class="row-menu__item" role="menuitem" href="{{ action.href }}">{{ action.label }}</a>
+              {% else %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endif %}
+              {% endfor %}
+              {% endrow_actions %}
+              {% else %}
               {% for action in row.actions %}
               {% if action.href %}
               <a class="hcos-row-action" href="{{ action.href }}">{{ action.label }}</a>
@@ -35,6 +50,7 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
               <button type="button" class="hcos-row-action" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
               {% endif %}
               {% endfor %}
+              {% endif %}
             </td>
             {% endif %}
           </tr>

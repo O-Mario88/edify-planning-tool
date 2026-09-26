@@ -1,4 +1,4 @@
-{% load frontend_filters table_pagination %}
+{% load frontend_filters table_pagination row_actions %}
 {% for section in detail_tables %}
 <section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs overflow-hidden" aria-labelledby="work-plan-{{ section.key }}-title">
   <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
@@ -50,11 +50,23 @@
             {% comment %}
             Each control only for a reader its page admits: the RVP and HR read
             the Work Plan but cannot open activity records under /my-plan/.
+            A reader offered both gets one Actions menu rather than a button
+            with a link under it (owner, 2026-09-26); one offered a single
+            control keeps it as it was. A row whose action already opens the
+            record (View) offers it once, not twice under two names.
             {% endcomment %}
             {% with details_url="/my-plan/"|add:r.id %}{% with can_act=request.user|can_open:r.table_action.url can_view=request.user|can_open:details_url %}
+            {% if can_act and can_view and r.table_action.url != details_url %}
+            {% if section.key == 'school' %}{% firstof r.school_name as record_name %}{% else %}{% firstof r.name as record_name %}{% endif %}
+            {% row_actions record_name %}
+              <a class="row-menu__item" role="menuitem" href="{{ r.table_action.url }}" {% if r.table_action.drawer %}hx-get="{{ r.table_action.url }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %} title="{{ r.table_action.description }}">{{ r.table_action.text }}</a>
+              <a class="row-menu__item" role="menuitem" href="{{ details_url }}">View details</a>
+            {% endrow_actions %}
+            {% else %}
             {% if can_act %}<a href="{{ r.table_action.url }}" {% if r.table_action.drawer %}hx-get="{{ r.table_action.url }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %} class="btn btn-secondary" title="{{ r.table_action.description }}">{{ r.table_action.text }}</a>{% endif %}
-            {% if can_view %}<a href="{{ details_url }}" class="block edify-text-caption edify-primary-text mt-1">View details</a>{% endif %}
+            {% if can_view and not can_act or can_view and r.table_action.url != details_url %}<a href="{{ details_url }}" class="block edify-text-caption edify-primary-text mt-1">View details</a>{% endif %}
             {% if not can_act and not can_view %}<span class="edify-text-muted" aria-hidden="true">—</span><span class="sr-only">No action available</span>{% endif %}
+            {% endif %}
             {% endwith %}{% endwith %}
           </td>
         </tr>

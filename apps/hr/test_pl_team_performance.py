@@ -207,6 +207,13 @@ class TeamPerformanceReviewsPageTest(TeamFixture):
                 }
             ],
         )
+        # A row with one action keeps its link; only two or more become an
+        # Actions menu (owner, 2026-09-26).
+        self.assertContains(
+            page,
+            'class="hcos-row-action" '
+            f'href="/performance-conversation?staff={self.officer_a_sp.id}"',
+        )
         bosco = _cells(rows[self.officer_b.name])
         self.assertEqual(bosco["Agreement"], "No agreement")
         self.assertEqual(bosco["Manager columns"], "—")
@@ -453,6 +460,16 @@ class TeamDevelopmentTest(TeamFixture):
         self.assertContains(page, "Team Professional Development")
         self.assertContains(page, "Waiting for your approval")
         self.assertContains(page, f"/cpd-learning/return?request_id={mine.id}")
+        # Approve and Return are one Actions menu (owner, 2026-09-26).
+        self.assertContains(
+            page,
+            '<button type="submit" class="row-menu__item" role="menuitem">Approve</button>',
+        )
+        self.assertContains(
+            page,
+            'class="row-menu__item" role="menuitem" '
+            f'hx-get="/cpd-learning/return?request_id={mine.id}"',
+        )
         self.assertNotContains(page, "Role-Based PD Allocation Settings")
         self.assertContains(page, 'aria-label="Performance &amp; Coaching sections"')
 

@@ -169,7 +169,10 @@ class PagePayloadBudgetTest(TestCase):
         ("/planning", 175, 950),
         ("/notifications", 265, 1390),
         ("/todos", 230, 1380),
-        ("/today/panel", 35, 320),
+        # Was 35 KB / 320: each Today row's decisions became one Actions
+        # menu (owner, 2026-09-26), carrying its forms and snooze choices
+        # inside the row. Measured 44 KB / 335 on this fixture.
+        ("/today/panel", 46, 350),
         ("/my-targets", 170, 940),
         ("/calendar", 285, 2210),
     )

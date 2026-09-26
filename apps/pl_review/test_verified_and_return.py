@@ -10,6 +10,7 @@ stated. The staff can resubmit after fixing the issue."
 
 from __future__ import annotations
 
+import re
 from datetime import date, timedelta
 
 from apps.activities import return_notes
@@ -24,6 +25,19 @@ from apps.pl_review import services
 from apps.pl_review.test_completion_reviews import QUEUE_URL, ReviewFixture, _staff
 
 REASON = "The 25 participants are not entered in Salesforce for TS-1001."
+
+
+def _row_menu(html: str, marker: str) -> list[str]:
+    """The Actions menu items of the table row carrying `marker`, in order.
+
+    A row's actions are one Actions menu (owner, 2026-09-26); a row without a
+    menu has none to list.
+    """
+    start = html.index(marker)
+    row = html[start : html.index("</tr>", start)]
+    if "data-row-actions" not in row:
+        return []
+    return re.findall(r'role="menuitem"[^>]*>([^<]+)</', row)
 
 
 class TheReasonIsRequiredTest(ReviewFixture):
@@ -153,6 +167,11 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
         response = self.as_user(self.pl_user).get(QUEUE_URL)
         self.assertContains(response, ">Verified</button>")
         self.assertContains(response, f"{QUEUE_URL}/{work.id}/return-drawer")
+        # Open and the two decisions are the row's one Actions menu.
+        self.assertEqual(
+            _row_menu(response.content.decode(), f'data-review-row="{work.id}"'),
+            ["Open", "Verified", "Return"],
+        )
 
     def test_the_return_drawer_asks_why_with_an_example(self):
         work = self._completion(self.james.id)
@@ -180,6 +199,10 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
         self.assertContains(response, f"/pl/review-queue/{session.id}/confirm")
         self.assertContains(response, f"/pl/review-queue/{session.id}/return-drawer")
         self.assertContains(response, "data-session-return")
+        self.assertEqual(
+            _row_menu(response.content.decode(), f'data-session-row="{session.id}"'),
+            ["View", "Verified", "Return"],
+        )
 
     def test_the_ia_workspace_offers_verified_and_return_with_the_example(self):
         ia_user, _ = _staff("vr-ia3@t.test", "Ian IA", EdifyRole.IMPACT_ASSESSMENT)

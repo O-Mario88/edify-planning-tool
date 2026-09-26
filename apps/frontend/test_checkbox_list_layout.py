@@ -52,32 +52,35 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         self.assertIn("fit-content(6rem) minmax(0, 1fr)", mobile_css)
         self.assertIn("fit-content(5rem) minmax(0, 1fr)", mobile_css)
 
-    def test_directory_actions_have_compact_mobile_labels_and_consistent_icons(self):
+    def test_directory_actions_are_one_menu_with_every_state_labelled(self):
         directory = (ROOT / "templates/partials/schools/directory_row.html").read_text()
-        cluster_icon = (
-            ROOT / "templates/partials/schools/_cluster_action_icon.html"
-        ).read_text()
-        project_icon = (
-            ROOT / "templates/partials/schools/_project_action_icon.html"
-        ).read_text()
-        css = (ROOT / "static/css/platform.css").read_text()
 
-        # Every action carries both labels — the phone shows one, the desktop
-        # the other — so the two counts move together whatever actions the row
-        # grows. The cluster action has three states now (add, change, and the
-        # refusal), the project action two, and Schedule is the sixth: the
-        # Impact Assessment role plans straight from the directory (owner,
+        # One Actions menu per row (owner, 2026-09-26: "School directory
+        # actions are add to cluster and Add to project"), so the phone and
+        # the desktop read the same full label and nothing wraps on a tablet.
+        # The cluster action has three states (add, change, and the refusal),
+        # the project action two, and Schedule is the sixth: the Impact
+        # Assessment role plans straight from the directory (owner,
         # 2026-09-17, "he can plan direct from the school directory. ONLY and
         # ONLY IA can plan from the school directory"). Reassign Owner is the
         # seventh, for Admin and Impact Assessment (owner, 2026-09-21): moving
         # a portfolio means moving several schools, and the directory is the
         # list a registry administrator is looking at.
-        full = directory.count("school-record-action__label--full")
-        self.assertEqual(full, directory.count("school-record-action__label--compact"))
-        self.assertEqual(full, 7)
-        self.assertEqual(directory.count("_cluster_action_icon.html"), 3)
-        self.assertEqual(directory.count("_project_action_icon.html"), 2)
-        self.assertIn('<circle cx="12" cy="5"', cluster_icon)
-        self.assertIn("M3.5 7.5h6", project_icon)
-        self.assertIn(".school-record-action__label--full { display: none; }", css)
-        self.assertIn(".school-record-action__label--compact { display: inline; }", css)
+        self.assertEqual(directory.count("{% row_actions school.school_name %}"), 1)
+        self.assertEqual(directory.count('class="row-menu__item"'), 7)
+        self.assertEqual(directory.count('role="menuitem"'), 7)
+        self.assertNotIn("school-record-action", directory)
+        for label in (
+            ">Schedule<",
+            ">Add to Cluster<",
+            ">Change Cluster<",
+            ">Reassign Owner<",
+            ">Add to Project<",
+        ):
+            self.assertIn(label, directory)
+        # The two refusals stay on the list, greyed; the cluster one says why.
+        self.assertEqual(directory.count('aria-disabled="true"'), 2)
+        self.assertIn(
+            '<span class="row-menu__reason">{{ school.disabled_reasons.add_to_cluster }}</span>',
+            directory,
+        )

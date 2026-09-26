@@ -10,6 +10,7 @@ Programme Lead's own session is verified by Impact Assessment.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from django.test import TestCase
@@ -153,6 +154,14 @@ class ClusterSessionStatusTest(TestCase):
         response = self._page(self.ia)
         self.assertContains(response, f'href="/ia/verification/{own.id}/"')
         self.assertContains(response, "IA Pending")
+        # Verified and Return are the row's one Actions menu (owner, 2026-09-26).
+        html = response.content.decode()
+        row = html[html.index(f'data-session-row="{own.id}"') :]
+        row = row[: row.index("</tr>")]
+        self.assertIn("data-row-actions", row)
+        self.assertEqual(
+            re.findall(r'role="menuitem"[^>]*>([^<]+)</', row), ["Verified", "Return"]
+        )
         # A CCEO's completion is the Lead's to verify, never IA's.
         self.assertContains(response, "PL Pending")
         self.assertNotContains(response, f"/pl/review-queue/{cceo_work.id}/confirm")
