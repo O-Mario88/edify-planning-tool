@@ -1654,3 +1654,214 @@ def workspace_tables(items):
             "kind": "activity",
         },
     ]
+
+
+# ── Trainings the Partner facilitates (owner, 2026-09-26) ───────────────────
+#
+# "All trainings assigned to partners should be under Partner Oversight as
+# well, and the cost is the training fee." A partner-facilitated group
+# training is the officer's work (apps.activities.facilitation): the officer
+# completes it with the attendance and the Salesforce ID, and the Programme
+# Lead confirms it or returns it. It reads here, under the Partner that
+# facilitates it, in its own table: Cluster Name, District, Training Name,
+# SSA Intervention, Training Date, Salesforce ID, Evidence, Status, Cost (the
+# facilitation fee) and the action.
+
+
+@dataclass
+class FacilitatedTraining:
+    activity_id: str
+    activity_type: str
+    activity_status: str
+    partner_id: str
+    partner_name: str = ""
+    cluster_name: str = ""
+    district: str = ""
+    training_name: str = ""
+    intervention_label: str = ""
+    target_intervention: str = ""
+    training_date: date | None = None
+    fee: int = 0
+    responsible_cceo_id: str | None = None
+    responsible_cceo_name: str = ""
+    supervising_pl_id: str | None = None
+    supervising_pl_name: str = ""
+    # completion_columns.annotate sets these.
+    salesforce_id: str = ""
+    evidence_label: str = ""
+    salesforce_ok: bool = False
+    evidence_ok: bool = False
+    is_complete: bool = False
+    completion_gap: str = ""
+    shows_complete: bool = False
+    # The view sets this: may the reader confirm or return it?
+    can_review: bool = False
+
+    @property
+    def awaits_review(self) -> bool:
+        """Completed by the officer and waiting on their Programme Lead."""
+        return self.activity_status == "submitted_to_pl"
+
+    @property
+    def with_ia(self) -> bool:
+        return self.activity_status == "awaiting_ia_verification"
+
+    @property
+    def is_returned(self) -> bool:
+        from apps.activities.services import RETURNED_STATUSES
+
+        return self.activity_status in RETURNED_STATUSES
+
+    @property
+    def is_overdue(self) -> bool:
+        from django.utils import timezone
+
+        return bool(
+            not self.is_complete
+            and not self.completion_gap
+            and not self.is_returned
+            and self.training_date
+            and self.training_date < timezone.localdate()
+        )
+
+    @property
+    def status_label(self) -> str:
+        """Upcoming until the officer completes it; Completed once the
+        attendance and the Salesforce ID are in; Verified once confirmed.
+        Returned, Overdue, or what a done status is missing, when so."""
+        if self.is_returned:
+            return "Returned"
+        if self.shows_complete:
+            return "Verified"
+        if self.is_complete:
+            return "Completed"
+        if self.completion_gap:
+            return self.completion_gap
+        return "Overdue" if self.is_overdue else "Upcoming"
+
+    @property
+    def delivery_phase(self) -> str:
+        """The page's status filter keys (PartnerOversightItem.delivery_phase)."""
+        from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
+        if self.is_returned:
+            return "returned"
+        if self.activity_status in COMPLETED_WORK_STATUSES:
+            return "completed"
+        if self.awaits_review or self.with_ia:
+            return "verification"
+        if self.activity_status in ("in_progress", "completion_started"):
+            return "in_progress"
+        return "scheduled"
+
+    @property
+    def status_tone(self) -> str:
+        return {
+            "Returned": "danger",
+            "Overdue": "danger",
+            "Verified": "success",
+            "Completed": "info",
+            "Upcoming": "neutral",
+        }.get(self.status_label, "warning")
+
+
+def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
+    """The partner-facilitated group trainings this principal may oversee,
+    under the same scope as the rest of Partner Monitoring (_resolve_scope):
+    the country, a region, or a Programme Lead's team and their own. Open
+    work first by training date, completed work at the bottom
+    (completion_columns)."""
+    from types import SimpleNamespace
+
+    from apps.activities.completion_columns import annotate, sort_completed_last
+    from apps.activities.facilitation import facilitation_fees
+    from apps.activities.models import Activity
+    from apps.partners.models import Partner
+
+    scope = _resolve_scope(principal)
+    if scope["kind"] == "team" and not scope["staff_ids"]:
+        return []
+    qs = (
+        Activity.objects.filter(
+            deleted_at__isnull=True, facilitating_partner_id__isnull=False
+        )
+        .exclude(facilitating_partner_id="")
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .select_related("cluster", "cluster__district", "training_course")
+    )
+    if fys:
+        qs = qs.filter(fy__in=tuple(str(fy) for fy in fys))
+    if scope.get("region_ids") is not None:
+        qs = qs.filter(cluster__region_id__in=scope["region_ids"])
+    elif not scope["is_country"]:
+        ids = scope["staff_ids"]
+        qs = qs.filter(
+            Q(responsible_staff_id__in=ids) | Q(cluster__responsible_staff_id__in=ids)
+        )
+    activities = list(qs)
+    if not activities:
+        return []
+
+    names = dict(
+        Partner.all_objects.filter(
+            id__in={a.facilitating_partner_id for a in activities}
+        ).values_list("id", "name")
+    )
+    fees = facilitation_fees([a.id for a in activities])
+    directory = _staff_directory(
+        [
+            SimpleNamespace(
+                monitoring_staff_id=None,
+                assigning_staff_id=a.responsible_staff_id,
+                school=None,
+                cluster=a.cluster,
+            )
+            for a in activities
+        ]
+    )
+    rows = []
+    for activity in activities:
+        owner = activity.responsible_staff_id or getattr(
+            activity.cluster, "responsible_staff_id", None
+        )
+        canonical = directory["canonical"].get(owner, owner)
+        pl_id, pl_name = directory["supervisor"].get(canonical, (None, ""))
+        training, _purpose, intervention = describe_work(activity=activity)
+        rows.append(
+            FacilitatedTraining(
+                activity_id=activity.id,
+                activity_type=activity.activity_type or "",
+                activity_status=activity.status or "",
+                partner_id=activity.facilitating_partner_id,
+                partner_name=names.get(activity.facilitating_partner_id, ""),
+                cluster_name=getattr(activity.cluster, "name", "") or "",
+                district=getattr(
+                    getattr(activity.cluster, "district", None), "name", ""
+                )
+                or "",
+                training_name=training,
+                intervention_label=intervention,
+                target_intervention=activity.focus_intervention or "",
+                training_date=activity_day(activity),
+                fee=fees.get(activity.id, 0),
+                responsible_cceo_id=canonical,
+                responsible_cceo_name=directory["names"].get(owner, ""),
+                supervising_pl_id=pl_id,
+                supervising_pl_name=pl_name,
+            )
+        )
+    annotate(rows)
+    sort_completed_last(rows, date_attr="training_date")
+    return rows
+
+
+def filter_trainings(trainings, *, member="all", activity_type="", status=""):
+    """The workspace's team-member, activity-type and status filters, as they
+    narrow the Partner's own work (filter_workspace)."""
+    return [
+        t
+        for t in trainings
+        if (member in ("", "all") or (t.responsible_cceo_id or "unassigned") == member)
+        and (not activity_type or t.activity_type == activity_type)
+        and (not status or t.delivery_phase == status)
+    ]

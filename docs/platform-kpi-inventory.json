@@ -8419,7 +8419,7 @@
    "audit_id": "KPI-SOURCE-466",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2463,
+   "line": 2487,
    "label": null,
    "keys": [
     "count",
@@ -8437,7 +8437,7 @@
    "audit_id": "KPI-SOURCE-467",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2580,
+   "line": 2604,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8573,7 +8573,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1974,
+   "line": 1999,
    "label": null,
    "keys": [
     "count",
@@ -8610,7 +8610,7 @@
    "audit_id": "KPI-SOURCE-476",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 572,
+   "line": 588,
    "label": null,
    "keys": [
     "count",
@@ -8629,7 +8629,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 612,
+   "line": 628,
    "label": null,
    "keys": [
     "count",
@@ -8648,7 +8648,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2002,
+   "line": 2030,
    "label": "All team members",
    "keys": [
     "count",
@@ -8666,7 +8666,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2004,
+   "line": 2036,
    "label": null,
    "keys": [
     "count",
@@ -8684,7 +8684,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 597,
+   "line": 613,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -9847,7 +9847,7 @@
    "audit_id": "KPI-SOURCE-545",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 355,
+   "line": 359,
    "label": null,
    "keys": [
     "activity_ids",
@@ -9866,7 +9866,7 @@
    "audit_id": "KPI-SOURCE-546",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 370,
+   "line": 374,
    "label": null,
    "keys": [
     "activity_count",
@@ -9886,7 +9886,7 @@
    "audit_id": "KPI-SOURCE-547",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 390,
+   "line": 394,
    "label": "Week {\u2026} (Days {\u2026}\u2013{\u2026})",
    "keys": [
     "activity_count",
@@ -9908,7 +9908,7 @@
    "audit_id": "KPI-SOURCE-548",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 417,
+   "line": 421,
    "label": null,
    "keys": [
     "label",

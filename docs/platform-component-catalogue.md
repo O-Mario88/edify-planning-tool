@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **504**
+Components and application partials: **505**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -382,6 +382,7 @@ Components and application partials: **504**
 | `partials/oversight/partner_detail_drawer.html` | application-partial | Reusable partner detail drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /partner-oversight/detail | 0 |
 | `partials/oversight/partner_filter_fields.html` | application-partial | Reusable partner filter fields interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/oversight/partner_school_row.html` | application-partial | Reusable partner school row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
+| `partials/oversight/partner_trainings_table.html` | application-partial | Reusable partner trainings table interface primitive | {{ item.status_tone }}; default, empty | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_work_row.html` | application-partial | Reusable partner work row interface primitive | danger, warning, {{ item.status_tone }}; default, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_work_tables.html` | application-partial | Reusable partner work tables interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive, info, warning, {% if summary.overdue %}danger{% else %}neutral{% endif %}; default | explicit responsive contract | accessible name and label | /partner-oversight/ | 0 |

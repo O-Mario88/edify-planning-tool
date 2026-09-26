@@ -245,6 +245,11 @@ class NotificationLinkResolver:
             if context_type == "Partner" and context_id:
                 return f"/partners/{context_id}", "Read Engagement"
             return "/partners", "Open Partners"
+        # A partner booked to facilitate a staff-run group training (owner,
+        # 2026-09-26): the training is staff work the partner cannot open, so
+        # the notice leads to where its facilitation fee is invoiced.
+        if event_type == "partner_facilitation_booked":
+            return "/partner/my-plan", "Open Partner Invoices"
         # ── end S2 ──
         # ── IA review · IA-N ──
         # Impact Assessment's handoffs open the record or the queue that

@@ -22,7 +22,7 @@ import uuid
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
@@ -44,7 +44,11 @@ def _partner_ids_for(principal) -> list[str]:
 
 
 def _planned_total(activity) -> int:
-    return activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
+    """What the partner is paid for: all of partner-delivered work; the
+    facilitation fee of a partner-facilitated training."""
+    from apps.activities.facilitation import partner_planned_total
+
+    return partner_planned_total(activity)
 
 
 def _paid_by_type(activity) -> dict[str, int]:
@@ -111,15 +115,18 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
 
     already_invoiced = set(
         PartnerInvoiceItem.objects.filter(
+            Q(activity__assigned_partner_id__in=partner_ids)
+            | Q(activity__facilitating_partner_id__in=partner_ids),
             instalment=instalment,
-            activity__assigned_partner_id__in=partner_ids,
         ).values_list("activity_id", flat=True)
     )
 
+    # The partner's own delivered work, and the staff-run group trainings it
+    # facilitates, whose fee it invoices here (owner, 2026-09-26).
     activities = (
         Activity.objects.filter(
-            assigned_partner_id__in=partner_ids,
-            delivery_type="partner",
+            Q(assigned_partner_id__in=partner_ids, delivery_type="partner")
+            | Q(facilitating_partner_id__in=partner_ids, delivery_type="staff"),
             deleted_at__isnull=True,
             scheduled_date__date__range=(start, end),
         )

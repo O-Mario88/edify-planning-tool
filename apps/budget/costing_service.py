@@ -957,6 +957,7 @@ def apply_to_activity(
 
     # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
     from datetime import timedelta
+    from apps.activities.facilitation import line_partner_id
     from apps.core.fy import get_operational_fy, get_quarter_for_date
 
     scheduled_date = activity.scheduled_date
@@ -1199,7 +1200,10 @@ def apply_to_activity(
                     responsible_role=None,
                     school=activity.school,
                     cluster=activity.cluster,
-                    partner_id=activity.assigned_partner_id or None,
+                    # Every line of partner-delivered work is the partner's;
+                    # of a partner-facilitated training, only the fee
+                    # (apps.activities.facilitation).
+                    partner_id=line_partner_id(activity, _line_item_type(line.key)),
                     project_id=activity.project_id,
                 )
             )

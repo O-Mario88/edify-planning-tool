@@ -14,6 +14,7 @@ from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.db import transaction
 from django.utils import timezone
 
+from apps.activities.facilitation import PARTNER_FEE_LINES
 from apps.activities.models import ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import fy_options, get_operational_fy
@@ -64,6 +65,9 @@ def _live_month_lines(principal, fy: str, month: int):
             activity__scheduled_date__isnull=False,
         )
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        # A partner-facilitated training's fee is the partner's, paid through
+        # its invoice (apps.activities.facilitation): not the team's request.
+        .exclude(PARTNER_FEE_LINES)
         .select_related("activity", "activity__school")
         .order_by("planned_date", "activity__activity_type", "label")
     )

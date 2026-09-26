@@ -1217,6 +1217,102 @@ def _resolved_executor_type(data: dict) -> str:
     return ExecutorType.STAFF
 
 
+def _facilitating_partner_for(
+    data: dict,
+    principal,
+    *,
+    activity_type: str,
+    catalogue_item=None,
+    school=None,
+    scheduled_date=None,
+):
+    """The partner that will facilitate this group training, or None.
+
+    Only a group training (facilitation.FACILITATED_TRAINING_TYPES) that a
+    staff member assigns to a partner qualifies. The partner is held to what
+    the chosen delivery asks: a Certified Partner Agency must be bookable for
+    the date; an assigned partner must exist and be active.
+    """
+    from apps.activities.facilitation import facilitates
+
+    partner_id = data.get("assignedPartnerId")
+    if not partner_id or not facilitates(activity_type):
+        return None
+    from apps.core.scoping import resolve_partner_ids
+
+    if resolve_partner_ids(principal):
+        return None
+    requested = _resolved_executor_type(data)
+    if requested not in PARTNER_EXECUTOR_TYPES:
+        return None
+    if requested == ExecutorType.CERTIFIED_PARTNER_AGENCY:
+        _assert_bookable_certified_agency(
+            partner_id,
+            activity_type=activity_type,
+            catalogue_item=catalogue_item,
+            school=school,
+            scheduled_date=scheduled_date,
+        )
+    else:
+        _assert_active_facilitator(partner_id)
+    return partner_id
+
+
+def _assert_active_facilitator(partner_id) -> None:
+    from apps.partners.models import Partner
+
+    if (
+        not partner_id
+        or not Partner.objects.filter(
+            id=partner_id, deleted_at__isnull=True, active_status=True
+        ).exists()
+    ):
+        raise BadRequest("Select an active Partner organisation to facilitate.")
+
+
+def _tell_facilitating_partner(activity: Activity) -> None:
+    """Tell the partner it is facilitating this training, once saved. It is
+    staff work, so it does not reach the partner's own plan; this is how the
+    partner hears of the date. Best-effort: never blocks the schedule."""
+
+    def _send():
+        try:
+            from apps.notifications.services import WorkflowNotificationService
+            from apps.partners.models import Partner
+
+            partner = (
+                Partner.objects.filter(id=activity.facilitating_partner_id)
+                .select_related("user")
+                .first()
+            )
+            user_id = getattr(getattr(partner, "user", None), "id", None)
+            if not user_id:
+                return
+            day = activity.scheduled_date or activity.planned_date
+            where = getattr(activity.cluster, "name", "") or "a cluster"
+            when = f" on {day:%d %b %Y}" if day else ""
+            WorkflowNotificationService.trigger(
+                event_type="partner_facilitation_booked",
+                category="partner",
+                priority="normal",
+                title="You are facilitating a group training",
+                body=(
+                    f"Edify booked your organisation to facilitate the group "
+                    f"training at {where}{when}. Its facilitation fee is "
+                    "invoiced through Partner Invoices."
+                ),
+                context_type="Partner",
+                context_id=partner.id,
+                recipients=[user_id],
+            )
+        except Exception:  # noqa: BLE001 — never block a schedule
+            logger.warning(
+                "facilitation notification failed for %s", activity.id, exc_info=True
+            )
+
+    transaction.on_commit(_send)
+
+
 def _assert_bookable_certified_agency(
     partner_id,
     *,
@@ -1990,6 +2086,27 @@ def create(
     # downstream surface reads it; `executor_type` records WHICH partner
     # workflow, which is what decides whether the partner still has to pick a
     # date or has already been booked onto one.
+    # A group training staff assign to a partner is staff work the partner
+    # facilitates (owner, 2026-09-26; apps.activities.facilitation): the
+    # officer completes it and the partner is paid its facilitation fee. The
+    # partner is checked as the chosen delivery would check it, then recorded
+    # as the facilitator. A partner scheduling its own handover keeps partner
+    # delivery, as work already assigned does.
+    facilitating_partner_id = _facilitating_partner_for(
+        data,
+        principal,
+        activity_type=activity_type,
+        catalogue_item=catalogue_item,
+        school=school,
+        scheduled_date=scheduled_date,
+    )
+    if facilitating_partner_id:
+        data = {
+            **data,
+            "assignedPartnerId": None,
+            "deliveryType": "staff",
+            "executorType": ExecutorType.STAFF,
+        }
     executor_type = _resolved_executor_type(data)
     is_partner = executor_type in PARTNER_EXECUTOR_TYPES
     is_certified_agency_booking = executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY
@@ -2626,6 +2743,7 @@ def create(
             responsible_staff_id=responsible_staff_id,
             monitored_by_staff_id=monitored_by_staff_id,
             assigned_partner_id=data.get("assignedPartnerId"),
+            facilitating_partner_id=facilitating_partner_id,
             delivery_type="partner" if is_partner else "staff",
             executor_type=executor_type,
             cluster_slot=data.get("clusterSlot"),
@@ -2797,6 +2915,8 @@ def create(
     if is_certified_agency_booking:
         _notify_certified_agency_booking(activity, certified_agency, principal)
     _ensure_partner_handover(activity, data)
+    if facilitating_partner_id:
+        _tell_facilitating_partner(activity)
     return _serialize(activity)
 
 
@@ -4452,6 +4572,30 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
         a = Activity.objects.select_for_update().get(pk=a.pk)
         delivery = data.get("deliveryType", a.delivery_type)
         was_partner = a.delivery_type == "partner"
+        # Staff moving a group training onto a partner make the partner its
+        # facilitator (owner, 2026-09-26; apps.activities.facilitation): it
+        # stays the officer's work, and the partner is paid the fee.
+        from apps.activities.facilitation import facilitates
+        from apps.core.scoping import resolve_partner_ids
+
+        if (
+            delivery == "partner"
+            and not was_partner
+            and facilitates(a.activity_type)
+            and not resolve_partner_ids(principal)
+        ):
+            _assert_active_facilitator(data.get("assignedPartnerId"))
+            a.facilitating_partner_id = data.get("assignedPartnerId")
+            delivery = "staff"
+            data = {
+                key: value
+                for key, value in data.items()
+                if key not in ("assignedPartnerId", "deliveryType")
+            }
+        elif "facilitatingPartnerId" in data:
+            if data.get("facilitatingPartnerId"):
+                _assert_active_facilitator(data.get("facilitatingPartnerId"))
+            a.facilitating_partner_id = data.get("facilitatingPartnerId") or None
         a.delivery_type = delivery
         # Only overwrite the partner link when the caller actually sent one —
         # a payload that omits the key used to null the partner while
@@ -4488,6 +4632,7 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
             update_fields=[
                 "delivery_type",
                 "assigned_partner_id",
+                "facilitating_partner_id",
                 "responsible_staff_id",
                 "expected_participants",
                 "status",

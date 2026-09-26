@@ -1484,6 +1484,15 @@ def pl_review_drawer(request, activity_id):
             subtitle="Not waiting on you",
             empty=str(getattr(exc, "detail", exc)),
         )
+    # The two decisions a reviewer holds, named the same on every surface
+    # (owner, 2026-09-24): Verified, or Return with the reason. Partner
+    # Monitoring's Trainings table calls the first Confirm Verification
+    # (owner, 2026-09-26); the act is the same.
+    decision = (
+        "Confirm Verification"
+        if request.GET.get("from") == "partner-trainings"
+        else "Verified"
+    )
     return _drawer(
         request,
         title="Completion review",
@@ -1491,24 +1500,26 @@ def pl_review_drawer(request, activity_id):
         or activity.get_activity_type_display(),
         facts=_review_facts(activity),
         action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
-        # The two decisions a reviewer holds, named the same on every surface
-        # (owner, 2026-09-24): Verified, or Return with the reason.
-        submit="Verified",
+        submit=decision,
         secondary={
             "label": "Return",
             "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
         },
         note=(
-            "Verified confirms the completion against Salesforce and marks it "
-            "complete. Return sends it back to the officer with your reason — "
-            "for example, participants not entered in Salesforce."
+            f"{decision} confirms the completion against Salesforce and marks "
+            "it complete. Return sends it back to the officer with your "
+            "reason — for example, participants not entered in Salesforce."
         ),
     )
 
 
 @require_page_permission("pl_review_queue")
 def pl_return_drawer(request, activity_id):
-    """Return: the reason is required, and the officer reads it as written."""
+    """Return: the reasons ticked and what the lead writes, at least one of
+    them, read by the officer as written (owner, 2026-09-26: "add a field for
+    reasons, especially if the Salesforce ID is entered but there are no
+    participants in Salesforce")."""
+    from apps.activities.return_notes import COMMON_REASONS
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
     from apps.pl_review.services import reviewable_activity
 
@@ -1536,19 +1547,28 @@ def pl_return_drawer(request, activity_id):
         submit="Return to officer",
         fields=[
             _field(
-                "reason",
+                "reasons",
                 "Why are you returning it?",
+                type="checkboxes",
+                options=[(reason, reason) for reason in COMMON_REASONS],
+                help="Tick every reason that applies.",
+            ),
+            _field(
+                "reason",
+                "What should the officer fix?",
                 type="textarea",
-                required=True,
                 rows=4,
-                maxlength=512,
+                maxlength=400,
                 placeholder=(
                     "Say exactly what to fix, e.g. The attendance form and "
                     "training ID are uploaded, but the participants are not "
                     "entered in Salesforce."
                 ),
-                help="The officer reads this as written on their My Plan.",
-            )
+                help=(
+                    "Tick a reason, write one, or both. The officer reads this "
+                    "as written on their My Plan."
+                ),
+            ),
         ],
     )
 
@@ -1586,9 +1606,13 @@ def pl_return_action(request, activity_id):
         return _review_refusal(request, a.id, "return")
 
     if request.method == "POST":
-        reason = request.POST.get("reason", "").strip()
+        reasons = request.POST.getlist("reasons")
+        written = request.POST.get("reason", "").strip()
+        reason = "; ".join([*reasons, written] if written else reasons)
         try:
-            pl_return(activity_id, {"reason": reason}, request.user)
+            pl_return(
+                activity_id, {"reasons": reasons, "reason": written}, request.user
+            )
             audit_log(
                 action="pl_return_completion",
                 subject_kind="Activity",
