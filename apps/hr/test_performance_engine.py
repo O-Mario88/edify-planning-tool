@@ -904,6 +904,37 @@ class HRConsoleTests(EngineFixture):
         review.refresh_from_db()
         self.assertEqual(review.stage, "priorities_agreed")
 
+    def test_an_agreement_row_offers_one_actions_menu(self):
+        """An agreement's steps are one Actions menu (owner, 2026-09-26).
+        Return and Recommend PIP still ask why through the shared reason
+        disclosure; those forms stay in the row, opened from the menu."""
+        from apps.hr.performance_engine import approve_agreement, build_draft_agreement
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        approve_agreement(review, self.hr)
+        page = self.hr_client.get("/hr/performance-cycle?fy=2026")
+        self.assertEqual(page.status_code, 200)
+        html = page.content.decode()
+        self.assertIn("data-row-actions", html)
+        self.assertIn(
+            'role="menuitem" '
+            f'href="/performance-conversation?staff={self.sp.id}">Open conversation',
+            html,
+        )
+        self.assertIn(
+            f"@click=\"reveal('return', 'reason-{review.id}')\">Return</button>", html
+        )
+        self.assertIn(
+            'class="row-menu__item row-menu__item--danger" role="menuitem"', html
+        )
+        # The forms that ask for a reason sit outside the menu, each still the
+        # shared disclosure with its labelled, required field.
+        self.assertIn(f'id="return-form-{review.id}"', html)
+        self.assertIn(f'id="reason-panel-{review.id}"', html)
+        self.assertIn(f'id="reason-pip-{self.sp.id}"', html)
+        # An approved agreement is returned, not approved again.
+        self.assertNotIn("Approve &amp; lock", html)
+
     def test_a_non_hr_user_cannot_drive_the_console(self):
         from django.test import Client
 

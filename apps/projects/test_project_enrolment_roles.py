@@ -250,6 +250,13 @@ class TheCoordinatorWorksFromTheProjectCardTest(_Roles):
             f"/projects/planning/bulk-partner?assignments={enrolment.id}", html
         )
         self.assertNotIn("/planning/assign-partner-modal", html)
+        # The two sit in the row's one Actions menu rather than as two buttons
+        # that wrapped on a tablet (owner, 2026-09-26).
+        self.assertIn(f'aria-label="Actions for {self.cceo_school.name}"', html)
+        self.assertIn('role="menuitem"', html)
+        self.assertIn(">Schedule</button>", html)
+        self.assertIn(">Assign</button>", html)
+        self.assertNotIn("school-record-action", html)
         # A school in nobody's project is not listed by it.
         self.assertNotIn(self.outsider.name, html)
 

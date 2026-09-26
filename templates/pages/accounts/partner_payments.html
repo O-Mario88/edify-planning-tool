@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load school_identity %}
 {% load frontend_filters %}
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 
 {% block title %}Partner Payments - Edify Command Center{% endblock %}
 
@@ -15,7 +15,7 @@ payType: 'clearance',
 payTypeLabel: 'Clearance',
 payOpener: null,
 openPayment(event, id, partner, amount, ptype, plabel) {
-this.payOpener = event.currentTarget;
+this.payOpener = event.currentTarget.closest('[data-row-actions]')?.querySelector('.row-menu__trigger') || event.currentTarget;
 this.selectedAct = id;
 this.partnerName = partner;
 this.payAmount = amount;
@@ -89,19 +89,23 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <td class="px-6 py-3 text-right text-slate-800 tabular-nums" data-label="Payable">
 {{ inv.payable_amount|ugx_amount }}
 </td>
-<td class="px-6 py-3" colspan="2">
-<div class="flex flex-wrap items-center gap-2 justify-end">
-<a href="/accounts/partner-invoices/{{ inv.id }}/download"
-   class="inline-flex h-8 items-center rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Download Invoice</a>
-<form method="POST" action="/accounts/partner-invoices/{{ inv.id }}/pay" class="flex flex-wrap items-center gap-2">
+<td class="px-6 py-3 text-right" colspan="2" data-record-action x-data="{ paying: false }">
+{% comment %}One Actions menu rather than a link and a payment form side by
+side (owner, 2026-09-26). Paying needs a reference and a method, so that
+form stays in the row, out of the menu: choosing Pay Partner opens it under
+the menu with focus on the reference.{% endcomment %}
+{% row_actions inv.partner_name %}
+<a class="row-menu__item" role="menuitem" href="/accounts/partner-invoices/{{ inv.id }}/download">Download Invoice</a>
+<button type="button" class="row-menu__item" role="menuitem" aria-controls="invoice-pay-{{ inv.id }}" @click="paying = true; $nextTick(() => requestAnimationFrame(() => $refs.payReference.focus()))">Pay Partner</button>
+{% endrow_actions %}
+<form id="invoice-pay-{{ inv.id }}" method="POST" action="/accounts/partner-invoices/{{ inv.id }}/pay" class="flex flex-wrap items-center gap-2 justify-end mt-2" x-show="paying" x-cloak @keydown.escape="paying = false">
 {% csrf_token %}
-<input name="payment_reference" required aria-label="Payment reference" placeholder="Reference" class="h-8 w-32 bg-slate-50 border border-slate-200 rounded-control text-[12px] font-semibold px-2">
+<input name="payment_reference" required aria-label="Payment reference" placeholder="Reference" x-ref="payReference" class="h-8 w-32 bg-slate-50 border border-slate-200 rounded-control text-[12px] font-semibold px-2">
 <select name="payment_method" aria-label="Payment method" class="h-8 bg-slate-50 border border-slate-200 rounded-control text-[12px] font-semibold px-2">
 {% for m in methods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
 </select>
 <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold transition-colors shadow-sm">Pay Partner</button>
 </form>
-</div>
 </td>
 </tr>
 {% endfor %}
@@ -242,18 +246,12 @@ Verified
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right" data-record-action>
-<div class="flex items-center justify-end gap-2">
-<button
-@click="openPayment($event, '{{ act.id }}', '{{ act.assigned_partner_id|escapejs }}', {{ act.balance_due|default:0 }}, 'clearance', 'Clearance')"
-type="button"
-class="h-8 px-3.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
->
-Clear Balance
-</button>
-<a href="/accounts/activities/{{ act.id }}/" aria-label="View activity finance detail" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-</a>
-</div>
+{% comment %}One Actions menu rather than a button and an icon link (owner,
+2026-09-26). Clear Balance still opens the payment drawer below.{% endcomment %}
+{% row_actions act.assigned_partner_name %}
+<button type="button" class="row-menu__item" role="menuitem" @click="openPayment($event, '{{ act.id }}', '{{ act.assigned_partner_id|escapejs }}', {{ act.balance_due|default:0 }}, 'clearance', 'Clearance')">Clear Balance</button>
+<a class="row-menu__item" role="menuitem" href="/accounts/activities/{{ act.id }}/" aria-label="View activity finance detail">View activity finance detail</a>
+{% endrow_actions %}
 </td>
 </tr>
 {% endfor %}

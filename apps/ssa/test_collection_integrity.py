@@ -338,6 +338,12 @@ class VerificationQueuePageTest(IntegrityFixture):
         self.assertIn(f'hx-get="/ssa/verification/{theirs.id}/return-drawer"', body)
         self.assertNotIn(f'hx-get="/ssa/verification/{mine.id}/return-drawer"', body)
         self.assertIn("Your scores: a different verifier confirms them", body)
+        # Confirm and Return are the row's one Actions menu (owner, 2026-09-26).
+        at = body.index(f'hx-get="/ssa/verification/{theirs.id}/return-drawer"')
+        row = body[body.rindex("<tr", 0, at) : body.index("</tr>", at)]
+        self.assertIn("data-row-actions", row)
+        self.assertIn('role="menuitem">Confirm</button>', row)
+        self.assertRegex(row, r'role="menuitem"[^>]*>Return</button>')
 
     def test_posting_another_countrys_record_is_not_found(self):
         foreign = self._record(self.ke_school)

@@ -1,5 +1,5 @@
-{% load frontend_filters %}
-<tr class="planning-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+{% load frontend_filters row_actions %}
+<tr class="planning-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
   <td class="school-plan-table__select"><label class="school-record-row__select" for="select-planning-school-{{ school.id }}">
       <input
         type="checkbox"
@@ -18,51 +18,43 @@
   </div></td>
   {% include "components/school_planning_badges.html" with badges=school.planningBadges layout="cells" %}
   {% if school.supportRule %}{% include "partials/planning/support_cell.html" %}{% endif %}
-  <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
+  <td data-label="Actions" class="school-plan-table__actions">
       {% comment %}
         Schedule and Assign grey out on the school's own visit rule as well as
         the role (owner, 2026-09-15): a client school visited or handed to a
         partner this year, or a core school whose staff visits are done. The
-        reason is the tooltip; the services refuse with the same sentence.
+        reason sits under the greyed item; the services refuse with the same
+        sentence. One Actions menu rather than two buttons, which wrapped onto
+        two lines on a tablet (owner, 2026-09-26).
       {% endcomment %}
+      {% row_actions school.name %}
       {% if can_schedule and school.staffCanSchedule %}
         <button
           type="button"
-          class="school-record-action school-record-action--schedule"
+          class="row-menu__item"
+          role="menuitem"
           hx-get="/planning/schedule-modal?school_id={{ school.schoolId }}{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
           aria-label="Schedule activity for {{ school.name }}"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
-          <span>Schedule</span>
-        </button>
+        >Schedule</button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" disabled title="{% firstof school.staffScheduleReason school.reason %}" data-visit-locked="{% if not school.staffCanSchedule %}true{% else %}false{% endif %}" aria-label="Schedule activity for {{ school.name }} unavailable{% if school.staffScheduleReason %}: {{ school.staffScheduleReason }}{% endif %}">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>
-          <span>Schedule</span>
-        </button>
+        <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-visit-locked="{% if not school.staffCanSchedule %}true{% else %}false{% endif %}" aria-label="Schedule activity for {{ school.name }} unavailable{% if school.staffScheduleReason %}: {{ school.staffScheduleReason }}{% endif %}">Schedule{% firstof school.staffScheduleReason school.reason as why %}{% if why %}<span class="row-menu__reason">{{ why }}</span>{% endif %}</button>
       {% endif %}
-
       {% if can_assign_partner and school.canAssignPartner and "Assign to Partner" not in school.blockedActions %}
         <button
           type="button"
-          class="school-record-action school-record-action--assign"
+          class="row-menu__item"
+          role="menuitem"
           hx-get="/planning/assign-partner-modal?school_id={{ school.schoolId }}"
           hx-target="#drawer-container"
           aria-label="Assign {{ school.name }} to a partner"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
-          <span>Assign</span>
-        </button>
+        >Assign</button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" disabled title="{% firstof school.assignPartnerReason school.reason %}" data-assign-locked="{% if not school.canAssignPartner %}true{% else %}false{% endif %}" aria-label="Assign {{ school.name }} to a partner unavailable{% if school.assignPartnerReason %}: {{ school.assignPartnerReason }}{% endif %}">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3"/></svg>
-          <span>Assign</span>
-        </button>
+        <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-assign-locked="{% if not school.canAssignPartner %}true{% else %}false{% endif %}" aria-label="Assign {{ school.name }} to a partner unavailable{% if school.assignPartnerReason %}: {{ school.assignPartnerReason }}{% endif %}">Assign{% firstof school.assignPartnerReason school.reason as why %}{% if why %}<span class="row-menu__reason">{{ why }}</span>{% endif %}</button>
       {% endif %}
-
-    </div></td>
+      {% endrow_actions %}
+    </td>
 </tr>
 <tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
   <td aria-hidden="true"></td>

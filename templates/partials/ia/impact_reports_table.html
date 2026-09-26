@@ -1,3 +1,4 @@
+{% load row_actions %}
 {% comment %}
 One card of plain-text rows for Impact Reports (IA review, owner, 2026-09-13):
 the register, a report's recommendations, frozen evidence, releases and
@@ -5,7 +6,8 @@ history, and a school's brief. The view hands `table` = {title, subtitle,
 rows: [{cells, actions}], has_actions, pager, param, empty_title, empty_body}
 and an optional `anchor`; the pager is already one page. A status is a word
 with a tone, never a pill. A row action is a link (`url`), a drawer (`drawer`)
-or a one-button form (`post`).
+or a one-button form (`post`). A row with two or more is one Actions menu
+rather than a button each (owner, 2026-09-26); a row with one keeps its button.
 {% endcomment %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="ia-report-table-{{ table.param }}" data-ia-report-table="{{ table.param }}"{% if anchor %} id="{{ anchor }}"{% endif %}>
   <header class="rpl-card__header">
@@ -37,6 +39,19 @@ or a one-button form (`post`).
           {% endfor %}
           {% if table.has_actions %}
           <td class="is-end" data-record-action data-label="Actions">
+            {% if row.actions|length > 1 %}
+            {% row_actions row.cells.0.text %}
+            {% for action in row.actions %}
+            {% if action.url %}
+            <a class="row-menu__item" role="menuitem" href="{{ action.url }}">{{ action.label }}</a>
+            {% elif action.drawer %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% elif action.post %}
+            <form role="none" method="post" action="{{ action.post }}">{% csrf_token %}<button type="submit" class="row-menu__item{% if action.label == "Remove" %} row-menu__item--danger{% endif %}" role="menuitem">{{ action.label }}</button></form>
+            {% endif %}
+            {% endfor %}
+            {% endrow_actions %}
+            {% else %}
             {% for action in row.actions %}
             {% if action.url %}
             <a class="rpl-row-link rounded-control" href="{{ action.url }}">{{ action.label }}</a>
@@ -46,6 +61,7 @@ or a one-button form (`post`).
             <form method="post" action="{{ action.post }}" class="inline">{% csrf_token %}<button type="submit" class="rpl-row-link rounded-control">{{ action.label }}</button></form>
             {% endif %}
             {% endfor %}
+            {% endif %}
           </td>
           {% endif %}
         </tr>

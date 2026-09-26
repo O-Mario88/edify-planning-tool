@@ -563,6 +563,18 @@ class FinanceOperatingSystemTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         ids = {a.id for a in resp.context["advances"]}
         self.assertIn(self.staff_activity.id, ids)
+        # Process Advance and the finance detail are one Actions menu (owner,
+        # 2026-09-26); Process Advance still opens the disbursement drawer.
+        self.assertContains(
+            resp,
+            'class="row-menu__item" role="menuitem" '
+            f"@click=\"openDisbursement($event, '{self.staff_activity.id}'",
+        )
+        self.assertContains(
+            resp,
+            'class="row-menu__item" role="menuitem" '
+            f'href="/accounts/activities/{self.staff_activity.id}/"',
+        )
 
         # Once disbursed it must leave the queue.
         self.staff_activity.payment_status = "disbursed"
@@ -570,6 +582,38 @@ class FinanceOperatingSystemTest(TestCase):
         resp = client.get("/accounts/advances/")
         ids = {a.id for a in resp.context["advances"]}
         self.assertNotIn(self.staff_activity.id, ids)
+
+    def test_budget_amendment_decisions_are_one_actions_menu(self):
+        """Approve, Return and Reject are one Actions menu (owner, 2026-09-26)
+        that sits inside the review form, so the optional note still posts
+        with whichever decision is chosen."""
+        from apps.budget.models import BudgetAmendment
+
+        amendment = BudgetAmendment.objects.create(
+            activity=self.staff_activity,
+            new_date=date(2026, 8, 1),
+            original_amount=250_000,
+            reason="School closed on the original date.",
+            requested_by="cceo-1",
+        )
+        resp = self._accountant_client().get("/accounts/budget-amendments")
+        self.assertEqual(resp.status_code, 200)
+        form = (
+            resp.content.decode()
+            .split(f'action="/accounts/budget-amendments/{amendment.id}/action"', 1)[1]
+            .split("</form>", 1)[0]
+        )
+        self.assertIn('name="note"', form)
+        self.assertIn("data-row-actions", form)
+        self.assertIn(
+            'name="action" value="approve" class="row-menu__item" role="menuitem"',
+            form,
+        )
+        self.assertIn(
+            'name="action" value="reject" '
+            'class="row-menu__item row-menu__item--danger" role="menuitem"',
+            form,
+        )
 
     def test_partner_queue_excludes_staff_and_transport_obligations(self):
         from apps.daily_visit_batches.models import DailyVisitBatch
@@ -619,6 +663,12 @@ class FinanceOperatingSystemTest(TestCase):
             self.assertEqual(resp.status_code, 200)
             ids = {a.id for a in resp.context["payments"]}
             self.assertIn(self.partner_activity.id, ids, state)
+            # Clear Balance sits on the row's Actions menu (owner, 2026-09-26).
+            self.assertContains(
+                resp,
+                'class="row-menu__item" role="menuitem" '
+                f"@click=\"openPayment($event, '{self.partner_activity.id}'",
+            )
 
         self.partner_activity.payment_status = "paid"
         self.partner_activity.save(update_fields=["payment_status"])

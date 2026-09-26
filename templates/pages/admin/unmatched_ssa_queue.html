@@ -1,6 +1,6 @@
 {% extends "layouts/shell.html" %}
 
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 
 {% block title %}Unmatched SSA Queue — Edify{% endblock %}
 
@@ -107,11 +107,42 @@
 <span class="px-2 py-0.5 bg-amber-50 text-amber-700 edify-text-caption rounded-pill font-bold tracking-wider">Pending</span>
 {% endif %}
 </td>
-<td class="px-4 py-4 text-right" data-record-action>
-<div class="flex items-center justify-end gap-2.5">
+<td class="px-4 py-4 text-right" data-record-action x-data="{ linking: false }">
+<!-- One Actions menu rather than four buttons (owner, 2026-09-26). Link needs
+     a school, so its picker stays in the row, out of the menu: choosing Link
+     opens it under the menu and puts focus on the picker. -->
+{% firstof r.school_name_raw r.school_id as ssa_record_name %}{% row_actions ssa_record_name %}
+<button type="button" class="row-menu__item" role="menuitem" aria-controls="ssa-link-{{ r.id }}" @click="linking = true; $nextTick(() => requestAnimationFrame(() => $refs.schoolPicker.focus()))">Link</button>
 
-<!-- Link Form -->
-<form method="post" action="" class="inline-flex items-center gap-1.5 m-0">
+<!-- Create School -->
+<form role="none" method="post" action="">
+{% csrf_token %}
+<input type="hidden" name="record_id" value="{{ r.id }}">
+<input type="hidden" name="action" value="create_school">
+<button type="submit" class="row-menu__item" role="menuitem">Create School</button>
+</form>
+
+<!-- Hold -->
+{% if r.status != 'hold' %}
+<form role="none" method="post" action="">
+{% csrf_token %}
+<input type="hidden" name="record_id" value="{{ r.id }}">
+<input type="hidden" name="action" value="hold">
+<button type="submit" class="row-menu__item" role="menuitem">Hold</button>
+</form>
+{% endif %}
+
+<!-- Ignore -->
+<form role="none" method="post" action="">
+{% csrf_token %}
+<input type="hidden" name="record_id" value="{{ r.id }}">
+<input type="hidden" name="action" value="ignore">
+<button type="submit" class="row-menu__item row-menu__item--danger" role="menuitem">Ignore</button>
+</form>
+{% endrow_actions %}
+
+<!-- Link Form — opened from the menu's Link item. -->
+<form id="ssa-link-{{ r.id }}" method="post" action="" class="flex items-center justify-end gap-1.5 mt-2" x-show="linking" x-cloak @keydown.escape="linking = false">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="match">
@@ -120,7 +151,7 @@
 <!-- The full school list is identical for every row, so it is rendered ONCE
      below and copied in on first interaction. Repeating it per row shipped
      16,274 options x ~33 rows = 37MB of HTML and a 61-second page. -->
-<select aria-label="School ID" name="school_id" required data-school-picker class="text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
+<select aria-label="School ID" name="school_id" required data-school-picker x-ref="schoolPicker" class="text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
 <option value="">-- Select school --</option>
 {% if r.suggested_school %}
 <option value="{{ r.suggested_school.id }}" selected>Suggested: {{ r.suggested_school.name }} ({{ r.suggested_school.school_id }})</option>
@@ -131,40 +162,6 @@
 Link
 </button>
 </form>
-
-<!-- Create School -->
-<form method="post" action="" class="inline m-0">
-{% csrf_token %}
-<input type="hidden" name="record_id" value="{{ r.id }}">
-<input type="hidden" name="action" value="create_school">
-<button type="submit" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold edify-text-caption rounded-control transition-all shadow-sm">
-Create School
-</button>
-</form>
-
-<!-- Hold -->
-{% if r.status != 'hold' %}
-<form method="post" action="" class="inline m-0">
-{% csrf_token %}
-<input type="hidden" name="record_id" value="{{ r.id }}">
-<input type="hidden" name="action" value="hold">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-control transition-all">
-Hold
-</button>
-</form>
-{% endif %}
-
-<!-- Ignore -->
-<form method="post" action="" class="inline m-0">
-{% csrf_token %}
-<input type="hidden" name="record_id" value="{{ r.id }}">
-<input type="hidden" name="action" value="ignore">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-rose-500 font-bold edify-text-caption rounded-control transition-all">
-Ignore
-</button>
-</form>
-
-</div>
 </td>
 </tr>
 {% empty %}

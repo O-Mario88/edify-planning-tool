@@ -702,6 +702,12 @@ class OutcomesAndProgressTests(EvidenceFixture):
         self.assertContains(response, "data-ia-collection-worklist")
         self.assertContains(response, "School EV-UG-1")
         self.assertContains(response, "Add SSA")
+        # A school's actions are its one Actions menu (owner, 2026-09-26).
+        self.assertContains(
+            response,
+            '<a class="row-menu__item" role="menuitem" '
+            'href="/ssa/manual/?school_id=EV-UG-1">Add SSA</a>',
+        )
         self.assertContains(response, "Assessment collection")
         self.assertNotContains(response, "School EV-KE-1")
 

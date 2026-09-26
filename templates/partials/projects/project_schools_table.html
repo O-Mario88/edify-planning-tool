@@ -1,4 +1,4 @@
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% comment %}
   The schools belonging to one project, inside that project's card (owner,
   2026-09-16: "the projects created should all be in their own cards so that
@@ -14,9 +14,9 @@
   project profile shows, so the card and the profile cannot disagree about
   where a school's planning has reached.
 
-  Both row controls stamp the project on the work (2026-09-24): Schedule
-  carries the project into the scheduling drawer, and Partner opens the
-  project handover (/projects/planning/bulk-partner) rather than the generic
+  Both row actions stamp the project on the work (2026-09-24): Schedule
+  carries the project into the scheduling drawer, and Assign (the Partner
+  button where it is the row's only action) opens the project handover (/projects/planning/bulk-partner) rather than the generic
   school-support drawer, which files a handover with no project and so never
   reached this project's planning, monitoring or impact rows.
 
@@ -75,6 +75,35 @@
         </td>
         <td class="px-4 py-3 align-top hidden lg:table-cell text-slate-600 font-semibold">{{ row.partner_status }}</td>
         <td class="px-3 py-3 align-top">
+          {% comment %}
+          One Actions menu rather than two buttons, which wrapped onto two
+          lines on a tablet (owner, 2026-09-26). A reader offered only one of
+          the two keeps it as its own button.
+          {% endcomment %}
+          {% if can_schedule and can_assign_partner %}
+          <div class="flex items-center justify-end">
+          {% row_actions row.school_name %}
+            <button
+              type="button"
+              class="row-menu__item"
+              role="menuitem"
+              hx-get="/planning/schedule-modal?school_id={{ row.school_id }}&amp;project_id={{ project_id }}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              aria-label="Schedule an activity for {{ row.school_name }}"
+            >Schedule</button>
+            <button
+              type="button"
+              class="row-menu__item"
+              role="menuitem"
+              hx-get="/projects/planning/bulk-partner?assignments={{ row.assignment_id }}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              aria-label="Assign {{ row.school_name }} to a partner"
+            >Assign</button>
+          {% endrow_actions %}
+          </div>
+          {% else %}
           <div class="flex items-center justify-end gap-1.5">
             {% if can_schedule %}
             <button
@@ -103,6 +132,7 @@
             </button>
             {% endif %}
           </div>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}

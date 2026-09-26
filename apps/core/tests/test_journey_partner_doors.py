@@ -166,6 +166,16 @@ class PartnerJourneyThroughTheDoorsTest(TestCase):
         plan = self.client.get("/my-plan")
         self.assertEqual(plan.status_code, 200)
         self.assertContains(plan, "PD Partner School")
+        # Start sits on the row's shared Actions menu (owner, 2026-09-26).
+        self.assertContains(plan, "data-row-actions")
+        self.assertContains(
+            plan,
+            f'<form role="none" method="post" action="/partner/activities/{activity.id}/start-action">',
+        )
+        self.assertContains(
+            plan,
+            '<button type="submit" class="row-menu__item" role="menuitem">Start Activity</button>',
+        )
         self.client.post(f"/partner/activities/{activity.id}/start-action")
         activity.refresh_from_db()
         self.assertEqual(activity.status, "completion_started")

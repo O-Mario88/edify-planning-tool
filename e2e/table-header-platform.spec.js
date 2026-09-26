@@ -10,7 +10,7 @@ test('light table headers across platform pages',async({page},info)=>{
  const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>/^Admin-.*\.html$/.test(f)):[];
  const server=await snapshotServer(root),issues=[];let checked=0;
  try{for(const file of files){
-  const html=fs.readFileSync(path.join(dir,file),'utf8');if(!html.includes('<table')&&!html.includes('school-record-action'))continue;
+  const html=fs.readFileSync(path.join(dir,file),'utf8');if(!html.includes('<table')&&!html.includes('school-record-action')&&!html.includes('data-row-actions'))continue;
   server.setHtml(html);await page.goto(server.origin+'/page',{waitUntil:'domcontentloaded'});
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   for(const width of [1290]){

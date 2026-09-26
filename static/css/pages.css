@@ -4057,6 +4057,43 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   }
 }
 
+/* An action this record cannot take stays on the list, greyed, with the
+   reason under it (owner, 2026-09-26: every row's actions in one menu). The
+   buttons it replaced said why in a tooltip; a menu has room to say it. */
+.row-menu__list .row-menu__item[aria-disabled="true"] {
+  color: var(--edify-text-subtle) !important;
+  cursor: not-allowed;
+}
+
+.row-menu__list .row-menu__item[aria-disabled="true"]:hover { background: transparent; }
+
+.row-menu__list .row-menu__item:has(.row-menu__reason) {
+  padding-block: 0.4375rem !important;
+  line-height: 1.35 !important;
+}
+
+.row-menu__reason {
+  display: block;
+  margin-block-start: 0.125rem;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  white-space: normal;
+}
+
+.row-menu__list { max-inline-size: min(20rem, calc(100vw - 1rem)); }
+
+/* A form an item opens (a Return reason, a Decline note) is a panel with room
+   for its field, not a list of one-line items. */
+.row-menu__list[role="dialog"] {
+  min-inline-size: min(18rem, calc(100vw - 1rem));
+  padding: 0.75rem;
+}
+
+/* A menu item that posts without asking anything is a one-button form; the
+   form is not a box of its own inside the list. */
+.row-menu__list form:has(> .row-menu__item) { display: contents; }
+
 /* ─── TEAM AVAILABILITY CALENDAR ─────────────────────────────────────────────
    FullCalendar ships its own button chrome, which arrived oversized, uppercase
    and unevenly spaced against the rest of the platform. These rules put its

@@ -1,0 +1,20 @@
+{% comment %}
+Verify & Confirm, and Return, as items of a Partner Monitoring row's Actions
+menu (owner, 2026-09-26: "Staff (PL and CCEO, IA) action buttons should have
+Verify and Confirm, Return"). The row shows them when the view set
+`item.can_review`: the work waits for verification and the reader is Impact
+Assessment or its monitor. SSA Support is confirmed in its own drawer, which
+also records the scores and the enrolment.
+{% endcomment %}
+{% if item.review_is_ssa %}
+<button type="button" class="row-menu__item" role="menuitem" data-partner-verify
+        hx-get="/activities/{{ item.partner_activity_id }}/partner-ssa-complete"
+        hx-target="#drawer-container" hx-swap="innerHTML">Verify &amp; Confirm</button>
+{% else %}
+<button type="button" class="row-menu__item" role="menuitem" data-partner-verify
+        hx-get="/partner-oversight/verify?activity_id={{ item.partner_activity_id }}"
+        hx-target="#drawer-container" hx-swap="innerHTML">Verify &amp; Confirm</button>
+{% endif %}
+<button type="button" class="row-menu__item" role="menuitem" data-partner-return
+        hx-get="/partner-oversight/return?activity_id={{ item.partner_activity_id }}"
+        hx-target="#drawer-container" hx-swap="innerHTML">Return</button>

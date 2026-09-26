@@ -1,5 +1,5 @@
 {% load school_identity %}
-{% load table_pagination impact_evidence %}
+{% load table_pagination impact_evidence row_actions %}
 {% comment %}
 Impact Assessment's Outcomes, Collection and (until the impact report lifecycle
 provides its own partial) Reports views (IA review, owner, 2026-09-13).
@@ -90,6 +90,20 @@ was measured. Tables are plain text: a status is a word with a tone.
             <td data-label="Need"><span data-tone="{{ row.state_tone }}">{{ row.state_label }}</span></td>
             <td data-label="Detail">{{ row.detail }}</td>
             <td class="is-end" data-record-action data-label="Actions">
+              {% comment %}Add SSA, Ask owner to collect and Request SSA visit are one Actions menu rather than a button each (owner, 2026-09-26); a school with one action keeps its button.{% endcomment %}
+              {% if row.actions|length > 1 %}
+              {% row_actions row.school %}
+              {% for action in row.actions %}
+              {% if action.method == "post" %}
+              <form role="none" method="post" action="{{ action.href }}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="row-menu__item" role="menuitem">{{ action.label }}</button></form>
+              {% elif action.method == "drawer" %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ action.href }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% else %}
+              <a class="row-menu__item" role="menuitem" href="{{ action.href }}">{{ action.label }}</a>
+              {% endif %}
+              {% endfor %}
+              {% endrow_actions %}
+              {% else %}
               {% for action in row.actions %}
               {% if action.method == "post" %}
               <form method="post" action="{{ action.href }}" class="ia-sample-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="rpl-row-link rounded-control">{{ action.label }}</button></form>
@@ -99,6 +113,7 @@ was measured. Tables are plain text: a status is a word with a tone.
               <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
               {% endif %}
               {% endfor %}
+              {% endif %}
             </td>
           </tr>
           {% empty %}

@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static table_pagination %}
+{% load static table_pagination row_actions %}
 
 {% block title %}User Management — Edify{% endblock %}
 
@@ -134,23 +134,13 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
             {% if partner.presentation_status != "deleted" %}<span class="edify-text-caption font-semibold block mt-1 {% if partner.user_setup_status == 'pending' %}text-amber-700{% else %}text-slate-400{% endif %}" data-partner-user-setup>{{ partner.get_user_setup_status_display }}</span>{% endif %}
           </td>
           <td class="px-5 py-3.5 text-right" data-record-action>
-            <div class="inline-flex items-center justify-end gap-2">
-              {% if partner.presentation_status != "deleted" and can_manage_partner_users %}
-              <button type="button" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" aria-label="Set up login for {{ partner.name }}">{% if partner.user_setup_status == 'pending' %}Set up login{% else %}Login{% endif %}</button>
-              {% endif %}
-              {% if partner.presentation_status != "deleted" %}
-              <form method="post" action="{% url 'frontend:admin_users' %}" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="partner_id" value="{{ partner.id }}">
-                {% if partner.active_status %}
-                <input type="hidden" name="action" value="deactivate_partner">
-                <button type="submit" class="btn btn-secondary h-8" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
-                {% else %}
-                <input type="hidden" name="action" value="activate_partner">
-                <button type="submit" class="btn btn-secondary h-8" aria-label="Activate {{ partner.name }}">Activate</button>
-                {% endif %}
-              </form>
-              {% endif %}
+            {% comment %}One Actions menu rather than up to three buttons
+            (owner, 2026-09-26). Delete still opens the confirmation dialog
+            below; the menu only carries the choice. A row left with one
+            action keeps its button: a deleted organisation's Delete (Admin),
+            or the toggle alone for a viewer who may neither set up logins
+            nor delete.{% endcomment %}
+            {% if partner.presentation_status == "deleted" %}
               {% if can_purge_partners %}
               <button
                 type="button"
@@ -169,7 +159,55 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
                 Delete
               </button>
               {% endif %}
-            </div>
+            {% elif not can_manage_partner_users and not can_purge_partners %}
+              <form method="post" action="{% url 'frontend:admin_users' %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="partner_id" value="{{ partner.id }}">
+                {% if partner.active_status %}
+                <input type="hidden" name="action" value="deactivate_partner">
+                <button type="submit" class="btn btn-secondary h-8" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
+                {% else %}
+                <input type="hidden" name="action" value="activate_partner">
+                <button type="submit" class="btn btn-secondary h-8" aria-label="Activate {{ partner.name }}">Activate</button>
+                {% endif %}
+              </form>
+            {% else %}
+            {% row_actions partner.name %}
+              {% if partner.presentation_status != "deleted" and can_manage_partner_users %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Set up login for {{ partner.name }}">{% if partner.user_setup_status == 'pending' %}Set up login{% else %}Login{% endif %}</button>
+              {% endif %}
+              {% if partner.presentation_status != "deleted" %}
+              <form role="none" method="post" action="{% url 'frontend:admin_users' %}">
+                {% csrf_token %}
+                <input type="hidden" name="partner_id" value="{{ partner.id }}">
+                {% if partner.active_status %}
+                <input type="hidden" name="action" value="deactivate_partner">
+                <button type="submit" class="row-menu__item row-menu__item--danger" role="menuitem" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
+                {% else %}
+                <input type="hidden" name="action" value="activate_partner">
+                <button type="submit" class="row-menu__item" role="menuitem" aria-label="Activate {{ partner.name }}">Activate</button>
+                {% endif %}
+              </form>
+              {% endif %}
+              {% if can_purge_partners %}
+              <button
+                type="button"
+                class="row-menu__item row-menu__item--danger"
+                role="menuitem"
+                data-partner-id="{{ partner.id }}"
+                data-partner-name="{{ partner.name }}"
+                data-partner-history="{% if partner.history_count %}1{% else %}0{% endif %}"
+                @click="
+                  partnerToDelete = $el.dataset.partnerId;
+                  partnerToDeleteName = $el.dataset.partnerName;
+                  partnerToDeleteHasHistory = $el.dataset.partnerHistory === '1';
+                  showPartnerDeleteModal = true
+                "
+                aria-label="Delete {{ partner.name }} permanently"
+              >Delete</button>
+              {% endif %}
+            {% endrow_actions %}
+            {% endif %}
           </td>
         </tr>
         {% empty %}

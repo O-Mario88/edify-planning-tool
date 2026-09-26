@@ -6,28 +6,28 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 535 |
-| Control declarations | 3400 |
-| State-changing | 411 |
-| High-consequence (state-changing) | 182 |
-| No automated evidence | 343 |
-| State-changing with no automated evidence | 23 |
+| Templates with controls | 539 |
+| Control declarations | 3449 |
+| State-changing | 417 |
+| High-consequence (state-changing) | 186 |
+| No automated evidence | 358 |
+| State-changing with no automated evidence | 24 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1115 |
+| button | 1146 |
 | disclosure | 67 |
-| field | 1173 |
-| link | 980 |
+| field | 1178 |
+| link | 993 |
 | tab | 65 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 750 |
-| none | 343 |
-| page-tested | 1249 |
-| request-tested | 1058 |
+| browser-rendered | 760 |
+| none | 358 |
+| page-tested | 1253 |
+| request-tested | 1078 |
 
 ## State-changing controls with no automated evidence
 
@@ -48,8 +48,9 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-F785BBDA2C57 | partials/disbursements/hold_drawer.html | 30 | Place on hold | `POST /disbursements/action` |
 | INT-DF91592AA3F3 | partials/disbursements/return_drawer.html | 30 | Return for correction | `POST /disbursements/action` |
 | INT-7F1E123B33F4 | partials/hr/extra_work_submit_drawer.html | 44 | Submit for verification | `POST /extra-work/{{ a.id }}/submit` |
-| INT-F55F4505D040 | partials/ia/outcomes.html | 95 | {{ action.label }} | `POST {{ action.href }}` |
-| INT-0F183F0F473C | partials/ia/outcomes.html | 258 | Download draft impact report (CSV) | `POST                                               ` |
+| INT-F55F4505D040 | partials/ia/outcomes.html | 98 | {{ action.label }} | `POST {{ action.href }}` |
+| INT-C773076EAE2B | partials/ia/outcomes.html | 109 | {{ action.label }} | `POST {{ action.href }}` |
+| INT-0F183F0F473C | partials/ia/outcomes.html | 273 | Download draft impact report (CSV) | `POST                                               ` |
 | INT-EE6B7A0045A6 | partials/ia/partner_return_drawer.html | 41 | Return to partner | `POST /ia/partner-evidence/{{ a.id }}/return-action` |
 | INT-4DAF16CA3708 | partials/ia/reports_view.html | 82 | Download annex (CSV) | `POST                                               ` |
 | INT-3144923BE448 | partials/leave/request_leave_drawer.html | 254 | Submit request | `POST                                          ` |

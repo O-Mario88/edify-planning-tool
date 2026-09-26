@@ -327,8 +327,18 @@ class ProjectWorkIsTheCoordinatorsTest(_Fixture):
         self.assertNotIn(
             f"/partner-oversight/withdraw?assignment_id={handover.id}", body
         )
-        # Work outside a project keeps its control.
+        # Work outside a project keeps its control, beside View in the row's
+        # one Actions menu (owner, 2026-09-26); the project row, with View
+        # alone, keeps its one button.
         self.assertIn(f"/partner-oversight/withdraw?assignment_id={plain.id}", body)
+        plain_row = self.row(body, plain)
+        self.assertIn("data-row-actions", plain_row)
+        self.assertRegex(
+            plain_row,
+            r'role="menuitem"[^>]*hx-get="/partner-oversight/withdraw\?assignment_id='
+            + str(plain.id),
+        )
+        self.assertNotIn("data-row-actions", self.row(body, handover))
 
     def test_a_returned_project_handover_offers_staff_no_resolve(self):
         handover = self.assign(

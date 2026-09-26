@@ -396,12 +396,10 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertContains(response, "Owner:")
         self.assertContains(response, "Core Cceo")
         self.assertContains(response, ">Core<")
-        self.assertContains(
-            response, 'class="school-record-action school-record-action--schedule"'
-        )
-        self.assertContains(
-            response, 'class="school-record-action school-record-action--assign"'
-        )
+        # Schedule and Assign are entries in the row's one Actions menu
+        # (owner, 2026-09-26), not buttons that wrap on a tablet.
+        self.assertContains(response, "data-row-actions")
+        self.assertContains(response, 'class="row-menu__item" role="menuitem"')
         self.assertContains(response, ">Schedule<")
         self.assertContains(response, ">Assign<")
 

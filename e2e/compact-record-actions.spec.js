@@ -12,7 +12,7 @@ test('compact record actions across platform pages',async({page},info)=>{
  const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>/^Admin-.*\.html$/.test(f)):[];
  const server=await snapshotServer(root),issues=[];let checked=0;
  try{for(const file of files){
-  const html=fs.readFileSync(path.join(dir,file),'utf8');if(!html.includes('<table')&&!html.includes('school-record-action'))continue;
+  const html=fs.readFileSync(path.join(dir,file),'utf8');if(!html.includes('<table')&&!html.includes('school-record-action')&&!html.includes('data-row-actions'))continue;
   server.setHtml(html);await page.goto(server.origin+'/page',{waitUntil:'domcontentloaded'});
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   for(const width of [390,768,1290]){
@@ -37,28 +37,35 @@ test('compact record actions across platform pages',async({page},info)=>{
  }finally{await server.close()}
 });
 
+// School Directory rows, Core School rows and cluster cards carry one Actions
+// menu since 2026-09-26 (owner: "switch to Action button with options to
+// schedule and assign"). The trigger is the record's one control: it must
+// stay on one line (the tablet wrap the owner reported) and never clip.
 test('school scheduling action still opens its drawer',async({page})=>{
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
  test.setTimeout(120000);
  for(const route of ['/schools','/core-schools','/clusters']){
   await page.goto(route);
-  const actions=page.locator(':is(.school-record-row,.school-list-card,.cluster-card) .school-record-action');
-  await expect(actions.first()).toBeVisible();
+  const triggers=page.locator(':is(.school-record-row,.school-list-card,.cluster-card) .row-menu__trigger');
+  await expect(triggers.first()).toBeVisible();
   for(const width of [390,768,1290]){
    await page.setViewportSize({width,height:900});
    for(const theme of ['theme-light','theme-dark','theme-blue']){
     await page.evaluate(t=>{document.documentElement.classList.remove('theme-light','theme-dark','theme-blue');document.documentElement.classList.add(t);document.documentElement.classList.toggle('dark',t!=='theme-light')},theme);
-    await expect(actions.first()).toHaveCSS('height','28px');
-    const issues=await actions.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&(Math.abs(r.height-28)>1||e.scrollHeight>e.clientHeight+2)}).map(e=>e.className));
+    const issues=await triggers.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();const floor=parseFloat(getComputedStyle(e).minHeight)||0;return r.width&&r.height&&(r.height>floor+1||e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2)}).map(e=>e.className+' height='+e.getBoundingClientRect().height));
     expect(issues,route+' '+width+' '+theme).toEqual([]);
    }
   }
  }
  await page.goto('/core-schools');
- const action=page.locator('.school-record-action[hx-get*="schedule-activity"]').first();
- await expect(action).toBeVisible();
- await expect(action).toHaveCSS('height','28px');
- await action.focus();
+ const item='[role="menuitem"][hx-get*="schedule-activity"]';
+ const row=page.locator('.core-school-row').filter({has:page.locator(item)}).first();
+ const trigger=row.locator('.row-menu__trigger');
+ await expect(trigger).toBeVisible();
+ await trigger.focus();
+ await trigger.press('Enter');
+ // Opening moves focus to the first entry, which is Schedule.
+ const action=row.locator(item);
  await expect(action).toBeFocused();
  await action.press('Enter');
  await expect(page.locator('#drawer-container').first()).toContainText('Schedule');

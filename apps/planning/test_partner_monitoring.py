@@ -9,12 +9,15 @@ Owner, 2026-09-23. The staff-facing place to follow Partner execution:
   numbers reconcile;
 * a Partner's hand-back is resolved through one governed decision that never
   moves the school and never makes two of anything;
-* staff watch and ask — they do not edit Partner evidence, IA verification,
-  Salesforce or payment from here.
+* staff watch and ask — they do not edit Partner evidence or payment from
+  here, and every decision is a drawer, never a form on the page;
+* the people who answer for Partner work — Impact Assessment or its monitor —
+  Verify & Confirm it or Return it with a reason (owner, 2026-09-26).
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date, timedelta
 
 from django.test import Client
@@ -447,11 +450,178 @@ class ProtectedPartnerFieldsTest(MonitoringFixture):
             with self.subTest(control=forbidden):
                 self.assertNotIn(forbidden, body)
 
-    def test_only_the_named_monitor_is_offered_the_salesforce_entry(self):
+    def test_only_its_reviewers_are_offered_verify_and_return(self):
+        """The monitor, not a lead who can merely see the work (owner,
+        2026-09-12 authority; 2026-09-26 actions), as items of the row's one
+        Actions menu."""
+        from apps.evidence.models import EvidenceRecord
+
+        EvidenceRecord.objects.create(
+            activity=self.activity, kind="visit_form", uri="pm/visit.pdf"
+        )
         monitor = self.client.get(
             f"/partner-oversight/?partner={self.partner.id}"
         ).content.decode()
         lead = self.page(self.pl_user, f"?partner={self.partner.id}").content.decode()
 
-        self.assertIn(f"/activities/{self.activity.id}/salesforce-id", monitor)
-        self.assertNotIn(f"/activities/{self.activity.id}/salesforce-id", lead)
+        verify = f"/partner-oversight/verify?activity_id={self.activity.id}"
+        send_back = f"/partner-oversight/return?activity_id={self.activity.id}"
+        for url in (verify, send_back):
+            with self.subTest(url=url):
+                self.assertIn(url, monitor)
+                self.assertNotIn(url, lead)
+        self.assertRegex(
+            monitor,
+            r'role="menuitem"[^>]*hx-get="'
+            + re.escape(verify)
+            + r'"[^>]*>Verify &amp; Confirm</button>',
+        )
+        self.assertRegex(
+            monitor,
+            r'role="menuitem"[^>]*hx-get="'
+            + re.escape(send_back)
+            + r'"[^>]*>Return</button>',
+        )
+        # The Salesforce door it replaces is gone from the row.
+        self.assertNotIn(f"/activities/{self.activity.id}/salesforce-id", monitor)
+
+
+class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
+    """Owner, 2026-09-26: "Staff (PL and CCEO, IA) action buttons should have
+    Verify and Confirm, Return in case they have not uploaded the evidence or
+    uploaded the wrong file as evidence ... they should return with a reason."
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.ia_user, cls.ia = cls._staff(
+            "ivy@p.test", "Ivy", EdifyRole.IMPACT_ASSESSMENT
+        )
+
+    def setUp(self):
+        from apps.evidence.models import EvidenceRecord
+
+        super().setUp()
+        self.assignment = self.assign()
+        self.activity = self.at(
+            self.schedule(self.assignment), status="awaiting_ia_verification"
+        )
+        EvidenceRecord.objects.create(
+            activity=self.activity,
+            kind="visit_form",
+            uri="pm/visit.pdf",
+            original_name="visit.pdf",
+        )
+        self.client = Client()
+        self.client.force_login(self.cceo_user)
+
+    def drawer(self, name, user=None):
+        client = self.client
+        if user is not None:
+            client = Client()
+            client.force_login(user)
+        return client.get(
+            f"/partner-oversight/{name}?activity_id={self.activity.id}",
+            headers={"HX-Request": "true"},
+        )
+
+    def test_the_verify_drawer_shows_the_evidence_and_asks_for_the_salesforce_id(self):
+        body = self.drawer("verify").content.decode()
+        self.assertIn('hx-post="/partner-oversight/verify/submit"', body)
+        self.assertIn("visit.pdf", body)
+        self.assertIn('name="salesforce_id"', body)
+        self.assertIn("Verify &amp; Confirm", body)
+
+    def test_verify_and_confirm_confirms_the_work(self):
+        response = self.client.post(
+            "/partner-oversight/verify/submit",
+            {"activity_id": self.activity.id, "salesforce_id": "SVE-PM-0001"},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "ia_verified")
+        self.assertEqual(self.activity.salesforce_activity_id, "SVE-PM-0001")
+
+    def test_with_no_evidence_there_is_nothing_to_confirm_only_to_return(self):
+        from apps.evidence.models import EvidenceRecord
+
+        EvidenceRecord.objects.filter(activity_id=self.activity.id).delete()
+        body = self.drawer("verify").content.decode()
+        self.assertIn("data-no-evidence", body)
+        self.assertNotIn('type="submit"', body)
+        self.assertIn(f"/partner-oversight/return?activity_id={self.activity.id}", body)
+
+    def test_the_return_drawer_offers_the_owners_reasons_first(self):
+        body = self.drawer("return").content.decode()
+        self.assertIn('hx-post="/partner-oversight/return/submit"', body)
+        first = body.index("Evidence not uploaded")
+        self.assertLess(first, body.index("Wrong file uploaded as evidence"))
+        self.assertLess(
+            body.index("Wrong file uploaded as evidence"),
+            body.index("Participants not entered in Salesforce"),
+        )
+        self.assertRegex(body, r'<textarea[^>]*name="comment"[^>]*required')
+
+    def test_return_needs_a_written_reason(self):
+        response = self.client.post(
+            "/partner-oversight/return/submit",
+            {"activity_id": self.activity.id, "reasons": ["Evidence not uploaded"]},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Say why the work is going back", response.content.decode())
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "awaiting_ia_verification")
+
+    def test_the_monitor_returns_it_to_the_partner_with_the_reason(self):
+        response = self.client.post(
+            "/partner-oversight/return/submit",
+            {
+                "activity_id": self.activity.id,
+                "reasons": ["Wrong file uploaded as evidence", "Not a listed reason"],
+                "comment": "The file is last term's visit form.",
+            },
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "returned")
+        self.assertEqual(self.activity.ia_verification_status, "returned")
+        note = self.activity.pl_review_note
+        self.assertTrue(note.startswith("Returned by James (CCEO): "), note)
+        self.assertIn("Wrong file uploaded as evidence", note)
+        self.assertIn("last term's visit form", note)
+        self.assertNotIn("Not a listed reason", note)
+
+    def test_impact_assessment_returns_on_its_own_status(self):
+        from apps.activities.services import return_partner_work
+
+        return_partner_work(
+            self.activity.id,
+            {"reasons": ["Evidence not uploaded"], "comment": "Nothing attached."},
+            self.ia_user,
+        )
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "returned_by_ia")
+        self.assertIn("(Impact Assessment)", self.activity.pl_review_note)
+
+    def test_a_lead_who_can_merely_see_it_can_do_neither(self):
+        for name in ("verify", "return"):
+            with self.subTest(drawer=name):
+                self.assertEqual(self.drawer(name, self.pl_user).status_code, 403)
+        client = Client()
+        client.force_login(self.pl_user)
+        response = client.post(
+            "/partner-oversight/return/submit",
+            {"activity_id": self.activity.id, "comment": "Not mine to return."},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "awaiting_ia_verification")
+
+    def test_work_not_waiting_for_verification_cannot_be_returned(self):
+        self.at(self.activity, status="partner_scheduled")
+        self.assertEqual(self.drawer("return").status_code, 403)
