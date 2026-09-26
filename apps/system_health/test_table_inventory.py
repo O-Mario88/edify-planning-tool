@@ -32,12 +32,6 @@ class TableBoundsTest(SimpleTestCase):
     #: * `pages/planning/fiscal_years.html` — one row per fiscal year the
     #:   platform has ever governed: three today, one more each October. The
     #:   page exists to see the years side by side.
-    #: * The four My Plan cards — School Visits, Trainings, Cluster Meetings and
-    #:   Programme Activities (owner, 2026-09-16). The page shows a person's
-    #:   whole fiscal year arranged by month, and a pager over it puts the thing
-    #:   the page exists for behind "Next". Bounded by what one officer can
-    #:   physically do in twelve months; a plan growing past that is a workload
-    #:   finding that should show rather than be hidden a page at a time.
     #: * `partials/priorities/master_view.html` — the Uganda master table
     #:   reproduces the approved master in full, and a page of a master plan is
     #:   not the master plan. Bounded by the plan (75 milestone rows).
@@ -59,7 +53,7 @@ class TableBoundsTest(SimpleTestCase):
     #:   completion table behind the Program Lead's chart (8bb11a1): one row
     #:   per supervised officer, one column per month charted. Bounded by the team,
     #:   like the team targets matrix, and read side by side with the chart.
-    UNBOUNDED_CEILING = 10
+    UNBOUNDED_CEILING = 6
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

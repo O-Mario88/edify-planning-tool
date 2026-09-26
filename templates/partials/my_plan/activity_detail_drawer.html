@@ -111,7 +111,7 @@ Evidence &amp; SF ID ({{ evidence_list|length }})
 <div class="rounded-surface overflow-hidden">
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
-{% paginate act.schedule_cost_lines.all "act_schedule_cost_lines_all_page" as act_schedule_cost_lines_all_pager %}
+{% paginate act.schedule_cost_lines.all "act_schedule_cost_lines_all_page" 20 as act_schedule_cost_lines_all_pager %}
 <table class="edify-record-table w-full text-left text-[12px] font-medium">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-semibold text-slate-600 border-b">

@@ -20,7 +20,7 @@ Returned — Needs Correction
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate returned_needs_correction "returned_needs_correction_page" as returned_needs_correction_pager %}
+{% paginate returned_needs_correction "returned_needs_correction_page" 20 as returned_needs_correction_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -83,7 +83,7 @@ Waiting on Approval
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate waiting_on_approval "waiting_on_approval_page" as waiting_on_approval_pager %}
+{% paginate waiting_on_approval "waiting_on_approval_page" 20 as waiting_on_approval_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -138,7 +138,7 @@ Partner Planned — Monitoring
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate partner_monitoring "partner_monitoring_page" as partner_monitoring_pager %}
+{% paginate partner_monitoring "partner_monitoring_page" 20 as partner_monitoring_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
@@ -208,7 +208,7 @@ Finance / Accountability Pending
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate finance_pending "finance_pending_page" as finance_pending_pager %}
+{% paginate finance_pending "finance_pending_page" 20 as finance_pending_pager %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>

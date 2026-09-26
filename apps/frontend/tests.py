@@ -517,6 +517,18 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(html.count('id="filters-page-input"'), 1)
         self.assertEqual(html.count('id="drawer-container"'), 1)
 
+    def test_schools_directory_rows_carry_a_district_column(self):
+        """District is a column on the collapsed row, not only in its details."""
+        self.school.account_owner_id = self.cceo_profile.id
+        self.school.save(update_fields=["account_owner_id"])
+        self.client.force_login(self.cceo_user)
+        html = self.client.get("/schools").content.decode()
+        start = html.index('data-directory-district')
+        cell = html[start : html.index("</div>", start)]
+        self.assertIn("District: ", cell)
+        self.assertIn(f'href="/districts/{self.district.id}"', cell)
+        self.assertIn(self.district.name, cell)
+
     def test_school_lists_show_real_grouped_ssa_scores(self):
         """Both school lists must show the stored scores, never placeholders."""
         self._cluster_the_school()
