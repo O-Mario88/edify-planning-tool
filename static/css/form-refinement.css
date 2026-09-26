@@ -65,3 +65,300 @@ body { font-size-adjust: none; }
   body .drawer-header__title-row h3 { font-size: 1.125rem !important; }
   body .drawer-body { padding: 1.5rem; }
 }
+
+/* ── One Edify calendar for every date field ───────────────────────────────
+   static/js/date-picker.js sets a read-only text field and this calendar
+   beside every <input type="date"> (owner, 2026-09-26: the same system
+   calendar everywhere, the Edify popover rather than the browser's own). It
+   lives in this sheet because it is form styling, and because a sheet of
+   its own was one more render-blocking request on every page
+   (apps/system_health/test_frontend_budgets.py).
+
+   The visible field is left to the field rules above and across the
+   platform — it is an input[type="text"], and every rule that draws a date
+   field draws a text field the same way — so it matches the fields around
+   it on every page. This part only makes room for the calendar mark and
+   draws the calendar.
+
+   LAYERS. The wrapper's resting display sits in Tailwind's `components`
+   layer, under the utilities, so a field's own `block`, `hidden` or `w-full`
+   still places it. Everything else is in its own layer with `!important`:
+   important declarations in a layer outrank unlayered important ones, which
+   is what keeps the platform's page-wide button and field contracts
+   (radius, font size, touch height) off the calendar's day buttons. Layers,
+   not load order, settle these rules, so this sheet's place before
+   interactions.css (which must stay the last stylesheet) does not matter. */
+
+@layer components {
+  .edify-datepick {
+    display: inline-block;
+    max-inline-size: 100%;
+    vertical-align: top;
+  }
+}
+
+@layer edify-datepick {
+  .edify-datepick {
+    position: relative !important;
+  }
+
+  /* The real date field: in the page for the form, its validation, its
+     listeners and browser tests; off screen for the reader. */
+  .edify-datepick__native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 1px !important;
+    max-height: 1px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    pointer-events: none !important;
+  }
+
+  .edify-datepick__field {
+    display: block !important;
+    padding-inline-start: 2.25rem !important;
+    padding-inline-end: 2rem !important;
+    cursor: pointer !important;
+    caret-color: transparent !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .edify-datepick__field:disabled {
+    cursor: not-allowed !important;
+  }
+
+  .edify-datepick__glyph,
+  .edify-datepick__caret {
+    position: absolute !important;
+    top: 50% !important;
+    display: flex !important;
+    color: var(--edify-text-muted) !important;
+    pointer-events: none !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .edify-datepick__glyph {
+    inset-inline-start: 0.75rem !important;
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .edify-datepick__caret {
+    inset-inline-end: 0.75rem !important;
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .edify-datepick[data-open] .edify-datepick__caret {
+    transform: translateY(-50%) rotate(180deg) !important;
+  }
+
+  .edify-datepick svg {
+    width: 100% !important;
+    height: 100% !important;
+    flex: none !important;
+  }
+
+  /* ── The calendar ─────────────────────────────────────────────────────── */
+
+  .edify-datepick__pop {
+    position: fixed !important;
+    z-index: 55 !important;
+    box-sizing: border-box !important;
+    width: 17.5rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    margin: 0 !important;
+    padding: 0.75rem !important;
+    border: 1px solid var(--edify-border) !important;
+    border-radius: var(--radius-surface, 12px) !important;
+    background: var(--edify-surface-raised, var(--edify-surface)) !important;
+    color: var(--edify-text) !important;
+    box-shadow: var(--edify-shadow-lg) !important;
+    font-family: var(--edify-font-sans, inherit) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    letter-spacing: normal !important;
+    text-align: start !important;
+    text-transform: none !important;
+    user-select: none !important;
+  }
+
+  .edify-datepick__pop[hidden] {
+    display: none !important;
+  }
+
+  :where(.edify-datepick__pop) button {
+    appearance: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: var(--radius-control, 10px) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    font: inherit !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    transition: background-color 0.12s ease, color 0.12s ease !important;
+  }
+
+  :where(.edify-datepick__pop) button:hover:not([aria-disabled="true"]) {
+    background: var(--edify-surface-hover) !important;
+    color: var(--edify-text) !important;
+  }
+
+  :where(.edify-datepick__pop) button:focus-visible {
+    outline: 2px solid var(--edify-accent) !important;
+    outline-offset: 1px !important;
+  }
+
+  .edify-datepick__head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.25rem !important;
+    margin: 0 0 0.5rem !important;
+  }
+
+  .edify-datepick__step {
+    width: 2rem !important;
+    height: 2rem !important;
+    color: var(--edify-text-muted) !important;
+  }
+
+  .edify-datepick__step svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .edify-datepick__caption {
+    height: 2rem !important;
+    padding: 0 0.625rem !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .edify-datepick__week {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.125rem !important;
+    margin: 0 0 0.125rem !important;
+  }
+
+  .edify-datepick__dow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 1.75rem !important;
+    color: var(--edify-text-muted) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+  }
+
+  .edify-datepick__day,
+  .edify-datepick__month {
+    width: 100% !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .edify-datepick__day {
+    height: 2.25rem !important;
+  }
+
+  .edify-datepick__day[data-blank] {
+    pointer-events: none !important;
+  }
+
+  .edify-datepick__day[aria-current="date"] {
+    color: var(--edify-accent-text, var(--edify-accent)) !important;
+    font-weight: 700 !important;
+    box-shadow: inset 0 0 0 1px var(--edify-accent) !important;
+  }
+
+  .edify-datepick__day[aria-selected="true"],
+  .edify-datepick__month[aria-pressed="true"] {
+    background: var(--edify-primary-action-fill, var(--edify-accent)) !important;
+    color: var(--edify-primary-action-ink, #fff) !important;
+    font-weight: 700 !important;
+    box-shadow: none !important;
+  }
+
+  .edify-datepick__day[aria-selected="true"]:hover,
+  .edify-datepick__month[aria-pressed="true"]:hover {
+    background: var(--edify-primary-action-fill-hover, var(--edify-accent)) !important;
+    color: var(--edify-primary-action-ink, #fff) !important;
+  }
+
+  :where(.edify-datepick__pop) button[aria-disabled="true"] {
+    color: var(--edify-text-subtle, var(--edify-text-muted)) !important;
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+  }
+
+  .edify-datepick__months {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.375rem !important;
+  }
+
+  .edify-datepick__month {
+    height: 2.5rem !important;
+  }
+
+  .edify-datepick__foot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0.5rem 0 0 !important;
+    padding: 0.5rem 0 0 !important;
+    border-top: 1px solid var(--edify-border) !important;
+  }
+
+  .edify-datepick__link {
+    height: 2rem !important;
+    padding: 0 0.625rem !important;
+    color: var(--edify-accent-text, var(--edify-accent)) !important;
+    font-weight: 600 !important;
+  }
+
+  /* A finger needs a bigger day than a pointer does; seven of them still fit
+     a 320px phone. */
+  @media (pointer: coarse) {
+    .edify-datepick__pop {
+      width: 19.5rem !important;
+    }
+
+    .edify-datepick__day {
+      height: 2.5rem !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .edify-datepick__caret,
+    :where(.edify-datepick__pop) button {
+      transition: none !important;
+    }
+  }
+}

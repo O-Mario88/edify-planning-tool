@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, '..');
 const sheets = [
   'fonts.css', 'main.css', 'design-system.css', 'components.css', 'components/mobile-patterns.css', 'pages.css',
   'drawers.css', 'app.css', 'platform.css', 'consistency.css', 'components/mobile-micro-ux.css', 'form-refinement.css',
-  'components/responsive-system.css', 'components/date-picker.css', 'components/interactions.css',
+  'components/responsive-system.css', 'components/interactions.css',
 ];
 const body = `
 <main>

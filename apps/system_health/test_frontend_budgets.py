@@ -83,10 +83,17 @@ def shell_assets() -> dict:
 class ShellAssetBudgetTest(SimpleTestCase):
     #: Measured 2026-09-24 (see the module docstring), plus 3 % for the
     #: gzip level and line endings; ratchet, not target.
+    #:
+    #: JS_GZIP_KB was 115. Raised to 124 on 2026-09-26 for one thing: the
+    #: Edify calendar (static/js/date-picker.js, 8.4 KB gzipped), which the
+    #: owner chose over the browser's own date picker on every date field.
+    #: It is deferred, so it does not block a first paint. Its styles went
+    #: into form-refinement.css rather than a sheet of their own, so the
+    #: stylesheet count held at 17.
     RENDER_BLOCKING_STYLESHEETS = 17
     CSS_GZIP_KB = 200
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
-    JS_GZIP_KB = 115
+    JS_GZIP_KB = 124
     INLINE_SCRIPT_KB = 40
 
     @classmethod
