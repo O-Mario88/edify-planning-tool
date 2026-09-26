@@ -15,7 +15,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from apps.analytics.pl_week_service import (
     DUE_THIS_WEEK,
@@ -25,9 +26,11 @@ from apps.analytics.pl_week_service import (
     OWN_AWAITING_LABEL,
     PARTNERS,
     build_week,
+    monday_of,
 )
 from apps.analytics.test_pl_week import (
     LAST_MONDAY,
+    LOCMEM,
     MONDAY,
     THURSDAY,
     PLWeekTest,
@@ -36,6 +39,7 @@ from apps.analytics.test_pl_week import (
 _pl = PLWeekTest
 
 
+@override_settings(CACHES=LOCMEM)
 class OfficerWeekTest(TestCase):
     setUp = _pl.setUp
     _staff = _pl._staff
@@ -84,9 +88,12 @@ class OfficerWeekTest(TestCase):
     def test_the_tab_counts_what_is_past_due(self):
         from apps.my_plan.past_due_service import get_past_due_dashboard_context
 
-        self._act(self.a1_sp, self.s1, LAST_MONDAY, status="in_progress")
+        # The past-due table reads the real clock, so last week is last week
+        # of the day the suite runs.
+        last_week = monday_of(timezone.localdate()) - timedelta(days=7)
+        self._act(self.a1_sp, self.s1, last_week, status="in_progress")
         # Done by its status, missing its form and ID: past due too.
-        self._act(self.a1_sp, self.s1, LAST_MONDAY, status="completed", complete=False)
+        self._act(self.a1_sp, self.s1, last_week, status="completed", complete=False)
         total = get_past_due_dashboard_context(self.a1)["past_due_total_count"]
         self.assertEqual(total, 2)
         tab = next(t for t in self._week()["tabs"] if t["key"] == ME)
@@ -106,6 +113,7 @@ class OfficerWeekTest(TestCase):
         self.assertEqual(row["action"], "none")
 
 
+@override_settings(CACHES=LOCMEM)
 class OfficerDashboardTest(TestCase):
     setUp = _pl.setUp
     _staff = _pl._staff
