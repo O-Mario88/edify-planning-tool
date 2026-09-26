@@ -45,7 +45,13 @@ TEMPLATE_ROOT = PROJECT_ROOT / "templates"
 _TEMPLATE_RE = re.compile(
     r"(?:render|TemplateResponse)\(\s*[^,]+,\s*[\"']([^\"']+\.html)[\"']"
 )
-_TEMPLATE_NAME_RE = re.compile(r"template_name\s*=\s*[\"']([^\"']+\.html)[\"']")
+# `view_template="…"` is how a role dashboard names the panel its tab rail
+# swaps (apps.frontend.views.dashboard_view_state): the page renders it
+# through `{% include dashboard_tabs.view_template %}`, so it is a template
+# of the page as surely as the one handed to render() (2026-09-27).
+_TEMPLATE_NAME_RE = re.compile(
+    r"(?:template_name|view_template)\s*=\s*[\"']([^\"']+\.html)[\"']"
+)
 # `render(request, WORKSPACE_TEMPLATE, ...)` — a renderer that keeps its
 # template names in module constants instead of inline literals.
 _RENDER_CONST_RE = re.compile(

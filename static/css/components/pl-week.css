@@ -180,17 +180,30 @@
   min-inline-size: 0;
   padding: 0.5rem;
 }
+/* The board's header row reads as every record table's does (owner,
+   2026-09-27: "table header row color ... consistent with the system
+   design"): micro semibold capitals on the theme's header surface, and in
+   the light theme Edify-blue ink on the card itself, no grey band. */
 .plwk-board__head .plwk-board__row {
-  border-block: 1px solid var(--edify-border);
-  background: var(--edify-surface-muted);
+  border-block: 1px solid var(--edify-table-header-divider, var(--edify-border));
+  background: var(--edify-table-header, var(--edify-surface-muted));
 }
 .plwk-board__head [role="columnheader"] {
   color: var(--edify-text-muted);
-  font-weight: var(--edify-text-label-weight);
-  letter-spacing: 0.04em;
+  font-size: var(--edify-text-table-heading-size);
+  font-weight: var(--edify-table-header-weight);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
-.plwk-board__head [role="columnheader"][data-today] {
+:root:is(.light, .theme-light) .plwk-board__head .plwk-board__row {
+  border-block-color: var(--edify-table-divider, var(--edify-border));
+  background: var(--edify-table-canvas, var(--edify-surface));
+}
+:root:is(.light, .theme-light) .plwk-board__head [role="columnheader"] {
+  color: #285b96;
+}
+.plwk-board__head [role="columnheader"][data-today],
+:root:is(.light, .theme-light) .plwk-board__head [role="columnheader"][data-today] {
   color: var(--edify-accent-text);
 }
 .plwk-board [role="cell"][data-today] {

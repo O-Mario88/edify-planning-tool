@@ -1160,12 +1160,15 @@ main .dashboard-view-nav { border-block-end: 0; }
      the thing below it rather than as something it is welded to. The gap goes
      on the shell that holds both, not on the nav — every role's panel brings
      its own spacing (the IA's leaves 3px, the CD's 12px), and one gap owned by
-     the container is the same on all of them and cannot double up. */
-  main [data-dashboard-view-shell] {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+     the container is the same on all of them and cannot double up. The gap
+     is set below, for every width. */
+}
+/* On phones too (owner, 2026-09-27): the rail sat on the heading of the panel
+   it switches, 4px apart, on both the officer's and the lead's dashboards. */
+main [data-dashboard-view-shell] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 @media (max-width: 48rem) {
   main .dashboard-view-nav .edify-section-nav__link {

@@ -77,8 +77,8 @@
     login-scoped bundle. apps/core/tests/test_login_bundle.py holds this.
   {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260909perf1">
-  <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260923responsive1">
-  <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260926pinned1">
+  <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260927typeorient1">
+  <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260927kpihelper1">
   <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260912focus1">
   <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
@@ -161,7 +161,7 @@
           database — apps.frontend.views.auth_views._login_stats — and the page
           shows a real zero rather than a placeholder when there is nothing yet.
         {% endcomment %}
-        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Schools reached{% endkpi_label %}{{ stat_schools_reached|default:"0" }}{% kpi_helper %}Every operating school · closed schools excluded{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools visited{% endkpi_label %}{{ stat_schools_visited|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }} · Current FY{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools trained{% endkpi_label %}{{ stat_schools_trained|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }} · Current FY{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}SSA completed{% endkpi_label %}{{ stat_ssa_completed|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }} · Confirmed only{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Schools reached{% endkpi_label %}{{ stat_schools_reached|default:"0" }}{% kpi_helper %}Operating schools{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools visited{% endkpi_label %}{{ stat_schools_visited|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools trained{% endkpi_label %}{{ stat_schools_trained|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}SSA completed{% endkpi_label %}{{ stat_ssa_completed|default:"0" }}{% kpi_helper %}of {{ stat_portfolio|default:"0" }}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
       </div>
     </section>
 

@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Field Officer Dashboard · Edify{% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20260926plweek8">
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20260927plweek9">
 <script src="{% static 'js/dashboard-greeting.js' %}?v=20260909greeting2" defer></script>
 {% endblock %}
 
@@ -39,7 +39,14 @@
         {% for item in school_visits_week|slice:":3" %}
           {% include "components/mobile_agenda_card.html" with item=item %}
         {% empty %}
+          {% comment %}Past-due work of any age is What needs you now; the
+          band only looks back three weeks, so it points there rather than
+          saying nothing is urgent beside a table of past-due plans.{% endcomment %}
+          {% if past_due_total_count %}
+          <a class="edify-empty-state" href="/dashboard?view=week#what-needs-you-now"><strong>{{ past_due_total_count }} past due</strong><span>Finish, reschedule or cancel them in What needs you now.</span></a>
+          {% else %}
           <div class="edify-empty-state"><strong>No urgent field work</strong><span>Your next scheduled activity will appear here.</span></div>
+          {% endif %}
         {% endfor %}
       {% endfor %}
     </div>
@@ -47,14 +54,12 @@
 </div>
 
 {% comment %}
-"What needs you now" — Past due plans requiring completion, rescheduling or cancellation
-{% endcomment %}
-{% include "partials/dashboards/what_needs_you_now.html" %}
-
-{% comment %}
-Two views (owner, 2026-09-05): the week the CCEO works from, and the country
-map. The week opens first — a field officer's morning is the plan — with the
-map one tab away. Header, KPI strip and the phone's Do-next band stay fixed.
+The views (owner, 2026-09-05): the week the CCEO works from, urgent schools
+and the country map. The week opens first — a field officer's morning is the
+plan. Header, KPI strip and the phone's Do-next band stay fixed, and the rail
+sits right under them as it does on the Programme Lead's dashboard (owner,
+2026-09-27: tabs consistent across the dashboards); the past-due tables are
+the first thing in This Week, not a band above the rail.
 {% endcomment %}
 {% include "partials/dashboards/_view_tabs.html" %}
 

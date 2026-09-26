@@ -516,6 +516,9 @@ class ProgramLeadDashboardService:
                 drilldown_url=view_url(view, fy),
             )
 
+        # Helpers are short and carry no "· FY" suffix: the FY picker sits
+        # right above the strip (owner, 2026-09-27: suffixes made the KPIs
+        # longer than the strip).
         return [
             tile(
                 "Team Priority Progress",
@@ -525,7 +528,7 @@ class ProgramLeadDashboardService:
                     f"verified against {contract_rows} team "
                     f"{_plural(contract_rows, 'priority', 'priorities')}"
                     if team_pct is not None
-                    else "No approved, weighted team allocation yet"
+                    else "No approved allocation yet"
                 ),
                 tone="info",
                 view="priorities",
@@ -537,7 +540,7 @@ class ProgramLeadDashboardService:
                 helper=(
                     "at the year's expected pace"
                     if measurable
-                    else "No approved officer priorities yet"
+                    else "No approved priorities yet"
                 ),
                 tone="success" if measurable and on_track == measurable else "warning",
                 view="coaching",
@@ -555,7 +558,7 @@ class ProgramLeadDashboardService:
                 f"{ssa['coverage_pct']}%" if ssa["portfolio"] else "Not measured",
                 raw=ssa["coverage_pct"] if ssa["portfolio"] else None,
                 helper=(
-                    f"{ssa['confirmed']:,} of {ssa['portfolio']:,} schools · FY {fy}"
+                    f"{ssa['confirmed']:,} of {ssa['portfolio']:,} schools"
                     if ssa["portfolio"]
                     else "No schools in your portfolio"
                 ),
@@ -566,7 +569,7 @@ class ProgramLeadDashboardService:
                 "Trainings Delivered",
                 str(trainings["delivered"]),
                 raw=trainings["delivered"],
-                helper=f"of {trainings['planned']:,} planned · FY {fy}",
+                helper=f"of {trainings['planned']:,} planned",
                 tone="info",
                 view="programmes",
             ),
@@ -574,7 +577,7 @@ class ProgramLeadDashboardService:
                 "Open Handoffs",
                 str(open_handoffs),
                 raw=open_handoffs,
-                helper="with the CD, Regional Lead and partners",
+                helper="with the CD, RL and partners",
                 tone="warning" if open_handoffs else "success",
                 view="collaboration",
             ),

@@ -98,6 +98,39 @@ class FluidTypeScaleTest(SimpleTestCase):
     def test_kpi_values_stay_inside_the_compact_strip(self):
         self.assertLessEqual(_size(self.css, "--edify-text-tile-value-size", 2560), 24)
 
+    def _media(self, query: str) -> dict[str, float]:
+        """The steps a media block re-declares, in px."""
+        block = self.css.split(f"@media {query} {{", 1)[1].split("\n}\n", 1)[0]
+        floor = float(_token(self.css, "--edify-text-floor").removesuffix("rem"))
+        sizes = {}
+        for name, value in re.findall(r"(--edify-text-[a-z-]+-size):\s*([^;]+);", block):
+            value = value.strip().replace("var(--edify-text-floor)", f"{floor}rem")
+            sizes[name] = float(value.removesuffix("rem")) * REM
+        return sizes
+
+    def test_a_phone_on_its_side_keeps_its_phone_sizes(self):
+        """Owner, 2026-09-27: the scale follows orientation as well as width.
+        A landscape phone is wide but short; it keeps every step's minimum."""
+        sizes = self._media("(orientation: landscape) and (max-height: 30rem)")
+        for step in self.STEPS + ("--edify-text-hero-size", "--edify-text-tile-value-size"):
+            with self.subTest(step=step):
+                self.assertEqual(sizes[step], _size(self.css, step, 320))
+
+    def test_a_wide_low_density_display_steps_up_and_keeps_the_hierarchy(self):
+        """Owner, 2026-09-27: and resolution. A 1440p or 4K monitor at 100%
+        reads one pixel up the scale; the order of the steps still holds and
+        the KPI values keep the strip's 24px ceiling."""
+        sizes = self._media("(min-width: 150rem) and (max-resolution: 1.5dppx)")
+        ordered = [sizes[step] for step in self.STEPS]
+        self.assertEqual(ordered, sorted(ordered, reverse=True))
+        self.assertEqual(len(set(ordered)), len(ordered))
+        for step in self.STEPS:
+            with self.subTest(step=step):
+                self.assertGreater(sizes[step], _size(self.css, step, 2560))
+                self.assertLessEqual(sizes[step] - _size(self.css, step, 2560), 1.01)
+        self.assertNotIn("--edify-text-hero-size", sizes)
+        self.assertNotIn("--edify-text-tile-value-size", sizes)
+
     def test_component_roles_alias_the_scale(self):
         for role, step in (
             ("--edify-text-card-heading-size", "var(--edify-text-heading-size)"),

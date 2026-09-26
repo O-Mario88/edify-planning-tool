@@ -5550,10 +5550,16 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+/* A fact is as wide as its content, so a long helper used to widen its fact
+   past the others and push the rest of the strip out of view (owner,
+   2026-09-27: "kpi strip on login has suffix which has made the kpi
+   longer"). The helper wraps inside its own measure instead — two lines at
+   most — and every fact keeps the width its label and value need. */
 .context-metrics__helper {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  max-inline-size: 22ch;
   overflow: hidden;
   color: var(--kpi-muted);
   font-size: var(--edify-text-micro-size);

@@ -545,7 +545,9 @@
       "accessibility_requirements": [],
       "bytes": 667,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2317,7 +2319,10 @@
       ],
       "bytes": 21449,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard",
+        "/ia/dashboard/"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3312,12 +3317,12 @@
       "example_pages": [
         "/admin-panel/school-upload-history",
         "/admin-panel/users/<str:user_id>",
+        "/dashboard",
         "/leave/coverage",
         "/leave/coverage/",
         "/leave/policies",
         "/leave/policies/",
-        "/schools/<str:school_id>",
-        "/strategic-priorities"
+        "/schools/<str:school_id>"
       ],
       "findings": [],
       "forms": 2,
@@ -4035,7 +4040,9 @@
       ],
       "bytes": 5413,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4056,7 +4063,9 @@
       "accessibility_requirements": [],
       "bytes": 2395,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4100,6 +4109,7 @@
       "bytes": 2302,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/dashboard",
         "/dashboard/planning-progress"
       ],
       "findings": [],
@@ -4122,7 +4132,9 @@
       ],
       "bytes": 3182,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4142,7 +4154,9 @@
       "accessibility_requirements": [],
       "bytes": 332,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4163,7 +4177,9 @@
       ],
       "bytes": 20655,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -4190,7 +4206,9 @@
       "accessibility_requirements": [],
       "bytes": 235,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4209,7 +4227,9 @@
       "accessibility_requirements": [],
       "bytes": 332,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4228,9 +4248,11 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1149,
+      "bytes": 1266,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4249,7 +4271,9 @@
       "accessibility_requirements": [],
       "bytes": 381,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4270,7 +4294,9 @@
       ],
       "bytes": 1216,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4315,7 +4341,9 @@
       ],
       "bytes": 3593,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4410,7 +4438,9 @@
       ],
       "bytes": 7382,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4433,7 +4463,9 @@
       ],
       "bytes": 34460,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -4455,7 +4487,9 @@
       "accessibility_requirements": [],
       "bytes": 244,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4505,7 +4539,9 @@
       "accessibility_requirements": [],
       "bytes": 332,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4527,7 +4563,9 @@
       ],
       "bytes": 50235,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -4560,7 +4598,9 @@
       "accessibility_requirements": [],
       "bytes": 508,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5492,7 +5532,9 @@
       "accessibility_requirements": [],
       "bytes": 2012,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5536,7 +5578,9 @@
       "accessibility_requirements": [],
       "bytes": 644,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5557,7 +5601,9 @@
       ],
       "bytes": 36781,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 6,
       "htmx_controls": 2,
@@ -5580,7 +5626,9 @@
       "accessibility_requirements": [],
       "bytes": 253,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5599,7 +5647,9 @@
       "accessibility_requirements": [],
       "bytes": 332,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5620,7 +5670,9 @@
       ],
       "bytes": 7305,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5644,7 +5696,9 @@
       "accessibility_requirements": [],
       "bytes": 353,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/dashboard"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -5666,6 +5720,7 @@
       "bytes": 5133,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/dashboard",
         "/dashboard/pl-urgent-schools"
       ],
       "findings": [],
@@ -7670,7 +7725,9 @@
       "accessibility_requirements": [],
       "bytes": 1045,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/ia/dashboard/"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -10649,7 +10706,9 @@
       ],
       "bytes": 18035,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/programme-rollout"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -10678,7 +10737,9 @@
       ],
       "bytes": 12377,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/programme-rollout"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 4,
@@ -10704,7 +10765,9 @@
       ],
       "bytes": 19304,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/programme-rollout"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -10730,7 +10793,9 @@
       "accessibility_requirements": [],
       "bytes": 1044,
       "deprecated_alternatives": [],
-      "example_pages": [],
+      "example_pages": [
+        "/programme-rollout"
+      ],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -12270,7 +12335,8 @@
       "bytes": 820,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard"
+        "/dashboard",
+        "/ia/dashboard/"
       ],
       "findings": [],
       "forms": 0,
@@ -34016,6 +34082,12 @@
         "template:pages/dashboards/cceo.html",
         "template:pages/dashboards/special_projects.html",
         "template:pages/dashboards/main.html",
+        "template:partials/dashboards/cd/view.html",
+        "template:partials/dashboards/rvp/view.html",
+        "template:partials/dashboards/hr/view.html",
+        "template:partials/dashboards/cceo/view.html",
+        "template:partials/dashboards/special_projects/view.html",
+        "template:partials/dashboards/admin/view.html",
         "test:referenced-by-automated-test",
         "permission:dashboard"
       ],
@@ -34114,7 +34186,13 @@
         "partials/dashboards/pl/week_panel.html",
         "pages/dashboards/cceo.html",
         "pages/dashboards/special_projects.html",
-        "pages/dashboards/main.html"
+        "pages/dashboards/main.html",
+        "partials/dashboards/cd/view.html",
+        "partials/dashboards/rvp/view.html",
+        "partials/dashboards/hr/view.html",
+        "partials/dashboards/cceo/view.html",
+        "partials/dashboards/special_projects/view.html",
+        "partials/dashboards/admin/view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -44752,6 +44830,7 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/ia/analytics_dashboard.html",
+        "template:partials/ia/view.html",
         "test:referenced-by-automated-test",
         "permission:ia_dashboard"
       ],
@@ -44822,7 +44901,8 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/ia/analytics_dashboard.html"
+        "pages/ia/analytics_dashboard.html",
+        "partials/ia/view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -72022,13 +72102,14 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/priorities_master.html",
+        "template:partials/priorities/master_view.html",
         "test:referenced-by-automated-test",
         "permission:priorities_master"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -72077,8 +72158,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -72086,13 +72167,17 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/priorities_master.html"
+        "pages/hr/priorities_master.html",
+        "partials/priorities/master_view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -72789,6 +72874,7 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/programme_rollout/index.html",
+        "template:partials/programme_rollout/view.html",
         "test:referenced-by-automated-test",
         "permission:programme_rollout"
       ],
@@ -72799,7 +72885,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -72843,7 +72929,8 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/programme_rollout/index.html"
+        "pages/programme_rollout/index.html",
+        "partials/programme_rollout/view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -82073,7 +82160,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.priority_views",
       "backend_view": "apps.frontend.views.priority_views.priority_configuration_page",
       "card_count": 0,
@@ -82082,17 +82169,18 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/priority_configuration.html",
+        "template:partials/priorities/setting_view.html",
         "test:referenced-by-automated-test",
         "permission:strategic_priorities"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -82103,9 +82191,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "strategic_priorities",
-      "primary_action": "Strategic Priorities",
+      "primary_action": "Approve FY cycle",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate strategic priorities within the frontend workflow.",
+      "purpose": "Turn the FY regional direction into measurable, approved and allocated priorities. Source wording stays intact until an authorized owner completes the definition. The priority groups and milestones for FY as the RVP and Country Director set them, with each milestone's progress from the plan. Your own targets come from the distribution on the other tabs.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -82120,7 +82208,11 @@
       "route": "/strategic-priorities",
       "route_name": "strategic_priorities",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/strategic-priorities",
+        "/strategic-priorities/priorities/{{ group.priority.id }}/remove",
+        "/strategic-priorities/cycles/{{ cycle.id }}/approve"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models",
@@ -82130,9 +82222,9 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
@@ -82145,13 +82237,19 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/priority_configuration.html"
+        "pages/hr/priority_configuration.html",
+        "partials/priorities/setting_view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[14px]",
+        "text-[16px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -82600,7 +82698,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_page",
       "card_count": 0,
@@ -82609,20 +82707,21 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/target_distribution.html",
+        "template:partials/priorities/distribution_view.html",
         "test:referenced-by-automated-test",
         "permission:target_distribution"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-8F0C3311A9",
@@ -82630,9 +82729,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "target_distribution",
-      "primary_action": "Target Distribution",
+      "primary_action": "Publish FY master",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate priorities within the frontend workflow.",
+      "purpose": "The governed country plan for moving every confirmed field target from Impact Assessment to Program Leads and onward to accountable CCEOs.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -82643,7 +82742,10 @@
       "route": "/target-distribution",
       "route_name": "target_distribution",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/target-distribution",
+        "/target-distribution/action"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models"
@@ -82652,28 +82754,31 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
+        "disabled": true,
+        "empty": true,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 7,
+        "type": "segmented-control"
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/target_distribution.html"
+        "pages/hr/target_distribution.html",
+        "partials/priorities/distribution_view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -83060,7 +83165,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.team_distribution_page",
       "card_count": 0,
@@ -83069,20 +83174,21 @@
       "evidence": [
         "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/team_target_distribution.html",
+        "template:partials/priorities/team_view.html",
         "test:referenced-by-automated-test",
         "permission:team_target_distribution"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A9FF05F38F",
@@ -83090,9 +83196,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "team_target_distribution",
-      "primary_action": "Team Target Distribution",
+      "primary_action": "Approve spread",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate team target distribution within the frontend workflow.",
+      "purpose": "Every figure below is exactly what Impact Assessment approved for your team. Allocate it across yourself and your supervised CCEOs, then monitor quarterly spread and delivery without changing the received target. Inspect approved team targets and delivery. Only the responsible Program Lead can allocate targets or approve quarterly spreads.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -83102,7 +83208,10 @@
       "route": "/target-distribution/team",
       "route_name": "team_target_distribution",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/target-distribution/team",
+        "/target-distribution/team/action"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models"
@@ -83113,7 +83222,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
@@ -83126,13 +83235,16 @@
       },
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/team_target_distribution.html"
+        "pages/hr/team_target_distribution.html",
+        "partials/priorities/team_view.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -98844,7 +98956,13 @@
         "partials/dashboards/pl/week_panel.html",
         "pages/dashboards/cceo.html",
         "pages/dashboards/special_projects.html",
-        "pages/dashboards/main.html"
+        "pages/dashboards/main.html",
+        "partials/dashboards/cd/view.html",
+        "partials/dashboards/rvp/view.html",
+        "partials/dashboards/hr/view.html",
+        "partials/dashboards/cceo/view.html",
+        "partials/dashboards/special_projects/view.html",
+        "partials/dashboards/admin/view.html"
       ]
     },
     {
@@ -100511,7 +100629,8 @@
       "route_name": "ia_dashboard",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/ia/analytics_dashboard.html"
+        "pages/ia/analytics_dashboard.html",
+        "partials/ia/view.html"
       ]
     },
     {
@@ -104729,7 +104848,8 @@
       "route_name": "priorities_master_register",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/priorities_master.html"
+        "pages/hr/priorities_master.html",
+        "partials/priorities/master_view.html"
       ]
     },
     {
@@ -104851,7 +104971,8 @@
       "route_name": "programme_rollout",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/programme_rollout/index.html"
+        "pages/programme_rollout/index.html",
+        "partials/programme_rollout/view.html"
       ]
     },
     {
@@ -106268,7 +106389,8 @@
       "route_name": "strategic_priorities",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/priority_configuration.html"
+        "pages/hr/priority_configuration.html",
+        "partials/priorities/setting_view.html"
       ]
     },
     {
@@ -106445,7 +106567,8 @@
       "route_name": "target_distribution",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/target_distribution.html"
+        "pages/hr/target_distribution.html",
+        "partials/priorities/distribution_view.html"
       ]
     },
     {
@@ -106522,7 +106645,8 @@
       "route_name": "team_target_distribution",
       "templates": [
         "partials/dashboards/_view_tabs.html",
-        "pages/hr/team_target_distribution.html"
+        "pages/hr/team_target_distribution.html",
+        "partials/priorities/team_view.html"
       ]
     },
     {

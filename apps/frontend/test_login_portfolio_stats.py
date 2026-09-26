@@ -178,7 +178,11 @@ class LoginPortfolioStatsTest(TestCase):
         # Three fractions over the portfolio, and the portfolio itself first:
         # "Schools reached" is every operating school (owner, 2026-09-12).
         self.assertEqual(html.count('data-component="context-metric"'), 4)
-        self.assertEqual(html.count(">of 4 ·"), 3)
-        self.assertIn("Every operating school · closed schools excluded", html)
+        # No suffix after the fraction (owner, 2026-09-27: the suffixes made
+        # the strip longer than the panel it sits in).
+        self.assertEqual(html.count(">of 4<"), 3)
+        self.assertIn(">Operating schools<", html)
+        self.assertNotIn("Current FY", html)
+        self.assertNotIn("Confirmed only", html)
         self.assertNotIn("Field visits", html)
         self.assertNotIn("Target progress", html)

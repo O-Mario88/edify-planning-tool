@@ -75,6 +75,17 @@
 }
 .presence-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--edify-border); vertical-align: middle; }
 .presence-table__status { width: 1.4rem; text-align: center; }
+/* One line a row, as every record table reads (the platform flattens a
+   figure over its detail). The detail follows its figure after a middle dot:
+   run together, "00:29" and "5 today" read "00:295 today". The dot column
+   keeps to the dot, so the name has the room its role needs beside it
+   (owner, 2026-09-27: the dashboard tables read one way). */
+.presence-table td :is(.presence-signin, .presence-duration) small,
+.presence-table__name small { margin-inline-start: 0.25rem; }
+.presence-table td :is(.presence-signin, .presence-duration) small::before,
+.presence-table__name small::before { content: "· "; color: var(--edify-text-subtle); }
+main .presence-table :is(th, td).presence-table__status { width: 1%; padding-inline: 0.5rem !important; }
+main .presence-table td.presence-table__name { width: 15rem; }
 .presence-table__name strong { display: block; color: var(--edify-text); font-weight: 620; white-space: nowrap; }
 .presence-table__name small { display: block; color: var(--edify-text-subtle); }
 .presence-row--lead .presence-table__name strong { font-weight: 720; }

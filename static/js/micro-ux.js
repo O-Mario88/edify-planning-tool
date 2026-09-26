@@ -831,8 +831,11 @@
       var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
       var node = walker.nextNode();
       while (node) {
-        /* Text inside a pill is the pill's to measure (a pill is capped). */
-        if (node.textContent.trim() && !(node.parentElement && node.parentElement.closest(PILL_BOX))) {
+        /* Text inside a pill is the pill's to measure (a pill is capped).
+           Screen-reader text is clipped to 1px but its range still spans the
+           whole word, so an icon column's hidden "Status" heading claimed
+           the width of the word (2026-09-27). */
+        if (node.textContent.trim() && !(node.parentElement && node.parentElement.closest(PILL_BOX + ', .sr-only, .edify-visually-hidden'))) {
           measureRange.selectNodeContents(node);
           Array.prototype.forEach.call(measureRange.getClientRects(), take);
         }
