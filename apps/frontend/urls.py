@@ -277,6 +277,11 @@ urlpatterns = [
         dashboard_views.notify_past_due_activity,
         name="dashboard_notify_past_due",
     ),
+    path(
+        "dashboard/pl-week-send/<str:activity_id>/",
+        dashboard_views.pl_week_send_reminder,
+        name="dashboard_pl_week_send",
+    ),
     # School actions: the sender's monitoring board and the recipient's queue.
     path(
         "actions/sent",

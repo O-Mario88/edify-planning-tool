@@ -1,8 +1,13 @@
-<div class="space-y-4" data-pl-today>
+<div class="space-y-4" data-pl-view="week" data-pl-week>
   {% comment %}
-  Leadership Attention: at most four things that need the lead now, drawn from
-  every responsibility. The heading always renders; a quiet day says so rather
-  than filling the band with green "all clear" cards.
+  This Week (owner, 2026-09-26): what the lead and their CCEOs have planned
+  and are working on this week, so the lead can follow up — one tab per
+  person, last week's unfinished work first, and a Partners tab for strict
+  monitoring of partner work. It opens the dashboard.
+
+  Leadership Attention stays on top: at most four things that need the lead
+  now, drawn from every responsibility. The heading always renders; a quiet
+  day says so rather than filling the band with green "all clear" cards.
   {% endcomment %}
   <section aria-labelledby="pl-attention-title" data-pl-attention>
     <h2 id="pl-attention-title" class="rpl-section-title">Leadership Attention</h2>
@@ -22,10 +27,25 @@
     {% endif %}
   </section>
 
-  {% comment %}
-  What needs you now: past due plans for lead's own work and team oversight
-  {% endcomment %}
-  {% include "partials/dashboards/what_needs_you_now.html" %}
+  {% comment %}The week itself. Its own tabs and arrows swap this panel alone
+  (HX-Target pl-week-panel), so the attention band above and the lists below
+  stay where they are.{% endcomment %}
+  <section id="pl-week-panel" class="plwk" aria-label="This week" data-pl-week-panel>
+    {% include "partials/dashboards/pl/week_panel.html" %}
+  </section>
+
+  {% comment %}Every overdue plan, of any age — the backlog. Last week's share
+  of it is each person's Overdue from last week, above; this is the whole list,
+  folded so the week reads first.{% endcomment %}
+  <details class="plwk-backlog edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-pl-backlog{% if not past_due_total_count %} hidden{% endif %}>
+    <summary class="plwk-backlog__summary">
+      <span class="plwk-backlog__name">All overdue plans, any age</span>
+      <span class="plwk-backlog__count">{{ past_due_total_count }}</span>
+    </summary>
+    <div class="plwk-backlog__body">
+      {% include "partials/dashboards/what_needs_you_now.html" %}
+    </div>
+  </details>
 
   {% comment %}The team's past-due plans pop up by themselves (owner,
   2026-09-24) while any of them has not been sent to its officer. Once a
@@ -50,8 +70,6 @@
        hx-swap="innerHTML"
        data-pl-past-due-autoload></div>
   {% endif %}
-
-  {% include "partials/today/dashboard_loader.html" %}
 
   {% comment %}Who's Online for this Lead's team, on the main dashboard
   (owner, 2026-09-24: "so they can be able to monitor their team working").

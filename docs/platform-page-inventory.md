@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **829**
-- All registered routes: **1301**
+- Routed product surfaces: **830**
+- All registered routes: **1302**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **492**
+- Shared component templates: **502**
 - Full pages: **260**
 - Partials and drawers: **274**
-- Permission-gated surfaces: **814**
-- Referenced by automated tests: **722**
+- Permission-gated surfaces: **815**
+- Referenced by automated tests: **723**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -273,6 +273,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3D83415EFD | /dashboard/pl-drilldown | Pl Dashboard Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6DED1FE26D | /dashboard/pl-send-urgent-action | Pl Send Urgent Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D2C1ACA82A | /dashboard/pl-urgent-schools | Pl Urgent Schools Page | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6756CED269 | /dashboard/pl-week-send/<str:activity_id>/ | Dashboard Pl Week Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-063B2154FF | /dashboard/planning-progress | Planning Progress Fragment | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-44FBA5501A | /data-quality/duplicates | Duplicate Review | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3804BD9D07 | /data-quality/issue/<str:issue_id>/action | Data Quality Issue Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

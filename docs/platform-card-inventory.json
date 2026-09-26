@@ -4,10 +4,10 @@
   "templates": 245,
   "distinct_titles": 642,
   "with_card_key": 13,
-  "untitled_surfaces": 588,
-  "untitled_chrome": 152,
+  "untitled_surfaces": 591,
+  "untitled_chrome": 153,
   "untitled_nested": 232,
-  "untitled_headless": 204,
+  "untitled_headless": 206,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -5097,8 +5097,8 @@
   },
   {
    "template": "templates/partials/dashboards/pl/team_view.html",
-   "line": 58,
-   "title": "Your team this week",
+   "line": 61,
+   "title": "Risks to this week",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
@@ -5106,7 +5106,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/team_view.html",
-   "line": 118,
+   "line": 101,
    "title": "Follow-ups you sent",
    "heading_level": 2,
    "has_card_key": false,
@@ -7423,7 +7423,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 30,
+   "line": 32,
    "title": "Your team today",
    "heading_level": 2,
    "has_card_key": false,
@@ -7441,7 +7441,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 93,
+   "line": 95,
    "title": "Today's route",
    "heading_level": 2,
    "has_card_key": false,
@@ -7459,7 +7459,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 135,
+   "line": 137,
    "title": "Your proposed week",
    "heading_level": 2,
    "has_card_key": false,
@@ -7477,7 +7477,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 179,
+   "line": 181,
    "title": "Day completion",
    "heading_level": 2,
    "has_card_key": false,

@@ -84,12 +84,16 @@ CCEO_WEEKLY_ACTIVITY_CAPACITY = 12
 SF_ID_OVERDUE_DAYS = 7
 
 # ── The views under the fixed part ───────────────────────────────────────────
-# Today opens first: Today and Dashboard are one page (owner, 2026-09-14),
-# with Map the first of the dashboard's own views. "operations" was the second view until 2026-09-13; a remembered cookie
+# This Week opens first (owner, 2026-09-26): what the lead and their CCEOs have
+# planned and are working on this week, one tab per person, with last week's
+# unfinished work and the partners' week beside it. It took over from Today,
+# which opened first from 2026-09-14; the lead's own Today workbench is its Me
+# tab, and "today" — the /today redirect and "Open Today" notifications — opens
+# there. "operations" was the second view until 2026-09-13; a remembered cookie
 # or a bookmark carrying it lands on Team, the view that inherited its work.
-DEFAULT_VIEW = "today"
+DEFAULT_VIEW = "week"
 VIEWS = (
-    "today",
+    "week",
     "map",
     "priorities",
     "team",
@@ -97,12 +101,13 @@ VIEWS = (
     "programmes",
     "collaboration",
 )
-VIEW_ALIASES = {"operations": "team"}
+VIEW_ALIASES = {"operations": "team", "today": "week"}
 VIEW_TABS = (
     (
-        "today",
-        "Today",
-        "What waits on you, your team in the field today, then your own day",
+        "week",
+        "This Week",
+        "Where you and your officers are working this week, what carried over "
+        "from last week, and what the partners did",
     ),
     ("map", "Map", "Your team's districts shaded by delivery"),
     (
@@ -464,14 +469,15 @@ class ProgramLeadDashboardService:
             }
             if include_fixed:
                 data["kpi_strip_items"] = ProgramLeadDashboardService.kpis(ctx)
-            if include_fixed or view == "today":
+            if include_fixed or view == "week":
                 data["leadership_attention"] = (
                     ProgramLeadDashboardService.leadership_attention(ctx)
                 )
             builders = {
-                # The Today workbench is built per request by the view
-                # (apps.frontend.views.today_views), never cached here.
-                "today": lambda: {},
+                # The week is built per request by the view
+                # (apps.analytics.pl_week_service), never cached here: its
+                # follow-ups and statuses move by the minute.
+                "week": lambda: {},
                 "map": lambda: {},
                 "priorities": lambda: ProgramLeadDashboardService.priorities_view(ctx),
                 "team": lambda: ProgramLeadDashboardService.team_view(ctx),
@@ -2398,9 +2404,14 @@ class ProgramLeadDashboardService:
         if drill == "week":
             today = timezone.localdate()
             wk = today - timedelta(days=today.weekday())
+            end = wk + timedelta(days=6)
+            # Dated the way the This Week view and "What needs you now" date
+            # work — planned date, else the scheduled timestamp. Reading the
+            # scheduled timestamp alone dropped work that carried only a
+            # planned date.
             qs = ctx.team_owned(ctx.acts).filter(
-                scheduled_date__date__gte=wk,
-                scheduled_date__date__lte=wk + timedelta(days=6),
+                Q(planned_date__range=(wk, end))
+                | Q(planned_date__isnull=True, scheduled_date__date__range=(wk, end))
             )
             return {
                 "kind": "activities",

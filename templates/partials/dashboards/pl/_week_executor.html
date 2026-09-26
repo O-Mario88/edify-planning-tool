@@ -1,0 +1,7 @@
+{% comment %}The Executor cell of the week's tables, as "What needs you now" draws it.{% endcomment %}
+<span class="inline-flex items-center gap-1.5">
+  {{ row.owner }}
+  {% if row.is_own %}
+  <span class="px-1.5 py-0.5 rounded text-xs font-bold edify-primary-soft edify-primary-text border edify-primary-border">You</span>
+  {% endif %}
+</span>

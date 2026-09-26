@@ -255,14 +255,16 @@ def _pl_map_context(user, fy, filters) -> dict:
 def _program_lead_dashboard(request, avatar_initials: str):
     """The Program Lead dashboard.
 
-    A fixed team pulse strip above one
-    view at a time: Today (the default — Today and Dashboard are one page,
-    owner 2026-09-14), Map, Priorities, Team,
+    A fixed team pulse strip above one view at a time: This Week (the default,
+    owner 2026-09-26 — what the lead and their CCEOs are working on this week,
+    one tab per person, and the partners' week), Map, Priorities, Team,
     Coaching, Programmes or Collaboration, one per responsibility in the role
     description (owner, 2026-09-13). The service builds only the fixed part and
-    the chosen view; a tab click builds the view alone. "operations", the old
-    second view, still resolves from an explicit bookmark to Team. Returning
-    without a view always opens Today, regardless of an older saved tab.
+    the chosen view; a tab click builds the view alone, and a click on one of
+    the week's own tabs builds only the week. "operations", the old second
+    view, still resolves from an explicit bookmark to Team, and "today" to the
+    week's Me tab, where the lead's Today workbench now lives. Returning
+    without a view always opens This Week, regardless of an older saved tab.
     """
     from apps.analytics.pl_dashboard_service import (
         DEFAULT_VIEW,
@@ -291,7 +293,29 @@ def _program_lead_dashboard(request, avatar_initials: str):
     view = normalise_view(asked)
     # Explicit legacy bookmarks retain their Team destination.
     remember = explicit or asked != view
-    tab_swap = request.headers.get("HX-Target") == "pl-dashboard-view-shell"
+    hx_target = request.headers.get("HX-Target")
+    week = None
+    if view == "week":
+        from apps.analytics.pl_week_service import ME, build_week
+
+        # "today" (the /today redirect, "Open Today" notifications) meant the
+        # lead's own day, which is the week's Me tab.
+        who = (request.GET.get("who") or "").strip() or (ME if asked == "today" else "")
+        week = build_week(
+            user,
+            fy=fy,
+            who=who,
+            week=request.GET.get("week"),
+            listing=request.GET.get("list") or "",
+        )
+        if hx_target == "pl-week-panel":
+            # One of the week's own tabs or arrows: the panel alone.
+            return render(
+                request,
+                "partials/dashboards/pl/week_panel.html",
+                {"week": week, "fy": fy},
+            )
+    tab_swap = hx_target == "pl-dashboard-view-shell"
     data = ProgramLeadDashboardService.get_dashboard(
         user,
         fy=fy,
@@ -313,6 +337,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
         "fy": fy,
         "fy_options": fy_options(),
         "dashboard_view": view,
+        "week": week,
         "mobile_status_label": f"Needs attention: {len(attention)}",
         # The phone opens on the most pressing thing the lead has to do; with
         # nothing waiting, on the team's plans.
@@ -339,11 +364,12 @@ def _program_lead_dashboard(request, avatar_initials: str):
 
         context.update(country_map_context(fy))
         context.update(_pl_map_context(user, fy, {}))
-    if view in ("today", "team"):
+    if view in ("week", "team"):
         # Who's Online, over this Lead's reporting line and nobody else's
-        # (owner, 2026-09-22). On Today as well as Team since 2026-09-24 —
-        # "put it on the main dashboard so they can monitor their team
-        # working". Built only for the views that show it: the Lead's other
+        # (owner, 2026-09-22). On the main dashboard as well as Team since
+        # 2026-09-24 — "put it on the main dashboard so they can monitor their
+        # team working"; the main dashboard's first view has been This Week
+        # since 2026-09-26. Built only for the views that show it: the Lead's other
         # views ask different questions and should not pay a roster query for
         # a panel they do not draw.
         from apps.accounts.presence import presence_summary, team_user_ids
@@ -1911,12 +1937,8 @@ PAST_DUE_POPUP_TABLE_ID = "pl-past-due-table"
 @require_POST
 def notify_past_due_activity(request, activity_id: str):
     """Dispatch a reminder notification to the responsible team member to complete, reschedule, or cancel a past-due activity."""
-    from django.http import HttpResponse
     from django.shortcuts import get_object_or_404
-    from django.utils.html import escape
     from apps.activities.models import Activity
-    from apps.accounts.models import StaffProfile, User
-    from apps.notifications.services import WorkflowNotificationService
 
     from django.http import HttpResponseForbidden
 
@@ -1932,6 +1954,27 @@ def notify_past_due_activity(request, activity_id: str):
             "Only the officer's Programme Lead can send a past-due plan, and "
             "only while it is still past due."
         )
+    return _send_lead_reminder(activity, due=False)
+
+
+def _send_lead_reminder(activity, *, due: bool):
+    """Send an officer the Lead's reminder for one activity, and answer with
+    the "Sent to <officer>" button that replaces the one pressed.
+
+    `due=False` is the past-due reminder "What needs you now" has always sent;
+    `due=True` asks about work not yet past its day, from the Lead's This Week
+    view (owner, 2026-09-26). Both raise the same notice, so completing,
+    rescheduling or cancelling the work closes either
+    (activities.services._resolve_overdue_reminder) and the Lead's lists read
+    it as sent.
+    """
+    from django.http import HttpResponse
+    from django.utils.html import escape
+
+    from apps.accounts.models import StaffProfile, User
+    from apps.my_plan.past_due_service import OVERDUE_REMINDER_EVENT
+    from apps.notifications.services import WorkflowNotificationService
+
     recipient_id = activity.responsible_staff_id or activity.monitored_by_staff_id
 
     # Resolve recipient name and user
@@ -1968,12 +2011,20 @@ def notify_past_due_activity(request, activity_id: str):
         )
     )
 
-    title = f"Action Required: Overdue {act_type}"
-    body = f"Your activity for {school_or_cluster} scheduled on {date_str} is past due. Please complete, reschedule, or cancel this activity."
+    if due:
+        title = f"Action Required: {act_type} due {date_str}"
+        body = (
+            f"Your activity for {school_or_cluster} is due on {date_str}. "
+            "Please complete it — upload the evidence and enter its Salesforce "
+            "ID — or reschedule it."
+        )
+    else:
+        title = f"Action Required: Overdue {act_type}"
+        body = f"Your activity for {school_or_cluster} scheduled on {date_str} is past due. Please complete, reschedule, or cancel this activity."
 
     if recipient_id:
         WorkflowNotificationService.trigger(
-            event_type="pl_activity_overdue_reminder",
+            event_type=OVERDUE_REMINDER_EVENT,
             category="action_required",
             priority="high",
             title=title,
@@ -1992,3 +2043,31 @@ def notify_past_due_activity(request, activity_id: str):
         f"</button>"
     )
     return HttpResponse(btn_html)
+
+
+@login_required
+@require_page_permission("dashboard")
+@require_POST
+def pl_week_send_reminder(request, activity_id: str):
+    """This Week's "Send to <officer>" (owner, 2026-09-26): remind an officer
+    to complete work they have not completed — upload the evidence and enter
+    the Salesforce ID — whether it is past its day or due later this week.
+
+    Only the officer's Programme Lead, only for work the officer delivers
+    themselves, not yet completed, and due by the end of this week
+    (pl_week_service.team_week_activity); anything else is refused.
+    """
+    from django.http import HttpResponseForbidden
+    from django.utils import timezone as tz
+
+    from apps.analytics.pl_week_service import activity_day, team_week_activity
+
+    activity = team_week_activity(request.user, activity_id)
+    if activity is None:
+        return HttpResponseForbidden(
+            "Only the officer's Programme Lead can send this, and only for "
+            "work the officer has not completed that is due by the end of "
+            "this week."
+        )
+    day = activity_day(activity)
+    return _send_lead_reminder(activity, due=not (day and day < tz.localdate()))

@@ -211,9 +211,13 @@ FIELD_ROLES = ("CCEO", "Program Lead", "ProjectCoordinator")
 SNOOZE_CHOICES = (("tomorrow", "Until tomorrow"), ("next_week", "Until next week"))
 
 
-def build_today_context(request) -> dict:
+def build_today_context(request, *, include_team: bool = True) -> dict:
     """Everything the Today workbench renders (partials/today/workbench.html),
-    for the Dashboard's Today view and the standalone page alike."""
+    for the Dashboard's Today view and the standalone page alike.
+
+    `include_team=False` leaves out the Programme Lead's "team today" section,
+    for the Lead's This Week view, whose Me tab holds this workbench beside a
+    tab for every officer (owner, 2026-09-26)."""
     principal = request.user
     role = getattr(principal, "active_role", "")
     is_program_lead = role == "Program Lead"
@@ -268,7 +272,9 @@ def build_today_context(request) -> dict:
                 ),
                 None,
             ),
-            "team_today": _team_today(principal) if is_program_lead else None,
+            "team_today": (
+                _team_today(principal) if is_program_lead and include_team else None
+            ),
             "has_own_portfolio": has_own_portfolio,
             "proposal": (
                 live_proposal_for(getattr(principal, "staff_profile_id", None))
@@ -286,6 +292,14 @@ def build_today_context(request) -> dict:
     return context
 
 
+def _include_team(request) -> bool:
+    """False inside the Programme Lead's This Week Me tab, which sends
+    `today_section=own` with every request made from within it (hx-vals on
+    the tab), so a redraw after an undo stays the lead's own day."""
+    asked = request.GET.get("today_section") or request.POST.get("today_section")
+    return asked != "own"
+
+
 @require_page_permission("today")
 @_staff_guard
 def today_panel(request):
@@ -295,7 +309,7 @@ def today_panel(request):
     return render(
         request,
         "partials/today/dashboard_view.html",
-        {"today": build_today_context(request)},
+        {"today": build_today_context(request, include_team=_include_team(request))},
     )
 
 
@@ -456,7 +470,7 @@ def today_unsnooze(request):
     response = render(
         request,
         "partials/today/dashboard_view.html",
-        {"today": build_today_context(request)},
+        {"today": build_today_context(request, include_team=_include_team(request))},
     )
     response["HX-Retarget"] = "[data-dashboard-today]"
     response["HX-Reswap"] = "outerHTML"

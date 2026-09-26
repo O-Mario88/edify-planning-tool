@@ -26,7 +26,9 @@ apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
   {% endcomment %}
   {% include "partials/today/waiting_table.html" %}
 
-  {% if mode == "lead" %}
+  {% comment %}Left out inside the Lead's This Week Me tab (team_today None,
+  owner 2026-09-26): every officer's day has its own tab there.{% endcomment %}
+  {% if mode == "lead" and team_today is not None %}
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="team-today-title" data-today-team>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 id="team-today-title" class="text-[13px] font-bold text-slate-800">Your team today</h2>
