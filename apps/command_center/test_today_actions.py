@@ -1,11 +1,12 @@
 """Today is where work is done (owner, 2026-09-14).
 
-Pins: a queue row that is one decision carries its buttons and the decision
-runs through the record's own service (so its refusals hold on Today too); a
-decision needing a reason is refused without one and the refusal lands in the
-row; snoozing hides a row until its day; Impact Assessment works its SSA
-queue from its dashboard's Today view; an activity's next step opens its
-drawer from the row.
+Pins: a queue row that is one decision carries it in the row's Actions menu
+(owner, 2026-09-26), a decision needing words keeping its form outside the
+menu, and the decision runs through the record's own service (so its refusals
+hold on Today too); a decision needing a reason is refused without one and the
+refusal lands in the row; snoozing hides a row until its day; Impact
+Assessment works its SSA queue from its dashboard's Today view; an activity's
+next step opens its drawer from the row.
 """
 
 from __future__ import annotations
@@ -225,6 +226,216 @@ class SnoozeTests(TestCase):
         )
         self.assertIn("HX-Retarget", response)
         self.assertFalse(TodoSnooze.objects.exists())
+
+
+def _elements(node, match=lambda el: True):
+    """Every element under `node` (a django.test.html tree) that matches."""
+    found = []
+    for child in getattr(node, "children", ()):
+        if isinstance(child, str):
+            continue
+        if match(child):
+            found.append(child)
+        found.extend(_elements(child, match))
+    return found
+
+
+def _attr(name, value=None):
+    return lambda el: name in dict(el.attributes) and (
+        value is None or dict(el.attributes)[name] == value
+    )
+
+
+def _text(node) -> str:
+    if isinstance(node, str):
+        return node
+    return "".join(_text(child) for child in node.children).strip()
+
+
+def _fields(form) -> dict:
+    """A form's named fields as {name: (tag, type, value)}."""
+    return {
+        dict(el.attributes)["name"]: (
+            el.name,
+            dict(el.attributes).get("type"),
+            dict(el.attributes).get("value"),
+        )
+        for el in _elements(form, _attr("name"))
+    }
+
+
+class QueueRowActionsMenuTests(TestCase):
+    """The Waiting on you row's actions are one Actions menu (owner,
+    2026-09-26: "every page use actions with dropdown options"): the same
+    posts, drawers and snoozes as the buttons they replace, and a decision
+    that needs words keeps its form outside the menu."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.pl, _ = _user("tq-pl@t.org", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+
+    def _rows(self):
+        from django.test.html import parse_html
+
+        rows = [
+            _row("plrev-abc", title="Review Completion", action_url="/pl/review"),
+            _row("visitreq-xyz", title="Visit request", action_url="/visits/xyz"),
+        ]
+        with patch(
+            "apps.command_center.todo_service.get_cached_todos",
+            return_value={"todos": rows, "total": 2},
+        ):
+            self.client.force_login(self.pl)
+            response = self.client.get("/today/panel")
+        self.assertEqual(response.status_code, 200)
+        tree = parse_html(response.content.decode())
+        return {
+            dict(_elements(tr, lambda el: el.name == "th")[0].attributes)["title"]: tr
+            for tr in _elements(tree, _attr("data-today-item"))
+        }
+
+    def test_every_action_is_an_item_of_one_menu(self):
+        rows = self._rows()
+        review = rows["Review Completion"]
+        slug = today_actions.row_slug("plrev-abc")
+        self.assertEqual(dict(review.attributes)["id"], slug)
+        # Every post inside the row still answers with a table row.
+        self.assertEqual(dict(review.attributes)["hx-vals"], '{"layout": "table"}')
+
+        menus = _elements(review, _attr("data-row-actions"))
+        self.assertEqual(len(menus), 1)
+        trigger = _elements(menus[0], _attr("class", "row-menu__trigger"))[0]
+        self.assertEqual(
+            dict(trigger.attributes)["aria-label"], "Actions for Review Completion"
+        )
+        menu = _elements(menus[0], _attr("role", "menu"))[0]
+        items = _elements(menu, _attr("role", "menuitem"))
+        self.assertEqual(
+            [_text(item) for item in items],
+            [
+                "Verified",
+                "Return",
+                "Review evidence",
+                "Open",
+                "Until tomorrow",
+                "Until next week",
+            ],
+        )
+        self.assertTrue(
+            all("row-menu__item" in dict(i.attributes)["class"] for i in items)
+        )
+        # No button is left beside the menu: the rest are the form panel's.
+        (panel,) = _elements(review, _attr("data-today-forms"))
+        inside = {id(el) for el in _elements(menus[0]) + _elements(panel)}
+        self.assertEqual(
+            [
+                b
+                for b in _elements(review, lambda el: el.name in ("button", "a"))
+                if id(b) not in inside
+            ],
+            [],
+        )
+
+        # A one-press decision posts the same fields to the same place.
+        verified = _elements(menu, _attr("hx-post", "/today/act"))
+        self.assertEqual(len(verified), 1)
+        self.assertEqual(dict(verified[0].attributes)["role"], "none")
+        self.assertEqual(dict(verified[0].attributes)["hx-target"], f"#{slug}")
+        self.assertEqual(dict(verified[0].attributes)["hx-swap"], "outerHTML")
+        self.assertEqual(
+            _fields(verified[0]),
+            {
+                "todo": ("input", "hidden", "plrev-abc"),
+                "op": ("input", "hidden", "confirm"),
+                "title": ("input", "hidden", "Review Completion"),
+            },
+        )
+        # A drawer step keeps its drawer.
+        (drawer,) = _elements(menu, _attr("hx-get"))
+        self.assertEqual(
+            dict(drawer.attributes)["hx-get"], "/pl/review-queue/abc/drawer"
+        )
+        self.assertEqual(dict(drawer.attributes)["hx-target"], "#drawer-container")
+        (open_link,) = _elements(menu, lambda el: el.name == "a")
+        self.assertEqual(dict(open_link.attributes)["href"], "/pl/review")
+
+        # Snoozing is two plain posts in the menu.
+        snoozes = _elements(menu, _attr("hx-post", "/today/snooze"))
+        self.assertEqual(
+            [_fields(form)["choice"][2] for form in snoozes], ["tomorrow", "next_week"]
+        )
+        self.assertTrue(
+            all(dict(f.attributes)["hx-target"] == f"#{slug}" for f in snoozes)
+        )
+
+        # The menu asks nothing: every input in it is a hidden one.
+        self.assertFalse(_elements(menu, lambda el: el.name in ("textarea", "select")))
+        self.assertEqual(
+            {dict(el.attributes).get("type") for el in _elements(menu, _attr("name"))},
+            {"hidden"},
+        )
+
+    def test_a_decision_that_needs_words_opens_its_form_outside_the_menu(self):
+        rows = self._rows()
+        review = rows["Review Completion"]
+        slug = today_actions.row_slug("plrev-abc")
+        menu = _elements(review, _attr("role", "menu"))[0]
+        (item,) = [
+            i
+            for i in _elements(menu, _attr("role", "menuitem"))
+            if _text(i) == "Return"
+        ]
+        self.assertEqual(
+            dict(item.attributes)["@click"], "$dispatch('today-form', 'return')"
+        )
+        self.assertEqual(dict(item.attributes)["aria-haspopup"], "dialog")
+
+        (panel,) = _elements(review, _attr("data-today-forms"))
+        self.assertFalse(_elements(panel, _attr("role", "menu")))
+        (form,) = _elements(panel, _attr("data-today-form"))
+        attrs = dict(form.attributes)
+        self.assertEqual(attrs["data-today-form"], "return")
+        self.assertEqual(attrs["hx-post"], "/today/act")
+        self.assertEqual(attrs["hx-target"], f"#{slug}")
+        self.assertEqual(attrs["hx-swap"], "outerHTML")
+        self.assertEqual(attrs["role"], "dialog")
+        self.assertEqual(
+            _fields(form),
+            {
+                "todo": ("input", "hidden", "plrev-abc"),
+                "op": ("input", "hidden", "return"),
+                "title": ("input", "hidden", "Review Completion"),
+                "reason": ("textarea", None, None),
+            },
+        )
+        (reason,) = _elements(form, lambda el: el.name == "textarea")
+        self.assertIn("required", dict(reason.attributes))
+        # A refusal is written into the row's own output, ahead of the title.
+        (error,) = _elements(review, _attr("data-today-error"))
+        self.assertEqual(error.name, "output")
+        self.assertEqual(dict(error.attributes)["role"], "alert")
+
+        # Two decisions that each need words: one panel, a form each; the
+        # decline reads as destructive on the menu.
+        visit = rows["Visit request"]
+        items = {
+            _text(i): dict(i.attributes)
+            for i in _elements(
+                _elements(visit, _attr("role", "menu"))[0], _attr("role", "menuitem")
+            )
+        }
+        self.assertIn("row-menu__item--danger", items["Decline"]["class"])
+        self.assertNotIn("row-menu__item--danger", items["Approve"]["class"])
+        (panel,) = _elements(visit, _attr("data-today-forms"))
+        forms = _elements(panel, _attr("data-today-form"))
+        self.assertEqual(
+            [dict(f.attributes)["data-today-form"] for f in forms],
+            ["approve", "decline"],
+        )
+        self.assertEqual(
+            [dict(f.attributes)["x-show"] for f in forms],
+            ["todayForm === 'approve'", "todayForm === 'decline'"],
+        )
 
 
 class ImpactAssessmentTodayTests(TestCase):

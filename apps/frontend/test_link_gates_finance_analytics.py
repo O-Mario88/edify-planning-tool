@@ -153,14 +153,41 @@ class WorkPlanRowLinksTest(SimpleTestCase):
         self.assertIn("Send to Jane", html)
         self.assertNotIn("View details", html)
         self.assertNotIn("No action available", html)
+        # One control left is its own button, not a one-item Actions menu.
+        self.assertNotIn("data-row-actions", html)
 
-    def test_readers_who_open_records_keep_both_links(self):
+    def test_readers_who_open_records_get_the_record_once(self):
+        """A row whose action is View already opens the record; it is not
+        offered a second time as View details (2026-09-26)."""
         for role in ("CountryDirector", "Program Lead", "Admin"):
             with self.subTest(role=role):
                 html = _render(self.TEMPLATE, role, self._tables())
-                self.assertEqual(html.count('href="/my-plan/act-1"'), 2)
-                self.assertIn("View details", html)
+                self.assertEqual(html.count('href="/my-plan/act-1"'), 1)
+                self.assertNotIn("View details", html)
                 self.assertNotIn("No action available", html)
+                self.assertNotIn("data-row-actions", html)
+
+    def test_a_different_action_and_the_record_are_one_actions_menu(self):
+        for role in ("CountryDirector", "Program Lead", "Admin"):
+            with self.subTest(role=role):
+                html = _render(
+                    self.TEMPLATE,
+                    role,
+                    self._tables(
+                        action_url="/messages/new?context_type=activity&context_id=act-1",
+                        action_text="Send to Jane",
+                    ),
+                )
+                # Both sit in the row's one Actions menu (owner, 2026-09-26).
+                self.assertEqual(html.count("data-row-actions"), 1)
+                self.assertIn(
+                    'aria-label="Actions for Quarterly programme review"', html
+                )
+                self.assertEqual(html.count('role="menuitem"'), 2)
+                self.assertIn("Send to Jane", html)
+                self.assertIn(
+                    'role="menuitem" href="/my-plan/act-1">View details', html
+                )
 
 
 class LinkGatePagesTest(TestCase):

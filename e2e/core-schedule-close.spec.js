@@ -4,7 +4,11 @@ const { signIn } = require('./helpers/auth');
 test('core scheduling closes after success and preserves validation errors', async ({ page }) => {
   await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
   await page.goto('/core-schools');
-  await page.locator('[hx-get^="/core-schools/schedule-training?"]').first().click();
+  // Training is an entry in the row's one Actions menu (owner, 2026-09-26).
+  const training = '[role="menuitem"][hx-get^="/core-schools/schedule-training?"]';
+  const row = page.locator('.core-school-row').filter({ has: page.locator(training) }).first();
+  await row.locator('.row-menu__trigger').click();
+  await row.locator(training).click();
   const schoolId = await page.locator('#schedule-training-drawer-root [name="school_id"]').inputValue();
 
   // Exercise the actual HTMX response contract without creating activities.

@@ -161,6 +161,36 @@ class SampleIntegrityTest(TestCase):
         self.assertContains(page, 'hx-get="/planning/schedule-modal?school_id=VS-UG"')
         self.assertEqual(Activity.objects.filter(school=self.ug_school).count(), 1)
 
+    def test_a_pending_samples_decisions_are_one_actions_menu(self):
+        """Confirm, Dispute and Field back-check are one Actions menu (owner,
+        2026-09-26). Confirm and Dispute carry what the checker found, so the
+        menu opens the row's note form for them rather than posting itself."""
+        activity = self._verified_activity(self.ug_school, self.ia)
+        S.draw_samples(days=7)
+        sample = VerificationSample.objects.get(activity=activity)
+        self.client.force_login(self.ia2)
+        body = self.client.get("/ia/samples/").content.decode()
+
+        self.assertIn("data-row-actions", body)
+        for choice, label in (("confirmed", "Confirm"), ("disputed", "Dispute")):
+            with self.subTest(label=label):
+                self.assertRegex(
+                    body,
+                    rf'role="menuitem"[^>]*@click="grade = \'{choice}\'[^"]*">{label}</button>',
+                )
+        self.assertIn(
+            f'<form role="none" method="post" action="/ia/samples/{sample.id}/field-check">',
+            body,
+        )
+        self.assertIn('role="menuitem">Field back-check</button>', body)
+        # The note stays in the row, in the one form that posts the decision.
+        form = body[body.index(f'id="grade-{sample.id}"') :]
+        form = form[: form.index("</form>")]
+        self.assertIn(f'action="/ia/samples/{sample.id}/outcome"', form)
+        self.assertIn('name="note"', form)
+        self.assertIn('name="status" :value="grade"', form)
+        self.assertNotIn('role="menuitem"', form)
+
     def test_the_page_lists_the_readers_country_and_costs_the_same_as_it_grows(self):
         self._verified_activity(self.ug_school, self.ia)
         self._verified_activity(self.ke_school, self.ke_ia)

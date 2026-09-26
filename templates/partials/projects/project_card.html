@@ -19,7 +19,7 @@ x-init="$watch('cardExpanded', value => { if (value && !schoolsLoaded) { htmx.tr
 data-project-card="{{ row.id }}"
 >
 <div
-@click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) cardExpanded = !cardExpanded"
+@click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button], .row-menu')) cardExpanded = !cardExpanded"
 class="cluster-card__summary"
 data-row-disclosure-summary
 >
@@ -69,12 +69,16 @@ data-row-disclosure-summary
 
 <div class="cluster-card__actions">
 {% comment %}
-Scheduling and partner handover are per school, so those two buttons live on
-each row of the roster below rather than up here: /planning/schedule-modal
-needs a school (a project_id alone only tunes its catalogue suggestions), and
-a partner is assigned to a school, never to a project. What belongs to the
-project as a whole is its planning workspace, where the same two actions can
-be done to many schools at once.
+Scheduling and partner handover are per school, so those two actions live in
+the Actions menu on each row of the roster below rather than up here:
+/planning/schedule-modal needs a school (a project_id alone only tunes its
+catalogue suggestions), and a partner is assigned to a school, never to a
+project. What belongs to the project as a whole is its planning workspace,
+where the same two actions can be done to many schools at once.
+
+Plan is the card's one action, so it stays a button: the platform's Actions
+menu (2026-09-26) is for a record with two or more. The chevron beside it
+opens the card; it does not act on the project.
 {% endcomment %}
 <a
 href="/projects/planning?project={{ row.id }}"

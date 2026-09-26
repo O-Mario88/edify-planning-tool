@@ -6,28 +6,28 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 542 |
-| Control declarations | 3428 |
-| State-changing | 413 |
-| High-consequence (state-changing) | 185 |
-| No automated evidence | 345 |
+| Templates with controls | 546 |
+| Control declarations | 3480 |
+| State-changing | 419 |
+| High-consequence (state-changing) | 189 |
+| No automated evidence | 353 |
 | State-changing with no automated evidence | 24 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1127 |
+| button | 1158 |
 | disclosure | 68 |
-| field | 1178 |
-| link | 988 |
+| field | 1185 |
+| link | 1002 |
 | tab | 67 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 750 |
-| none | 345 |
-| page-tested | 1263 |
-| request-tested | 1070 |
+| browser-rendered | 760 |
+| none | 353 |
+| page-tested | 1274 |
+| request-tested | 1093 |
 
 ## State-changing controls with no automated evidence
 
@@ -39,7 +39,6 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-50C5EA35C587 | partials/business_transformation/loan_drawer.html | 35 | Confirm & complete | `POST /loans/{{ loan.id }}/salesforce-confirmation` |
 | INT-18330D9DA127 | partials/business_transformation/loan_drawer.html | 54 | Submit IA decision | `POST /loans/{{ loan.id }}/ia-validation` |
 | INT-ED7F98B5F13D | partials/catalogue/new_activity_drawer.html | 87 | Add activity | `POST /settings/activity-catalogue/new` |
-| INT-0431ED443AC0 | partials/clusters/bulk_schedule_drawer.html | 180 | Schedule the day | `POST /clusters/{{ cluster.id }}/bulk-schedule-drawer` |
 | INT-5ECC5BA5D5F4 | partials/core_schools/champion_review_drawer.html | 127 | Reject candidacy | `POST                                                             ` |
 | INT-574FE8F3BDA9 | partials/core_schools/champion_review_drawer.html | 131 | Graduate school | `POST                                                              ` |
 | INT-3791C26399DE | partials/cost_settings/add_drawer.html | 52 | Add cost | `POST /cost-settings/add` |
@@ -49,8 +48,9 @@ Static scan of every template control (button, link, input, select, textarea, su
 | INT-F785BBDA2C57 | partials/disbursements/hold_drawer.html | 30 | Place on hold | `POST /disbursements/action` |
 | INT-DF91592AA3F3 | partials/disbursements/return_drawer.html | 30 | Return for correction | `POST /disbursements/action` |
 | INT-7F1E123B33F4 | partials/hr/extra_work_submit_drawer.html | 44 | Submit for verification | `POST /extra-work/{{ a.id }}/submit` |
-| INT-F55F4505D040 | partials/ia/outcomes.html | 95 | {{ action.label }} | `POST {{ action.href }}` |
-| INT-0F183F0F473C | partials/ia/outcomes.html | 258 | Download draft impact report (CSV) | `POST                                               ` |
+| INT-F55F4505D040 | partials/ia/outcomes.html | 98 | {{ action.label }} | `POST {{ action.href }}` |
+| INT-C773076EAE2B | partials/ia/outcomes.html | 109 | {{ action.label }} | `POST {{ action.href }}` |
+| INT-0F183F0F473C | partials/ia/outcomes.html | 273 | Download draft impact report (CSV) | `POST                                               ` |
 | INT-EE6B7A0045A6 | partials/ia/partner_return_drawer.html | 41 | Return to partner | `POST /ia/partner-evidence/{{ a.id }}/return-action` |
 | INT-4DAF16CA3708 | partials/ia/reports_view.html | 82 | Download annex (CSV) | `POST                                               ` |
 | INT-3144923BE448 | partials/leave/request_leave_drawer.html | 254 | Submit request | `POST                                          ` |

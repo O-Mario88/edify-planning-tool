@@ -1,4 +1,4 @@
-{% load table_pagination frontend_filters %}
+{% load table_pagination frontend_filters row_actions %}
 {% comment %}
 Spiritual transformation (Programme Rollout, owner 2026-09-13): Christlike
 Behaviour and Exposure to the Word of God — the team's averages against the
@@ -110,8 +110,15 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
           <td data-label="Planned response">{{ row.responses }}</td>
           <td data-label="State"><span data-tone="{{ row.tone }}">{{ row.state }}</span></td>
           <td class="is-end" data-record-action data-label="Actions">
+            {% comment %}School and Plan are one Actions menu rather than two buttons (owner, 2026-09-26); a school with nothing to plan keeps its link.{% endcomment %}
+            {% if row.plan_url %}
+            {% row_actions row.name %}
+            <a class="row-menu__item" role="menuitem" href="{{ row.school_url }}">School</a>
+            <a class="row-menu__item" role="menuitem" href="{{ row.school_url }}" hx-get="{{ row.plan_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Plan</a>
+            {% endrow_actions %}
+            {% else %}
             <a href="{{ row.school_url }}" class="rpl-row-link rounded-control">School</a>
-            {% if row.plan_url %}<a href="{{ row.school_url }}" hx-get="{{ row.plan_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Plan</a>{% endif %}
+            {% endif %}
           </td>
         </tr>
         {% empty %}

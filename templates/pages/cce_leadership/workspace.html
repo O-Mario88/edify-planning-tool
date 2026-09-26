@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 
 {% block title %}{{ title }} · Edify{% endblock %}
 
@@ -89,6 +89,20 @@ from a To-Do or notification link (?open=…); it opens once the page loads.
             {% endfor %}
             {% if has_row_actions %}
             <td class="is-end" data-record-action data-label="Actions">
+              {% comment %}Two or more actions are one Actions menu rather
+              than a row of links (owner, 2026-09-26); a record with one
+              action keeps its link.{% endcomment %}
+              {% if row.actions|length > 1 %}
+              {% row_actions row.cells.0.text %}
+              {% for action in row.actions %}
+              {% if action.href %}
+              <a class="row-menu__item" role="menuitem" href="{{ action.href }}">{{ action.label }}</a>
+              {% else %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endif %}
+              {% endfor %}
+              {% endrow_actions %}
+              {% else %}
               {% for action in row.actions %}
               {% if action.href %}
               <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
@@ -96,6 +110,7 @@ from a To-Do or notification link (?open=…); it opens once the page loads.
               <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
               {% endif %}
               {% endfor %}
+              {% endif %}
             </td>
             {% endif %}
           </tr>

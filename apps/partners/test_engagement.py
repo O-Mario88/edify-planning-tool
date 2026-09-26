@@ -650,6 +650,17 @@ class FlagLoopTest(EngagementFixture):
         # A To-Do link opens the page with the drawer on load.
         page = self.client.get(f"/quality-checks?resolve={flag['id']}")
         self.assertContains(page, "data-flag-autoload")
+        # An open flag's two actions are one Actions menu (owner, 2026-09-26).
+        self.assertContains(
+            page,
+            '<button type="submit" class="row-menu__item" role="menuitem">'
+            "Acknowledge</button>",
+        )
+        self.assertContains(
+            page,
+            'class="row-menu__item" role="menuitem" '
+            f'hx-get="/quality-checks?resolve={flag["id"]}"',
+        )
 
         refused = self.client.post(
             "/quality-checks",

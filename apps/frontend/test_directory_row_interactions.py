@@ -4,7 +4,11 @@ from django.test import SimpleTestCase
 
 
 ROOT = Path(__file__).resolve().parents[2]
-INTERACTIVE_GUARD = "a, button, input, label, select, textarea, [role=button]"
+# A click inside a row's open Actions menu is a choice, not a toggle of the
+# row's details (owner, 2026-09-26: every row's actions in one menu).
+INTERACTIVE_GUARD = (
+    "a, button, input, label, select, textarea, [role=button], .row-menu"
+)
 
 
 class DirectoryRowInteractionContractTests(SimpleTestCase):

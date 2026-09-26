@@ -1,0 +1,33 @@
+{% comment %}
+One record's actions: an Actions button and the list it opens (owner,
+2026-09-26: "every page use actions with dropdown options"). Rendered by
+{% row_actions %} … {% endrow_actions %} (apps/frontend/templatetags/row_actions.py);
+`items` are the caller's .row-menu__item controls.
+
+The list is fixed-positioned by Alpine's rowMenu, so no table scroller or card
+clips it. Opening moves focus to the first item; the arrow keys, Home and End
+move through the items, Escape returns to the button, Tab leaves. Choosing an
+item closes the list; an aria-disabled item (one that says why it is not
+available) does nothing and keeps the list open.
+{% endcomment %}
+<div class="row-menu" x-data="rowMenu" data-row-actions
+     @keydown.escape.window="open && dismiss()" @click.outside="close()"
+     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+  <button type="button" class="row-menu__trigger" x-ref="trigger"
+          @click="toggle(); open && focusItem(0)"
+          @keydown.arrow-down.prevent="open || toggle(); focusItem(0)"
+          :aria-expanded="open ? 'true' : 'false'"
+          aria-haspopup="menu"{% if name %}
+          aria-label="Actions for {{ name }}"{% endif %}>
+    Actions
+    <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+  </button>
+  <div class="row-menu__list" x-ref="list" x-show="open" x-cloak
+       :style="`left:${x}px; top:${y}px`" x-transition.opacity.duration.120ms role="menu"
+       @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)"
+       @keydown.home.prevent="focusItem(0)" @keydown.end.prevent="focusItem(-1)"
+       @keydown.tab="close()"
+       @click="$event.target.closest('[role=menuitem]:not([aria-disabled=true])') && close()">
+    {{ items }}
+  </div>
+</div>

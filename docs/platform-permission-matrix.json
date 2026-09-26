@@ -14329,9 +14329,81 @@
     "Accountant",
     "Admin"
    ],
+   "route": "/partner-oversight/return",
+   "route_name": "partner_work_return_drawer",
+   "view": "apps.frontend.views.partner_review_views.partner_return_drawer_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/partner-oversight/return/submit",
+   "route_name": "partner_work_return_submit",
+   "view": "apps.frontend.views.partner_review_views.partner_return_submit_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
    "route": "/partner-oversight/send",
    "route_name": "partner_oversight_send",
    "view": "apps.frontend.views.oversight_views.partner_oversight_send_action_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/partner-oversight/verify",
+   "route_name": "partner_verify_drawer",
+   "view": "apps.frontend.views.partner_review_views.partner_verify_drawer_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/partner-oversight/verify/submit",
+   "route_name": "partner_verify_submit",
+   "view": "apps.frontend.views.partner_review_views.partner_verify_submit_view"
   },
   {
    "page_permission": "partner_oversight",
@@ -18110,27 +18182,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 409,
-  "Admin": 1012,
+  "Accountant": 413,
+  "Admin": 1016,
   "BusinessTransformationOfficer": 234,
-  "CCEO": 538,
-  "CountryDirector": 768,
+  "CCEO": 542,
+  "CountryDirector": 772,
   "HumanResources": 332,
-  "ImpactAssessment": 632,
+  "ImpactAssessment": 636,
   "MfiLoanOfficer": 130,
   "MfiPartnerAdmin": 133,
   "PartnerAdmin": 221,
   "PartnerFieldOfficer": 221,
-  "Program Lead": 623,
+  "Program Lead": 627,
   "ProjectCoordinator": 453,
-  "RegionalProgramLead": 319,
-  "RegionalVicePresident": 371
+  "RegionalProgramLead": 323,
+  "RegionalVicePresident": 375
  },
  "summary": {
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
-  "routes_guarded": 1109,
-  "routes_total": 1303,
+  "routes_guarded": 1113,
+  "routes_total": 1307,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

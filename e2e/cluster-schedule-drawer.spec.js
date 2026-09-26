@@ -22,8 +22,12 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await page.goto('/clusters');
     await page.waitForLoadState('networkidle');
 
-    // Find the first cluster card schedule button
-    const scheduleBtn = page.locator('.school-record-action--schedule').first();
+    // The first cluster card's Schedule, an entry in the card's one Actions
+    // menu since 2026-09-26 (owner: "switch to Action button with options to
+    // schedule and assign").
+    const card = page.locator('.cluster-card:has(.row-menu__trigger)').first();
+    await card.locator('.row-menu__trigger').click();
+    const scheduleBtn = card.getByRole('menuitem', { name: /^Schedule Group Training for / });
     await expect(scheduleBtn).toBeVisible();
     await scheduleBtn.click();
 

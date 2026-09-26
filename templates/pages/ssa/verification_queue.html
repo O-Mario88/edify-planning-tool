@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load school_identity %}
+{% load school_identity row_actions %}
 
 {% block title %}IA SSA Verification Queue — Edify{% endblock %}
 
@@ -9,7 +9,9 @@ SSA Verification (apps/frontend/views/ssa_views.py ssa_verification_queue_view).
 Every SSA lands pending until a verifier other than its collector confirms it
 (IA review, owner, 2026-09-13). Readers see the records in their reach; the
 Confirm and Return actions appear only on rows the reader may decide. Return
-opens a one-column drawer for the reason, which the collector is sent.
+opens a one-column drawer for the reason, which the collector is sent. On
+those rows Open visit, Confirm and Return are one Actions menu rather than
+three buttons (owner, 2026-09-26); a row with only its visit keeps the link.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-mobile-family="verification" data-ssa-verification>
 
@@ -83,17 +85,19 @@ opens a one-column drawer for the reason, which the collector is sent.
           <td data-label="Average" class="tabular-nums">{% if r.average is not None %}{{ r.average }} / 10{% else %}—{% endif %}</td>
           <td data-label="Status"><span data-tone="{{ r.tone }}">{{ r.state }}</span></td>
           <td class="is-end" data-record-action data-label="Actions">
-            {% if r.visit_url %}<a href="{{ r.visit_url }}" class="rpl-row-link rounded-control">Open visit</a>{% endif %}
             {% if r.can_decide %}
-            <form method="post" action="/ssa/verification/" class="ia-sample-form">
+            {% row_actions r.school %}
+            {% if r.visit_url %}<a class="row-menu__item" role="menuitem" href="{{ r.visit_url }}">Open visit</a>{% endif %}
+            <form role="none" method="post" action="/ssa/verification/">
               {% csrf_token %}
               <input type="hidden" name="record_id" value="{{ r.id }}">
               <input type="hidden" name="action" value="verify">
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="rpl-row-link rounded-control">Confirm</button>
+              <button type="submit" class="row-menu__item" role="menuitem">Confirm</button>
             </form>
-            <button type="button" class="rpl-row-link rounded-control" hx-get="/ssa/verification/{{ r.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
-            {% endif %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="/ssa/verification/{{ r.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
+            {% endrow_actions %}
+            {% elif r.visit_url %}<a href="{{ r.visit_url }}" class="rpl-row-link rounded-control">Open visit</a>{% endif %}
           </td>
         </tr>
         {% empty %}

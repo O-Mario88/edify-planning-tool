@@ -222,6 +222,18 @@ class OnlyTheCoordinatorDecidesTest(_TableFixture):
         self.assertIn(
             f"/projects/monitoring/resolve?handover={self.handed_back.id}", body
         )
+        # Both are items on the row's Actions menu (owner, 2026-09-26);
+        # withdrawing takes the work from its partner, so it reads as such.
+        self.assertIn(
+            'class="row-menu__item row-menu__item--danger" role="menuitem" '
+            f'hx-get="/projects/monitoring/withdraw?handover={self.handed_over.id}"',
+            body,
+        )
+        self.assertIn(
+            'class="row-menu__item" role="menuitem" '
+            f'hx-get="/projects/monitoring/resolve?handover={self.handed_back.id}"',
+            body,
+        )
 
     def test_everyone_else_is_offered_no_decision(self):
         for user in (self.lead_user, self.ia_user):

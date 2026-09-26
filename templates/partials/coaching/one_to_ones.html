@@ -1,4 +1,4 @@
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% comment %}
 This month's one-to-ones (owner, 2026-09-13): one row per officer on the
 Programme Lead's team with the month's one-to-one, the latest coaching and
@@ -37,6 +37,22 @@ the To-Do queue reads.
           {% endif %}
           {% endfor %}
           <td class="is-end" data-record-action data-label="Actions">
+            {% comment %}
+            Log one-to-one and History sit in one Actions menu rather than as
+            two buttons (owner, 2026-09-26); a row with one action keeps its
+            button.
+            {% endcomment %}
+            {% if row.actions|length > 1 %}
+            {% row_actions row.cells.0.text %}
+            {% for action in row.actions %}
+            {% if action.href %}
+            <a class="row-menu__item" role="menuitem" href="{{ action.href }}">{{ action.label }}</a>
+            {% else %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% endif %}
+            {% endfor %}
+            {% endrow_actions %}
+            {% else %}
             {% for action in row.actions %}
             {% if action.href %}
             <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
@@ -44,6 +60,7 @@ the To-Do queue reads.
             <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
             {% endif %}
             {% endfor %}
+            {% endif %}
           </td>
         </tr>
         {% empty %}

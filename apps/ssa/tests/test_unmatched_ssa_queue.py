@@ -310,6 +310,30 @@ class SuggestedMatchTest(UnmatchedSSAQueueTestBase):
         self.assertEqual(stale_check["severity"], "warning")
 
 
+class UnmatchedSSAQueueRowActionsTest(UnmatchedSSAQueueTestBase):
+    def test_a_record_offers_one_actions_menu(self):
+        """Link, Create School, Hold and Ignore are one Actions menu (owner,
+        2026-09-26). Link needs a school, so its picker stays in the row,
+        outside the menu, and the menu's Link item opens it."""
+        rec = self._unmatched("NR-MENU", name_raw="Menu Raw Primary")
+        html = self.client.get("/ssa/unmatched").content.decode()
+
+        self.assertIn('aria-label="Actions for Menu Raw Primary"', html)
+        self.assertIn(f'role="menuitem" aria-controls="ssa-link-{rec.id}"', html)
+        for label in ("Create School", "Hold"):
+            self.assertIn(
+                f'<button type="submit" class="row-menu__item" role="menuitem">{label}</button>',
+                html,
+            )
+        self.assertIn(
+            '<button type="submit" class="row-menu__item row-menu__item--danger" '
+            'role="menuitem">Ignore</button>',
+            html,
+        )
+        self.assertIn(f'<form id="ssa-link-{rec.id}"', html)
+        self.assertIn('x-show="linking"', html)
+
+
 class UnmatchedSSAQueueScopeTest(UnmatchedSSAQueueTestBase):
     def test_unmatched_queue_scope_narrowing_combines_filters(self):
         """Filters must AND together, not silently override each other."""

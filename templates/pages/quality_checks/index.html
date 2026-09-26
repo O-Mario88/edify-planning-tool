@@ -1,6 +1,6 @@
 {% extends "layouts/shell.html" %}
 
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% block title %}Quality Checks — Edify{% endblock %}
 
 {% block shell_content %}
@@ -103,14 +103,21 @@ a one-column drawer that asks what was done.
 <td class="is-end" data-record-action data-label="Actions">
 {% if row.may_act %}
 {% if f.status == "open" %}
-<form method="POST" action="/quality-checks" class="inline">
+{% comment %}An open flag has two actions, so they are one Actions menu
+rather than two buttons (owner, 2026-09-26); an acknowledged flag keeps its
+single Resolve button.{% endcomment %}
+{% firstof f.scope_name f.category "Flag" as flag_name %}{% row_actions flag_name %}
+<form role="none" method="POST" action="/quality-checks">
 {% csrf_token %}
 <input type="hidden" name="action" value="acknowledge">
 <input type="hidden" name="flag_id" value="{{ f.id }}">
-<button type="submit" class="rpl-row-link rounded-control">Acknowledge</button>
+<button type="submit" class="row-menu__item" role="menuitem">Acknowledge</button>
 </form>
-{% endif %}
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/quality-checks?resolve={{ f.id }}" hx-target="#drawer-container" hx-swap="innerHTML">Resolve</button>
+{% endrow_actions %}
+{% else %}
 <button type="button" class="rpl-row-link rounded-control" hx-get="/quality-checks?resolve={{ f.id }}" hx-target="#drawer-container" hx-swap="innerHTML">Resolve</button>
+{% endif %}
 {% endif %}
 </td>
 {% endif %}

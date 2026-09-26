@@ -20,9 +20,15 @@ or corrected before submitting, and it read to a screen reader as nothing at
 all.
 
 Params: uid (required), trigger_label, field_label, submit_label,
-placeholder, tone ("neutral" | "danger"), rows.
+placeholder, tone ("neutral" | "danger"), rows, open_panel.
+
+`open_panel` is for a form something else already revealed — an Actions menu
+item (owner, 2026-09-26: every row's actions in one menu). The panel starts
+open and the disclosure draws no trigger of its own, which would otherwise be
+a second button repeating the menu item's name.
 {% endcomment %}
-<div x-data="{ open: false }" @keydown.escape="open = false" class="reason-disclosure">
+<div x-data="{ open: {{ open_panel|yesno:'true,false' }} }"{% if not open_panel %} @keydown.escape="open = false"{% endif %} class="reason-disclosure">
+  {% if not open_panel %}
   <button type="button"
           @click="open = !open"
           :aria-expanded="open ? 'true' : 'false'"
@@ -30,6 +36,7 @@ placeholder, tone ("neutral" | "danger"), rows.
           class="reason-disclosure__trigger{% if tone == 'danger' %} reason-disclosure__trigger--danger{% endif %}">
     {{ trigger_label|default:"Return" }}
   </button>
+  {% endif %}
 
   <div x-show="open" x-cloak id="reason-panel-{{ uid }}" class="reason-disclosure__panel">
     <label for="reason-{{ uid }}" class="reason-disclosure__label">

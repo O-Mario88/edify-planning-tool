@@ -1,4 +1,4 @@
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 {% if is_htmx and can_export %}
 <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
 {% endif %}
@@ -98,10 +98,24 @@
             <td data-label="Weakest intervention"><strong class="spp-cell-title">{{ row.weakest }}</strong>{% if row.weakest_score is not None %}<small>{{ row.weakest_score|floatformat:1 }}/10</small>{% endif %}</td>
             <td data-label="Recommended action"><span class="spp-action-copy">{{ row.action }}</span></td>
             <td data-label="Partner"><span>{{ row.partner }}</span></td>
-            <td data-record-action><div class="spp-row-actions">
+            <td data-record-action>
+              {% comment %}
+              One Actions menu rather than two buttons (owner, 2026-09-26:
+              "switch to Action button with options to schedule and assign").
+              A reader who cannot hand a school to a partner has one action
+              left, which keeps its own button.
+              {% endcomment %}
+              {% if can_assign_partner %}
+              {% row_actions row.school_name %}
+                {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" class="row-menu__item" role="menuitem" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ row.school_name }}">Schedule</button>{% else %}<a class="row-menu__item" role="menuitem" href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
+                <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ row.school_name }} to a partner">Assign</button>
+              {% endrow_actions %}
+              {% else %}
+              <div class="spp-row-actions">
               {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML"><svg class="shrink-0 h-4 w-4 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule</button>{% else %}<a href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
-              {% if can_assign_partner %}<button type="button" class="is-secondary" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Partner</button>{% endif %}
-            </div></td>
+              </div>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

@@ -279,6 +279,22 @@ class SegmentedTabsTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
         self.assertIn("--edify-radius-sm: var(--radius-control);", tokens)
 
+    def test_the_selected_segment_keeps_the_segment_shape(self):
+        """Owner, 2026-09-26: "the tab design switched to pills not the
+        straight line in the middle and curves on the curved edges".
+
+        From 2026-09-20 the selected segment carried `border-radius: 9999px`,
+        lifted above the end-corner rules, so it floated a lozenge in the
+        middle of a squared rail. The fill sets no radius of its own: a
+        selected middle segment is a rectangle between its two rules, and a
+        selected end segment curves only into the rail's corner.
+        """
+        fill = self.css.split("The selected segment is filled, not raised", 1)[1]
+        fill = fill.split("\n}\n", 1)[0]
+        self.assertIn("background: #1976d2 !important;", fill)
+        self.assertNotIn("border-radius", fill)
+        self.assertNotIn("9999px !important", self.css)
+
     def test_decorative_children_do_not_change_end_segment_geometry(self):
         """Grouped navigation has hidden labels before its first real tab."""
         for selector in (

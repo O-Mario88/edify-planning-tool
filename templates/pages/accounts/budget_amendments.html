@@ -1,6 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load school_identity %}
-{% load table_pagination %}
+{% load table_pagination row_actions %}
 
 {% block title %}Budget Amendments · Edify{% endblock %}
 
@@ -46,13 +46,21 @@
             <td class="py-2.5 pr-3" data-label="Status"><span class="edify-text-caption font-bold {% if amendment.status == 'applied' %}text-emerald-600{% elif amendment.status == 'submitted' or amendment.status == 'under_review' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ amendment.get_status_display }}</span>{% if amendment.review_note %}<br><span class="text-slate-400">{{ amendment.review_note }}</span>{% endif %}</td>
             <td class="py-2.5" data-record-action>
               {% if amendment.status == 'submitted' or amendment.status == 'under_review' %}
+              {% comment %}One Actions menu rather than three buttons (owner,
+              2026-09-26). The optional review note stays in the row, outside
+              the menu; the menu sits inside the same form, so whichever
+              decision is chosen posts the note with it.{% endcomment %}
               <form method="POST" action="{% url 'frontend:budget_amendment_action' amendment.id %}" class="flex flex-col gap-1.5 min-w-[160px]">
                 {% csrf_token %}
-                <input type="text" name="note" placeholder="Review note (optional)" class="h-8 px-2 border border-slate-200 rounded-control text-[12px]">
-                <div class="flex gap-1.5">
-                  <button type="submit" name="action" value="approve" class="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-semibold rounded-control">Approve &amp; Apply</button>
-                  <button type="submit" name="action" value="return" class="h-8 px-3 bg-amber-500 hover:bg-amber-600 text-white edify-text-caption font-semibold rounded-control">Return</button>
-                  <button type="submit" name="action" value="reject" class="h-8 px-3 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold rounded-control">Reject</button>
+                {% comment %}Enter in the note must not decide anything: the form's first
+                submit is Approve & Apply, inside the closed menu.{% endcomment %}
+                <input type="text" name="note" placeholder="Review note (optional)" aria-label="Review note (optional)" @keydown.enter.prevent class="h-8 px-2 border border-slate-200 rounded-control text-[12px]">
+                <div>
+                  {% firstof amendment.activity.school.name amendment.activity.activity_type as amendment_name %}{% row_actions amendment_name %}
+                  <button type="submit" name="action" value="approve" class="row-menu__item" role="menuitem">Approve &amp; Apply</button>
+                  <button type="submit" name="action" value="return" class="row-menu__item" role="menuitem">Return</button>
+                  <button type="submit" name="action" value="reject" class="row-menu__item row-menu__item--danger" role="menuitem">Reject</button>
+                  {% endrow_actions %}
                 </div>
               </form>
               {% else %}

@@ -1,0 +1,79 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Verify & Confirm Partner work from Partner Monitoring (owner, 2026-09-26).
+The reviewer sees what the Partner submitted — every evidence file, and the
+checklist the activity requires — and records the Salesforce Activity ID that
+confirms it. With no evidence there is nothing to confirm: the drawer says so
+and offers Return instead. The POST is decided again by ia_confirm
+(apps/frontend/views/partner_review_views.py).
+{% endcomment %}
+{% block drawer_title %}{% if a %}Verify {% firstof a.school.name a.cluster.name "Partner work" %}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if a %}Submitted by {{ partner_name }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if refusal %}
+<p class="text-sm edify-text-muted" role="alert" data-review-refusal>{{ refusal }}</p>
+{% else %}
+<form hx-post="/partner-oversight/verify/submit" hx-target="#partner-verify-result" hx-swap="innerHTML"
+      hx-disabled-elt="find button[type=submit]" class="space-y-4" data-partner-verify>
+  {% csrf_token %}
+  <input type="hidden" name="activity_id" value="{{ a.id }}">
+  <div id="partner-verify-result" aria-live="polite"></div>
+
+  <dl class="space-y-1 text-[13px]">
+    <div class="flex gap-2"><dt class="text-slate-500">Activity:</dt><dd class="font-semibold text-slate-800">{{ a.get_activity_type_display }}</dd></div>
+    {% if a.actual_delivery_date or a.scheduled_date %}<div class="flex gap-2"><dt class="text-slate-500">Delivered:</dt><dd class="font-semibold text-slate-800">{% if a.actual_delivery_date %}{{ a.actual_delivery_date|date:"j M Y" }}{% else %}{{ a.scheduled_date|date:"j M Y" }}{% endif %}</dd></div>{% endif %}
+    {% if a.submitted_to_ia_at %}<div class="flex gap-2"><dt class="text-slate-500">Submitted:</dt><dd class="font-semibold text-slate-800">{{ a.submitted_to_ia_at|date:"j M Y" }}</dd></div>{% endif %}
+  </dl>
+
+  <section class="space-y-2" aria-labelledby="partner-verify-evidence">
+    <h3 id="partner-verify-evidence" class="edify-text-caption font-semibold text-slate-600">Evidence submitted</h3>
+    {% if evidence %}
+    <ul class="space-y-1.5" data-evidence-files>
+      {% for e in evidence %}
+      <li class="flex items-center justify-between gap-3 text-[13px]">
+        <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="truncate font-semibold edify-primary-text hover:underline">{% firstof e.original_name e.kind "Evidence file" %}</a>
+        <a href="/api/evidence/{{ e.id }}/file?download=1" class="edify-text-caption font-semibold edify-primary-text hover:underline">Download</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="edify-note" data-tone="warning" role="status" data-no-evidence>
+      <p class="edify-note__body">No evidence was uploaded with this submission. Return it to {{ partner_name }} with the reason.</p>
+    </div>
+    {% endif %}
+    {% if evidence_checklist %}
+    <ul class="space-y-1 edify-text-caption text-slate-600" aria-label="Evidence this activity requires">
+      {% for item in evidence_checklist %}
+      <li class="{% if item.uploaded %}text-emerald-700{% else %}text-rose-600{% endif %}">{{ item.label }} — {% if item.uploaded %}uploaded{% else %}missing{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  <div class="space-y-1">
+    <label for="partner-verify-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce Activity ID <span class="text-rose-500">*</span></label>
+    {% if a.salesforce_activity_id %}
+    <input id="partner-verify-sf" type="text" value="{{ a.salesforce_activity_id }}" readonly class="w-full">
+    {% else %}
+    <input id="partner-verify-sf" name="salesforce_id" type="text" required maxlength="64" autocomplete="off" placeholder="The activity's ID in Salesforce" class="w-full">
+    {% endif %}
+  </div>
+  <div class="space-y-1">
+    <label for="partner-verify-note" class="block edify-text-caption font-semibold text-slate-600">Note <span class="font-normal text-slate-500">(optional)</span></label>
+    <textarea id="partner-verify-note" name="verification_note" rows="2" maxlength="500" class="w-full"></textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if evidence %}
+    <button type="submit" class="btn btn-primary h-8">Verify &amp; Confirm</button>
+    {% else %}
+    <button type="button" class="btn btn-danger h-8"
+            hx-get="/partner-oversight/return?activity_id={{ a.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            hx-disabled-elt="this">Return with reason</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

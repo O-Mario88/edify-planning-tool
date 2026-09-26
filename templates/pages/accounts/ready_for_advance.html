@@ -1,6 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load school_identity table_pagination %}
-{% load frontend_filters %}
+{% load frontend_filters row_actions %}
 
 {% block title %}Advances Queue - Edify Command Center{% endblock %}
 
@@ -11,7 +11,7 @@ selectedAct: null,
 budgetSum: 0,
 disburseOpener: null,
 openDisbursement(event, id, amount) {
-this.disburseOpener = event.currentTarget;
+this.disburseOpener = event.currentTarget.closest('[data-row-actions]')?.querySelector('.row-menu__trigger') || event.currentTarget;
 this.selectedAct = id;
 this.budgetSum = amount;
 this.disburseOpen = true;
@@ -102,18 +102,12 @@ Process approved fund requests ready for disbursement. These advances are releas
 <!-- Actions -->
 <td class="px-6 py-4 text-right max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-3 max-xl:border-t max-xl:border-slate-100" data-record-action>
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Actions</span>
-<div class="flex items-center justify-end gap-2">
-<button
-@click="openDisbursement($event, '{{ act.id }}', {{ act.est_cost_cents|default:0 }})"
-type="button"
-class="h-8 px-3.5 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
->
-Process Advance
-</button>
-<a href="/accounts/activities/{{ act.id }}/" aria-label="View activity finance detail" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-</a>
-</div>
+{% comment %}One Actions menu rather than a button and an icon link (owner,
+2026-09-26). Process Advance still opens the disbursement drawer below.{% endcomment %}
+{% row_actions act.school.name|default:"Cluster-wide" %}
+<button type="button" class="row-menu__item" role="menuitem" @click="openDisbursement($event, '{{ act.id }}', {{ act.est_cost_cents|default:0 }})">Process Advance</button>
+<a class="row-menu__item" role="menuitem" href="/accounts/activities/{{ act.id }}/" aria-label="View activity finance detail">View activity finance detail</a>
+{% endrow_actions %}
 </td>
 </tr>
 {% endfor %}

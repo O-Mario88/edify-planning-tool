@@ -400,11 +400,13 @@ class PlanningToMyPlanFlowTest(TestCase):
         )
 
     @override_settings(PARTNER_SUPPORTED_SCHOOL_PLANNING_VISIBILITY_ENABLED=False)
-    def test_partner_activity_appears_in_monitoring_staff_my_plan_when_flag_off(
+    def test_partner_activity_stays_off_my_plan_even_with_the_flag_off(
         self,
     ):
-        """With the Partner-supported schools rule switched off, the previous
-        behaviour returns: the monitor sees the work via monitored_by_staff_id."""
+        """My Plan holds only the staff's own planned work for every reader
+        (owner, 2026-09-26: "leave the My Plan page with only activities
+        planned by the staff"). With the rollout flag off it used to bring
+        the monitored Partner work back; it no longer does."""
         user, profile = self._cceo_with_profile(email="monitor-off@plan.test")
         fy = get_operational_fy()
         activity = Activity.objects.create(
@@ -421,7 +423,28 @@ class PlanningToMyPlanFlowTest(TestCase):
             planned_date=timezone.localdate(),
         )
         ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
-        self.assertIn(str(activity.id), _activity_ids(ctx))
+        self.assertNotIn(str(activity.id), _activity_ids(ctx))
+        self.assertEqual(ctx["partner_monitoring"], [])
+
+    def test_a_legacy_partner_status_on_staff_delivery_stays_off_my_plan(self):
+        """A row the Partner owns by status is not the officer's work even if
+        its delivery type was left at the staff default."""
+        user, profile = self._cceo_with_profile(email="legacy-status@plan.test")
+        fy = get_operational_fy()
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=fy,
+            quarter="Q1",
+            responsible_staff_id=profile.id,
+            assigned_partner_id="PARTNER-1",
+            delivery_type="staff",
+            status="partner_scheduled",
+            scheduled_date=timezone.now(),
+            planned_date=timezone.localdate(),
+        )
+        ctx = get_frontend_context(user, {"fy": fy, "period": "fy"})
+        self.assertNotIn(str(activity.id), _activity_ids(ctx))
 
     def test_partner_delivery_attribution_logic(self):
         """The attribution logic in create() must:

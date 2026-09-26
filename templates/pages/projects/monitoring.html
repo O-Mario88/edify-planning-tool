@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 {% load kpi_metrics %}
-{% load frontend_filters table_pagination %}
+{% load frontend_filters table_pagination row_actions %}
 
 {% block title %}Project Monitoring · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260924project1">{% endblock %}
@@ -167,9 +167,10 @@ as "no change".
     The school's name opens the row's details: every piece of project work
     there, whether it happened, and its focus SSA readings beside the impact
     engine's verdict. View opens the same record in a drawer. Everyone but the
-    Project Coordinator reads; the coordinator's doors (Schedule, Partner,
-    Withdraw/Reassign, Resolve) are drawn for them alone and checked again by
-    each drawer's route and by the service behind it.
+    Project Coordinator reads; the coordinator's doors (Schedule, Assign to a
+    partner, Withdraw/Reassign, Resolve) are drawn for them alone, in the
+    row's Actions menu beside View, and checked again by each drawer's route
+    and by the service behind it.
     {% endcomment %}
     <div class="border-t edify-border">
       {% with page_key="schools_page-"|add:row.id %}
@@ -192,7 +193,7 @@ as "no change".
             {% for school in school_pager.rows %}
             {% with row_id="s-"|add:school.assignment_id %}
             <tr class="partner-plan-row" data-project-school="{{ school.school_pk }}" data-plan-stage="{{ school.plan_stage }}" data-execution="{{ school.execution }}" data-status="{{ school.status_key }}"
-                @click="if (!$event.target.closest('a, button, input, select, textarea, label')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+                @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
                 :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
               <td data-label="School ID"><span class="partner-plan-table__code">{{ school.school_code }}</span></td>
               <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
@@ -211,7 +212,34 @@ as "no change".
                 {% if school.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
               </span></td>
               <td data-label="Activity date" data-activity-date>{% if school.activity_date %}{{ school.activity_date|date:"j M Y" }}{% elif school.awaiting_date %}Awaiting scheduling{% else %}—{% endif %}</td>
-              <td data-label="Actions" class="school-plan-table__actions"><div class="school-record-row__actions">
+              <td data-label="Actions" class="school-plan-table__actions">
+                {% comment %}
+                The coordinator's doors sit in one Actions menu with View
+                rather than as a row of buttons, which wrapped on a tablet
+                (owner, 2026-09-26). A reader with View alone — everyone but
+                the coordinator, or the coordinator on a paused project with
+                no partner decision waiting — keeps it as its own button.
+                {% endcomment %}
+                {% if result.controls and school.resolve_url or result.controls and school.withdraw_url or result.controls and school.schedule_url %}
+                {% row_actions school.school_name %}
+                <button type="button" class="row-menu__item" role="menuitem"
+                        hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                        aria-label="View {{ school.school_name }}'s project work">View</button>
+                {% if school.resolve_url %}
+                <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.resolve_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Resolve the work {{ school.school_name }}'s partner returned">Resolve</button>
+                {% endif %}
+                {% if school.withdraw_url %}
+                <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="{{ school.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ school.withdraw_label }} at {{ school.school_name }}, or reassign it" data-project-withdraw>Withdraw / Reassign</button>
+                {% endif %}
+                {% if school.schedule_url %}
+                <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule project work at {{ school.school_name }}">Schedule</button>
+                <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.school_name }} to a partner">Assign</button>
+                {% else %}
+                <p class="row-menu__note" role="none">Paused — takes no new work</p>
+                {% endif %}
+                {% endrow_actions %}
+                {% else %}
+                <div class="school-record-row__actions">
                 <button type="button" class="school-record-action school-record-action--assign"
                         hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
                         aria-label="View {{ school.school_name }}'s project work">
@@ -219,32 +247,11 @@ as "no change".
                   <span>View</span>
                 </button>
                 {% if result.controls %}
-                {% if school.resolve_url %}
-                <button type="button" class="school-record-action school-record-action--schedule" hx-get="{{ school.resolve_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Resolve the work {{ school.school_name }}'s partner returned">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
-                  <span>Resolve</span>
-                </button>
-                {% endif %}
-                {% if school.withdraw_url %}
-                <button type="button" class="school-record-action school-record-action--assign" hx-get="{{ school.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ school.withdraw_label }} at {{ school.school_name }}, or reassign it" data-project-withdraw>
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14.5L4.5 10 9 5.5"/><path d="M4.5 10h9.5a5.5 5.5 0 010 11H11"/></svg>
-                  <span>Withdraw / Reassign</span>
-                </button>
-                {% endif %}
-                {% if school.schedule_url %}
-                <button type="button" class="school-record-action school-record-action--schedule" hx-get="{{ school.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule project work at {{ school.school_name }}">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  <span>Schedule</span>
-                </button>
-                <button type="button" class="school-record-action school-record-action--assign" hx-get="{{ school.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.school_name }} to a partner">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m12-11a4 4 0 10-8 0 4 4 0 008 0zm4 1v6m3-3h-6" /></svg>
-                  <span>Partner</span>
-                </button>
-                {% else %}
                 <span class="edify-text-caption edify-text-muted" title="A paused project takes no new work">Paused</span>
                 {% endif %}
+                </div>
                 {% endif %}
-              </div></td>
+              </td>
             </tr>
             <tr id="project-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
               <td aria-hidden="true"></td>

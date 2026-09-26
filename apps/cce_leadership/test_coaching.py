@@ -522,7 +522,12 @@ class FeedbackPassOnTest(CoachingFixture):
         page = self.client.get("/cce-leadership/feedback")
         self.assertContains(page, "Delivered by")
         self.assertContains(page, "Grace Trainers · partner")
-        self.assertContains(page, f'href="/activities/{staff.activity_id}"')
+        # Open and Open training are one Actions menu (owner, 2026-09-26).
+        self.assertContains(
+            page,
+            'class="row-menu__item" role="menuitem" '
+            f'href="/activities/{staff.activity_id}"',
+        )
         self.assertContains(page, "passed to the officer")
         self.assertNotContains(page, '<th scope="col">Country</th>', html=False)
         self.assertContains(page, "Regional Lead Coaching", msg_prefix="the tab rail")
@@ -531,6 +536,9 @@ class FeedbackPassOnTest(CoachingFixture):
         director = self.client.get("/cce-leadership/feedback")
         self.assertContains(director, '<th scope="col">Country</th>', html=False)
         self.assertNotContains(director, "Open training")
+        # One action left, so the row keeps its link rather than a menu.
+        self.assertContains(director, 'class="rpl-row-link rounded-control"')
+        self.assertNotContains(director, 'class="row-menu__item"')
 
     def test_acknowledged_feedback_can_still_be_passed_on_later(self):
         observation = self._shared_observation()
@@ -722,6 +730,13 @@ class CoachingPagesTest(CoachingFixture):
         self.assertContains(page, "Log coaching")
         self.assertContains(page, "data-coaching-one-to-ones")
         self.assertContains(page, "Second Officer")
+        # Each officer's Log one-to-one and History are one Actions menu
+        # rather than two buttons (owner, 2026-09-26).
+        self.assertContains(page, 'aria-label="Actions for Second Officer"')
+        self.assertContains(
+            page,
+            f'role="menuitem" href="/team/coaching?cceo={self.cceo2_sp.id}">History</a>',
+        )
         self.assertContains(page, "Recovery Plans", msg_prefix="the team strip")
         for url in (
             "/team/coaching/new",

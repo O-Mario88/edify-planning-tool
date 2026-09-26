@@ -1,11 +1,11 @@
-{% load table_pagination frontend_filters %}
+{% load table_pagination frontend_filters row_actions %}
 {% comment %}
 School self-assessments (Programme Rollout, owner 2026-09-13): each portfolio
 school in one state for the year, per officer and per cluster — a confirmed
 SSA, collected and waiting on Impact Assessment, a collection scheduled or
 handed to a partner, or nothing planned — beside the cluster × intervention
 heatmap the Programme Lead dashboard draws (latest confirmed cycle). Every
-list button opens the schools behind the row, read-only. Figures:
+list action opens the schools behind the row, read-only. Figures:
 apps.analytics.programme_rollout_service.ssa_rollout.
 {% endcomment %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-ssa-officers-title" data-rollout-ssa-officers>
@@ -40,9 +40,16 @@ apps.analytics.programme_rollout_service.ssa_rollout.
           <td class="is-num" data-label="Scheduled or with a partner">{{ row.scheduled|intcomma }}</td>
           <td class="is-num" data-label="Not yet planned">{% if row.not_planned %}<span data-tone="danger">{{ row.not_planned|intcomma }}</span>{% else %}0{% endif %}</td>
           <td class="is-end" data-record-action data-label="Actions">
-            {% if row.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}
-            {% if row.awaiting %}<a href="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Awaiting</a>{% endif %}
+            {% comment %}Not planned, Awaiting and Oversight are one Actions menu rather than a button each (owner, 2026-09-26); an officer with only Oversight keeps the link.{% endcomment %}
+            {% if row.not_planned or row.awaiting %}
+            {% row_actions row.name %}
+            {% if row.not_planned %}<a class="row-menu__item" role="menuitem" href="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML">Not planned</a>{% endif %}
+            {% if row.awaiting %}<a class="row-menu__item" role="menuitem" href="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML">Awaiting</a>{% endif %}
+            <a class="row-menu__item" role="menuitem" href="{{ row.oversight_url }}">Oversight</a>
+            {% endrow_actions %}
+            {% else %}
             <a href="{{ row.oversight_url }}" class="rpl-row-link rounded-control">Oversight</a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}

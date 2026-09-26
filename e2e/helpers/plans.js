@@ -26,8 +26,10 @@ async function ensureActionableRow(page) {
   if (await page.locator('.row-menu__trigger').count()) return;
 
   await page.goto('/core-schools');
-  const schedule = page.locator('.school-record-action[hx-get*="schedule-activity"]').first();
-  await expect(schedule).toBeVisible();
+  // An entry in the row's Actions menu (2026-09-26): read, not clicked, so
+  // the menu stays shut and the entry is only attached.
+  const schedule = page.locator('.core-school-row [role="menuitem"][hx-get*="schedule-activity"]').first();
+  await expect(schedule).toBeAttached();
   const schoolId = new URL(await schedule.getAttribute('hx-get'), page.url()).searchParams.get('school_id');
   expect(schoolId, 'a core school to schedule at').toBeTruthy();
 

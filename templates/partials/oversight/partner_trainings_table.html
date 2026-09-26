@@ -1,4 +1,4 @@
-{% load frontend_filters table_pagination %}
+{% load frontend_filters row_actions table_pagination %}
 {% comment %}
 The group trainings this Partner facilitates (owner, 2026-09-26): "All
 trainings assigned to partners should be under Partner Oversight as well,
@@ -44,31 +44,32 @@ drawer, so this page stays read-only (no write from the table itself).
           {% include "components/completion_cells.html" with row=item %}
           <td data-label="Status"><span class="partner-status-chip" data-tone="{{ item.status_tone }}"{% if item.completion_gap %} data-completion-gap{% endif %}>{{ item.status_label }}</span></td>
           <td class="text-right tabular-nums" data-label="Cost">UGX {{ item.fee|intcomma }}</td>
-          <td data-label="Action" class="school-plan-table__actions"><div class="school-record-row__actions" data-record-action>
+          <td data-label="Action" class="school-plan-table__actions">
+            {% comment %}Two or more actions are one Actions menu, as on every
+            record (owner, 2026-09-26); a row with one keeps its one button.{% endcomment %}
             {% if item.awaits_review and item.can_review %}
+            {% row_actions item.cluster_name %}
             {% if item.is_complete %}
-            <button type="button" class="school-record-action school-record-action--schedule"
+            <button type="button" class="row-menu__item" role="menuitem" data-training-confirm
                     hx-get="/pl/review-queue/{{ item.activity_id }}/drawer?from=partner-trainings"
-                    hx-target="#drawer-container" hx-swap="innerHTML">
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></svg>
-              <span>Confirm Verification</span>
-            </button>
+                    hx-target="#drawer-container" hx-swap="innerHTML">Confirm Verification</button>
             {% endif %}
-            <button type="button" class="school-record-action school-record-action--assign"
+            <button type="button" class="row-menu__item" role="menuitem" data-training-return
                     hx-get="/pl/review-queue/{{ item.activity_id }}/return-drawer"
-                    hx-target="#drawer-container" hx-swap="innerHTML">
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
-              <span>Return</span>
-            </button>
+                    hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
+            <a class="row-menu__item" role="menuitem" href="/activities/{{ item.activity_id }}">View activity</a>
+            {% endrow_actions %}
             {% elif item.with_ia %}
             <span class="edify-text-caption edify-text-muted">With Impact Assessment</span>
             {% else %}
+            <div class="school-record-row__actions" data-record-action>
             <a class="school-record-action school-record-action--assign" href="/activities/{{ item.activity_id }}">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
               <span>View activity</span>
             </a>
+            </div>
             {% endif %}
-          </div></td>
+          </td>
         </tr>
       {% empty %}<tr><td colspan="10" class="partner-plan-table__empty">No trainings facilitated by this Partner for the selected team.</td></tr>{% endfor %}</tbody>
     </table>

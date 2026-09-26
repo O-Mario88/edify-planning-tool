@@ -163,6 +163,27 @@ class WorkspaceTests(SurfaceFixture):
         self.assertEqual(row["counterparty"], self.pl.name)
         self.assertEqual(row["counterparty_label"], "Sent by")
 
+    def test_two_row_actions_are_one_menu_and_one_stays_a_link(self):
+        """Open and Acknowledge are one Actions menu for the recipient (owner,
+        2026-09-26); the sender's open row has Open alone and keeps its link."""
+        school = self._school("SF-W4")
+        action = self._send(school)
+        self.client.force_login(self.cceo)
+        mine = self.client.get("/actions/mine")
+        self.assertEqual(mine.status_code, 200)
+        self.assertContains(mine, f'aria-label="Actions for {school.name}"')
+        self.assertRegex(
+            mine.content.decode(),
+            rf'role="menuitem"\s+hx-post="/actions/{action.id}/acknowledge',
+        )
+        self.client.force_login(self.pl)
+        sent = self.client.get("/actions/sent")
+        self.assertEqual(sent.status_code, 200)
+        self.assertNotContains(sent, f'aria-label="Actions for {school.name}"')
+        self.assertContains(
+            sent, 'class="urgent-action urgent-action--primary no-underline"'
+        )
+
     def test_neither_sees_the_others_rows(self):
         other = _user("sf-other@t.org", EdifyRole.CCEO.value)
         self._send(self._school("SF-W3"))

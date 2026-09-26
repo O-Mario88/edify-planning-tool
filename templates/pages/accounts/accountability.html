@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters table_pagination %}
+{% load frontend_filters table_pagination row_actions %}
 
 {% block title %}Accountability Tracking - Edify Command Center{% endblock %}
 
@@ -99,18 +99,12 @@ NetSuite ID Required
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right" data-record-action>
-<div class="flex items-center justify-end gap-2">
-<button
-@click="netsuiteOpen = true; selectedAct = '{{ rec.activity.id }}'; budgetSum = {{ rec.actual_spend }}"
-type="button"
-class="h-8 px-3.5 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
->
-Enter NetSuite ID
-</button>
-<a href="/accounts/activities/{{ rec.activity.id }}/" aria-label="View activity finance detail" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-</a>
-</div>
+{% comment %}One Actions menu rather than a button and an icon link (owner,
+2026-09-26). Enter NetSuite ID still opens the drawer below.{% endcomment %}
+{% row_actions rec.activity.id|slice:":8" %}
+<button type="button" class="row-menu__item" role="menuitem" @click="netsuiteOpen = true; selectedAct = '{{ rec.activity.id }}'; budgetSum = {{ rec.actual_spend }}">Enter NetSuite ID</button>
+<a class="row-menu__item" role="menuitem" href="/accounts/activities/{{ rec.activity.id }}/" aria-label="View activity finance detail">View activity finance detail</a>
+{% endrow_actions %}
 </td>
 </tr>
 {% endfor %}

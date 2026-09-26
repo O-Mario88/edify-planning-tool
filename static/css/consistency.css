@@ -2882,6 +2882,23 @@ main :is(.apexcharts-datalabel-value) {
   word-break: normal !important;
 }
 
+/* A panel opened from a row is not row text. Every row's actions became one
+   Actions menu (owner, 2026-09-26), and the menu, the reasons under its
+   greyed items and the forms some items open (a Return reason, a Decline
+   note) sit inside the row's cell. Held to one line by the rule above, a
+   textarea's label, field and button ran side by side off the panel. Same
+   weight as that rule and written after it, so it wins on order. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th)
+  :is(.row-menu__list, .reason-disclosure__panel),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th)
+  :is(.row-menu__list, .reason-disclosure__panel)
+  :not(.sr-only, .edify-visually-hidden) {
+  text-wrap: wrap !important;
+  white-space: normal !important;
+}
+
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   .edify-record-table [data-record-title] > :first-child {
   max-inline-size: none !important;

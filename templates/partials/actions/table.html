@@ -1,4 +1,4 @@
-{% load school_identity table_pagination %}
+{% load school_identity table_pagination row_actions %}
 {% comment %}
 The action board. Carries `edify-record-table` so it keeps the shared
 horizontally scrollable table behavior
@@ -104,13 +104,22 @@ the transition took.
             </span>
           </td>
           <td class="px-3 py-2.5 align-top text-right" data-record-action>
+            {% comment %}
+            An open action with a second step (Escalate for the sender,
+            Acknowledge for the recipient) is one Actions menu rather than
+            two buttons (owner, 2026-09-26). A row with only Open, or a
+            closed row's View school, keeps its single link.
+            {% endcomment %}
             <div class="inline-flex items-center justify-end gap-1.5 flex-wrap">
               {% if r.is_active %}
-                <a href="{{ r.route }}" class="urgent-action urgent-action--primary no-underline"
+                {% if perspective == "recipient" or perspective == "sender" and r.can_escalate %}
+                {% row_actions r.school %}
+                <a class="row-menu__item" role="menuitem" href="{{ r.route }}"
                    aria-label="Open the work for {{ r.school }}">Open</a>
                 {% if perspective == "sender" and r.can_escalate %}
                 <button type="button"
-                        class="urgent-action"
+                        class="row-menu__item"
+                        role="menuitem"
                         hx-post="/actions/{{ r.id }}/escalate?tab={{ tab }}"
                         hx-target="#actions-workspace"
                         hx-swap="innerHTML"
@@ -118,11 +127,17 @@ the transition took.
                 {% endif %}
                 {% if perspective == "recipient" %}
                 <button type="button"
-                        class="urgent-action"
+                        class="row-menu__item"
+                        role="menuitem"
                         hx-post="/actions/{{ r.id }}/acknowledge?tab={{ tab }}"
                         hx-target="#actions-workspace"
                         hx-swap="innerHTML"
                         aria-label="Acknowledge {{ r.school }}">Acknowledge</button>
+                {% endif %}
+                {% endrow_actions %}
+                {% else %}
+                <a href="{{ r.route }}" class="urgent-action urgent-action--primary no-underline"
+                   aria-label="Open the work for {{ r.school }}">Open</a>
                 {% endif %}
               {% else %}
                 <a href="/schools/{{ r.school_pk }}" class="urgent-action no-underline"

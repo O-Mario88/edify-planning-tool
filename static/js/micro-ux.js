@@ -1850,7 +1850,7 @@
     var node = select;
     var parent = node.parentElement;
     while (parent && !parent.matches(FILTER_CONTAINERS)) {
-      if (parent.querySelectorAll('select, input:not([type="hidden"]), button, a').length > 1) break;
+      if (parent.querySelectorAll('select, input:not([type="hidden"]):not(.edify-datepick__native), button, a').length > 1) break;
       node = parent;
       parent = node.parentElement;
     }
@@ -1884,7 +1884,9 @@
   var wideFilterRows = window.matchMedia('(min-width: 80rem)');
   var phoneFilterRows = window.matchMedia('(max-width: 47.999rem)');
   var filterMoreId = 0;
-  var FILTER_CONTROL = 'select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])';
+  /* A date field the Edify calendar stands in for (date-picker.js) is kept in
+     the page but is not a control on it: its visible field is. */
+  var FILTER_CONTROL = 'select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not(.edify-datepick__native)';
 
   function filterRowOf(bar) {
     var counts = new Map(), best = null;

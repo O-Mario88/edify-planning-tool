@@ -19,7 +19,7 @@ A route of one school is a real day and had no door here at all: the drawer
 refused it and the planner went away without planning. So five is the ceiling
 now, and one is enough.
 
-Three rules, and all three live here rather than in the drawer:
+Four rules, and all four live here rather than in the drawer:
 
 * **A cluster, and only a cluster.** The schools are resolved from live
   cluster membership, not from whatever ids the browser posted. The Planning
@@ -34,6 +34,14 @@ Three rules, and all three live here rather than in the drawer:
   school on the route. In-school Training is refused by name, because it
   pairs a governed course with a companion visit and the course is a
   per-school choice.
+* **One SSA intervention for the whole day.** Owner, 2026-09-26: "for group
+  scheduling, SSA intervention should be the same. it should be chosen from
+  group visit scheduling drawer." The planner names it once and every school
+  on the route is planned against it. Left open, each school's own weakest
+  score filled the gap, so one day of follow-ups reported as many different
+  interventions as it had schools. An SSA Support day collects the
+  assessment and names none at any school, exactly as the per-school drawer
+  shows it (Data Gathering).
 
 Nothing here writes an Activity itself: every school goes through
 ``schedule_school_visit`` — the same canonical service the per-school drawer
@@ -62,11 +70,17 @@ from apps.partners.purposes import (
 __all__ = [
     "CLUSTER_BULK_MAXIMUM_SCHOOLS",
     "CLUSTER_BULK_VISIT_PURPOSES",
+    "DAY_COLLECTS_THE_SSA",
     "BulkMember",
     "BulkSelection",
     "bulk_schedule_cluster_visits",
+    "day_focus_options",
     "schedulable_members",
 ]
+
+#: The bulk purpose whose day collects the SSA rather than moving one of its
+#: interventions — the per-school drawer's "Data Gathering".
+DAY_COLLECTS_THE_SSA = "ssa_support"
 
 
 @dataclass
@@ -214,6 +228,54 @@ def schedulable_members(cluster, principal) -> BulkSelection:
     return BulkSelection(cluster_id=cluster.id, cluster_name=cluster.name, members=rows)
 
 
+def day_focus_options(selection: BulkSelection) -> tuple[list[tuple], str]:
+    """The eight interventions to choose the day's one from, and a suggestion.
+
+    Each option carries the verified need across the schools that can be
+    ticked — the ranking the cluster drawer's own intervention picker shows —
+    and the weakest of them is suggested, as the per-school drawer suggests a
+    school's weakest confirmed score. It is advice: the planner may name any
+    of the eight. Nothing is suggested where no open school has a current
+    verified SSA.
+    """
+    from apps.core.enums import SsaIntervention
+    from apps.ssa.plan_alignment import cluster_need
+
+    open_ids = [member.id for member in selection.selectable]
+    need = cluster_need(selection.cluster_id, open_ids) if open_ids else None
+    need_by_code = {row["intervention"]: row for row in (need.rows if need else [])}
+    options = [
+        (code, label, need_by_code.get(code)) for code, label in SsaIntervention.choices
+    ]
+    suggested = need.priorities[0] if need and need.priorities else ""
+    return options, suggested
+
+
+def _day_focus(purpose: str, raw) -> str | None:
+    """The one SSA intervention every school on the day is planned against.
+
+    Asked once for the day and required (owner, 2026-09-26). Left open, it
+    was not left alike: ``activities.services.create`` fills a follow-up's
+    target from each school's own weakest score, so a day of five follow-ups
+    reported five targets nobody chose. An SSA Support day names none — it
+    collects the assessment the interventions are scored by — so anything
+    posted for it is dropped rather than refused.
+    """
+    from apps.core.enums import SsaIntervention
+
+    if purpose == DAY_COLLECTS_THE_SSA:
+        return None
+    value = str(raw or "").strip()
+    if not value:
+        raise BadRequest(
+            "Choose the SSA intervention for this day. Every school on it is "
+            "planned against the same one."
+        )
+    if value not in SsaIntervention.values:
+        raise BadRequest("Choose a valid canonical SSA intervention.")
+    return value
+
+
 def _parse_date(raw) -> date:
     if not raw:
         raise BadRequest("Pick the day these visits are planned for.")
@@ -244,7 +306,8 @@ def _assert_follow_up_is_plannable_in_bulk(purpose: str, fy: str) -> None:
 
 @transaction.atomic
 def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict:
-    """Plan one purpose, on one day, at every school the planner ticked.
+    """Plan one purpose and one intervention, on one day, at every school
+    the planner ticked.
 
     Returns ``{"created": [activity ids], "schools": n, "purpose": ...}``.
     Raises ``BadRequest`` with the sentence to show the planner; nothing is
@@ -255,6 +318,7 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
 
     cluster = _cluster_for(cluster_id, principal)
     purpose = normalise_cluster_bulk_purpose(data.get("purposeOfVisit"))
+    focus = _day_focus(purpose, data.get("focusIntervention"))
     when = _parse_date(data.get("scheduledDate"))
     fy = get_operational_fy(when)
     _assert_follow_up_is_plannable_in_bulk(purpose, fy)
@@ -326,6 +390,9 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
                 f"for {when.isoformat()}."
             ),
         }
+        if focus:
+            payload["focusIntervention"] = focus
+            payload["purposeIntervention"] = focus
         result = schedule_school_visit(payload, principal)
         created.append(result["id"])
 
@@ -334,6 +401,7 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
         "schools": len(created),
         "purpose": purpose,
         "purposeLabel": label,
+        "focusIntervention": focus,
         "scheduledDate": when.isoformat(),
         "clusterId": cluster.id,
         "clusterName": cluster.name,

@@ -1853,15 +1853,18 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
     2026-09-21), and takes at most five schools for a day — five was first
     read as a floor, and a floor left a planner with four schools no door at
     all (owner, 2026-09-22). It offers only the four purposes that are the
-    same errand at every school on the route. Every rule lives in
-    apps.planning.cluster_bulk_scheduling; this view opens the drawer and
-    hands the selection to it.
+    same errand at every school on the route, and asks once for the SSA
+    intervention every one of them is planned against (owner, 2026-09-26).
+    Every rule lives in apps.planning.cluster_bulk_scheduling; this view
+    opens the drawer and hands the selection to it.
     """
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
     from apps.planning.cluster_bulk_scheduling import (
         CLUSTER_BULK_MAXIMUM_SCHOOLS,
         CLUSTER_BULK_VISIT_PURPOSES,
+        DAY_COLLECTS_THE_SSA,
         bulk_schedule_cluster_visits,
+        day_focus_options,
         schedulable_members,
     )
     from apps.frontend.views.planning_views import _saved_without_leaving
@@ -1875,6 +1878,7 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
     selection = schedulable_members(cluster, request.user)
 
     def drawer(error=None, posted=None, status=200):
+        focus_options, suggested_focus = day_focus_options(selection)
         return render(
             request,
             "partials/clusters/bulk_schedule_drawer.html",
@@ -1884,6 +1888,14 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
                 "members": [member.as_dict() for member in selection.members],
                 "maximum_schools": CLUSTER_BULK_MAXIMUM_SCHOOLS,
                 "bulk_visit_purposes": CLUSTER_BULK_VISIT_PURPOSES,
+                "day_focus_options": focus_options,
+                "suggested_focus": suggested_focus,
+                # A re-rendered drawer keeps the planner's own choice, blank
+                # included; only a fresh one carries the suggestion.
+                "selected_focus": (
+                    posted["focusIntervention"] if posted else suggested_focus
+                ),
+                "collects_the_ssa": DAY_COLLECTS_THE_SSA,
                 "validation_error": error,
                 "posted": posted or {},
                 "drawer_size": "md",
@@ -1898,6 +1910,7 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
         "purposeOfVisit": request.POST.get("purpose_of_visit", "").strip(),
         "scheduledDate": request.POST.get("scheduled_date", "").strip(),
         "activityPurposeText": request.POST.get("activity_goal", "").strip(),
+        "focusIntervention": request.POST.get("focus_intervention", "").strip(),
         "schoolIds": request.POST.getlist("school_ids"),
     }
     try:
@@ -1908,8 +1921,10 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
         return error_fragment(exc, action="Could not schedule the day", status=400)
     from apps.frontend.views.planning_views import _my_plan_url_for_scheduled_date
 
+    focus = result["focusIntervention"]
+    target = f" for {SsaIntervention(focus).label}" if focus else ""
     return _saved_without_leaving(
-        f"{result['purposeLabel']} scheduled at {result['schools']} "
+        f"{result['purposeLabel']}{target} scheduled at {result['schools']} "
         f"{result['clusterName']} schools for {result['scheduledDate']}.",
         plan_url=_my_plan_url_for_scheduled_date(result["scheduledDate"]),
         plan_link_label="Open My Plan",

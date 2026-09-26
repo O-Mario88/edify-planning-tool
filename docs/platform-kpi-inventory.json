@@ -15692,7 +15692,7 @@
   {
    "audit_id": "KPI-SURFACE-129",
    "template": "templates/partials/ia/outcomes.html",
-   "line": 142,
+   "line": 157,
    "source_pattern": "shared-component",
    "items_expression": "progress.tiles",
    "presentation": "context",
@@ -15714,7 +15714,7 @@
   {
    "audit_id": "KPI-SURFACE-130",
    "template": "templates/partials/ia/outcomes.html",
-   "line": 237,
+   "line": 252,
    "source_pattern": "shared-component",
    "items_expression": "ia_outcomes.cohort_tiles",
    "presentation": "context",
