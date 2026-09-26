@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **829**
-- All registered routes: **1301**
+- Routed product surfaces: **833**
+- All registered routes: **1305**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **492**
+- Shared component templates: **494**
 - Full pages: **260**
 - Partials and drawers: **274**
-- Permission-gated surfaces: **814**
-- Referenced by automated tests: **722**
+- Permission-gated surfaces: **818**
+- Referenced by automated tests: **726**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -607,7 +607,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-43F04DB2BD | /partner-oversight/export | Partner Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B9AC68C949 | /partner-oversight/resolve | Partner Return Resolve Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-041F0272FC | /partner-oversight/resolve/submit | Partner Return Resolve Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-9BAA4C5BFA | /partner-oversight/return | Partner Work Return Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7B8A670762 | /partner-oversight/return/submit | Partner Work Return Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7D18F54818 | /partner-oversight/send | Partner Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-D8AD53178E | /partner-oversight/verify | Partner Verify Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-ACAF02E8F1 | /partner-oversight/verify/submit | Partner Verify Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2E9357EB4A | /partner-oversight/withdraw | Partner Withdrawal Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F82160D685 | /partner-oversight/withdraw/review | Partner Withdrawal Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1F7D5AC355 | /partner-oversight/withdraw/submit | Partner Withdrawal Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

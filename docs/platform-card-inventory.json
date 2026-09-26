@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 673,
+  "titled_cards": 672,
   "templates": 245,
-  "distinct_titles": 642,
+  "distinct_titles": 641,
   "with_card_key": 13,
-  "untitled_surfaces": 588,
-  "untitled_chrome": 152,
+  "untitled_surfaces": 587,
+  "untitled_chrome": 151,
   "untitled_nested": 232,
   "untitled_headless": 204,
   "templates_with_same_title_twice": 0,
@@ -267,7 +267,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 117,
+   "line": 121,
    "title": "Awaiting 50% MOU Advance",
    "heading_level": 2,
    "has_card_key": false,
@@ -281,7 +281,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 180,
+   "line": 184,
    "title": "Verified \u2014 Awaiting Clearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -454,21 +454,21 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 316,
+   "line": 354,
    "title": "Delete ?",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface max-w-md w-full p-6 shadow-lg relative border border-rose-200 space-y-5",
    "branch_path": [
     [
-     25,
+     29,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 354,
+   "line": 392,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
@@ -920,7 +920,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 337,
+   "line": 345,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 372,
+   "line": 380,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 395,
+   "line": 403,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -1938,7 +1938,7 @@
   },
   {
    "template": "templates/pages/ia/verification_samples.html",
-   "line": 37,
+   "line": 44,
    "title": "Samples",
    "heading_level": 2,
    "has_card_key": false,
@@ -2249,7 +2249,7 @@
   },
   {
    "template": "templates/pages/my_plan/pl_queue.html",
-   "line": 28,
+   "line": 30,
    "title": "Waiting on you",
    "heading_level": 2,
    "has_card_key": false,
@@ -2376,7 +2376,7 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 118,
+   "line": 103,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
@@ -5804,7 +5804,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/supervisor_queue.html",
-   "line": 12,
+   "line": 13,
    "title": "Waiting for your approval",
    "heading_level": 2,
    "has_card_key": false,
@@ -5985,7 +5985,7 @@
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 143,
+   "line": 158,
    "title": "By outcome area and SSA domain",
    "heading_level": 3,
    "has_card_key": false,
@@ -5996,14 +5996,14 @@
      1
     ],
     [
-     17,
+     19,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 180,
+   "line": 195,
    "title": "Student learning, discipleship and EdTech",
    "heading_level": 2,
    "has_card_key": false,
@@ -6014,14 +6014,14 @@
      1
     ],
     [
-     17,
+     19,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 248,
+   "line": 263,
    "title": "Draft impact report",
    "heading_level": 2,
    "has_card_key": false,
@@ -6032,14 +6032,14 @@
      1
     ],
     [
-     40,
+     42,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 263,
+   "line": 278,
    "title": "Project cohorts by SSA domain",
    "heading_level": 3,
    "has_card_key": false,
@@ -6050,14 +6050,14 @@
      1
     ],
     [
-     40,
+     42,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 286,
+   "line": 301,
    "title": "Project enrolments and next actions",
    "heading_level": 3,
    "has_card_key": false,
@@ -6068,7 +6068,7 @@
      1
     ],
     [
-     40,
+     42,
      1
     ]
    ]
@@ -6312,28 +6312,14 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 123,
-   "title": "Partner Planned \u2014 Monitoring",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card overflow-hidden edify-primary-border",
-   "branch_path": [
-    [
-     6,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/my_plan/attention.html",
-   "line": 194,
+   "line": 128,
    "title": "Finance / Accountability Pending",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     11,
+     6,
      0
     ]
    ]
@@ -6729,7 +6715,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 133,
+   "line": 140,
    "title": "Spiritual programmes",
    "heading_level": 2,
    "has_card_key": false,
@@ -6738,7 +6724,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 180,
+   "line": 187,
    "title": "Delivered by officers and partners",
    "heading_level": 2,
    "has_card_key": false,
@@ -6747,7 +6733,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 223,
+   "line": 230,
    "title": "Biblical integration ratings",
    "heading_level": 2,
    "has_card_key": false,
@@ -6765,7 +6751,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/ssa.html",
-   "line": 73,
+   "line": 80,
    "title": "SSA rollout by cluster",
    "heading_level": 2,
    "has_card_key": false,
@@ -6774,7 +6760,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/ssa.html",
-   "line": 120,
+   "line": 127,
    "title": "SSA intervention heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -6810,7 +6796,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/trainings.html",
-   "line": 162,
+   "line": 169,
    "title": "Trainings in the next days",
    "heading_level": 2,
    "has_card_key": false,
@@ -6819,7 +6805,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/trainings.html",
-   "line": 209,
+   "line": 216,
    "title": "Regional Lead observations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6828,7 +6814,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/trainings.html",
-   "line": 253,
+   "line": 260,
    "title": "Strengthen or replace recommendations",
    "heading_level": 2,
    "has_card_key": false,
@@ -7078,7 +7064,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 124,
+   "line": 138,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7092,7 +7078,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 133,
+   "line": 147,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7106,7 +7092,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 150,
+   "line": 164,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7120,7 +7106,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 156,
+   "line": 170,
    "title": "Project Delivery Readiness",
    "heading_level": 2,
    "has_card_key": false,
