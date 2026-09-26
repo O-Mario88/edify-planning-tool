@@ -59,15 +59,13 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await expect(surface).toHaveCount(0);
   });
 
-  test('Clusters page Actions › Schedule Group Training opens planner drawer and stays open', async ({ page }) => {
+  test('Top-level Schedule Group Training button opens planner drawer and stays open', async ({ page }) => {
     test.setTimeout(60000);
     await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
     await page.goto('/clusters');
     await page.waitForLoadState('networkidle');
 
-    // An entry in the page header's one Actions menu.
-    await page.locator('main .edify-page-header .row-menu__trigger').click();
-    const groupTrainingBtn = page.getByRole('menuitem', { name: 'Schedule Group Training', exact: true });
+    const groupTrainingBtn = page.getByRole('button', { name: 'Schedule Group Training', exact: true });
     await expect(groupTrainingBtn).toBeVisible();
     await groupTrainingBtn.click();
 
@@ -86,15 +84,13 @@ test.describe('Cluster Schedule Drawers stay open and contain cost preview', () 
     await expect(surface).toHaveCount(0);
   });
 
-  test('Clusters page Actions › Schedule Cluster Meeting opens planner drawer and stays open', async ({ page }) => {
+  test('Top-level Schedule Cluster Meeting button opens planner drawer and stays open', async ({ page }) => {
     test.setTimeout(60000);
     await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
     await page.goto('/clusters');
     await page.waitForLoadState('networkidle');
 
-    // An entry in the page header's one Actions menu.
-    await page.locator('main .edify-page-header .row-menu__trigger').click();
-    const meetingBtn = page.getByRole('menuitem', { name: 'Schedule Cluster Meeting', exact: true });
+    const meetingBtn = page.getByRole('button', { name: 'Schedule Cluster Meeting', exact: true });
     await expect(meetingBtn).toBeVisible();
     await meetingBtn.click();
 

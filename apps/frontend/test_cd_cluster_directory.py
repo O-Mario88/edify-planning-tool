@@ -78,24 +78,33 @@ class CountryDirectorClusterDirectoryTest(TestCase):
         self.assertEqual(cceo_response.status_code, 200)
         self.assertTemplateUsed(cceo_response, "partials/clusters/cluster_list.html")
 
-    def test_the_page_header_is_one_actions_menu(self):
-        """Create Cluster, Schedule Group Training, Schedule Cluster Meeting
-        and Export were four header buttons (owner, 2026-09-26: "put the
-        Clusters page header buttons in one Actions menu too"). Each role gets
-        the items its drawers would open for."""
+    def test_the_page_header_buttons_are_grouped(self):
+        """Separate buttons, organised (owner, 2026-09-26: "keep them up as
+        separate buttons but organize them in a professional way"): one
+        primary action, outline buttons for the rest, and a hairline before
+        Export. Each role gets the buttons its drawers would open for."""
 
-        def header_items(user):
+        def header(user):
             self.client.force_login(user)
             body = self.client.get("/clusters").content.decode()
-            header = body.split('class="edify-page-header__controls"', 1)[1].split(
+            return body.split('class="edify-page-header__controls"', 1)[1].split(
                 "<!-- Messages notifications wrapper -->", 1
             )[0]
-            self.assertEqual(header.count("data-row-actions"), 1)
-            self.assertNotIn("edify-action-button", header)
-            return re.findall(r'role="menuitem"[^>]*>([^<]+)<', header)
 
+        def labels(markup):
+            return [
+                re.sub(r"<[^>]+>", "", label).strip()
+                for label in re.findall(
+                    r'class="edify-action-button [^"]*"[^>]*>(.*?)</(?:a|button)>',
+                    markup,
+                    re.S,
+                )
+            ]
+
+        cceo = header(self.cceo)
+        self.assertNotIn("data-row-actions", cceo)
         self.assertEqual(
-            header_items(self.cceo),
+            labels(cceo),
             [
                 "Create Cluster",
                 "Schedule Group Training",
@@ -103,7 +112,13 @@ class CountryDirectorClusterDirectoryTest(TestCase):
                 "Export",
             ],
         )
-        self.assertEqual(header_items(self.cd), ["Create Cluster", "Export"])
+        self.assertEqual(cceo.count('class="edify-action-button primary'), 1)
+        self.assertLess(
+            cceo.index("Schedule Cluster Meeting"),
+            cceo.index("edify-page-header__sep"),
+        )
+        self.assertLess(cceo.index("edify-page-header__sep"), cceo.index("Export"))
+        self.assertEqual(labels(header(self.cd)), ["Create Cluster", "Export"])
 
     def test_cd_filter_refresh_returns_the_same_cards(self):
         self.client.force_login(self.cd)
