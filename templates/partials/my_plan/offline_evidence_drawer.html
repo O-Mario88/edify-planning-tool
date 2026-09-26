@@ -1,0 +1,119 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Upload evidence{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% comment %}
+The upload drawer without signal (owner, 2026-09-26: "make the upload drawer
+open offline too").
+
+The service worker keeps this one copy, precached at install beside the
+offline page, and serves it for /activities/<id>/evidence when the network
+cannot answer, with __EDIFY_ACTIVITY_ID__ replaced by the id the person
+tapped (sw.js checks the id's shape first). It is made for nobody: no user,
+no activity, no CSRF token — the same rule as the offline page, because it
+is shown to whoever holds the phone. So it cannot know the activity's form
+or whether it is partner work, and asks only for what it can:
+
+* the form's pages, posted as `evidence_file` with no kind, which the server
+  files as the form the activity still needs (resolve_evidence_kind);
+* the Salesforce ID, shown only when the signed-in person is staff
+  (data-edify-field-role on <body>) and not required here: the server
+  applies the rules when the saved request is sent, and ignores it on
+  partner work.
+
+Submit goes to the field outbox (field-outbox.js), which sends it, pages and
+all, once the phone is back online; a refusal is kept there with its reason.
+{% endcomment %}
+<div class="space-y-4 text-[12px] font-semibold text-slate-600">
+  <div id="evidence-errors" aria-live="polite"></div>
+
+  <p class="edify-note edify-text-caption font-medium" data-tone="warning">
+    No signal: this upload is saved on your phone and sent when you are back online.
+  </p>
+
+  <form id="evidence-form" hx-post="/activities/__EDIFY_ACTIVITY_ID__/evidence/action" hx-encoding="multipart/form-data"
+        hx-request='{"timeout":120000}'
+        hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
+        x-data="{ preparing: 0, staff: document.body.dataset.edifyFieldRole === 'staff' }"
+        @evidence-pages-busy="preparing = Math.max(0, preparing + ($event.detail ? 1 : -1))"
+        class="space-y-4">
+
+    <section x-data="{% include 'components/evidence_pages_state.html' %}"
+             aria-labelledby="ev-label-offline"
+             class="space-y-3 rounded-control border border-slate-200 p-3">
+      <div class="space-y-1">
+        <p id="ev-label-offline" class="text-[13px] font-semibold text-slate-800">Visit form or attendance form <span class="text-rose-500">*</span></p>
+        <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
+      </div>
+
+      <!-- The camera, the file picker, and the input the form posts -->
+      <input type="file" x-ref="cameraInput" accept="image/*" capture="environment" class="hidden"
+             @change="add($event)">
+      <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" multiple class="hidden"
+             @change="add($event)">
+      <input type="file" name="evidence_file" x-ref="mainInput" multiple
+             accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
+             class="hidden" @change="add($event)">
+
+      <div class="grid grid-cols-2 gap-2" data-keep-columns>
+        <button type="button" @click="$refs.cameraInput.click()" :disabled="busy"
+                class="btn btn-secondary min-h-11 w-full gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+          <span x-text="pages.length ? 'Photo next page' : 'Take photo'">Take photo</span>
+        </button>
+        <button type="button" @click="$refs.storageInput.click()" :disabled="busy"
+                class="btn btn-secondary min-h-11 w-full gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span x-text="pages.length ? 'Add files' : 'Choose files'">Choose files</span>
+        </button>
+      </div>
+
+      <div x-show="pages.length" x-cloak class="space-y-1">
+        <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="Pages to submit">
+          <template x-for="(p, i) in pages" :key="p.id">
+            <li class="flex items-center justify-between gap-2 px-3 py-2">
+              <div class="flex items-center gap-2 min-w-0 text-emerald-700">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                <div class="min-w-0">
+                  <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
+                  <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
+                </div>
+              </div>
+              <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
+                      class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
+                Remove
+              </button>
+            </li>
+          </template>
+        </ol>
+        <p class="edify-text-caption text-slate-500" x-text="pages.length > 1 ? pages.length + ' pages will be saved as one PDF.' : '1 page will be saved.'"></p>
+      </div>
+      <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
+      <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
+    </section>
+
+    <div x-show="staff" x-cloak class="space-y-1">
+      <label for="ev-sf-offline" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID</label>
+      <input id="ev-sf-offline" name="salesforce_id" type="text" maxlength="30" :disabled="!staff"
+             placeholder="The activity's Salesforce entry ID"
+             aria-describedby="ev-sf-offline-help"
+             class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <p id="ev-sf-offline-help" class="edify-text-caption text-slate-500">Needed with your form unless it is already entered.</p>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+      <button type="submit" class="btn btn-primary h-8" :disabled="preparing > 0">Submit</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

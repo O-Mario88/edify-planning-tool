@@ -86,7 +86,10 @@ class ShellAssetBudgetTest(SimpleTestCase):
     RENDER_BLOCKING_STYLESHEETS = 17
     CSS_GZIP_KB = 200
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
-    JS_GZIP_KB = 115
+    #: +0.1 KB (2026-09-26): platform-status.js lets the upload drawer's
+    #: request through offline, so the service worker can open it without
+    #: signal (89 bytes; the shell stood at 114.99 KB).
+    JS_GZIP_KB = 115.1
     INLINE_SCRIPT_KB = 40
 
     @classmethod

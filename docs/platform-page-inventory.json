@@ -300,7 +300,8 @@
       "bytes": 4447,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/activities/<str:activity_id>/evidence"
+        "/activities/<str:activity_id>/evidence",
+        "/offline/evidence-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -8343,6 +8344,35 @@
       "template": "partials/my_plan/kpi_cards.html",
       "variants": [
         "executive"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 7173,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/offline/evidence-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Offline Evidence Drawer",
+      "purpose": "Reusable offline evidence drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/offline_evidence_drawer.html",
+      "variants": [
+        "warning"
       ]
     },
     {
@@ -61841,6 +61871,85 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.pwa_views",
+      "backend_view": "apps.frontend.views.pwa_views.offline_evidence_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/offline_evidence_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /activities/__EDIFY_ACTIVITY_ID__/evidence/action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8FC9361881",
+      "page_title": "Offline Evidence Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "0\">Submit",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The upload drawer without signal (owner, 2026-09-26: \"make the upload drawer open offline too\"): precached by the worker beside the offline page and served for /activities/<id>/evidence when the network fails, with the tapped activity's id put in.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/offline/evidence-drawer",
+      "route_name": "offline_evidence_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/activities/__EDIFY_ACTIVITY_ID__/evidence/action"
+      ],
+      "services_and_models": [],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/offline_evidence_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.hr_views",
@@ -102638,6 +102747,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.pwa_views.offline_evidence_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/offline/evidence-drawer",
+      "route_name": "offline_evidence_drawer",
+      "templates": [
+        "partials/my_plan/offline_evidence_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.hr_views.onboarding_view",
       "kind": "page",
       "methods": [
@@ -106490,30 +106613,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 537,
+    "accessibility_contract_pass": 538,
     "activity_states": 24,
-    "all_routes": 1302,
+    "all_routes": 1303,
     "api_routes": 360,
-    "component_templates": 503,
+    "component_templates": 504,
     "full_pages": 260,
-    "mobile_contract_pass": 537,
+    "mobile_contract_pass": 538,
     "nonvisual_actions": 268,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 542,
+      "interaction-fragment": 543,
       "operational-queue": 151,
       "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 274,
+    "partials_and_drawers": 275,
     "permission_gated": 815,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 830,
+    "routed_surfaces": 831,
     "scheduled_jobs": 31,
     "severity_counts": {
       "critical": 0,
@@ -106521,8 +106644,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 537,
-    "test_referenced": 723,
-    "theme_contract_pass": 537
+    "tablet_contract_pass": 538,
+    "test_referenced": 724,
+    "theme_contract_pass": 538
   }
 }

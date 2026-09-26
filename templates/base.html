@@ -1095,6 +1095,7 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
 class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 data-edify-outbox-owner="{{ request.user|outbox_owner }}"
+data-edify-field-role="{{ request.user|field_role }}"
 >
 {% include "partials/pwa_launch.html" %}
 {% include "partials/connectivity_status.html" %}

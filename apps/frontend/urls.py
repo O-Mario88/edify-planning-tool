@@ -60,6 +60,11 @@ urlpatterns = [
     # Rendered without user data: the worker precaches it and serves it to
     # any navigation the network cannot answer.
     path("offline", pwa_views.offline, name="offline"),
+    path(
+        "offline/evidence-drawer",
+        pwa_views.offline_evidence_drawer,
+        name="offline_evidence_drawer",
+    ),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path(

@@ -5,20 +5,20 @@
   "by_evidence": {
    "browser-rendered": 750,
    "none": 355,
-   "page-tested": 1242,
-   "request-tested": 1071
+   "page-tested": 1250,
+   "request-tested": 1072
   },
   "by_kind": {
-   "button": 1123,
+   "button": 1128,
    "disclosure": 68,
-   "field": 1171,
+   "field": 1175,
    "link": 989,
    "tab": 67
   },
-  "controls": 3418,
-  "high_consequence": 184,
-  "state_changing": 412,
-  "templates_scanned": 541,
+  "controls": 3427,
+  "high_consequence": 185,
+  "state_changing": 413,
+  "templates_scanned": 542,
   "unresolved_destinations": 0,
   "untested": 355,
   "untested_state_changing": 24
@@ -712,6 +712,7 @@
     "/notifications/drawer",
     "/offboarding/<str:plan_id>",
     "/offboarding/new",
+    "/offline/evidence-drawer",
     "/onboarding/<str:plan_id>",
     "/partner-engagements/<str:engagement_id>",
     "/partner-engagements/<str:engagement_id>/follow-up",
@@ -7218,6 +7219,12 @@
     "PROJECT_COORDINATOR"
    ]
   },
+  "partials/my_plan/offline_evidence_drawer.html": {
+   "pages": [
+    "/offline/evidence-drawer"
+   ],
+   "roles": []
+  },
   "partials/my_plan/partner_ssa_completion_drawer.html": {
    "pages": [
     "/activities/<str:activity_id>/partner-ssa-complete"
@@ -8954,9 +8961,9 @@
   }
  },
  "controls": [
-  {"accessible_name": "Keep this page open", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-312418232715", "kind": "button", "line": 1128, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
-  {"accessible_name": "Open sign in", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-CA67DE56C61B", "kind": "link", "line": 1129, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "base.html"},
-  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DA69FD4ED621", "kind": "button", "line": 1145, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
+  {"accessible_name": "Keep this page open", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-312418232715", "kind": "button", "line": 1129, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
+  {"accessible_name": "Open sign in", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-CA67DE56C61B", "kind": "link", "line": 1130, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "base.html"},
+  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DA69FD4ED621", "kind": "button", "line": 1146, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
   {"accessible_name": "Data context {{ freshness|default:\"Live to current filters\" }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F43BB5A63B9D", "kind": "disclosure", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_decision_frame.html"},
   {"accessible_name": "{{ action_label }}→", "destination": "{{ action_href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E98DADB80B7E", "kind": "link", "line": 32, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/analytics_decision_frame.html"},
   {"accessible_name": "Data details · {{ engine.record_count }} records", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-26C6E0BD5314", "kind": "disclosure", "line": 3, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_provenance.html"},
@@ -11557,6 +11564,15 @@
   {"accessible_name": "Filter by status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-934B637F6B2A", "kind": "field", "line": 142, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "partials/my_plan/filters.html"},
   {"accessible_name": "Apply filters", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9D7D03CDBF81", "kind": "button", "line": 153, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/filters.html"},
   {"accessible_name": "Clear Filters", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-9A3F6B7787F1", "kind": "link", "line": 162, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/my_plan/filters.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-15B746DDBA22", "kind": "field", "line": 52, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A67248C8BE6F", "kind": "field", "line": 54, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-CB5E5B55403D", "kind": "field", "line": 56, "method": "", "selector": "input[name=evidence_file]", "state_changing": false, "tag": "input", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "Take photo", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B0F9DDC86EEC", "kind": "button", "line": 61, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "Choose files", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-767DB74474B7", "kind": "button", "line": 69, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "Remove", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5094F2EB0120", "kind": "button", "line": 91, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "The activity's Salesforce entry ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-715AAC6FFEDA", "kind": "field", "line": 106, "method": "", "selector": "#ev-sf-offline", "state_changing": false, "tag": "input", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B22BEBE1ABE6", "kind": "button", "line": 114, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/offline_evidence_drawer.html"},
+  {"accessible_name": "Submit", "destination": "/activities/__EDIFY_ACTIVITY_ID__/evidence/action", "destination_route": "/activities/<str:activity_id>/evidence/action", "evidence": "request-tested", "high_consequence": true, "id": "INT-3DA07E763708", "kind": "button", "line": 115, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/my_plan/offline_evidence_drawer.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D4EAA5DA3A51", "kind": "field", "line": 30, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/my_plan/partner_ssa_completion_drawer.html"},
   {"accessible_name": "{{ a.school.enrollment|default_if_none:'' }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-83C510586429", "kind": "field", "line": 48, "method": "", "selector": "#partner-ssa-enrollment", "state_changing": false, "tag": "input", "template": "partials/my_plan/partner_ssa_completion_drawer.html"},
   {"accessible_name": "SVE-…", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1DC3BEA12C94", "kind": "field", "line": 65, "method": "", "selector": "#partner-ssa-salesforce-id", "state_changing": false, "tag": "input", "template": "partials/my_plan/partner_ssa_completion_drawer.html"},
