@@ -180,12 +180,18 @@ def resolve_visit_district_type(user: StaffUser | Mapping, target_district) -> s
     ``target_district``, by the role rule in apps.daily_visit_batches.districts.
     A field user with no primary district is refused, never guessed."""
     person = _as_mapping(user, "user")
-    try:
-        return resolve_district_type(
-            person.get("role"), person.get("primary_district"), target_district
+    role = person.get("role")
+    primary_district = person.get("primary_district")
+    # The two refusals are checked here, with their own wording, so that no
+    # caught exception's text is ever handed on to a client.
+    if not str(target_district or "").strip():
+        raise CostingValidationError("target_district is required")
+    if is_field_role(role) and not str(primary_district or "").strip():
+        raise CostingValidationError(
+            f"a {role} must have exactly one primary district configured "
+            f"before a visit can be priced"
         )
-    except ValueError as exc:
-        raise CostingValidationError(str(exc)) from None
+    return resolve_district_type(role, primary_district, target_district)
 
 
 def cost_school_visit_day(
