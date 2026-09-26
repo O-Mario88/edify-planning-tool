@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **502**
+Components and application partials: **503**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -16,6 +16,7 @@ Components and application partials: **502**
 | `components/context_metrics.html` | shared-component | Reusable context metrics interface primitive | {{ item.tone }}, {{ trend_tone }}; default | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /accounts<br>/accounts/<br>/admin-ops/incidents/<str:incident_id><br>/admin-ops/planning<br>/admin-ops/support<br>/admin-ops/team-plans<br>/admin-panel/data-quality-center<br>/analytics/country-director | 0 |
 | `components/drawers/base_drawer.html` | shared-component | Reusable base drawer interface primitive | canonical; default, error, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id><br>/activities/<str:activity_id>/attendance<br>/activities/<str:activity_id>/complete<br>/activities/<str:activity_id>/evidence<br>/activities/<str:activity_id>/partner-ssa-complete<br>/activities/<str:activity_id>/salesforce-id<br>/activities/<str:activity_id>/ssa-upload<br>/activities/<str:activity_id>/start | 0 |
 | `components/empty_state.html` | shared-component | Reusable empty state interface primitive | {{ tone }}; default, empty | inherits containing page contract | inherits semantic parent contract | /accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/advances<br>/accounts/advances/<br>/accounts/approval-history<br>/accounts/approval-history/ | 0 |
+| `components/evidence_pages_state.html` | shared-component | Reusable evidence pages state interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id>/evidence | 0 |
 | `components/form_field.html` | shared-component | Reusable form field interface primitive | canonical; default | inherits containing page contract | accessible name and label | /loan-applications/apply | 0 |
 | `components/kpi_strip.html` | shared-component | Reusable kpi strip interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/meter.html` | shared-component | Reusable meter interface primitive | {{ progress.classification.tone|default:; default | inherits containing page contract | accessible name and label | /my-performance<br>/my-performance/development<br>/my-performance/documents<br>/my-performance/values<br>/priorities/master<br>/strategic-priorities<br>/target-distribution | 0 |

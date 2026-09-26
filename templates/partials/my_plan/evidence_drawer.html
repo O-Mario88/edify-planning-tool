@@ -24,94 +24,77 @@ partner work at Confirm Salesforce Entry.
   {% endif %}
 
   {% for item in evidence_checklist %}
+  {% comment %} One form may be several pages (owner, 2026-09-26): every photo
+  taken and file chosen joins one list (components/evidence_pages_state.html),
+  all of it is posted as evidence_file, and the server joins the pages into
+  one PDF, in the order added. {% endcomment %}
   <form hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
         hx-request='{"timeout":120000}'
         hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
-        x-data="{
-          fileName: '',
-          hasFile: false,
-          fileSize: '',
-          handleFileSelect(event) {
-            const files = event.target.files;
-            if (files && files.length > 0) {
-              const f = files[0];
-              this.fileName = f.name;
-              this.fileSize = (f.size / 1024).toFixed(0) + ' KB';
-              this.hasFile = true;
-              if (event.target !== this.$refs.mainInput) {
-                try {
-                  this.$refs.mainInput.files = files;
-                } catch (err) {
-                  const dt = new DataTransfer();
-                  dt.items.add(f);
-                  this.$refs.mainInput.files = dt.files;
-                }
-              }
-            }
-          },
-          clearFile() {
-            this.fileName = '';
-            this.hasFile = false;
-            this.fileSize = '';
-            if (this.$refs.mainInput) this.$refs.mainInput.value = '';
-            if (this.$refs.cameraInput) this.$refs.cameraInput.value = '';
-            if (this.$refs.storageInput) this.$refs.storageInput.value = '';
-          }
-        }"
+        x-data="{% include 'components/evidence_pages_state.html' %}"
         class="space-y-3 rounded-control border {% if item.uploaded %}border-emerald-200{% else %}border-slate-200{% endif %} p-3">
     {% csrf_token %}
     <input type="hidden" name="evidence_kind" value="{{ item.kind }}">
     <div class="flex items-center justify-between gap-3">
       <div class="space-y-1">
         <p class="text-[13px] font-semibold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
-        <p class="edify-text-caption text-slate-500">A PDF or a photo; a photo is converted to an A4 PDF.</p>
+        <p class="edify-text-caption text-slate-500">Take a photo of each page, or choose PDFs or photos. The pages are joined into one PDF, in the order you add them.</p>
       </div>
       {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
     </div>
 
-    <!-- Hidden file inputs for Camera and File Storage -->
+    <!-- The camera, the file picker, and the input the form posts -->
     <input type="file" x-ref="cameraInput" accept="image/*" capture="environment" class="hidden"
-           @change="handleFileSelect($event)">
-    <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" class="hidden"
-           @change="handleFileSelect($event)">
-    <input type="file" name="evidence_file" x-ref="mainInput" required
+           @change="add($event)">
+    <input type="file" x-ref="storageInput" accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp" multiple class="hidden"
+           @change="add($event)">
+    <input type="file" name="evidence_file" x-ref="mainInput" required multiple
            accept="application/pdf,image/jpeg,image/png,image/jpg,image/webp"
-           class="hidden" @change="handleFileSelect($event)">
+           class="hidden" @change="add($event)">
 
-    <!-- Action Buttons for Mobile Photo vs Device Storage -->
     <div class="grid grid-cols-2 gap-2" data-keep-columns>
-      <button type="button" @click="$refs.cameraInput.click()"
+      <button type="button" @click="$refs.cameraInput.click()" :disabled="busy"
               class="btn btn-secondary min-h-11 w-full gap-2">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
           <circle cx="12" cy="13" r="3"/>
         </svg>
-        <span>Take photo</span>
+        <span x-text="pages.length ? 'Photo next page' : 'Take photo'">Take photo</span>
       </button>
-      <button type="button" @click="$refs.storageInput.click()"
+      <button type="button" @click="$refs.storageInput.click()" :disabled="busy"
               class="btn btn-secondary min-h-11 w-full gap-2">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
-        <span>Choose file</span>
+        <span x-text="pages.length ? 'Add files' : 'Choose files'">Choose files</span>
       </button>
     </div>
 
-    <!-- Selected file indicator -->
-    <div x-show="hasFile" x-cloak class="flex items-center justify-between gap-2 px-3 py-2 rounded-control border border-emerald-200 text-emerald-700 text-[12px]">
-      <div class="flex items-center gap-2 min-w-0">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-        </svg>
-        <div class="min-w-0">
-          <p class="font-semibold truncate" x-text="fileName"></p>
-          <p class="edify-text-caption font-medium">Selected (<span x-text="fileSize"></span>), ready to upload</p>
-        </div>
-      </div>
-      <button type="button" @click="clearFile()" class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
-        Change
-      </button>
+    <!-- The pages so far, in order -->
+    <div x-show="pages.length" x-cloak class="space-y-1">
+      <ol class="divide-y divide-slate-100 rounded-control border border-emerald-200" aria-label="Pages to upload">
+        <template x-for="(p, i) in pages" :key="p.id">
+          <li class="flex items-center justify-between gap-2 px-3 py-2">
+            <div class="flex items-center gap-2 min-w-0 text-emerald-700">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              <div class="min-w-0">
+                <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
+                <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
+              </div>
+            </div>
+            <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
+                    class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
+              Remove
+            </button>
+          </li>
+        </template>
+      </ol>
+      <p class="edify-text-caption text-slate-500" x-show="pages.length > 1" x-text="pages.length + ' pages will be uploaded as one PDF.'"></p>
     </div>
+    <p x-show="busy" x-cloak class="edify-text-caption text-slate-500" role="status">Preparing the photo…</p>
+    <p x-show="notice" x-cloak x-text="notice" class="edify-text-caption font-semibold text-rose-600" role="status"></p>
 
     {% if not is_partner_viewer %}
     {% comment %} Required for staff — their upload carries its Salesforce
@@ -125,8 +108,8 @@ partner work at Confirm Salesforce Entry.
              class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
     </div>
     {% endif %}
-    <button type="submit" class="btn btn-primary h-8">
-      Upload {{ item.label }}
+    <button type="submit" class="btn btn-primary h-8" :disabled="busy || !pages.length">
+      <span x-text="pages.length > 1 ? 'Upload {{ item.label|escapejs }} (' + pages.length + ' pages)' : 'Upload {{ item.label|escapejs }}'">Upload {{ item.label }}</span>
     </button>
   </form>
   {% empty %}

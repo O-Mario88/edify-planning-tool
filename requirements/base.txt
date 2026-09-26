@@ -93,3 +93,6 @@ numpy==2.5.1
 pandas==3.0.5
 scipy==1.18.0
 fpdf2==2.8.7
+# Merges the pages of a multi-page evidence upload (several photos or PDFs
+# of one attendance form) into one PDF — apps.evidence.pages.
+pypdf==5.4.0

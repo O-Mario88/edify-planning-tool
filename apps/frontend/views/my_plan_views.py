@@ -42,6 +42,7 @@ from apps.activities.salesforce import (
     reserve_salesforce_id,
 )
 from apps.evidence.services import (
+    record_pages_upload,
     record_upload,
     evidence_records_for_activity,
     infer_kind_from_upload,
@@ -1051,28 +1052,31 @@ def complete_activity_action(request, activity_id):
                 messages.error(request, f"Error starting completion: {e}")
                 return local_redirect(f"/my-plan/{a.id}")
 
+        # Each form may come as several pages — photographed or chosen
+        # together — merged into one PDF (owner, 2026-09-26).
         uploads = []
-        evidence_file = request.FILES.get("evidence_file")
-        if evidence_file is not None:
+        evidence_files = request.FILES.getlist("evidence_file")
+        if evidence_files:
             uploads.append(
                 (
                     a,
-                    evidence_file,
+                    evidence_files,
                     request.POST.get("evidence_kind"),
                 )
             )
         if paired_school_visit is not None:
-            training_file = request.FILES.get("training_evidence_file")
-            visit_file = request.FILES.get("visit_evidence_file")
-            if training_file is not None:
-                uploads.append((a, training_file, EvidenceKind.ATTENDANCE_FORM))
-            if visit_file is not None:
+            training_files = request.FILES.getlist("training_evidence_file")
+            visit_files = request.FILES.getlist("visit_evidence_file")
+            if training_files:
+                uploads.append((a, training_files, EvidenceKind.ATTENDANCE_FORM))
+            if visit_files:
                 uploads.append(
-                    (paired_school_visit, visit_file, EvidenceKind.VISIT_FORM)
+                    (paired_school_visit, visit_files, EvidenceKind.VISIT_FORM)
                 )
-        for target_activity, uploaded_file, asserted_kind in uploads:
+        for target_activity, uploaded_files, asserted_kind in uploads:
+            uploaded_file = uploaded_files[0]
             try:
-                record_upload(
+                record_pages_upload(
                     principal=request.user,
                     activity_id=target_activity.id,
                     # What the person selected, else what this activity still
@@ -1085,7 +1089,7 @@ def complete_activity_action(request, activity_id):
                         activity=target_activity,
                         asserted=asserted_kind,
                     ),
-                    file_obj=uploaded_file,
+                    files=uploaded_files,
                 )
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
@@ -1799,7 +1803,11 @@ def evidence_upload_action(request, activity_id):
         return forbidden
 
     if request.method == "POST":
-        evidence_file = request.FILES.get("evidence_file")
+        # One file, or the pages of one form — photographed or chosen
+        # together — which are merged into one PDF (owner, 2026-09-26;
+        # apps.evidence.services.record_pages_upload).
+        evidence_files = request.FILES.getlist("evidence_file")
+        evidence_file = evidence_files[0] if evidence_files else None
         if evidence_file:
             try:
                 # A STAFF upload of a governed form carries its Salesforce
@@ -1821,7 +1829,7 @@ def evidence_upload_action(request, activity_id):
                         "Enter the Salesforce ID with your form upload — it "
                         "is required for staff-delivered work."
                     )
-                record_upload(
+                record_pages_upload(
                     principal=request.user,
                     activity_id=activity_id,
                     # What the person selected, else what this activity still
@@ -1834,7 +1842,7 @@ def evidence_upload_action(request, activity_id):
                         activity=a,
                         asserted=request.POST.get("evidence_kind"),
                     ),
-                    file_obj=evidence_file,
+                    files=evidence_files,
                 )
 
                 audit_log(
@@ -2206,13 +2214,18 @@ def attendance_upload_action(request, activity_id):
         if attendance_file:
             # The governed Training Attendance form is PDF-only; a photographed
             # sheet is welcome but is recorded as a supplementary PHOTO — it
-            # does not satisfy the form requirement, the PDF does.
-            is_pdf = (attendance_file.name or "").lower().endswith(".pdf")
-            record_upload(
+            # does not satisfy the form requirement, the PDF does. Several
+            # pages together are merged into one PDF (owner, 2026-09-26), and
+            # that PDF is the form.
+            attendance_files = request.FILES.getlist("attendance_file")
+            is_pdf = len(attendance_files) > 1 or (
+                attendance_file.name or ""
+            ).lower().endswith(".pdf")
+            record_pages_upload(
                 principal=request.user,
                 activity_id=activity_id,
                 kind="attendance_form" if is_pdf else "photo",
-                file_obj=attendance_file,
+                files=attendance_files or [attendance_file],
             )
 
         audit_log(

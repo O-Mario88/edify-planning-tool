@@ -296,6 +296,27 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 4201,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/evidence"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Evidence Pages State",
+      "purpose": "Reusable evidence pages state interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/evidence_pages_state.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -8040,7 +8061,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7754,
+      "bytes": 7987,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -8156,7 +8177,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23848,
+      "bytes": 24024,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -8252,7 +8273,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8174,
+      "bytes": 8418,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -17231,7 +17252,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Upload",
+      "primary_action": "1 ? 'Upload (' + pages.length + ' pages)' : 'Upload '\">Upload",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -106473,7 +106494,7 @@
     "activity_states": 24,
     "all_routes": 1302,
     "api_routes": 360,
-    "component_templates": 502,
+    "component_templates": 503,
     "full_pages": 260,
     "mobile_contract_pass": 537,
     "nonvisual_actions": 268,
