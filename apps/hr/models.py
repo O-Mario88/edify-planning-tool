@@ -1990,7 +1990,14 @@ class PriorityMilestone(TimeStampedModel):
     due_date = models.DateField(null=True, blank=True)
     active = models.BooleanField(default=False)
     version = models.PositiveIntegerField(default=1)
-    source_order = models.PositiveIntegerField(default=1)
+    # The milestone's place in its priority: the row number in the source
+    # plan, which the import and the seeders always pass. A milestone saved
+    # without one (added by hand — admin, shell, a test) goes after the
+    # priority's last milestone (save() below). It used to default to 1, so
+    # hand-added milestones tied and their order fell to created_at — one
+    # value for every row under a frozen clock — and then to the CUID, which
+    # is not monotonic.
+    source_order = models.PositiveIntegerField(default=None)
 
     class Meta:
         db_table = "hr_priority_milestone"
@@ -2009,6 +2016,14 @@ class PriorityMilestone(TimeStampedModel):
                 name="active_milestone_must_be_defined",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.source_order is None:
+            last = PriorityMilestone.objects.filter(
+                priority_id=self.priority_id
+            ).aggregate(last=models.Max("source_order"))["last"]
+            self.source_order = (last or 0) + 1
+        super().save(*args, **kwargs)
 
 
 class MilestoneAllocation(TimeStampedModel):

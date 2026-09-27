@@ -20,6 +20,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from freezegun import freeze_time
 
 from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest
@@ -496,3 +497,58 @@ class RemovePriorityTest(PrioritySettingFixture):
             PriorityMilestone.objects.filter(pk__in=[free.pk, held.pk]).count() == 2
         )
         self.assertFalse(AuditLog.objects.filter(action=PRIORITY_REMOVED).exists())
+
+    def test_the_audit_lists_hand_added_milestones_in_the_order_they_were_added(
+        self,
+    ):
+        # Hand-added milestones once shared source_order 1, so their order fell
+        # to created_at and then the CUID. A frozen clock gives both one
+        # created_at, and SECOND's id sorts first here, as a CUID can.
+        priority = self._priority()
+        with freeze_time("2026-09-26 10:00:00"):
+            first = self._milestone(priority, "FIRST", id="cz-first")
+            second = self._milestone(priority, "SECOND", id="ca-second")
+        self.assertEqual(first.created_at, second.created_at)
+
+        snapshot = remove_priority(priority, principal=self.cd, reason="Not this FY")
+
+        removed = AuditLog.objects.get(
+            action=PRIORITY_REMOVED, subject_id=snapshot["priority_id"]
+        )
+        self.assertEqual(
+            [m["code"] for m in removed.payload["milestones"]], ["FIRST", "SECOND"]
+        )
+
+
+class MilestonePositionTest(PrioritySettingFixture):
+    def test_a_milestone_added_without_a_position_goes_after_the_last(self):
+        priority = self._priority()
+        other = self._priority("OTHER_GROUP", sequence=2)
+        self._milestone(other, "ELSEWHERE", source_order=40)
+        self._milestone(priority, "SEEDED", source_order=7)
+
+        added = self._milestone(priority, "ADDED")
+
+        # Placed after its own priority's last milestone, not any priority's.
+        self.assertEqual(added.source_order, 8)
+        self.assertEqual(
+            list(priority.milestones.values_list("code", flat=True)),
+            ["SEEDED", "ADDED"],
+        )
+
+    def test_the_first_milestone_of_a_priority_takes_position_one(self):
+        milestone = self._milestone(self._priority())
+
+        self.assertEqual(milestone.source_order, 1)
+
+    def test_a_given_position_is_kept(self):
+        priority = self._priority()
+        self._milestone(priority, "LATER", source_order=5)
+
+        earlier = self._milestone(priority, "EARLIER", source_order=2)
+
+        self.assertEqual(earlier.source_order, 2)
+        self.assertEqual(
+            list(priority.milestones.values_list("code", flat=True)),
+            ["EARLIER", "LATER"],
+        )
