@@ -3,19 +3,21 @@
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/presence.css' %}?v=20260924plpresence1">{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/presence.css' %}?v=20260927presence3"><link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20260927plweek9">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
 The Programme Lead's home (owner, 2026-09-13), organised around the five
 responsibilities of the role: strategic direction, team leadership,
 performance management, programme implementation and collaboration. The team
-pulse stays fixed; attention and past-due work live in Today.
+pulse stays fixed; attention, the week and past-due work live in This Week
+(owner, 2026-09-26), the view the page opens on.
 The dashboard is a read — every control opens the page where the work is done.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-pl-dashboard>
 
-  {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Lead the team forward" description="Start with what your team is waiting on, then coach, direct and follow up." period_label="FY "|add:fy status_label=mobile_status_label primary_action=mobile_primary_action %}
+  {# No FY in this header: the FY picker sits right under it (owner, 2026-09-27). #}
+  {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Lead the team forward" description="Start with what your team is waiting on, then coach, direct and follow up." status_label=mobile_status_label primary_action=mobile_primary_action %}
 
   <header class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">

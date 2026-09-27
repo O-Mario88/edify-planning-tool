@@ -167,7 +167,11 @@ class CceoJourneyFlowTest(BaseFlowTest):
         self.assertRedirects(r, "/dashboard?view=today", fetch_redirect_response=False)
         r = self.client.get("/dashboard?view=today")
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, 'hx-get="/today/panel"')
+        # The officer's Today is This Week's My activities (owner,
+        # 2026-09-26): its past-due work is "What needs you now", not the
+        # To-Do workbench's "Waiting on you".
+        self.assertContains(r, 'data-pl-week-who="me"')
+        self.assertNotContains(r, 'hx-get="/today/panel"')
         self.assertEqual(self.client.get("/today/panel").status_code, 200)
 
     def test_calendar_renders_for_cceo(self):

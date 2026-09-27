@@ -54,11 +54,16 @@ def _seed_rates(**rates: int) -> None:
             is_active=True,
             label="Centralized costing test catalogue",
         )
+    from apps.budget.reference import RATE_LABELS
+    from apps.daily_visit_batches.pricing import KEY_LABELS
+
     for key, unit_cost in rates.items():
         CostSetting.objects.update_or_create(
             key=key,
             defaults={
-                "label": key,
+                # The label a published card carries: the preview names each
+                # line as the catalogue does (owner, 2026-09-26).
+                "label": RATE_LABELS.get(key) or KEY_LABELS.get(key) or key,
                 "unit_cost": unit_cost,
                 # Recipe tests configure both prices explicitly. Missing
                 # minima must never fall back to operational rates in the UI.
@@ -357,17 +362,14 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # The meeting's own rate, the twelve participants fed at the cluster
-        # meals rate (owner, 2026-09-15), the room, the materials (by the
-        # page, 0 until the rates are set) and the staff member's day:
-        # transport and lunch. The lunch sits beside the participants' meals
-        # (session costing spec, 2026-09-26); from 2026-09-17 until then a
-        # session that fed the room dropped it.
-        self.assertEqual(prev["amount"], 7000 + 12 * 6000 + 30000 + 15000 + 8000)
+        # The twelve participants' snacks at the cluster meals rate (owner,
+        # 2026-09-15), the room, the materials (by the page, 0 until the
+        # rates are set) and the staff member's day: transport and lunch. No
+        # per-meeting rate (owner, 2026-09-26), though the card carries one.
+        self.assertEqual(prev["amount"], 12 * 6000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
             {
-                "cluster_meeting",
                 "cluster_meetings_trainings_meals",
                 "group_training_venue_cost",
                 "printing_training_materials",
@@ -376,7 +378,9 @@ class CentralizedCostingTest(APITestCase):
                 "lunch_per_day",
             },
         )
-        self.assertEqual(prev["lines"][0]["label"], "Cluster Meeting")
+        self.assertEqual(
+            prev["lines"][0]["label"], "Cluster Meeting - Participant Meals"
+        )
         meals = next(
             line for line in prev["lines"] if line["key"].endswith("trainings_meals")
         )
@@ -386,7 +390,6 @@ class CentralizedCostingTest(APITestCase):
         self.assertEqual(
             labels,
             {
-                "activity_rate",
                 "participant_meals",
                 "venue",
                 "materials",

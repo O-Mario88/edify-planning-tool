@@ -39,6 +39,19 @@ one column, as every platform drawer is.
     <input type="checkbox" id="hr-field-{{ field.name }}" name="{{ field.name }}" value="1"{% if field.value %} checked{% endif %}>
     <span>{{ field.label }}{% if field.help %}<small>{{ field.help }}</small>{% endif %}</span>
   </label>
+  {% elif field.type == "checkboxes" %}
+  {% comment %} Several choices under one name, each its own checkbox (the
+  Programme Lead's return reasons, 2026-09-26). {% endcomment %}
+  <fieldset class="hr-drawer-form__field">
+    <legend class="block edify-text-caption font-semibold text-slate-600">{{ field.label }}{% if field.required %} <span class="text-rose-500">*</span>{% endif %}</legend>
+    {% for option in field.options %}
+    <label class="hr-drawer-form__check" for="hr-field-{{ field.name }}-{{ forloop.counter }}">
+      <input type="checkbox" id="hr-field-{{ field.name }}-{{ forloop.counter }}" name="{{ field.name }}" value="{{ option.0 }}"{% if option.0 in field.value %} checked{% endif %}>
+      <span>{{ option.1 }}</span>
+    </label>
+    {% endfor %}
+    {% if field.help %}<span class="hr-drawer-form__help">{{ field.help }}</span>{% endif %}
+  </fieldset>
   {% else %}
   <div class="hr-drawer-form__field">
     <label for="hr-field-{{ field.name }}" class="block edify-text-caption font-semibold text-slate-600">{{ field.label }}{% if field.required %} <span class="text-rose-500">*</span>{% endif %}</label>

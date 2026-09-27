@@ -1,0 +1,8 @@
+{% comment %}The Focus / SSA Intervention cell of the week's tables, as "What needs you now" draws it.{% endcomment %}
+{% if row.focus_intervention and row.focus_intervention != "—" %}
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+  {{ row.focus_intervention }}
+</span>
+{% else %}
+<span class="text-slate-400">—</span>
+{% endif %}

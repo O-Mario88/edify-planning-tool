@@ -61,6 +61,11 @@ urlpatterns = [
     # Rendered without user data: the worker precaches it and serves it to
     # any navigation the network cannot answer.
     path("offline", pwa_views.offline, name="offline"),
+    path(
+        "offline/evidence-drawer",
+        pwa_views.offline_evidence_drawer,
+        name="offline_evidence_drawer",
+    ),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path(
@@ -277,6 +282,11 @@ urlpatterns = [
         "dashboard/notify-past-due/<str:activity_id>/",
         dashboard_views.notify_past_due_activity,
         name="dashboard_notify_past_due",
+    ),
+    path(
+        "dashboard/pl-week-send/<str:activity_id>/",
+        dashboard_views.pl_week_send_reminder,
+        name="dashboard_pl_week_send",
     ),
     # School actions: the sender's monitoring board and the recipient's queue.
     path(

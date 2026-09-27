@@ -16,9 +16,11 @@ journeys and the Resolve drawer address it by.
   </span></td>
   <td data-label="Staff member">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
   <td data-label="Activity / purpose">{{ item.activity_type|replace_underscore|title }}</td>
+  {% include "components/completion_cells.html" with row=item %}
   <td data-label="Status"><span class="partner-plan-table__status">
+    {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
     <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"
-          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{{ item.status_label }}</span>
+          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{{ item.status_label }}</span>{% endif %}
     {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
   </span></td>
   <td data-label="{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}">{% if table.kind == 'activity' %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting date" }}{% else %}{{ item.scheduled_date|date:"j M Y"|default:"Awaiting scheduling" }}{% endif %}</td>
@@ -51,7 +53,8 @@ journeys and the Resolve drawer address it by.
     <div class="school-record-row__actions">{% include "partials/oversight/_partner_view_button.html" %}</div>
     {% endif %}
     {% else %}
-    <div class="school-record-row__actions">
+    {# data-record-action: the lone link styles as a button (micro-ux.js). #}
+    <div class="school-record-row__actions" data-record-action>
     <a class="school-record-action school-record-action--assign" href="/activities/{{ item.partner_activity_id }}">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
       <span>View activity</span>
@@ -62,7 +65,7 @@ journeys and the Resolve drawer address it by.
 </tr>
 <tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="5">
+  <td colspan="7">
     <dl class="school-record-row__metadata">
       {% if item.school_code %}<div><dt>School ID:</dt><dd>{{ item.school_code }}</dd></div>{% endif %}
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}

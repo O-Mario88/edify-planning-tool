@@ -206,12 +206,13 @@ class PLDashboardTest(TestCase):
         return set(re.findall(r'href="(/[^"#]*)', html))
 
     # ── Views: the rail, the alias and building only what is shown ──────────
-    def test_views_are_today_the_map_and_the_five_responsibilities(self):
-        # Today and Dashboard are one page, Today first (owner, 2026-09-14).
+    def test_views_are_this_week_the_map_and_the_five_responsibilities(self):
+        # This Week opens the dashboard (owner, 2026-09-26); it took over from
+        # Today, which the lead's week holds as its Me tab.
         self.assertEqual(
             [key for key, _label, _hint in dashboard_module.VIEW_TABS],
             [
-                "today",
+                "week",
                 "map",
                 "priorities",
                 "team",
@@ -220,11 +221,12 @@ class PLDashboardTest(TestCase):
                 "collaboration",
             ],
         )
-        self.assertEqual(dashboard_module.DEFAULT_VIEW, "today")
+        self.assertEqual(dashboard_module.DEFAULT_VIEW, "week")
         self.assertEqual(normalise_view("operations"), "team")
+        self.assertEqual(normalise_view("today"), "week")
         self.assertEqual(normalise_view("Coaching"), "coaching")
-        self.assertEqual(normalise_view("funding"), "today")
-        self.assertEqual(normalise_view(None), "today")
+        self.assertEqual(normalise_view("funding"), "week")
+        self.assertEqual(normalise_view(None), "week")
 
     def test_only_the_fixed_part_and_the_chosen_view_are_built(self):
         other_views = {
@@ -259,7 +261,7 @@ class PLDashboardTest(TestCase):
         self.assertIn("cceo_performance", swap)
         self.assertNotIn("ssa_matrix", swap)
 
-    def test_operations_bookmark_opens_team_but_saved_cookie_opens_today(self):
+    def test_operations_bookmark_opens_team_but_saved_cookie_opens_this_week(self):
         self.client.force_login(self.pl_a)
         response = self.client.get("/dashboard", {"fy": FY, "view": "operations"})
         self.assertEqual(response.status_code, 200)
@@ -270,8 +272,8 @@ class PLDashboardTest(TestCase):
 
         self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "operations"
         response = self.client.get("/dashboard", {"fy": FY})
-        self.assertIn("data-pl-today", response.content.decode())
-        self.assertEqual(response.context["dashboard_view"], "today")
+        self.assertIn("data-pl-week", response.content.decode())
+        self.assertEqual(response.context["dashboard_view"], "week")
 
     def test_a_tab_click_builds_the_view_without_the_fixed_part(self):
         self.client.force_login(self.pl_a)
@@ -355,11 +357,12 @@ class PLDashboardTest(TestCase):
         self.assertEqual(by_label["SSA Coverage"]["value"], "50%")
 
     def test_attention_heading_always_renders_with_an_empty_state(self):
-        # Leadership Attention is the Today view's opening section since
-        # 2026-09-20; it renders there with or without anything to show.
+        # Leadership Attention opens the dashboard's first view (Today from
+        # 2026-09-20, This Week since 2026-09-26); it renders there with or
+        # without anything to show.
         self.client.force_login(self.pl_b)
         WeeklyFundRequest.objects.all().delete()
-        response = self.client.get("/dashboard", {"fy": FY, "view": "today"})
+        response = self.client.get("/dashboard", {"fy": FY, "view": "week"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Leadership Attention")
         self.assertEqual(response.context["leadership_attention"], [])

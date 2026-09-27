@@ -108,6 +108,10 @@ const CACHE = 'edify-static-' + VERSION;
 // still has somewhere to keep the fallback page.
 const OFFLINE_CACHE = 'edify-offline-' + VERSION;
 const OFFLINE_URL = '/offline';
+// The upload drawer without signal: made for nobody, like the offline page,
+// with the tapped activity's id put in (see `offline_evidence_drawer`).
+const OFFLINE_DRAWER_URL = '/offline/evidence-drawer';
+const DRAWER_PATH = /^\/activities\/([A-Za-z0-9_-]{1,64})\/evidence$/;
 const OUTBOX_SYNC_TAG = 'edify-outbox';
 
 self.addEventListener('install', (event) => {
@@ -117,7 +121,9 @@ self.addEventListener('install', (event) => {
     caches.open(OFFLINE_CACHE)
       // `reload` skips the HTTP cache: the page precached is the one this
       // deploy serves, not whatever the browser kept from the previous one.
-      .then((c) => c.add(new Request(OFFLINE_URL, { cache: 'reload' })))%(precache_assets)s
+      .then((c) => c.add(new Request(OFFLINE_URL, { cache: 'reload' }))
+        // Tolerantly: a missing drawer must not leave the app without the page.
+        .then(() => c.add(new Request(OFFLINE_DRAWER_URL, { cache: 'reload' })).catch(() => null)))%(precache_assets)s
   );
 });
 
@@ -148,6 +154,24 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // An upload drawer the network cannot answer gets the precached generic one,
+  // for the activity in its URL. Only a *failed* fetch qualifies, and the
+  // drawer the app renders for a user is never stored. The id is checked by
+  // DRAWER_PATH before it is written into the page.
+  const drawer = DRAWER_PATH.exec(new URL(req.url).pathname);
+  if (drawer && new URL(req.url).origin === self.location.origin) {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(OFFLINE_DRAWER_URL, { cacheName: OFFLINE_CACHE })
+        .then((res) => (res ? res.text().then((html) => {
+          const headers = new Headers(res.headers);
+          headers.delete('Content-Length');
+          headers.delete('Content-Encoding');
+          return new Response(html.split('__EDIFY_ACTIVITY_ID__').join(drawer[1]), { headers });
+        }) : Response.error())))
+    );
+    return;
+  }
 
   // A page navigation the network cannot answer gets the precached fallback.
   // Only a *failed* fetch qualifies: a 4xx or 5xx is the app answering and is
@@ -257,6 +281,8 @@ def static_version() -> str:
         "templates/base.html",
         "templates/pages/offline.html",
         "static/js/field-outbox.js",
+        "templates/partials/my_plan/offline_evidence_drawer.html",
+        "templates/components/evidence_pages_state.html",
     ):
         digest.update((Path(settings.BASE_DIR) / relative).read_bytes())
     manifest = Path(settings.STATIC_ROOT or "") / "staticfiles.json"
@@ -310,4 +336,25 @@ def offline(request):
         request,
         "pages/offline.html",
         {"csrf_token": "", "field_outbox_script": script},
+    )
+
+
+@require_GET
+@cache_control(max_age=0, no_cache=True)
+def offline_evidence_drawer(request):
+    """The upload drawer without signal (owner, 2026-09-26: "make the upload
+    drawer open offline too"): precached by the worker beside the offline
+    page and served for /activities/<id>/evidence when the network fails,
+    with the tapped activity's id put in.
+
+    Stored once and shown to whoever holds the phone, so it follows the
+    offline page's rule: nothing reads the user, the session or an activity,
+    and the CSRF token is blank (base.html's <body> carries the live one, and
+    the field outbox reads the cookie when it sends). Its Submit is saved by
+    the outbox; the server applies every rule when the request is sent.
+    """
+    return render(
+        request,
+        "partials/my_plan/offline_evidence_drawer.html",
+        {"csrf_token": "", "drawer_size": "sm"},
     )

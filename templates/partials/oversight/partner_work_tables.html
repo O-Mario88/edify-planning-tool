@@ -9,9 +9,10 @@ Partner's, so there is no Partner column.
 
 The Schools assigned table reads the owner's columns (2026-09-24): School ID,
 School Name, Staff Name, Training, Purpose of Assignment, SSA Intervention,
-Status, Activity date and Actions. Status reads Awaiting Schedule until the
+Salesforce ID, Evidence, Status, Activity date and Actions. Status reads Awaiting Schedule until the
 Partner dates the work and Scheduled once they have, with the Activity date
-the day they chose. The cluster and activity tables keep their six columns.
+the day they chose. The cluster and activity tables keep their six columns,
+with the Salesforce ID and Evidence before Status (owner, 2026-09-26).
 
 Status tones say what the reader has to do: red when staff must act (returned
 or overdue), blue while the work waits on the Partner's date or on IA, amber
@@ -23,7 +24,7 @@ the same rule the Planning badges keep.
 <section class="partner-plan-group" aria-labelledby="partner-plan-{{ table.page_param }}">
   <h3 id="partner-plan-{{ table.page_param }}" class="partner-plan-group__title" data-no-titlebar>{{ table.title }} ({{ table.items|length }})</h3>
   <div class="school-plan-table-scroll">
-    <table class="school-plan-table partner-plan-table" data-partner-monitoring-table="{{ table.kind }}"{% if table.columns == 'school' %} data-partner-school-columns{% endif %} x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
+    <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-monitoring-table="{{ table.kind }}"{% if table.columns == 'school' %} data-partner-school-columns{% endif %} x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
       <caption class="sr-only">{{ table.title }} for {{ active_partner.name }}{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
       {% if table.columns == 'school' %}
       <thead><tr>
@@ -33,25 +34,29 @@ the same rule the Planning badges keep.
         <th scope="col">Training</th>
         <th scope="col">Purpose of Assignment</th>
         <th scope="col">SSA Intervention</th>
+        <th scope="col">Salesforce ID</th>
+        <th scope="col">Evidence</th>
         <th scope="col">Status</th>
         <th scope="col">Activity date</th>
         <th scope="col" class="school-plan-table__actions">Actions</th>
       </tr></thead>
       <tbody>{% for item in page.rows %}
         {% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_school_row.html" %}{% endwith %}
-      {% empty %}<tr><td colspan="9" class="partner-plan-table__empty">No schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="11" class="partner-plan-table__empty">No schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% else %}
       <thead><tr>
         <th scope="col">{% if table.kind == 'activity' %}School / cluster{% else %}{% if table.page_param == 'partner_clusters_page' %}Cluster{% else %}School{% endif %}{% endif %}</th>
         <th scope="col">Staff member</th>
         <th scope="col">Activity / purpose</th>
+        <th scope="col">Salesforce ID</th>
+        <th scope="col">Evidence</th>
         <th scope="col">Status</th>
         <th scope="col">{% if table.kind == 'activity' %}Scheduled{% else %}Activity date{% endif %}</th>
         <th scope="col" class="school-plan-table__actions">Actions</th>
       </tr></thead>
       <tbody>{% for item in page.rows %}
         {% if table.kind == 'activity' %}{% with row_id="p-"|add:item.partner_activity_id %}{% include "partials/oversight/partner_work_row.html" %}{% endwith %}{% else %}{% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_work_row.html" %}{% endwith %}{% endif %}
-      {% empty %}<tr><td colspan="6" class="partner-plan-table__empty">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="8" class="partner-plan-table__empty">No work for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% endif %}
     </table>
   </div>

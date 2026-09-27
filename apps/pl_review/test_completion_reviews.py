@@ -367,6 +367,9 @@ class CompletionReviewsPageTest(ReviewFixture):
                 self.assertNotContains(response, "<form")
 
     def test_the_return_drawer_requires_a_reason(self):
+        """A reason ticked, one written, or both (owner, 2026-09-26): the
+        form offers the common reasons and a note, and the service refuses a
+        return with neither (test_the_service_refuses_a_blank_reason)."""
         work = self._completion(self.james.id)
 
         response = self.as_user(self.pl_user).get(
@@ -374,9 +377,9 @@ class CompletionReviewsPageTest(ReviewFixture):
         )
 
         self.assertContains(response, f'action="{QUEUE_URL}/{work.id}/return"')
-        self.assertRegex(
-            response.content.decode(), r'<textarea[^>]*name="reason"[^>]*required'
-        )
+        body = response.content.decode()
+        self.assertRegex(body, r'<input type="checkbox"[^>]*name="reasons"')
+        self.assertRegex(body, r'<textarea[^>]*name="reason"')
 
     def test_another_teams_completion_cannot_be_decided_by_id(self):
         rival = self._completion(self.rival.id, school=self.rival_school)

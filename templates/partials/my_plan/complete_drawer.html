@@ -25,15 +25,15 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 <h4 class="text-[13px] font-semibold text-slate-800">Evidence</h4>
 
 {% if is_paired_in_school_training %}
-<p class="edify-text-caption text-slate-500">Each form is attached to its own Salesforce record.</p>
+<p class="edify-text-caption text-slate-500">Each form is attached to its own Salesforce record. A form with several pages: choose them together and they are joined into one PDF.</p>
 <div class="space-y-1">
 <label for="training_evidence_file" class="block edify-text-caption font-semibold text-slate-600">Training attendance form <span class="font-normal text-slate-500">(TS- record)</span></label>
-<input id="training_evidence_file" type="file" name="training_evidence_file" accept="application/pdf"
+<input id="training_evidence_file" type="file" name="training_evidence_file" accept="application/pdf" multiple
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
 </div>
 <div class="space-y-1">
 <label for="visit_evidence_file" class="block edify-text-caption font-semibold text-slate-600">School visit form <span class="font-normal text-slate-500">(SVE- record)</span></label>
-<input id="visit_evidence_file" type="file" name="visit_evidence_file" accept="application/pdf"
+<input id="visit_evidence_file" type="file" name="visit_evidence_file" accept="application/pdf" multiple
 class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
 </div>
 {% else %}
@@ -43,11 +43,12 @@ class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 
 id="evidence_file"
 type="file"
 name="evidence_file"
+multiple
 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" capture="environment"
 aria-describedby="evidence-file-help"
 class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
-<p id="evidence-file-help" class="edify-text-caption text-slate-500">A photo of the meeting, participant list, stamp or report. Needed for verification.</p>
+<p id="evidence-file-help" class="edify-text-caption text-slate-500">A photo of the meeting, participant list, stamp or report. Needed for verification. Several pages? Choose them together: they are joined into one PDF.</p>
 </div>
 
 <div class="space-y-1">

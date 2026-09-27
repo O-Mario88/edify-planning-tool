@@ -150,6 +150,17 @@ class PlanningOversightItem:
     assignment_status: str = ""
     evidence_status: str = ""
     salesforce_status: str = ""
+    # The Salesforce ID and Evidence columns (owner, 2026-09-26), set by
+    # apps.activities.completion_columns.annotate where a table shows them.
+    salesforce_id: str = ""
+    evidence_label: str = ""
+    salesforce_ok: bool = False
+    evidence_ok: bool = False
+    # Complete only with both columns green; a done status over a missing
+    # half reads completion_gap instead, and never shows_complete.
+    is_complete: bool = False
+    completion_gap: str = ""
+    shows_complete: bool = False
     ia_status: str = ""
     finance_status: str = ""
     # The moment the completion entered the Impact Assessment queue. Carried

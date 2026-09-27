@@ -26,9 +26,12 @@ from apps.system_health.interaction_inventory import (
     resolve_route,
 )
 
-#: Controls with no automated evidence at 2026-09-24. Lower it as evidence is
-#: added; raising it is a reviewed decision, never a way to get CI green.
-UNTESTED_CEILING = 363
+#: Controls with no automated evidence. Lower it as evidence is added;
+#: raising it is a reviewed decision, never a way to get CI green.
+#: 363 at 2026-09-24; 299 at 2026-09-27, when the page inventory learned that
+#: a role dashboard renders its `view_template` panels, so the dashboard
+#: page tests now count for the controls in them.
+UNTESTED_CEILING = 299
 #: State-changing controls with no automated evidence at 2026-09-24.
 UNTESTED_STATE_CHANGING_CEILING = 26
 

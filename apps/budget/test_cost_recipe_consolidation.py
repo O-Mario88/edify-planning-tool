@@ -241,9 +241,7 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
             **PAGES,
         )
         self.assertEqual(
-            cost.amount,
-            self._session(1, RATES["cluster_meetings_trainings"], 20 * TRAINING_MEALS)
-            + MATERIALS,
+            cost.amount, self._session(1, meals=20 * TRAINING_MEALS) + MATERIALS
         )
         by_key = {line.key: line for line in cost.lines}
         printing = by_key["printing_training_materials"]
@@ -285,7 +283,9 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
         )
         self.assertEqual(cost.amount, self._session(3) + MATERIALS)
 
-    def test_a_cluster_training_carries_the_cluster_rate(self):
+    def test_a_cluster_training_carries_no_per_session_rate(self):
+        """Owner, 2026-09-26: "cluster training should no longer be the
+        cost" — the session is its meals, fee, venue, materials and day."""
         for activity_type in ("cluster_training", "cluster_training_ssa_collection"):
             with self.subTest(activity_type=activity_type):
                 cost = _cost(
@@ -294,11 +294,9 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
                     expectedParticipants=20,
                 )
                 self.assertEqual(
-                    cost.amount,
-                    self._session(
-                        1, RATES["cluster_meetings_trainings"], 20 * TRAINING_MEALS
-                    ),
+                    cost.amount, self._session(1, meals=20 * TRAINING_MEALS)
                 )
+                self.assertNotIn("cluster_meetings_trainings", _keys(cost))
 
     def test_a_cluster_session_feeds_its_participants_per_head(self):
         """A cluster meeting carries the
@@ -583,22 +581,18 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
         )
         self.assertEqual(
             cost.amount,
-            # A card written before meetings and trainings were priced apart
-            # carries only the shared row, and the alias answers the meeting
-            # key from it — so the split reprices nothing on its own.
-            RATES["cluster_meetings_trainings"]
-            + 12 * CLUSTER_MEALS
+            # The participants' snacks, the room, the materials and the staff
+            # day (owner, 2026-09-26): no per-meeting rate on top.
+            12 * CLUSTER_MEALS
             + RATES["group_training_venue_cost"]
             + MATERIALS
             + PRIMARY_STAFF_DAY,
         )
         self.assertNotIn("group_training_facilitation_fee", _keys(cost))
 
-    def test_a_meeting_and_a_training_can_be_priced_apart(self):
-        """Owner, 2026-09-17: "cluster meeting is not fetching the right cost
-        for cluster meeting". It could not — the two shared one catalogue row,
-        so whatever the Country Director set for a training was what a meeting
-        cost. A card that carries the meeting's own rate uses it."""
+    def test_neither_session_charges_a_per_session_rate(self):
+        """Owner, 2026-09-26: a meeting and a training are what they spend —
+        a card that still carries the per-session rows charges neither."""
         card = {**RATES, "cluster_meeting": 9_000}
         meeting = cost_for_activity(
             {
@@ -609,14 +603,11 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
             },
             card,
         )
-        self.assertIn("cluster_meeting", _keys(meeting))
+        self.assertNotIn("cluster_meeting", _keys(meeting))
         self.assertNotIn("cluster_meetings_trainings", _keys(meeting))
         self.assertEqual(
             meeting.amount,
-            9_000
-            + 12 * CLUSTER_MEALS
-            + RATES["group_training_venue_cost"]
-            + PRIMARY_STAFF_DAY,
+            12 * CLUSTER_MEALS + RATES["group_training_venue_cost"] + PRIMARY_STAFF_DAY,
         )
         training = cost_for_activity(
             {
@@ -627,7 +618,7 @@ class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
             },
             card,
         )
-        self.assertIn("cluster_meetings_trainings", _keys(training))
+        self.assertNotIn("cluster_meetings_trainings", _keys(training))
         self.assertNotIn("cluster_meeting", _keys(training))
 
     def test_cluster_training_never_uses_meeting_participant_meals(self):

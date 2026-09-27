@@ -45,17 +45,18 @@ class TodayWorkbenchTests(TestCase):
         )
         StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=school.id)
 
-    def test_the_dashboard_opens_on_today_and_the_old_door_leads_there(self):
+    def test_the_old_door_leads_to_the_dashboard_and_the_workbench_stays(self):
         self.client.force_login(self.cceo)
         self.assertRedirects(
             self.client.get("/today"),
             "/dashboard?view=today",
             fetch_redirect_response=False,
         )
-        response = self.client.get("/dashboard")
-        self.assertEqual(response.context["dashboard_view"], "today")
-        # The panel fetches the workbench once the dashboard has painted.
-        self.assertContains(response, 'hx-get="/today/panel"')
+        # The officer's dashboard opens on This Week since 2026-09-26 (owner:
+        # "like the redesigned PL dashboard"), and ?view=today lands there.
+        response = self.client.get("/dashboard?view=today")
+        self.assertEqual(response.context["dashboard_view"], "week")
+        # The workbench itself is still served, for every field role.
         self.assertContains(self.client.get("/today/panel"), "Your next activity")
 
     def test_a_field_role_gets_the_workbench(self):

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 672,
+  "titled_cards": 669,
   "templates": 245,
-  "distinct_titles": 641,
+  "distinct_titles": 638,
   "with_card_key": 13,
-  "untitled_surfaces": 587,
-  "untitled_chrome": 151,
+  "untitled_surfaces": 590,
+  "untitled_chrome": 152,
   "untitled_nested": 232,
-  "untitled_headless": 204,
+  "untitled_headless": 206,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -4534,38 +4534,11 @@
   },
   {
    "template": "templates/partials/dashboards/cceo/week.html",
-   "line": 4,
+   "line": 7,
    "title": "Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden scroll-mt-20",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/cceo/week.html",
-   "line": 32,
-   "title": "Overdue From Last Week",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/cceo/week.html",
-   "line": 93,
-   "title": "School Visits",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/cceo/week.html",
-   "line": 127,
-   "title": "Cluster Activities This Week",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card overflow-hidden",
    "branch_path": []
   },
   {
@@ -5097,8 +5070,8 @@
   },
   {
    "template": "templates/partials/dashboards/pl/team_view.html",
-   "line": 58,
-   "title": "Your team this week",
+   "line": 61,
+   "title": "Risks to this week",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
@@ -5106,7 +5079,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/team_view.html",
-   "line": 118,
+   "line": 101,
    "title": "Follow-ups you sent",
    "heading_level": 2,
    "has_card_key": false,
@@ -5358,7 +5331,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 105,
+   "line": 106,
    "title": "No past due plans",
    "heading_level": 3,
    "has_card_key": false,
@@ -5372,7 +5345,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 116,
+   "line": 117,
    "title": "School Visits (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5386,7 +5359,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 276,
+   "line": 283,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5400,7 +5373,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 438,
+   "line": 451,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -6407,7 +6380,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 140,
+   "line": 145,
    "title": "2. Core School Visits",
    "heading_level": 5,
    "has_card_key": false,
@@ -6416,7 +6389,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 245,
+   "line": 255,
    "title": "3. Cluster Meetings",
    "heading_level": 5,
    "has_card_key": false,
@@ -6425,7 +6398,7 @@
   },
   {
    "template": "templates/partials/oversight/_officer_panel_body.html",
-   "line": 338,
+   "line": 353,
    "title": "4. Schools with Planned Training",
    "heading_level": 5,
    "has_card_key": false,
@@ -7409,7 +7382,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 30,
+   "line": 32,
    "title": "Your team today",
    "heading_level": 2,
    "has_card_key": false,
@@ -7427,7 +7400,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 93,
+   "line": 95,
    "title": "Today's route",
    "heading_level": 2,
    "has_card_key": false,
@@ -7445,7 +7418,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 135,
+   "line": 137,
    "title": "Your proposed week",
    "heading_level": 2,
    "has_card_key": false,
@@ -7463,7 +7436,7 @@
   },
   {
    "template": "templates/partials/today/workbench.html",
-   "line": 179,
+   "line": 181,
    "title": "Day completion",
    "heading_level": 2,
    "has_card_key": false,

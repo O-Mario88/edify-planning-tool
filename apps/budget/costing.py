@@ -375,22 +375,29 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add_group_session(_days_of(a), conference)
 
     elif activity_type in CLUSTER_MEETING_TYPES:
-        # A cluster meeting: its own rate (owner, 2026-09-17 — it used to take
-        # the one the trainings were priced on, so the two could never differ),
-        # the participants fed per head (owner, 2026-09-15), the room, the
-        # materials and the staff day with its lunch (session costing spec,
-        # 2026-09-26). Nobody facilitates a meeting.
+        # A cluster meeting is what it spends (owner, 2026-09-26): the
+        # participants' snacks per head, the room, the printed and
+        # photocopied materials, and the staff member's day — transport and
+        # lunch, and in a secondary district breakfast, dinner and a night —
+        # shared across every activity that officer runs that day (the Daily
+        # Visit Batch). No per-meeting rate on top, and nobody facilitates a
+        # meeting.
         days = _days_of(a)
-        add_rate(CLUSTER_MEETING_RATE_KEY)
         add_meals(CLUSTER_MEALS_RATE_KEY, days)
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
         add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
+        # A group training is what it spends (owner, 2026-09-26): the
+        # participants' meals per head, the facilitation fee, the venue, the
+        # printed and photocopied materials, and the staff member's day
+        # (primary or secondary district) shared across that officer's
+        # activities that day. The "Cluster Training" per-session rate is no
+        # longer charged.
         add_group_session(
             _days_of(a),
-            "cluster_meetings_trainings",
+            None,
             meals_key=GROUP_TRAINING_MEALS_RATE_KEY,
             travel=True,
         )

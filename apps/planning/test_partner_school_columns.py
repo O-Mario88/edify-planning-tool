@@ -40,6 +40,10 @@ COLUMNS = [
     "Training",
     "Purpose of Assignment",
     "SSA Intervention",
+    # Every planned activities table's two completion columns, before Status
+    # (owner, 2026-09-26).
+    "Salesforce ID",
+    "Evidence",
     "Status",
     "Activity date",
     "Actions",

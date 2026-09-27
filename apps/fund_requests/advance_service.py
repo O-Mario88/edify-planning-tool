@@ -57,8 +57,15 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     # visit (2026-09-12 journey walk: 132 of 448 pending advances in dev).
     from apps.fund_requests.fundable import vendor_direct_filter
 
+    from apps.activities.facilitation import PARTNER_FEE_LINES
+
+    # A partner-facilitated training's fee is the partner's, paid through its
+    # invoice (apps.activities.facilitation): it gets no staff advance, and
+    # one a previous sync opened is dropped below like any vanished line.
     lines = list(
-        activity.schedule_cost_lines.exclude(amount=0).exclude(vendor_direct_filter())
+        activity.schedule_cost_lines.exclude(amount=0)
+        .exclude(vendor_direct_filter())
+        .exclude(PARTNER_FEE_LINES)
     )
     line_ids = {line.id for line in lines}
 

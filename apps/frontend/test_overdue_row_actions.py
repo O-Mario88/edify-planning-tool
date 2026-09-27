@@ -70,21 +70,27 @@ class OverdueRowMenuMarkupTest(TestCase):
     def setUp(self):
         self.src = _read("templates/pages/dashboards/cceo.html")
 
+    # The officer's overdue rows are the dashboard's past-due table since
+    # 2026-09-26 (This Week lists the week's own work), so the menu is its.
     def test_the_row_offers_a_menu_not_a_lone_reschedule_button(self):
         self.assertIn("row-menu__trigger", self.src)
         self.assertIn('aria-haspopup="true"', self.src)
-        for label in ("Complete", "Reschedule", "Discuss this activity"):
+        for label in (
+            "Complete Activity",
+            "Reschedule Activity",
+            ">Discuss this activity<",
+        ):
             with self.subTest(label=label):
-                self.assertIn(f">{label}<", self.src)
+                self.assertIn(label, self.src)
 
     def test_complete_and_reschedule_open_drawers_in_place(self):
         """Both are drawers; navigating away would lose the dashboard."""
-        self.assertIn('hx-get="{{ r.complete_url }}"', self.src)
-        self.assertIn('hx-get="{{ r.reschedule_url }}"', self.src)
+        self.assertIn('hx-get="{{ row.complete_url }}"', self.src)
+        self.assertIn('hx-get="{{ row.reschedule_url }}"', self.src)
         self.assertIn('hx-target="#drawer-container"', self.src)
 
     def test_discuss_is_a_link_carrying_the_activity(self):
-        self.assertIn('href="{{ r.discuss_url }}"', self.src)
+        self.assertIn('href="{{ row.discuss_url }}"', self.src)
 
 
 class DebriefFocusActivityTest(TestCase):

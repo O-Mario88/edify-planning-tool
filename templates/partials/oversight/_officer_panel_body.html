@@ -55,7 +55,7 @@ and `forloop` from the including context.{% endcomment %}
       {% if group.client_school_visits %}
       <div class="overflow-x-auto">
         {% paginate group.client_school_visits group.page_param|add:"-cv" as cv_pager %}
-        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll" data-pinned-actions>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
@@ -66,6 +66,8 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Salesforce ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Evidence</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
             </tr>
@@ -113,9 +115,12 @@ and `forloop` from the including context.{% endcomment %}
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
                 {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
+              {% include "components/completion_cells.html" with row=item completion_cell_class="px-4 py-2.5 whitespace-nowrap" %}
               <td class="px-4 py-2.5">
                 {% if item.is_awaiting_partner_schedule %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% elif item.completion_gap %}
+                <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -156,7 +161,7 @@ and `forloop` from the including context.{% endcomment %}
       {% if group.core_school_visits %}
       <div class="overflow-x-auto">
         {% paginate group.core_school_visits group.page_param|add:"-kv" as kv_pager %}
-        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll" data-pinned-actions>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
@@ -168,6 +173,8 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[180px]">Purpose of Visit</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Salesforce ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Evidence</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
             </tr>
@@ -218,9 +225,12 @@ and `forloop` from the including context.{% endcomment %}
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
                 {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
+              {% include "components/completion_cells.html" with row=item completion_cell_class="px-4 py-2.5 whitespace-nowrap" %}
               <td class="px-4 py-2.5">
                 {% if item.is_awaiting_partner_schedule %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% elif item.completion_gap %}
+                <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -261,7 +271,7 @@ and `forloop` from the including context.{% endcomment %}
       {% if group.cluster_meetings %}
       <div class="overflow-x-auto">
         {% paginate group.cluster_meetings group.page_param|add:"-cm" as cm_pager %}
-        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll" data-pinned-actions>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Cluster Name</th>
@@ -272,6 +282,8 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">SSA Intervention</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]">Participants</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Salesforce ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Evidence</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
             </tr>
@@ -311,9 +323,12 @@ and `forloop` from the including context.{% endcomment %}
               <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
                 {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
               </td>
+              {% include "components/completion_cells.html" with row=item completion_cell_class="px-4 py-2.5 whitespace-nowrap" %}
               <td class="px-4 py-2.5">
                 {% if item.is_awaiting_partner_schedule %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                {% elif item.completion_gap %}
+                <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -354,7 +369,7 @@ and `forloop` from the including context.{% endcomment %}
       {% if group.planned_trainings %}
       <div class="overflow-x-auto">
         {% paginate group.planned_trainings group.page_param|add:"-pt" as pt_pager %}
-        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll">
+        <table class="edify-record-table w-full text-left whitespace-nowrap" data-mobile-table="scroll" data-pinned-actions>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle border-b edify-border bg-slate-50/40 dark:bg-slate-950/20">
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[100px]">School ID</th>
@@ -367,6 +382,8 @@ and `forloop` from the including context.{% endcomment %}
               <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[90px]">Participants</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Delivery Type</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[100px]">Cost</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">Salesforce ID</th>
+              <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Evidence</th>
               <th scope="col" class="px-4 py-2.5 font-semibold min-w-[120px]">Status</th>
               <th scope="col" class="px-4 py-2.5 font-semibold text-right min-w-[90px]">Actions</th>
             </tr>
@@ -427,9 +444,12 @@ and `forloop` from the including context.{% endcomment %}
                 <td class="px-4 py-2.5 whitespace-nowrap text-right tabular-nums font-semibold text-slate-900 dark:text-white">
                   {% if item.is_awaiting_partner_schedule %}<span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>{% else %}UGX {{ item.planned_cost|intcomma }}{% endif %}
                 </td>
+                {% include "components/completion_cells.html" with row=item completion_cell_class="px-4 py-2.5 whitespace-nowrap" %}
                 <td class="px-4 py-2.5">
                   {% if item.is_awaiting_partner_schedule %}
                   <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
+                  {% elif item.completion_gap %}
+                  <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
                   {% else %}
                   <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                     {{ item.activity_status|status_label }}

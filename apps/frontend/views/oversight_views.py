@@ -554,6 +554,22 @@ def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list
     return tabs, active["key"], active["items"]
 
 
+def _mark_reviewable(user, trainings) -> None:
+    """Set `can_review` on the facilitated trainings waiting on a Programme
+    Lead: whether this reader may confirm or return each (the review rule
+    itself, pl_review.services.may_review), one query for the lot."""
+    waiting = [t for t in trainings if t.awaits_review]
+    if not waiting:
+        return
+    from apps.activities.models import Activity
+    from apps.pl_review.services import may_review
+
+    activities = Activity.objects.in_bulk([t.activity_id for t in waiting])
+    for training in waiting:
+        activity = activities.get(training.activity_id)
+        training.can_review = bool(activity and may_review(user, activity))
+
+
 def _program_lead_tabs(
     items, selected: str | None, *, program_leads=None
 ) -> tuple[list[dict], str, list]:
@@ -939,6 +955,26 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             for data in grouped_dict.values()
         ]
 
+    # The Salesforce ID and Evidence columns, and open work first by planned
+    # date with the officer's completed work at the bottom, in every one of
+    # the four tables (owner, 2026-09-26; apps.activities.completion_columns).
+    # Sorted before the templates page them, so page one is the oldest open
+    # work.
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    streams = (
+        "client_school_visits",
+        "core_school_visits",
+        "cluster_meetings",
+        "planned_trainings",
+    )
+    annotate(item for group in owner_groups for key in streams for item in group[key])
+    for group in owner_groups:
+        for key in streams:
+            sort_completed_last(group[key])
+        for training_group in group["planned_trainings_grouped"]:
+            sort_completed_last(training_group["items"])
+
     return owner_groups
 
 
@@ -1100,6 +1136,12 @@ def team_planning_oversight_view(request):
                 request, "partials/oversight/coverage_workspace.html", context
             )
         return render(request, "pages/oversight/team_planning.html", context)
+    # Partner work stays on Partner Monitoring (owner, 2026-09-26: "partner
+    # visits should remain on the partner oversight"): the planned activities
+    # tables here, their counts and their filters are the team's own work.
+    # The coverage lens above still counts a school a Partner will visit.
+    available_items = [i for i in available_items if not i.is_partner_work]
+    items = [i for i in items if not i.is_partner_work]
     # Both the country lens and the Regional Programme Lead's region lens read
     # many Programme Leads, so both are organised in Lead tabs; only the copy
     # and the headline tiles differ (owner, 2026-09-12).
@@ -1845,6 +1887,9 @@ def country_planning_team_view(request, staff_id: str):
     items = oversight.build_items(
         request.user, program_lead_id=staff_id, **_service_period(period)
     )
+    # Partner work stays on Partner Monitoring (owner, 2026-09-26), as on
+    # Team Oversight: these are the team's own planned activities.
+    items = [i for i in items if not i.is_partner_work]
 
     program_lead_name = next(
         (i.supervising_pl_name for i in items if i.supervising_pl_name), ""
@@ -1916,18 +1961,27 @@ def partner_oversight_view(request):
     all_items = partner_oversight.build_items(
         request.user, fys=plan_fys, **_service_period(period)
     )
+    # The group trainings a Partner facilitates (owner, 2026-09-26): staff
+    # work, read here under that Partner, in the same scope and through the
+    # same Programme Lead and team-member tabs as the Partner's own work.
+    all_trainings = partner_oversight.facilitated_trainings(request.user, fys=plan_fys)
     partner_scope = _partner_scope(request.user)
     country_lens = partner_scope["is_country"]
     if country_lens:
         sys_pls = oversight.system_program_leads()
         if partner_scope.get("region_ids") is not None:
-            visible_leads = {i.supervising_pl_id for i in all_items}
+            visible_leads = {i.supervising_pl_id for i in all_items} | {
+                t.supervising_pl_id for t in all_trainings
+            }
             sys_pls = [p for p in sys_pls if p["id"] in visible_leads]
-        program_lead_tabs, requested_pl, team_items = _program_lead_tabs(
-            all_items, requested_pl, program_leads=sys_pls
+        program_lead_tabs, requested_pl, team_rows = _program_lead_tabs(
+            [*all_items, *all_trainings], requested_pl, program_leads=sys_pls
         )
     else:
-        program_lead_tabs, team_items = [], all_items
+        program_lead_tabs, team_rows = [], [*all_items, *all_trainings]
+    is_training = partner_oversight.FacilitatedTraining
+    team_items = [i for i in team_rows if not isinstance(i, is_training)]
+    team_trainings = [i for i in team_rows if isinstance(i, is_training)]
 
     roster = oversight.program_lead_members(
         requested_pl if country_lens else request.user.id
@@ -1938,14 +1992,14 @@ def partner_oversight_view(request):
     # workspace below — team-member tabs, filters, KPIs and the school, cluster
     # and activity tables — reads that Partner's work alone.
     partner_pairs = sorted(
-        {(i.partner_id, i.partner_name) for i in team_items if i.partner_id},
+        {(i.partner_id, i.partner_name) for i in team_rows if i.partner_id},
         key=lambda pair: pair[1],
     )
     partner_tabs = [
         {
             "key": partner_key,
             "label": partner_name,
-            "count": sum(1 for i in team_items if i.partner_id == partner_key),
+            "count": sum(1 for i in team_rows if i.partner_id == partner_key),
         }
         for partner_key, partner_name in partner_pairs
     ]
@@ -1957,26 +2011,34 @@ def partner_oversight_view(request):
         entry["is_active"] = entry is active_partner
     partner_id = active_partner["key"] if active_partner else ""
     partner_items = [i for i in team_items if partner_id and i.partner_id == partner_id]
+    partner_trainings = [
+        t for t in team_trainings if partner_id and t.partner_id == partner_id
+    ]
 
     member_names = {p["id"]: p["name"] for p in roster}
     member_names.update(
         {
             i.responsible_cceo_id or "unassigned": i.responsible_cceo_name
             or "Unassigned"
-            for i in partner_items
+            for i in [*partner_items, *partner_trainings]
         }
     )
     member = (request.GET.get("member") or "all").strip()
     if member not in member_names:
         member = "all"
     member_tabs = [
-        {"key": "all", "label": "All team members", "count": len(partner_items)}
+        {
+            "key": "all",
+            "label": "All team members",
+            "count": len(partner_items) + len(partner_trainings),
+        }
     ] + [
         {
             "key": key,
             "label": name,
             "count": sum(
-                (i.responsible_cceo_id or "unassigned") == key for i in partner_items
+                (i.responsible_cceo_id or "unassigned") == key
+                for i in [*partner_items, *partner_trainings]
             ),
         }
         for key, name in member_names.items()
@@ -1990,11 +2052,11 @@ def partner_oversight_view(request):
         member_items, activity_type=activity_type
     )
     items = partner_oversight.filter_workspace(typed_items, status=status)
-    # Waiting-on-staff first: a hand-back nobody has decided on is the one row
-    # somebody here has to act on.
-    items.sort(
-        key=lambda i: (not i.awaits_staff_decision, not i.is_overdue, i.school_name)
+    trainings = partner_oversight.filter_trainings(
+        partner_trainings, member=member, activity_type=activity_type, status=status
     )
+    _mark_reviewable(request.user, trainings)
+    partner_oversight.order_for_monitoring(items)
     # Verify & Confirm and Return (owner, 2026-09-26: "Staff (PL and CCEO, IA)
     # action buttons should have Verify and Confirm, Return"). Offered to
     # exactly the people the approved authority names (owner, 2026-09-12):
@@ -2045,6 +2107,7 @@ def partner_oversight_view(request):
         "activity_type": activity_type,
         "activity_types": sorted(
             {i.activity_type for i in member_items if i.activity_type}
+            | {t.activity_type for t in partner_trainings if t.activity_type}
         ),
         "status": status,
         # Each status with how many of this Partner's rows it would show, so
@@ -2064,6 +2127,7 @@ def partner_oversight_view(request):
             )
         ],
         "workspace_tables": partner_oversight.workspace_tables(items),
+        "facilitated_trainings": trainings,
         # The years the page read, said beside the tables (FY 2026–2027 in
         # September), so a row dated next October is not a surprise.
         "plan_period_label": horizon_label(plan_fys),

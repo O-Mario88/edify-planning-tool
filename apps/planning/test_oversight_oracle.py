@@ -737,6 +737,15 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         or (uses_member_tabs and item.operational_owner_id in allowed_people)
     ]
     _decorate_sessions(principal, cluster_work)
+    # Not part of the frozen pass: the Salesforce ID and Evidence columns and
+    # the completed-last order every planned activities table took on
+    # 2026-09-26, applied here as the live code applies them, so this oracle
+    # keeps proving the performance pass changed nothing else.
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    annotate(cluster_work)
+    clusters_svc.hold_complete_to_both_columns(cluster_work)
+    sort_completed_last(cluster_work)
 
     # One directory for the people holding clusters and the people running
     # the sessions. A person's work is filed by the same profile and the same

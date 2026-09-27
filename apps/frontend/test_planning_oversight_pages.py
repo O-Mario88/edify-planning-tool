@@ -324,7 +324,10 @@ class ReadOnlyTest(OversightPageFixture):
 
 
 class MoneyOnThePageTest(OversightPageFixture):
-    def test_an_unscheduled_partner_assignment_shows_no_cost(self):
+    def test_an_unscheduled_partner_assignment_stays_on_partner_monitoring(self):
+        # Partner work stays on Partner Monitoring (owner, 2026-09-26: "partner
+        # visits should remain on the partner oversight"); Team Oversight's
+        # tables are the team's own work.
         PartnerAssignment.objects.create(
             school=self.school,
             partner=self.partner,
@@ -333,15 +336,13 @@ class MoneyOnThePageTest(OversightPageFixture):
             expected_activity_type="school_visit",
             status="assigned",
         )
+        client = self.as_user(self.pl_user)
 
-        body = (
-            self.as_user(self.pl_user)
-            .get(PL_URL, {"owner": self.james.id})
-            .content.decode()
-        )
+        team = client.get(PL_URL, {"owner": self.james.id}).content.decode()
+        partner = client.get("/partner-oversight/").content.decode()
 
-        self.assertIn("Partner yet to schedule", body)
-        self.assertIn("UGX 0", body)
+        self.assertNotIn("Partner yet to schedule", team)
+        self.assertIn("Awaiting Schedule", partner)
 
     def test_the_headline_budget_equals_the_cost_lines_in_scope(self):
         body = (

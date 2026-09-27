@@ -100,7 +100,8 @@
   window.addEventListener('online', showRestored);
 
   document.addEventListener('htmx:beforeRequest', function (event) {
-    if (navigator.onLine) return;
+    // The upload drawer opens offline: sw.js answers it.
+    if (navigator.onLine || /^\/activities\/[^/]+\/evidence$/.test(event.detail.pathInfo.requestPath)) return;
     event.preventDefault();
     showOffline();
     announce('This action was not sent because you are offline. Reconnect and try again.', 'assertive');

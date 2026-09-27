@@ -215,14 +215,15 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
-        # A cluster meeting: its own rate, the ten participants fed at the
-        # cluster meals rate (owner, 2026-09-15), the venue and the staff
-        # day's transport and lunch (session costing spec, 2026-09-26). No
-        # pages were stated, so there is no printing or photocopying line
-        # (materials are by the page since 2026-09-15).
-        # 0 + 10 x 8,000 + 200,000 + 50,000 + 12,000 = 342,000
+        # A cluster meeting: the ten participants' snacks at the cluster
+        # meals rate (owner, 2026-09-15), the venue and the staff day's
+        # transport and lunch (session costing spec, 2026-09-26) — no
+        # per-meeting rate (owner, 2026-09-26). No pages were stated, so
+        # there is no printing or photocopying line (materials are by the
+        # page since 2026-09-15).
+        # 10 x 8,000 + 200,000 + 50,000 + 12,000 = 342,000
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
-        self.assertEqual(cm_lines.count(), 5)
+        self.assertEqual(cm_lines.count(), 4)
         self.assertEqual(sum(l.amount for l in cm_lines), 342000)
         self.assertEqual(
             cm_lines.get(cost_setting_key="cluster_meetings_trainings_meals").amount,
@@ -261,7 +262,6 @@ class WeeklyFundRequestsTest(APITestCase):
         self.assertEqual(
             {line.cost_setting_key for line in gt_lines},
             {
-                "cluster_meetings_trainings",
                 "group_training_meals",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",

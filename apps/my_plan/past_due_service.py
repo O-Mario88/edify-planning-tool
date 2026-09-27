@@ -145,6 +145,12 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
             "id", "activity_type", "responsible_staff_id", "monitored_by_staff_id"
         )
     )
+    if not is_pl:
+        # The officer's own past work that a status calls done but that is
+        # missing its Salesforce ID or its form is not complete (owner,
+        # 2026-09-26), and it is theirs to finish: it is listed here rather
+        # than on a separate "Waiting on you" list.
+        light += _incomplete_past_work(own_ids, user, today)
     if not light:
         return _empty_past_due_context(is_pl)
 
@@ -198,6 +204,42 @@ def get_past_due_dashboard_context(user) -> dict[str, Any]:
     }
 
 
+def _incomplete_past_work(own_ids, user, today) -> list[tuple]:
+    """(id, type, responsible, monitored) of the officer's own past-dated work
+    whose status says done but whose Salesforce ID or form is missing
+    (apps.activities.completion_columns), oldest first."""
+    from apps.activities.completion_columns import (
+        OFFICER_COMPLETED_STATUSES,
+        completion_columns,
+        is_complete,
+    )
+
+    candidates = list(
+        Activity.objects.filter(
+            deleted_at__isnull=True, status__in=OFFICER_COMPLETED_STATUSES
+        )
+        .filter(
+            Q(planned_date__lt=today)
+            | Q(planned_date__isnull=True, scheduled_date__date__lt=today)
+        )
+        .filter(staff_my_plan_q(own_ids, user))
+        .order_by("planned_date", "scheduled_date", "id")
+        .values_list(
+            "id",
+            "activity_type",
+            "responsible_staff_id",
+            "monitored_by_staff_id",
+            "status",
+        )
+    )
+    columns = completion_columns((row[0], row[1]) for row in candidates)
+    return [
+        row[:4]
+        for row in candidates
+        if not is_complete(row[4], columns.get(row[0], {}))
+    ]
+
+
 class PastDueRows(Sequence):
     """One past-due table, in order, whose rows are built when read.
 
@@ -221,6 +263,14 @@ class PastDueRows(Sequence):
 
     def __iter__(self):
         return iter(self._build(self._ids))
+
+
+def activity_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
+    """The School Visits / Trainings / Cluster Meetings table rows for these
+    activities, in the order given — the same rows "What needs you now"
+    draws, for the Programme Lead's week (apps.analytics.pl_week_service),
+    which tables the same work with the same columns."""
+    return _build_rows(activity_ids, own_ids=own_ids, today=today)
 
 
 def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
@@ -279,6 +329,23 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
 
     minimum_amounts = planned_minimum_amounts(activities)
 
+    # Rows a status calls done but that miss a half (see
+    # _incomplete_past_work): what each still needs.
+    from apps.activities.completion_columns import (
+        OFFICER_COMPLETED_STATUSES,
+        completion_columns,
+        completion_gap,
+    )
+
+    # The Salesforce ID and Evidence columns every planned activities table
+    # carries (apps.activities.completion_columns), two queries a page.
+    columns = completion_columns((a.id, a.activity_type) for a in activities)
+    incomplete = {
+        a.id: completion_gap(a.status, columns.get(a.id, {}))
+        for a in activities
+        if a.status in OFFICER_COMPLETED_STATUSES
+    }
+
     rows: list[dict[str, Any]] = []
     for a in activities:
         is_own = a.responsible_staff_id in own_ids or (
@@ -301,7 +368,15 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
             cluster_district_name = getattr(a.school.district, "name", "") or ""
 
         # Status text and tone
-        if a.status in ("returned", "returned_by_pl", "returned_by_ia"):
+        gap = incomplete.get(a.id, "")
+        if gap:
+            # Done by its status, missing a half: say which (owner,
+            # 2026-09-26), and let the row open the upload drawer, where the
+            # form and the Salesforce ID are submitted together.
+            status_lbl = gap
+            status_tone = "warning"
+            status_class = "bg-amber-50 text-amber-700 border-amber-200"
+        elif a.status in ("returned", "returned_by_pl", "returned_by_ia"):
             status_lbl = "Returned"
             status_tone = "danger"
             status_class = "bg-rose-50 text-rose-700 border-rose-200"
@@ -363,12 +438,21 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
             "expected_participants": a.expected_participants or "—",
             "delivery_type": a.delivery_type,
             "reminder_sent": a.id in active_reminder_act_ids,
-            "complete_url": f"/my-plan/{a.id}/complete-drawer",
+            "complete_url": (
+                f"/activities/{a.id}/evidence"
+                if gap
+                else f"/my-plan/{a.id}/complete-drawer"
+            ),
+            "completion_gap": gap,
             "reschedule_url": f"/my-plan/{a.id}/reschedule-drawer",
             "cancel_url": f"/my-plan/{a.id}/cancel-drawer",
             "details_url": f"/my-plan/{a.id}",
+            "discuss_url": f"/debriefs/submit?activity={a.id}",
             "is_completed": False,
         }
+        from apps.activities.completion_columns import EMPTY
+
+        row.update(columns.get(a.id, EMPTY))
 
         rows.append(row)
     return rows
@@ -391,6 +475,28 @@ def _reminded_activity_ids(activity_ids) -> set[str]:
             resolved_at__isnull=True,
         ).values_list("context_id", flat=True)
     )
+
+
+def reminder_sent_on(activity_ids) -> dict[str, Any]:
+    """When each activity's live overdue reminder was sent, one query: the
+    Programme Lead's week says "Followed up Tue" rather than offering the
+    same reminder twice."""
+    if not activity_ids:
+        return {}
+    sent: dict[str, Any] = {}
+    for context_id, created_at in Notification.objects.filter(
+        source_event_type=OVERDUE_REMINDER_EVENT,
+        context_id__in=list(activity_ids),
+        resolved_at__isnull=True,
+    ).values_list("context_id", "created_at"):
+        if created_at and (context_id not in sent or created_at > sent[context_id]):
+            sent[context_id] = created_at
+    return {
+        context_id: timezone.localtime(moment).date()
+        if timezone.is_aware(moment)
+        else moment.date()
+        for context_id, moment in sent.items()
+    }
 
 
 def team_past_due_activity(user, activity_id: str):

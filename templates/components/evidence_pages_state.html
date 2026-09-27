@@ -1,0 +1,117 @@
+{% comment %}
+The pages of one evidence form (owner, 2026-09-26: "the users can just take a
+photo or photos and confirm Upload ... allow multiple uploads and merge them
+into one file"). Included as a form's x-data: `x-data="{% include ... %}"`.
+
+Every photo taken and file chosen joins one list, in the order added, and
+each can be removed. The list is written into the form's named file input
+(x-ref="mainInput", `multiple`), so the ordinary submit (and the field
+outbox, which serialises the form as it stands) carries every page. The
+server checks each page and joins them into one PDF with exactly those
+pages (apps/evidence/pages.py).
+
+While a photo is being prepared it dispatches `evidence-pages-busy` (true,
+then false), so the form can hold its Submit until every page is in.
+
+The camera and picker inputs are emptied after each pick, so the next photo
+fires `change` again. A browser without the DataTransfer constructor keeps
+the last pick only: one page, as before.
+
+A phone photo is 3-5 MB and 4000 px across; the page it becomes is A4 at 150
+DPI (1240 x 1754), so it is sent at 2000 px on the long side: a fraction of
+the data over a field connection and in the outbox. The browser draws it
+upright (EXIF orientation applies by default), on white. Any failure sends
+the original.
+
+Inline rather than Alpine.data in static/js/alpine-components.js: the shell
+script budget (apps/system_health/test_frontend_budgets.py) has no room, and
+a <script> in the drawer would run after Alpine has initialised the form.
+The text below sits inside a double-quoted attribute: no double quotes.
+{% endcomment %}{
+  pages: [],
+  seq: 0,
+  busy: false,
+  notice: '',
+  maxPages: 20,
+  async add(event) {
+    const input = event.target;
+    const picked = Array.from(input.files || []);
+    if (!picked.length) return;
+    this.notice = '';
+    if (!this.canMerge()) {
+      this.pages = [this.page(picked[picked.length - 1])];
+      if (input !== this.$refs.mainInput) this.$refs.mainInput.files = input.files;
+      return;
+    }
+    input.value = '';
+    this.busy = true;
+    this.$dispatch('evidence-pages-busy', true);
+    try {
+      for (const file of picked) {
+        if (this.pages.length >= this.maxPages) {
+          this.notice = 'One upload holds at most ' + this.maxPages + ' pages.';
+          break;
+        }
+        this.pages.push(this.page(await this.shrink(file)));
+      }
+    } finally {
+      this.busy = false;
+      this.sync();
+      this.$dispatch('evidence-pages-busy', false);
+    }
+  },
+  remove(index) {
+    this.pages.splice(index, 1);
+    this.notice = '';
+    this.sync();
+  },
+  page(file) {
+    const kb = file.size / 1024;
+    this.seq += 1;
+    return {
+      id: this.seq,
+      file: file,
+      name: file.name || 'Photo',
+      size: kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(kb)) + ' KB',
+    };
+  },
+  canMerge() {
+    try { return Boolean(new DataTransfer()); } catch (err) { return false; }
+  },
+  sync() {
+    const input = this.$refs.mainInput;
+    if (!input) return;
+    const transfer = new DataTransfer();
+    this.pages.forEach((p) => transfer.items.add(p.file));
+    input.files = transfer.files;
+  },
+  async shrink(file) {
+    const LONG_EDGE = 2000;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1024 * 1024) return file;
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+      const scale = Math.min(1, LONG_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      if (!blob || blob.size >= file.size) return file;
+      const stem = (file.name || 'photo').replace(/\.[^.]+$/, '');
+      return new File([blob], stem + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+    } catch (err) {
+      return file;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  },
+}

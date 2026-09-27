@@ -13,21 +13,25 @@
   `photocopyPages`, `photocopyCopies`, `copiesTouched`, `copies` and
   `photocopiedPages`. `materials_preview` adds the live cost-preview
   triggers of the Cluster Action Planner; the planning drawer has none.
+
+  Short labels that fit one line, and cells aligned at the foot, so the
+  three boxes stay level (owner, 2026-09-26: "training material fields are
+  not aligned").
 {% endcomment %}
 <div>
   <span class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Training materials <span class="text-slate-400 normal-case tracking-normal font-medium">(optional)</span></span>
-  <div class="grid grid-cols-3 gap-2" data-keep-columns>
+  <div class="grid grid-cols-3 items-end gap-2" data-keep-columns>
     <div>
-      <label for="printing_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Printing (pages)</label>
-      <input aria-label="Pages to print" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+      <label for="printing_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Pages to print</label>
+      <input type="number" min="0" step="1" inputmode="numeric" placeholder="0"
         id="printing_pages" name="printing_pages" x-model="printingPages"
         {% if materials_preview %}hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
         hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"{% endif %}
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
     </div>
     <div>
-      <label for="photocopy_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Photocopying (pages)</label>
-      <input aria-label="Pages to photocopy" type="number" min="0" step="1" inputmode="numeric" placeholder="0"
+      <label for="photocopy_pages" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500 mb-1">Pages to copy</label>
+      <input type="number" min="0" step="1" inputmode="numeric" placeholder="0"
         id="photocopy_pages" name="photocopy_pages" x-model="photocopyPages"
         {% if materials_preview %}hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
         hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"{% endif %}
@@ -43,7 +47,7 @@
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
     </div>
   </div>
-  <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400" aria-live="polite">
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400" aria-live="polite">
     Pages &times; the printing rate; pages &times; copies &times; the photocopying rate. Leave blank or 0 for no materials cost.
     <span x-show="photocopiedPages" x-cloak x-text="`${Number(photocopyPages) || 0} pages × ${Number(copies) || 0} copies = ${photocopiedPages.toLocaleString()} pages to photocopy.`"></span>
   </p>

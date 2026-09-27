@@ -60,15 +60,22 @@ PAGES = (
 # view paints the dashboard's fixed part and fetches the old /today workbench
 # from /today/panel, so the dashboard never waits on the To-Do queue.
 #
+# On 2026-09-26 the CCEO dashboard opened on This Week (owner: "like the
+# redesigned PL dashboard"), which ?view=today now reaches: the officer's
+# week, built in one pass for its three tables, in place of the Today view
+# that painted the fixed part and then fetched /today/panel (78) — the
+# officer's first screen costs about half what it did. The past-due table
+# also reads the officer's done-but-incomplete work (+1 on every view).
+#
 #   page                          @6    @12   ceiling
-#   /dashboard?view=operations    27     27   27
-#   /dashboard?view=today         26     26   29
+#   /dashboard?view=operations    28     28   30
+#   /dashboard?view=today         39     39   43
 #   /today/panel                  78     78   85
 #   /planning               38     38   41
 #   /fund-requests/weekly   71     72   79
 CEILINGS = {
-    "/dashboard?view=operations": 27,
-    "/dashboard?view=today": 29,
+    "/dashboard?view=operations": 30,
+    "/dashboard?view=today": 43,
     "/today/panel": 85,
     "/planning": 41,
     "/fund-requests/weekly": 79,

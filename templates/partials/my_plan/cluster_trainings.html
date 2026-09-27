@@ -23,7 +23,7 @@ Open Planning
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate cluster_trainings "cluster_trainings_page" 20 as cluster_trainings_pager %}
 {% if cluster_trainings %}
-<table class="edify-data-table mp-table edify-record-table whitespace-nowrap">
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
 <th class="min-w-[90px]">School ID</th>
@@ -38,6 +38,8 @@ Open Planning
 <th class="text-right min-w-[100px]">Cost</th>
 <th class="min-w-[120px]">Budget status</th>
 <th class="min-w-[120px]">Verification</th>
+<th class="min-w-[130px]">Salesforce ID</th>
+<th class="min-w-[160px]">Evidence</th>
 <th class="min-w-[110px]">Status</th>
 <th class="text-right min-w-[90px]">Actions</th>
 </tr>
@@ -100,6 +102,7 @@ Open Planning
 <td data-label="Verification" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.verification_color|default:'purple' }}">{{ row.verification_status|default:'—' }}</span>
 </td>
+{% include "components/completion_cells.html" %}
 <td data-label="Status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label|default:'—' }}</span>
 </td>

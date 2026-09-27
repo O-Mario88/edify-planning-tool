@@ -1160,12 +1160,15 @@ main .dashboard-view-nav { border-block-end: 0; }
      the thing below it rather than as something it is welded to. The gap goes
      on the shell that holds both, not on the nav — every role's panel brings
      its own spacing (the IA's leaves 3px, the CD's 12px), and one gap owned by
-     the container is the same on all of them and cannot double up. */
-  main [data-dashboard-view-shell] {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+     the container is the same on all of them and cannot double up. The gap
+     is set below, for every width. */
+}
+/* On phones too (owner, 2026-09-27): the rail sat on the heading of the panel
+   it switches, 4px apart, on both the officer's and the lead's dashboards. */
+main [data-dashboard-view-shell] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 @media (max-width: 48rem) {
   main .dashboard-view-nav .edify-section-nav__link {
@@ -3985,6 +3988,27 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .school-ssa-group__score { font-weight: 800; white-space: nowrap; }
+
+/* The group training and cluster meeting drawer lists the cluster's
+   recommended interventions in this same format (owner, 2026-09-26). On the
+   dark and Edify blue themes the danger text token is a soft salmon or pink;
+   the owner asked for bright red there, as the week's overdue rows use. */
+:root.theme-dark [data-cluster-ssa-need] .school-ssa-group--danger { color: #ff5252; }
+:root.theme-blue [data-cluster-ssa-need] .school-ssa-group--danger { color: #ff6b6b; }
+[data-cluster-ssa-need] .school-ssa-group ul { gap: .375rem; }
+/* The planner's help text wraps to two or three lines; the caption token's
+   1rem line is for single-line labels (owner, 2026-09-26: "fix the text
+   spacing"). */
+#cluster-planner-form p.edify-text-caption { line-height: 1.45 !important; }
+/* The drawer paints its spans in the body text colour; the score and its
+   dot belong to the group's colour, as on the school record. */
+[data-cluster-ssa-need] .school-ssa-group li :is(.school-ssa-group__score, .school-ssa-group__dot, strong) {
+  color: inherit;
+}
+[data-cluster-ssa-need] .school-ssa-group li .school-ssa-group__dot {
+  background-color: currentColor;
+}
+
 
 .school-ssa-group__empty {
   color: var(--edify-text-subtle);

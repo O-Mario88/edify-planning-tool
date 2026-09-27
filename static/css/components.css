@@ -5550,10 +5550,16 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+/* A fact is as wide as its content, so a long helper used to widen its fact
+   past the others and push the rest of the strip out of view (owner,
+   2026-09-27: "kpi strip on login has suffix which has made the kpi
+   longer"). The helper wraps inside its own measure instead — two lines at
+   most — and every fact keeps the width its label and value need. */
 .context-metrics__helper {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  max-inline-size: 22ch;
   overflow: hidden;
   color: var(--kpi-muted);
   font-size: var(--edify-text-micro-size);
@@ -5692,3 +5698,20 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .school-plan-table__details .school-record-row__metadata { margin: 0 0 .75rem; }
 .school-plan-table__group th { background: var(--edify-surface-muted, var(--edify-surface)); }
 .school-plan-table tbody > tr:not(.school-plan-table__details):hover { background: var(--edify-hover); }
+
+/* ── Pinned actions ─────────────────────────────────────────────────────
+   A planned activities table carries every column its page needs, plus the
+   Salesforce ID and Evidence (owner, 2026-09-26), so on a laptop it is
+   wider than its card and the Actions column fell behind a sideways scroll,
+   where it read as missing. A table that opts in with data-pinned-actions
+   keeps its last column on the right edge of its scroll region, as Core
+   School Oversight's Send to does (platform.css, .core-oversight-table). The
+   plain-table rules give every cell an opaque surface, so the columns
+   scrolling beneath it stay hidden. At every width: a record table stays a
+   table that scrolls sideways on a phone too (mobile-shell.css, "Record
+   tables stay tables"), which is where the actions most need holding. */
+table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([colspan]) {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 1;
+}

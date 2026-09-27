@@ -608,6 +608,15 @@ def preview(
                 line.allocation_index = 0
                 line.label = KEY_LABELS[line.key]
         cost.amount = sum(line.amount for line in cost.lines)
+    # Every line is named as the CD Cost Catalogue names it (owner,
+    # 2026-09-26: "everything should be fetched from the database"): the
+    # rate and its label come from the same row; the code's label is kept
+    # only for a line the card does not carry.
+    _rates, settings = _rate_card(catalogue)
+    for line in cost.lines:
+        setting = settings.get(line.key)
+        if setting is not None and (setting.label or "").strip():
+            line.label = setting.label.strip()
     missing = cost.missing_items
     blockers = [
         (
@@ -957,6 +966,7 @@ def apply_to_activity(
 
     # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
     from datetime import timedelta
+    from apps.activities.facilitation import line_partner_id
     from apps.core.fy import get_operational_fy, get_quarter_for_date
 
     scheduled_date = activity.scheduled_date
@@ -1199,7 +1209,10 @@ def apply_to_activity(
                     responsible_role=None,
                     school=activity.school,
                     cluster=activity.cluster,
-                    partner_id=activity.assigned_partner_id or None,
+                    # Every line of partner-delivered work is the partner's;
+                    # of a partner-facilitated training, only the fee
+                    # (apps.activities.facilitation).
+                    partner_id=line_partner_id(activity, _line_item_type(line.key)),
                     project_id=activity.project_id,
                 )
             )

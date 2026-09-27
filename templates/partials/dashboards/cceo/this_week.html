@@ -1,0 +1,24 @@
+<div class="space-y-4" data-cceo-view="week" data-pl-week>
+  {% comment %}
+  The field officer's This Week (owner, 2026-09-26): the CCEO dashboard "like
+  the redesigned PL dashboard, but only the CCEO's activities, schools, and
+  the partners they assigned schools to". The Programme Lead's week in its
+  solo mode (apps.analytics.pl_week_service, `solo=True`):
+
+  * My activities — Overdue from last week and Due this week, as the School
+    Visits, Group Trainings and Cluster Meetings tables with the Salesforce
+    ID and Evidence columns; each row keeps Complete, Reschedule and Cancel.
+    The officer's Today workbench (route, next action) opens the tab.
+  * My week — the officer's own days, one column a day.
+  * My partners — Partner Monitoring's items in the officer's own scope.
+
+  Its tabs and arrows swap #pl-week-panel alone, as on the lead's dashboard.
+  Every overdue plan of any age is "What needs you now", the first thing in
+  this tab (owner, 2026-09-27: the rail sits under the KPI strip).
+  {% endcomment %}
+  {% include "partials/dashboards/what_needs_you_now.html" %}
+  <section id="pl-week-panel" class="plwk" aria-label="This week" data-pl-week-panel>
+    {% include "partials/dashboards/pl/week_panel.html" %}
+  </section>
+
+</div>

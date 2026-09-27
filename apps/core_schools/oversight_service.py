@@ -194,7 +194,17 @@ def planned_core_work(principal, *, fy: str) -> list:
         item.package_kind = kind
         item.via_cluster = getattr(item, "via_cluster", False)
         item.session_status, item.session_tone = session_status(item)
-    work.sort(key=lambda i: (i.planned_date is None, i.planned_date, i.school_name))
+    # The Salesforce ID and Evidence columns, and open work first by planned
+    # date with the officer's completed work at the bottom (owner,
+    # 2026-09-26). The school name orders rows that share a date.
+    from apps.activities.completion_columns import annotate, sort_completed_last
+
+    annotate(work)
+    from apps.clusters.oversight_service import hold_complete_to_both_columns
+
+    hold_complete_to_both_columns(work)
+    work.sort(key=lambda i: i.school_name or "")
+    sort_completed_last(work)
     return work
 
 

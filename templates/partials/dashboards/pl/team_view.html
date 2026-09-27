@@ -2,9 +2,9 @@
 {% load frontend_filters %}
 {% comment %}
 Team leadership (owner, 2026-09-13): the compact roster (My Team holds the
-full one), who is in the field and away this week and where leave or load puts
-the week at risk, the team's handoffs waiting on the lead grouped by the page
-where each is decided, and the follow-ups the lead has sent.
+full one), where leave or load puts the week at risk (who is working where each
+day is This Week's, since 2026-09-26), the team's handoffs waiting on the lead
+grouped by the page where each is decided, and the follow-ups the lead has sent.
 {% endcomment %}
 <div class="space-y-4" data-pl-view="team">
 
@@ -55,39 +55,22 @@ where each is decided, and the follow-ups the lead has sent.
         </div>
       </section>
 
+      {% comment %}Who is working where, day by day, is This Week's (owner,
+      2026-09-26); this card keeps what that view does not show: where leave
+      or load puts the week at risk.{% endcomment %}
       <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-team-week-title" data-pl-team-week>
         <header class="rpl-card__header">
           <div class="rpl-card__heading">
-            <h2 id="pl-team-week-title" class="rpl-card__title">Your team this week</h2>
-            <span class="rpl-card__subtitle">In the field today, away, and where leave or load puts the week at risk</span>
+            <h2 id="pl-team-week-title" class="rpl-card__title">Risks to this week</h2>
+            <span class="rpl-card__subtitle">Where leave or load puts your team's week at risk</span>
           </div>
           <a class="rpl-card__link" href="{{ team_week.availability_url }}">Team Availability <span aria-hidden="true">&rarr;</span></a>
         </header>
         {% kpi_strip %}
-          {% kpi_metric %}{% kpi_label %}In the field today{% endkpi_label %}{{ team_week.in_field_count }}{% kpi_helper %}officer{{ team_week.in_field_count|pluralize }} with work today{% endkpi_helper %}{% endkpi_metric %}
-          {% kpi_metric %}{% kpi_label %}On leave today{% endkpi_label %}{{ team_week.on_leave|length }}{% kpi_helper %}approved leave{% endkpi_helper %}{% endkpi_metric %}
           {% kpi_metric %}{% kpi_label %}Leave conflicts{% endkpi_label %}{{ team_week.leave_conflicts|length }}{% kpi_helper %}next 7 days{% endkpi_helper %}{% endkpi_metric %}
           {% kpi_metric %}{% kpi_label %}Overloaded{% endkpi_label %}{{ team_week.overloaded|length }}{% kpi_helper %}above healthy capacity{% endkpi_helper %}{% endkpi_metric %}
         {% endkpi_strip %}
         <div class="rpl-follow-list" role="list">
-          {% for row in team_week.in_field|slice:":6" %}
-          <div class="rpl-follow" role="listitem">
-            <div class="rpl-follow__head">
-              <span class="rpl-follow__who">{{ row.name }}</span>
-              <span class="rpl-follow__due">In the field</span>
-            </div>
-            <span class="rpl-follow__what">{{ row.activities }} activit{{ row.activities|pluralize:"y,ies" }} today</span>
-          </div>
-          {% endfor %}
-          {% for row in team_week.on_leave|slice:":6" %}
-          <div class="rpl-follow" role="listitem">
-            <div class="rpl-follow__head">
-              <span class="rpl-follow__who">{{ row.name }}</span>
-              <span class="rpl-follow__due">On leave</span>
-            </div>
-            <span class="rpl-follow__what">Back after {{ row.back }}</span>
-          </div>
-          {% endfor %}
           {% for row in team_week.leave_conflicts|slice:":6" %}
           <div class="rpl-follow" role="listitem">
             <div class="rpl-follow__head">
@@ -107,10 +90,10 @@ where each is decided, and the follow-ups the lead has sent.
           </div>
           {% endfor %}
         </div>
-        {% if not team_week.in_field and not team_week.on_leave and not team_week.leave_conflicts and not team_week.overloaded %}
-        {% include "components/empty_state.html" with message="No field work, leave or load risk for your team today." compact="true" %}
+        {% if not team_week.leave_conflicts and not team_week.overloaded %}
+        {% include "components/empty_state.html" with message="No leave or load risk for your team this week." compact="true" %}
         {% endif %}
-        <div class="rpl-card__footnote"><a href="/dashboard/pl-drilldown?drill=week&amp;fy={{ fy }}" hx-get="/dashboard/pl-drilldown?drill=week&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">See the team's scheduled work this week</a></div>
+        <div class="rpl-card__footnote"><a href="/dashboard?view=week&amp;fy={{ fy }}">See where each officer is working this week</a></div>
       </section>
 
     </div>

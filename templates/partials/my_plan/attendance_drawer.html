@@ -43,9 +43,12 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 id="attendance_file"
 type="file"
 name="attendance_file"
+multiple
 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" capture="environment"
+aria-describedby="attendance-file-help"
 class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
+<p id="attendance-file-help" class="edify-text-caption text-slate-500">A sheet with several pages: choose all the pages together (PDFs or photos) and they are joined into one PDF.</p>
 </div>
 
 <!-- School Attendance Checklist -->

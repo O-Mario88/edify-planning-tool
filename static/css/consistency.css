@@ -167,8 +167,18 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
     display: inline-flex;
     align-items: center;
     min-height: 32px;
-    /* Negative margin so the hit area does not become the row height. */
-    margin-block: -8px;
+    /* Negative margin so the hit area does not become the row height. It is
+       the cell's own padding (the pinned 32px row: 5.5px either side), so
+       the target is the row exactly and its text sits on the row's line —
+       -8px lifted every link 2.5px above its neighbours (2026-09-27). */
+    margin-block: -5.5px;
+  }
+  /* A record's title link keeps its ellipsis, which needs a block, so the
+     centring above does not reach it: its text sat at the top of the target,
+     7px above the rest of the row on phones and tablets (2026-09-27). One
+     line as tall as the target centres it the same way. */
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"]) .edify-record-table [data-record-title] > a:first-child {
+    line-height: 32px;
   }
 }
 
@@ -4307,7 +4317,26 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
   background: #285b96 !important;
   color: #fff !important;
-  padding: .5rem .75rem !important;
+  padding: .375rem .75rem !important;
+}
+/* A title band names the table under it; it does not compete with it (owner,
+   2026-09-27: "reduce the size of the blue table header row not to dominate
+   the designs"). Every theme: the title and its caption on the label step —
+   table structure never drops to micro — told apart by weight, both tight,
+   so a one-line band stays about 2rem tall. */
+:root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4):not(button *):not(a *),
+:root :is(main, .drawer-body, [role="dialog"]) :is(h2, h3, h4).edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
+  margin: 0 !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+:root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar p:not(button *):not(a *) {
+  margin-block: 0.125rem 0 !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 450 !important;
+  line-height: 1.35 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
   color: #fff !important;
@@ -4316,7 +4345,9 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td) :is(span, a, button) {
   color: #285b96 !important;
 }
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table) thead :is(th, td) {
+/* Who's Online is a record of people, read like every other dashboard table
+   (owner, 2026-09-27: one table header treatment across the dashboards). */
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table, table.presence-table) thead :is(th, td) {
   color: #285b96 !important;
   font-size: var(--edify-text-table-heading-size) !important;
   font-weight: 600 !important;

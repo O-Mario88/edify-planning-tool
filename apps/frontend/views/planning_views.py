@@ -972,6 +972,27 @@ def _requester_identity(user) -> str | None:
     )
 
 
+def _cluster_need_groups(ssa_need) -> list[dict]:
+    """The cluster's recommended interventions as the school record's SSA
+    groups (apps.ssa.presentation): Critical under "needing urgent
+    attention", the rest under "to watch", weakest first, empty groups left
+    out."""
+    from apps.ssa.presentation import SSA_SCORE_GROUPS
+
+    titles = {key: (title, tone) for key, title, tone in SSA_SCORE_GROUPS}
+    rows = [row for row in ssa_need.rows if row["intervention"] in ssa_need.priorities]
+    groups = []
+    for key, keep in (
+        ("urgent", lambda row: row.get("band") == "Critical"),
+        ("warning", lambda row: row.get("band") != "Critical"),
+    ):
+        items = [row for row in rows if keep(row)]
+        if items:
+            title, tone = titles[key]
+            groups.append({"key": key, "title": title, "tone": tone, "items": items})
+    return groups
+
+
 @require_any_page_permission("planning", "visit_requests")
 def schedule_modal_view(request):
     if not _may_open_schedule_drawer(request.user):
@@ -1074,17 +1095,17 @@ def schedule_modal_view(request):
 
         ssa_need = cluster_need(cluster.id)
         need_by_code = {row["intervention"]: row for row in ssa_need.rows}
+        # The list offers the trainings for the cluster's recommended
+        # interventions, by their own names (owner, 2026-09-26: no
+        # " · priority need" on the name — "it makes it very messy"); the
+        # drawer's Show all trainings reaches the rest, and the service
+        # schedules any governed course.
         for option in training_options:
             row = need_by_code.get(option.get("ssaIntervention"))
             option["addressesPriority"] = (
                 option.get("ssaIntervention") in ssa_need.priorities
             )
             option["clusterAverage"] = row["average"] if row else None
-            option["label"] = (
-                f"{option['label']} · priority need"
-                if option["addressesPriority"]
-                else option["label"]
-            )
         training_options.sort(key=lambda option: not option["addressesPriority"])
 
         from apps.accounts.models import StaffProfile
@@ -1129,6 +1150,10 @@ def schedule_modal_view(request):
                 for row in ssa_need.rows
                 if row["intervention"] in ssa_need.priorities
             ],
+            # The recommended interventions drawn as a school record draws its
+            # SSA (owner, 2026-09-26: "use the second reference photo, in
+            # that exact format"): the urgent ones, then the ones to watch.
+            "ssa_need_groups": _cluster_need_groups(ssa_need),
             "selected_focus_intervention": (
                 ssa_need.priorities[0]
                 if action == "meeting" and ssa_need.priorities
@@ -1138,6 +1163,18 @@ def schedule_modal_view(request):
                 (code, label, need_by_code.get(code))
                 for code, label in SsaIntervention.choices
             ],
+            # The meeting's focus lists the recommended interventions (owner,
+            # 2026-09-26), Show all interventions the rest; any is accepted.
+            "meeting_intervention_options_json": json.dumps(
+                [
+                    {
+                        "code": code,
+                        "label": str(label),
+                        "recommended": code in ssa_need.priorities,
+                    }
+                    for code, label in SsaIntervention.choices
+                ]
+            ),
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context

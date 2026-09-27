@@ -37,10 +37,14 @@ TEMPLATE_FAMILIES: dict[str, tuple[str, ...]] = {
         "templates/partials/ia/operations.html",
         "templates/partials/ia/_geography_cards.html",
     ),
+    # The field officer's dashboard opens on This Week since 2026-09-26; its
+    # overdue rows are the past-due table the page includes above the views.
     "templates/pages/dashboards/cceo.html": (
         "templates/partials/dashboards/cceo/view.html",
+        "templates/partials/dashboards/cceo/this_week.html",
         "templates/partials/dashboards/cceo/map_view.html",
         "templates/partials/dashboards/cceo/week.html",
+        "templates/partials/dashboards/what_needs_you_now.html",
     ),
     "templates/partials/dashboards/hr/body.html": (
         "templates/partials/dashboards/hr/view.html",

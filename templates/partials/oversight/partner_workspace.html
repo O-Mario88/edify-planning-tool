@@ -187,6 +187,7 @@ resolving a hand-back opens its own governed drawer.
       </ul>
     </header>
     {% include "partials/oversight/partner_work_tables.html" %}
+    {% if facilitated_trainings %}{% include "partials/oversight/partner_trainings_table.html" %}{% endif %}
   </section>
   {% else %}
   {% include "components/empty_state.html" with title="No partner work in this period" message="When a school's support is handed to a Partner it appears here — first waiting on the Partner's date, then through delivery, IA verification and payment." %}

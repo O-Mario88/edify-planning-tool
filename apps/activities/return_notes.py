@@ -32,8 +32,10 @@ NOTE_MAX = 512
 
 #: The reasons an approver most often returns a school visit or a training
 #: for, offered on both the Programme Lead's and Impact Assessment's Return.
-#: "Participants not entered in Salesforce" is the owner's own example.
+#: "Participants not entered in Salesforce" is the owner's own example, and
+#: so is a Salesforce ID with no participants behind it (2026-09-26).
 COMMON_REASONS = (
+    "Salesforce ID entered, but no participants in Salesforce",
     "Participants not entered in Salesforce",
     "Activity ID missing or wrong in Salesforce",
     "Attendance form missing or unreadable",

@@ -226,3 +226,24 @@ def outbox_owner(user):
     from django.utils.crypto import salted_hmac
 
     return salted_hmac("edify.field-outbox.owner", str(user.pk)).hexdigest()[:24]
+
+
+@register.filter
+def field_role(user):
+    """ "partner" or "staff" for <body data-edify-field-role>, "" signed out.
+
+    The upload drawer served without signal is made for nobody
+    (partials/my_plan/offline_evidence_drawer.html), so it reads this to show
+    the Salesforce ID to staff only (owner, 2026-09-26: partners upload, staff
+    complete). A display hint from the active role, costing no query; the
+    server decides what an upload may carry when it arrives.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return ""
+    from apps.core.rbac import EdifyRole
+
+    partner_roles = {
+        EdifyRole.PARTNER_ADMIN.value,
+        EdifyRole.PARTNER_FIELD_OFFICER.value,
+    }
+    return "partner" if getattr(user, "active_role", "") in partner_roles else "staff"

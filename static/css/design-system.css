@@ -595,6 +595,46 @@
   --edify-layer-toast: 60;
 }
 
+/* ── THE SCALE BY ORIENTATION AND DISPLAY ───────────────────────────────────
+   Still the one scale above (owner, 2026-09-27: "default typography with
+   responsive size adjustment based on the screen size, resolution, and
+   orientation"). Width alone reads a phone turned sideways as a small laptop
+   and a large low-density monitor as a 1920px one, so two cases answer to
+   more than the width:
+
+   · A phone on its side (landscape, at most 30rem tall) keeps its phone
+     sizes. Its width would otherwise interpolate toward desktop headings on a
+     screen with barely 400px of height for them.
+   · A wide, low-density display (150rem / 2400px and wider at up to 1.5 device
+     pixels per CSS pixel: a 1440p or 4K monitor run at 100%) steps one pixel
+     up the scale, so copy on a 27" screen reads at the size it does on a
+     laptop. A high-density display is already sharp at the clamp's ceiling.
+     The hero and KPI values keep their 24px ceiling: the strip is built to it.
+
+   These are the only two places the steps are re-declared, and only here. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  :root {
+    --edify-text-display-size: 1.25rem;
+    --edify-text-hero-size: 1.25rem;
+    --edify-text-heading-size: 1rem;
+    --edify-text-title-size: 0.9375rem;
+    --edify-text-body-size: 0.875rem;
+    --edify-text-label-size: 0.8125rem;
+    --edify-text-micro-size: var(--edify-text-floor);
+    --edify-text-tile-value-size: 1.125rem;
+  }
+}
+@media (min-width: 150rem) and (max-resolution: 1.5dppx) {
+  :root {
+    --edify-text-display-size: 1.6875rem;
+    --edify-text-heading-size: 1.3125rem;
+    --edify-text-title-size: 1.125rem;
+    --edify-text-body-size: 1rem;
+    --edify-text-label-size: 0.9375rem;
+    --edify-text-micro-size: 0.875rem;
+  }
+}
+
 :root.light {
   color-scheme: light;
   /* Explicitly re-state the reference-blue light-mode scale so it cannot be
