@@ -112,23 +112,6 @@ class RouteValidationService:
                     "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
                 }
             )
-        district_ids = {
-            s.district_id
-            for s in schools
-            if s.district_id
-            and district_type_for_staff(responsible_user, s.district) == "secondary"
-        }
-        if len(district_ids) > 1:
-            from apps.daily_visit_batches.services import _resolve_group
-
-            if _resolve_group(district_ids) is None:
-                issues.append(
-                    {
-                        "code": "secondary_group_unapproved",
-                        "severity": "blocking",
-                        "message": "Multiple secondary districts without an approved Secondary Route Group.",
-                    }
-                )
         no_district = [s.name for s in schools if not s.district_id]
         if no_district:
             issues.append(

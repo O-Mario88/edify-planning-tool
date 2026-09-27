@@ -3372,7 +3372,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1119,
+   "line": 1090,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3381,7 +3381,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1152,
+   "line": 1123,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,

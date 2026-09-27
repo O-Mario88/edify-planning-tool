@@ -1016,7 +1016,7 @@ def _workflow_issues() -> dict:
         DAILY_BATCH_ELIGIBLE_TYPES,
         REQUIRED_KEYS,
     )
-    from apps.geography.models import District, SecondaryDistrictGroup
+    from apps.geography.models import District
 
     # Districts with no primary/secondary classification yet — the root cause
     # of most "cannot schedule" errors below; actionable at
@@ -1049,7 +1049,6 @@ def _workflow_issues() -> dict:
         _home_districts[str(_profile_id)] = _home_id
         _home_districts[str(_user_id)] = _home_id
     mixed_district_batches = 0
-    unapproved_secondary_batches = 0
     batch_count_mismatch = 0
     budget_changed_after_approval = 0
     from apps.fund_requests.models import WeeklyFundRequest as _WFR
@@ -1069,7 +1068,6 @@ def _workflow_issues() -> dict:
         .prefetch_related(_live_members)
     ):
         _member_activities = _batch._live_members
-        _live_district_ids = set()
         _live_types = set()
         for _a in _member_activities:
             if _a.school_id and _a.school.district_id:
@@ -1083,28 +1081,11 @@ def _workflow_issues() -> dict:
                     if _home
                     else _a.school.district.district_type
                 )
-                if _type == "secondary":
-                    _live_district_ids.add(_a.school.district_id)
                 if _type:
                     _live_types.add(_type)
         _live_count = len(_member_activities)
         if "secondary" in _live_types and _batch.district_type != "secondary":
             mixed_district_batches += 1
-        if _batch.district_type == "secondary" and len(_live_district_ids) > 1:
-            _match = (
-                SecondaryDistrictGroup.objects.filter(status="approved")
-                .annotate(
-                    n=Count(
-                        "members__district_id",
-                        distinct=True,
-                        filter=Q(members__district_id__in=_live_district_ids),
-                    )
-                )
-                .filter(n=len(_live_district_ids))
-                .exists()
-            )
-            if not _match:
-                unapproved_secondary_batches += 1
         if _live_count and _live_count != _batch.school_count:
             batch_count_mismatch += 1
             is_locked = (
@@ -1381,10 +1362,6 @@ def _workflow_issues() -> dict:
     if mixed_district_batches:
         blockers.append(
             f"{mixed_district_batches} Daily Visit Batch(es) include secondary-district schools but use primary daily rates."
-        )
-    if unapproved_secondary_batches:
-        blockers.append(
-            f"{unapproved_secondary_batches} secondary-district Daily Visit Batch(es) span districts with no approved group."
         )
     if batch_activities_missing_lines:
         blockers.append(
@@ -1723,7 +1700,6 @@ def _workflow_issues() -> dict:
         "confirmedWeeklyRequestsDrifted": confirmed_wfrs_drifted,
         "scheduledVisitsMissingBatch": scheduled_visits_missing_batch,
         "mixedDistrictBatches": mixed_district_batches,
-        "unapprovedSecondaryGroupBatches": unapproved_secondary_batches,
         "batchActivitiesMissingCostLines": batch_activities_missing_lines,
         "batchSchoolCountMismatch": batch_count_mismatch,
         "underTargetBatchesMissingReason": under_target_missing_reason,

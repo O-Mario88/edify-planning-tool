@@ -52,13 +52,9 @@ def route_intelligence_checks() -> dict:
     mixed_district_days = (
         batches.filter(issues__code="mixed_district_types").distinct().count()
     )
-    # 4. Secondary districts grouped without an approved route group.
-    ungrouped_secondary_days = (
-        batches.filter(issues__code="secondary_group_unapproved").distinct().count()
-    )
-    # 5. Route load exceeds the working day.
+    # 4. Route load exceeds the working day.
     overloaded_days = batches.filter(feasible=False).count()
-    # 6. Fewer schools than the CD target without a recorded reason.
+    # 5. Fewer schools than the CD target without a recorded reason.
     below_target_no_reason = 0
     for rb in batches.filter(target_snapshot__isnull=False).select_related(
         "cost_batch"
@@ -67,14 +63,14 @@ def route_intelligence_checks() -> dict:
             reason = rb.cost_batch.reason if rb.cost_batch else None
             if not (reason or "").strip():
                 below_target_no_reason += 1
-    # 7. Cost batch and route batch school counts do not match.
+    # 6. Cost batch and route batch school counts do not match.
     count_mismatch = 0
     for rb in DailyVisitRouteBatch.objects.exclude(
         cost_batch__isnull=True
     ).select_related("cost_batch"):
         if rb.cost_batch and rb.school_count != rb.cost_batch.school_count:
             count_mismatch += 1
-    # 8. Low location confidence on a scheduled visit day.
+    # 7. Low location confidence on a scheduled visit day.
     low_confidence_days = batches.filter(
         confidence__in=["low", "needs_cleanup"]
     ).count()
@@ -83,7 +79,6 @@ def route_intelligence_checks() -> dict:
         "plannedVisitNoRouteBatch": visits_without_route_batch,
         "schoolsWeakLocation": schools_weak_location,
         "mixedDistrictRouteDays": mixed_district_days,
-        "ungroupedSecondaryDays": ungrouped_secondary_days,
         "routeLoadExceedsDay": overloaded_days,
         "belowTargetNoReason": below_target_no_reason,
         "costRouteCountMismatch": count_mismatch,
