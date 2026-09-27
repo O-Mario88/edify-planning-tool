@@ -177,6 +177,22 @@ class DrawerMotionTest(SimpleTestCase):
         # The action shelf clears the home indicator.
         self.assertIn("env(safe-area-inset-bottom)", phone)
 
+    def test_the_drawer_is_sized_to_the_screen(self):
+        """Owner, 2026-09-27: "reduce the drawer size on mobile screen as well
+        not to cover the entire mobile screen. On tablet screen as well." A
+        phone's sheet stops at 86% of the small viewport; a tablet's card at
+        40rem or 78% of the screen; the form inside is compact."""
+        styles = _read("static/css/consistency.css")
+        block = styles[styles.index("Drawer size by screen") :]
+        self.assertIn("--edify-sheet-top-gap: 14svh;", block)
+        self.assertIn("@media (min-width: 48rem) and (max-width: 79.99rem)", block)
+        self.assertIn("max-block-size: min(40rem, 78dvh) !important;", block)
+        fields = _read("static/css/form-refinement.css")
+        self.assertIn("#drawer-container .drawer-body :is(", fields)
+        self.assertIn("block-size: 2.5rem !important;", fields)
+        # A phone's field keeps a 16px value, or iOS zooms on focus.
+        self.assertIn("font-size: 1rem !important;", fields)
+
     def test_reduced_motion_removes_the_movement_not_the_drawer(self):
         block = self.final[
             self.final.index("@media (prefers-reduced-motion: reduce)") :

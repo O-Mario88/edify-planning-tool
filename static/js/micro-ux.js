@@ -123,8 +123,14 @@
     var contentTables = elementsWithin(root, 'main table, .drawer-body table, [role="dialog"] table');
     var containingTable = root.closest && root.closest('table.edify-plain-table');
     if (containingTable && contentTables.indexOf(containingTable) < 0) contentTables.push(containingTable);
-    contentTables.forEach(function (table) {
-      table.classList.add('edify-plain-table');
+    /* A record table's region names its table even when it holds only an
+       empty state (owner, 2026-09-27: every table card takes the band), so
+       it is an anchor for the title band as well as the table itself. */
+    var bandAnchors = contentTables.concat(Array.from(elementsWithin(root, 'main .edify-record-table-wrap')).filter(function (wrap) {
+      return !wrap.querySelector('table');
+    }));
+    bandAnchors.forEach(function (table) {
+      if (table.matches('table')) table.classList.add('edify-plain-table');
       // Find the nearest local title bar; never paint a page heading or filters.
       var branch = table;
       while (branch.parentElement && !branch.parentElement.matches('main, body')) {
@@ -136,9 +142,13 @@
             // own h2, so it was painted as the blue title bar of the next table
             // in the same container, and its labels turned white on white.
             // Whole cards, empty states and headers containing navigation are
-            // independent surfaces, never the title band of a later table.
-            && !child.matches('section, article, aside, .card, [role="tabpanel"], .edify-page-header, form, [data-context-metrics], .context-metrics, summary, .cd-officer-summary, details > :first-child, [data-no-titlebar], [data-card-header], .edify-card-header, [class*="border-b"]')
-            && !child.querySelector('h1, table, form, input, select, textarea, section, article, nav, [role="tablist"], [data-edify-tablist], button, [role="button"], .edify-empty-state, [class*="badge"], [class*="pill"]')
+            // independent surfaces, never the title band of a later table. A
+            // table's own title bar may carry its count and its own buttons
+            // and sit over a divider (owner, 2026-09-27: the dashboards'
+            // tables, "School Visits (Past Due) 6 · Open Planning", lost the
+            // blue band because a badge or a button disqualified them).
+            && !child.matches('section, article, aside, .card, [role="tabpanel"], .edify-page-header, form, [data-context-metrics], .context-metrics, summary, .cd-officer-summary, details > :first-child, [data-no-titlebar], [data-card-header], .edify-card-header')
+            && !child.querySelector('h1, table, form, input, select, textarea, section, article, nav, [role="tablist"], [data-edify-tablist], .edify-empty-state')
             && child.querySelectorAll('h2, h3, h4').length <= 1
             && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));
         });
@@ -149,6 +159,7 @@
         if (parent.querySelectorAll('table').length > 1 || parent.querySelector('h1')) break;
         branch = parent;
       }
+      if (!table.matches('table')) return; // an empty region: the band only
 
       table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
         /* The menu's own trigger is a control in the cell and keeps the row
@@ -729,6 +740,46 @@
           element.removeAttribute('title');
           delete element.dataset.edifyTitle;
         }
+      });
+    });
+  }
+
+  /* ── A finger's target on every small control ───────────────────────────
+     Owner's mobile directive, 2026-09-27: "All interactive controls must have
+     an effective target of at least 44×44 CSS pixels ... Use invisible touch
+     padding where needed." On a touch or phone-width screen, a control
+     smaller than that gets data-edify-touch and mobile-micro-ux.css gives it
+     an invisible 44px square centred on it. A control that draws its own
+     ::after, or holds an absolutely placed badge that the square's
+     positioning would move, is left as it is. Reads first, then writes. */
+  var touchScreen = window.matchMedia('(pointer: coarse), (max-width: 47.999rem)');
+  var TOUCHABLE = ':is(main, #drawer-container) :is(a[href], button, summary, [role="tab"], [role="button"])';
+
+  function markTouchTargets(root) {
+    if (!touchScreen.matches) return;
+    runWhenIdle(function () {
+      if (root !== document && !root.isConnected) return;
+      var scope = root.querySelectorAll ? root : document;
+      var controls = Array.from(scope.querySelectorAll(TOUCHABLE));
+      if (root.matches && root.matches(TOUCHABLE)) controls.push(root);
+      var marks = controls.map(function (control) {
+        if (control.hasAttribute('data-edify-touch')) return null;
+        var box = control.getBoundingClientRect();
+        if (!box.width || !box.height || (box.width >= 44 && box.height >= 44)) return null;
+        if (window.getComputedStyle(control, '::after').content !== 'none') return null;
+        var style = window.getComputedStyle(control);
+        /* A link in running text keeps its line: a square would take taps
+           from the lines above and below it. */
+        if (style.display === 'inline' && control.closest('p')) return null;
+        if (style.position !== 'static') return 'positioned';
+        var placed = Array.from(control.querySelectorAll('*')).some(function (child) {
+          var position = window.getComputedStyle(child).position;
+          return position === 'absolute' || position === 'fixed';
+        });
+        return placed ? null : 'static';
+      });
+      controls.forEach(function (control, index) {
+        if (marks[index]) control.setAttribute('data-edify-touch', marks[index]);
       });
     });
   }
@@ -2099,6 +2150,7 @@
       fitTables(root);
       watchScrollRegions(root);
       titleTruncatedLabels(root);
+      markTouchTargets(root);
     });
   }
 

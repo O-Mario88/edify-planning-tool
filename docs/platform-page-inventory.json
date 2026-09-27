@@ -856,7 +856,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 76773,
+      "bytes": 75977,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2317,7 +2317,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21449,
+      "bytes": 20599,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4669,7 +4669,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5513,
+      "bytes": 5585,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"

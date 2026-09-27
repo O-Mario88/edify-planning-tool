@@ -59,10 +59,18 @@ for (const [theme, color] of [['theme-light', 'rgb(255, 255, 255)'], ['theme-dar
       await expect(page.locator('.context-metrics__value').first()).toHaveCSS('font-weight', '700');
       const metrics = await rail.evaluate((el, whole) => ({ width: el.clientWidth, visible: (0, eval)(whole)(el), overflow: el.scrollWidth > el.clientWidth + 2, height: el.offsetHeight, pageOverflow: document.documentElement.scrollWidth > innerWidth }), wholeFacts);
       const visible = metrics.visible;
-      // A phone shows a couple of facts and scrolls to the rest; a desktop shows most or all of them.
-      expect(visible).toBeGreaterThanOrEqual(width === 390 ? 2 : width === 768 ? 4 : 6);
-      if (width === 390) expect(visible).toBeLessThan(8);
-      expect(metrics.height).toBeLessThanOrEqual(100);
+      if (width === 390) {
+        // A phone shows every fact at once in a grid of compact rows, with
+        // nothing to swipe (owner's mobile directive, 2026-09-27: "Do not make
+        // mobile users horizontally scroll through a long KPI carousel").
+        expect(metrics.overflow).toBe(false);
+        expect(await rail.evaluate(el => { const r = el.getBoundingClientRect(); return [...el.children].every(f => { const b = f.getBoundingClientRect(); return b.left >= r.left - 1 && b.right <= r.right + 1; }); })).toBe(true);
+        expect(await rail.evaluate(el => getComputedStyle(el).display)).toBe('grid');
+      } else {
+        // A tablet shows most facts and scrolls to the rest; a desktop shows most or all of them.
+        expect(visible).toBeGreaterThanOrEqual(width === 768 ? 4 : 6);
+        expect(metrics.height).toBeLessThanOrEqual(100);
+      }
       expect(await page.locator(".context-metrics__value").first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeLessThanOrEqual(24);
       expect(metrics.pageOverflow).toBe(false);
       await expect(page.locator('.context-metrics__value')).toHaveText(['2,048', '384', '48', '156', '120', '94.2%', '68.4%', '07']);
@@ -136,7 +144,8 @@ for (const [name, html] of Object.entries(platformFixtures)) {
         const rail = page.locator('.context-metrics__sentence');
         const measurements = await rail.evaluate(el => ({ height: el.offsetHeight, overflow: document.documentElement.scrollWidth > innerWidth, values: [...el.querySelectorAll('.context-metrics__value')].map(v => v.textContent.trim()), labels: [...el.querySelectorAll('.context-metrics__label')].map(v => v.textContent.trim()) }));
         expect(measurements.overflow).toBe(false);
-        expect(measurements.height).toBeLessThan(200);
+        // A phone stacks the facts two to a row, so its strip is taller.
+        expect(measurements.height).toBeLessThan(width === 390 ? 520 : 200);
         expect(measurements.values.every(v => v && !v.includes('{{') && !v.includes('}}'))).toBe(true);
         expect(measurements.labels.every(Boolean)).toBe(true);
         if (name === 'finance-sources') {
@@ -168,7 +177,9 @@ test('public sign-in retains its live strip on mobile, tablet and desktop', asyn
 test('real HTMX swaps clean up text nodes and remount KPI navigation', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await render(page, 'theme-light', 390);
+  // At a tablet's width, where the strip still pages; a phone shows every
+  // fact in a grid and has no navigation to remount.
+  await render(page, 'theme-light', 768);
   await page.route('**/replacement', route => route.fulfill({
     body: '\n' + markup.replace('data-context-metrics', 'data-live-replacement data-context-metrics') + '\n', contentType: 'text/html',
   }));
@@ -183,7 +194,7 @@ test('real HTMX swaps clean up text nodes and remount KPI navigation', async ({ 
   await page.getByRole('button', { name: 'Refresh KPI fixture' }).click();
   await expect(page.locator('main > [data-live-replacement][data-kpi-ready]')).toHaveCount(1);
   await page.getByRole('button', { name: 'Show next metrics' }).click();
-  // The swapped strip pages by however many facts fit at 390px, so the range
+  // The swapped strip pages by however many facts fit at 768px, so the range
   // only has to have moved off the first page of eight.
   await expect(page.locator('.context-metrics__range')).toHaveText(/^(\d+)–(\d+) of 8$/);
   await expect.poll(rangeStart(page), { message: 'the remounted range moves past the first fact' }).toBeGreaterThan(1);

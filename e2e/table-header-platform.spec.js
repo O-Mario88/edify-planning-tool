@@ -22,7 +22,8 @@ test('light table headers across platform pages',async({page},info)=>{
      for(const e of document.querySelectorAll('table thead th, .edify-table-titlebar')){
       const r=e.getBoundingClientRect();if(!r.width||!r.height)continue;
       const s=getComputedStyle(e);
-      if(e.matches('th')&&s.color!=='rgb(40, 91, 150)')errors.push(e.className+' color='+s.color);
+      // A header row painted blue (the budget ledger's band) writes white on it.
+      if(e.matches('th')&&!e.closest('.budget-ledger-band')&&s.color!=='rgb(40, 91, 150)')errors.push(e.className+' color='+s.color);
       if(e.matches('.edify-table-titlebar')&&s.backgroundColor!=='rgb(40, 91, 150)')errors.push(e.className+' background='+s.backgroundColor);
      }
      return [...new Set(errors)].slice(0,8);

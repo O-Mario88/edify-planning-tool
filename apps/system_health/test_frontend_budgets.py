@@ -91,7 +91,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: into form-refinement.css rather than a sheet of their own, so the
     #: stylesheet count held at 17.
     RENDER_BLOCKING_STYLESHEETS = 17
-    CSS_GZIP_KB = 200
+    #: Raised to 202 on 2026-09-27 for the phone pass the owner asked for
+    #: (199.0 to 201.0 KB, +1%): KPI strips as a grid on phones, a record's
+    #: Actions beside its name, pinned selection columns, invisible 44px touch
+    #: squares, drawers sized to the screen, blue title bands with white text
+    #: on every table and heading rows that fit a phone.
+    CSS_GZIP_KB = 202
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -103,7 +108,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: Actions menu opened "fixed in one position and hidden" (owner). It
     #: replaced rowMenu's, the rail menu's and the calendar's own placement
     #: code, so the net growth is 5.5 KB (123.9 to 129.4).
-    JS_GZIP_KB = 130
+    #:
+    #: Raised to 131 on 2026-09-27 (129.4 to 130.8 KB, +1.1%) for micro-ux.js
+    #: giving every small control an invisible 44px touch square and letting a
+    #: table's title bar keep its count and buttons (and an empty table region)
+    #: take the blue band.
+    JS_GZIP_KB = 131
     INLINE_SCRIPT_KB = 40
 
     @classmethod

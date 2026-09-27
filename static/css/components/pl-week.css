@@ -154,6 +154,9 @@
 
 /* ── Everyone's week: a board of people by days ─────────────────────── */
 .plwk-board-scroll {
+  /* The containing block of the cells' visually hidden labels (absolute):
+     without it they escape the scroller and widen the whole workspace. */
+  position: relative;
   max-inline-size: 100%;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -410,39 +413,36 @@
   padding: 0.25rem 1rem 1rem;
 }
 
-/* ── Phones: each person becomes a card, empty days drop away ────────── */
+/* ── Phones: still a table (owner's mobile directive, 2026-09-27: "Tables
+   must remain tables on mobile") ───────────────────────────────────────────
+   The board keeps its header row, every day column and every cell, and
+   scrolls sideways inside its own box; the person column stays pinned at the
+   left edge with an opaque background, so each row keeps its name in view. */
 @media (max-width: 47.999rem) {
-  .plwk-board-scroll {
-    overflow-x: visible;
+  .plwk-board {
+    --plw-day-columns: repeat(5, minmax(7.25rem, 1fr));
+    min-inline-size: 45rem;
   }
-  .plwk-board,
   .plwk-board[data-days="7"] {
-    min-inline-size: 0;
-  }
-  .plwk-board__head {
-    display: none;
+    --plw-day-columns: repeat(7, minmax(7rem, 1fr));
+    min-inline-size: 60rem;
   }
   .plwk-board__row {
-    display: block;
-    padding-block: 0.5rem;
+    grid-template-columns: 8.5rem 5rem var(--plw-day-columns);
   }
-  .plwk-board__row > * {
-    padding: 0.25rem 1rem !important;
+  .plwk-board__who {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    padding-inline-start: 0.75rem !important;
+    background: var(--edify-surface);
+    box-shadow: inset -1px 0 0 var(--edify-divider);
   }
-  .plwk-board [data-empty] {
-    display: none;
+  .plwk-board__head .plwk-board__who {
+    background: var(--edify-table-header, var(--edify-surface-muted));
   }
-  .plwk-board [role="cell"][data-label]::before {
-    content: attr(data-label);
-    display: block;
-    margin-block-end: 0.25rem;
-    color: var(--edify-text-muted);
-    font-weight: var(--edify-text-label-weight);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .plwk-board__carried {
-    text-align: start;
+  :root:is(.light, .theme-light) .plwk-board__head .plwk-board__who {
+    background: var(--edify-table-canvas, var(--edify-surface));
   }
   .plwk-box__header--split {
     flex-direction: column;

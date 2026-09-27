@@ -52,7 +52,9 @@ test('school scheduling action still opens its drawer',async({page})=>{
    await page.setViewportSize({width,height:900});
    for(const theme of ['theme-light','theme-dark','theme-blue']){
     await page.evaluate(t=>{document.documentElement.classList.remove('theme-light','theme-dark','theme-blue');document.documentElement.classList.add(t);document.documentElement.classList.toggle('dark',t!=='theme-light')},theme);
-    const issues=await triggers.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();const floor=parseFloat(getComputedStyle(e).minHeight)||0;return r.width&&r.height&&(r.height>floor+1||e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2)}).map(e=>e.className+' height='+e.getBoundingClientRect().height));
+    // The label's own box, not scrollWidth: a phone's invisible 44px touch
+    // square (a positioned ::after) overflows the button on purpose.
+    const issues=await triggers.evaluateAll(items=>items.filter(e=>{const r=e.getBoundingClientRect();const floor=parseFloat(getComputedStyle(e).minHeight)||0;const text=document.createRange();text.selectNodeContents(e);const t=text.getBoundingClientRect();return r.width&&r.height&&(r.height>floor+1||t.height>r.height+2||t.left<r.left-1||t.right>r.right+1)}).map(e=>e.className+' height='+e.getBoundingClientRect().height));
     expect(issues,route+' '+width+' '+theme).toEqual([]);
    }
   }

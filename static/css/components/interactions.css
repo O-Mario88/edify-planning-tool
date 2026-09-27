@@ -274,8 +274,10 @@ main :is(
   .edify-section-nav__clusters,
   .edify-section-nav__inner
 ) {
-  background: #071e3d !important;
-  border-color: rgba(59, 130, 246, 0.28) !important;
+  /* The card's own surface, not a darker strip (owner, 2026-09-27: "Black
+     tab strip" — #071e3d under #103f62 cards read as a black bar). */
+  background: var(--edify-surface-raised, #103f62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   --edify-segment-rule: rgba(255, 255, 255, 0.18) !important;
 }
 
@@ -292,8 +294,8 @@ main :is(
   .edify-section-nav__clusters,
   .edify-section-nav__inner
 ) {
-  background: var(--edify-surface, #0f172a) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: var(--edify-surface-raised, var(--edify-surface, #0f172a)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   --edify-segment-rule: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -1413,6 +1415,66 @@ main .edify-filter-row > label.edify-filter-row__field {
     max-inline-size: calc(100% - 3.5rem) !important;
   }
 
+  /* One line of text, one row (owner, 2026-09-27: "cluster meeting planned
+     this FY is wrapped with a dead space on the right and the counter further
+     wrapped"). A title with its icon and count — no action, no paragraph —
+     reads as one run of text: the count follows the title's last word and
+     wraps with it, and a two-line title leaves no empty column beside it. */
+  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) {
+    display: block !important;
+    min-inline-size: 0 !important;
+  }
+
+  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > .edify-head-row__title {
+    display: inline !important;
+  }
+
+  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > :not(.edify-head-row__title) {
+    display: inline-flex !important;
+    vertical-align: middle;
+    margin-inline: 0.375rem 0 !important;
+  }
+
+  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > :not(.edify-head-row__title):first-child {
+    margin-inline: 0 0.375rem !important;
+  }
+
+  /* A title beside one action keeps the row: the action at its own width on
+     the right, the title in the rest of the line, wrapping inside it. */
+  main .edify-head-row--action.edify-head-row--action:has(> :nth-child(2):last-child) {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    column-gap: 0.625rem !important;
+  }
+
+  main .edify-head-row--action.edify-head-row--action:has(> :nth-child(2):last-child) > .edify-head-row__title.edify-head-row__title {
+    flex: 1 1 0 !important;
+    max-inline-size: none !important;
+  }
+
+  /* A heading row's buttons are compact on a phone (owner, 2026-09-27:
+     "reduce the buttons ... according to the screen size"); micro-ux.js gives
+     each a 44px touch square. */
+  main .edify-head-row > :is(a.btn, button.btn, a[class*="btn-"], button[class*="btn-"], a.rounded-control, button.rounded-control) {
+    min-block-size: 0 !important;
+    block-size: 1.875rem !important;
+    padding-inline: 0.625rem !important;
+    font-size: var(--edify-text-label-size) !important;
+  }
+
+  /* Titles on the phone's steps: a card or table title on the label-plus
+     step, a page title at 18px — so a title fits its line beside its count
+     and action instead of taking three. */
+  main :is(.edify-head-row__title:is(h2, h3, h4), .edify-head-row__title :is(h2, h3, h4)) {
+    font-size: 0.875rem !important;
+    line-height: 1.3 !important;
+  }
+
+  main .edify-page-header h1 {
+    font-size: 1.125rem !important;
+    line-height: 1.25 !important;
+  }
+
   /* Items keep their width and a real box: the touch-target rule's negative
      margins made a wrapped action overlap the line above it. */
   main .edify-head-row > :not(.edify-head-row__title) {
@@ -1533,6 +1595,15 @@ main .edify-filter-row > label.edify-filter-row__field {
   :root main .school-record-row .school-record-row__actions:has(> :nth-child(4)) > * svg {
     display: none !important;
   }
+
+  /* One Actions menu (every school row since 2026-09-26) is a single
+     control at its own width, beside the record's name rather than a
+     full-width row of its own under it (owner, 2026-09-27). */
+  :root main .school-record-row .school-record-row__actions.school-record-row__actions:has(> .row-menu:only-child) {
+    display: flex !important;
+    inline-size: auto !important;
+    justify-content: flex-end !important;
+  }
 }
 
 /* ─── PHONE PAGE-HEADER ACTIONS (owner, 2026-09-25) ──────────────────────────
@@ -1563,6 +1634,17 @@ main .edify-filter-row > label.edify-filter-row__field {
     gap: 0.375rem !important;
     font-size: 0.8125rem !important;
     white-space: nowrap !important;
+  }
+
+  /* A header written as a hero (a title block and an action group side by
+     side, one level down) wraps that group as whole buttons too: a
+     `shrink-0` row of two buttons ran 17px past a 320px screen on the
+     closure queue (2026-09-27 phone audit). */
+  main .edify-page-header :is(div, span).shrink-0:has(> :is(a, button)) {
+    flex-wrap: wrap !important;
+    flex-shrink: 1 !important;
+    min-inline-size: 0 !important;
+    max-inline-size: 100% !important;
   }
 
   /* An idle loading indicator holds no place in the row. */

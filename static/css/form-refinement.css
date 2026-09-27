@@ -362,3 +362,26 @@ body { font-size-adjust: none; }
     }
   }
 }
+
+/* Drawer fields on phones and tablets (owner, 2026-09-27: the input drawer
+   adjusts to the screen): 40px fields, and on a phone a 16px value, which
+   stops iOS zooming the page when a field takes focus. Anchored on the drawer
+   host, so it outranks the 44px field floor above. Desktops are unchanged. */
+@media (max-width: 79.99rem) {
+  #drawer-container .drawer-body :is(
+    select,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"])
+  ) {
+    block-size: 2.5rem !important;
+    min-block-size: 2.5rem !important;
+    min-height: 2.5rem !important;
+    padding-block: 0 !important;
+    line-height: normal !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  #drawer-container .drawer-body :is(select, input, textarea) {
+    font-size: 1rem !important;
+  }
+}

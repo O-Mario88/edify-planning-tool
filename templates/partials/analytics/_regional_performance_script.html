@@ -36,8 +36,6 @@ window.subregionMap = function (){
     // the platform forces every table cell visible with a ten-part
     // !important rule (mobile-micro-ux.css), which yields only to an inline
     // display:none, i.e. to x-show. So the component watches the two bands.
-    wideColumns:false,
-    _wideColumnsQuery:null,
     sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
     combinedBoundaries:{}, combinedDistrictRequests:{},
     schoolTypes:[
@@ -241,19 +239,8 @@ window.subregionMap = function (){
       if (!this.$el.querySelector('.sr-map-viewport')) return;
       this.refreshMapLabelPlacement();
     },
-    watchWideColumns(){
-      if(this._wideColumnsQuery || !window.matchMedia) return;
-      // The table sits below the map at every width (owner, 2026-09-14), so
-      // the three wide columns need only a tablet's width.
-      const query = window.matchMedia('(min-width: 48rem)');
-      this.wideColumns = query.matches;
-      this._wideColumnsHandler = event => { this.wideColumns = event.matches; };
-      query.addEventListener('change', this._wideColumnsHandler);
-      this._wideColumnsQuery = query;
-    },
     async load(){
       if(this.loading || this.ready) return;
-      this.watchWideColumns();
       this.loading = true;
       // district_insight ships an object keyed by district name, already in
       // the shape the card needs -- no re-indexing. (It replaced an array;
@@ -326,13 +313,9 @@ window.subregionMap = function (){
     // sub-counties whenever the tab regained focus (frontend audit,
     // 2026-09-23).
     destroy(){
-      if (this._wideColumnsQuery && this._wideColumnsHandler) {
-        this._wideColumnsQuery.removeEventListener('change', this._wideColumnsHandler);
-      }
       if (this._pageshowHandler) window.removeEventListener('pageshow', this._pageshowHandler);
       if (this._visibilityHandler) document.removeEventListener('visibilitychange', this._visibilityHandler);
       if (this.boundaryExitHandler) document.removeEventListener('pointermove', this.boundaryExitHandler);
-      this._wideColumnsQuery = null;
       this._pageshowBound = false;
       this._visibilityBound = false;
       this.boundaryExitHandler = null;

@@ -5599,6 +5599,73 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   .context-metrics__sentence { scroll-behavior: auto; }
 }
 
+/* Phones: every KPI on screen, no swiping (owner's mobile directive,
+   2026-09-27: "Do not make mobile users horizontally scroll through a long
+   KPI carousel"). Below the tablet width the strip wraps into a grid of
+   compact rows — two columns on a phone, four from 600px — in the same
+   surface, order, labels, values, helpers and drill-downs. Dividers run
+   between cells: a rule on the left of every cell but a row's first, and on
+   top of every row but the first. An odd last cell takes the row. The swipe
+   navigation has nothing to do here. Tablets and desktops keep the strip. */
+@media (max-width: 47.999rem) {
+  .context-metrics .context-metrics__sentence {
+    display: grid !important;
+    grid-template-columns: repeat(var(--kpi-columns, 2), minmax(0, 1fr));
+    overflow: hidden !important;
+    scroll-snap-type: none;
+  }
+  .context-metrics .context-metrics__fact {
+    min-width: 0 !important;
+    min-inline-size: 0;
+  }
+  .context-metrics .context-metrics__fact + .context-metrics__fact::before {
+    display: none;
+  }
+  .context-metrics .context-metrics__fact:not(:nth-child(2n + 1))::before {
+    display: block;
+  }
+  .context-metrics .context-metrics__fact:nth-child(n + 3) {
+    border-block-start: 1px solid var(--kpi-divider);
+  }
+  .context-metrics .context-metrics__fact:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  /* Words wrap inside a cell: a drill-down fact is a <button>, and the
+     platform's buttons do not wrap, so "Portfolio Schools Trained" ran 27px
+     out of its cell and was cut at 320px. */
+  .context-metrics .context-metrics__text,
+  .context-metrics .context-metrics__link {
+    padding: 10px 12px;
+    white-space: normal !important;
+  }
+  .context-metrics .context-metrics__helper {
+    max-inline-size: none;
+  }
+  .context-metrics .context-metrics__navigation {
+    display: none !important;
+  }
+}
+
+@media (min-width: 37.5rem) and (max-width: 47.999rem) {
+  .context-metrics { --kpi-columns: 4; }
+  .context-metrics .context-metrics__fact:not(:nth-child(2n + 1))::before {
+    display: none;
+  }
+  .context-metrics .context-metrics__fact:not(:nth-child(4n + 1))::before {
+    display: block;
+  }
+  .context-metrics .context-metrics__fact:nth-child(n + 3) {
+    border-block-start: 0;
+  }
+  .context-metrics .context-metrics__fact:nth-child(n + 5) {
+    border-block-start: 1px solid var(--kpi-divider);
+  }
+  .context-metrics .context-metrics__fact:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}
+/* end of the phone KPI grid */
+
 .context-metrics__link[aria-current="page"] { box-shadow: inset 0 -2px var(--kpi-text); background: color-mix(in srgb, var(--kpi-text) 6%, transparent); }
 
 .context-metrics__value--compact { overflow-wrap: normal; }

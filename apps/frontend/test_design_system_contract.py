@@ -8,6 +8,16 @@ from django.test import SimpleTestCase
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _strip_rules(context: str) -> str:
+    """The strip's own rules: the context-metrics contract without the phone
+    grid block. A phone lays every fact out in a grid of compact rows (owner's
+    mobile directive, 2026-09-27: no KPI carousel on a phone); from a tablet
+    up the strip stays one continuous, scrolling row."""
+    start = context.index("/* Phones: every KPI on screen")
+    end = context.index("/* end of the phone KPI grid */")
+    return context[:start] + context[end:]
+
+
 class DesignSystemContractTest(SimpleTestCase):
     """Guard the shared contracts that prevent primary-style drift.
 
@@ -204,7 +214,7 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertNotIn('data-component="kpi-card"', template)
         self.assertIn("box-shadow:", context)
         self.assertNotIn("background-image:", context)
-        self.assertNotIn("grid-template-columns:", context)
+        self.assertNotIn("grid-template-columns:", _strip_rules(context))
 
     def test_popup_drawers_use_the_centered_dialog_contract(self):
         """Actions must never fall back to a full-height right-side drawer."""

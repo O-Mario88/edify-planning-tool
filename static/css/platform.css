@@ -4219,6 +4219,28 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
+/* One Actions menu stays on the name's line (owner's mobile directive,
+   2026-09-27: "Do not stack action buttons below names"). The narrow-row
+   rules above move a row's actions under its content, which suited a row of
+   two to four buttons; a row whose actions are one Actions menu (every school
+   row since 2026-09-26) keeps it in a third, auto-width column beside the
+   name, level with its first line, and the name wraps in its own column. */
+@media (max-width: 52rem) {
+  .school-record-row__summary:has(> .school-record-row__actions > .row-menu:only-child) { grid-template-columns: minmax(0, 1fr) auto; }
+  .school-record-row__summary--selectable:has(> .school-record-row__actions > .row-menu:only-child) { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  .school-record-row__summary:has(> .school-record-row__actions > .row-menu:only-child) > .school-record-row__actions { grid-column: 2; grid-row: 1; align-self: start; }
+  .school-record-row__summary--selectable:has(> .school-record-row__actions > .row-menu:only-child) > .school-record-row__actions { grid-column: 3; }
+}
+
+@supports (container-type: inline-size) {
+  @container school-record (max-width: 58rem) {
+    .school-record-row__summary:has(> .school-record-row__actions > .row-menu:only-child) { grid-template-columns: minmax(0, 1fr) auto; }
+    .school-record-row__summary--selectable:has(> .school-record-row__actions > .row-menu:only-child) { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+    .school-record-row__summary:has(> .school-record-row__actions > .row-menu:only-child) > .school-record-row__actions { grid-column: 2; grid-row: 1; align-self: start; }
+    .school-record-row__summary--selectable:has(> .school-record-row__actions > .row-menu:only-child) > .school-record-row__actions { grid-column: 3; }
+  }
+}
+
 /* ═════════════════════════════════════════════════════════════════════
    RECORD ROWS FROM TABLET WIDTH UP (owner, 2026-09-11)
    "Fix the table layout on all lists — it is like the card is split into two
@@ -4795,20 +4817,16 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   border-block-end: 1px dashed var(--edify-border);
 }
 
-/* Narrow rows put the school name back on its own line.
-   The headline is a two-column grid (name | actions), which is right at
-   desktop width and wrong once the row is phone-sized: two buttons plus their
-   labels left about five characters for the name, so "Nakifuma UMEA Primary
-   School" rendered as "Nakif um…". The name is the row's identity and gets the
-   full width; the actions move underneath, where they are also easier to hit. */
+/* Narrow rows keep the name and its Actions on one line (owner, 2026-09-27:
+   "Do not stack action buttons below names"). When a row carried two to four
+   buttons they left the name five characters, so the actions moved under it;
+   since 2026-09-26 a row has one compact Actions menu, so the name keeps the
+   rest of the line and wraps inside its own column, and the menu stays level
+   with the name's first line. */
 @container core-school-row (max-width: 30rem) {
   .core-school-row--compact .core-school-row__headline {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.5rem;
-  }
-
-  .core-school-row--compact .core-school-row__headline .school-record-row__actions {
-    justify-content: flex-start;
   }
 }
 

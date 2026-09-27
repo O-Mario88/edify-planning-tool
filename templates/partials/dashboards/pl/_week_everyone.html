@@ -9,8 +9,9 @@ someone has work on them.
 A board, not a record table: a day holds several places, one under another,
 which the platform's record-table rule (one line per row, consistency.css)
 would flatten into one. So it is drawn as an ARIA table of divs, read by
-assistive technology as rows and columns. On a phone each row becomes that
-person's card and empty days drop away. Rows page with the shared pager; a
+assistive technology as rows and columns. On a phone it stays a table: it
+scrolls sideways in its own box with the Person column pinned (owner,
+2026-09-27: tables stay tables on mobile). Rows page with the shared pager; a
 team fits on one page.
 {% endcomment %}
 <div class="plwk-box edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-pl-week-everyone>

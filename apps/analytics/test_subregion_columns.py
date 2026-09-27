@@ -185,27 +185,22 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
             self.assertNotIn(gone, html)
         self.assertIn('colspan="10"', html)
 
-    def test_the_planned_columns_give_way_on_a_phone(self):
-        """The three "# planned" columns repeat the denominator of the ratio
-        beside them, so they are the ones that hide below tablet width; the
-        ratios and the partner count show everywhere. Visibility is the
-        component's: the platform's no-stacked-pairs rule forces every table
-        cell visible with !important and yields only to an inline
-        display:none, which is what x-show writes."""
+    def test_every_column_shows_on_a_phone(self):
+        """No column gives way on a phone (owner's mobile directive,
+        2026-09-27: "Do not hide table columns", "Tables must remain tables
+        on mobile"): the three "# planned" columns and the full header labels
+        show at every width, and a narrow screen scrolls the table sideways
+        in its own region instead of squeezing it."""
         html = _read("templates/partials/analytics/regional_performance.html")
-        self.assertEqual(
-            html.count('text-right sr-wide" x-show="wideColumns" x-cloak title='), 3
-        )
-        self.assertEqual(
-            html.count(
-                'sr-wide" x-show="wideColumns" x-cloak\n                    x-text='
-            ),
-            3,
-        )
-        # Three <col>s, three headers, three cells.
-        self.assertEqual(html.count('x-show="wideColumns"'), 9)
+        self.assertNotIn("wideColumns", html)
+        self.assertIn('data-mobile-table="scroll"', html)
+        self.assertNotIn('data-mobile-table="fit"', html)
+        for label in ("Visits planned", "Meetings planned", "Trainings planned"):
+            self.assertIn(f">{label}</th>", html)
+        for label in ("Schools", "Clusters", "Visits achieved", "Partner"):
+            self.assertIn(f">{label}</th>", html)
         script = _read("templates/partials/analytics/_regional_performance_script.html")
-        self.assertIn("window.matchMedia('(min-width: 48rem)')", script)
+        self.assertNotIn("wideColumns", script)
         css = _read("static/css/pages/analytics-dashboard.css")
         self.assertIn(
             ".analytics-geo-card .sr-distribution-panel { flex: 0 0 auto; width: 100%; }",
