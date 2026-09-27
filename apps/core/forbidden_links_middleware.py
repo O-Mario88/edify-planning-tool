@@ -27,10 +27,12 @@ from __future__ import annotations
 
 import re
 
-_SCRIPT = re.compile(r"(<script\b.*?</script\s*>)", re.S | re.I)
-_ANCHOR = re.compile(r"<a\b(?P<attrs>[^>]*)>(?P<body>.*?)</a\s*>", re.S | re.I)
+# End tags end at the first ">", whatever sits before it ("</script foo>" is
+# still the end of the script), as an HTML parser reads them.
+_SCRIPT = re.compile(r"(<script\b.*?</script\b[^>]*>)", re.S | re.I)
+_ANCHOR = re.compile(r"<a\b(?P<attrs>[^>]*)>(?P<body>.*?)</a\b[^>]*>", re.S | re.I)
 _HX_BUTTON = re.compile(
-    r"<button\b(?P<attrs>[^>]*\bhx-get\s*=\s*\"(?P<url>/[^\"]*)\"[^>]*)>.*?</button\s*>",
+    r"<button\b(?P<attrs>[^>]*\bhx-get\s*=\s*\"(?P<url>/[^\"]*)\"[^>]*)>.*?</button\b[^>]*>",
     re.S | re.I,
 )
 _HREF = re.compile(r"\bhref\s*=\s*\"(?P<url>/[^\"]*)\"", re.I)

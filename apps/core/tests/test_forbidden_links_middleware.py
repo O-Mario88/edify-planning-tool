@@ -61,6 +61,15 @@ class ForbiddenLinksMiddlewareTests(SimpleTestCase):
         self.assertNotIn("Schedule", html)
         self.assertIn("Add</button>", html)
 
+    def test_an_end_tag_with_anything_before_its_bracket_still_ends_it(self):
+        script = '<script>const t = \'<a href="/planning" class="btn">x</a>\';</script\t\n foo>'
+        self.assertEqual(self._render(script), script)
+        self.assertEqual(self._render('<a href="/planning" class="btn">Open</a >'), "")
+        self.assertEqual(
+            self._render('<abbr><a href="/my-plan">Plan</a></abbr>'),
+            '<abbr><a href="/my-plan">Plan</a></abbr>',
+        )
+
     def test_scripts_anonymous_users_and_other_responses_are_untouched(self):
         script = '<script>const t = \'<a href="/planning" class="btn">x</a>\';</script>'
         self.assertEqual(self._render(script), script)
