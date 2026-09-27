@@ -15,15 +15,17 @@
   </nav>
 
   <!-- Header -->
+  {% comment %}The standard header parts (lead, then controls), so a tablet puts the
+  two actions on the title's line when they fit, like every other header
+  (2026-09-27 sweep).{% endcomment %}
   <div class="edify-page-header edify-page-hero">
-    <div class="edify-page-hero__row">
       <div class="edify-page-header__lead">
-        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Country funding roll-up</p>
+        <p class="edify-page-eyebrow edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Country funding roll-up</p>
         <p class="edify-page-eyebrow">Finance</p>
         <h1 class="edify-page-title edify-page-header__title">Consolidated Fund Allocation</h1>
         <p class="edify-page-header__description">Every staff member’s planned costs, nationally · {{ selected.title }} · FY {{ fy }}</p>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="edify-page-header__controls flex flex-wrap items-center gap-2">
         <button type="button"
                 hx-get="/finance/fund-allocation/admin-budget-drilldown?month={{ admin_month_name }}&fy={{ fy }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
@@ -36,7 +38,6 @@
           Export
         </button>
       </div>
-    </div>
   </div>
 
   {% comment %} 2026-08-20 tab audit: this strip rendered ONE hard-coded

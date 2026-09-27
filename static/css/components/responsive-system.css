@@ -135,6 +135,14 @@
     --edify-table-select-size: 2rem;
   }
 
+  /* A table's tick box is 14px in its column; its 44px finger square is the
+     invisible one micro-ux.js draws. The workspace's 2.75rem label minimum
+     made the column micro-ux.js measures for the pin 68px (Staff, 2026-09-27
+     sweep). */
+  .edify-table-scroll-region > table .edify-table-choice {
+    min-inline-size: 0;
+  }
+
   .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
     > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > :is(thead, tbody, tfoot) > tr > :first-child,
   .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
@@ -157,6 +165,10 @@
   .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
     > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :first-child > label {
     margin-inline: auto;
+    /* The label is the box's width, not the 2.75rem workspace minimum: that
+       made Staff's pinned tick column 68px. The 44px finger square stays
+       (micro-ux.js, invisible). */
+    min-inline-size: 0;
   }
 
   .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
@@ -229,11 +241,12 @@
     content: none !important;
   }
 
-  /* On a phone the cap holds even where a table rule sets the name
-     `display: inline !important` (an inline box ignores the cap): a 376px
-     project name was pinned over the whole of a 360px table. Desktop keeps
-     the names it had. */
-  @media (max-width: 47.999rem) {
+  /* On a phone or a tablet the cap holds even where a table rule sets the
+     name `display: inline !important` (an inline box ignores the cap): a
+     376px project name was pinned over the whole of a 360px table, and a
+     306px school name over most of a tablet's (Partner Completed, 2026-09-27
+     sweep). Desktop keeps the names it had. */
+  @media (max-width: 79.999rem) {
     .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
       > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > tbody > tr > :first-child > :first-child:not(input, button, .edify-table-choice),
     .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
