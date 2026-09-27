@@ -281,15 +281,54 @@ class DailyVisitBatchTestCase(TestCase):
             batch.daily_pool_amount,
         )
 
-    # ── 4. Unapproved secondary combo rejected, then approved ───────────────
-    def test_unapproved_secondary_group_rejected_then_approved(self):
-        # 2 schools also happens to be under the target of 3 — but the
-        # unapproved-group check runs BEFORE the target check, so this must
-        # still fail on the group rule, not the reason-required rule.
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule(["BATCH-SEC-A", "BATCH-SEC-B"], date(2026, 8, 7))
-        self.assertNotIsInstance(ctx.exception, ReasonRequiredError)
+    # ── 4. Any districts may share a day (owner, 2026-09-27) ────────────────
+    # "Some districts are very close": a day may cross secondary districts
+    # with or without an approved group, and is priced as one secondary day.
+    def test_two_secondary_districts_share_a_day_without_a_group(self):
+        result = self._schedule(
+            ["BATCH-SEC-A", "BATCH-SEC-B"],
+            date(2026, 8, 7),
+            reason="under target on purpose",
+        )
+        self.assertEqual(len(result["activities"]), 2)
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.district_type, "secondary")
+        self.assertIsNone(batch.secondary_district_group)
+        self.assertEqual(
+            sum(a.est_cost_cents for a in batch.activities.all()),
+            batch.daily_pool_amount,
+        )
 
+    def test_a_second_district_joins_the_days_batch(self):
+        first = self._schedule(
+            ["BATCH-SEC-A"], date(2026, 8, 7), reason="under target on purpose"
+        )
+        second = self._schedule(["BATCH-SEC-B"], date(2026, 8, 7))
+        self.assertEqual(first["batchId"], second["batchId"])
+        self.assertEqual(
+            DailyVisitBatch.objects.get(pk=first["batchId"]).school_count, 2
+        )
+
+    def test_rescheduling_onto_another_districts_day_joins_it(self):
+        from apps.activities.services import reschedule
+
+        target_day = self._schedule(
+            ["BATCH-SEC-A"], date(2026, 8, 7), reason="under target on purpose"
+        )
+        moved = self._schedule(
+            ["BATCH-SEC-B"], date(2026, 8, 11), reason="under target on purpose"
+        )
+        reschedule(
+            moved["activities"][0]["id"],
+            {"scheduledDate": "2026-08-07T09:00:00+03:00", "reason": "Same route"},
+            self.principal,
+        )
+        self.assertEqual(
+            Activity.objects.get(id=moved["activities"][0]["id"]).daily_visit_batch_id,
+            target_day["batchId"],
+        )
+
+    def test_an_approved_group_still_labels_the_day(self):
         group = SecondaryDistrictGroup.objects.create(
             name="Batch Secondary Route", status="approved"
         )
@@ -299,13 +338,13 @@ class DailyVisitBatchTestCase(TestCase):
         SecondaryDistrictGroupMember.objects.create(
             group=group, district=self.secondary_district_b
         )
-
         result = self._schedule(
             ["BATCH-SEC-A", "BATCH-SEC-B"],
             date(2026, 8, 7),
             reason="under target on purpose",
         )
-        self.assertEqual(len(result["activities"]), 2)
+        batch = DailyVisitBatch.objects.get(pk=result["batchId"])
+        self.assertEqual(batch.secondary_district_group, group)
 
     # ── 5. Over-cap hard reject ──────────────────────────────────────────────
     def test_over_target_cap_rejected(self):

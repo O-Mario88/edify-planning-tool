@@ -3965,9 +3965,9 @@ def admin_region_district_setup_view(request):
 
     Also the CD/Admin's classification surface for Daily Visit Batch costing:
     every district needs a primary/secondary district_type before staff school
-    visits there can be scheduled (see apps.daily_visit_batches), and nearby
-    secondary districts can only be combined on the same day's batch once
-    grouped here into an approved SecondaryDistrictGroup.
+    visits there can be scheduled (see apps.daily_visit_batches). Secondary
+    District Groups named here label nearby districts often visited together;
+    they never limit which districts share a day.
     """
     from django.contrib import messages
     from apps.geography.models import (
@@ -4031,9 +4031,7 @@ def admin_region_district_setup_view(request):
             except (BadRequest, NotFoundError) as exc:
                 messages.error(request, str(exc.detail))
                 return redirect("/admin-panel/region-district-setup")
-            messages.success(
-                request, f"'{group.name}' approved for same-day scheduling."
-            )
+            messages.success(request, f"'{group.name}' approved.")
 
         else:
             district_name = request.POST.get("district_name")
