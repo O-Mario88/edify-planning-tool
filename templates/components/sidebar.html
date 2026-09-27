@@ -115,7 +115,10 @@ a second permanent row beneath it.
 
       <a href="/settings" class="app-sidebar__settings-item">All settings</a>
       <a href="/profile" class="app-sidebar__settings-item">My profile</a>
-      <a href="/change-password" class="app-sidebar__settings-item">Change password</a>
+      {% comment %}/change-password serves only a forced change; for anyone else it
+      returns to the dashboard, so the link is drawn only when it leads
+      somewhere (owner, 2026-09-27: hide what a role cannot use).{% endcomment %}
+      {% if request.user.must_change_password %}<a href="/change-password" class="app-sidebar__settings-item">Change password</a>{% endif %}
       <a href="/notifications" class="app-sidebar__settings-item">Notification centre</a>
     </div>
   </div>

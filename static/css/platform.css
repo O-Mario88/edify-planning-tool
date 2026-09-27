@@ -935,7 +935,10 @@ main :where(
   align-items: center !important;
   align-self: stretch !important;
   justify-content: center !important;
-  min-inline-size: 7rem !important;
+  /* As wide as its label, with the same padding as every other tab (owner,
+     2026-09-27: "the tab on planning page is not consistent"): a 7rem floor
+     gave "Clusters" twice the side space of "Assigned to Partner". */
+  min-inline-size: 0 !important;
   min-block-size: 2.375rem !important;
   block-size: auto !important;
   /* Size from the complete label before sharing any spare rail width. The
@@ -3371,70 +3374,6 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .school-record-row__identity { min-inline-size: 0; }
-
-/* The Schools directory gives the district its own column (owner,
-   2026-09-26). Scoped to `.school-directory-row`: the planning, core-school
-   and cluster lists share this row and keep their two tracks. Tablet and
-   desktop only; a phone row leaves it out (it is still in the expanded
-   record's details). It becomes a third track only when the LIST is wide
-   enough (container `school-record`, not the viewport — the sidebar decides
-   how wide the list is): beside three labelled buttons, a narrower row
-   squeezed the school's name to nothing at 768px and 1024px. Until then it
-   sits under the name. */
-.school-directory-row__district {
-  display: flex;
-  min-inline-size: 0;
-  min-block-size: 1.75rem;
-  align-items: center;
-  align-self: start;
-  gap: 0.3rem;
-  color: var(--edify-text-muted);
-  font-size: var(--edify-text-label-size);
-  font-weight: 600;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.school-directory-row__district svg {
-  flex: 0 0 auto;
-  inline-size: 0.9rem;
-  block-size: 0.9rem;
-}
-.school-directory-row__district a {
-  position: relative;
-  z-index: 3;
-  color: var(--edify-text);
-  text-decoration: none;
-  pointer-events: auto;
-}
-.school-directory-row__district a:hover { color: var(--edify-accent-text); text-decoration: underline; }
-.school-directory-row__district a:focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
-  outline-offset: 2px;
-  border-radius: 0.25rem;
-}
-@media (min-width: 48rem) {
-  .school-directory-row__district { grid-column: 2; min-block-size: 0; margin-block-start: -0.35rem; }
-}
-@container school-record (min-width: 60rem) {
-  .school-directory-row .school-record-row__content {
-    grid-template-columns: fit-content(7.5rem) minmax(0, 1fr) minmax(6rem, 8.5rem);
-  }
-  .school-directory-row .school-directory-row__district { grid-column: 3; min-block-size: 1.75rem; margin-block-start: 0; }
-}
-/* The column's left edge is set by the actions beside it, and "Change
-   Cluster" is wider than "Add to Cluster" — the district drifted 6px between
-   clustered and unclustered rows. One width for the cluster button, sized
-   to the longer label, keeps the column straight. Outranks the compact
-   record-action rule in consistency.css, which pins `max-content` with
-   !important. */
-@container school-record (min-width: 60rem) {
-  :root main .school-directory-list .school-directory-row.school-record-row .school-record-action[data-cluster-action][data-cluster-action] {
-    min-inline-size: 8.75rem !important;
-  }
-}
-@media (max-width: 47.999rem) {
-  .school-directory-row__district { display: none; }
-}
 
 .school-record-row__title {
   max-inline-size: 55rem;

@@ -190,6 +190,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # After authentication: a link or hx-get button the signed-in role cannot
+    # follow is not drawn (owner, 2026-09-27). apps/core/forbidden_links_middleware.py.
+    "apps.core.forbidden_links_middleware.ForbiddenLinksMiddleware",
     # After authentication so request.user is resolved. Records route
     # patterns + timing only (STAFF_TIME_STANDARD.md); never breaks a
     # request; disabled under test so assertNumQueries contracts hold.

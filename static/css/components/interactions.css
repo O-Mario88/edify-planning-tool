@@ -1124,10 +1124,10 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
 
 /* ─── ONE FILTER ROW (owner, 2026-09-25) ─────────────────────────────────────
    The School Directory's filter design, for every filter row on the
-   platform: on a desktop the fields share the whole width on one line, each
-   as wide as the next, and a row with more filters than slots ends in "More
-   filters" (micro-ux.js arranges the row; a page may author the control
-   itself). Below a desktop the platform's wrapping filter sheet is unchanged.
+   platform: on a tablet or desktop the fields share the whole width on one
+   line, each as wide as the next, as many as the width holds (owner,
+   2026-09-27), and a row with more filters than slots ends in "More filters"
+   (micro-ux.js arranges the row; a page may author the control itself).
 
    `#edify-filter-row` and `#edify-filter-field` name no element. They lift
    these rules to the weight of the id-keyed filter contracts in
@@ -1135,7 +1135,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
    short-value field among them), which they replace on a desktop and which
    would otherwise win on specificity; this file loads last, so a tie is
    ours. */
-@media (min-width: 64rem) {
+@media (min-width: 48rem) {
   main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row] {
     display: flex !important;
     flex-wrap: nowrap !important;
@@ -1322,8 +1322,8 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
     inline-size: 100% !important;
     min-inline-size: 0 !important;
     max-inline-size: none !important;
-    block-size: 2.5rem !important;
-    min-block-size: 2.5rem !important;
+    block-size: 2rem !important;
+    min-block-size: 2rem !important;
     padding-inline: 0.5rem 1.5rem !important;
     background-position: right 0.35rem center !important;
     font-size: 0.75rem !important;
@@ -1342,8 +1342,8 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   main .edify-filter-row .edify-filter-more__toggle,
   main .edify-filter-row .edify-filter-more-slot > :is(button, summary),
   main .edify-filter-row > button.edify-filter-more-slot {
-    block-size: 2.5rem !important;
-    min-block-size: 2.5rem !important;
+    block-size: 2rem !important;
+    min-block-size: 2rem !important;
     padding-inline: 0.625rem !important;
     font-size: 0.75rem !important;
   }
@@ -1540,18 +1540,19 @@ main .edify-filter-row > label.edify-filter-row__field {
     word-break: normal;
   }
 
-  /* An opened record's details are one list, one "Label: value" per line,
-     every line starting at the School ID's edge: no columns, no label
-     stacked over its value. `#edify-record-details` names no element; it
-     outranks the table-disclosure rules in consistency.css, which lay the
-     same list out as wrapping pairs for a desktop. */
+  /* An opened record's details are "Label: value" pairs in rows that wrap,
+     as on a desktop (owner, 2026-09-27: "the school metadata in the expanded
+     detail should not be in 1 colum. it should be in row with wrappers"; it
+     was one pair per line from 2026-09-25). No columns, no label stacked
+     over its value. `#edify-record-details` names no element; it outranks
+     the table-disclosure rules in consistency.css. */
   main :is(#edify-record-details, .school-record-row.is-expanded .school-record-row__identity, .school-record-row__details)
     > dl.school-record-row__metadata:not(.core-school-row__metadata),
   main :is(#edify-record-details, .school-plan-table__details) td > dl.school-record-row__metadata {
-    flex-direction: column !important;
-    flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    gap: 0.4rem !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 0.25rem 0.875rem !important;
     inline-size: 100%;
     max-inline-size: none !important;
   }
@@ -1559,10 +1560,13 @@ main .edify-filter-row > label.edify-filter-row__field {
   main :is(#edify-record-details, .school-record-row.is-expanded .school-record-row__identity, .school-record-row__details)
     > dl.school-record-row__metadata:not(.core-school-row__metadata) > div,
   main :is(#edify-record-details, .school-plan-table__details) td > dl.school-record-row__metadata > div {
-    display: flex !important;
+    display: inline-flex !important;
+    flex: 0 1 auto !important;
     flex-direction: row !important;
     align-items: baseline !important;
-    inline-size: 100%;
+    gap: 0.3rem !important;
+    inline-size: auto !important;
+    max-inline-size: 100% !important;
   }
 }
 
@@ -1682,4 +1686,421 @@ main .edify-filter-row > label.edify-filter-row__field {
   :where([class*="space-y-"]) > [data-edify-lifted]:not([data-edify-dropdown]) {
     margin-block: 0 !important;
   }
+}
+
+/* ─── ROWS THAT REACH THE EDGE (owner, 2026-09-27) ───────────────────────────
+   "make sure the dead space on the right is filled out ... Do it for the
+   entire platform." On a phone, micro-ux.js marks a flex row that holds only
+   buttons, tabs, links or chips and has its line to itself: data-edify-fill
+   on the row, data-edify-fill-path on the wrappers between it and its line,
+   each valued by its parent's layout ("row" for a flex row, else "block").
+   The row spans the screen and its items share the width — a short tab rail
+   included, which everywhere else fits its contents (above). The repeated
+   attribute outranks that rule and the rails' own sizing. */
+@media (max-width: 47.999rem) {
+  main :is([data-edify-fill], [data-edify-fill-path]):is([data-edify-fill], [data-edify-fill-path]):nth-child(n) {
+    max-inline-size: none !important;
+    margin-inline: 0 !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+  }
+
+  main :is([data-edify-fill="row"], [data-edify-fill-path="row"]):is([data-edify-fill], [data-edify-fill-path]):nth-child(n) {
+    flex: 1 1 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  main :is([data-edify-fill="block"], [data-edify-fill-path="block"]):is([data-edify-fill], [data-edify-fill-path]):nth-child(n) {
+    inline-size: 100% !important;
+  }
+
+  main [data-edify-fill][data-edify-fill] > :nth-child(n) {
+    flex-grow: 1 !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  main [data-edify-fill][data-edify-fill] > details > summary {
+    inline-size: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* ─── A HEADING'S WRAPPED CAPTION (owner, 2026-09-27) ────────────────────────
+   "if Ordered by date cannot fit on the same row and it must be wrapped to
+   the next line, then make sure ordered by date is indented to start from
+   where cluster word start not from below the icon and the spacing between
+   cluster meeting and ordered by reduced." micro-ux.js marks the row whose
+   item wrapped and measures the heading's text offset; the item starts
+   there and the row's lines sit close. Every width, every page. */
+main .edify-head-row.edify-head-row[data-edify-head-wrap],
+.drawer-body .edify-head-row.edify-head-row[data-edify-head-wrap] {
+  row-gap: 0.125rem !important;
+}
+
+main .edify-head-row.edify-head-row[data-edify-head-wrap] > [data-edify-head-wrapped],
+.drawer-body .edify-head-row.edify-head-row[data-edify-head-wrap] > [data-edify-head-wrapped] {
+  margin-inline-start: var(--edify-head-indent) !important;
+  max-inline-size: calc(100% - var(--edify-head-indent)) !important;
+}
+
+/* ─── CLEAR FILTERS IS AN × (owner, 2026-09-27) ──────────────────────────────
+   "X Clear filters should just be a x and on the same row." micro-ux.js
+   turns a filter row's Clear/Reset control into the icon (its name stays
+   "Clear filters") and puts it at the end of the row: after the fields and
+   More on a tablet or desktop, and in a column of its own on a phone's
+   first line. :not(#…) lifts these over the row's id-weighted rules. */
+main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none) {
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+  align-self: flex-end !important;
+  inline-size: 2rem !important;
+  min-inline-size: 2rem !important;
+  block-size: 2rem !important;
+  min-block-size: 2rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
+  border-radius: var(--radius-control, 8px) !important;
+  background: var(--edify-surface) !important;
+  color: var(--edify-text-muted) !important;
+  font-size: 0 !important;
+  text-decoration: none !important;
+}
+
+main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none) > svg {
+  inline-size: 0.875rem !important;
+  block-size: 0.875rem !important;
+}
+
+main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):hover,
+main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):focus-visible {
+  border-color: var(--edify-danger) !important;
+  color: var(--edify-danger) !important;
+}
+
+@media (max-width: 47.999rem) {
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row]:has(> [data-edify-filter-clear]) {
+    grid-template-columns: repeat(var(--edify-filter-cols, 3), minmax(0, 1fr)) auto auto !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row]:has(> [data-edify-filter-clear]) > :is(.edify-filter-more, .edify-filter-more-slot):not(#edify-filter-none) {
+    grid-column: -3 / -2 !important;
+  }
+
+  main :is(#edify-filter-row, .edify-filter-row).edify-filter-row[data-edify-filter-row] > [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none) {
+    grid-column: -2 / -1 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: end !important;
+  }
+}
+
+/* ─── PHONE AND TABLET: A TITLE'S ACTIONS SHARE ITS LINE (owner, 2026-09-27) ─
+   "make sure the dead space on the right is filled out." A page header with
+   one or two actions puts them on the title's line, at the right, and the
+   eyebrow and description keep full lines above and below: a lone Export no
+   longer sits on a row of its own with the rest of the line empty. Three or
+   more actions keep their own row, where micro-ux.js spreads them across it.
+   A tab rail with one action beside it (My Plan's period tabs and its
+   calendar) shares the line the same way, the tabs taking what is left.
+   Tablets too (owner, 2026-09-27: "move export button on the same row as
+   the school directory header"). */
+@media (max-width: 63.999rem) {
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas: "eyebrow eyebrow" "title actions" "text text" !important;
+    align-items: center !important;
+    column-gap: 0.75rem !important;
+    row-gap: 0 !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead {
+    display: contents !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > .edify-page-eyebrow {
+    grid-area: eyebrow !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > :is(h1, .edify-page-title) {
+    grid-area: title !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > .edify-page-header__description {
+    grid-area: text !important;
+    margin-block-start: 0.25rem !important;
+  }
+
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__controls {
+    grid-area: actions !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    inline-size: auto !important;
+  }
+}
+
+@media (max-width: 47.999rem) {
+  main .edify-view-toolbar > [data-edify-tablist]:has(+ a.btn) {
+    flex: 1 1 0 !important;
+    min-inline-size: 0 !important;
+    inline-size: auto !important;
+  }
+
+  main .edify-view-toolbar > [data-edify-tablist]:has(+ a.btn) > * {
+    flex-grow: 1 !important;
+  }
+}
+
+/* ─── SCHOOL DIRECTORY ROWS READ LIKE PLANNING'S (owner, 2026-09-27) ─────────
+   "school directory should have the same typography as planning. table
+   should have smaller font sizes to fit perfectly in one row as planning
+   page. also reduce the size of the action buttons to match the rest" and
+   "make everything is on the same row ... even on mobile screen." A closed
+   row is one line at every width: tick box, ID, the name at the table step
+   (ending in an ellipsis when it is longer than the line), and the 24px
+   Actions button Planning uses. Opening a row lays its details under the ID
+   and name, across the row. The prefix outranks the record-row layouts in
+   platform.css and the phone rules above. */
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__summary {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: 0.5rem !important;
+  min-block-size: 2.25rem !important;
+  padding: 0.25rem 0.75rem !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__select {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  inline-size: auto !important;
+  min-inline-size: 0 !important;
+  align-self: flex-start !important;
+  block-size: 1.5rem !important;
+  min-block-size: 0 !important;
+  margin: 0 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__content {
+  display: grid !important;
+  flex: 1 1 auto !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  grid-auto-rows: minmax(1.5rem, auto) !important;
+  align-items: center !important;
+  gap: 0.25rem 0.625rem !important;
+  min-inline-size: 0 !important;
+  padding: 0 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__identity {
+  display: contents !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__school-id {
+  grid-column: 1 !important;
+  align-self: center !important;
+  min-block-size: 0 !important;
+  padding: 0.0625rem 0.375rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 1.3 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__title {
+  grid-column: 2 !important;
+  display: block !important;
+  min-inline-size: 0 !important;
+  max-inline-size: none !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  -webkit-line-clamp: none !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__title > .school-record-row__link {
+  display: inline !important;
+  font: inherit !important;
+  white-space: nowrap !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__metadata {
+  grid-column: 1 / -1 !important;
+}
+
+/* An opened record's details read as rows that wrap, each label and its
+   value together on one line, at one type size (owner, 2026-09-27: "the
+   school metadata in the expanded detail should not be in 1 colum. it
+   should be in row with wrappers"). Planning's opened rows the same. */
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata,
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 0.25rem 1.25rem !important;
+  margin: 0 !important;
+  padding: 0.25rem 0 0.375rem !important;
+  grid-template-columns: none !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata > div,
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata > div {
+  display: inline-flex !important;
+  flex: 0 1 auto !important;
+  align-items: baseline !important;
+  gap: 0.3rem !important;
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  grid-template-columns: none !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata :is(dt, dd),
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata :is(dt, dd) {
+  margin: 0 !important;
+  font-size: var(--edify-text-table-size) !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata dt,
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata dt {
+  color: var(--edify-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata dd,
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata dd {
+  font-weight: 600 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata dd :is(.edify-badge, .edify-text-caption),
+:root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata dd :is(.edify-badge, .edify-text-caption) {
+  font-size: var(--edify-text-micro-size) !important;
+}
+
+/* Links in the details (District, Cluster, Staff) are words in a line, not
+   32px controls: the tap-height rule made their lines taller than the rest. */
+:root main :is(.school-directory-row.school-record-row.is-expanded, table.school-plan-table .school-plan-table__details) dl.school-record-row__metadata a[href]:not(#edify-filter-none) {
+  display: inline !important;
+  min-block-size: 0 !important;
+  min-inline-size: 0 !important;
+}
+
+@media (max-width: 47.999rem) {
+  /* The details use the width under the Actions button too. */
+  :root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata {
+    inline-size: auto !important;
+    margin-inline-end: calc(-1 * (var(--edify-row-actions-reach, 5.25rem))) !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata :is(dt, dd),
+  :root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata :is(dt, dd) {
+    font-size: var(--edify-text-micro-size) !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row.is-expanded dl.school-record-row__metadata,
+  :root main table.school-plan-table.school-plan-table .school-plan-table__details dl.school-record-row__metadata {
+    column-gap: 0.875rem !important;
+  }
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .school-record-row__actions {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  align-self: flex-start !important;
+  min-block-size: 1.5rem !important;
+  inline-size: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+:root main .school-directory-row.school-directory-row.school-record-row .row-menu__trigger {
+  block-size: 1.5rem !important;
+  min-block-size: 1.5rem !important;
+  padding-block: 0 !important;
+  font-size: var(--edify-text-table-size) !important;
+}
+
+@media (max-width: 47.999rem) {
+  :root main .school-directory-row.school-directory-row.school-record-row .school-record-row__summary {
+    gap: 0.375rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row .school-record-row__title {
+    font-size: var(--edify-text-micro-size) !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row .row-menu__trigger {
+    padding-inline: 0.5rem !important;
+    font-size: var(--edify-text-micro-size) !important;
+  }
+}
+
+/* A link the signed-in role cannot follow is drawn as its words alone
+   (apps/core/forbidden_links_middleware.py, owner 2026-09-27): no link
+   colour, no underline, nothing to press. */
+:is(main, #drawer-container) [data-edify-link-off][data-edify-link-off] {
+  color: inherit !important;
+  text-decoration: none !important;
+  cursor: text !important;
+}
+
+/* A toolbar slot with nothing showing (Planning's view switch outside the
+   Scheduled tab holds only a hidden initialiser) takes no line: it wrapped
+   under the tabs and put 24px of empty toolbar between them and the table. */
+main .edify-view-toolbar > div:not(:has(> :not([hidden], template, script))) {
+  display: none !important;
+}
+
+/* A tab rail in a toolbar is spaced by the toolbar, not by its own 1.5rem
+   margin (pages.css), which doubled the gap above Planning's table. */
+main .edify-view-toolbar > .edify-tab-container {
+  margin-block: 0 !important;
+}
+
+/* ─── FILTER VALUES SIT CENTRED (owner, 2026-09-27) ──────────────────────────
+   "Text inside the filter should be aligned centered with even padding." A
+   filter's value is centred in its field with the same padding either side;
+   the chevron sits inside the right-hand padding. Typed search fields keep
+   their text at the start. :not(#…) lifts this over the rows' id rules. */
+main :is([data-edify-filter-row], .school-filters-form, .school-filter-canvas, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar, [data-edify-filter-more-panel]) select:not(#edify-filter-none),
+main :is([data-edify-filter-row], .school-filters-form, .school-filter-canvas, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar, [data-edify-filter-more-panel]) .edify-datepick__display:not(#edify-filter-none) {
+  text-align: center !important;
+  text-align-last: center !important;
+  padding-inline: 1.375rem !important;
+  background-position: right 0.45rem center !important;
+}
+
+@media (max-width: 47.999rem) {
+  main :is([data-edify-filter-row], .school-filters-form, .school-filter-canvas, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar, [data-edify-filter-more-panel]) select:not(#edify-filter-none),
+  main :is([data-edify-filter-row], .school-filters-form, .school-filter-canvas, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar, [data-edify-filter-more-panel]) .edify-datepick__display:not(#edify-filter-none) {
+    padding-inline: 1.125rem !important;
+    background-position: right 0.3rem center !important;
+  }
+}
+
+/* One Actions button everywhere (owner, 2026-09-27: "reduce the size of the
+   action buttons to match the rest of the action buttons for uniformity"):
+   the 24px Planning uses, on Core Schools and cluster cards too. A phone's
+   44px finger square is the trigger's ::after (mobile-micro-ux.css). */
+:root main .row-menu .row-menu__trigger.row-menu__trigger {
+  block-size: 1.5rem !important;
+  min-block-size: 1.5rem !important;
+  max-block-size: 1.5rem !important;
+  padding-block: 0 !important;
 }

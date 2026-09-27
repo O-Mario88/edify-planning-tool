@@ -644,7 +644,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 63.999rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2.5rem;
+    --edify-action-button-block-size: 2.25rem;
     --edify-action-button-padding-inline: 0.75rem;
     --edify-action-button-icon-size: 0.9375rem;
     --edify-action-button-radius: var(--radius-control);
@@ -816,7 +816,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 36rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2.5rem;
+    --edify-action-button-block-size: 2rem;
     --edify-action-button-padding-inline: 0.5rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -847,7 +847,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 22.5rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2.5rem;
+    --edify-action-button-block-size: 2rem;
     --edify-action-button-padding-inline: 0.45rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -1122,4 +1122,123 @@ main #filters-form .school-filter-grid > * {
   .edify-pagination__ellipsis {
     inline-size: 0.5rem;
   }
+}
+
+/* ── Phones: compact controls, and rows that reach the edge ────────────────
+   Owner, 2026-09-27: "make sure the dead space on the right is filled out
+   and also making mobile buttons and badges smaller to match and fit the
+   mobile screens perfectly. Do it for the entire platform." The one action
+   height steps with the screen — 40px on a desktop, 36px on a tablet, 32px
+   on a phone (the tokens above) — and on a phone:
+   - buttons, tabs and control links carry 12px type; each keeps a 44px
+     finger's target (micro-ux.js marks every control under 44px and the
+     invisible squares above cover it);
+   - badges, pills and figure chips are 12px type on a 20px pill;
+   - a row of controls reaches the right edge (interactions.css, "ROWS THAT
+     REACH THE EDGE"). */
+@media (max-width: 47.999rem) {
+  :root:root:root {
+    --edify-action-button-block-size: 2rem;
+    --edify-action-button-padding-inline: 0.625rem;
+    --edify-action-button-icon-size: 0.875rem;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .hcos-button,
+    .tt-button,
+    .plwk-arrow,
+    .edify-tab,
+    .edify-section-nav__link,
+    .edify-section-nav__cluster,
+    .edify-rail-more__toggle,
+    .hrd-action,
+    .mobile-role-home__action
+  ):not(:is(td, th) *) {
+    block-size: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
+    padding-block: 0 !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .edify-primary-solid,
+    .hcos-button,
+    .tt-button,
+    .plwk-arrow,
+    .edify-tab,
+    .edify-rail-more__toggle,
+    .hrd-action,
+    .mobile-role-home__action
+  ):not(:is(td, th) *),
+  .edify-shell [role="tab"]:not(:is(td, th) *) {
+    font-size: var(--edify-text-micro-size) !important;
+    padding-inline: var(--edify-action-button-padding-inline) !important;
+  }
+
+  /* A tab is as wide as its label on a phone: the 7rem floor (platform.css)
+     sent a third short tab into More on a 390px screen. A rail that has its
+     line to itself still spreads its tabs across it. */
+  main :is(
+    [role="tab"],
+    .edify-tab-btn,
+    [data-edify-tab],
+    .messages-inbox-tab,
+    .pto-tabs > button,
+    .sp-period-tabs > button,
+    .spp-tabs > button,
+    .tt-segmented > button,
+    .oversight-entity-tabs__link,
+    .edify-section-nav__cluster,
+    .edify-section-nav__link
+  ) {
+    min-inline-size: 0 !important;
+  }
+
+  .edify-shell :is(
+    .edify-badge,
+    .edify-status-badge,
+    .pill,
+    .status-pill,
+    .mp-badge,
+    .sp-badge,
+    .school-planning-badge,
+    .partner-status-chip,
+    .ia-trust-chip,
+    .ia-priority-chip,
+    .analytics-status-chip,
+    .hrd-count-pill,
+    .plwk-fact,
+    .fund-stage,
+    .ia-master__state,
+    span.rounded-pill:not(:empty)
+  ):not(:is(td, th) *) {
+    min-block-size: 0 !important;
+    padding-block: 0.125rem !important;
+    padding-inline: 0.5rem !important;
+    font-size: var(--edify-text-micro-size) !important;
+    line-height: 1.25 !important;
+  }
+}
+
+/* ── Tick boxes scale with the screen ───────────────────────────────────────
+   Owner, 2026-09-27: "the size of checkboxes should adjust dynamically." One
+   fluid size, 14px on a phone to 16px on a desktop, as the type beside it
+   scales, instead of a fixed 20px box that outweighed a phone's 13px row.
+   The finger's target is still the invisible 44px square around it (above).
+   Switches and custom-drawn boxes keep their own anatomy. */
+:root {
+  --edify-check-size: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
+}
+
+:root :is(.edify-shell, #drawer-container) :is(input[type="checkbox"], input[type="radio"]):not(.sr-only, .peer, .appearance-none, [role="switch"], .edify-visually-hidden) {
+  inline-size: var(--edify-check-size) !important;
+  block-size: var(--edify-check-size) !important;
+  min-inline-size: var(--edify-check-size) !important;
+  min-block-size: var(--edify-check-size) !important;
+  max-block-size: var(--edify-check-size) !important;
+  flex: 0 0 auto !important;
+  align-self: center;
 }

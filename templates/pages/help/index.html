@@ -66,7 +66,12 @@
 </section>
 {% endif %}
 
+{% comment %}The complete manual is an Admin export (help_center.views
+_manager_required); anyone else was refused, so the link is drawn only for
+those it serves (owner, 2026-09-27: hide what a role cannot use).{% endcomment %}
+{% if request.user.is_staff or request.user.active_role == "Admin" %}
 <section class="mt-7 flex flex-wrap gap-3" aria-label="Reference">
   <a href="/help/export/complete" class="btn h-8">Download the manual</a>
 </section>
+{% endif %}
 {% endblock %}

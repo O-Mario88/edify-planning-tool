@@ -138,11 +138,29 @@ class HRExceptionTests(TestCase):
             due_date=date.today() - timedelta(days=20),
         )
         match = next(
-            i for i in build_hr_exceptions(self.cd) if i.kind == "review_overdue"
+            i for i in build_hr_exceptions(self.hr) if i.kind == "review_overdue"
         )
         self.assertEqual(match.person, self.cceo.name)
         self.assertIn(self.cceo_sp.id, match.url)
         self.assertEqual(match.severity, "high")
+
+    def test_an_overdue_review_the_viewer_is_not_part_of_has_no_link(self):
+        """The Country Director sees every overdue review in the country, but
+        the conversation opens only for its employee, reviewer, functional
+        manager and HR (owner, 2026-09-27: hide what a role cannot open)."""
+        PerformanceReview.objects.create(
+            staff=self.cceo_sp,
+            period="FY2027 Q1",
+            fy="2027",
+            review_type="quarterly",
+            status="Manager Review Pending",
+            due_date=date.today() - timedelta(days=20),
+        )
+        match = next(
+            i for i in build_hr_exceptions(self.cd) if i.kind == "review_overdue"
+        )
+        self.assertEqual(match.person, self.cceo.name)
+        self.assertEqual(match.url, "")
 
     # ── people risk ──────────────────────────────────────────────────────
     def test_an_employee_with_no_manager_is_a_people_risk(self):

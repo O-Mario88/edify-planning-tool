@@ -139,6 +139,12 @@ class SidebarSettingsWiringTest(TestCase):
         body = response.content.decode()
         self.assertIn("app-sidebar__settings-trigger", body)
         for url in SETTINGS_DESTINATIONS:
+            if url == "/change-password":
+                # Drawn only while a change is required (owner, 2026-09-27:
+                # hide what a role cannot use): for anyone else the page
+                # returns to the dashboard.
+                self.assertNotIn(f'href="{url}"', body)
+                continue
             self.assertIn(f'href="{url}"', body)
         # Identity and title are rendered once in the upper-right account menu.
         self.assertIn("Gear Tester", body)

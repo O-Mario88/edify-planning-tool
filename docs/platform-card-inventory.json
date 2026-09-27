@@ -6,8 +6,8 @@
   "with_card_key": 13,
   "untitled_surfaces": 590,
   "untitled_chrome": 152,
-  "untitled_nested": 232,
-  "untitled_headless": 206,
+  "untitled_nested": 233,
+  "untitled_headless": 205,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -2535,7 +2535,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 305,
+   "line": 290,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -5331,7 +5331,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 106,
+   "line": 100,
    "title": "No past due plans",
    "heading_level": 3,
    "has_card_key": false,
@@ -5345,7 +5345,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 117,
+   "line": 111,
    "title": "School Visits (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5359,7 +5359,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 282,
+   "line": 276,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5373,7 +5373,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 449,
+   "line": 443,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,

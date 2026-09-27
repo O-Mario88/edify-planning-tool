@@ -8,7 +8,6 @@
 <div
 x-data="{
 selectedSchools: [],
-bulkActionOpen: false,
 selectedSchoolId: null,
 activeView: 'list',
 showAssignPartnerForm: false
@@ -45,17 +44,9 @@ class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex
 Export
 </a>
 
-<!-- Bulk Action trigger -->
-<button
-@click="bulkActionOpen = !bulkActionOpen"
-:disabled="selectedSchools.length === 0"
-:class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex-none"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-Assign
-</button>
-
+{% comment %}No header Assign (owner, 2026-09-27: "The assign button below
+the planning header is not necessary"): ticking schools raises the selection
+bar, which carries Assign and Export Selected.{% endcomment %}
 {% if can_add_non_school_activity %}
 <!-- Field events (district meetings, boot camps, workshops) are planned from
      the same catalogue-governed drawer the Work Plan uses. -->
@@ -69,14 +60,8 @@ Plan Field Event
 </button>
 {% endif %}
 
-<!-- Open My Plan -->
-<a
-href="/my-plan"
-class="edify-action-button primary h-9 transition-all shadow-sm flex-1 sm:flex-none"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Open My Plan
-</a>
+{% comment %}No header Open My Plan (owner, 2026-09-27: "Open My plan buttons are
+not really neccesary"): My Plan is in the navigation.{% endcomment %}
 </div>
 </div>
 

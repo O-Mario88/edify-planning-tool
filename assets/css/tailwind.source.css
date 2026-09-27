@@ -18,6 +18,21 @@
  */
 @import "tailwindcss" source(none);
 
+/* `dark:` follows the app's theme, not the device's alone (owner,
+   2026-09-27: "that black tab is not professional at all"). Tailwind's
+   default dark variant is the prefers-color-scheme query by itself, so a
+   phone or laptop set to dark mode painted every `dark:` utility (slate-800
+   rails, dark pills, pale text) onto the LIGHT theme. The root carries
+   `.dark` only when the chosen theme is dark or blue (base.html); requiring
+   it as well leaves those two themes exactly as they were. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(.dark, .dark *) {
+      @slot;
+    }
+  }
+}
+
 @source "../../templates";
 @source "../../apps";
 

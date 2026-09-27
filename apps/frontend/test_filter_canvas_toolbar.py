@@ -73,37 +73,24 @@ class _HeaderSelectAudit(HTMLParser):
 
 
 class FilterCanvasToolbarContractTests(TestCase):
-    def test_primary_filter_toolbars_expose_at_most_three_fields(self):
+    def test_filter_toolbars_carry_no_advanced_filter_dialog(self):
+        """Every filter is a field of its row (owner, 2026-09-27: "Redesign
+        more filter drawer to be more like a dropdown and remove the Applied
+        label"). micro-ux.js shows as many as the row's width holds and puts
+        the rest in the row's More dropdown, so a toolbar no longer caps its
+        fields at three and hides the others in a dialog."""
         violations = []
         form_pattern = re.compile(
             r'<form\b[^>]*data-component="filter-toolbar"[^>]*>(.*?)</form>',
             re.DOTALL,
         )
-        enclosed_pattern = re.compile(
-            r"<(?:dialog|details)\b.*?</(?:dialog|details)>", re.DOTALL
-        )
-        field_pattern = re.compile(r"<(?:select|input)\b([^>]*)>", re.DOTALL)
-
         for template in sorted((ROOT / "templates").rglob("*.html")):
             source = template.read_text(encoding="utf-8")
             for form in form_pattern.findall(source):
-                primary = enclosed_pattern.sub("", form)
-                fields = [
-                    attrs
-                    for attrs in field_pattern.findall(primary)
-                    if not re.search(r'type=["\']hidden["\']', attrs)
-                ]
-                if len(fields) > 3:
-                    violations.append(
-                        f"{template.relative_to(ROOT)}: {len(fields)} primary fields"
-                    )
+                if 'data-component="filter-drawer"' in form or "· Applied" in form:
+                    violations.append(str(template.relative_to(ROOT)))
 
-        self.assertEqual(
-            violations,
-            [],
-            "normal-width filter toolbars may expose at most three primary "
-            "fields; put the rest in the shared filter drawer",
-        )
+        self.assertEqual(violations, [])
 
     def test_page_headers_never_contain_filter_selects(self):
         violations = []
@@ -246,6 +233,7 @@ class FilterCanvasToolbarContractTests(TestCase):
         self.assertIn('data-component="filter-toolbar"', form)
         self.assertIn('class="platform-filter-bar"', form)
         self.assertNotIn("grid-cols-", form)
+        # Four fields in one row, no advanced dialog (owner, 2026-09-27).
         self.assertEqual(form.count("<label"), 4)
-        self.assertEqual(form.split("<dialog", 1)[0].count("<label"), 3)
-        self.assertIn('data-component="filter-drawer"', form)
+        self.assertNotIn("<dialog", form)
+        self.assertNotIn("· Applied", form)

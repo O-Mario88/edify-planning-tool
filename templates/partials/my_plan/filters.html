@@ -31,6 +31,15 @@
        {% if period == 'fy' or not period %}aria-current="page"{% endif %}>This FY</a>
   </nav>
 
+  {% comment %}Open Calendar sits on the tabs' row, at its right (owner,
+  2026-09-27: "place the button below the header on the right but same row
+  as This Week Tabs"); on a phone it is the calendar icon at the row's end.
+  {% endcomment %}
+  <a href="/calendar" class="btn btn-primary h-8 shadow-sm" aria-label="Open Calendar" title="Open Calendar">
+    <svg class="h-4 w-4 md:mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <span class="max-md:sr-only">Open Calendar</span>
+  </a>
+
   <!-- Filters Form for My Plan -->
   <form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan" x-data
   hx-get="/my-plan"
@@ -90,21 +99,14 @@ month; picking a month goes straight there.{% endcomment %}
 </select>
 </div>
 
-<button type="button" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50 self-end transition-all" aria-haspopup="dialog"
-        @click="$refs.advancedFilters.showModal()">
-<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_active %} · Applied{% endif %}
-</button>
-
-<dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="my-plan-advanced-filter-title">
-<header class="edify-filter-drawer__header">
-<div><p class="edify-page-eyebrow">My Plan</p><h2 id="my-plan-advanced-filter-title">Advanced filters</h2></div>
-<button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.advancedFilters.close()">×</button>
-</header>
-<div class="edify-filter-drawer__body">
+{% comment %}District, staff, activity type and status are fields of the row
+like the others (owner, 2026-09-27: "Redesign more filter drawer to be more
+like a dropdown and remove the Applied label"): the row shows as many as its
+width holds and micro-ux.js puts the rest in its More dropdown, whose count
+says how many of them are set.{% endcomment %}
 
 <!-- District Filter -->
-<div class="flex flex-col min-w-[120px]">
+<div class="platform-filter-compact flex flex-col min-w-[120px]">
 <span class="edify-filter-label">District</span>
 <select name="district" aria-label="Filter by district" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all">All districts</option>
@@ -115,7 +117,7 @@ More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_
 </div>
 
 <!-- Staff Filter -->
-<div class="flex flex-col min-w-[130px]">
+<div class="platform-filter-compact flex flex-col min-w-[130px]">
 <span class="edify-filter-label">Staff member</span>
 <select name="staff" aria-label="Filter by staff member" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all">All staff</option>
@@ -126,7 +128,7 @@ More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_
 </div>
 
 <!-- Activity Type Filter -->
-<div class="flex flex-col min-w-[140px]">
+<div class="platform-filter-compact flex flex-col min-w-[140px]">
 <span class="edify-filter-label">Activity type</span>
 <select name="activity_type" aria-label="Filter by activity type" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_activity_type or selected_activity_type == 'all' %}selected{% endif %}>All types</option>
@@ -137,7 +139,7 @@ More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_
 </div>
 
 <!-- Status Filter -->
-<div class="flex flex-col min-w-[120px]">
+<div class="platform-filter-compact flex flex-col min-w-[120px]">
 <span class="edify-filter-label">Status</span>
 <select name="status" aria-label="Filter by status" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>All statuses</option>
@@ -147,12 +149,6 @@ More<span class="edify-filter-more__long"> filters</span>{% if advanced_filters_
 <option value="returned_for_correction" {% if selected_status == 'returned_for_correction' %}selected{% endif %}>Returned</option>
 </select>
 </div>
-
-</div>
-<footer class="edify-filter-drawer__footer">
-<button type="button" class="btn btn-primary h-8" @click="$refs.advancedFilters.close()">Apply filters</button>
-</footer>
-</dialog>
 
 {% comment %}Clear Filters — shown only when a filter is actually active, so
 the control never occupies space it has not earned. Server-rendered rather

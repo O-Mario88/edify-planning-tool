@@ -75,7 +75,8 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
             self.assertNotIn(f".{data_canvas}", density)
 
     def test_one_action_button_height_at_every_width(self):
-        """Page actions retain the rebuild's 40px height across breakpoints.
+        """One page-action height per screen class: 40px desktop, 36px
+        tablet, 32px phone.
 
         Dense record actions have a separate 24px scoped override.
         """
@@ -83,7 +84,8 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         sizes = set(
             re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
         )
-        self.assertEqual(sizes, {"2.5rem"})
+        # Desktop 40px, tablet 36px, phone 32px (owner, 2026-09-27).
+        self.assertEqual(sizes, {"2.5rem", "2.25rem", "2rem"})
 
     def test_the_row_rhythm_is_not_gated_on_a_desktop_width(self):
         """A record table stays a table on a phone (mobile-shell.css says so),

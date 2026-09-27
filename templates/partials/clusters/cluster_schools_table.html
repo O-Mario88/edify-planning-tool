@@ -29,17 +29,18 @@
             {% comment %}One Actions menu rather than up to five buttons
             (owner, 2026-09-26: "cluster list actions are schedule, assign,
             remove"). An action this school cannot take stays on the list,
-            greyed, with its reason under it.{% endcomment %}
+            greyed, with its reason under it; one the viewer's role may never
+            take is not on it (owner, 2026-09-27).{% endcomment %}
             {% row_actions s.name %}
             {% if can_schedule and s.staffCanSchedule %}
               <button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/schedule-modal?school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ s.name }}">Schedule</button>
-            {% else %}
+            {% elif can_schedule %}
               <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-visit-locked="{% if not s.staffCanSchedule %}true{% else %}false{% endif %}" aria-label="Schedule support for {{ s.name }} unavailable{% if s.staffScheduleReason %}: {{ s.staffScheduleReason }}{% endif %}">Schedule{% if s.staffScheduleReason %}<span class="row-menu__reason">{{ s.staffScheduleReason }}</span>{% endif %}</button>
             {% endif %}
 
             {% if can_assign_partner and s.canAssignPartner %}
               <button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/assign-partner-modal?school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ s.name }} to a partner">Assign</button>
-            {% else %}
+            {% elif can_assign_partner %}
               <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-assign-locked="{% if not s.canAssignPartner %}true{% else %}false{% endif %}" aria-label="Assign {{ s.name }} to a partner unavailable{% if s.assignPartnerReason %}: {{ s.assignPartnerReason }}{% endif %}">Assign{% if s.assignPartnerReason %}<span class="row-menu__reason">{{ s.assignPartnerReason }}</span>{% endif %}</button>
             {% endif %}
 

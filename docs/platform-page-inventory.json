@@ -606,8 +606,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 460,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -658,7 +660,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6779,
+      "bytes": 7070,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3037,7 +3039,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8564,
+      "bytes": 8679,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -5742,7 +5744,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 40136,
+      "bytes": 38802,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6839,7 +6841,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 14160,
+      "bytes": 14076,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -8249,7 +8251,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5013,
+      "bytes": 5177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8270,7 +8272,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7175,
+      "bytes": 7339,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8345,7 +8347,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5815,
+      "bytes": 5971,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8366,7 +8368,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5786,
+      "bytes": 5942,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8421,7 +8423,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9652,
+      "bytes": 9364,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8541,7 +8543,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4178,
+      "bytes": 4340,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8632,7 +8634,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4881,
+      "bytes": 5045,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10128,7 +10130,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7028,
+      "bytes": 7256,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -11046,7 +11048,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2724,
+      "bytes": 2754,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -11474,7 +11476,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10717,
+      "bytes": 10281,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -35651,7 +35653,7 @@
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-A3ABFAEDCD",
@@ -52212,7 +52214,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A05C99B6EA",
@@ -85997,7 +85999,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "todos",
-      "primary_action": "Medium",
+      "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "The dedicated To-Do operating queue \u2014 system-generated, role-scoped, auto-closing action items derived live from workflow state.",
       "remediation": "No automated remediation outstanding",
@@ -86065,8 +86067,8 @@
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 10,
+        "type": "segmented-control"
       },
       "templates": [
         "pages/todos/index.html"

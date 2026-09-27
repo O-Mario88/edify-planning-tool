@@ -302,17 +302,21 @@ test.describe('Responsive contract — behaviours', () => {
         await context.close();
       }
     }
-    // Planning's eight filters: one full-width row on a desktop — five fields
-    // and "More filters" holding the other three, the School Directory's six
-    // slots (owner, 2026-09-25) — and several to a row on a phone.
+    // Planning's eight filters: one full-width row on a desktop, as many
+    // fields as its width holds (a slot per 9rem, owner 2026-09-27: "add more
+    // filters on desktop to fill the entire row") and "More filters" holding
+    // the rest — and several to a row on a phone.
     {
       const { context, page } = await openAs(browser, baseURL, DESKTOP_CONTEXT, { width: 1440, height: 900 }, 'cceo@edify.org');
       try {
         await page.goto('/planning');
         const { rows, clipped } = await rowsOf(page, '#filters-form');
-        expect(rows).toEqual([6]);
+        expect(rows.length).toBe(1);
+        expect(rows[0]).toBeGreaterThanOrEqual(7);
         expect(clipped).toEqual([]);
-        await expect(page.locator('#filters-form [data-edify-filter-more-panel] select')).toHaveCount(3);
+        const tucked = await page.locator('#filters-form [data-edify-filter-more-panel] select').count();
+        expect(tucked).toBeGreaterThanOrEqual(1);
+        expect(tucked).toBeLessThanOrEqual(2);
       } finally {
         await context.close();
       }

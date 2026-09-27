@@ -25,7 +25,10 @@ test('compact record actions across platform pages',async({page},info)=>{
       if(e.closest('[role="menu"], .row-menu, [popover]')||e.matches('[role="menuitem"]'))continue;
       const r=e.getBoundingClientRect();if(!r.width||!r.height)continue;
       if(Math.abs(r.height-28)>1)errors.push(e.tagName+' '+e.className+' height='+r.height);
-      if(e.scrollHeight>e.clientHeight+2)errors.push(e.className+' clipped content '+e.scrollHeight+'/'+e.clientHeight);
+      // The label's own box, not scrollHeight: a phone's invisible 44px touch
+      // square (a positioned ::after) overflows the button on purpose.
+      const text=document.createRange();text.selectNodeContents(e);const t=text.getBoundingClientRect();
+      if(t.height&&(t.top<r.top-1||t.bottom>r.bottom+1))errors.push(e.className+' clipped content '+Math.round(t.height)+'/'+Math.round(r.height));
      }
      return [...new Set(errors)].slice(0,8);
     });checked++;if(errors.length)issues.push({file,width,theme,errors});

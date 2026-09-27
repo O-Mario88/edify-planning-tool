@@ -128,8 +128,11 @@
      header cell that says "Select" in words pins with its column. Before, a
      box inside a label was taken for the identity, the name cap below clipped
      it to 16px, and the name itself scrolled away. */
+  /* 32px: the box is 14px on a phone, and the 44px finger's square around
+     it (mobile-micro-ux.css) reaches past the column's edge (owner,
+     2026-09-27: "huge gap between checkboxes and the school id"). */
   .edify-table-scroll-region {
-    --edify-table-select-size: 2.75rem;
+    --edify-table-select-size: 2rem;
   }
 
   .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])

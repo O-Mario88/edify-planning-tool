@@ -61,27 +61,17 @@
         {% for did, dname in district_options %}<option value="{{ did }}" {% if did == district_id %}selected{% endif %}>{{ dname }}</option>{% endfor %}
       </select>
     </label>
-    <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.debriefAdvancedFilters.showModal()">
-      More<span class="edify-filter-more__long"> filters</span>{% if risk_level %} · Applied{% endif %}
-    </button>
-    <dialog x-ref="debriefAdvancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="debrief-advanced-filter-title">
-      <header class="edify-filter-drawer__header">
-        <div><p class="edify-page-eyebrow">Field Debriefs</p><h2 id="debrief-advanced-filter-title">Advanced filters</h2></div>
-        <button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.debriefAdvancedFilters.close()">×</button>
-      </header>
-      <div class="edify-filter-drawer__body">
-        <label class="block">
-          <span class="edify-filter-label">Risk level</span>
-          <select aria-label="Risk level" name="risk_level">
-            <option value="">Any</option>
-            {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
-          </select>
-        </label>
-      </div>
-      <footer class="edify-filter-drawer__footer">
-        <button type="button" class="btn btn-primary h-8" @click="$refs.debriefAdvancedFilters.close()">Apply filters</button>
-      </footer>
-    </dialog>
+    {% comment %}Risk level is a field of the row like the others (owner,
+    2026-09-27: "Redesign more filter drawer to be more like a dropdown and
+    remove the Applied label"): the row shows what its width holds and puts the
+    rest in its More dropdown.{% endcomment %}
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Risk level</span>
+      <select aria-label="Risk level" name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">Any</option>
+        {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
     {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
   </form>
 

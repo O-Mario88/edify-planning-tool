@@ -3,7 +3,8 @@
 <section class="sp-card sp-table-card sp-table-card--{{ accent }}" aria-labelledby="sp-table-{{ kind }}">
   <div class="sp-card__header">
     <div><h2 id="sp-table-{{ kind }}">{{ title }} <span class="sp-count">{{ count }}</span>{% if readonly %}<span class="sp-readonly">Read only</span>{% endif %}</h2></div>
-    <a href="/projects/planning">View planning <span aria-hidden="true">→</span></a>
+    {% comment %}No link in a table's header (owner, 2026-09-27): Planning is
+    in the navigation.{% endcomment %}
   </div>
   <div class="sp-table-wrap">
     {% paginate rows "rows_page" as rows_pager %}
