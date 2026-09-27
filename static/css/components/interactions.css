@@ -1575,3 +1575,29 @@ main .edify-filter-row > label.edify-filter-row__field {
     block-size: 0.875rem;
   }
 }
+
+/* ── THE TOP LAYER (static/js/top-layer.js) ─────────────────────────────────
+   Dropdowns open at their button and overlays cover the window by being shown
+   in the browser's top layer as popovers (owner, 2026-09-27). The browser's
+   popover defaults would centre a lifted element (inset 0, margin auto,
+   fit-content size) and paint it in system colours; these hand it back to its
+   own rules. Zero specificity in the base layer, so every rule the element
+   already has, Tailwind utilities included, still wins. */
+@layer base {
+  :where([data-edify-lifted]) {
+    inset: auto;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    color: inherit;
+    background-color: transparent;
+  }
+
+  /* A modal written inside a `space-y-*` stack took the stack's sibling
+     margin (platform.css sets it with !important) and stood 12px clear of the
+     window's top. A fixed box is not in the stack. Important in the base
+     layer, which outranks important in every later layer and unlayered. */
+  :where([class*="space-y-"]) > [data-edify-lifted]:not([data-edify-dropdown]) {
+    margin-block: 0 !important;
+  }
+}

@@ -3975,8 +3975,12 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 /* Fixed, not absolute: an absolute menu is clipped by the card's hidden
    overflow and by the table's horizontal scroller, so half of it disappeared
-   inside the card. The controller supplies left/top from the trigger's rect
-   and right-aligns it on the trigger's right edge. */
+   inside the card. Fixed alone was not enough either: a row, card or
+   workspace with a container type makes a fixed box relative to itself, so
+   the Core Schools menu opened offset and hidden (2026-09-27). rowMenu shows
+   the list in the top layer through EdifyLayer (static/js/top-layer.js),
+   which supplies left/top from the trigger's rect: down from the button,
+   right-aligned on its right edge. */
 .row-menu__list {
   position: fixed;
   z-index: 60;

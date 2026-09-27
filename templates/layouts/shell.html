@@ -335,6 +335,7 @@ class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--t
 <div class="edify-topbar__account relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
 <button
 type="button"
+x-ref="accountButton"
 @click="open = !open"
 aria-label="Account menu"
 :aria-expanded="open"
@@ -345,9 +346,10 @@ class="edify-topbar__icon-control edify-topbar__icon-control--avatar text-white 
 
 <div
 x-show="open"
+x-dropdown="$refs.accountButton"
 x-cloak
 x-transition.opacity.duration.120ms
-class="absolute right-0 mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden edify-surface border edify-border"
+class="fixed w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden edify-surface border edify-border"
 style="display: none"
 >
 <div class="px-4 py-2 border-b edify-border-bottom">

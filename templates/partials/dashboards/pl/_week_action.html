@@ -32,8 +32,7 @@ apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none.
 </button>
 {% elif row.action == "own" %}
 <div class="row-menu" x-data="rowMenu"
-     @keydown.escape.window="close()" @click.outside="close()"
-     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+     @keydown.escape.window="close()" @click.outside="close()">
   <button type="button" class="row-menu__trigger" x-ref="trigger"
           @click="toggle()"
           :aria-expanded="open ? 'true' : 'false'"
@@ -43,7 +42,7 @@ apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none.
     <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
   </button>
   <div class="row-menu__list" x-ref="list" x-show="open"
-       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+       x-cloak x-transition.opacity.duration.120ms role="menu">
     <button type="button" hx-get="/my-plan/{{ row.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML" @click="close()" class="row-menu__item" role="menuitem">Complete Activity</button>
     <button type="button" hx-get="/my-plan/{{ row.id }}/reschedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" @click="close()" class="row-menu__item" role="menuitem">Reschedule Activity</button>
     <button type="button" hx-get="/my-plan/{{ row.id }}/cancel-drawer" hx-target="#drawer-container" hx-swap="innerHTML" @click="close()" class="row-menu__item row-menu__item--danger" role="menuitem">Cancel Activity</button>

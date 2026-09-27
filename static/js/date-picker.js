@@ -228,6 +228,7 @@
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-modal", "false");
     display.setAttribute("aria-controls", pop.id);
+    if (doc.defaultView && doc.defaultView.EdifyLayer) doc.defaultView.EdifyLayer.mark(pop);
 
     /* The field's label now names the field the reader uses. The date field
        keeps no label of its own (it is hidden from assistive technology), so
@@ -403,13 +404,18 @@
     this.pop.hidden = false;
     this.wrapper.setAttribute("data-open", "");
     this.display.setAttribute("aria-expanded", "true");
-    this.render(true);
+    // Placed (lifted into the top layer) before focus moves in: a panel that
+    // is not yet shown cannot take focus.
+    this.render(false);
     this.place();
+    var target = this.pop.querySelector('[tabindex="0"]');
+    if (target) target.focus({ preventScroll: true });
   };
 
   Field.prototype.close = function (returnFocus) {
     if (openField === this) openField = null;
     this.pop.hidden = true;
+    if (this.layer()) this.layer().close(this.pop);
     this.pop.innerHTML = "";
     this.wrapper.removeAttribute("data-open");
     this.display.setAttribute("aria-expanded", "false");
@@ -430,10 +436,24 @@
     this.close(true);
   };
 
-  /* Fixed, so no scrolling drawer or table can clip it, but measured from its
-     own containing block: a transformed drawer makes `fixed` relative to the
-     drawer rather than the window. */
+  Field.prototype.layer = function () {
+    var view = this.doc.defaultView;
+    return view && view.EdifyLayer;
+  };
+
+  /* Down from the field, in the top layer (static/js/top-layer.js), so no
+     scrolling drawer, table or container-query box moves or clips it; the
+     layer follows the field as the page scrolls and closes the calendar once
+     the field leaves the screen. Without the layer: fixed, measured from its
+     own containing block, since a transformed drawer makes `fixed` relative
+     to the drawer rather than the window. */
   Field.prototype.place = function () {
+    var layer = this.layer();
+    if (layer) {
+      var field = this;
+      layer.open(this.pop, this.display, { align: "start", gap: 6, onLost: function () { field.close(false); } });
+      return;
+    }
     var pop = this.pop;
     var anchor = this.display.getBoundingClientRect();
     var view = this.doc.documentElement;
@@ -687,7 +707,7 @@
       if (openField && !openField.contains(event.target)) openField.close(false);
     });
     function follow() {
-      if (!openField) return;
+      if (!openField || openField.layer()) return;
       var box = openField.display.getBoundingClientRect();
       if (box.bottom < 0 || box.top > win.innerHeight || !openField.display.isConnected) openField.close(false);
       else openField.place();

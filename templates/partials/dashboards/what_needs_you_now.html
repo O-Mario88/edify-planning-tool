@@ -197,8 +197,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                 {% if row.is_own %}
                 <!-- Own Activity: Complete, Reschedule, Cancel Action Dropdown -->
                 <div class="row-menu" x-data="rowMenu"
-                     @keydown.escape.window="close()" @click.outside="close()"
-                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                     @keydown.escape.window="close()" @click.outside="close()">
                   <button type="button" class="row-menu__trigger" x-ref="trigger"
                           @click="toggle()"
                           :aria-expanded="open ? 'true' : 'false'"
@@ -208,7 +207,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                     <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                   </button>
                   <div class="row-menu__list" x-ref="list" x-show="open"
-                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                       x-cloak x-transition.opacity.duration.120ms role="menu">
                     <button type="button"
                             hx-get="{{ row.complete_url }}"
                             hx-target="#drawer-container"
@@ -365,8 +364,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                 {% if row.is_own %}
                 <!-- Own Activity Actions -->
                 <div class="row-menu" x-data="rowMenu"
-                     @keydown.escape.window="close()" @click.outside="close()"
-                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                     @keydown.escape.window="close()" @click.outside="close()">
                   <button type="button" class="row-menu__trigger" x-ref="trigger"
                           @click="toggle()"
                           :aria-expanded="open ? 'true' : 'false'"
@@ -376,7 +374,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                     <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                   </button>
                   <div class="row-menu__list" x-ref="list" x-show="open"
-                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                       x-cloak x-transition.opacity.duration.120ms role="menu">
                     <button type="button"
                             hx-get="{{ row.complete_url }}"
                             hx-target="#drawer-container"
@@ -531,8 +529,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                 {% if row.is_own %}
                 <!-- Own Activity Actions -->
                 <div class="row-menu" x-data="rowMenu"
-                     @keydown.escape.window="close()" @click.outside="close()"
-                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                     @keydown.escape.window="close()" @click.outside="close()">
                   <button type="button" class="row-menu__trigger" x-ref="trigger"
                           @click="toggle()"
                           :aria-expanded="open ? 'true' : 'false'"
@@ -542,7 +539,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                     <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                   </button>
                   <div class="row-menu__list" x-ref="list" x-show="open"
-                       :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                       x-cloak x-transition.opacity.duration.120ms role="menu">
                     <button type="button"
                             hx-get="{{ row.complete_url }}"
                             hx-target="#drawer-container"

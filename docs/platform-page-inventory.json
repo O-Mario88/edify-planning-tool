@@ -586,7 +586,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1957,
+      "bytes": 1983,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3510,7 +3510,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6125,
+      "bytes": 6205,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4643,7 +4643,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4467,
+      "bytes": 4351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -5742,7 +5742,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 40532,
+      "bytes": 40136,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -7933,7 +7933,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18678,
+      "bytes": 18754,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -8154,7 +8154,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6266,
+      "bytes": 6150,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9002,7 +9002,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5174,
+      "bytes": 5034,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -11448,7 +11448,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9357,
+      "bytes": 9427,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools",
@@ -12461,7 +12461,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9681,
+      "bytes": 9573,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
