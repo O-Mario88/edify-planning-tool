@@ -8295,7 +8295,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24024,
+      "bytes": 24211,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
