@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% comment %}Field Debrief Dashboard body (§16 mockup) — re-rendered by HTMX on
 filter change. Every number is derived live from FieldDebriefService's
 role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
@@ -20,10 +21,10 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                 colours stay. Everything else is the shared form. */
              const cfg = window.EdifyChartSystem.formBase({});
              cfg.series = [
-               { name: 'Submitted', data: {{ trend.submitted|escape }} },
-               { name: 'Completed', data: {{ trend.completed|escape }} },
-               { name: 'Action Required', data: {{ trend.action_required|escape }} },
-               { name: 'Critical', data: {{ trend.critical|escape }} }
+               { name: 'Submitted', data: {{ trend.submitted|js_data }} },
+               { name: 'Completed', data: {{ trend.completed|js_data }} },
+               { name: 'Action Required', data: {{ trend.action_required|js_data }} },
+               { name: 'Critical', data: {{ trend.critical|js_data }} }
              ];
              cfg.chart.type = 'line';
              cfg.chart.height = 260;

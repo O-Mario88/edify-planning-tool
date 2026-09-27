@@ -1,9 +1,35 @@
 """Charts reuse already-scoped view data; tags never query or widen access."""
 
+import json
 import math
+
 from django import template
+from django.utils.safestring import mark_safe
 
 register = template.Library()
+
+
+_JS_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0026"}
+
+
+@register.filter
+def js_data(value):
+    """A Python value as a JavaScript literal for an inline chart series.
+
+    ``{{ series|escape }}`` printed a Python list, so a month with no rate
+    rendered ``None`` and the Country Director's operations chart died with
+    "None is not defined" (2026-09-27 platform sweep). JSON writes ``null``,
+    which the charts draw as a gap; ``<``, ``>`` and ``&`` are escaped so the
+    value cannot close the surrounding <script>."""
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    # Safe to mark: the value is JSON (numbers, null, quoted strings), and the
+    # three characters that could end the <script> or start markup are
+    # escaped, as django.utils.html.json_script does. Suppressed unqualified
+    # because B308 is a blacklist check and ignores a test-id list.
+    return mark_safe(  # nosec B308 B703
+        json.dumps(value, cls=DjangoJSONEncoder).translate(_JS_ESCAPES)
+    )
 
 
 def _number(value):

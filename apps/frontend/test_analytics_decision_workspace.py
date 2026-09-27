@@ -54,8 +54,12 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("target_by_district_summary", service)
         for count in ("districts", "attention", "critical"):
             self.assertIn(
-                "{{ target_by_district_summary.%s|default:0 }}</b>" % count, template
+                "{{ target_by_district_summary.%s|default:0 }}</span>" % count, template
             )
+        # The filters are the platform's tab rail (owner, 2026-09-27), and the
+        # count is the tab's own count.
+        self.assertIn('class="analytics-priority-filters" data-edify-tablist', template)
+        self.assertEqual(template.count("data-edify-tab-count"), 3)
         self.assertIn('class="analytics-priority-empty"', template)
         self.assertIn("No critical district in this scope", template)
 
@@ -107,7 +111,14 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertNotIn("min-inline-size: 34rem", layout)
         self.assertIn("overflow-x: clip", layout)
         self.assertIn("table-layout: fixed", layout)
-        self.assertIn("padding: 1rem 0.5rem 0", layout)
+        # The distribution block starts on the key's and title band's edge
+        # (owner, 2026-09-27): no side padding of its own, and flush from the
+        # platform's nested-card inset its "-panel" class name would get.
+        self.assertIn("padding: 1rem 0 0", layout)
+        self.assertIn(
+            '<div class="sr-distribution-panel w-full" data-edify-padding="flush">',
+            map_template,
+        )
         self.assertIn("@media (max-width:48rem)", map_template)
         # A phone map carries SUB-REGION names only (owner, 2026-09-05). All
         # 136 district names at once on a 375px canvas overlap into noise, and

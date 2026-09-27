@@ -214,6 +214,96 @@
   object-fit: contain;
 }
 
+/* Phones and tablets: the sheet is only as tall as the drawing (owner,
+   2026-09-27: "There is a huge space above and below the map in mobile
+   mode... fix it also in tablet mode"). The drawing is a square viewBox, so
+   on a card narrower than the height above it filled the width and left the
+   rest as two bands of nothing, ~116px each on a 390px phone. Here the sheet
+   is square, capped by the same room-under-the-chrome bound, and never less
+   than 17.5rem so a landscape phone still shows a readable map. Desktop keeps
+   the full-width, 600px sheet above. */
+@media (max-width: 63.999rem) {
+  .analytics-geo-card .sr-map-viewport {
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: max(17.5rem, min(600px, calc(100svh - var(--sr-map-chrome)))) !important;
+  }
+}
+
+/* The school key under the map. The heading sits on the first row of items
+   and the items keep one rhythm: a 12px dot, the label, the count, left-
+   aligned in 28px rows. Phones lay the items out in two even columns under
+   the heading, so the dots line up; wider cards run them along one line
+   beside the heading and wrap under the first item, not under the heading.
+   The platform's shared button rules (centred content, a 40px phone block
+   size) do not apply to a key entry; its touch target is micro-ux.js's
+   invisible 44px square. */
+.analytics-geo-card .sr-key {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .375rem;
+}
+.analytics-geo-card .sr-key .sr-key-name {
+  margin: 0;
+  text-align: start;
+  line-height: 1.75rem !important;
+}
+.analytics-geo-card .sr-key .sr-key-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .125rem 1rem;
+  align-items: center;
+  min-inline-size: 0;
+}
+.analytics-geo-card .sr-key .sr-key-item {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: .375rem;
+  inline-size: auto;
+  min-inline-size: 0;
+  height: 1.75rem !important;
+  min-height: 1.75rem !important;
+  /* The hover wash reaches past the dot and the count; the negative margins
+     keep the entry's footprint to its content, so the dots sit on the
+     card's content edge and the gaps below are the visible gaps. */
+  margin-inline: -.375rem;
+  padding: 0 .375rem !important;
+  text-align: start !important;
+  white-space: nowrap;
+}
+.analytics-geo-card .sr-key .sr-key-item > .sr-legend-marker {
+  margin-inline-end: .125rem;
+}
+.analytics-geo-card .sr-key .sr-key-text {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.analytics-geo-card .sr-key .sr-key-count {
+  flex: 0 0 auto;
+}
+@media (min-width: 48rem) {
+  /* One 1rem gap between the heading and the first dot and between entries;
+     the heading's gap adds back the first entry's negative margin. */
+  .analytics-geo-card .sr-key {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: calc(1rem + .375rem);
+  }
+  .analytics-geo-card .sr-key .sr-key-name {
+    flex: 0 0 auto;
+  }
+  .analytics-geo-card .sr-key .sr-key-list {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    gap: .125rem 1rem;
+  }
+}
+
 .analytics-geo-card .sr-distribution-scroll {
   max-inline-size: 100%;
   overflow-x: clip;
@@ -408,45 +498,13 @@
   margin-block-start: 3px;
 }
 
+/* The priority filters are the platform's tab rail (data-edify-tablist,
+   interactions.css) since 2026-09-27; the selected tab and each tab's count
+   come from there. Every tab still carries its count, so a reader can tell
+   "no critical district in this scope" from "the filter did nothing"
+   (owner, 2026-09-05). */
 .analytics-priority-filters {
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  border-radius: var(--edify-radius-control);
-  background: var(--edify-surface-muted);
-}
-
-.analytics-priority-filters button {
-  flex: 1 1 auto;
-  min-block-size: 32px;
-  padding-inline: .6rem;
-  border-radius: calc(var(--edify-radius-control) - 2px);
-  color: var(--edify-text-muted);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* The selected filter is unmistakable: accent on accent, not a lighter
-   shade of the rail. And every button carries its count, so a reader can
-   tell "no critical district in this scope" from "the filter did nothing" —
-   with two districts, both critical, all three filters showed the same rows
-   and the card read as broken (owner, 2026-09-05). */
-.analytics-priority-filters button.is-active {
-  color: var(--edify-on-accent);
-  background: var(--edify-accent);
-  box-shadow: var(--edify-shadow-sm);
-}
-
-.analytics-priority-filters button b {
-  margin-inline-start: .3rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  opacity: .7;
-}
-
-.analytics-priority-filters button.is-active b {
-  opacity: 1;
+  max-inline-size: 100%;
 }
 
 /* What a filter says when nothing matches, instead of an empty card. */
@@ -762,14 +820,6 @@
     display: none;
   }
 
-  .analytics-priority-filters {
-    overflow-x: auto;
-  }
-
-  .analytics-priority-filters button {
-    min-block-size: 36px;
-  }
-
   .analytics-evidence-disclosure > summary {
     min-block-size: 52px;
   }
@@ -845,10 +895,16 @@
    it: a nested scroll region was giving it a second, narrower viewport
    inside the panel — the table measured 256px inside a 337px card and
    scrolled sideways with the whole width sitting unused beside it (owner,
-   2026-09-05). There is room here; nothing needs to scroll horizontally. */
+   2026-09-05). There is room here; nothing needs to scroll horizontally.
+
+   It starts on the same edge as the school key and the card's title band
+   (owner, 2026-09-27). Its class ends in "-panel", so the platform's nested-
+   card rule (consistency.css) had given it a surface's 16px padding, setting
+   its heading and table 17px in from everything above; the template marks
+   it data-edify-padding="flush", that rule's own opt-out for table shells. */
 .analytics-geo-card .sr-distribution-panel {
   margin-block-start: .25rem;
-  padding: 1rem 0.5rem 0;
+  padding: 1rem 0 0;
   border-block-start: 1px solid var(--edify-border);
 }
 
@@ -1649,3 +1705,10 @@ main #impact-workspace .impact-group-pagination a {
    band): mobile-micro-ux.css forces every table cell visible with a
    ten-part !important rule that yields only to an inline display:none. */
 
+
+/* The workspace's "Updating…" sits under the header, out of its actions, and
+   holds no line until a request runs (owner, 2026-09-27: a title's one or two
+   actions share its line on a phone). */
+#analytics-panel-updating:not(.htmx-request) {
+  display: none;
+}

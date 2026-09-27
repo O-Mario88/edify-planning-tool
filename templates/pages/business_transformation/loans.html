@@ -13,9 +13,14 @@
     <p class="text-sm text-[var(--edify-text-muted)]">Access follows your active platform role.</p>
     <div class="flex flex-wrap items-center justify-end gap-2">
       {% if can_export_loans %}
-      <a href="/loan-applications/export.csv{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-8">Applications CSV</a>
-      <a href="/loans/export.csv{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-8">Export loan records (CSV)</a>
-      <a href="/loans/export.xlsx{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-8">Excel report</a>
+      {% comment %}One Export: the Excel report already carries the applications and
+      the processed loans (owner, 2026-09-27: "export buttons dont have to be two
+      buttons. It should be export in excel not csv"). The CSV routes still
+      answer for existing links.{% endcomment %}
+      <a href="/loans/export.xlsx{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-8" data-loans-export aria-label="Export to Excel" title="Export to Excel: summary, applications and processed loans">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export
+      </a>
       {% endif %}
       {% if can_write_loans and can_execute_loans %}
         {% include "components/badge.html" with tone="success" label=access_label size="md" dot="true" %}

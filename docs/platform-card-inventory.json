@@ -4,10 +4,10 @@
   "templates": 245,
   "distinct_titles": 638,
   "with_card_key": 13,
-  "untitled_surfaces": 590,
-  "untitled_chrome": 152,
+  "untitled_surfaces": 591,
+  "untitled_chrome": 151,
   "untitled_nested": 233,
-  "untitled_headless": 205,
+  "untitled_headless": 207,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -723,21 +723,21 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 67,
+   "line": 72,
    "title": "School loan applications",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
    "branch_path": [
     [
-     12,
+     10,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 119,
+   "line": 124,
    "title": "Lending partner dashboard",
    "heading_level": 2,
    "has_card_key": false,
@@ -746,49 +746,49 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 158,
+   "line": 163,
    "title": "Create or update a loan",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
    "branch_path": [
     [
-     21,
+     19,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 163,
+   "line": 168,
    "title": "Approved loan purposes",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "px-5 py-4 border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)]",
    "branch_path": [
     [
-     21,
+     19,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 251,
+   "line": 256,
    "title": "Record repayment position",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
    "branch_path": [
     [
-     22,
+     20,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 342,
+   "line": 347,
    "title": "Loan register",
    "heading_level": 2,
    "has_card_key": false,
@@ -1451,7 +1451,7 @@
   },
   {
    "template": "templates/pages/finance/fund_allocation.html",
-   "line": 59,
+   "line": 60,
    "title": "Activity cost plan \u2014 whole country",
    "heading_level": 2,
    "has_card_key": false,
@@ -1893,7 +1893,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 39,
+   "line": 43,
    "title": "Why work is returned",
    "heading_level": 2,
    "has_card_key": false,
@@ -1902,7 +1902,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 55,
+   "line": 59,
    "title": "Return rate by month",
    "heading_level": 2,
    "has_card_key": false,
@@ -1911,7 +1911,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 82,
+   "line": 86,
    "title": "Submitters, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -1920,7 +1920,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 98,
+   "line": 102,
    "title": "Partners, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -1929,7 +1929,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 115,
+   "line": 119,
    "title": "Verifiers",
    "heading_level": 2,
    "has_card_key": false,
@@ -2349,7 +2349,7 @@
   },
   {
    "template": "templates/pages/partner/assignments.html",
-   "line": 20,
+   "line": 18,
    "title": "Awaiting Scheduling",
    "heading_level": 2,
    "has_card_key": false,
@@ -2358,7 +2358,7 @@
   },
   {
    "template": "templates/pages/partner/assignments.html",
-   "line": 43,
+   "line": 41,
    "title": "Scheduled",
    "heading_level": 2,
    "has_card_key": false,
@@ -2399,7 +2399,7 @@
   },
   {
    "template": "templates/pages/partner/today.html",
-   "line": 53,
+   "line": 50,
    "title": "Today's Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2408,7 +2408,7 @@
   },
   {
    "template": "templates/pages/partner/today.html",
-   "line": 73,
+   "line": 70,
    "title": "Coming Up",
    "heading_level": 2,
    "has_card_key": false,
@@ -2417,7 +2417,7 @@
   },
   {
    "template": "templates/pages/partner/today.html",
-   "line": 90,
+   "line": 87,
    "title": "MOU Payments",
    "heading_level": 2,
    "has_card_key": false,
@@ -2681,7 +2681,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 127,
+   "line": 124,
    "title": "Budget & Execution",
    "heading_level": 2,
    "has_card_key": false,
@@ -2695,7 +2695,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 157,
+   "line": 154,
    "title": "Delivery by Intervention",
    "heading_level": 2,
    "has_card_key": false,
@@ -2709,7 +2709,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 220,
+   "line": 217,
    "title": "Upcoming Follow-Ups",
    "heading_level": 2,
    "has_card_key": false,
@@ -2723,7 +2723,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 248,
+   "line": 245,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -2741,7 +2741,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 276,
+   "line": 273,
    "title": "Partner Delivery",
    "heading_level": 2,
    "has_card_key": false,
@@ -2759,7 +2759,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 302,
+   "line": 299,
    "title": "Same engine as Planning",
    "heading_level": 2,
    "has_card_key": false,
@@ -4633,7 +4633,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 489,
+   "line": 490,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -5387,7 +5387,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 66,
+   "line": 67,
    "title": "Top Challenges Reported",
    "heading_level": 2,
    "has_card_key": false,
@@ -5396,7 +5396,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 80,
+   "line": 81,
    "title": "Action Center",
    "heading_level": 2,
    "has_card_key": false,
@@ -5405,7 +5405,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 110,
+   "line": 111,
    "title": "Team &amp; Partner Debriefs",
    "heading_level": 2,
    "has_card_key": false,
@@ -5414,7 +5414,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 117,
+   "line": 118,
    "title": "Recent Activity",
    "heading_level": 2,
    "has_card_key": false,
@@ -5423,7 +5423,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 135,
+   "line": 136,
    "title": "Recent Peer Solutions",
    "heading_level": 2,
    "has_card_key": false,
@@ -5432,7 +5432,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 174,
+   "line": 175,
    "title": "Debrief Intelligence Highlights",
    "heading_level": 2,
    "has_card_key": false,
@@ -6515,7 +6515,7 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 107,
+   "line": 109,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -6967,7 +6967,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 74,
+   "line": 70,
    "title": "Plan Breakdown by Period",
    "heading_level": 2,
    "has_card_key": false,
@@ -6981,7 +6981,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 86,
+   "line": 82,
    "title": "Upcoming Today",
    "heading_level": 2,
    "has_card_key": false,
@@ -6995,7 +6995,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 95,
+   "line": 91,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -7009,7 +7009,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 102,
+   "line": 98,
    "title": "Budget &amp; Workflow Status",
    "heading_level": 2,
    "has_card_key": false,
@@ -7023,7 +7023,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 50,
+   "line": 54,
    "title": "Project school planning queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -7037,7 +7037,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 138,
+   "line": 142,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7051,7 +7051,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 147,
+   "line": 151,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7065,7 +7065,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 164,
+   "line": 168,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -7079,7 +7079,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 170,
+   "line": 174,
    "title": "Project Delivery Readiness",
    "heading_level": 2,
    "has_card_key": false,

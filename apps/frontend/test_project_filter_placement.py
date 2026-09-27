@@ -46,9 +46,10 @@ class ProjectFilterPlacementTests(TestCase):
         self.assertEqual(form.count('class="edify-filter-label"'), 3)
         for label in ("Financial year", "Project type", "Status"):
             self.assertIn(label, form)
-        # "filters" hides on a phone, where the row's last slot reads "More".
-        self.assertIn('More<span class="edify-filter-more__long"> filters</span>', form)
-        self.assertIn('hx-push-url="false"', form)
+        # No "More filters" drawer (owner, 2026-09-27): it held the same three
+        # fields as the row, which puts any overflow in its own More dropdown.
+        self.assertNotIn("edify-filter-more__long", form)
+        self.assertNotIn('hx-get="/projects/filters-drawer"', form)
 
     def test_directory_mobile_rules_cannot_stack_project_filters(self):
         css = (ROOT / "static/css/consistency.css").read_text()

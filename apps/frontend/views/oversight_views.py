@@ -2424,7 +2424,8 @@ def partner_oversight_send_action_view(request):
 @require_page_permission("partner_oversight")
 @require_export_permission
 def partner_oversight_export_view(request):
-    """The current partner view, as CSV. Same scope, same period, same rows."""
+    """The current partner view, as CSV or (``format=xlsx``) as a workbook.
+    Same scope, same period, same rows."""
     import csv
 
     from django.http import StreamingHttpResponse
@@ -2451,6 +2452,17 @@ def partner_oversight_export_view(request):
         activity_type=request.GET.get("activity_type", ""),
         status=request.GET.get("status", ""),
     )
+
+    # The page's Export button asks for the workbook (owner, 2026-09-27: "It
+    # should be export in excel not csv"); CSV stays the default for links.
+    if _wants_excel(request):
+        from apps.core.excel import workbook_response
+
+        header, *rows = partner_oversight.export_rows(items)
+        return workbook_response(
+            f"partner-oversight-{period['fy']}.xlsx",
+            [{"title": "Partner monitoring", "headers": list(header), "rows": rows}],
+        )
 
     class _Echo:
         def write(self, value):

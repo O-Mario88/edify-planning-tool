@@ -1,10 +1,9 @@
-import csv
 import datetime
 import hashlib
 import json
 
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 from apps.core.permissions import (
@@ -261,27 +260,34 @@ def analytics_dashboard_view(request):
 @require_page_permission("analytics")
 @require_export_permission
 def analytics_export_view(request):
-    """Download the caller's current role-scoped analytics KPIs as CSV."""
+    """Download the caller's current role-scoped analytics KPIs, as an Excel
+    workbook (owner, 2026-09-27); ``?format=csv`` still answers as CSV."""
+    from apps.core.excel import table_download
+
     data = AnalyticsDashboardService.get_analytics_data(
         request.user, _analytics_filters(request)
     )
     generated = timezone.localtime().strftime("%Y-%m-%d %H:%M %Z")
-    response = HttpResponse(content_type="text/csv; charset=utf-8")
-    response["Content-Disposition"] = (
-        f'attachment; filename="edify-analytics-{timezone.localdate().isoformat()}.csv"'
+    rows = [
+        [
+            card.get("label", ""),
+            card.get("value", ""),
+            card.get("helper", ""),
+            generated,
+        ]
+        for card in data.get("kpi_strip_items", [])
+    ]
+    return table_download(
+        request,
+        f"edify-analytics-{timezone.localdate().isoformat()}",
+        [
+            {
+                "title": "Analytics",
+                "headers": ["Metric", "Value", "Context", "Generated at"],
+                "rows": rows,
+            }
+        ],
     )
-    writer = csv.writer(response)
-    writer.writerow(["Metric", "Value", "Context", "Generated at"])
-    for card in data.get("kpi_strip_items", []):
-        writer.writerow(
-            [
-                card.get("label", ""),
-                card.get("value", ""),
-                card.get("helper", ""),
-                generated,
-            ]
-        )
-    return response
 
 
 @require_page_permission("pl_analytics")
@@ -1047,38 +1053,45 @@ def cd_analytics_drilldown_view(request):
 @require_page_permission("cd_analytics")
 @require_export_permission
 def cd_analytics_export_view(request):
-    """One of the CD's five country CSVs, for the cockpit's current period.
+    """The CD's country export, for the cockpit's current period.
 
-    ``?set=delivery|risk|finance|core`` picks the dataset; the FY, quarter,
-    month and filters are the ones the page is showing. Read-only; respects
-    the CD role gate and the export permission."""
-    import csv
-
-    from django.http import HttpResponse
-
-    from apps.analytics.cd_export_service import country_export, normalise_dataset
+    One Export button, one Excel workbook (owner, 2026-09-27: "export buttons
+    dont have to be two buttons. It should be export in excel not csv"): a
+    sheet per dataset. ``?set=delivery|risk|finance|core|impact`` narrows it
+    to one dataset, and ``?format=csv`` answers that dataset as CSV for links
+    that already ask for it. The FY, quarter, month and filters are the ones
+    the page is showing. Read-only; respects the CD role gate and the export
+    permission."""
+    from apps.analytics.cd_export_service import (
+        DATASETS,
+        country_export,
+        dataset_label,
+        normalise_dataset,
+    )
+    from apps.core.excel import table_download
 
     fy = (request.GET.get("fy") or "").strip() or None
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    dataset = normalise_dataset(request.GET.get("set"))
-    slug, header, rows = country_export(
-        request.user,
-        dataset,
-        fy=fy,
-        quarter=quarter,
-        month=month,
-        filters=_cd_filters(request),
-    )
-    resp = HttpResponse(content_type="text/csv")
-    resp["Content-Disposition"] = (
-        f'attachment; filename="cd-{slug}-{fy or get_operational_fy()}.csv"'
-    )
-    w = csv.writer(resp)
-    w.writerow(header)
-    for row in rows:
-        w.writerow(row)
-    return resp
+    wanted = (request.GET.get("set") or "").strip()
+    csv_asked = (request.GET.get("format") or "").strip().lower() == "csv"
+    datasets = [normalise_dataset(wanted)] if wanted or csv_asked else list(DATASETS)
+    sheets, slugs = [], []
+    for dataset in datasets:
+        slug, header, rows = country_export(
+            request.user,
+            dataset,
+            fy=fy,
+            quarter=quarter,
+            month=month,
+            filters=_cd_filters(request),
+        )
+        slugs.append(slug)
+        sheets.append(
+            {"title": dataset_label(dataset), "headers": header, "rows": rows}
+        )
+    stem = slugs[0] if len(slugs) == 1 else "country"
+    return table_download(request, f"cd-{stem}-{fy or get_operational_fy()}", sheets)
 
 
 @require_POST

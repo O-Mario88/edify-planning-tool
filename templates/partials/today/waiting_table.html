@@ -10,7 +10,10 @@ queue ("View all N").
   <section aria-labelledby="waiting-title" data-today-waiting class="space-y-2">
     <div class="flex flex-wrap items-center justify-between gap-2 px-1">
       <h2 id="waiting-title" class="text-[14px] font-bold text-slate-800 dark:text-slate-100">Waiting on you</h2>
-      {% if queue_total %}<a href="/todos" class="text-[12px] font-bold edify-primary-text">View all {{ queue_total }} <span aria-hidden="true">&rarr;</span></a>{% endif %}
+      {% comment %}The whole queue, as one icon in the table's title band (owner,
+      2026-09-27: no buttons on a table header; "if you MUST put it... use an
+      icon so the counters dont wrap").{% endcomment %}
+      {% if queue_total %}<a href="/todos" class="edify-band-glyph" aria-label="View all {{ queue_total }} in To-Do" title="View all {{ queue_total }} in To-Do"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></a>{% endif %}
     </div>
     <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs">
       <table class="edify-record-table w-full border-collapse text-left edify-text-caption" data-today-waiting-table data-waiting-table>

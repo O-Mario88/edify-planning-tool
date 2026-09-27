@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
@@ -11,8 +12,8 @@
             carries one geometry, grid, legend and tooltip. */
          const cfg = window.EdifyChartSystem.formBase({});
          cfg.series = [
-           { name: 'Core Schools', data: {{ core_champion.core.series|escape }} },
-           { name: 'Champion Schools', data: {{ core_champion.champion.series|escape }} }
+           { name: 'Core Schools', data: {{ core_champion.core.series|js_data }} },
+           { name: 'Champion Schools', data: {{ core_champion.champion.series|js_data }} }
          ];
          cfg.chart.type = 'line';
          cfg.chart.height = 210;

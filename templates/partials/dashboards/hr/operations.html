@@ -357,7 +357,7 @@ Every card links to the register where the work is done.
             <h3 id="hrd-requirements-title" class="hrd-card__title">Employment compliance by requirement</h3>
             <span class="hrd-card__subtitle">{% if compliance.completion is not None %}{{ compliance.completion }}% of {{ compliance.obligations }} obligation{{ compliance.obligations|pluralize }} met{% else %}No requirement is set for your countries{% endif %}</span>
           </div>
-          <a class="hrd-card__link" href="/compliance-register">Register <span aria-hidden="true">&rarr;</span></a>
+          {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
         </header>
         <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Employment compliance by requirement; scroll sideways for more columns">
           {% paginate compliance_status "compliance_status_page" as compliance_status_pager %}
@@ -454,7 +454,7 @@ Every card links to the register where the work is done.
             <h3 id="hrd-pay-title" class="hrd-card__title">Compensation and benefits</h3>
             <span class="hrd-card__subtitle">Pay reviews and benefit cover for active staff; amounts stay on the register</span>
           </div>
-          <a class="hrd-card__link" href="/compensation-benefits">Register <span aria-hidden="true">&rarr;</span></a>
+          {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
         </header>
         <div class="hrd-figures hrd-figures--two">
           <div class="hrd-figure"><span class="hrd-figure__label" title="Pay reviews due">Pay reviews due</span><strong class="hrd-figure__value" {% if compensation.reviews_due %}data-tone="warning"{% endif %}>{{ compensation.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>

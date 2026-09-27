@@ -4778,6 +4778,14 @@ main .edify-avatar-neutral {
 :root main table[data-waiting-table] :is(thead th:first-child, tbody > tr > :first-child:not([colspan])) {
   inline-size: 100% !important; max-inline-size: 0 !important; min-inline-size: 14rem !important;
 }
+/* On a phone the pinned title keeps to the identity measure, so Kind, Status,
+   Due and the action have room beside it (2026-09-27 sweep: 224px of a 352px
+   table). Tablets and desktops keep 14rem. */
+@media (max-width: 47.999rem) {
+  :root main table[data-waiting-table] :is(thead th:first-child, tbody > tr > :first-child:not([colspan])) {
+    min-inline-size: calc(var(--edify-table-identity-measure) + 1.5rem) !important;
+  }
+}
 :root main table[data-waiting-table] tbody > tr > :first-child:not([colspan]) {
   overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
 }

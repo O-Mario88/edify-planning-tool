@@ -2,7 +2,7 @@
 {% load static table_pagination %}
 
 {% block title %}Decision Log — Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260923srscroll1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="history" data-analytics-enterprise>
@@ -26,12 +26,13 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </select>
 </form>
 
-<div class="flex flex-wrap gap-1.5">
-<a href="?days={{ log.days }}" class="px-3 py-1.5 rounded-pill edify-text-caption font-bold border transition-colors {% if not log.activeGroup %}edify-primary-solid edify-primary-on-solid border-transparent{% else %}border-[var(--edify-border)] text-slate-600 hover:bg-slate-50{% endif %}">All</a>
+{% comment %}The platform's tab rail, not loose pills (owner, 2026-09-27).{% endcomment %}
+<nav data-edify-tablist aria-label="Decision group" class="max-w-full">
+<a href="?days={{ log.days }}" data-edify-tab{% if not log.activeGroup %} aria-current="page"{% endif %}>All</a>
 {% for g in log.groups %}
-<a href="?group={{ g }}&days={{ log.days }}" class="px-3 py-1.5 rounded-pill edify-text-caption font-bold border transition-colors {% if log.activeGroup == g %}edify-primary-solid edify-primary-on-solid border-transparent{% else %}border-[var(--edify-border)] text-slate-600 hover:bg-slate-50{% endif %}">{{ g }}</a>
+<a href="?group={{ g }}&days={{ log.days }}" data-edify-tab{% if log.activeGroup == g %} aria-current="page"{% endif %}>{{ g }}</a>
 {% endfor %}
-</div>
+</nav>
 
 {% include "partials/analytics/section_nav.html" %}
 

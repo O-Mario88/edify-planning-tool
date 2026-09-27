@@ -7,8 +7,11 @@ three fields and the whole change-history table spanning three columns, which
 grew one row to five times the height of its neighbours (owner, 2026-09-07).
 {% endcomment %}
 <tr id="cost-setting-row-{{ c.key }}" class="hover:bg-slate-50/60 transition-colors">
-<td class="px-4 py-3 font-bold text-slate-800 align-middle" data-record-title>
-{{ c.label }}
+{% comment %}data-pinned-stack: when the table scrolls on a phone or tablet, its
+pinned name keeps its lines within the identity width instead of one long line
+that covered every column after it, Edit included (2026-09-27 sweep).{% endcomment %}
+<td class="px-4 py-3 font-bold text-slate-800 align-middle" data-record-title data-pinned-stack>
+<span>{{ c.label }}</span>
 <span class="block edify-text-caption text-slate-500 mt-0.5">{{ c.unit }}{% if c.catalogue_item_id %} · linked to {{ c.catalogue_item.display_name }}{% endif %}</span>
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>

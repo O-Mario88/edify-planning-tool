@@ -69,6 +69,29 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     return response
 
 
+def table_download(request, stem: str, sheets: list[dict]) -> HttpResponse:
+    """An export as a workbook, or as CSV for a link that asks for it.
+
+    Owner, 2026-09-27: "It should be export in excel not csv since the team
+    use excel more." A page's one Export button downloads ``<stem>.xlsx``;
+    ``?format=csv`` still answers with the first sheet as ``<stem>.csv`` for
+    anything that already links to the CSV.
+    """
+    if (request.GET.get("format") or "").strip().lower() == "csv":
+        import csv
+
+        sheet = (sheets or [{}])[0]
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
+        writer = csv.writer(response)
+        if sheet.get("headers"):
+            writer.writerow(sheet["headers"])
+        for row in sheet.get("rows") or []:
+            writer.writerow(row)
+        return response
+    return workbook_response(f"{stem}.xlsx", sheets)
+
+
 def style_header(sheet) -> None:
     """The navy heading row every plan export opens with."""
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side

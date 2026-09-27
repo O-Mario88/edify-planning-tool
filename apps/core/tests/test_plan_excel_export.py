@@ -120,16 +120,19 @@ class TheExportsOfferBothFilesTest(SimpleTestCase):
         self.assertNotIn("{% querystring export='csv' %}", page)
         self.assertEqual(page.count("{% querystring export="), 1)
 
-    def test_every_oversight_workspace_offers_both_files(self):
-        """One header Export menu holds both files (owner, 2026-09-25), and
-        every planning workspace re-sends it when a period change swaps it."""
+    def test_every_oversight_workspace_offers_one_excel_export(self):
+        """One header Export button, the Excel workbook (owner, 2026-09-27:
+        "export buttons dont have to be two buttons. It should be export in
+        excel"), and every planning workspace re-sends it when a period change
+        swaps it."""
         from pathlib import Path
 
         root = Path(__file__).resolve().parents[3]
         menu = (root / "templates/partials/oversight/_export_menu.html").read_text()
-        self.assertIn("Export CSV", menu)
-        self.assertIn("Export Excel", menu)
+        self.assertNotIn("Export CSV", menu)
+        self.assertIn('aria-label="Export to Excel"', menu)
         self.assertIn("format=xlsx", menu)
+        self.assertEqual(menu.count("href="), 1)
         for path in (
             "partials/oversight/pl_workspace",  # Programme Lead, IA, Regional Lead
             "partials/oversight/team_country_workspace",

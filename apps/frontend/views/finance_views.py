@@ -815,10 +815,13 @@ def fund_allocation_view(request):
     }
     month_num = MONTH_MAP.get(month_name.lower(), 4)
 
-    # CSV export keeps the per-staff consolidation (unchanged). The service is
+    # The export keeps the per-staff consolidation (unchanged). The service is
     # only run for the export path now — the on-screen page is the country
-    # cost-plan below and does not need the per-staff breakdown.
-    if request.GET.get("export") == "csv":
+    # cost-plan below and does not need the per-staff breakdown. The drawer
+    # asks for the Excel workbook (owner, 2026-09-27: "It should be export in
+    # excel not csv"); ``export=csv`` still answers CSV.
+    export = (request.GET.get("export") or "").strip().lower()
+    if export in {"csv", "xlsx", "excel"}:
         data = MonthlyFundAllocationService.get_monthly_allocation(
             month_num=month_num,
             fy=fy,
@@ -829,14 +832,10 @@ def fund_allocation_view(request):
             per_page=per_page,
             principal=request.user,
         )
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = (
-            f'attachment; filename="consolidated_fund_allocation_{month_name}_{fy}.csv"'
-        )
-        writer = csv.writer(response)
+        rows = []
 
         if export_mode == "admin_only":
-            writer.writerow(
+            rows.append(
                 [
                     "Line Item Description",
                     "Cost Category",
@@ -847,7 +846,7 @@ def fund_allocation_view(request):
                 ]
             )
             for line in data["admin_budget_data"]["lines"]:
-                writer.writerow(
+                rows.append(
                     [
                         line["description"],
                         line["cost_category"],
@@ -858,7 +857,7 @@ def fund_allocation_view(request):
                     ]
                 )
         else:
-            writer.writerow(
+            rows.append(
                 [
                     "Staff",
                     "Staff Visits Count",
@@ -905,7 +904,7 @@ def fund_allocation_view(request):
                     else 0
                 )
 
-                writer.writerow(
+                rows.append(
                     [
                         r["name"],
                         r["staff_visits"]["count"],
@@ -929,6 +928,18 @@ def fund_allocation_view(request):
                         r["total_allocation"],
                     ]
                 )
+        stem = f"consolidated_fund_allocation_{month_name}_{fy}"
+        if export != "csv":
+            from apps.core.excel import workbook_response
+
+            headers, *body = rows
+            return workbook_response(
+                f"{stem}.xlsx",
+                [{"title": "Fund allocation", "headers": headers, "rows": body}],
+            )
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
+        csv.writer(response).writerows(rows)
         return response
 
     # ── On-screen page: the country cost-plan (same format as the budget) ──

@@ -29,25 +29,22 @@ from apps.frontend.views.dashboard_view_state import (
 )
 
 
-def _export_hr_dashboard_csv(data, *, fy, country, department):
+def _export_hr_dashboard(data, *, fy, country, department, excel):
     """Export the dashboard's figures as they were computed for this viewer.
 
     Aggregates only: the file carries counts per section and per country, never
-    a named person, because a CSV leaves the platform's access rules behind.
+    a named person, because a file leaves the platform's access rules behind.
+    The page's Export button asks for the Excel workbook (owner, 2026-09-27:
+    "It should be export in excel not csv"); ``?export=csv`` still answers CSV.
     """
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = (
-        f'attachment; filename="hr_director_dashboard_fy{fy}.csv"'
-    )
-    writer = csv.writer(response)
+    rows = []
     # The Context column reports the scope actually applied, never the scope
     # requested: the figures behind it once were organisation-wide.
     context = " · ".join(
         value for value in (data.get("scope_label", ""), f"FY {fy}") if value
     )
-    writer.writerow(["Section", "Metric", "Value", "Context"])
     for item in data.get("kpi_strip_items", []):
-        writer.writerow(
+        rows.append(
             ["People pulse", item.get("label", ""), item.get("value", ""), context]
         )
     for row in data.get("workforce_by_country", []):
@@ -61,15 +58,13 @@ def _export_hr_dashboard_csv(data, *, fy, country, department):
             ("Leaving soon", "leaving_soon"),
         ):
             value = row.get(key)
-            writer.writerow(
+            rows.append(
                 ["Staffing by country", label, "" if value is None else value, where]
             )
     for stage in data.get("recruitment_funnel", []):
-        writer.writerow(
-            ["Recruitment pipeline", stage["stage"], stage["count"], context]
-        )
+        rows.append(["Recruitment pipeline", stage["stage"], stage["count"], context])
     for stage in data.get("performance", {}).get("stages", []):
-        writer.writerow(["Review cycle", stage["label"], stage["count"], context])
+        rows.append(["Review cycle", stage["label"], stage["count"], context])
     for row in data.get("motivation_rows", []):
         where = f"{context} · {row['country']}"
         morale = row.get("morale") or {}
@@ -81,11 +76,11 @@ def _export_hr_dashboard_csv(data, *, fy, country, department):
             ("Open safety incidents", row["safety_open"]),
             ("Recognitions this FY", row["recognitions"]),
         ):
-            writer.writerow(["Wellbeing by country", label, value, where])
+            rows.append(["Wellbeing by country", label, value, where])
     for row in data.get("compliance_status", []):
         where = f"{context} · {row['country']}"
         for label in ("compliant", "due_soon", "expired", "missing"):
-            writer.writerow(
+            rows.append(
                 [
                     "Employment compliance",
                     f"{row['requirement']}: {label.replace('_', ' ')}",
@@ -93,6 +88,20 @@ def _export_hr_dashboard_csv(data, *, fy, country, department):
                     where,
                 ]
             )
+    stem = f"hr_director_dashboard_fy{fy}"
+    headers = ["Section", "Metric", "Value", "Context"]
+    if excel:
+        from apps.core.excel import workbook_response
+
+        return workbook_response(
+            f"{stem}.xlsx",
+            [{"title": "HR dashboard", "headers": headers, "rows": rows}],
+        )
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
+    writer = csv.writer(response)
+    writer.writerow(headers)
+    writer.writerows(rows)
     return response
 
 
@@ -785,9 +794,14 @@ def dashboard_view(request):
         data = HRDashboardService.get_dashboard(
             request.user, fy=fy, country=country, department=department
         )
-        if request.GET.get("export") == "csv":
-            return _export_hr_dashboard_csv(
-                data, fy=fy, country=country, department=department
+        export = (request.GET.get("export") or "").strip().lower()
+        if export in {"csv", "xlsx", "excel"}:
+            return _export_hr_dashboard(
+                data,
+                fy=fy,
+                country=country,
+                department=department,
+                excel=export != "csv",
             )
         # The phone opening names the most serious matter, then the review
         # cycle, then the director's own queue.

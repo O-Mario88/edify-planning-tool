@@ -2695,16 +2695,14 @@ def ia_verification_analytics_view(request):
 
 @require_page_permission("ia_verification_analytics")
 def ia_verification_analytics_export_view(request):
-    """The decisions behind the analytics, as CSV, for the same window."""
-    import csv
-
-    from django.http import HttpResponse
-
+    """The decisions behind the analytics, for the same window: an Excel
+    workbook (owner, 2026-09-27), or CSV with ``?format=csv``."""
     from apps.activities.verification_analytics import (
         EXPORT_HEADER,
         export_rows,
         verification_analytics,
     )
+    from apps.core.excel import table_download
     from apps.core.permissions import RolePermissionService, render_access_denied
 
     if not RolePermissionService.can_export(request.user, request.path):
@@ -2712,15 +2710,17 @@ def ia_verification_analytics_export_view(request):
     raw = (request.GET.get("window") or "").strip()
     window = int(raw) if raw.isdigit() and int(raw) in (30, 90, 180, 365) else 90
     data = verification_analytics(request.user, window_days=window)
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = (
-        f'attachment; filename="verification-decisions-{window}d.csv"'
+    return table_download(
+        request,
+        f"verification-decisions-{window}d",
+        [
+            {
+                "title": "Verification decisions",
+                "headers": list(EXPORT_HEADER),
+                "rows": list(export_rows(data)),
+            }
+        ],
     )
-    writer = csv.writer(response)
-    writer.writerow(EXPORT_HEADER)
-    for row in export_rows(data):
-        writer.writerow(row)
-    return response
 
 
 @require_page_permission("ia_samples")
