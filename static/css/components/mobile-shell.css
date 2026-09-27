@@ -516,26 +516,6 @@
   .edify-topbar .edify-topbar__utilities { margin-inline-start: auto; }
 }
 
-/* A two-word label keeps both words on a narrow phone (owner, 2026-09-27:
-   typography that fits): "School Directory" read "School Dir…" in a 78px
-   tab. It takes a second line rather than an ellipsis, on the micro step, and no more
-   than two lines, so the columns stay equal and the bar's height holds. */
-@media (max-width: 26.9375rem) {
-  .edify-bottom-nav__label {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: var(--edify-text-micro-size);
-    line-height: 1.1;
-    text-align: center;
-    white-space: normal;
-    overflow-wrap: normal;
-  }
-
-  /* The second line comes out of the tab's own padding, so the bar stays
-     56px and the workspace's clearance below still clears it. */
-  .edify-bottom-nav__item {
-    gap: 0.0625rem;
-    padding-block: 0.0625rem;
-  }
-}
+/* A tab's label is one line: a long page name has a short tab label
+   (MOBILE_NAV_SHORT_LABELS in apps/core/navigation.py — School Directory is
+   "Schools"), never a second line (owner, 2026-09-27). */
