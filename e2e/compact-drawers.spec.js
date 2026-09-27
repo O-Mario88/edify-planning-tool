@@ -19,6 +19,10 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
   let surface=page.locator('.drawer-surface.active');await expect(surface).toBeVisible();
   if(flow.nested){await surface.locator(flow.nested).first().click();surface=page.locator('.drawer-surface.active');await expect(surface.locator('form')).toBeVisible();}
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
+  // The pointer is left where the Actions menu was clicked. Resized, a
+  // footer button can land under it, and its hover lift then moves it off
+  // and back every frame, so it is never "stable" to scroll to.
+  await page.mouse.move(0,0);
   for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
    await page.setViewportSize({width,height});
    const r=await surface.boundingBox();

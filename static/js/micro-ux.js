@@ -2115,8 +2115,12 @@
 
   function arrangeFilterRows(root) {
     if (!root.querySelectorAll) return;
-    /* A field swapped in alone (Sub-county) re-arranges its whole row. */
-    var owner = root !== document && root.closest && !root.matches(FILTER_CONTAINERS) && root.closest(FILTER_CONTAINERS);
+    /* A field swapped in alone (Sub-county) re-arranges its whole row; the
+       row's own moves (marked fields, More, the ×) do not, or it loops. */
+    var owner = root !== document && root.closest && !root.matches(FILTER_CONTAINERS)
+      && !root.matches('.edify-filter-row__field, [data-edify-filter-moved], [data-edify-filter-more], [data-edify-filter-clear]')
+      && (root.matches(FILTER_CONTROL) || root.querySelector(FILTER_CONTROL))
+      && root.closest(FILTER_CONTAINERS);
     if (owner) {
       var owned = filterRowOf(owner);
       if (owned && owned.row) delete owned.row.dataset.edifyFilterSlots;
