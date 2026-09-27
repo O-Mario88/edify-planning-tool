@@ -1030,7 +1030,9 @@ class IaWorkspaceCreditTests(DistributionFixture):
         self.test_the_live_ia_workspace_path_credits_milestones_too()
 
         self.client.force_login(self.ia)
-        response = self.client.get(f"/target-distribution?fy={FY}")
+        # The table shows 25 milestones a page, and the credited one follows
+        # the seeded rows of its priority, so search for its row.
+        response = self.client.get(f"/target-distribution?fy={FY}&q=IAUI_1")
 
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
