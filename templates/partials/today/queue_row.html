@@ -16,9 +16,9 @@ wrapped onto two lines on a tablet (owner, 2026-09-26: "every page use actions
 with dropdown options"). A drawer step, a one-press decision, Open and the
 snooze choices are items of that menu. A decision that asks for words first —
 a reason, an ID, an attestation — keeps its short form out of the menu, in a
-small panel of its own: the house row-menu (fixed-positioned by Alpine's
-rowMenu, which the table's scroll region cannot clip), anchored on the Actions
-button. Its menu item raises `today-form` with the operation's key; the panel
+small panel of its own: the house row-menu (opened down from the Actions
+button in the browser's top layer by Alpine's rowMenu, which the table's
+scroll region cannot clip). Its menu item raises `today-form` with the operation's key; the panel
 shows that operation's form and puts focus in its first field, and Cancel or
 Escape hands focus back to the Actions button.
 {% endcomment %}
@@ -60,8 +60,7 @@ Escape hands focus back to the Actions button.
       <div class="row-menu" x-data="rowMenu" x-ref="trigger"
            @today-form="todayForm = $event.detail; open || toggle(); $nextTick(() => $refs.list.querySelector(`[data-today-form='${todayForm}'] :is(input:not([type=hidden]), textarea)`)?.focus({ preventScroll: true }))"
            @click="$event.target.closest('.row-menu__trigger') && close()"
-           @keydown.escape.window="open && (close(), $el.querySelector('.row-menu__trigger').focus())" @click.outside="close()"
-           @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+           @keydown.escape.window="open && (close(), $el.querySelector('.row-menu__trigger').focus())" @click.outside="close()">
         {% row_actions todo.title %}
           {% for op in todo.today.operations %}
             {% if op.drawer_url %}
@@ -88,7 +87,7 @@ Escape hands focus back to the Actions button.
           </div>
           {% endif %}
         {% endrow_actions %}
-        <div class="row-menu__list min-w-72 w-max max-w-sm p-3 text-left" data-today-forms x-ref="list" x-show="open" :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms>
+        <div class="row-menu__list min-w-72 w-max max-w-sm p-3 text-left" data-today-forms x-ref="list" x-show="open" x-cloak x-transition.opacity.duration.120ms>
           {% for op in todo.today.operations %}{% if op.needs_form and not op.drawer_url %}
           <form class="space-y-2" x-show="todayForm === '{{ op.key }}'" role="dialog" aria-label="{{ op.label }} — {{ todo.title }}"
                 hx-post="/today/act" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" data-today-form="{{ op.key }}">

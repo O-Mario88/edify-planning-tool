@@ -58,8 +58,42 @@ test.describe('row actions menu', () => {
     // The menu is as tall as the items it holds, not one flattened line.
     expect(menuBox.height).toBeGreaterThan(previousBottom - menuBox.y - 1);
 
+    // It drops DOWN from the button (owner, 2026-09-27), in the top layer,
+    // where no row, card or workspace container can move or clip it.
+    const triggerBox = await trigger.boundingBox();
+    expect(menuBox.y).toBeGreaterThanOrEqual(triggerBox.y + triggerBox.height);
+    expect(await menu.evaluate((el) => el.matches(':popover-open'))).toBe(true);
+
     // And it still closes.
     await page.keyboard.press('Escape');
     await expect(menu).toBeHidden();
+  });
+
+  test('drops down from a button at the foot of the screen', async ({ page }) => {
+    test.setTimeout(120_000);
+    await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
+    await ensureActionableRow(page);
+    const trigger = page.locator('.row-menu__trigger').first();
+    await expect(trigger).toBeVisible();
+
+    // Scroll whatever holds the button until it sits just above the foot of
+    // the window, where the old menu flipped up over the button.
+    await trigger.evaluate((el) => {
+      el.scrollIntoView({ block: 'end' });
+      let box = el.parentElement;
+      while (box && box.scrollHeight <= box.clientHeight) box = box.parentElement;
+      if (box) box.scrollTop -= 8;
+    });
+    await trigger.click();
+
+    const menu = page.locator('.row-menu__list:popover-open');
+    await expect(menu).toBeVisible();
+    const triggerBox = await trigger.boundingBox();
+    const menuBox = await menu.boundingBox();
+    const viewport = page.viewportSize();
+    expect(menuBox.y, 'below the button, not over it').toBeGreaterThanOrEqual(triggerBox.y + triggerBox.height);
+    expect(menuBox.y + menuBox.height, 'the whole menu on screen').toBeLessThanOrEqual(viewport.height);
+    expect(menuBox.x).toBeGreaterThanOrEqual(0);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(viewport.width);
   });
 });

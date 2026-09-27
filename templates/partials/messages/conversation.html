@@ -37,12 +37,12 @@
       <!-- Header actions -->
       <div class="flex items-center gap-0.5 shrink-0" x-data="{ menu: false }">
         <div class="relative">
-          <button type="button" @click="menu = !menu" @click.outside="menu = false"
+          <button type="button" x-ref="menuButton" @click="menu = !menu" @click.outside="menu = false" :aria-expanded="menu" aria-haspopup="menu"
                   class="h-8 w-8 rounded-control hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors" aria-label="More actions">
             <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5a2 2 0 110-4 2 2 0 010 4zm0 9a2 2 0 110-4 2 2 0 010 4zm0 9a2 2 0 110-4 2 2 0 010 4z"/></svg>
           </button>
-          <div x-show="menu" x-transition style="display:none"
-               class="absolute right-0 mt-1 w-44 edify-surface rounded-surface border border-slate-200 shadow-xl z-20 py-1.5">
+          <div x-show="menu" x-dropdown="$refs.menuButton" x-transition style="display:none"
+               class="fixed w-44 edify-surface rounded-surface border border-slate-200 shadow-xl z-20 py-1.5">
             <a href="/messages/new/?forward={{ selected.thread.id }}" class="block px-3.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50">Forward conversation</a>
             <form hx-post="/messages/thread/{{ selected.thread.id }}/archive">{% csrf_token %}
               <button type="submit" class="w-full text-left px-3.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50">Archive</button>

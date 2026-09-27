@@ -84,7 +84,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260923responsive1">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260926district1">
-<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260926rowmenu1">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260927layer1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -106,7 +106,7 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260927titleband1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260927srwidth1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260927layer1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -117,7 +117,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260923settings1">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260925accordion1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260927layer1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -166,7 +166,11 @@ other page was relying on them.
 
 <!-- Alpine.js Components -->
     <script src="{% static 'js/chart-standard.js' %}?v=20260923merge5"></script>
-    <script src="{% static 'js/alpine-components.js' %}?v=20260926rowmenu1"></script>
+    {% comment %}Whatever floats opens in the top layer, dropdowns down from
+    their button (owner, 2026-09-27). Deferred, and ahead of Alpine and the
+    deferred enhancers that use it, so it runs before all of them.{% endcomment %}
+    <script defer src="{% static 'js/top-layer.js' %}?v=20260927layer1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260927layer1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -231,8 +235,8 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260927srwidth1"></script>
-<script defer src="{% static 'js/date-picker.js' %}?v=20260926datepick2"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260927layer1"></script>
+<script defer src="{% static 'js/date-picker.js' %}?v=20260927layer1"></script>
 
 {% comment %}
 A paginated link keeps the tab the reader chose. Oversight puts one person's

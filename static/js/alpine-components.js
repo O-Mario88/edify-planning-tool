@@ -241,26 +241,32 @@ document.addEventListener('alpine:init', () => {
 
   // Row actions menu.
   //
-  // The list is position:fixed rather than absolute, because an absolutely
-  // positioned menu is clipped by the first ancestor that scrolls or hides its
-  // overflow — and every table here sits inside a card with overflow hidden and
-  // a horizontally scrolling wrapper. Fixed coordinates escape both, so the
-  // menu opens whole instead of losing its lower half inside the card.
-  //
-  // The cost of fixed positioning is that the coordinates go stale the moment
-  // anything scrolls or resizes, so the menu re-measures on both. Closing
-  // instead would be simpler, but a menu that vanishes because a mobile
-  // browser collapsed its toolbar is a menu the user has to open twice.
+  // The list opens DOWN from its Actions button, wherever the button is
+  // (owner, 2026-09-27). It is shown in the browser's top layer by EdifyLayer
+  // (static/js/top-layer.js): a fixed box inside a row, card or workspace
+  // that carries a container type is placed against that box rather than the
+  // window, which is how the Core Schools menu came to open "fixed in one
+  // position and hidden". In the top layer nothing traps or clips it, and
+  // EdifyLayer moves it with the button as the page scrolls or resizes,
+  // closing it (onLost) once the button has left the screen.
   Alpine.data('rowMenu', () => ({
     open: false,
-    x: 0,
-    y: 0,
+    init() {
+      if (window.EdifyLayer && this.$refs.list) { window.EdifyLayer.mark(this.$refs.list); }
+    },
     toggle() {
-      this.open = !this.open;
-      if (this.open) { this.place(); }
+      if (this.open) { this.close(); return; }
+      this.open = true;
+      // After x-show has shown the list, so it can be measured.
+      this.$nextTick(() => {
+        if (!this.open || !window.EdifyLayer) { return; }
+        window.EdifyLayer.open(this.$refs.list, this.$refs.trigger, { align: 'end', onLost: () => this.close() });
+      });
     },
     close() {
+      if (!this.open) { return; }
       this.open = false;
+      if (window.EdifyLayer && this.$refs.list) { window.EdifyLayer.close(this.$refs.list); }
     },
     /* Keyboard for components/row_actions.html: focus an item by index
        (negative counts from the end), step through them, and put focus back
@@ -281,30 +287,6 @@ document.addEventListener('alpine:init', () => {
     dismiss() {
       this.close();
       if (this.$refs.trigger) { this.$refs.trigger.focus(); }
-    },
-    reposition() {
-      if (this.open) { this.place(); }
-    },
-    place() {
-      // After the tick, x-show has applied display, so the list can be
-      // measured — which is what decides whether it fits below the row.
-      this.$nextTick(() => {
-        const trigger = this.$refs.trigger;
-        const list = this.$refs.list;
-        if (!trigger || !list) { return; }
-        const rect = trigger.getBoundingClientRect();
-        const height = list.offsetHeight;
-        // Right-aligned on the trigger by arithmetic rather than by a CSS
-        // translate: x-transition writes its own inline `transform`, which
-        // wins over the stylesheet and left the menu hanging off the row.
-        this.x = Math.max(8, rect.right - list.offsetWidth);
-        // Flip above the trigger when the menu would run past the foot of the
-        // viewport, which is what the last row of a long table does.
-        const below = rect.bottom + 4;
-        this.y = (below + height > window.innerHeight && rect.top - 4 - height > 0)
-          ? rect.top - 4 - height
-          : below;
-      });
     }
   }));
 

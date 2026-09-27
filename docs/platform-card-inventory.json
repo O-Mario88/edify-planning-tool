@@ -5359,7 +5359,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 283,
+   "line": 282,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5373,7 +5373,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 451,
+   "line": 449,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,

@@ -1322,40 +1322,21 @@
     more.appendChild(toggle);
     more.appendChild(menu);
     rail.appendChild(more);
-    var anchor = null;
+    /* Down from the toggle, in the top layer, following it as the page
+       scrolls (static/js/top-layer.js). A fixed menu inside main was placed
+       against main — a size container since 2026-09-20 — so at a phone width
+       the debrief rail's More menu opened off-screen. */
+    if (window.EdifyLayer) window.EdifyLayer.mark(menu);
     more.addEventListener('toggle', function () {
-      if (!more.open) { anchor = null; return; }
-      var rect = toggle.getBoundingClientRect();
-      anchor = { top: rect.top, left: rect.left };
-      var top = Math.round(rect.bottom + 4);
-      var right = Math.round(Math.max(8, window.innerWidth - rect.right));
-      menu.style.top = top + 'px';
-      menu.style.right = right + 'px';
-      /* The menu is position: fixed, but a fixed box sits against the nearest
-         ancestor with containment or a transform rather than the viewport,
-         and main has been a size container (container-type: inline-size)
-         since 2026-09-20. Viewport coordinates then land the menu wherever
-         that ancestor's scroll position puts them — at a phone width the
-         debrief rail's More menu opened off-screen and the scroll to reach
-         it closed it. Read where the menu landed and take up the difference,
-         which is exact for any containing block. */
-      var landed = menu.getBoundingClientRect();
-      var dy = top - landed.top;
-      var dx = (window.innerWidth - right) - landed.right;
-      if (Math.abs(dy) > 0.5) menu.style.top = Math.round(top + dy) + 'px';
-      if (Math.abs(dx) > 0.5) menu.style.right = Math.round(right - dx) + 'px';
+      if (!window.EdifyLayer) return;
+      if (!more.open) { window.EdifyLayer.close(menu); return; }
+      window.EdifyLayer.open(menu, toggle, { align: 'end', onLost: function () { more.open = false; } });
       var first = menu.querySelector(railItemSelector);
       if (first) first.focus({ preventScroll: true });
     });
     menu.addEventListener('click', function (event) {
       if (event.target.closest(railItemSelector)) more.open = false;
     });
-    /* Whether the toggle has moved since the menu was placed under it. */
-    more.edifyRailMoved = function () {
-      if (!anchor) return false;
-      var rect = toggle.getBoundingClientRect();
-      return Math.abs(rect.top - anchor.top) > 1 || Math.abs(rect.left - anchor.left) > 1;
-    };
     return more;
   }
 
@@ -1463,15 +1444,6 @@
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) { more.open = false; more.querySelector('summary').focus(); });
   });
-  window.addEventListener('scroll', function () {
-    /* Scroll events arrive a frame late, so the scroll that brought the
-       toggle into view fires after the tap that opened the menu and used to
-       close it at once. The menu closes when the page has moved under it. */
-    document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) {
-      if (typeof more.edifyRailMoved !== 'function' || more.edifyRailMoved()) more.open = false;
-    });
-  }, { passive: true, capture: true });
-
   var fitTimer = null;
   window.addEventListener('resize', function () {
     window.clearTimeout(fitTimer);

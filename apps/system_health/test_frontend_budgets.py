@@ -96,7 +96,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
     #: 89 bytes, inside the calendar's allowance.
-    JS_GZIP_KB = 124
+    #:
+    #: Raised to 130 on 2026-09-27 for static/js/top-layer.js (5.9 KB gzipped,
+    #: deferred): every dropdown opens down from its button and every overlay
+    #: covers the window, in the browser's top layer, after the Core Schools
+    #: Actions menu opened "fixed in one position and hidden" (owner). It
+    #: replaced rowMenu's, the rail menu's and the calendar's own placement
+    #: code, so the net growth is 5.5 KB (123.9 to 129.4).
+    JS_GZIP_KB = 130
     INLINE_SCRIPT_KB = 40
 
     @classmethod
