@@ -3396,6 +3396,9 @@ MOBILE_NAV_SHORT_LABELS = {
     "ia_verification_queue": "Verify",
     "leave_approvals": "Leave",
     "my_professional_development": "PD",
+    # One line in a phone's tab (owner, 2026-09-27): "School Directory" either
+    # ended "School Dir…" or took two lines, and a navigation label never wraps.
+    "schools": "Schools",
     "staff": "People",
     "system_health": "Health",
     "team_planning_oversight": "Oversight",

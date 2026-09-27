@@ -4810,3 +4810,101 @@ main .edify-avatar-neutral {
   padding: 0; border: 0; background: transparent; color: inherit;
   font: inherit; text-align: start; cursor: pointer;
 }
+
+/* ── A title band's own count and buttons (owner, 2026-09-27) ───────────────
+   The dashboards' and My Plan's tables carry their count and a button in the
+   title bar, and now take the blue band like every other table ("the blue
+   table header in the light mode also disappeared ... all blue backgrounds
+   have white font"). On the band the count is a white figure on a light
+   pill, the buttons are white outlines, and a button keeps the band short. */
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  span:is([class*="badge"], [class*="pill"], .rounded-pill):not(button *):not(a.btn *) {
+  background: rgb(255 255 255 / 0.16) !important;
+  border-color: rgb(255 255 255 / 0.32) !important;
+  color: #fff !important;
+}
+
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  :is(a.btn, button.btn, a[class*="btn-"], button[class*="btn-"], a.rounded-control, button.rounded-control, .row-menu__trigger) {
+  min-block-size: 0 !important;
+  block-size: 1.75rem !important;
+  padding-inline: 0.625rem !important;
+  border: 1px solid rgb(255 255 255 / 0.6) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-size: var(--edify-text-label-size) !important;
+}
+
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  :is(a.btn, button.btn, a[class*="btn-"], button[class*="btn-"], a.rounded-control, button.rounded-control, .row-menu__trigger):is(:hover, :focus-visible) {
+  background: rgb(255 255 255 / 0.12) !important;
+  border-color: #fff !important;
+}
+
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar svg {
+  color: #fff !important;
+}
+
+/* Everything written on a blue band reads white (owner, 2026-09-27: "make
+   sure all blue backgrounds have white font"): a band's links, terms and
+   labels as well as its title, apart from a control that brings its own
+   light surface. The budget ledger's blue header row keeps its white
+   headings over the light theme's blue column ink. */
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  :is(a, button, dt, dd, strong, small, em, b, label, li, div, span, p, h2, h3, h4, h5):not(.btn):not([class*="btn-"]):not(.rounded-control):not(.rpl-row-link):not(.row-menu__trigger):not(button *):not(.btn *):not(.rpl-row-link *):not([class*="badge"]):not([class*="pill"]) {
+  color: #fff !important;
+}
+
+:root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td),
+:root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td) * {
+  color: #fff !important;
+}
+
+/* ── Drawer size by screen (owner, 2026-09-27) ──────────────────────────────
+   "Reduce the drawer size on mobile screen as well not to cover the entire
+   mobile screen. On tablet screen as well ... the input drawer size should
+   adjust based on the screen size." A phone's sheet stops at 86% of the
+   small viewport, so the page stays in view above it; a tablet's card stops
+   at 40rem or 78% of the screen, whichever is less. Both grow with their
+   content up to that cap and scroll inside it, title and action shelf
+   pinned. The form inside is compact: 13px labels, 40px fields that keep a
+   16px value (smaller makes iOS zoom the page on focus; the field rules live
+   in form-refinement.css, which loads later), 36px shelf buttons
+   (micro-ux.js gives each a 44px touch square). Desktops are unchanged. */
+@media (max-width: 47.99rem) {
+  :root {
+    --edify-sheet-top-gap: 14svh;
+  }
+}
+
+@media (min-width: 48rem) and (max-width: 79.99rem) {
+  .drawer-surface.drawer-surface,
+  .drawer-surface.drawer-surface.type-center,
+  .drawer-surface.drawer-surface.type-right_top,
+  .edify-popup-dialog .edify-popup-dialog__surface.edify-popup-dialog__surface {
+    max-block-size: min(40rem, 78dvh) !important;
+  }
+}
+
+@media (max-width: 79.99rem) {
+  .drawer-surface.drawer-surface .drawer-header {
+    padding-block: 0.75rem !important;
+  }
+
+  .drawer-surface.drawer-surface .drawer-body label {
+    font-size: var(--edify-text-label-size) !important;
+  }
+
+  .drawer-surface.drawer-surface .drawer-footer {
+    min-block-size: 0 !important;
+    min-height: 0 !important;
+    padding-block: 0.625rem !important;
+  }
+
+  .drawer-surface.drawer-surface .drawer-footer :is(button, a.btn, .btn) {
+    block-size: 2.25rem !important;
+    min-block-size: 2.25rem !important;
+  }
+}
+

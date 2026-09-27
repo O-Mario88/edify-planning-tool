@@ -320,7 +320,16 @@ class InventoryTests(SimpleTestCase):
         self.assertIn("context-metrics__sentence", component)
         self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("box-shadow:", context)
-        self.assertNotIn("grid-template-columns:", context)
+        # A phone lays the facts out as a grid (owner's mobile directive,
+        # 2026-09-27: no KPI carousel on a phone); the strip's own rules,
+        # from a tablet up, stay one continuous row.
+        phone = context[
+            context.index("/* Phones: every KPI on screen") : context.index(
+                "/* end of the phone KPI grid */"
+            )
+        ]
+        self.assertNotIn("grid-template-columns:", context.replace(phone, ""))
+        self.assertIn("grid-template-columns:", phone)
 
     def test_compact_or_mobile_tray_has_at_most_two_items(self):
         from django.template.loader import render_to_string

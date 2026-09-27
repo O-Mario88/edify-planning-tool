@@ -98,8 +98,10 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertNotIn("xl:w-[286px]", map_template)
         self.assertIn("sr-map-viewport", map_template)
         self.assertIn("sr-distribution-panel", map_template)
-        self.assertIn('data-mobile-table="fit"', map_template)
-        self.assertNotIn('data-mobile-table="scroll"', map_template)
+        # Every column shows on a phone and the table scrolls in its region
+        # (owner's mobile directive, 2026-09-27: "Do not hide table columns").
+        self.assertIn('data-mobile-table="scroll"', map_template)
+        self.assertNotIn('data-mobile-table="fit"', map_template)
         self.assertIn("sr-distribution-col--name", map_template)
         self.assertIn("@media (max-width: 64rem)", layout)
         self.assertNotIn("min-inline-size: 34rem", layout)

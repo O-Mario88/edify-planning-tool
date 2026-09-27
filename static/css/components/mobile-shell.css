@@ -333,7 +333,9 @@
    underneath it and be unreachable. This is the clearance. */
 @media (max-width: 1023.98px) {
   .edify-shell-has-bottom-nav .edify-workspace {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    /* The bar's height and a 12px margin, so a page's last line never
+       ends flush against the bar (2026-09-27 phone pass). */
+    padding-bottom: calc(56px + 0.75rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -513,3 +515,7 @@
   .edify-topbar > .edify-topbar__date { display: none; }
   .edify-topbar .edify-topbar__utilities { margin-inline-start: auto; }
 }
+
+/* A tab's label is one line: a long page name has a short tab label
+   (MOBILE_NAV_SHORT_LABELS in apps/core/navigation.py — School Directory is
+   "Schools"), never a second line (owner, 2026-09-27). */

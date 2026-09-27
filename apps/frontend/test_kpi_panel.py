@@ -5,6 +5,16 @@ from django.test import SimpleTestCase
 from .test_design_system_quality import _read
 
 
+def _strip_rules(context: str) -> str:
+    """The strip's own rules: the context-metrics contract without the phone
+    grid block. A phone lays every fact out in a grid of compact rows (owner's
+    mobile directive, 2026-09-27: no KPI carousel on a phone); from a tablet
+    up the strip stays one continuous, scrolling row."""
+    start = context.index("/* Phones: every KPI on screen")
+    end = context.index("/* end of the phone KPI grid */")
+    return context[:start] + context[end:]
+
+
 class ContextMetricsAnatomyTest(SimpleTestCase):
     def test_component_has_one_shared_semantic_list(self):
         markup = _read("templates/components/context_metrics.html")
@@ -47,7 +57,7 @@ class ContextMetricsAnatomyTest(SimpleTestCase):
             "border-block-start:",
             "grid-template-columns:",
         ):
-            self.assertNotIn(forbidden, contract)
+            self.assertNotIn(forbidden, _strip_rules(contract))
 
     def test_mobile_summary_scrolls_facts_at_a_fixed_minimum_width(self):
         """A phone shows a couple of facts and scrolls to the rest. The strip

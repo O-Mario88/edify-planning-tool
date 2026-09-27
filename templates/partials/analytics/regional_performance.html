@@ -248,43 +248,38 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
         at every level of the table -- sub-region, district and sub-county --
         so the same activity is counted the same way wherever it is read.
 
-        Every screen shows the name, the school and cluster counts, the three
-        achieved/planned ratios and the partner count. The three "# Planned"
-        columns repeat the denominator of the ratio beside them, so they are
-        the ones that give way on a phone: they show from tablet width up
-        (`wideColumns`), where the table has the room.
+        Every screen shows every column, the three "# Planned" columns
+        included: on a phone the table scrolls sideways in its own region
+        rather than dropping columns or shortening its headers (owner's mobile
+        directive, 2026-09-27: "Do not hide table columns").
       {% endcomment %}
       <div class="sr-distribution-scroll max-h-[620px]">
         <table class="sr-distribution-table w-full text-left text-table-cell"
-               data-mobile-table="fit">
+               data-mobile-table="scroll">
           <colgroup>
             <col class="sr-distribution-col--name">
             <col class="sr-distribution-col--schools">
             <col class="sr-distribution-col--clusters">
-            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--planned sr-wide-col">
             <col class="sr-distribution-col--achieved">
-            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--planned sr-wide-col">
             <col class="sr-distribution-col--achieved">
-            <col class="sr-distribution-col--planned sr-wide-col" x-show="wideColumns">
+            <col class="sr-distribution-col--planned sr-wide-col">
             <col class="sr-distribution-col--achieved">
             <col class="sr-distribution-col--partner">
           </colgroup>
           <thead class="sticky top-0 z-10 edify-surface">
             <tr class="text-table-header font-bold uppercase tracking-wider text-slate-400">
               <th class="pb-1.5 pr-1" x-text="distributionLevel()">Sub-region</th>
-              <th class="pb-1.5 px-1 text-right" title="Schools" x-text="wideColumns ? 'Schools' : 'Sch'">Sch</th>
-              <th class="pb-1.5 px-1 text-right" title="Clusters" x-text="wideColumns ? 'Clusters' : 'Clu'">Clu</th>
-              {% comment %}Shown where the table has the room: from tablet width up.
-              The platform forces every table cell visible with a ten-part
-              !important rule (mobile-micro-ux.css), which yields only to an
-              inline display:none, i.e. to x-show.{% endcomment %}
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Visit Planned">Visits planned</th>
-              <th class="pb-1.5 pl-1 text-right" title="School Visit achieved (Achieved/Planned)" x-text="wideColumns ? 'Visits achieved' : 'Visits'">Visits</th>
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Cluster Meeting Planned">Meetings planned</th>
-              <th class="pb-1.5 pl-1 text-right" title="Cluster Meetings Achieved (Achieved/Planned)" x-text="wideColumns ? 'Meetings achieved' : 'Meet'">Meet</th>
-              <th class="pb-1.5 pl-2 text-right sr-wide" x-show="wideColumns" x-cloak title="# Cluster Trainings Planned">Trainings planned</th>
-              <th class="pb-1.5 pl-1 text-right" title="Cluster trainings achieved (Achieved/Planned)" x-text="wideColumns ? 'Trainings achieved' : 'Train'">Train</th>
-              <th class="pb-1.5 pl-1 text-right" title="# Assigned to Partner" x-text="wideColumns ? 'Partner' : 'Ptnr'">Ptnr</th>
+              <th class="pb-1.5 px-1 text-right" title="Schools">Schools</th>
+              <th class="pb-1.5 px-1 text-right" title="Clusters">Clusters</th>
+              <th class="pb-1.5 pl-2 text-right sr-wide" title="# Visit Planned">Visits planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="School Visit achieved (Achieved/Planned)">Visits achieved</th>
+              <th class="pb-1.5 pl-2 text-right sr-wide" title="# Cluster Meeting Planned">Meetings planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="Cluster Meetings Achieved (Achieved/Planned)">Meetings achieved</th>
+              <th class="pb-1.5 pl-2 text-right sr-wide" title="# Cluster Trainings Planned">Trainings planned</th>
+              <th class="pb-1.5 pl-1 text-right" title="Cluster trainings achieved (Achieved/Planned)">Trainings achieved</th>
+              <th class="pb-1.5 pl-1 text-right" title="# Assigned to Partner">Partner</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
@@ -312,17 +307,17 @@ was measured in seconds. Same URL as the script's fetch.{% endcomment %}
                     x-text="row.schools"></td>
                 <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600"
                     x-text="row.clusters"></td>
-                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
+                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide"
                     x-text="row.visits_planned.toLocaleString()"></td>
                 <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
                     :title="`${row.visits_achieved} of ${row.visits_planned} planned school visits achieved`"
                     x-text="achievedOfPlanned(row.visits_achieved, row.visits_planned)"></td>
-                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
+                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide"
                     x-text="row.cluster_meetings_planned.toLocaleString()"></td>
                 <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
                     :title="`${row.cluster_meetings_achieved} of ${row.cluster_meetings_planned} planned cluster meetings achieved`"
                     x-text="achievedOfPlanned(row.cluster_meetings_achieved, row.cluster_meetings_planned)"></td>
-                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide" x-show="wideColumns" x-cloak
+                <td class="py-1.5 pl-2 text-right font-semibold tabular-nums text-slate-600 sr-wide"
                     x-text="row.cluster_trainings_planned.toLocaleString()"></td>
                 <td class="py-1.5 pl-1 text-right font-bold tabular-nums text-slate-800"
                     :title="`${row.cluster_trainings_achieved} of ${row.cluster_trainings_planned} planned cluster trainings achieved`"

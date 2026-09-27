@@ -34,6 +34,16 @@ def _read(relative_path):
     return read_template(ROOT, relative_path)
 
 
+def _strip_rules(context: str) -> str:
+    """The strip's own rules: the context-metrics contract without the phone
+    grid block. A phone lays every fact out in a grid of compact rows (owner's
+    mobile directive, 2026-09-27: no KPI carousel on a phone); from a tablet
+    up the strip stays one continuous, scrolling row."""
+    start = context.index("/* Phones: every KPI on screen")
+    end = context.index("/* end of the phone KPI grid */")
+    return context[:start] + context[end:]
+
+
 class KpiStripMigrationTests(SimpleTestCase):
     """Keep contextual summaries unified without reviving KPI card grids."""
 
@@ -134,7 +144,7 @@ class KpiStripMigrationTests(SimpleTestCase):
         self.assertIn("scroll-snap-type: x ", context)
         self.assertIn("box-shadow:", context)
         self.assertNotIn("background-image:", context)
-        self.assertNotIn("grid-template-columns:", context)
+        self.assertNotIn("grid-template-columns:", _strip_rules(context))
 
     def test_specialised_workspaces_use_the_shared_component_not_an_adapter(self):
         migrated = (
