@@ -1,7 +1,11 @@
 <thead>
   <tr>
-    {% if selectable %}<th scope="col" class="school-plan-table__select">Select</th>{% endif %}
-    <th scope="col">School ID</th>
+    {% comment %}The tick column carries no visible heading and the ID column says
+    "ID" (both still named for a screen reader), so neither is wider than what
+    it holds and the school name gets the room (owner, 2026-09-27: "there is a
+    huge gap between checkboxes and the school id").{% endcomment %}
+    {% if selectable %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
+    <th scope="col" aria-label="School ID" title="School ID">ID</th>
     <th scope="col">School Name</th>
     <th scope="col">Visit Plan Status</th>
     <th scope="col">Training Plan Status</th>

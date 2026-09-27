@@ -745,9 +745,53 @@ def build_hr_exceptions(principal, today: date | None = None) -> list[HRExceptio
     for build in _BUILDERS_PRINCIPAL_ONLY:
         items.extend(build(principal))
     items.extend(_policy_review_due(principal, today))
+    _unlink_closed_conversations(principal, items)
 
     items.sort(key=lambda i: (_SEVERITY_ORDER.get(i.severity, 3), i.sort_key))
     return items
+
+
+_CONVERSATION_URL = "/performance-conversation?staff="
+
+
+def _unlink_closed_conversations(principal, items: list[HRException]) -> None:
+    """A conversation the viewer is not part of keeps its exception and loses
+    its Open link (owner, 2026-09-27: "hide all feature that a role is blocked
+    from accessing"). The country scope shows a Country Director every overdue
+    review, but the conversation opens only for its employee, reviewer,
+    functional manager and HR — the rule performance_conversation_view
+    applies — and anyone else was sent back to the dashboard."""
+    role = getattr(principal, "active_role", "")
+    if role in ("HumanResources", "Human Resources", "Admin"):
+        return
+    linked = [i for i in items if i.url.startswith(_CONVERSATION_URL)]
+    if not linked:
+        return
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceReview
+    from apps.hr.review_authority import is_reviewer_of
+
+    own = getattr(principal, "staff_profile_id", None) or getattr(
+        getattr(principal, "staff_profile", None), "id", None
+    )
+    ids = {i.url[len(_CONVERSATION_URL) :] for i in linked}
+    profiles = StaffProfile.objects.filter(id__in=ids).select_related("user")
+    functional = set(
+        PerformanceReview.objects.filter(
+            staff_id__in=ids,
+            fy=get_operational_fy(),
+            review_type="annual_priorities",
+            functional_manager_id=getattr(principal, "id", None),
+        ).values_list("staff_id", flat=True)
+    )
+    openable = {
+        p.id
+        for p in profiles
+        if p.id == own or p.id in functional or is_reviewer_of(p, principal)
+    }
+    for item in linked:
+        if item.url[len(_CONVERSATION_URL) :] not in openable:
+            item.url = ""
 
 
 def grouped_hr_exceptions(principal, today: date | None = None) -> dict:

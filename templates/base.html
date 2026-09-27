@@ -74,7 +74,7 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260926district1">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260927chrome1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
@@ -100,13 +100,13 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260923sweep2">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260927mobile2">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260927chrome1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260927mobile2">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260927mobile2">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260927chrome1">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260927chrome1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -116,8 +116,8 @@ other page was relying on them.
      identity column, the workspace overflow guard and the phone page header.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
-<link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260927mobile2">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260927mobile2">
+<link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260927chrome1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260927chrome1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -134,6 +134,15 @@ other page was relying on them.
   // A request must always reach a terminal state. Individual file-upload
   // forms opt into a longer budget because their payloads can be large.
   htmx.config.timeout = 45000;
+
+  // Alpine owns an element's style once it starts: x-show writes
+  // display:none. htmx's settle step gives a swapped-in element the old
+  // attributes of the element with its id, then puts the server's back —
+  // which wiped that display:none from every Planning detail row whose school
+  // was also on the previous tab, and they all opened (owner, 2026-09-27:
+  // "scheduled/in my plan accordion are all opened by default"). Style no
+  // longer settles; class and size still do.
+  htmx.config.attributesToSettle = ['class', 'width', 'height'];
 
   // Server-side validation responses (400/403) carry user-facing notices —
   // e.g. the Daily Visit "reason required" panel and route/scheduling errors.
@@ -235,7 +244,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260927mobile2"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260927chrome1"></script>
 <script defer src="{% static 'js/date-picker.js' %}?v=20260927layer1"></script>
 
 {% comment %}

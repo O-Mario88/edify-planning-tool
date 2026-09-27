@@ -25,7 +25,7 @@
     </div>
     <div class="flex flex-wrap gap-2 pt-1">
       <a href="/profile" class="btn h-8 inline-flex items-center">View profile</a>
-      <a href="/change-password" class="btn btn-primary h-8 inline-flex items-center">Change password</a>
+      {% if user.must_change_password %}<a href="/change-password" class="btn btn-primary h-8 inline-flex items-center">Change password</a>{% endif %}
     </div>
   </section>
 

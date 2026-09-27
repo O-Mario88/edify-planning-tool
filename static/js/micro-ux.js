@@ -784,6 +784,149 @@
     });
   }
 
+  /* Phone rows of only controls or chips that have their line to themselves
+     fill it (owner, 2026-09-27: "dead space on the right"; interactions.css
+     "ROWS THAT REACH THE EDGE"). Reads, then writes. */
+  var phoneRows = window.matchMedia('(max-width: 47.999rem)');
+  var ROW_ITEM = 'a[href], button, summary, details, [role="tab"], [role="button"]';
+  var ROW_SKIP = 'td, th, [role="menu"], [popover], dialog, .row-menu, .edify-bottom-nav, .edify-pagination, .edify-pagination-scope, nav[aria-label*="page" i], .pagination, .pager, .edify-datepick, [data-edify-filter-row], [data-edify-filter-more-panel], .context-metrics, [data-edify-fill="off"]';
+
+  function inFlow(element) {
+    if (element.hidden) return false;
+    var style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.position === 'absolute' || style.position === 'fixed') return false;
+    var box = element.getBoundingClientRect();
+    return box.width > 0 && box.height > 0;
+  }
+
+  function filled(style) {
+    return parseFloat(style.borderTopWidth) > 0 || !/^(rgba\(0, 0, 0, 0\)|transparent)$/.test(style.backgroundColor);
+  }
+
+  function rowItem(element) {
+    if (!element.textContent.trim()) return false;
+    if (element.matches(ROW_ITEM)) return true;
+    if (element.querySelector('p, div, h1, h2, h3, h4, h5, h6, ul, ol, table, input, select, textarea')) return false;
+    return filled(window.getComputedStyle(element));
+  }
+
+  function planRowFill(row) {
+    var style = window.getComputedStyle(row);
+    if (!/flex/.test(style.display) || /column/.test(style.flexDirection)) return null;
+    var items = Array.from(row.children).filter(inFlow);
+    if (items.length < 2 || !items.every(rowItem)) return null;
+    var path = [], box = row;
+    while (box.parentElement && !box.parentElement.matches('main, body') && Array.from(box.parentElement.children).filter(inFlow).length === 1) {
+      box = box.parentElement;
+      path.push(box);
+    }
+    var line = box.parentElement;
+    if (!line) return null;
+    var edge = box.getBoundingClientRect();
+    var beside = Array.from(line.children).some(function (sibling) {
+      if (sibling === box || !inFlow(sibling)) return false;
+      var other = sibling.getBoundingClientRect();
+      return other.top < edge.bottom - 2 && other.bottom > edge.top + 2;
+    });
+    if (beside) return null;
+    var lineStyle = window.getComputedStyle(line);
+    var right = line.getBoundingClientRect().right - (parseFloat(lineStyle.paddingRight) || 0) - (parseFloat(lineStyle.borderRightWidth) || 0);
+    var ends = {};
+    items.forEach(function (item) {
+      var rect = item.getBoundingClientRect(), top = Math.round(rect.top / 4);
+      ends[top] = Math.max(ends[top] || 0, rect.right);
+    });
+    var gap = Math.max.apply(null, Object.keys(ends).map(function (top) { return right - ends[top]; }));
+    if (gap < 12) return null;
+    return { row: row, path: path, context: function (element) {
+      var parent = window.getComputedStyle(element.parentElement);
+      return /flex/.test(parent.display) && !/column/.test(parent.flexDirection) ? 'row' : 'block';
+    } };
+  }
+
+  function fillPhoneRows(root) {
+    if (!phoneRows.matches) {
+      if (root === document) {
+        document.querySelectorAll('[data-edify-fill], [data-edify-fill-path]').forEach(function (element) {
+          if (element.getAttribute('data-edify-fill') === 'off') return;
+          element.removeAttribute('data-edify-fill');
+          element.removeAttribute('data-edify-fill-path');
+        });
+      }
+      return;
+    }
+    runWhenIdle(function () {
+      if (root !== document && !root.isConnected) return;
+      var scope = root.querySelectorAll ? root : document;
+      var rows = new Set();
+      scope.querySelectorAll(ROW_ITEM + ', span, strong').forEach(function (item) {
+        var row = item.parentElement;
+        if (!row || rows.has(row) || row.hasAttribute('data-edify-fill') || !row.closest('main') || row.closest(ROW_SKIP)) return;
+        rows.add(row);
+      });
+      var plans = Array.from(rows).map(planRowFill).filter(Boolean).map(function (plan) {
+        return {
+          row: plan.row,
+          rowContext: plan.context(plan.row),
+          path: plan.path.map(function (element) { return [element, plan.context(element)]; })
+        };
+      });
+      plans.forEach(function (plan) {
+        plan.row.setAttribute('data-edify-fill', plan.rowContext);
+        plan.path.forEach(function (entry) { entry[0].setAttribute('data-edify-fill-path', entry[1]); });
+      });
+    });
+  }
+
+  /* A heading row's item that wraps starts under the heading's words, past
+     its icon (owner, 2026-09-27; interactions.css). Resets, reads, writes. */
+  function indentWrappedHeads(root) {
+    var rows = Array.from(elementsWithin(root.querySelectorAll ? root : document, '.edify-head-row'));
+    rows.forEach(function (row) {
+      if (!row.hasAttribute('data-edify-head-wrap')) return;
+      row.removeAttribute('data-edify-head-wrap');
+      row.style.removeProperty('--edify-head-indent');
+      Array.from(row.children).forEach(function (child) { child.removeAttribute('data-edify-head-wrapped'); });
+    });
+    var plans = rows.map(function (row) {
+      var title = row.querySelector(':scope > .edify-head-row__title');
+      var heading = title && (title.matches('h1, h2, h3, h4, h5, p') ? title : title.querySelector('h1, h2, h3, h4, h5, p'));
+      if (!heading) return null;
+      var style = window.getComputedStyle(row);
+      if (!/flex/.test(style.display) || /column/.test(style.flexDirection)) return null;
+      var start = row.getBoundingClientRect().left + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.borderLeftWidth) || 0);
+      var indent = Math.round(heading.getBoundingClientRect().left - start);
+      if (indent < 4) return null;
+      var bottom = title.getBoundingClientRect().bottom;
+      var wrapped = Array.from(row.children).filter(function (child) {
+        if (child === title) return false;
+        var box = child.getBoundingClientRect();
+        return box.width > 0 && box.top >= bottom - 2 && Math.abs(box.left - start) < 2;
+      });
+      return wrapped.length ? { row: row, indent: indent, wrapped: wrapped } : null;
+    });
+    plans.forEach(function (plan) {
+      if (!plan) return;
+      plan.row.setAttribute('data-edify-head-wrap', '');
+      plan.row.style.setProperty('--edify-head-indent', plan.indent + 'px');
+      plan.wrapped.forEach(function (child) { child.setAttribute('data-edify-head-wrapped', ''); });
+    });
+  }
+
+  /* A pinned identity sits at its table's measured tick-column width
+     (2rem, or wider under a visible "Select"). Reads, then writes. */
+  function pinSelectColumns(root) {
+    var tables = elementsWithin(root.querySelectorAll ? root : document, '.edify-table-scroll-region > table');
+    var widths = tables.map(function (table) {
+      var box = table.querySelector(':scope > tbody > tr > :first-child :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)');
+      var cell = box && box.closest('td, th');
+      return cell ? Math.ceil(cell.getBoundingClientRect().width) : 0;
+    });
+    tables.forEach(function (table, index) {
+      if (widths[index]) table.style.setProperty('--edify-table-select-size', widths[index] + 'px');
+    });
+  }
+
   var desktopShell = window.matchMedia('(min-width: 64rem)');
 
   /* The scroll region a table lives in: the nearest ancestor that scrolls
@@ -1501,7 +1644,11 @@
     fitTimer = window.setTimeout(function () {
       fitRails(document);
       fitTables(document);
+      pinSelectColumns(document);
       titleTruncatedLabels(document);
+      fillPhoneRows(document);
+      indentWrappedHeads(document);
+      if (!phoneFilterRows.matches) arrangeFilterRows(document);
     }, 150);
   }, { passive: true });
 
@@ -1601,7 +1748,7 @@
     }
     revealTab(match.tab, true);
     // Nested officer rails become measurable after Alpine reveals their panel.
-    afterPaint(function () { fitRails(document); });
+    afterPaint(function () { fitRails(document); fillPhoneRows(document); indentWrappedHeads(document); });
   });
 
   document.addEventListener('focusin', function (event) {
@@ -1938,13 +2085,53 @@
     if (badge) { badge.textContent = count || ''; badge.hidden = !count; }
   }
 
+  /* A phone keeps three fields and More; wider, a slot per 9rem of row
+     (owner, 2026-09-27). */
+  var FILTER_SLOT_PX = 144, FILTER_GAP_PX = 12;
+
+  function filterSlots(width, phone) {
+    if (phone) return 4;
+    if (!width) return wideFilterRows.matches ? 6 : 5;
+    return Math.max(3, Math.floor((width + FILTER_GAP_PX) / (FILTER_SLOT_PX + FILTER_GAP_PX)));
+  }
+
+  /* Clear Filters is an × at the row's end; its name stays (owner, 2026-09-27). */
+  var CLEAR_TEXT = /^(×\s*)?(clear|reset)(\s+all)?(\s+filters?)?$/i;
+
+  function compactClearFilters(bar, row) {
+    Array.from(bar.querySelectorAll('a, button')).forEach(function (control) {
+      if (control.closest('[data-edify-filter-more-panel], dialog')) return;
+      var text = control.textContent.replace(/\s+/g, ' ').trim();
+      if (!control.hasAttribute('data-edify-filter-clear')) {
+        if (!control.matches('[data-component="clear-filters"]') && !CLEAR_TEXT.test(text)) return;
+        control.setAttribute('data-edify-filter-clear', '');
+        control.setAttribute('aria-label', 'Clear filters');
+        control.setAttribute('title', 'Clear filters');
+        control.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>';
+      }
+      if (control.parentElement !== row) row.appendChild(control);
+    });
+  }
+
   function arrangeFilterRows(root) {
     if (!root.querySelectorAll) return;
-    var phone = phoneFilterRows.matches, slots = phone ? 4 : wideFilterRows.matches ? 6 : 5;
-    elementsWithin(root, FILTER_CONTAINERS).forEach(function (bar) {
-      if (bar.closest('.edify-page-header, [role="dialog"], .drawer-body, [data-edify-filter-row="off"]')) return;
+    /* A field swapped in alone (Sub-county) re-arranges its whole row. */
+    var owner = root !== document && root.closest && !root.matches(FILTER_CONTAINERS) && root.closest(FILTER_CONTAINERS);
+    if (owner) {
+      var owned = filterRowOf(owner);
+      if (owned && owned.row) delete owned.row.dataset.edifyFilterSlots;
+      root = owner;
+    }
+    var phone = phoneFilterRows.matches;
+    var bars = elementsWithin(root, FILTER_CONTAINERS).filter(function (bar) {
+      return !bar.closest('.edify-page-header, [role="dialog"], .drawer-body, [data-edify-filter-row="off"]');
+    });
+    var widths = bars.map(function (bar) { return bar.getBoundingClientRect().width; });
+    bars.forEach(function (bar, index) {
+      var slots = filterSlots(widths[index], phone);
       var found = filterRowOf(bar), row = found && found.row;
       if (!row) return;
+      compactClearFilters(bar, row);
       var own = desktopFilterRows.matches && bar.closest('.school-filters-form, .school-filter-canvas') || !phone && bar.closest('.oversight-period-filter');
       if (!own && row.dataset.edifyFilterSlots === String(slots)) return;
       var more = row.querySelector(':scope > [data-edify-filter-more]');
@@ -2148,9 +2335,12 @@
       enhanceCustomDialogs(root);
       fitRails(root);
       fitTables(root);
+      pinSelectColumns(root);
       watchScrollRegions(root);
       titleTruncatedLabels(root);
       markTouchTargets(root);
+      fillPhoneRows(root);
+      indentWrappedHeads(root);
     });
   }
 

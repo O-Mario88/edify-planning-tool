@@ -41,20 +41,23 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertIn("padding: 0.3rem 0.875rem !important", css)
 
     def test_shared_mobile_controls_use_compact_accessible_scale(self):
-        """The rebuild uses 40px page actions at every breakpoint.
+        """Page actions are 40px on a desktop, 36px on a tablet, 32px on a phone.
 
         Record-row actions remain separately condensed to 24px; the root
         control token must not fluctuate as a window is resized.
         """
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
 
+        # The height steps with the screen (owner, 2026-09-27: "making mobile
+        # buttons and badges smaller to match and fit the mobile screens"):
+        # 40px desktop, 36px tablet, 32px phone.
         sizes = re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
-        self.assertEqual(set(sizes), {"2.5rem"})
-        self.assertEqual(len(sizes), 4, "one height declared per breakpoint step")
+        self.assertEqual(set(sizes), {"2.5rem", "2.25rem", "2rem"})
+        self.assertEqual(len(sizes), 5, "one height declared per breakpoint step")
         self.assertIn("--edify-action-button-padding-inline: 0.5rem", css)
         self.assertIn("--edify-action-button-icon-size: 0.75rem", css)
         self.assertIn("max-width: 22.5rem", css)
-        self.assertEqual(css.count(":root:root:root"), 4)
+        self.assertEqual(css.count(":root:root:root"), 5)
         self.assertIn(
             "min-block-size: var(--edify-action-button-block-size) !important", css
         )

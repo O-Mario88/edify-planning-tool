@@ -81,40 +81,34 @@ filtered on a value no row has ever carried and emptied the queue.
 choosing a district would silently drop the "overdue" the reader came for.{% endcomment %}
 {% for chip in drilldowns %}<input type="hidden" name="{{ chip.key }}" value="{{ chip.value }}">{% endfor %}
 
-<button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.advancedFilters.showModal()">Advanced filters{% if filters.quarter or filters.staff or filters.core_school %} · Applied{% endif %}</button>
+{% comment %}Quarter, school scope and responsible staff are fields of the row
+like the others (owner, 2026-09-27: "Redesign more filter drawer to be more
+like a dropdown and remove the Applied label"): the row shows what its width holds
+and puts the rest in its More dropdown.{% endcomment %}
+<div class="flex flex-col min-w-[110px]">
+<label class="edify-filter-label" for="ia-filter-quarter">Quarter</label>
+<select id="ia-filter-quarter" name="quarter" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="">All quarters</option>
+<option value="Q1" {% if filters.quarter == "Q1" %}selected{% endif %}>Q1</option>
+<option value="Q2" {% if filters.quarter == "Q2" %}selected{% endif %}>Q2</option>
+<option value="Q3" {% if filters.quarter == "Q3" %}selected{% endif %}>Q3</option>
+<option value="Q4" {% if filters.quarter == "Q4" %}selected{% endif %}>Q4</option>
+</select>
+</div>
 
-<dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="ia-advanced-filter-title">
-  <header class="edify-filter-drawer__header">
-    <div><p class="edify-page-eyebrow">Activity Verification</p><h2 id="ia-advanced-filter-title">Advanced filters</h2></div>
-    <button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.advancedFilters.close()">×</button>
-  </header>
-  <div class="edify-filter-drawer__body">
-    <div class="flex flex-col">
-      <label class="edify-filter-label" for="ia-filter-quarter">Quarter</label>
-      <select id="ia-filter-quarter" name="quarter">
-        <option value="">All quarters</option>
-        <option value="Q1" {% if filters.quarter == "Q1" %}selected{% endif %}>Q1</option>
-        <option value="Q2" {% if filters.quarter == "Q2" %}selected{% endif %}>Q2</option>
-        <option value="Q3" {% if filters.quarter == "Q3" %}selected{% endif %}>Q3</option>
-        <option value="Q4" {% if filters.quarter == "Q4" %}selected{% endif %}>Q4</option>
-      </select>
-    </div>
-    <div class="flex flex-col">
-      <label class="edify-filter-label" for="ia-filter-scope">School scope</label>
-      <select id="ia-filter-scope" name="core_school">
-        <option value="">All schools</option>
-        <option value="true" {% if filters.core_school == "true" %}selected{% endif %}>Core schools only</option>
-      </select>
-    </div>
-    <div class="flex flex-col">
-      <label class="edify-filter-label" for="ia-filter-staff">Responsible staff</label>
-      <input id="ia-filter-staff" type="text" name="staff" value="{{ filters.staff|default:'' }}" placeholder="Filter by CCEO name…">
-    </div>
-  </div>
-  <footer class="edify-filter-drawer__footer">
-    <button type="button" class="btn btn-primary h-8" @click="$refs.advancedFilters.close()">Apply filters</button>
-  </footer>
-</dialog>
+<div class="flex flex-col min-w-[130px]">
+<label class="edify-filter-label" for="ia-filter-scope">School scope</label>
+<select id="ia-filter-scope" name="core_school" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="">All schools</option>
+<option value="true" {% if filters.core_school == "true" %}selected{% endif %}>Core schools only</option>
+</select>
+</div>
+
+<div class="flex flex-col min-w-[140px]">
+<label class="edify-filter-label" for="ia-filter-staff">Responsible staff</label>
+<input id="ia-filter-staff" type="text" name="staff" value="{{ filters.staff|default:'' }}" placeholder="Filter by CCEO name…" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+</div>
+
 
 {% if filters_active %}
 <a href="/ia/verification/" data-component="clear-filters"

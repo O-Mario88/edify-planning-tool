@@ -4698,8 +4698,8 @@ main .edify-avatar-neutral {
    visit planned column. move them to the right to give more space to the
    school name"). */
 :root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 50rem !important; }
-.school-plan-table--selectable thead th:nth-child(1) { width: 3rem; }
-.school-plan-table--selectable thead th:nth-child(2) { width: 5.5rem; }
+.school-plan-table--selectable thead th:nth-child(1) { width: 2rem; }
+.school-plan-table--selectable thead th:nth-child(2) { width: 3.75rem; }
 .school-plan-table--selectable thead th:nth-child(3) { width: auto; }
 .school-plan-table--selectable thead th:nth-child(4) { width: 10.25rem; }
 .school-plan-table--selectable thead th:nth-child(5) { width: 11.75rem; }

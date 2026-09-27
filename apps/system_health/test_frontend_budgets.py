@@ -96,7 +96,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: Actions beside its name, pinned selection columns, invisible 44px touch
     #: squares, drawers sized to the screen, blue title bands with white text
     #: on every table and heading rows that fit a phone.
-    CSS_GZIP_KB = 202
+    #:
+    #: Raised to 203 on 2026-09-27 (201.0 to 202.6 KB, +0.8%) for the compact
+    #: page chrome the owner asked for: phone controls and badges on a smaller
+    #: step, rows that reach the screen's edge, one-row filters with an ×,
+    #: School Directory rows like Planning's, and details that wrap.
+    CSS_GZIP_KB = 203
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -113,7 +118,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: giving every small control an invisible 44px touch square and letting a
     #: table's title bar keep its count and buttons (and an empty table region)
     #: take the blue band.
-    JS_GZIP_KB = 131
+    #:
+    #: Raised to 134 on 2026-09-27 (130.8 to 133.2 KB, +1.8%) for micro-ux.js
+    #: filling a phone's rows of controls, indenting a heading's wrapped
+    #: caption, filter slots from the row's width with an × Clear, and pinning
+    #: a table's identity at its measured tick column.
+    JS_GZIP_KB = 134
     INLINE_SCRIPT_KB = 40
 
     @classmethod

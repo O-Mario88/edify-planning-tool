@@ -85,8 +85,11 @@ class PlatformAccordionContractTests(SimpleTestCase):
         # `display: grid !important` here once opened every row on a phone.
         self.assertNotIn("display: grid", phone)
         self.assertNotIn("repeat(2", phone)
-        # An opened record's details are one list, one pair per line.
-        self.assertIn("flex-direction: column !important", phone)
+        # An opened record's details are pairs in rows that wrap (owner,
+        # 2026-09-27: "should not be in 1 colum. it should be in row with
+        # wrappers"), not one pair per line.
+        self.assertIn("flex-wrap: wrap !important", phone)
+        self.assertNotIn("flex-direction: column !important", phone)
         # The overview starts at the School ID's edge.
         self.assertIn("grid-column: 1 / -1", phone)
 

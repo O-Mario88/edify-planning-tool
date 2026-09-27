@@ -107,14 +107,18 @@ class TheExportsOfferBothFilesTest(SimpleTestCase):
             with self.subTest(query=query):
                 self.assertEqual(_wants_excel(rf.get(f"/export{query}")), expected)
 
-    def test_my_plan_offers_both_files(self):
+    def test_my_plan_offers_one_excel_export(self):
+        """One Export, in Excel (owner, 2026-09-27: "export buttons dont have
+        to be two buttons. It should be export in excel not csv since the team
+        use excel more"). ?export=csv still answers for existing links."""
         from pathlib import Path
 
         page = (
             Path(__file__).resolve().parents[3] / "templates/pages/my_plan/index.html"
         ).read_text()
-        self.assertIn("{% querystring export='csv' %}", page)
         self.assertIn("{% querystring export='xlsx' %}", page)
+        self.assertNotIn("{% querystring export='csv' %}", page)
+        self.assertEqual(page.count("{% querystring export="), 1)
 
     def test_every_oversight_workspace_offers_both_files(self):
         """One header Export menu holds both files (owner, 2026-09-25), and

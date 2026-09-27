@@ -184,10 +184,14 @@ class IAVerificationWorkspaceContractTest(SimpleTestCase):
         self.assertIn("edify-row-overflow__menu", self.table)
         self.assertNotIn("Review Action", self.table)
 
-    def test_queue_uses_three_inline_filters_and_a_real_advanced_filter_dialog(self):
+    def test_queue_filters_are_one_row_with_no_advanced_dialog(self):
+        """Every filter is a field of the row (owner, 2026-09-27: "Redesign
+        more filter drawer to be more like a dropdown and remove the ·
+        Applied"); micro-ux.js puts what the width cannot hold in More."""
         self.assertEqual(self.queue.count('class="edify-filter-label"'), 6)
-        self.assertIn('data-component="filter-drawer"', self.queue)
-        self.assertIn('<dialog x-ref="advancedFilters"', self.queue)
+        self.assertNotIn('data-component="filter-drawer"', self.queue)
+        self.assertNotIn("<dialog", self.queue)
+        self.assertNotIn("· Applied", self.queue)
         self.assertNotIn('include "components/context_metrics.html"', self.queue)
 
     def test_review_is_a_mobile_full_screen_workspace_with_sticky_decisions(self):

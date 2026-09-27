@@ -53,7 +53,9 @@ function layoutDefects() {
   main.querySelectorAll('input[type="checkbox"]').forEach((box) => {
     if (!shown(box)) return;
     const r = box.getBoundingClientRect();
-    if (r.width < 17.5 || r.height < 17.5) defects.push(`a tick box is ${Math.round(r.width)}x${Math.round(r.height)}`);
+    // 14px on a phone, scaling to 16px (owner, 2026-09-27: "the size of
+    // checkboxes should adjust dynamically"); smaller is a clipped box.
+    if (r.width < 13.5 || r.height < 13.5) defects.push(`a tick box is ${Math.round(r.width)}x${Math.round(r.height)}`);
     for (let n = box.parentElement; n && n !== main; n = n.parentElement) {
       const s = getComputedStyle(n);
       if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;

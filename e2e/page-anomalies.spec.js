@@ -120,11 +120,11 @@ test('search survives filter changes and debrief advanced controls remain usable
   await expect(search).toHaveValue('anomaly-query');
  }
  await page.goto('/debriefs');
- await page.getByRole('button',{name:'More filters',exact:true}).click();
- await expect(page.locator('dialog[open]')).toBeVisible();
- await page.getByLabel('Risk level',{exact:true}).selectOption('critical');
- await page.getByRole('button',{name:'Apply filters',exact:true}).click();
- await expect(page.locator('dialog[open]')).toHaveCount(0);
+ // Risk level is a field of the row, or in its More dropdown when the row
+ // is full (owner, 2026-09-27: no advanced-filter dialog).
+ const risk=page.getByLabel('Risk level',{exact:true});
+ if(!(await risk.isVisible())) await page.locator('#debrief-filters [data-edify-filter-more-toggle]').click();
+ await risk.selectOption('critical');
  await expect(page).toHaveURL(/risk_level=critical/);
  await page.getByRole('link',{name:'New Field Debrief',exact:true}).click();
  await expect(page.locator('textarea[name=what_went_well]')).toBeVisible();

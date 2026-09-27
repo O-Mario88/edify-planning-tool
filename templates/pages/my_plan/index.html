@@ -25,32 +25,18 @@
   Send Invoice
 </button>
 {% endif %}
-{% comment %}The currently filtered feed, in either file. Excel is here
-because the plan is read in Excel and a CSV argues with it about dates and
-money (owner, 2026-09-22); CSV stays for anything that already links to it.
+{% comment %}The currently filtered feed as one Excel file (owner, 2026-09-27:
+"export buttons dont have to be two buttons. It should be export in excel not
+csv since the team use excel more"). ?export=csv still answers for anything
+that links to it. Open Calendar moved beside the period tabs (filters.html).
 {% endcomment %}
-<a
-href="{% querystring export='csv' %}"
-class="btn btn-ghost h-8 shadow-sm"
->
-<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export CSV
-</a>
 <a
 href="{% querystring export='xlsx' %}"
 class="btn btn-ghost h-8 shadow-sm"
+aria-label="Export this plan to Excel"
 >
-<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export Excel
-</a>
-
-<!-- Open Calendar button -->
-<a
-href="/calendar"
-class="btn btn-primary h-8 shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Open Calendar
+<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
 </a>
 </div>
 </div>

@@ -517,17 +517,20 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(html.count('id="filters-page-input"'), 1)
         self.assertEqual(html.count('id="drawer-container"'), 1)
 
-    def test_schools_directory_rows_carry_a_district_column(self):
-        """District is a column on the collapsed row, not only in its details."""
+    def test_schools_directory_rows_keep_the_district_in_the_details(self):
+        """No District column on the collapsed row (owner, 2026-09-27: "remove
+        the district so that the row is not wide"): it is one of the record's
+        details, still linked to its district."""
         self.school.account_owner_id = self.cceo_profile.id
         self.school.save(update_fields=["account_owner_id"])
         self.client.force_login(self.cceo_user)
         html = self.client.get("/schools").content.decode()
-        start = html.index("data-directory-district")
-        cell = html[start : html.index("</div>", start)]
-        self.assertIn("District: ", cell)
-        self.assertIn(f'href="/districts/{self.district.id}"', cell)
-        self.assertIn(self.district.name, cell)
+        self.assertNotIn("data-directory-district", html)
+        details = html[html.index('class="school-record-row__metadata"') :]
+        details = details[: details.index("</dl>")]
+        self.assertIn("District:", details)
+        self.assertIn(f'href="/districts/{self.district.id}"', details)
+        self.assertIn(self.district.name, details)
 
     def test_school_lists_show_real_grouped_ssa_scores(self):
         """Both school lists must show the stored scores, never placeholders."""

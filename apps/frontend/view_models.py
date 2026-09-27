@@ -123,14 +123,13 @@ class SchoolDirectoryViewModel:
         # for Change Cluster with a confirmation instead. One active cluster
         # still holds: the service closes the old membership before opening
         # the new one.
-        if not can_assign_cluster:
-            disabled_reasons["add_to_cluster"] = (
-                "You do not have permission to assign clusters."
+        # A role without the permission does not see the action at all
+        # (owner, 2026-09-27: "hide all feature that a role is blocked from
+        # accessing"): no entry and no reason, so the menu leaves it out.
+        if can_assign_cluster:
+            available_actions.append(
+                "change_cluster" if is_clustered else "add_to_cluster"
             )
-        elif is_clustered:
-            available_actions.append("change_cluster")
-        else:
-            available_actions.append("add_to_cluster")
 
         # Reassign Owner — Admin and Impact Assessment only (owner,
         # 2026-09-15, restated 2026-09-21). It existed on the school's own
@@ -144,13 +143,9 @@ class SchoolDirectoryViewModel:
             available_actions.append("reassign_owner")
 
         # Assign to Project action
-        if not active_projects_exist:
+        if can_assign_project and not active_projects_exist:
             disabled_reasons["assign_to_project"] = "No active project available."
-        elif not can_assign_project:
-            disabled_reasons["assign_to_project"] = (
-                "You do not have permission to assign projects."
-            )
-        else:
+        elif can_assign_project:
             available_actions.append("assign_to_project")
 
         # Resolve cluster name from pre-loaded dict
