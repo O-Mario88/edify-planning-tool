@@ -23,6 +23,7 @@ from apps.activities.models import Activity
 from apps.core_schools.models import CoreActivitySlot, CorePlan
 from apps.core_schools.test_core_visit_purposes import _CoreFixture
 from apps.planning.services import schedule_school_visit
+from apps.schools.models import School
 
 TODAY = date.today()
 
@@ -132,6 +133,89 @@ class CoreVisitRoutingTest(_CoreFixture):
 
         activity = Activity.objects.get(id=result["id"])
         self.assertEqual(activity.activity_type, "school_visit")
+
+
+class CoreAndClientVisitsShareADayTest(_CoreFixture):
+    """A core visit and a client visit may fall on the same day, in either
+    order, even when the two schools sit in different nearby districts
+    (owner, 2026-09-27). Both join the staff member's one Daily Visit Batch
+    and split one day's cost."""
+
+    def setUp(self):
+        super().setUp()
+        from apps.budget.models import CostSetting
+        from apps.daily_visit_batches.services import _catalogue_for_batch_date
+        from apps.geography.models import District
+
+        self.day = _weekday(TODAY + timedelta(days=3))
+        self.cceo_sp.primary_district_id = self.district.id
+        self.cceo_sp.save(update_fields=["primary_district_id"])
+        near_a = District.objects.create(name="Near A", region=self.region)
+        near_b = District.objects.create(name="Near B", region=self.region)
+        School.objects.filter(id=self.school.id).update(district=near_a)
+        self.client_school = self._school("CLIENT-7", "Nearby Client", self.cceo_sp)
+        School.objects.filter(id=self.client_school.id).update(
+            school_type="client", district=near_b
+        )
+        self.client_school.refresh_from_db()
+        self.school.refresh_from_db()
+
+        catalogue = _catalogue_for_batch_date(self.day)
+        for key, cost in (
+            ("secondary_transport_per_day", 330000),
+            ("lunch_per_day", 30000),
+            ("secondary_breakfast_per_day", 40000),
+            ("secondary_overnight_dinner_per_day", 50000),
+            ("secondary_accommodation_per_night", 150000),
+        ):
+            CostSetting.objects.update_or_create(
+                key=key,
+                defaults={
+                    "label": key,
+                    "unit_cost": cost,
+                    "fy": catalogue.fy,
+                    "catalogue": catalogue,
+                    "version": catalogue.version,
+                },
+            )
+
+    def _visit(self, school):
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+        result = schedule_school_visit(
+            {
+                "schoolId": school.school_id,
+                "activityType": "school_visit",
+                "catalogueItemId": resolve_item_for_workflow_kind("school_visit").id,
+                "scheduledDate": self.day.isoformat(),
+                "purposeType": "ssa_support",
+                "responsibleStaffId": self.cceo_sp.id,
+                "deliveryType": "staff",
+                "requireCatalogue": True,
+            },
+            self.cceo,
+        )
+        return Activity.objects.get(id=result["id"])
+
+    def _assert_one_shared_day(self, core, client):
+        self.assertEqual(core.activity_type, "core_visit")
+        self.assertEqual(client.activity_type, "school_visit")
+        self.assertEqual(core.planned_date, client.planned_date)
+        core.refresh_from_db()
+        client.refresh_from_db()
+        self.assertIsNotNone(core.daily_visit_batch_id)
+        self.assertEqual(core.daily_visit_batch_id, client.daily_visit_batch_id)
+        self.assertEqual(core.daily_visit_batch.school_count, 2)
+
+    def test_a_core_visit_joins_a_client_visit_day(self):
+        client = self._visit(self.client_school)
+        core = self._visit(self.school)
+        self._assert_one_shared_day(core, client)
+
+    def test_a_client_visit_joins_a_core_visit_day(self):
+        core = self._visit(self.school)
+        client = self._visit(self.client_school)
+        self._assert_one_shared_day(core, client)
 
 
 class CoreVisitBackfillTest(_CoreFixture):

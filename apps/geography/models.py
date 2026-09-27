@@ -209,10 +209,11 @@ class SecondaryDistrictGroupStatus(models.TextChoices):
 
 
 class SecondaryDistrictGroup(TimeStampedModel):
-    """CD/Admin-approved group of nearby secondary districts that may be
-    combined in one staff member's same-day Daily Visit Batch (e.g. a
-    "Kitgum Secondary Route" covering Lamwo/Pader/Agago). Only groups with
-    status=APPROVED count for same-day scheduling validation."""
+    """CD/Admin-named group of nearby secondary districts often visited on the
+    same day (e.g. a "Kitgum Secondary Route" covering Lamwo/Pader/Agago).
+    Staff may combine schools from any districts on one day; an APPROVED group
+    covering the day's districts is recorded on the Daily Visit Batch as a
+    label, never as a gate."""
 
     id = CuidField()
     name = models.CharField(max_length=255, unique=True)

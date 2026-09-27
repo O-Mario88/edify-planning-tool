@@ -228,17 +228,18 @@ class RouteIntelligenceTestCase(TestCase):
         self.assertFalse(p["blocked"])
         self.assertFalse(any("mixed" in w.lower() for w in p["warnings"]))
 
-    # ── 6. Secondary route group exception ───────────────────────────────────
-    def test_secondary_group_exception(self):
+    # ── 6. Secondary districts share a day, grouped or not ───────────────────
+    # Owner, 2026-09-27: "some districts are very close".
+    def test_two_secondary_districts_are_not_blocked(self):
         p = self._preview([self.sa, self.sb])
-        self.assertEqual(p["status"], "blocked")  # ungrouped secondary districts
+        self.assertFalse(p["blocked"])
+        self.assertNotEqual(p["status"], "blocked")
         group = SecondaryDistrictGroup.objects.create(
             name="North Route", status="approved"
         )
         SecondaryDistrictGroupMember.objects.create(group=group, district=self.sec_a)
         SecondaryDistrictGroupMember.objects.create(group=group, district=self.sec_b)
-        p2 = self._preview([self.sa, self.sb])
-        self.assertNotEqual(p2["status"], "blocked")
+        self.assertEqual(self._preview([self.sa, self.sb])["status"], p["status"])
 
     # ── 7. Working-day overload → Not Feasible + split/reduce advice ─────────
     def test_working_day_overload_not_feasible(self):

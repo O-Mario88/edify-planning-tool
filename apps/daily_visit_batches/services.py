@@ -5,9 +5,10 @@ through `schedule_visits`, which is what makes "every school visit
 creates/updates a DailyVisitBatch" true system-wide, not just for bulk
 scheduling.
 
-Validation order: unclassified district -> locked
-batch -> unapproved secondary grouping -> CD daily-target cap (hard) ->
-CD daily-target floor (soft, needs a reason) -> create/attach -> recalculate.
+Validation order: unclassified district -> locked batch -> CD daily-target
+cap (hard) -> CD daily-target floor (soft, needs a reason) -> create/attach ->
+recalculate. Schools from any mix of districts may share a day: a day with any
+secondary-district school is priced as one secondary day.
 """
 
 from __future__ import annotations
@@ -118,6 +119,9 @@ def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
 
 
 def _resolve_group(district_ids: set[str]):
+    """The approved SecondaryDistrictGroup covering every one of these
+    districts, if one exists. A label on the batch only — it never gates
+    scheduling."""
     from apps.geography.models import SecondaryDistrictGroup
 
     if not district_ids:
@@ -134,16 +138,6 @@ def _resolve_group(district_ids: set[str]):
         .filter(n=len(district_ids))
         .first()
     )
-
-
-def _assert_common_approved_group(district_ids: set[str]) -> None:
-    if len(district_ids) <= 1:
-        return
-    if _resolve_group(district_ids) is None:
-        raise BadRequest(
-            "These secondary districts are not approved for same-day scheduling. "
-            "Choose schools from one district or an approved nearby district group."
-        )
 
 
 def schedule_visits(
@@ -238,7 +232,6 @@ def schedule_visits(
             if d and district_type_for_staff(responsible_user_id, d) == "secondary"
         }
         incoming_district_type = "secondary" if all_district_ids else "primary"
-        _assert_common_approved_group(all_district_ids)
 
         catalogue = active_catalogue(activity_common_fields.get("fy"))
         target = catalogue.required_school_visits_per_day if catalogue else 5
@@ -353,8 +346,8 @@ def attach_activity_to_batch(
     share — otherwise each visit bills the entire day's transport/meal pool.
 
     Returns False only when the first day's pool rates are unavailable; the
-    caller then records the missing-rate recipe. Conflicting districts and
-    locked requests raise rather than silently bill another full daily pool.
+    caller then records the missing-rate recipe. A locked request raises
+    rather than silently bill another full daily pool.
     Must be called inside the caller's transaction.
     """
     district = member_district(activity)
@@ -392,7 +385,6 @@ def attach_activity_to_batch(
         if d and district_type_for_staff(responsible_user_id, d) == "secondary"
     }
     district_type = "secondary" if all_district_ids else "primary"
-    _assert_common_approved_group(all_district_ids)
 
     catalogue = _catalogue_for_batch_date(activity.planned_date)
     from apps.budget.costing_service import _rate_card
@@ -517,7 +509,6 @@ def reschedule_within_batch(
             if d and district_type_for_staff(responsible_user_id, d) == "secondary"
         }
         incoming_type = "secondary" if all_district_ids else "primary"
-        _assert_common_approved_group(all_district_ids)
 
         catalogue = _catalogue_for_batch_date(new_date)
         target = catalogue.required_school_visits_per_day if catalogue else 5

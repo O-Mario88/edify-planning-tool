@@ -12,9 +12,9 @@ Location sources are used in strict priority order (never text-first):
   4. Shipping-address text  (phrase parsing with stopword filtering)
   5. Manual review          (needs_cleanup — a Data Quality To-Do, never a rejection)
 
-The mandate's "SecondaryRouteGroup" already exists as
-apps.geography.SecondaryDistrictGroup (CD/Admin-approved, status gated) — the
-route layer reuses it rather than duplicating the concept.
+A visit day may cross districts freely; an approved
+apps.geography.SecondaryDistrictGroup that covers the day's districts is kept
+on the route batch as a label only.
 """
 
 from __future__ import annotations

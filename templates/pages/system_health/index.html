@@ -875,25 +875,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 27: Secondary districts combined without an approved group -->
+<!-- Check 27: Batch-linked activity missing cost-line breakdown -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">27. Secondary districts combined without CD approval</span>
-<span class="text-[12px] text-slate-500 block">A secondary-district batch spanning more than one district must be covered by a single CD/Admin-approved Secondary District Group.</span>
-</div>
-<div class="text-right shrink-0">
-{% if health.unapprovedSecondaryGroupBatches > 0 %}
-<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unapprovedSecondaryGroupBatches }} Items</span>
-{% else %}
-<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
-{% endif %}
-</div>
-</div>
-
-<!-- Check 28: Batch-linked activity missing cost-line breakdown -->
-<div class="flex items-center justify-between gap-3 pt-3">
-<div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">28. Daily Visit Batch activity missing cost breakdown</span>
+<span class="font-semibold text-[14px] text-slate-900 block">27. Daily Visit Batch activity missing cost breakdown</span>
 <span class="text-[12px] text-slate-500 block">Every batch-linked school visit should carry its Transport/Lunch(/Accommodation/Dinner) component lines, not a lump total.</span>
 </div>
 <div class="text-right shrink-0">
@@ -905,10 +890,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 29: Daily Visit Batch school count drifted -->
+<!-- Check 28: Daily Visit Batch school count drifted -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">29. Daily Visit Batch school count out of sync</span>
+<span class="font-semibold text-[14px] text-slate-900 block">28. Daily Visit Batch school count out of sync</span>
 <span class="text-[12px] text-slate-500 block">The batch's stored school count no longer matches its live active members — a recalculation was skipped.</span>
 </div>
 <div class="text-right shrink-0">
@@ -920,10 +905,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 30: Under-target batch missing a reason -->
+<!-- Check 29: Under-target batch missing a reason -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">30. Under-target Daily Visit Batch missing a reason</span>
+<span class="font-semibold text-[14px] text-slate-900 block">29. Under-target Daily Visit Batch missing a reason</span>
 <span class="text-[12px] text-slate-500 block">A batch scheduled below the CD's daily school-visit target should always carry the staff member's reason.</span>
 </div>
 <div class="text-right shrink-0">
@@ -935,10 +920,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 31: Locked batch changed after approval -->
+<!-- Check 30: Locked batch changed after approval -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">31. Daily Visit Batch changed after approval</span>
+<span class="font-semibold text-[14px] text-slate-900 block">30. Daily Visit Batch changed after approval</span>
 <span class="text-[12px] text-slate-500 block">A batch whose weekly fund request has already left draft status should never have its member schools change — needs reconciliation.</span>
 </div>
 <div class="text-right shrink-0">
@@ -950,10 +935,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 32: Cost Catalogue missing Daily Visit Batch rates -->
+<!-- Check 31: Cost Catalogue missing Daily Visit Batch rates -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">32. Cost Catalogue missing Daily Visit Batch rates</span>
+<span class="font-semibold text-[14px] text-slate-900 block">31. Cost Catalogue missing Daily Visit Batch rates</span>
 <span class="text-[12px] text-slate-500 block">The active catalogue must define every primary/secondary daily rate (transport, lunch, accommodation, overnight dinner) used for shared visit-day pricing.</span>
 </div>
 <div class="text-right shrink-0">
@@ -965,10 +950,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
-<!-- Check 33: Districts missing primary/secondary classification -->
+<!-- Check 32: Districts missing primary/secondary classification -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">33. Districts missing primary/secondary classification</span>
+<span class="font-semibold text-[14px] text-slate-900 block">32. Districts missing primary/secondary classification</span>
 <span class="text-[12px] text-slate-500 block">School visits cannot be scheduled in an unclassified district. Classify each district at <a href="/admin-panel/region-district-setup" class="underline hover:no-underline">Region &amp; District Setup</a>.</span>
 </div>
 <div class="text-right shrink-0">
@@ -984,7 +969,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 data quality, district-rule violations, working-day overloads. -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">34. Planned visit days without a route batch</span>
+<span class="font-semibold text-[14px] text-slate-900 block">33. Planned visit days without a route batch</span>
 <span class="text-[12px] text-slate-500 block">Upcoming staff visit days whose cost batch has no Route Intelligence twin.</span>
 </div>
 <div class="text-right shrink-0">
@@ -998,7 +983,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">35. Schools missing coordinates with weak address data</span>
+<span class="font-semibold text-[14px] text-slate-900 block">34. Schools missing coordinates with weak address data</span>
 <span class="text-[12px] text-slate-500 block">No coordinates, no structured sub-county/parish and no shipping address — route estimates for these schools need a location cleanup.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1012,7 +997,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">36. Visit days mixing primary and secondary districts</span>
+<span class="font-semibold text-[14px] text-slate-900 block">35. Visit days mixing primary and secondary districts</span>
 <span class="text-[12px] text-slate-500 block">Strict rule: no crossing from a primary district to a secondary district on the same day.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1026,21 +1011,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">37. Secondary districts grouped without an approved route group</span>
-<span class="text-[12px] text-slate-500 block">Multiple secondary districts on one day are only allowed inside a CD/Admin-approved Secondary Route Group.</span>
-</div>
-<div class="text-right shrink-0">
-{% if health.routeIntelligence.ungroupedSecondaryDays > 0 %}
-<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.ungroupedSecondaryDays }} Days</span>
-{% else %}
-<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
-{% endif %}
-</div>
-</div>
-
-<div class="flex items-center justify-between gap-3 pt-3">
-<div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">38. Route load exceeds the working day</span>
+<span class="font-semibold text-[14px] text-slate-900 block">36. Route load exceeds the working day</span>
 <span class="text-[12px] text-slate-500 block">Estimated travel + visit + buffer time is more than the 8h field day — reduce schools or split the day.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1054,7 +1025,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">39. Days below the CD daily target without a reason</span>
+<span class="font-semibold text-[14px] text-slate-900 block">37. Days below the CD daily target without a reason</span>
 <span class="text-[12px] text-slate-500 block">Fewer schools than the CD's required visits per day and no recorded justification.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1068,7 +1039,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">40. Cost batch and route batch school counts differ</span>
+<span class="font-semibold text-[14px] text-slate-900 block">38. Cost batch and route batch school counts differ</span>
 <span class="text-[12px] text-slate-500 block">The costing twin and the route twin of the same visit day disagree on the school set.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1082,7 +1053,7 @@ data quality, district-rule violations, working-day overloads. -->
 
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">41. Scheduled visit days with low location confidence</span>
+<span class="font-semibold text-[14px] text-slate-900 block">39. Scheduled visit days with low location confidence</span>
 <span class="text-[12px] text-slate-500 block">Route estimate may be inaccurate — verify sub-county / coordinates before route approval.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1094,11 +1065,11 @@ data quality, district-rule violations, working-day overloads. -->
 </div>
 </div>
 
-<!-- Checks 42-43: portfolio membership invariants. Every write path refuses
+<!-- Check 40: portfolio membership invariants. Every write path refuses
 these now; these count the rows that predate the rule. -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
-<span class="font-semibold text-[14px] text-slate-900 block">42. Schools in another staff member's cluster</span>
+<span class="font-semibold text-[14px] text-slate-900 block">40. Schools in another staff member's cluster</span>
 <span class="text-[12px] text-slate-500 block">A school belongs to a cluster owned by the person responsible for the school. Moving it across portfolios needs a transfer — run <span class="font-mono">audit_portfolio_ownership</span> for the affected rows.</span>
 </div>
 <div class="text-right shrink-0">
@@ -1114,7 +1085,7 @@ these now; these count the rows that predate the rule. -->
 </div>
 </div>
 
-<!-- Gold Standard UI quality lints (42+): computed live from template/CSS
+<!-- Gold Standard UI quality lints (41+): computed live from template/CSS
 source — mock data, emojis, dead links, static charts, theme/responsive. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
@@ -1126,7 +1097,7 @@ source — mock data, emojis, dead links, static charts, theme/responsive. -->
 <div class="pt-3">
 <div class="flex items-center justify-between">
 <div>
-<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:43 }}. {{ c.label }}</span>
+<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:40 }}. {{ c.label }}</span>
 <span class="text-[12px] text-slate-500 block">{{ c.fix }}</span>
 </div>
 <div class="text-right shrink-0 pl-3">
@@ -1147,7 +1118,7 @@ source — mock data, emojis, dead links, static charts, theme/responsive. -->
 </div>
 </div>
 
-<!-- Professional Development checks (48+): certificate/NetSuite closure
+<!-- Professional Development checks (47+): certificate/NetSuite closure
 gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
@@ -1158,7 +1129,7 @@ gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
 <div class="pt-3">
 <div class="flex items-center justify-between">
 <div>
-<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:49 }}. {{ c.label }}</span>
+<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:46 }}. {{ c.label }}</span>
 <span class="text-[12px] text-slate-500 block">{{ c.fix }}</span>
 </div>
 <div class="text-right shrink-0 pl-3">
