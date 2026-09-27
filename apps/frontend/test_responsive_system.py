@@ -103,7 +103,9 @@ class FluidTypeScaleTest(SimpleTestCase):
         block = self.css.split(f"@media {query} {{", 1)[1].split("\n}\n", 1)[0]
         floor = float(_token(self.css, "--edify-text-floor").removesuffix("rem"))
         sizes = {}
-        for name, value in re.findall(r"(--edify-text-[a-z-]+-size):\s*([^;]+);", block):
+        for name, value in re.findall(
+            r"(--edify-text-[a-z-]+-size):\s*([^;]+);", block
+        ):
             value = value.strip().replace("var(--edify-text-floor)", f"{floor}rem")
             sizes[name] = float(value.removesuffix("rem")) * REM
         return sizes
@@ -112,7 +114,10 @@ class FluidTypeScaleTest(SimpleTestCase):
         """Owner, 2026-09-27: the scale follows orientation as well as width.
         A landscape phone is wide but short; it keeps every step's minimum."""
         sizes = self._media("(orientation: landscape) and (max-height: 30rem)")
-        for step in self.STEPS + ("--edify-text-hero-size", "--edify-text-tile-value-size"):
+        for step in self.STEPS + (
+            "--edify-text-hero-size",
+            "--edify-text-tile-value-size",
+        ):
             with self.subTest(step=step):
                 self.assertEqual(sizes[step], _size(self.css, step, 320))
 
