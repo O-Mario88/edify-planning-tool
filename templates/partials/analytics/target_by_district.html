@@ -20,16 +20,16 @@ and without the counts and the empty state below that read as a broken control
   </header>
 
   {% if target_by_district_groups %}
-  <div class="analytics-priority-filters" aria-label="District priority status">
-    <button type="button" @click="filter = 'all'"
-            :class="filter === 'all' && 'is-active'"
-            :aria-pressed="(filter === 'all').toString()">All sub-regions <b>{{ target_by_district_summary.districts|default:0 }}</b></button>
-    <button type="button" @click="filter = 'attention'"
-            :class="filter === 'attention' && 'is-active'"
-            :aria-pressed="(filter === 'attention').toString()">Needs attention <b>{{ target_by_district_summary.attention|default:0 }}</b></button>
-    <button type="button" @click="filter = 'critical'"
-            :class="filter === 'critical' && 'is-active'"
-            :aria-pressed="(filter === 'critical').toString()">Critical <b>{{ target_by_district_summary.critical|default:0 }}</b></button>
+  {% comment %}The platform's tab rail, not loose pills (owner, 2026-09-27:
+  "that black tab is not professional at all"; the To-Do and What needs you
+  now filters moved to the rail the same day).{% endcomment %}
+  <div class="analytics-priority-filters" data-edify-tablist role="group" aria-label="District priority status">
+    <button type="button" data-edify-tab class="edify-tab" @click="filter = 'all'"
+            :aria-pressed="(filter === 'all').toString()">All sub-regions <span data-edify-tab-count>{{ target_by_district_summary.districts|default:0 }}</span></button>
+    <button type="button" data-edify-tab class="edify-tab" @click="filter = 'attention'"
+            :aria-pressed="(filter === 'attention').toString()">Needs attention <span data-edify-tab-count>{{ target_by_district_summary.attention|default:0 }}</span></button>
+    <button type="button" data-edify-tab class="edify-tab" @click="filter = 'critical'"
+            :aria-pressed="(filter === 'critical').toString()">Critical <span data-edify-tab-count>{{ target_by_district_summary.critical|default:0 }}</span></button>
   </div>
 
   <div class="analytics-priority-empty" x-cloak role="status"

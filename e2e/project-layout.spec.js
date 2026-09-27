@@ -42,14 +42,15 @@ test('project filters, queue tabs, and closed action menus survive interaction',
  for(const id of ['assign-project-staff-title','add-project-school-title']){const panel=page.locator('details[aria-labelledby="'+id+'"]');await expect(panel.locator('form')).toBeHidden();await panel.locator('summary').first().click();await expect(panel.locator('form')).toBeVisible();}
  await page.goto('/projects/planning');
  await page.locator('.spp-readiness summary').click();await expect(page.locator('.spp-band').first()).toBeVisible();
- await page.locator('.spp-more-filters summary').click();await expect(page.locator('.spp-more-filters')).toHaveAttribute('open','');
+ // Every filter is a field of the row (owner, 2026-09-27); no disclosure to open.
+ await expect(page.locator('.spp-more-filters')).toHaveCount(0);
  const project=page.locator('#spp-filters select[name="project"]');
  const value=await project.locator('option').nth(1).getAttribute('value');
  await project.selectOption(value);await expect(page).toHaveURL(new RegExp('project='+value));
  await page.getByRole('button',{name:/Ready for Support/}).click();await expect(page).toHaveURL(/tab=ready/);
  await expect(page.locator('#spp-filters select[name="project"]')).toHaveValue(value);
  await page.goto('/projects/my-plan');
- if(await page.locator('.sp-more-filters').count()){await page.locator('.sp-more-filters summary').click();await expect(page.locator('.sp-more-filters')).toHaveAttribute('open','');}
+ await expect(page.locator('.sp-more-filters')).toHaveCount(0);
  await page.getByRole('tab',{name:'Month',exact:true}).click();await expect(page).toHaveURL(/period=month/);
  await expect(page.locator('#sp-plan-filters')).toBeVisible();
  await page.getByRole('button',{name:'Filters',exact:true}).click();await expect(page.locator('#sp-plan-filters')).toBeHidden();

@@ -100,14 +100,26 @@ class AnalyticsDashboardTest(TestCase):
         # Preserve the original map at every breakpoint. The region name is map
         # content, not a reinstated Region filter.
         self.assertContains(response, "Central Region")
-        self.assertContains(response, "Download CSV")
+        # One Excel export (owner, 2026-09-27: "export in excel not csv").
+        self.assertContains(response, 'aria-label="Export to Excel"')
         self.assertContains(response, "Send to Inbox")
+
+    def test_analytics_export_is_excel_and_csv_on_request(self):
+        from apps.core.excel import XLSX_CONTENT_TYPE
+
+        self.client.login(email="cd@edify.org", password="testpassword")
+        workbook = self.client.get(
+            reverse("frontend:analytics_export"), {"fy": "2026", "quarter": "Q2"}
+        )
+        self.assertEqual(workbook.status_code, 200)
+        self.assertEqual(workbook["Content-Type"], XLSX_CONTENT_TYPE)
+        self.assertIn(".xlsx", workbook["Content-Disposition"])
 
     def test_analytics_csv_export_uses_current_authorized_dashboard_data(self):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(
             reverse("frontend:analytics_export"),
-            {"fy": "2026", "quarter": "Q2"},
+            {"fy": "2026", "quarter": "Q2", "format": "csv"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")

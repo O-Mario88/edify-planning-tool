@@ -13,7 +13,7 @@ opens the report.
     <h2 id="cd-impact-findings-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
       <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Impact findings
     </h2>
-    <a href="/ia/impact-reports/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open impact reports →</a>
+    {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
   </div>
   {% include "components/context_metrics.html" with items=impact_findings.tiles variant="executive" title="Impact findings" %}
   {% if impact_findings.latest and impact_findings.latest.portfolio_in_scope %}

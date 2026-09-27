@@ -190,3 +190,8 @@
    delivery titlebars; a flex row set "Project Planning Intelligence" and
    "Selected school" side by side in two sizes. */
 .spp-intelligence > header, .spp-bulk > header { flex-direction: column; align-items: flex-start; gap: 2px; }
+
+/* The row's "Updating…" sits under it and shows only while a request runs, so
+   the filter row keeps one line (owner, 2026-09-27). */
+.spp-updating { display: block; margin-block-start: .25rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
+.spp-updating:not(.htmx-request) { display: none; }

@@ -16,8 +16,8 @@ test('populated oversight and finance remain compact, readable and interactive',
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
     await expect(page.locator('body')).toHaveCSS('background-image','none');
     if(route.includes('team-planning')){
-     // One Export in the page header, CSV and Excel under it (owner, 2026-09-25).
-     await expect(page.locator('.edify-page-header [data-oversight-export] > summary')).toBeVisible();
+     // One Export in the page header: the Excel workbook (owner, 2026-09-27).
+     await expect(page.locator('.edify-page-header a[data-oversight-export]')).toBeVisible();
     }
     for(const header of await page.locator('main .edify-page-header:visible').all())await expect(header).toHaveCSS('box-shadow','none');
    }
@@ -36,12 +36,10 @@ test('populated oversight and finance remain compact, readable and interactive',
     expect(['right','end']).toContain(await page.getByRole('columnheader',{name:'Cost',exact:true}).first().evaluate(e=>getComputedStyle(e).textAlign));
    }
    if(route.includes('team-planning')&&(width===390||width===1048)){
-    const exportMenu=page.locator('[data-oversight-export]');
-    await exportMenu.locator('summary').click();
-    await expect(exportMenu.getByRole('menuitem',{name:/Export CSV/})).toBeVisible();
-    await expect(exportMenu.getByRole('menuitem',{name:/Export Excel/})).toBeVisible();
+    const exportLink=page.locator('a[data-oversight-export]');
+    await expect(exportLink).toHaveAttribute('href',/format=xlsx/);
+    await expect(exportLink).toHaveAccessibleName('Export to Excel');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
-    await exportMenu.locator('summary').click();
    }
    if(width===390||width===1048)await page.screenshot({path:info.outputPath(route.replaceAll('/','_')+width+'.png')});
   }

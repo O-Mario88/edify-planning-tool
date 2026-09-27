@@ -51,13 +51,13 @@ Program Leads table, verification, risk, field intelligence and actions.
                 as the same chart as its PL and RVP twins. */
              const cfg = window.EdifyChartSystem.mixedTrend(4);
              cfg.series = [
-               { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|escape }} },
-               { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|escape }} },
-               { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
-               { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
+               { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|js_data }} },
+               { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|js_data }} },
+               { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|js_data }} },
+               { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|js_data }} }
              ];
              {% if country_performance.prior_completed %}
-             cfg.series.push({ name: 'Completed FY{{ country_performance.prior_fy }}', type: 'line', data: {{ country_performance.prior_completed|escape }} });
+             cfg.series.push({ name: 'Completed FY{{ country_performance.prior_fy }}', type: 'line', data: {{ country_performance.prior_completed|js_data }} });
              {% endif %}
              cfg.chart.height = 265;
              cfg.labels = {{ country_performance.labels|escape }};
@@ -177,7 +177,7 @@ Program Leads table, verification, risk, field intelligence and actions.
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
           <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>Country Program Leads Performance
         </h2>
-        <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
+        {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
       </div>
       <div class="overflow-x-auto -mx-1">
         {% paginate pl_performance.rows "pl_performance_rows_page" as pl_performance_rows_pager %}
@@ -415,7 +415,8 @@ Program Leads table, verification, risk, field intelligence and actions.
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Priority Schools Needing Urgent Attention
           </h2>
-          <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all priority schools →</a>
+          {# The table's own "see all", as one icon in its title band (owner, 2026-09-27). #}
+          <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-band-glyph" aria-label="View all priority schools" title="View all priority schools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></a>
         </div>
         <div class="overflow-x-auto -mx-1">
           {% paginate priority_schools "operations_priority_schools_page" as operations_priority_schools_pager %}

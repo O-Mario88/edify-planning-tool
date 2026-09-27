@@ -14,7 +14,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
       <h2 id="rollout-interventions-title" class="rpl-card__title">Trainings by SSA intervention</h2>
       <span class="rpl-card__subtitle">All eight interventions, the spiritual pair first · FY {{ fy }}</span>
     </div>
-    <a class="rpl-card__link" href="/programme-rollout?view=spiritual&amp;{{ carry_query }}">Spiritual transformation <span aria-hidden="true">&rarr;</span></a>
+    {# No links in a table's title band (owner, 2026-09-27); Spiritual is the rail's third tab. #}
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by SSA intervention; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">
@@ -58,7 +58,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
       <h2 id="rollout-courses-title" class="rpl-card__title">Trainings by course</h2>
       <span class="rpl-card__subtitle">The governed Training Catalogue, with the Regional Lead's observations of each · {{ course_pager.total }} course{{ course_pager.total|pluralize }}</span>
     </div>
-    <a class="rpl-card__link" href="/cce-leadership/feedback">Training feedback <span aria-hidden="true">&rarr;</span></a>
+    {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by course; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">
@@ -219,7 +219,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
           <h2 id="rollout-observed-title" class="rpl-card__title">Regional Lead observations</h2>
           <span class="rpl-card__subtitle">Average ratings by who delivered · FY {{ fy }}</span>
         </div>
-        <a class="rpl-card__link" href="/cce-leadership/feedback">Open feedback <span aria-hidden="true">&rarr;</span></a>
+        {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
       </header>
       <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Observation ratings by deliverer">
         <table class="rpl-table" data-mobile-table="scroll">

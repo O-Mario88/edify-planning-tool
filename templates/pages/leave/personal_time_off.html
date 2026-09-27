@@ -37,7 +37,7 @@
 >
   <header class="edify-page-header pto-header">
     <div class="pto-header__copy edify-page-header__lead">
-      <div class="pto-eyebrow">
+      <div class="pto-eyebrow edify-page-eyebrow">
         <span class="pto-eyebrow__dot" aria-hidden="true"></span>
         Time &amp; availability
       </div>
@@ -45,7 +45,7 @@
       <p class="edify-page-header__description">Plan time away with confidence, protect delivery, and keep every handover accountable.</p>
     </div>
 
-    <div class="pto-header__actions">
+    <div class="pto-header__actions edify-page-header__controls">
       <a href="{% url 'frontend:leave_calendar' %}" class="pto-button pto-button--secondary">
         <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/>
@@ -345,9 +345,7 @@
         <span class="pto-kicker">Audit-ready visibility</span>
         <h2 id="team-tracker-title">Team leave tracker</h2>
       </div>
-      {% if role == 'PL' or role == 'CD' or role == 'HR' or role == 'ADMIN' %}
-      <a href="{% url 'frontend:leave_tracker' %}" class="pto-button pto-button--secondary pto-button--small">Manage tracker</a>
-      {% endif %}
+      {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); Leave Tracker is in the sidebar for the roles that manage it. #}
     </div>
 
     <div class="pto-table-wrap overflow-x-auto">

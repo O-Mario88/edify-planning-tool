@@ -365,6 +365,22 @@ class DirectorDashboardPageTest(TestCase):
         self.assertIn("Staffing by country", {row[0] for row in rows[1:]})
         self.assertNotIn(self.officer.name, body)
 
+    def test_the_export_button_downloads_the_same_figures_as_excel(self):
+        """Owner, 2026-09-27: "It should be export in excel not csv"."""
+        from openpyxl import load_workbook
+
+        from apps.core.excel import XLSX_CONTENT_TYPE
+
+        page = self.client.get("/dashboard").content.decode()
+        self.assertIn("export=xlsx", page)
+        response = self.client.get("/dashboard?export=xlsx")
+        self.assertEqual(response["Content-Type"], XLSX_CONTENT_TYPE)
+        sheet = load_workbook(io.BytesIO(response.content)).active
+        rows = [[cell.value for cell in row] for row in sheet.iter_rows()]
+        self.assertEqual(rows[0], ["Section", "Metric", "Value", "Context"])
+        self.assertIn("Staffing by country", {row[0] for row in rows[1:]})
+        self.assertNotIn(self.officer.name, str(rows))
+
     def test_the_map_is_still_one_tab_away(self):
         html = self.client.get("/dashboard?view=map").content.decode()
         self.assertIn("subregionMap()", html)

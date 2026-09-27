@@ -1,3 +1,4 @@
+{% load chart_tags %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
@@ -10,8 +11,8 @@
             carries one geometry, grid, legend and tooltip. */
          const cfg = window.EdifyChartSystem.comparisonBar({});
          cfg.series = [
-           { name: 'Team Staff', data: {{ staff_partner.staff|escape }} },
-           { name: 'Partners', data: {{ staff_partner.partner|escape }} }
+           { name: 'Team Staff', data: {{ staff_partner.staff|js_data }} },
+           { name: 'Partners', data: {{ staff_partner.partner|js_data }} }
          ];
          cfg.chart.height = 240;
          cfg.labels = {{ staff_partner.labels|escape }};

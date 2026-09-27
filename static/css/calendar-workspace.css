@@ -618,8 +618,13 @@ a.calendar-event:focus-visible {
   font-weight: 600;
 }
 
+/* The note is a line of its own under the keys, from the same left edge
+   (owner, 2026-09-27: "the legends are poorly aligned and spaced"). Pushed
+   right with an auto margin, it wrapped to a second line that started
+   mid-row on a desktop. */
 .calendar-month__legend p {
-  margin: 0 0 0 auto;
+  flex: 1 0 100%;
+  margin: 0;
   color: var(--edify-text-subtle);
 }
 
@@ -919,10 +924,14 @@ a.calendar-event:focus-visible {
     text-transform: uppercase;
   }
 
+  /* Every day is one height (2026-09-27 sweep): the platform's phone action
+     height already set the month's own days to 36px, and the neighbouring
+     months' days, disabled buttons it skips, kept 44px and made the first
+     and last weeks taller than the rest. */
   .calendar-mobile__day {
     display: grid;
     min-width: 0;
-    min-height: 2.75rem;
+    min-height: 2.25rem;
     place-items: center;
     align-content: center;
     gap: 0.16rem;

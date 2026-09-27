@@ -101,7 +101,6 @@ class EveryDropdownOpensFromItsButtonTests(SimpleTestCase):
             ("templates/layouts/shell.html", "accountButton"),
             ("templates/pages/schools/index.html", "exportButton"),
             ("templates/partials/messages/conversation.html", "menuButton"),
-            ("templates/partials/core_schools/filters.html", "moreFiltersButton"),
             (
                 "templates/partials/schools/directory_intelligence.html",
                 "editTypeButton",

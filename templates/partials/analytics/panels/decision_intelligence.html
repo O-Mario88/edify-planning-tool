@@ -24,7 +24,7 @@ travels with the panel rather than sitting in the shared header.{% endcomment %}
 <form method="POST" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="recompute">
-<button type="submit" class="px-4 py-2 rounded-control border border-[var(--edify-border)] text-[12px] font-bold hover:bg-slate-50">Rescan FY {{ fy }}</button>
+<button type="submit" class="btn btn-secondary h-8">Rescan FY {{ fy }}</button>
 </form>
 </div>
 

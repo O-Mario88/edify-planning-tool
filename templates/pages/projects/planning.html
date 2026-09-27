@@ -4,7 +4,7 @@
 {% block title %}Special Projects Planning — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260916ui1">
+<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260927filters1">
 {% endblock %}
 
 {% block shell_content %}
@@ -24,17 +24,19 @@
 >
   <header class="edify-page-header spp-header">
     <div class="spp-heading edify-page-header__lead">
-      <p class="spp-eyebrow">Special Projects</p>
+      <p class="spp-eyebrow edify-page-eyebrow">Special Projects</p>
       <h1 class="edify-page-title edify-page-header__title">Special Projects Planning</h1>
       <p class="edify-page-header__description">Plan SSA scores, school support, partner assignments, and delivery for schools assigned from the School Directory.</p>
     </div>
-    <div class="spp-header__tools">
-      {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
-      <div class="spp-actions">
-        {% if can_export %}<a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>{% endif %}
-        <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign <span x-show="selected.length" x-text="selected.length"></span></button>
-        <a class="spp-button spp-button--primary" href="/projects/my-plan{% if selected.project %}?project={{ selected.project }}{% endif %}">{% include "partials/projects/planning_icon.html" with name="calendar" %} Open My Plan</a>
-      </div>
+    {% comment %}The page's actions in the standard header controls, so a phone or
+    tablet puts them on the title's line like every other header (owner,
+    2026-09-27). Search moved to the top bar (topbar_search).{% endcomment %}
+    <div class="edify-page-header__controls">
+      {% comment %}No header Assign or Open My Plan (owner, 2026-09-27): the header
+      Assign was a no-op until schools were ticked, and bulk Assign stays in the
+      selection bar; "Open My plan buttons are not really neccesary" — the
+      project's Activities tab and the Projects page open it.{% endcomment %}
+      {% if can_export %}<a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>{% endif %}
     </div>
   </header>
 

@@ -14,7 +14,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
       <h2 id="rollout-ssa-officers-title" class="rpl-card__title">SSA rollout by officer</h2>
       <span class="rpl-card__subtitle">Where each officer's schools stand on this year's self-assessment · FY {{ fy }}</span>
     </div>
-    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+    {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA rollout by officer; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">

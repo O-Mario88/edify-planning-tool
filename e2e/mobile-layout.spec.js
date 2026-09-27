@@ -175,3 +175,60 @@ test('tablets keep the KPI strip and desktops keep the Actions beside the name',
   expect(sameLine).toBe(true);
   await context.close();
 });
+
+/* Owner, 2026-09-27: "There is a huge space above and below the map in
+   mobile mode. Also the legends are poorly aligned and spaced... fix it also
+   in tablet mode." The drawing fills its sheet top to bottom, the school key
+   starts on the card's edge with its dots in line, and the distribution
+   block below starts on that same edge. */
+test('the dashboard map fits its drawing and its key lines up on phones and tablets', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
+  await page.goto('/dashboard?view=map');
+  await expect(page.locator('.sr-map-viewport > svg')).toBeVisible();
+  for (const [width, height] of [[320, 640], [390, 844], [430, 932], [768, 1024], [820, 1180]]) {
+    await page.setViewportSize({ width, height });
+    await page.waitForTimeout(400);
+    const m = await page.evaluate(() => {
+      const card = document.querySelector('.analytics-geo-card');
+      const sheet = card.querySelector('.sr-map-viewport').getBoundingClientRect();
+      const drawing = card.querySelector('#sr-cam').getBoundingClientRect();
+      const name = card.querySelector('.sr-key-name').getBoundingClientRect();
+      const items = [...card.querySelectorAll('.sr-key-item')].map((item) => ({
+        box: item.getBoundingClientRect(),
+        dot: item.querySelector('.sr-legend-marker').getBoundingClientRect(),
+      }));
+      const distribution = card.querySelector('.sr-distribution-panel p').getBoundingClientRect();
+      return {
+        above: drawing.top - sheet.top,
+        below: sheet.bottom - drawing.bottom,
+        nameLeft: name.left,
+        nameTop: name.top,
+        heights: items.map((i) => Math.round(i.box.height)),
+        dots: items.map((i) => ({ x: Math.round(i.dot.left), y: Math.round(i.box.top) })),
+        distributionLeft: distribution.left,
+      };
+    });
+    const label = `${width}x${height}`;
+    expect(m.above, label).toBeLessThanOrEqual(12);
+    expect(m.below, label).toBeLessThanOrEqual(12);
+    expect(new Set(m.heights), label).toEqual(new Set([28]));
+    expect(Math.abs(m.distributionLeft - m.nameLeft), label).toBeLessThanOrEqual(2);
+    const firstDot = m.dots[0];
+    if (width < 768) {
+      // Two even columns under the heading: every dot in a column shares x,
+      // and the first column's dots sit on the heading's edge.
+      const columns = [...new Set(m.dots.map((d) => d.x))];
+      expect(columns.length, label).toBe(2);
+      expect(Math.abs(firstDot.x - m.nameLeft), label).toBeLessThanOrEqual(2);
+      expect(m.dots[0].y, label).toBeGreaterThan(m.nameTop);
+    } else {
+      // One line beside the heading; a wrapped entry starts under the first.
+      expect(Math.abs(firstDot.y - m.nameTop), label).toBeLessThanOrEqual(1);
+      for (const dot of m.dots) expect(dot.x, label).toBeGreaterThanOrEqual(firstDot.x);
+    }
+  }
+  await context.close();
+});

@@ -23,6 +23,7 @@ from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.notifications.models import Notification
 from apps.schools.models import School
+from apps.core.excel import XLSX_CONTENT_TYPE
 
 
 def _user(email, name, role, country="Uganda"):
@@ -175,7 +176,10 @@ class VerificationAnalyticsTest(IaOversightFixture):
             self.assertEqual(page.status_code, 200, who.active_role)
             export = self.client.get("/ia/analytics/export?window=90")
             self.assertEqual(export.status_code, 200, who.active_role)
-            self.assertEqual(export["Content-Type"], "text/csv")
+            # One Excel export (owner, 2026-09-27); CSV on request.
+            self.assertEqual(export["Content-Type"], XLSX_CONTENT_TYPE)
+            as_csv = self.client.get("/ia/analytics/export?window=90&format=csv")
+            self.assertTrue(as_csv["Content-Type"].startswith("text/csv"))
         self.client.force_login(self.cceo)
         self.assertNotEqual(self.client.get("/ia/analytics/").status_code, 200)
 

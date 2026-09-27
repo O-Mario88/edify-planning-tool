@@ -16,7 +16,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
       <h2 id="rollout-spiritual-scores-title" class="rpl-card__title">Christlike Behaviour and the Word of God</h2>
       <span class="rpl-card__subtitle">{% if rollout.summary.latest_fy %}Latest confirmed cycle FY {{ rollout.summary.latest_fy }}{% if rollout.summary.prev_fy %} against FY {{ rollout.summary.prev_fy }}{% endif %}{% else %}No confirmed SSA cycle yet{% endif %}</span>
     </div>
-    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+    {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
   </header>
   <div class="rpl-impact rpl-impact--four">
     {% for score in rollout.scores %}
@@ -233,7 +233,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
       <h2 id="rollout-biblical-title" class="rpl-card__title">Biblical integration ratings</h2>
       <span class="rpl-card__subtitle">The Regional Lead's shared observations of the team's trainings{% if rollout.summary.biblical is not None %} · average {{ rollout.summary.biblical }} of 4 across {{ rollout.summary.observed }}{% endif %}</span>
     </div>
-    <a class="rpl-card__link" href="/cce-leadership/feedback">Training feedback <span aria-hidden="true">&rarr;</span></a>
+    {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Biblical integration ratings; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">

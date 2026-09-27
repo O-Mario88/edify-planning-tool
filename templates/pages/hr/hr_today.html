@@ -62,7 +62,8 @@
         <tbody class="divide-y divide-slate-100">
           {% for item in group_items_pager.rows %}
           <tr class="align-top hover:bg-slate-50/60 transition-colors">
-            <td class="px-3 py-3 min-w-[300px]">
+            {# 300px from tablet width up; on a phone the pinned matter keeps to the identity measure, so Who, When and Action stay reachable (2026-09-27 sweep). #}
+            <td class="px-3 py-3 md:min-w-[300px]">
               <p class="font-bold text-slate-800">{{ item.title }}</p>
               <p class="edify-text-caption text-slate-500 mt-0.5">{{ item.detail }}</p>
             </td>

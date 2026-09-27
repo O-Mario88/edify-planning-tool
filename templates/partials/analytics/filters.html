@@ -39,83 +39,79 @@ tiles and the panel move together and can never describe different scopes.{% end
       </select>
     </label>
 
-    <details class="analytics-more-filters"
-             {% if filters.selected_district or filters.selected_sub_county or filters.selected_cluster or filters.selected_staff or filters.selected_partner or filters.selected_school_type and filters.selected_school_type != 'All' or filters.selected_activity_type and filters.selected_activity_type != 'All' %}open{% endif %}>
-      <summary>
-        <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 5h14M5.5 10h9M8 15h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
-        More<span class="edify-filter-more__long"> filters</span>
-        <span aria-hidden="true">7</span>
-      </summary>
-      <div class="analytics-more-filters__panel">
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">District</span>
-          <select aria-label="District" name="district">
-            <option value="">All districts</option>
-            {% for d in districts %}<option value="{{ d.id }}" {% if filters.selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
-          </select>
-        </label>
+    {% comment %}District, sub-county, cluster, staff, partner, school type and
+    activity type are fields of the row like the others (owner, 2026-09-27:
+    "Redesign more filter drawer to be more like a dropdown... could you apply
+    the same everywhere"): the row shows what its width holds and puts the rest
+    in its own More dropdown, with a count of what is set (micro-ux.js), instead
+    of a disclosure that always said "7".{% endcomment %}
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">District</span>
+      <select aria-label="District" name="district">
+        <option value="">All districts</option>
+        {% for d in districts %}<option value="{{ d.id }}" {% if filters.selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">Sub-county</span>
-          {% comment %}The two long lists (every sub-county and cluster in scope, ~2,500
-          options each) are handed to the page inert, in a <template>, and become
-          options when More filters opens or the select is reached (micro-ux.js).
-          Until then the select holds "All" and the chosen value, so what it shows
-          and what the form sends are unchanged (P-5, owner-approved 2026-09-25).{% endcomment %}
-          <select aria-label="Sub-County" name="sub_county" data-lazy-options>
-            <option value="">All sub-counties</option>
-            {% for sc in sub_counties %}{% if filters.selected_sub_county == sc.id %}<option value="{{ sc.id }}" selected>{{ sc.district.name }} · {{ sc.name }}</option>{% endif %}{% endfor %}
-            <template data-lazy-options>{% for sc in sub_counties %}<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>{% endfor %}</template>
-          </select>
-        </label>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Sub-county</span>
+      {% comment %}The two long lists (every sub-county and cluster in scope, ~2,500
+      options each) are handed to the page inert, in a <template>, and become
+      options when More filters opens or the select is reached (micro-ux.js).
+      Until then the select holds "All" and the chosen value, so what it shows
+      and what the form sends are unchanged (P-5, owner-approved 2026-09-25).{% endcomment %}
+      <select aria-label="Sub-County" name="sub_county" data-lazy-options>
+        <option value="">All sub-counties</option>
+        {% for sc in sub_counties %}{% if filters.selected_sub_county == sc.id %}<option value="{{ sc.id }}" selected>{{ sc.district.name }} · {{ sc.name }}</option>{% endif %}{% endfor %}
+        <template data-lazy-options>{% for sc in sub_counties %}<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>{% endfor %}</template>
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">Cluster</span>
-          <select aria-label="Cluster" name="cluster" data-lazy-options>
-            <option value="">All clusters</option>
-            {% for c in clusters %}{% if filters.selected_cluster == c.id %}<option value="{{ c.id }}" selected>{{ c.name }}</option>{% endif %}{% endfor %}
-            <template data-lazy-options>{% for c in clusters %}<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</template>
-          </select>
-        </label>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Cluster</span>
+      <select aria-label="Cluster" name="cluster" data-lazy-options>
+        <option value="">All clusters</option>
+        {% for c in clusters %}{% if filters.selected_cluster == c.id %}<option value="{{ c.id }}" selected>{{ c.name }}</option>{% endif %}{% endfor %}
+        <template data-lazy-options>{% for c in clusters %}<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</template>
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">Staff</span>
-          <select aria-label="Staff" name="staff">
-            <option value="">All staff</option>
-            {% for s in staff_profiles %}<option value="{{ s.id }}" {% if filters.selected_staff == s.id %}selected{% endif %}>{{ s.user.name }}</option>{% endfor %}
-          </select>
-        </label>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Staff</span>
+      <select aria-label="Staff" name="staff">
+        <option value="">All staff</option>
+        {% for s in staff_profiles %}<option value="{{ s.id }}" {% if filters.selected_staff == s.id %}selected{% endif %}>{{ s.user.name }}</option>{% endfor %}
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">Partner</span>
-          <select aria-label="Partner" name="partner">
-            <option value="">All partners</option>
-            {% for p in partners %}<option value="{{ p.id }}" {% if filters.selected_partner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
-          </select>
-        </label>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Partner</span>
+      <select aria-label="Partner" name="partner">
+        <option value="">All partners</option>
+        {% for p in partners %}<option value="{{ p.id }}" {% if filters.selected_partner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">School type</span>
-          <select aria-label="School type" name="school_type">
-            <option value="All" {% if filters.selected_school_type == 'All' or not filters.selected_school_type %}selected{% endif %}>All school types</option>
-            <option value="core" {% if filters.selected_school_type == 'core' %}selected{% endif %}>Core</option>
-            <option value="champion" {% if filters.selected_school_type == 'champion' %}selected{% endif %}>Champion</option>
-            <option value="client" {% if filters.selected_school_type == 'client' %}selected{% endif %}>Client</option>
-          </select>
-        </label>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">School type</span>
+      <select aria-label="School type" name="school_type">
+        <option value="All" {% if filters.selected_school_type == 'All' or not filters.selected_school_type %}selected{% endif %}>All school types</option>
+        <option value="core" {% if filters.selected_school_type == 'core' %}selected{% endif %}>Core</option>
+        <option value="champion" {% if filters.selected_school_type == 'champion' %}selected{% endif %}>Champion</option>
+        <option value="client" {% if filters.selected_school_type == 'client' %}selected{% endif %}>Client</option>
+      </select>
+    </label>
 
-        <label class="analytics-filter-field">
-          <span class="edify-filter-label">Activity type</span>
-          <select aria-label="Activity type" name="activity_type">
-            <option value="All" {% if filters.selected_activity_type == 'All' or not filters.selected_activity_type %}selected{% endif %}>All activities</option>
-            <option value="school_visit" {% if filters.selected_activity_type == 'school_visit' %}selected{% endif %}>School visit</option>
-            <option value="cluster_training" {% if filters.selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster training</option>
-            <option value="cluster_meeting" {% if filters.selected_activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster meeting</option>
-            <option value="ssa_activity" {% if filters.selected_activity_type == 'ssa_activity' %}selected{% endif %}>SSA support</option>
-          </select>
-        </label>
-      </div>
-    </details>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Activity type</span>
+      <select aria-label="Activity type" name="activity_type">
+        <option value="All" {% if filters.selected_activity_type == 'All' or not filters.selected_activity_type %}selected{% endif %}>All activities</option>
+        <option value="school_visit" {% if filters.selected_activity_type == 'school_visit' %}selected{% endif %}>School visit</option>
+        <option value="cluster_training" {% if filters.selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster training</option>
+        <option value="cluster_meeting" {% if filters.selected_activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster meeting</option>
+        <option value="ssa_activity" {% if filters.selected_activity_type == 'ssa_activity' %}selected{% endif %}>SSA support</option>
+      </select>
+    </label>
 
     <a href="/analytics" class="analytics-filter-command__clear">
       <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>

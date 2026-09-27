@@ -39,8 +39,9 @@ class ProjectsFiltersSmokeTests(TestCase):
         self.assertContains(r, 'name="fy"')
         self.assertContains(r, 'name="type"')
         self.assertContains(r, 'name="status"')
-        # drawer route is live, not a 404 link
-        self.assertContains(r, "/projects/filters-drawer")
+        # No "More filters" drawer on the row (owner, 2026-09-27): it held the
+        # same three fields the row shows. Its route still answers below.
+        self.assertNotContains(r, "/projects/filters-drawer")
         self.assertContains(r, 'id="project-list"')
 
     def test_filtered_view_by_type(self):
