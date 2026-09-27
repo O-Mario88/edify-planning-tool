@@ -10,6 +10,8 @@ was saved to, not the current week, where it looked unsaved.
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
@@ -24,8 +26,12 @@ def _today():
     """The platform's date, read when a test runs rather than when the module
     is imported. A module-level constant went stale when the suite ran across
     midnight in Africa/Nairobi, and the scheduling rules then refused every
-    "today" as a day that had passed."""
-    return timezone.localdate()
+    "today" as a day that had passed. Sundays take no scheduling, so a run on a
+    Sunday plans for the Monday (every test here failed on 2026-09-27)."""
+    day = timezone.localdate()
+    while day.weekday() == 6:
+        day += timedelta(days=1)
+    return day
 
 
 class ClosedSchoolTakesNoWorkTest(_purposes._CoreFixture):
