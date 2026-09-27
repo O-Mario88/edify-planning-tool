@@ -1671,6 +1671,7 @@ def school_detail_view(request, school_id):
         "school": school,
         "visit_status": visit_state,
         "training_coverage": training_state,
+        "core_package": _core_package_marks(school, fy_now),
         "status_fy": fy_now,
         "current_cluster": current_cluster,
         "current_cluster_cross_district": bool(
@@ -1694,6 +1695,39 @@ def school_detail_view(request, school_id):
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
     }
     return render(request, "pages/schools/detail.html", context)
+
+
+def _core_package_marks(school, fy: str) -> dict | None:
+    """A Core School's package on its profile: the visits and trainings
+    planned, each V1..V4 / T1..T4 green once completed and blue while planned
+    (owner, 2026-09-27: "show colors on the core metadata page as well").
+    None for any other school, or a core school with no package."""
+    if school.school_type != "core":
+        return None
+    from apps.core_schools.core_planning_services import (
+        CorePackageSchedulingService,
+        package_marks,
+    )
+    from apps.core_schools.services import get_live_core_plan
+
+    plan = get_live_core_plan(school.school_id, fy)
+    if plan is None:
+        return None
+    slots = sorted(plan.slots.all(), key=lambda slot: slot.sequence_number or 0)
+    summary = CorePackageSchedulingService.summary(plan, slots)
+    visits = package_marks([s for s in slots if s.activity_type == "visit"])
+    trainings = package_marks([s for s in slots if s.activity_type == "training"])
+    return {
+        "fy": plan.fy,
+        "visits": visits,
+        "trainings": trainings,
+        "visits_planned": summary["visits"],
+        "trainings_planned": summary["trainings"],
+        "visits_done": sum(m["state"] == "done" for m in visits),
+        "trainings_done": sum(m["state"] == "done" for m in trainings),
+        "visits_target": summary["visits_target"],
+        "trainings_target": summary["trainings_target"],
+    }
 
 
 @require_page_permission("school_profile")

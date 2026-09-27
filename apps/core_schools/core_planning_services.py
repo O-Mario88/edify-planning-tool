@@ -63,8 +63,82 @@ CORE_ALLOCATED_SLOT_STATUSES = frozenset(
         "returned_by_pl",
         "evidence returned",
         "evidence_returned",
+        # Owner, 2026-09-27: core work planned from any page must stay counted
+        # as V1..V4 / T1..T4. The Activity -> slot mirror copies the activity's
+        # own status onto its slot, and these five are statuses a live
+        # activity passes through — starting completion, waiting for its
+        # Salesforce ID, returned by IA, handed to a partner, or waiting on the
+        # school owner's approval. None was in this set, so the moment the
+        # mirror wrote one the slot read FREE: the Core Schools row dropped the
+        # visit, the chooser offered its number again, and the next booking
+        # overwrote its activity_id, taking the V2 off My Plan.
+        "completion_started",
+        "completion started",
+        "salesforce_id_required",
+        "returned_by_ia",
+        "assigned_to_partner",
+        "awaiting_owner_approval",
     }
 )
+
+
+def core_slot_status(activity_status: str | None) -> str:
+    """The status a package slot takes from the activity that fills it.
+
+    The slot's own "Planned" means an OPEN slot, so an activity whose status
+    is "planned" (booked, not yet dated) cannot be copied across as it is — it
+    would hand the slot back to the package while the work still holds it.
+    Every other status is the activity's own.
+    """
+    status = activity_status or ""
+    if status.strip().lower() == "planned":
+        return "Scheduled"
+    return status
+
+
+#: A slot whose work is done — completed, verified, confirmed or closed.
+CORE_SLOT_DONE_LOWER = frozenset(
+    {
+        "completed",
+        "closed",
+        "ia_verified",
+        "iaverified",
+        "accountant_confirmed",
+        "accountantconfirmed",
+    }
+)
+
+
+def slot_state(status) -> str:
+    """ "done", "planned" (dated, or held by a partner) or "open"."""
+    if (status or "").strip().lower() in CORE_SLOT_DONE_LOWER:
+        return "done"
+    if CorePackageSchedulingService.status_is_taken(status):
+        return "planned"
+    return "open"
+
+
+def package_marks(slots) -> list[dict]:
+    """V1..V4 / T1..T4 as every Core surface shows them (owner, 2026-09-27):
+    "All completed core visit and trainings have green scheduled/planned is
+    blue." One mark per slot, past the fourth too, in its state."""
+    words = {"done": "completed", "planned": "planned", "open": "not planned"}
+    marks = []
+    for slot in slots:
+        letter = {"visit": "V", "training": "T"}.get(slot.activity_type, "A")
+        state = slot_state(slot.status)
+        label = f"{letter}{slot.sequence_number}"
+        marks.append(
+            {
+                "label": label,
+                "state": state,
+                "word": words[state].capitalize(),
+                "title": f"{label} {words[state]}",
+            }
+        )
+    return marks
+
+
 # How many missing CorePlan rows one page load will repair. See the call site.
 SELF_HEAL_BATCH = 50
 
@@ -92,6 +166,27 @@ def core_training_q(prefix: str = ""):
     ).values("activity_id")
     return (
         Q(**{f"{prefix}activity_type": "core_training"})
+        | Q(**{f"{prefix}id__in": slot_activity_ids})
+    ) & Q(**{f"{prefix}cluster__isnull": True})
+
+
+def core_visit_q(prefix: str = ""):
+    """Activities that are a Core School's package visits.
+
+    A ``core_visit`` — what the Core Schools and Planning drawers book — or
+    any visit that fills one of the package's visit slots, however it was
+    booked (owner, 2026-09-27: counted "irrespective of where the visits
+    scheduling ... is done from"; apps.core_schools.package_credit). The
+    staff/partner split on a Core Schools row and the two-per-side caps count
+    this, so they agree with the package's own "Visits n/4".
+    """
+    from django.db.models import Q
+
+    slot_activity_ids = CoreActivitySlot.objects.filter(
+        activity_type="visit", activity_id__isnull=False
+    ).values("activity_id")
+    return (
+        Q(**{f"{prefix}activity_type": "core_visit"})
         | Q(**{f"{prefix}id__in": slot_activity_ids})
     ) & Q(**{f"{prefix}cluster__isnull": True})
 
@@ -141,14 +236,21 @@ class CorePackageSchedulingService:
 
     @classmethod
     def summary(cls, plan: CorePlan, slots=None) -> dict:
+        # Taken, not merely dated: a visit handed to a partner who has not
+        # dated it yet is still one of the package's four (owner, 2026-09-27:
+        # counted "irrespective of where the visits scheduling or training
+        # scheduling is done from"). The row used to count dated slots only
+        # while the page's tiles and the row's own staff/partner split counted
+        # the partner's held visits too, so "Visits 1/4 (staff 1/2 · partner
+        # 1/2)" added up to two.
         slot_list = list(slots if slots is not None else plan.slots.all())
         visits = sum(
-            cls.is_allocated(slot)
+            cls.status_is_taken(slot.status)
             for slot in slot_list
             if slot.activity_type == "visit"
         )
         trainings = sum(
-            cls.is_allocated(slot)
+            cls.status_is_taken(slot.status)
             for slot in slot_list
             if slot.activity_type == "training"
         )
@@ -308,13 +410,16 @@ class CorePackageSchedulingService:
                 core_plan=plan, activity_type=activity_type
             )
         }
+        # Taken, not merely allocated: a slot handed to a partner who has not
+        # dated it yet ("Assigned") is the partner's, and giving it to this
+        # booking would count one visit where there are two.
         slot = existing.get(sequence_number)
-        if slot is not None and not cls.is_allocated(slot):
+        if slot is not None and not cls.status_is_taken(slot.status):
             return slot
 
         for sequence in sorted(existing):
             candidate = existing[sequence]
-            if not cls.is_allocated(candidate):
+            if not cls.status_is_taken(candidate.status):
                 return candidate
 
         kind = next(
@@ -858,9 +963,12 @@ class CorePackageProgressService:
         # Partner support, as one grouped read. The compact row shows it beside
         # the visit and training counts because "is anyone else carrying part
         # of this package" is one of the nine facts §15 asks a core row for.
+        # Handovers a partner still holds: one withdrawn or handed back is
+        # no longer "assigned" (2026-09-27 — the row kept counting it).
         partner_counts_map = {
             item["school_id"]: item["count"]
             for item in PartnerAssignment.objects.filter(school_id__in=db_ids)
+            .exclude(status=PartnerAssignment.STATUS_RETURNED_TO_STAFF)
             .values("school_id")
             .annotate(count=Count("id"))
         }
@@ -959,56 +1067,40 @@ class CorePackageProgressService:
                         }
                     )
 
-            # Calculate next missing milestone
+            # The next piece of the package nobody has planned yet. "Missing"
+            # meant "not completed", so a school whose V1 was booked from the
+            # Planning page read "Missing First Visit" beside "Visits 1/4"
+            # (owner, 2026-09-27: planned work is counted, wherever it was
+            # booked). A booked slot is not missing; the Visits and Trainings
+            # counts say how much is planned, and the slot pills what is done.
             next_missing_milestone = "All Packages are Complete"
             seq_names = {1: "First", 2: "Second", 3: "Third", 4: "Fourth"}
 
+            def _planned(slot) -> bool:
+                return bool(
+                    slot and CorePackageSchedulingService.status_is_taken(slot.status)
+                )
+
             for seq in range(1, 5):
-                # Check Visit
                 slot_v = (
                     next((sl for sl in v_slots if sl.sequence_number == seq), None)
                     if plan
                     else None
                 )
-                v_done = False
-                if slot_v:
-                    v_status = slot_v.status.lower()
-                    if v_status in [
-                        "completed",
-                        "completed_at",
-                        "accountantconfirmed",
-                        "accountant_confirmed",
-                        "ia_verified",
-                        "iaverified",
-                    ]:
-                        v_done = True
-
-                if not v_done:
+                if not _planned(slot_v):
                     next_missing_milestone = f"Missing {seq_names[seq]} Visit"
                     break
-
-                # Check Training
                 slot_t = (
                     next((sl for sl in t_slots if sl.sequence_number == seq), None)
                     if plan
                     else None
                 )
-                t_done = False
-                if slot_t:
-                    t_status = slot_t.status.lower()
-                    if t_status in [
-                        "completed",
-                        "completed_at",
-                        "accountantconfirmed",
-                        "accountant_confirmed",
-                        "ia_verified",
-                        "iaverified",
-                    ]:
-                        t_done = True
-
-                if not t_done:
+                if not _planned(slot_t):
                     next_missing_milestone = f"Missing {seq_names[seq]} Training"
                     break
+
+            visit_marks = package_marks(v_slots)
+            training_marks = package_marks(t_slots)
 
             cluster_name = clusters_map.get(s.cluster_id, "—") if s.cluster_id else "—"
             project_count = project_counts_map.get(s.id, 0)
@@ -1076,6 +1168,10 @@ class CorePackageProgressService:
                     "assessment_completed": bool(plan and plan.assessment_completed),
                     "visits": visits,
                     "trainings": trainings,
+                    "visit_marks": visit_marks,
+                    "training_marks": training_marks,
+                    "visits_done": sum(m["state"] == "done" for m in visit_marks),
+                    "trainings_done": sum(m["state"] == "done" for m in training_marks),
                     "scheduled_visit_count": package_summary["visits"],
                     "scheduled_training_count": package_summary["trainings"],
                     "visits_target": package_summary["visits_target"],
@@ -1138,7 +1234,21 @@ class CorePackageProgressService:
                 "pill_class": "bg-emerald-50 text-emerald-700 border-emerald-200",
                 "label": "✔",
             }
-        elif status in ["scheduled", "assigned", "in_progress", "in progress"]:
+        elif status in [
+            "scheduled",
+            "assigned",
+            "in_progress",
+            "in progress",
+            # Dated by a partner, moved, handed over or being completed: the
+            # slot is booked (owner, 2026-09-27 — every planned visit counts).
+            "partner_scheduled",
+            "partner scheduled",
+            "rescheduled",
+            "assigned_to_partner",
+            "awaiting_owner_approval",
+            "completion_started",
+            "completion started",
+        ]:
             return {
                 "status": "Scheduled",
                 "pill_class": "edify-primary-soft edify-primary-text edify-primary-border",
@@ -1151,6 +1261,7 @@ class CorePackageProgressService:
             "evidence_accepted",
             "awaiting_ia_verification",
             "submitted_to_pl",
+            "salesforce_id_required",
             "iapending",
             "ia pending",
         ]:
@@ -1162,6 +1273,7 @@ class CorePackageProgressService:
         elif status in [
             "returned",
             "returned_by_pl",
+            "returned_by_ia",
             "evidence returned",
             "evidence_returned",
         ]:
@@ -1190,8 +1302,10 @@ class CorePlanningService:
         """Prepares items for the Core Schools Planning Queue."""
         if hasattr(core_schools_qs, "values_list"):
             school_ids = list(core_schools_qs.values_list("school_id", flat=True))
+            school_pks = list(core_schools_qs.values_list("id", flat=True))
         else:
             school_ids = [s.school_id for s in core_schools_qs]
+            school_pks = [s.id for s in core_schools_qs]
 
         plans = CorePlan.objects.filter(
             school_id__in=school_ids, fy=fy
@@ -1208,8 +1322,12 @@ class CorePlanningService:
         # instead of two per school (2026-09-06).
         assigned_partner_by_school = {}
         for school_id, partner_id in (
+            # Keyed by the School pk, not the business code: matched against
+            # the codes, this and the SSA read below found nothing, so every
+            # queue row read "Assessment Required" and "Unassigned".
             PartnerAssignment.objects.filter(
-                school_id__in=school_ids, status="assigned"
+                school_id__in=school_pks,
+                status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
             )
             .order_by("school_id", "-created_at")
             .values_list("school_id", "partner_id")
@@ -1217,7 +1335,7 @@ class CorePlanningService:
             assigned_partner_by_school.setdefault(school_id, partner_id)
         latest_confirmed_ssa_by_school = {}
         for rec in SsaRecord.objects.filter(
-            school_id__in=school_ids,
+            school_id__in=school_pks,
             fy=fy,
             deleted_at__isnull=True,
             verification_status="confirmed",
@@ -1237,6 +1355,8 @@ class CorePlanningService:
             trainings_done = 0
             assessment_done = 0
             total_done = 0
+            visit_marks = []
+            training_marks = []
             assigned_staff_name = "Unassigned"
             assigned_partner_name = "Unassigned"
 
@@ -1279,6 +1399,16 @@ class CorePlanningService:
                     if sl.activity_type == "assessment" and sl.status in done_statuses
                 )
                 total_done = visits_done + trainings_done + assessment_done
+                # Each slot in its colour — done green, planned blue, open
+                # grey (owner, 2026-09-27) — and the package counted however
+                # its work was booked.
+                ordered = sorted(slot_list, key=lambda sl: sl.sequence_number or 0)
+                visit_marks = package_marks(
+                    [sl for sl in ordered if sl.activity_type == "visit"]
+                )
+                training_marks = package_marks(
+                    [sl for sl in ordered if sl.activity_type == "training"]
+                )
 
                 # Check slot assignments
                 first_partner_slot = next(
@@ -1302,14 +1432,25 @@ class CorePlanningService:
 
                 # Recommendation logic: next missing item in slot. The Core
                 # Assessment is the package's first milestone.
+                # The next slot nobody has planned — a visit booked from any
+                # page is planned, and recommending it again sent planners to
+                # schedule a second V2 (owner, 2026-09-27).
+                open_visit = next(
+                    (m for m in visit_marks if m["state"] == "open"), None
+                )
+                open_training = next(
+                    (m for m in training_marks if m["state"] == "open"), None
+                )
                 if assessment_done < 1:
                     next_recommended = "Core Assessment"
-                elif visits_done < 4:
-                    next_recommended = f"V{visits_done + 1} Visit"
-                elif trainings_done < 4:
-                    next_recommended = f"T{trainings_done + 1} Training"
-                else:
+                elif open_visit:
+                    next_recommended = f"{open_visit['label']} Visit"
+                elif open_training:
+                    next_recommended = f"{open_training['label']} Training"
+                elif visits_done >= 4 and trainings_done >= 4:
                     next_recommended = "Graduation Review"
+                else:
+                    next_recommended = "Package planned"
 
             queue_data.append(
                 {
@@ -1328,6 +1469,8 @@ class CorePlanningService:
                     "visits_done": visits_done,
                     "trainings_done": trainings_done,
                     "assessment_done": assessment_done,
+                    "visit_marks": visit_marks,
+                    "training_marks": training_marks,
                     "progress_pct": int((total_done / EXPECTED_CORE_SLOTS) * 100),
                 }
             )

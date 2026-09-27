@@ -430,6 +430,8 @@ def _partner_workspace(request):
         writer.writerow(
             [
                 "Partner",
+                # Owner, 2026-09-27: "All exported plan should have school ID."
+                "School ID",
                 "School / target",
                 "District / cluster",
                 "Purpose of Visit",
@@ -443,6 +445,7 @@ def _partner_workspace(request):
             writer.writerow(
                 [
                     row["partner"].name,
+                    row.get("school_code") or "",
                     row["school_name"],
                     row["district_cluster"],
                     row["purpose"],
@@ -1286,9 +1289,43 @@ def partner_schedule_assignment_drawer(request, assignment_id):
         {
             "assignment": assignment,
             "approved_item": assignment.catalogue_item,
+            "cost_preview": _partner_cost_preview(assignment),
             "drawer_size": "md",
         },
     )
+
+
+def _partner_cost_preview(assignment) -> dict | None:
+    """What scheduling this handover will price it at — the same Cost
+    Catalogue recipe the schedule applies (budget.costing_service.preview),
+    read before the Partner commits to a date (2026-09-27 client partner
+    review: the drawer said nothing of the payment, which the Partner only
+    learnt from the invoice). None when the handover names no approved work.
+    """
+    item = assignment.catalogue_item
+    if item is None:
+        return None
+    from apps.budget.costing_service import preview
+
+    try:
+        result = preview(
+            {
+                "activityType": item.workflow_kind
+                or assignment.expected_activity_type
+                or "school_visit",
+                "catalogueItemId": item.id,
+                "costingProfile": getattr(item, "costing_profile", None),
+                "deliveryType": "partner",
+                "fy": get_operational_fy(),
+            }
+        )
+    except Exception:  # noqa: BLE001 - a preview never blocks scheduling
+        return None
+    return {
+        "amount": result["amount"],
+        "labels": [line["label"] for line in result["lines"] if line.get("amount")],
+        "missing": bool(result["costMissing"]),
+    }
 
 
 @require_page_permission("partner_activities")

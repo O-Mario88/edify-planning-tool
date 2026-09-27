@@ -500,7 +500,8 @@ class PartnerTeamWorkspaceTest(PartnerOversightFixture):
         self.assertTrue(svc.assignment_in_scope(self.cceo_user, assignment.id))
         self.assertTrue(all(i.supervising_pl_id == self.pl.id for i in items))
         self.assertEqual(svc.summarize(items)["scheduled_trainings"], 1)
-        self.assertEqual(len(svc.workspace_tables(items)[1]["items"]), 1)
+        tables = {t["page_param"]: t for t in svc.workspace_tables(items)}
+        self.assertEqual(len(tables["partner_clusters_page"]["items"]), 1)
 
     def test_shared_partner_does_not_expose_another_team(self):
         own = self.assign()
@@ -524,7 +525,8 @@ class PartnerTeamWorkspaceTest(PartnerOversightFixture):
         response = self.client.get("/partner-oversight/", params)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Empty member")
-        self.assertEqual(len(response.context["workspace_tables"][0]["items"]), 1)
+        tables = {t["page_param"]: t for t in response.context["workspace_tables"]}
+        self.assertEqual(len(tables["partner_schools_page"]["items"]), 1)
         export = self.client.get("/partner-oversight/export", params)
         body = b"".join(export.streaming_content).decode()
         self.assertIn("School A", body)

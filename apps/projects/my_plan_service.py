@@ -176,6 +176,9 @@ def _row(activity, partner_names, project_names, principal, today):
     return {
         "id": activity.id,
         "school_id": activity.school_id,
+        # The business code, for the export (owner, 2026-09-27: "All exported
+        # plan should have school ID"); `school_id` above is the pk.
+        "school_code": (activity.school.school_id or "") if activity.school_id else "",
         "school": activity.school.name
         if activity.school_id
         else (activity.cluster.name if activity.cluster_id else "Unassigned"),

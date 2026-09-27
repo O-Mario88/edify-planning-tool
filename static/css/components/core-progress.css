@@ -1,0 +1,62 @@
+/* Core package progress on the Core Schools rows (owner, 2026-09-27):
+   "All completed core visit and trainings have green scheduled/planned is
+   blue." Done is the success colour, planned the brand blue, open stays
+   quiet. The count before the marks follows the same rule (.is-planned is
+   the blue state beside the shared .is-positive / .is-attention). */
+
+.core-school-row--compact .core-school-row__metadata dd.is-planned {
+  color: var(--edify-accent-text, var(--edify-accent));
+}
+
+.core-seq {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-inline-start: 0.3rem;
+  vertical-align: 0.05em;
+}
+
+.core-seq__mark {
+  display: inline-block;
+  min-inline-size: 1.7rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--edify-border);
+  border-radius: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.15rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--edify-text-muted, #64748b);
+  background: transparent;
+}
+
+.core-seq__mark[data-state="done"] {
+  color: var(--edify-success-text);
+  background: var(--edify-success-light);
+  border-color: var(--edify-success-border);
+}
+
+.core-seq__mark[data-state="planned"] {
+  color: var(--edify-accent-text, var(--edify-accent));
+  background: var(--edify-accent-light);
+  border-color: color-mix(in srgb, var(--edify-accent) 35%, transparent);
+}
+
+/* The count beside the marks on a School 360 profile. */
+.core-package-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.core-package-count[data-state="done"] {
+  color: var(--edify-success-text);
+}
+
+.core-package-count[data-state="planned"] {
+  color: var(--edify-accent-text, var(--edify-accent));
+}
+
+.core-package-count[data-state="open"] {
+  color: var(--edify-warning-text, var(--edify-warning));
+}

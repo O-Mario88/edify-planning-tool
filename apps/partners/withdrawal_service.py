@@ -504,6 +504,20 @@ def _perform(
     else:
         withdrawal.state = WithdrawalState.EFFECTIVE
 
+    # A Core School's package slot follows the work (owner, 2026-09-27): one
+    # the partner had not dated goes back to the package, or to the partner
+    # replacing them. It used to stay "Assigned" to the withdrawn partner for
+    # ever, so the package counted a visit nobody held and never offered it
+    # again.
+    from apps.core_schools.package_credit import release_assignment_slot
+
+    release_assignment_slot(
+        assignment,
+        replacement=withdrawal.replacement_assignment
+        if withdrawal.disposition == WithdrawalDisposition.REASSIGN_PARTNER
+        else None,
+    )
+
     withdrawal.effective_at = timezone.now()
     withdrawal.save(
         update_fields=["replacement_assignment", "state", "effective_at", "updated_at"]

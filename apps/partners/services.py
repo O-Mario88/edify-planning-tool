@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from django.db import IntegrityError, transaction
@@ -11,6 +12,8 @@ from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundE
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
 from .models import Partner, PartnerAssignment, PartnerUserSetupStatus
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .models import PartnerMember
@@ -935,6 +938,11 @@ def return_assignment(assignment_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+        # The Core package slot the handover held goes back to the package,
+        # open to be scheduled again (owner, 2026-09-27).
+        from apps.core_schools.package_credit import release_assignment_slot
+
+        release_assignment_slot(assignment)
 
     audit_log(
         action="partner.assignment_returned",
@@ -1161,9 +1169,24 @@ def create_assignment(**fields):
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.
         with transaction.atomic():
-            return PartnerAssignment.objects.create(
+            assignment = PartnerAssignment.objects.create(
                 status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
             )
+            # A handover at a Core School from the Planning page holds one of
+            # the package's slots while it waits for the partner, as a Core
+            # Schools handover does (owner, 2026-09-27). One that names its
+            # slot is committed by its caller (commit_assign).
+            from apps.core_schools.package_credit import reserve_for_assignment
+
+            try:
+                reserve_for_assignment(assignment)
+            except Exception:  # noqa: BLE001 - bookkeeping never blocks a handover
+                logger.warning(
+                    "Core slot reservation failed for assignment %s",
+                    assignment.id,
+                    exc_info=True,
+                )
+            return assignment
     except IntegrityError as exc:
         # Two submissions that both passed PartnerAssignment.save's check
         # before either committed: the index refuses the second, and it gets

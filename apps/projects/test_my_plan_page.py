@@ -188,6 +188,9 @@ class SpecialProjectMyPlanPageTests(TestCase):
         self.assertEqual(export.status_code, 200)
         self.assertIn("Coordinator A School", body)
         self.assertNotIn("Coordinator B School", body)
+        # Owner, 2026-09-27: "All exported plan should have school ID."
+        self.assertIn("School ID", body.splitlines()[0])
+        self.assertIn("SP-PLAN-A", body)
 
     def test_special_project_calendar_preserves_project_scope(self):
         self.client.force_login(self.user_a)

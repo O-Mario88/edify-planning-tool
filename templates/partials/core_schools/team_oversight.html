@@ -49,8 +49,9 @@ that ask is re-derived server-side before it is written.
                 </th>
                 <td data-label="Responsible CCEO">{% if r.account_owner_id %}<a href="/staff/{{ r.account_owner_id }}" class="hover:underline font-semibold edify-primary-text-hover">{{ r.responsible_cceo }}</a>{% else %}{{ r.responsible_cceo }}{% endif %}</td>
                 <td data-label="Assessment"><span class="edify-status-badge {% if r.assessment_done %}success{% else %}danger{% endif %}">{% if r.assessment_done %}Complete{% else %}Outstanding{% endif %}</span></td>
-                <td class="tabular-nums" data-label="Visits">{{ r.scheduled_visit_count }} / {{ r.visits_target }}</td>
-                <td class="tabular-nums" data-label="Trainings">{{ r.scheduled_training_count }} / {{ r.trainings_target }}</td>
+                {% comment %}Green once every planned visit is completed, blue while planned work remains, amber with nothing planned (owner, 2026-09-27).{% endcomment %}
+                <td class="tabular-nums" data-label="Visits"><span class="core-package-count" data-state="{% if not r.scheduled_visit_count %}open{% elif r.visits_done >= r.scheduled_visit_count %}done{% else %}planned{% endif %}" data-tone="{% if not r.scheduled_visit_count %}warning{% elif r.visits_done >= r.scheduled_visit_count %}success{% else %}info{% endif %}">{{ r.scheduled_visit_count }} / {{ r.visits_target }}</span></td>
+                <td class="tabular-nums" data-label="Trainings"><span class="core-package-count" data-state="{% if not r.scheduled_training_count %}open{% elif r.trainings_done >= r.scheduled_training_count %}done{% else %}planned{% endif %}" data-tone="{% if not r.scheduled_training_count %}warning{% elif r.trainings_done >= r.scheduled_training_count %}success{% else %}info{% endif %}">{{ r.scheduled_training_count }} / {{ r.trainings_target }}</span></td>
                 <td class="tabular-nums" data-label="Partner support">{% if r.partner_support %}{{ r.partner_support }}{% else %}—{% endif %}</td>
                 {% comment %}
                 The chips are flexed on an inner wrapper, not on the cell. A

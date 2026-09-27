@@ -4174,14 +4174,21 @@ main textarea,
 :root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(.text-white, .edify-table-status, [class*="badge"], [class*="pill"], [class*="chip"]) {
   color: var(--edify-text) !important;
 }
-:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="success"], [class*="text-emerald"], [class*="text-green"], [class*="bg-emerald"], [class*="bg-green"]) {
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="success"], [class*="text-emerald"], [class*="text-green"], [class*="bg-emerald"], [class*="bg-green"], .mp-badge--green) {
   color: var(--edify-success-text) !important;
 }
-:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="danger"], [class*="text-rose"], [class*="text-red"], [class*="bg-rose"], [class*="bg-red"]) {
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="danger"], [class*="text-rose"], [class*="text-red"], [class*="bg-rose"], [class*="bg-red"], .mp-badge--red) {
   color: var(--edify-danger-text) !important;
 }
-:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="warning"], [class*="text-amber"], [class*="text-orange"], [class*="bg-amber"], [class*="bg-orange"]) {
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="warning"], [class*="text-amber"], [class*="text-orange"], [class*="bg-amber"], [class*="bg-orange"], .mp-badge--amber) {
   color: var(--edify-warning-text) !important;
+}
+/* Planned work is blue, completed work green (owner, 2026-09-27: "mark
+   planned activities with a different color and completed plans with a
+   different colors"). My Plan's badges carry their tone as .mp-badge--*;
+   flattened, they read in the tone's ink rather than all in body text. */
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="info"], .mp-badge--blue) {
+  color: var(--edify-accent-text) !important;
 }
 /* Preserve keyboard location without permanently boxing editable content. */
 :root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(input, select, textarea, a):focus-visible {

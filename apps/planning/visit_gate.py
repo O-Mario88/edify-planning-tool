@@ -328,10 +328,13 @@ def visit_gates(
             "partner_visits",
         )
     if core_ids:
-        from apps.core_schools.core_planning_services import core_training_q
+        from apps.core_schools.core_planning_services import (
+            core_training_q,
+            core_visit_q,
+        )
 
         _tally(
-            live.filter(school_id__in=core_ids, activity_type="core_visit"),
+            live.filter(school_id__in=core_ids).filter(core_visit_q()),
             "staff_visits",
             "partner_visits",
         )
@@ -368,17 +371,18 @@ def visit_gates(
 
 
 def _is_core_visit_assignment(assignment) -> bool:
-    support = (assignment.support_type or "").strip().lower()
-    if support:
-        return support == "visit"
-    return bool(assignment.visit_number)
+    # A handover that names no slot (made from the Planning page) is read by
+    # what it asks for, as the package reads it when it reserves its slot
+    # (apps.core_schools.package_credit.assignment_kind).
+    from apps.core_schools.package_credit import assignment_kind
+
+    return assignment_kind(assignment) == "visit"
 
 
 def _is_core_training_assignment(assignment) -> bool:
-    support = (assignment.support_type or "").strip().lower()
-    if support:
-        return support == "training"
-    return bool(assignment.training_number)
+    from apps.core_schools.package_credit import assignment_kind
+
+    return assignment_kind(assignment) == "training"
 
 
 def visit_gate(school, fy: str | None = None, **kwargs) -> VisitGate:

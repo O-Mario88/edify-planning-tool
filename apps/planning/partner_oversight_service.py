@@ -207,6 +207,18 @@ class PartnerOversightItem:
     can_review: bool = False
     review_is_ssa: bool = False
 
+    # Core Schools on their own table (owner, 2026-09-27): which of the
+    # package's visits or trainings the handover is ("V2", "T1"), what the
+    # Partner is paid for a core school visit before they have dated it (the
+    # Cost Catalogue's Core Partner Visit rate), and the two decisions its
+    # Actions menu offers. `annotate_core_support` sets the first two; the
+    # view sets the rest for its reader.
+    core_slot_label: str = ""
+    partner_rate: int | None = None
+    can_confirm_work: bool = False
+    confirm_block_reason: str = ""
+    can_withdraw_school: bool = False
+
     risks: list[dict] = field(default_factory=list)
     next_action_owner: str = ""
     next_action: str = ""
@@ -372,6 +384,31 @@ class PartnerOversightItem:
         if self.stage != STAGE_SCHEDULED:
             return None
         return self.scheduled_date
+
+    @property
+    def is_core_school_work(self) -> bool:
+        """A handover at a Core School — its own table (owner, 2026-09-27)."""
+        return bool(
+            self.partner_assignment_id and self.school_id and self.school_type == "core"
+        )
+
+    @property
+    def display_cost(self) -> int | None:
+        """The Cost column of the Core Schools table: what the Partner's
+        scheduled work was priced at, or — before they have dated it — the
+        Cost Catalogue's rate for a partner's core school visit, which is what
+        it will be priced at (owner, 2026-09-27: "should fetch the partner
+        cost of visiting a school")."""
+        if self.is_scheduled and self.planned_cost:
+            return self.planned_cost
+        if self.is_returned:
+            # Taken back from the Partner: nothing will be priced at their rate.
+            return None
+        return self.partner_rate
+
+    @property
+    def cost_is_rate(self) -> bool:
+        return not (self.is_scheduled and self.planned_cost)
 
 
 def choice_label(value: str, choices) -> str:
@@ -1372,6 +1409,9 @@ def summarize(items) -> dict:
 
 EXPORT_HEADER = (
     "Partner",
+    # Owner, 2026-09-27: "All exported plan should have school ID." The
+    # school's business code; blank for cluster work.
+    "School ID",
     "School",
     "District",
     "Cluster",
@@ -1405,6 +1445,7 @@ def export_rows(items):
     for item in items:
         yield (
             item.partner_name,
+            item.school_code if item.school_id else "",
             item.school_name,
             item.district,
             item.cluster_name,
@@ -1623,9 +1664,26 @@ def order_for_monitoring(items: list) -> list:
     completed (evidence and Salesforce ID in) at the bottom. School name
     orders rows that share a date.
     """
-    from apps.activities.completion_columns import annotate, sort_completed_last
+    from apps.activities.completion_columns import (
+        MISSING_SF,
+        annotate,
+        sort_completed_last,
+    )
 
     annotate(items, id_attr="partner_activity_id")
+    for item in items:
+        # A Partner submits its evidence without a Salesforce ID; whoever
+        # confirms the work enters it in the Verify drawer. So work the Partner
+        # has submitted with its form is waiting on the reviewer, not missing
+        # anything of the Partner's — it reads Verification, not "Missing
+        # Salesforce ID", which sent reviewers chasing the Partner for an ID
+        # the Partner is never asked for (2026-09-27 client partner review).
+        if (
+            item.completion_gap == MISSING_SF
+            and item.activity_status in _AWAITING_IA_STATUSES
+            and item.evidence_ok
+        ):
+            item.completion_gap = ""
     items.sort(key=lambda i: i.school_name or "")
     sort_completed_last(items, date_attr="scheduled_date")
     items.sort(key=lambda i: not i.awaits_staff_decision)
@@ -1633,15 +1691,42 @@ def order_for_monitoring(items: list) -> list:
 
 
 def workspace_tables(items):
-    """The Partner's three tables. The schools table carries the owner's
+    """The Partner's tables. The schools table carries the owner's
     columns (2026-09-24): School ID, School Name, Staff Name, Training,
-    Purpose of Assignment, SSA Intervention, Status, Activity date, Actions."""
+    Purpose of Assignment, SSA Intervention, Status, Activity date, Actions.
+
+    Core Schools handed to the Partner are on a table of their own (owner,
+    2026-09-27): the package visit or training each one is, Waiting for
+    scheduling from partner until they date it and the planned date once they
+    have, the cost, the Salesforce ID and evidence, and an Actions menu that
+    confirms completed work or withdraws the school."""
     items = list(items)
+    core = [i for i in items if i.is_core_school_work]
+    # Drawn only for a Partner who holds Core Schools: every other Partner's
+    # workspace keeps its three tables rather than gaining an empty fourth.
+    core_tables = (
+        [
+            {
+                "page_param": "partner_core_page",
+                "title": "Core Schools assigned",
+                "items": core,
+                "kind": "core",
+                "columns": "core",
+            }
+        ]
+        if core
+        else []
+    )
     return [
+        *core_tables,
         {
             "page_param": "partner_schools_page",
             "title": "Schools assigned",
-            "items": [i for i in items if i.partner_assignment_id and i.school_id],
+            "items": [
+                i
+                for i in items
+                if i.partner_assignment_id and i.school_id and not i.is_core_school_work
+            ],
             "kind": "assignment",
             "columns": "school",
         },
@@ -1658,6 +1743,61 @@ def workspace_tables(items):
             "kind": "activity",
         },
     ]
+
+
+def core_partner_visit_rate() -> int | None:
+    """The Cost Catalogue's rate for a partner's visit to a Core School — the
+    rate the Partner's scheduling prices the work at (budget.costing:
+    ``core_partner_visit``). None when the Country Director has published
+    none."""
+    from apps.budget.costing_service import _rate_card, active_catalogue
+
+    rates, _settings = _rate_card(active_catalogue())
+    value = rates.get("core_partner_visit")
+    return int(value) if value is not None else None
+
+
+def annotate_core_support(items) -> None:
+    """Name each Core School handover's package slot and its partner rate.
+
+    V1..V4 / T1..T4 is the package slot the work holds — the same number the
+    Core Schools page and My Plan show: the slot the Partner's activity fills
+    once it is scheduled; before that, the slot the handover names or holds.
+    A few queries for the whole page, whatever its length.
+    """
+    from apps.core_schools.models import CoreActivitySlot
+    from apps.core_schools.package_credit import slot_held_by_assignment
+    from apps.partners.models import PartnerAssignment
+
+    core = [i for i in items if i.is_core_school_work]
+    if not core:
+        return
+    rate = core_partner_visit_rate()
+    by_activity = {
+        activity_id: (kind, sequence)
+        for activity_id, kind, sequence in CoreActivitySlot.objects.filter(
+            activity_id__in=[
+                i.partner_activity_id for i in core if i.partner_activity_id
+            ]
+        ).values_list("activity_id", "activity_type", "sequence_number")
+    }
+    handovers = {
+        a.id: a
+        for a in PartnerAssignment.objects.filter(
+            id__in=[i.partner_assignment_id for i in core]
+        ).select_related("school")
+    }
+    for item in core:
+        item.partner_rate = rate
+        held = by_activity.get(item.partner_activity_id)
+        if held is None and item.stage == STAGE_AWAITING_SCHEDULE:
+            handover = handovers.get(item.partner_assignment_id)
+            slot = slot_held_by_assignment(handover) if handover else None
+            if slot is not None:
+                held = (slot.activity_type, slot.sequence_number)
+        if held:
+            kind, sequence = held
+            item.core_slot_label = f"{'V' if kind == 'visit' else 'T'}{sequence}"
 
 
 # ── Trainings the Partner facilitates (owner, 2026-09-26) ───────────────────
