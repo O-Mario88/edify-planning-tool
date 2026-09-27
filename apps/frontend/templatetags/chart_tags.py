@@ -23,7 +23,13 @@ def js_data(value):
     value cannot close the surrounding <script>."""
     from django.core.serializers.json import DjangoJSONEncoder
 
-    return mark_safe(json.dumps(value, cls=DjangoJSONEncoder).translate(_JS_ESCAPES))
+    # Safe to mark: the value is JSON (numbers, null, quoted strings), and the
+    # three characters that could end the <script> or start markup are
+    # escaped, as django.utils.html.json_script does. Suppressed unqualified
+    # because B308 is a blacklist check and ignores a test-id list.
+    return mark_safe(  # nosec B308 B703
+        json.dumps(value, cls=DjangoJSONEncoder).translate(_JS_ESCAPES)
+    )
 
 
 def _number(value):
