@@ -2085,6 +2085,7 @@ def partner_oversight_view(request):
         item.can_review = item.partner_activity_id in reviewable
         item.review_is_ssa = reviewable.get(item.partner_activity_id, False)
     _lock_project_work(request.user, items)
+    _prepare_core_actions(request.user, items)
     summary = partner_oversight.summarize(items)
     partner_group = None
     if active_partner:
@@ -2211,6 +2212,64 @@ def _lock_project_work(user, items) -> None:
         if item.project_id and item.project_id not in directed:
             item.project_locked = True
             item.withdrawal_label = ""
+
+
+def _prepare_core_actions(user, items) -> None:
+    """The Core Schools table's two decisions, for this reader.
+
+    Owner, 2026-09-27: "The Action button drop down should include, Confirm
+    completed work if they have uploaded the visit form and withdraw the school
+    incase they have not schedule it."
+
+    * Confirm completed work — once the Partner's visit form (the attendance
+      register, for a training) is in. It is the same confirmation Verify &
+      Confirm makes (activities.services.ia_confirm), so it is offered to the
+      people that names — Impact Assessment and the work's monitor — and it
+      opens once the Partner has submitted the work (the Salesforce ID is
+      entered in the Verify drawer).
+      Before that the entry is greyed and says what it waits for; to anyone
+      who may never confirm it, it is not shown.
+    * Withdraw school — only while the Partner has not scheduled it, and only
+      to a role that may withdraw partner work (the service refuses the rest).
+    """
+    from apps.activities.models import Activity
+    from apps.core.permissions import has_permission
+    from apps.planning import partner_oversight_service as partner_oversight
+    from apps.planning.partner_oversight_service import STAGE_AWAITING_SCHEDULE
+
+    core = [item for item in items if item.is_core_school_work]
+    if not core:
+        return
+    partner_oversight.annotate_core_support(core)
+    may_withdraw = bool(
+        getattr(user, "is_superuser", False)
+        or has_permission(user, Permission.PARTNER_ASSIGNMENT_WITHDRAW.value)
+    )
+    waiting = {
+        item.partner_activity_id
+        for item in core
+        if item.evidence_ok and not item.can_review and item.partner_activity_id
+    }
+    confirmers = {
+        activity.id
+        for activity in Activity.objects.filter(id__in=waiting)
+        if RolePermissionService.can_confirm_partner_activity(user, activity)
+    }
+    for item in core:
+        item.can_withdraw_school = bool(
+            may_withdraw
+            and item.stage == STAGE_AWAITING_SCHEDULE
+            and item.withdrawal_label
+            and not item.project_locked
+        )
+        if not item.evidence_ok:
+            continue
+        if item.can_review:
+            item.can_confirm_work = True
+        elif item.partner_activity_id in confirmers and not item.shows_complete:
+            # The Partner submits without a Salesforce ID; whoever confirms
+            # enters it in the Verify drawer (partner_review_views).
+            item.confirm_block_reason = "Waiting for the partner to submit it"
 
 
 def _partner_kpis(summary) -> list[dict]:

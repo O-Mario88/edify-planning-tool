@@ -1,0 +1,103 @@
+{% load frontend_filters row_actions %}
+{% comment %}
+One row of Partner Monitoring's Core Schools assigned table (owner,
+2026-09-27): "Core Schools assigned to the partner should also appear on
+partner oversight page but on its own table and the table should include the
+columns for waiting for scheduling from partner and when the partner
+schedules, it should change to the planned date and add the column for cost
+and should fetch the partner cost of visiting a school. The Action button drop
+down should include, Confirm completed work if they have uploaded the visit
+form and withdraw the school incase they have not schedule it. Add the
+evidence column as well."
+
+Core support is the package visit or training the handover is (V1..V4 /
+T1..T4, the Core Schools page's own numbers). Planned date reads "Waiting for
+scheduling from partner" until the Partner dates the work. Cost is the priced
+work once scheduled; before that, the Cost Catalogue's Core Partner Visit
+rate — what the Partner's scheduling will price it at. The Actions menu offers
+View, Confirm completed work (the visit form in; greyed with what it waits
+for until the Partner has submitted it), Return, Withdraw school (only while
+unscheduled) and Resolve Exception on a hand-back. `row_id` is
+"a-<assignment>", as on the Schools assigned table.
+{% endcomment %}
+<tr class="partner-plan-row" data-assignment="{{ item.partner_assignment_id }}" data-core-assignment{% if item.awaits_staff_decision %} data-returned{% endif %}{% if item.project_id %} data-project="{{ item.project_id }}"{% endif %}
+    @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+    :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
+  <td data-label="School ID"><span class="partner-plan-table__code">{{ item.school_code|default:"—" }}</span></td>
+  <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
+    <button type="button" class="school-plan-table__name-toggle"
+            @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+            :aria-expanded="(openRowId === '{{ row_id }}').toString()"
+            aria-controls="partner-row-details-{{ row_id }}"
+            aria-label="Details for {{ item.school_name }}">{{ item.school_name }}</button>
+  </span></td>
+  <td data-label="Staff Name">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
+  <td data-label="Core support" data-core-support>{{ item.core_slot_label|default:"—" }}</td>
+  <td data-label="Purpose of Assignment">{{ item.purpose_label|default:"—" }}</td>
+  <td data-label="Planned date" data-planned-date>{% if item.activity_date %}{{ item.activity_date|date:"j M Y" }}{% elif item.stage == "awaiting_schedule" %}<span class="edify-text-muted" data-waiting-for-partner>Waiting for scheduling from partner</span>{% else %}—{% endif %}</td>
+  <td data-label="Cost" class="text-right tabular-nums whitespace-nowrap" data-core-cost>{% if item.display_cost is not None %}<span{% if item.cost_is_rate %} title="Core Partner Visit rate from the Cost Catalogue — what the partner's scheduling prices this visit at"{% endif %}>UGX {{ item.display_cost|intcomma }}</span>{% elif item.is_returned %}—{% else %}<span class="edify-text-muted">Rate not set</span>{% endif %}</td>
+  {% include "components/completion_cells.html" with row=item %}
+  <td data-label="Status"><span class="partner-plan-table__status">
+    {% if item.completion_gap %}<span class="partner-status-chip" data-tone="warning" data-completion-gap>{{ item.completion_gap }}</span>{% else %}
+    <span class="partner-status-chip" data-tone="{{ item.status_tone }}" data-status="{{ item.delivery_phase }}"
+          {% if item.return_reason %}title="{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}"{% endif %}>{{ item.status_label }}</span>{% endif %}
+    {% if item.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
+  </span></td>
+  <td data-label="Actions" class="school-plan-table__actions">
+    {% row_actions item.school_name %}
+    <button type="button" class="row-menu__item" role="menuitem"
+            hx-get="/partner-oversight/detail?assignment_id={{ item.partner_assignment_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">View</button>
+    {% if item.can_confirm_work %}
+    {% if item.review_is_ssa %}
+    <button type="button" class="row-menu__item" role="menuitem" data-core-confirm
+            hx-get="/activities/{{ item.partner_activity_id }}/partner-ssa-complete"
+            hx-target="#drawer-container" hx-swap="innerHTML">Confirm completed work</button>
+    {% else %}
+    <button type="button" class="row-menu__item" role="menuitem" data-core-confirm
+            hx-get="/partner-oversight/verify?activity_id={{ item.partner_activity_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Confirm completed work</button>
+    {% endif %}
+    {% elif item.confirm_block_reason %}
+    <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-core-confirm-locked
+            aria-label="Confirm completed work unavailable: {{ item.confirm_block_reason }}">Confirm completed work<span class="row-menu__reason">{{ item.confirm_block_reason }}</span></button>
+    {% endif %}
+    {% if item.can_review %}
+    <button type="button" class="row-menu__item" role="menuitem" data-partner-return
+            hx-get="/partner-oversight/return?activity_id={{ item.partner_activity_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Return</button>
+    {% endif %}
+    {% if item.can_withdraw_school %}
+    <button type="button" class="row-menu__item" role="menuitem" data-core-withdraw
+            hx-get="/partner-oversight/withdraw?assignment_id={{ item.partner_assignment_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Withdraw school</button>
+    {% endif %}
+    {% if item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
+    <button type="button" class="row-menu__item" role="menuitem"
+            hx-get="/partner-oversight/resolve?assignment_id={{ item.partner_assignment_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Resolve Exception</button>
+    {% endif %}
+    {% endrow_actions %}
+  </td>
+</tr>
+<tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
+  <td aria-hidden="true"></td>
+  <td colspan="11">
+    <dl class="school-record-row__metadata">
+      {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
+      {% if item.stage == "awaiting_schedule" and item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}
+      {% if item.training_name %}<div><dt>Training:</dt><dd>{{ item.training_name }}</dd></div>{% endif %}
+      {% if item.intervention_label %}<div><dt>SSA Intervention:</dt><dd>{{ item.intervention_label }}</dd></div>{% endif %}
+      {% if item.field_officer %}<div><dt>Partner officer:</dt><dd>{{ item.field_officer }}</dd></div>{% endif %}
+      {% if item.district %}<div><dt>District:</dt><dd>{{ item.district }}</dd></div>{% endif %}
+      {% if item.partner_activity_id %}
+      <div><dt>Execution:</dt><dd>{{ item.execution_status }}</dd></div>
+      <div><dt>IA:</dt><dd>{{ item.ia_status_label }}</dd></div>
+      <div><dt>Payment:</dt><dd>{{ item.payment_label }}</dd></div>
+      {% endif %}
+      {% if item.return_reason %}<div><dt>Returned:</dt><dd>{{ item.return_reason_category|replace_underscore|title }} — {{ item.return_reason }}</dd></div>{% endif %}
+      {% if item.is_returned and item.resolution_label %}<div><dt>Decision:</dt><dd>{{ item.resolution_label }}</dd></div>{% endif %}
+      {% if item.project_name %}<div data-project-note><dt>Special Project:</dt><dd>{{ item.project_name }}{% if item.project_locked %} — withdrawals and reassignments are its Project Coordinator's{% endif %}</dd></div>{% endif %}
+    </dl>
+  </td>
+</tr>

@@ -505,7 +505,11 @@ class Activity(SoftDeleteModel):
                 activity_id=self.id
             ).select_related("core_plan"):
                 with transaction.atomic():
-                    slot.status = self.status
+                    from apps.core_schools.core_planning_services import (
+                        core_slot_status,
+                    )
+
+                    slot.status = core_slot_status(self.status)
                     if self.scheduled_date:
                         slot.scheduled_for = self.scheduled_date.date()
                     # The DRF-only "complete" branch of _apply_slot_action
@@ -563,6 +567,23 @@ class Activity(SoftDeleteModel):
                 self.id,
                 exc_info=True,
             )
+        # A visit or training at a Core School counts toward its package
+        # whichever page booked it (owner, 2026-09-27). Work the booking route
+        # already linked is left alone; the rest takes the package's next open
+        # slot once this transaction commits (apps.core_schools.package_credit).
+        if self.school_id and not self.cluster_id:
+            try:
+                from apps.core_schools.package_credit import schedule_package_credit
+
+                schedule_package_credit(self)
+            except Exception:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "Core package credit could not be queued for activity %s",
+                    self.id,
+                    exc_info=True,
+                )
 
 
 class SchoolVisitFeedback(TimeStampedModel):

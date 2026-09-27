@@ -509,6 +509,7 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
                 "Number of Participants",
                 "Responsible Party",
                 "Party Type",
+                "School ID",
                 "Venue",
                 "Delivery Mode",
                 "Cost (UGX)",
@@ -521,7 +522,9 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         self.assertEqual(data[3], "Student Activities")
         self.assertEqual(data[5], 12)
         self.assertEqual(data[6], 40)
-        self.assertEqual(data[10], "Group")
+        # A programme event is at no school, so it has no School ID.
+        self.assertIn(data[9], ("", None))
+        self.assertEqual(data[11], "Group")
         summary = workbook["Plan Summary"]
         summary_headers = [cell.value for cell in next(summary.iter_rows(max_row=1))]
         self.assertEqual(

@@ -2200,8 +2200,18 @@ def map_view(request):
 @require_page_permission("planning")
 def core_school_detail_view(request, plan_id):
     """Core school detail."""
+    from apps.core_schools.core_planning_services import package_marks
+
     plan = get_object_or_404(CorePlan, id=plan_id)
-    slots = CoreActivitySlot.objects.filter(core_plan=plan).order_by("sequence_number")
+    kind_order = {"assessment": 0, "visit": 1, "training": 2}
+    slots = sorted(
+        CoreActivitySlot.objects.filter(core_plan=plan),
+        key=lambda slot: (kind_order.get(slot.activity_type, 3), slot.sequence_number),
+    )
+    # Each slot named as every Core surface names it (A1, V1..V4, T1..T4) and
+    # coloured by state — completed green, planned blue (owner, 2026-09-27).
+    for slot, mark in zip(slots, package_marks(slots)):
+        slot.mark = mark
     context = {"plan": plan, "slots": slots}
     return render(request, "pages/core_schools/detail.html", context)
 
@@ -2682,6 +2692,7 @@ def special_projects_my_plan_view(request):
         writer.writerow(
             [
                 "Activity ID",
+                "School ID",
                 "School / Cluster",
                 "District",
                 "Project",
@@ -2699,6 +2710,7 @@ def special_projects_my_plan_view(request):
             writer.writerow(
                 [
                     row["id"],
+                    row["school_code"],
                     row["school"],
                     row["district"],
                     row["project"],

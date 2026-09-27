@@ -2719,6 +2719,22 @@ def create(
                 catalogue_item=catalogue_item,
                 purpose_type=p_type,
             )
+            # A Core School: no second visit that day for the same
+            # intervention by the same person (owner, 2026-09-27).
+            from apps.activities.duplicate_visits import (
+                assert_not_duplicate_core_visit,
+            )
+
+            assert_not_duplicate_core_visit(
+                school,
+                activity_type=activity_type,
+                day=planned_date,
+                focus_intervention=focus,
+                delivery_type="partner" if is_partner else "staff",
+                staff_id=responsible_staff_id,
+                partner_id=data.get("assignedPartnerId"),
+                purpose_type=p_type,
+            )
         # §1/§21: every activity names the planning workflow that authorized
         # it, so every budget row can identify its dated plan source.
         if non_school:
@@ -3647,9 +3663,61 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                     ),
                 },
             )
+        _move_partner_work_to_delivery_date(a, principal)
     _notify_completion_routed(a, next_status, principal)
     _resolve_overdue_reminder(a)
     return _serialize(a)
+
+
+def _move_partner_work_to_delivery_date(a: Activity, principal=None) -> None:
+    """Partner work is dated, and costed, on the day it was delivered.
+
+    Owner, 2026-09-27, asked whether a partner visit delivered earlier than
+    planned (planned 6 Oct = FY2027, delivered 26 Sep = FY2026) should stay on
+    its planned date: "Move to delivery date". So once the Partner submits
+    with an actual delivery date that differs from the plan, the activity,
+    its handover and its cost lines move to that day — and to that day's
+    week, month, quarter and fiscal year. The single cost writer re-prices it
+    and re-syncs the funding drafts, as a reschedule does; the past-date
+    guard a reschedule applies is not asked, because this records what
+    happened rather than planning what will.
+    """
+    day = a.actual_delivery_date
+    if a.delivery_type != "partner" or not day or day == a.planned_date:
+        return
+    from datetime import time as _time
+
+    from apps.partners.models import PartnerAssignment
+
+    if a.scheduled_date:
+        at = timezone.localtime(a.scheduled_date).replace(
+            year=day.year, month=day.month, day=day.day
+        )
+    else:
+        at = timezone.make_aware(datetime.combine(day, _time(9, 0)))
+    a.scheduled_date = at
+    a.planned_date = day
+    a.planned_month = day.month
+    a.planned_week = min(5, (day.day - 1) // 7 + 1)
+    a.month = day.month
+    a.quarter = get_quarter_for_date(day)
+    a.fy = get_operational_fy(day)
+    a.save(
+        update_fields=[
+            "scheduled_date",
+            "planned_date",
+            "planned_month",
+            "planned_week",
+            "month",
+            "quarter",
+            "fy",
+            "updated_at",
+        ]
+    )
+    _apply_schedule_cost_snapshot(a, {}, principal=principal)
+    PartnerAssignment.objects.filter(scheduled_activity=a).update(
+        scheduled_date=day, updated_at=timezone.now()
+    )
 
 
 def submit_for_review(activity_id: str, principal, data: dict | None = None) -> dict:
@@ -4496,13 +4564,27 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # lost the increment anyway.
         a = Activity.objects.select_for_update().get(pk=a.pk)
         old_date = a.scheduled_date
-        from apps.activities.duplicate_visits import assert_not_duplicate_client_visit
+        from apps.activities.duplicate_visits import (
+            assert_not_duplicate_client_visit,
+            assert_not_duplicate_core_visit,
+        )
 
         assert_not_duplicate_client_visit(
             a.school,
             activity_type=a.activity_type,
             day=planned_date,
             catalogue_item=a.catalogue_item,
+            purpose_type=a.purpose_type,
+            exclude_activity_id=a.pk,
+        )
+        assert_not_duplicate_core_visit(
+            a.school,
+            activity_type=a.activity_type,
+            day=planned_date,
+            focus_intervention=a.focus_intervention,
+            delivery_type=a.delivery_type,
+            staff_id=a.responsible_staff_id,
+            partner_id=a.assigned_partner_id,
             purpose_type=a.purpose_type,
             exclude_activity_id=a.pk,
         )
@@ -4770,6 +4852,7 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
 def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -> dict:
     """Turn one locked PartnerAssignment into one costed canonical Activity."""
 
+    from apps.core_schools.core_planning_services import CorePackageSchedulingService
     from apps.core_schools.models import CoreActivitySlot, cslot_id
     from apps.partners.models import PartnerAssignment
 
@@ -4956,6 +5039,20 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 purpose_type=pa.purpose_of_visit,
                 exclude_activity_id=pa.scheduled_activity_id,
             )
+            from apps.activities.duplicate_visits import (
+                assert_not_duplicate_core_visit,
+            )
+
+            assert_not_duplicate_core_visit(
+                pa.school,
+                activity_type=_sched_activity_type,
+                day=planned_date,
+                focus_intervention=pa.focus_intervention,
+                delivery_type="partner",
+                partner_id=pa.partner_id,
+                purpose_type=pa.purpose_of_visit,
+                exclude_activity_id=pa.scheduled_activity_id,
+            )
         # The school's own staff member where the handoff recorded one; the
         # assigner otherwise, which is what every pre-existing row resolves to.
         monitored_by_staff_id = _canonical_staff_identity(
@@ -5131,10 +5228,31 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             ]
         )
 
-        if pa.school and pa.school.school_type == "core":
-            slot_kind = "visit" if pa.support_type == "Visit" else "training"
+        # Only a handover that names its package slot is linked here. One
+        # from the Planning page names none: it used to read as "training" and
+        # "1", so it took T1 even when T1 was already somebody's, and that
+        # training lost its link and its T1. It is now linked after commit
+        # like any other core work (apps.core_schools.package_credit), which
+        # takes the slot the handover reserved or the next open one.
+        support = (pa.support_type or "").strip().lower()
+        if (
+            pa.school
+            and pa.school.school_type == "core"
+            and (
+                support in ("visit", "training")
+                or pa.visit_number
+                or pa.training_number
+            )
+        ):
+            if support in ("visit", "training"):
+                slot_kind = support
+            else:
+                slot_kind = "visit" if pa.visit_number else "training"
             try:
-                seq_num = int(pa.visit_number or pa.training_number or 1)
+                seq_num = int(
+                    (pa.visit_number if slot_kind == "visit" else pa.training_number)
+                    or 1
+                )
             except ValueError:
                 seq_num = 1
             # Find the slot this assignment already HOLDS, rather than
@@ -5175,6 +5293,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 )
                 or (candidates[0] if len(candidates) == 1 else None)
             )
+            if (
+                slot
+                and slot.activity_id
+                and slot.activity_id != activity.id
+                and CorePackageSchedulingService.status_is_allocated(slot.status)
+            ):
+                # That number already carries other live work; never take it
+                # from under it. The catch-all links this one to a free slot.
+                slot = None
             if slot:
                 slot.status = "Scheduled"
                 slot.activity_id = activity.id
@@ -5246,13 +5373,27 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         a.fy = get_operational_fy(new_date)
         a.quarter = get_quarter_for_date(new_date)
         planned_date, planned_month, planned_week = _schedule_period(new_date, data)
-        from apps.activities.duplicate_visits import assert_not_duplicate_client_visit
+        from apps.activities.duplicate_visits import (
+            assert_not_duplicate_client_visit,
+            assert_not_duplicate_core_visit,
+        )
 
         assert_not_duplicate_client_visit(
             a.school,
             activity_type=a.activity_type,
             day=planned_date,
             catalogue_item=a.catalogue_item,
+            purpose_type=a.purpose_type,
+            exclude_activity_id=a.pk,
+        )
+        assert_not_duplicate_core_visit(
+            a.school,
+            activity_type=a.activity_type,
+            day=planned_date,
+            focus_intervention=a.focus_intervention,
+            delivery_type=a.delivery_type,
+            staff_id=a.responsible_staff_id,
+            partner_id=a.assigned_partner_id,
             purpose_type=a.purpose_type,
             exclude_activity_id=a.pk,
         )

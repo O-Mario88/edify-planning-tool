@@ -34,6 +34,16 @@
   </p>
   {% endif %}
 
+  {% comment %}
+  What the work pays, from the Cost Catalogue, before the Partner commits a
+  date — the same recipe scheduling prices it with (2026-09-27).
+  {% endcomment %}
+  {% if cost_preview %}
+  <p class="edify-note" data-partner-cost-preview{% if cost_preview.missing %} data-tone="warning"{% endif %}>
+    {% if cost_preview.amount and not cost_preview.missing %}Payment for this work: <span class="font-semibold tabular-nums">UGX {{ cost_preview.amount|intcomma }}</span>{% if cost_preview.labels %} · {{ cost_preview.labels|join:", " }}{% endif %}. It is priced from the Cost Catalogue when you schedule.{% else %}The Cost Catalogue has no rate for this work yet, so its payment is set by Edify after you schedule.{% endif %}
+  </p>
+  {% endif %}
+
   <div class="space-y-1">
     <label for="partner-scheduled-date" class="block edify-text-caption font-semibold text-slate-600">Delivery date <span class="text-rose-500">*</span></label>
     <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">

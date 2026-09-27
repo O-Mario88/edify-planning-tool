@@ -683,6 +683,9 @@ def build_work_plan_context(user, params) -> dict:
                     else (a.delivery_method_snapshot or "").replace("_", " ").title()
                 ),
                 "school_count": a.planned_school_count,
+                # The school's business code for the export (owner,
+                # 2026-09-27: "All exported plan should have school ID").
+                "school_code": (a.school.school_id or "") if a.school_id else "",
                 "venue": place,
                 "participants": participants,
                 "cost_lines": [

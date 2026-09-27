@@ -1389,8 +1389,19 @@ def read_filters(request) -> dict:
 
 
 # ── Export ───────────────────────────────────────────────────────────────────
+def _export_school_id(item) -> str:
+    """The school's business code (owner, 2026-09-27: "All exported plan
+    should have school ID"), never the row's pk fallback or its "—"; blank
+    for cluster and non-school work."""
+    code = item.school_code or ""
+    if not item.school_id or code in ("—", item.school_id):
+        return ""
+    return code
+
+
 EXPORT_COLUMNS = (
     ("Financial year", lambda i: i.fy),
+    ("School ID", _export_school_id),
     ("Planned date", lambda i: i.planned_date.isoformat() if i.planned_date else ""),
     ("Activity type", lambda i: i.activity_type),
     ("Context", lambda i: i.context_label),

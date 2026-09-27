@@ -157,8 +157,13 @@ def my_plan_view(request):
     # oversight pages. CSV stays, so existing links keep working.
     export = request.GET.get("export", "").strip().lower()
     if export in {"csv", "xlsx", "excel"}:
+        # Owner, 2026-09-27: "All exported plan should have school ID." The
+        # School ID is the school's business code; a cluster session a row
+        # stands for as a whole has none. A cluster training is listed once
+        # per invited school, so its rows carry each school's own ID.
         headers = [
             "Activity ID",
+            "School ID",
             "Type",
             "School / Cluster",
             "District",
@@ -167,19 +172,43 @@ def my_plan_view(request):
             "Owner",
             "Budget (UGX)",
         ]
+        # Every table the page shows, the Core School and Programme School
+        # cards included — the export used to stop at the three general
+        # tables, so a Core School's visits and trainings never reached it.
+        feed = [
+            *context.get("core_school_visits", []),
+            *context.get("core_school_trainings", []),
+            *context.get("school_visits", []),
+            *context.get("cluster_trainings", []),
+            *context.get("cluster_meetings", []),
+            *(
+                row
+                for group in context.get("programme_school_work", [])
+                for row in group["rows"]
+            ),
+            *context.get("programme_activities", []),
+        ]
         rows = []
-        for a in (
-            context.get("school_visits", [])
-            + context.get("cluster_trainings", [])
-            + context.get("cluster_meetings", [])
-        ):
-            is_cluster = a["activity_type"].startswith("cluster")
+        seen = set()
+        for a in feed:
+            is_cluster_row = a["activity_type"].startswith("cluster") and not a.get(
+                "is_cluster_invited"
+            )
+            school_code = "" if is_cluster_row else (a.get("school_id") or "")
+            key = (a["id"], school_code)
+            if key in seen:
+                continue
+            seen.add(key)
+            sequence = a.get("visit_number") or a.get("training_number") or ""
             rows.append(
                 [
                     a["id"],
-                    a["activity_type_label"],
-                    a["cluster_name"] if is_cluster else a["school_name"],
-                    a["cluster_district"] if is_cluster else a["school_district"],
+                    school_code,
+                    f"{a['activity_type_label']} ({sequence})"
+                    if sequence
+                    else a["activity_type_label"],
+                    a["cluster_name"] if is_cluster_row else a["school_name"],
+                    a["cluster_district"] if is_cluster_row else a["school_district"],
                     a["planned_date"] or "",
                     a["status_label"],
                     a.get("owner", ""),
@@ -198,7 +227,7 @@ def my_plan_view(request):
                         "headers": headers,
                         "rows": rows,
                         # Budget is a number, and a plan people add up.
-                        "number_formats": {8: "#,##0"},
+                        "number_formats": {9: "#,##0"},
                     }
                 ],
             )

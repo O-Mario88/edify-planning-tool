@@ -47,20 +47,21 @@
 {% endif %}
 </td>
 
-<!-- Progress — the 4+4 core package as discrete, labelled segments -->
+<!-- Progress — the 4+4 core package as V1..V4 / T1..T4, each green once
+     completed and blue while planned (owner, 2026-09-27; core-progress.css) -->
 <td class="min-w-[124px] px-3 py-2.5">
 <div class="space-y-1.5" role="img" aria-label="Visits {{ q.visits_done }} of 4 complete, trainings {{ q.trainings_done }} of 4 complete">
 <div class="flex items-center gap-2">
 <span class="inline-block w-[42px] edify-text-caption font-semibold text-slate-500">Visits</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
-{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.visits_done %}bg-[var(--edify-primary)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+{% if q.visit_marks %}<span class="core-seq">{% for mark in q.visit_marks %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span>{% else %}{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill bg-slate-200"></span>{% endfor %}{% endif %}
 </span>
 <span class="edify-text-caption font-bold tabular-nums {% if q.visits_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.visits_done }}/4</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="inline-block w-[42px] edify-text-caption font-semibold text-slate-500">Trainings</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
-{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.trainings_done %}bg-[var(--edify-teal)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+{% if q.training_marks %}<span class="core-seq">{% for mark in q.training_marks %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span>{% else %}{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill bg-slate-200"></span>{% endfor %}{% endif %}
 </span>
 <span class="edify-text-caption font-bold tabular-nums {% if q.trainings_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.trainings_done }}/4</span>
 </div>
@@ -84,6 +85,8 @@ class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-control 
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
 Upload Assessment
 </button>
+{% elif q.next_recommended == "Package planned" %}
+<span class="core-package-count edify-text-caption" data-state="planned" title="Every visit and training of the package is planned; the marks turn green as each is completed.">Package planned</span>
 {% elif q.next_recommended == "Graduation Review" or q.next_recommended == "Core Assessment" %}
 <button
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"

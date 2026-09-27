@@ -462,6 +462,7 @@ def work_plan_export(request):
         "Number of Participants",
         "Responsible Party",
         "Party Type",
+        "School ID",
         "Venue",
         "Delivery Mode",
         "Cost (UGX)",
@@ -480,6 +481,7 @@ def work_plan_export(request):
                 row["participants"] or 0,
                 row["responsible"],
                 row["responsibility_type"],
+                row["school_code"],
                 row["venue"],
                 row["programme_delivery_mode"],
                 int(row["cost"] or 0),
@@ -488,8 +490,8 @@ def work_plan_export(request):
         )
 
     style_header(sheet)
-    style_body(sheet, {12: "#,##0"})
-    widths = [22, 20, 38, 28, 26, 18, 21, 28, 14, 28, 18, 18, 20]
+    style_body(sheet, {13: "#,##0"})
+    widths = [22, 20, 38, 28, 26, 18, 21, 28, 14, 12, 28, 18, 18, 20]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "A2"

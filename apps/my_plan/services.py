@@ -131,6 +131,36 @@ def status_tone(status_class: str) -> str:
     return "slate"
 
 
+#: Status labels that mean "planned, still to be delivered" (owner,
+#: 2026-09-27: "mark planned activities with a different color and completed
+#: plans with a different colors ... scheduled/planned is blue").
+PLANNED_STATUS_LABELS = frozenset({"Scheduled", "This Week"})
+
+
+def plan_row_tone(activity, status_label: str, status_class: str, *, is_core: bool):
+    """The badge colour of a My Plan row: completed work green, planned work
+    blue (owner, 2026-09-27).
+
+    Every table: the "Scheduled" and "This Week" labels read blue — "This
+    Week" used to share completed work's green. A Core School's visits and
+    trainings keep to the two colours the owner named: green once the work is
+    completed, blue for everything still planned or in hand — only a return
+    (red) and a request awaiting the owner's approval (amber) stay apart.
+    """
+    status = activity.status or ""
+    if status in COMPLETED_WORK_STATUSES:
+        return "green"
+    if is_core:
+        if status in ("returned", "returned_by_pl", "returned_by_ia"):
+            return "red"
+        if status == "awaiting_owner_approval":
+            return "amber"
+        return "blue"
+    if status_label in PLANNED_STATUS_LABELS:
+        return "blue"
+    return status_tone(status_class)
+
+
 def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     """Resolves operational status pill color and text for row tables."""
     status = activity.status
@@ -1491,7 +1521,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             "badges": badges,
             "status_label": status_label,
             "status_class": status_class,
-            "status_tone": status_tone(status_class),
+            "status_tone": plan_row_tone(
+                a, status_label, status_class, is_core=bool(is_core)
+            ),
         }
 
         # Legacy lists for compatibility

@@ -69,7 +69,7 @@ Core School Visits Planned for {% if period == 'week' %}This Week{% elif period 
 <td class="text-slate-700 font-medium" data-label="District">{{ row.school_district|default:"—" }}</td>
 <td class="font-semibold text-slate-700">
   {{ row.activity_type_label|default:"Core Visit" }}
-  {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.visit_number }} ({{ row.core_progress }})</span>{% endif %}
+  {% if row.visit_number %}<span class="block edify-text-caption font-semibold text-slate-400"><span class="mp-badge mp-badge--{{ row.status_tone|default:'blue' }}" data-core-number>{{ row.visit_number }}</span> {{ row.core_progress }}</span>{% endif %}
 </td>
 <td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>

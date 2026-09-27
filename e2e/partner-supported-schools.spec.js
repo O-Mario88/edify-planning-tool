@@ -338,9 +338,11 @@ test.describe('Partner-supported schools — journeys', () => {
     await signIn(page, data.pl_email, PASSWORD);
     for (const handover of data.handovers.slice(0, 3)) {
       await page.goto(`/partner-oversight/?partner=${handover.partner_id}`);
-      // One Partner's workspace: its school, cluster and activity tables.
+      // One Partner's workspace: its school, cluster and activity tables, and
+      // its Core Schools table when it holds any (owner, 2026-09-27).
       await expect(page.locator('[data-partner-table]')).toHaveAttribute('data-partner-table', handover.partner_id);
-      await expect(page.locator('[data-partner-monitoring-table]')).toHaveCount(3);
+      const tables = await page.locator('[data-partner-monitoring-table]').count();
+      expect(tables - (await page.locator('[data-partner-monitoring-table="core"]').count())).toBe(3);
       const schools = page.locator('[data-partner-monitoring-table="assignment"]').first();
       // Open work reads oldest date first (owner, 2026-09-26), so a Partner
       // with older assignments lists the handover past the first page: find

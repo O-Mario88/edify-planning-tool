@@ -531,3 +531,90 @@ def assert_not_duplicate_client_visit(school, **kwargs) -> None:
         f"{school.name} already has this visit on {day:%-d %b %Y}. Open that "
         "visit instead of planning a second one for the same day."
     )
+
+
+# ── Core School visits ───────────────────────────────────────────────────────
+#
+# Owner, 2026-09-27: "No core visits duplicate on the same day. Right new we
+# are planning for next fy so that is fine but no duplicate visit for the same
+# day same intervention and same person."
+#
+# A Core School's visit is a duplicate of another when both are live, at the
+# same school, on the same day, for the same SSA intervention (none counts as
+# its own intervention — SSA data gathering), delivered by the same person:
+# the responsible officer for staff work, the partner for partner work. A
+# staff visit and a partner visit that day, or two officers, or two
+# interventions, are separate pieces of work. Planning into the next fiscal
+# year is untouched.
+
+
+def _core_visit_kind(activity_type: str, purpose_type: str | None) -> bool:
+    from apps.core_schools.package_credit import PACKAGE_VISIT_TYPES
+    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
+
+    return (
+        str(activity_type or "") in PACKAGE_VISIT_TYPES
+        and purpose_type != COMPANION_VISIT_PURPOSE
+    )
+
+
+def existing_same_day_core_visit(
+    school,
+    *,
+    activity_type: str,
+    day: date | None,
+    focus_intervention: str | None,
+    delivery_type: str,
+    staff_id: str | None = None,
+    partner_id: str | None = None,
+    purpose_type: str | None = None,
+    exclude_activity_id: str | None = None,
+):
+    """The live core visit this one would duplicate, if any."""
+    from django.db.models import Q
+
+    from apps.activities.models import Activity
+    from apps.core_schools.package_credit import PACKAGE_VISIT_TYPES
+    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
+
+    if school is None or day is None or school.school_type != "core":
+        return None
+    if not _core_visit_kind(activity_type, purpose_type):
+        return None
+    qs = (
+        Activity.objects.filter(
+            school_id=school.pk,
+            planned_date=day,
+            activity_type__in=PACKAGE_VISIT_TYPES,
+            deleted_at__isnull=True,
+        )
+        .exclude(status__in=GONE_STATUSES)
+        .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
+    )
+    if focus_intervention:
+        qs = qs.filter(focus_intervention=focus_intervention)
+    else:
+        qs = qs.filter(Q(focus_intervention__isnull=True) | Q(focus_intervention=""))
+    if delivery_type == "partner":
+        if not partner_id:
+            return None
+        qs = qs.filter(delivery_type="partner", assigned_partner_id=partner_id)
+    else:
+        if not staff_id:
+            return None
+        qs = qs.exclude(delivery_type="partner").filter(responsible_staff_id=staff_id)
+    if exclude_activity_id:
+        qs = qs.exclude(pk=exclude_activity_id)
+    return qs.order_by("created_at").first()
+
+
+def assert_not_duplicate_core_visit(school, **kwargs) -> None:
+    existing = existing_same_day_core_visit(school, **kwargs)
+    if existing is None:
+        return
+    day = kwargs["day"]
+    raise BadRequest(
+        f"{school.name} already has a core visit on {day:%-d %b %Y} for this "
+        "intervention by the same person. Open that visit instead, or choose "
+        "another day or intervention."
+    )

@@ -1,5 +1,8 @@
 {% load frontend_filters table_pagination %}
 {% comment %}
+Core Schools handed to the Partner lead, on their own table (owner,
+2026-09-27; partner_core_row.html has the columns and the Actions menu).
+
 One Partner's work in the Planning table's design (owner, 2026-09-23): the
 same header row, status pills and outlined icon actions as the Planning page,
 and the same disclosure — the school's name opens the row's details, where the
@@ -24,9 +27,26 @@ the same rule the Planning badges keep.
 <section class="partner-plan-group" aria-labelledby="partner-plan-{{ table.page_param }}">
   <h3 id="partner-plan-{{ table.page_param }}" class="partner-plan-group__title" data-no-titlebar>{{ table.title }} ({{ table.items|length }})</h3>
   <div class="school-plan-table-scroll">
-    <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-monitoring-table="{{ table.kind }}"{% if table.columns == 'school' %} data-partner-school-columns{% endif %} x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
+    <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-monitoring-table="{{ table.kind }}"{% if table.columns == 'school' %} data-partner-school-columns{% elif table.columns == 'core' %} data-partner-core-columns{% endif %} x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
       <caption class="sr-only">{{ table.title }} for {{ active_partner.name }}{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
-      {% if table.columns == 'school' %}
+      {% if table.columns == 'core' %}
+      <thead><tr>
+        <th scope="col">School ID</th>
+        <th scope="col">School Name</th>
+        <th scope="col">Staff Name</th>
+        <th scope="col">Core support</th>
+        <th scope="col">Purpose of Assignment</th>
+        <th scope="col">Planned date</th>
+        <th scope="col" class="text-right">Cost</th>
+        <th scope="col">Salesforce ID</th>
+        <th scope="col">Evidence</th>
+        <th scope="col">Status</th>
+        <th scope="col" class="school-plan-table__actions">Actions</th>
+      </tr></thead>
+      <tbody>{% for item in page.rows %}
+        {% with row_id="a-"|add:item.partner_assignment_id %}{% include "partials/oversight/partner_core_row.html" %}{% endwith %}
+      {% empty %}<tr><td colspan="11" class="partner-plan-table__empty">No Core Schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
+      {% elif table.columns == 'school' %}
       <thead><tr>
         <th scope="col">School ID</th>
         <th scope="col">School Name</th>

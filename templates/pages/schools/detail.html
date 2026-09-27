@@ -4,6 +4,7 @@
 {% load frontend_filters %}
 
 {% block title %}{{ school.name }} - School 360{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20260927coreprogress3">{% endblock %}
 
 {% block shell_content %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -170,6 +171,17 @@ Not specified
 <p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
 <p class="edify-profile-field__value mt-0.5"><span class="edify-badge" data-tone="{{ visit_status.tone }}">{{ visit_status.label }}</span>{% if visit_status.next_date %} <span class="edify-text-caption">{{ visit_status.next_date|date:"j M Y" }}</span>{% endif %}</p>
 </div>
+{% if core_package %}
+{% comment %}A Core School's package (owner, 2026-09-27): completed work green, planned blue, open quiet — the same marks as the Core Schools rows (core-progress.css).{% endcomment %}
+<div data-core-package="visits">
+<p class="edify-profile-field__label">Core visits (FY{{ core_package.fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="core-package-count" data-state="{% if not core_package.visits_planned %}open{% elif core_package.visits_done >= core_package.visits_planned %}done{% else %}planned{% endif %}">{{ core_package.visits_planned }}/{{ core_package.visits_target }}</span> <span class="core-seq" data-core-seq="visits">{% for mark in core_package.visits %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span></p>
+</div>
+<div data-core-package="trainings">
+<p class="edify-profile-field__label">Core trainings (FY{{ core_package.fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="core-package-count" data-state="{% if not core_package.trainings_planned %}open{% elif core_package.trainings_done >= core_package.trainings_planned %}done{% else %}planned{% endif %}">{{ core_package.trainings_planned }}/{{ core_package.trainings_target }}</span> <span class="core-seq" data-core-seq="trainings">{% for mark in core_package.trainings %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span></p>
+</div>
+{% endif %}
 <div data-school-training-status>
 <p class="edify-profile-field__label">Cluster training (FY{{ status_fy }})</p>
 <p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {{ training_coverage.cluster_name }}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>

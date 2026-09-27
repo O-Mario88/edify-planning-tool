@@ -115,6 +115,7 @@ def credit_cluster_session(activity) -> None:
     """Link or release Core training slots to match this session's register."""
     from apps.core_schools.core_planning_services import (
         CorePackageSchedulingService,
+        core_slot_status,
     )
     from apps.core_schools.models import CoreActivitySlot, CorePlan
     from apps.core_schools.services import resync_plan_completion
@@ -193,7 +194,7 @@ def credit_cluster_session(activity) -> None:
                 # package slot left to fill.
                 continue
             open_slot.activity_id = activity.id
-            open_slot.status = activity.status
+            open_slot.status = core_slot_status(activity.status)
             open_slot.owner = (
                 "partner" if activity.delivery_type == "partner" else "staff"
             )

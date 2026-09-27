@@ -3631,7 +3631,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13262,
+      "bytes": 13872,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3807,7 +3807,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9874,
+      "bytes": 10954,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3856,7 +3856,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11636,
+      "bytes": 12457,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3875,7 +3875,10 @@
       ],
       "tables": 1,
       "template": "partials/core_schools/team_oversight.html",
-      "variants": []
+      "variants": [
+        "{% if not r.scheduled_training_count %}warning{% elif r.trainings_done >= r.scheduled_training_count %}success{% else %}info{% endif %}",
+        "{% if not r.scheduled_visit_count %}warning{% elif r.visits_done >= r.scheduled_visit_count %}success{% else %}info{% endif %}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -8348,7 +8351,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5971,
+      "bytes": 6103,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8369,7 +8372,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5942,
+      "bytes": 6034,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9287,6 +9290,35 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 8218,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 6,
+      "kind": "application-partial",
+      "name": "Partner Core Row",
+      "purpose": "Reusable partner core row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/partner_core_row.html",
+      "variants": [
+        "danger",
+        "warning",
+        "{{ item.status_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 11160,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -9463,7 +9495,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4486,
+      "bytes": 5614,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9911,7 +9943,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3314,
+      "bytes": 4076,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
@@ -9931,7 +9963,8 @@
       "tables": 0,
       "template": "partials/partners/schedule_assignment_drawer.html",
       "variants": [
-        "danger"
+        "danger",
+        "warning"
       ]
     },
     {
@@ -30326,7 +30359,9 @@
       "page_id": "UI-PAGE-635D9F0FEB",
       "page_title": "Core Schools",
       "page_type": "interaction-fragment",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/core-progress.css"
+      ],
       "permission_key": "core_schools",
       "primary_action": "Core Schools",
       "primary_user_decision": "What immediate step completes the parent workflow?",
@@ -30514,7 +30549,9 @@
       "page_id": "UI-PAGE-C4495A9FB9",
       "page_title": "Core School Plan",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/core-progress.css"
+      ],
       "permission_key": "planning",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -73077,6 +73114,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78101,6 +78139,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78180,7 +78219,9 @@
       "page_id": "UI-PAGE-DBD42E0288",
       "page_title": "School 360",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/core-progress.css"
+      ],
       "permission_key": "school_profile",
       "primary_action": "Edit Details",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -78211,6 +78252,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78317,6 +78359,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78423,6 +78466,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78520,6 +78564,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78611,6 +78656,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78707,6 +78753,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78802,6 +78849,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78900,6 +78948,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -78995,6 +79044,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79177,6 +79227,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79268,6 +79319,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79359,6 +79411,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79450,6 +79503,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79620,6 +79674,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79719,6 +79774,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79817,6 +79873,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -79917,6 +79974,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -80014,6 +80072,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -80108,6 +80167,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -80205,6 +80265,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -80295,6 +80356,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -80382,6 +80444,7 @@
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
@@ -107284,7 +107347,7 @@
     "activity_states": 24,
     "all_routes": 1307,
     "api_routes": 360,
-    "component_templates": 508,
+    "component_templates": 509,
     "full_pages": 260,
     "mobile_contract_pass": 538,
     "nonvisual_actions": 272,
