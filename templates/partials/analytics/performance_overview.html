@@ -1,3 +1,4 @@
+{% load chart_tags %}
 <div
 x-data="{
 chart: null,
@@ -7,9 +8,9 @@ if (this.chart) this.chart.destroy();
    keeps green because it is a rate against target, not a peer series. */
 const options = window.EdifyChartSystem.mixedTrend(3);
 options.series = [
-  { name: 'Planned', type: 'column', data: {{ performance_overview.planned|escape }} },
-  { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|escape }} },
-  { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|escape }} }
+  { name: 'Planned', type: 'column', data: {{ performance_overview.planned|js_data }} },
+  { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|js_data }} },
+  { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|js_data }} }
 ];
 options.chart.height = 240;
 options.colors = [window.EdifyChartSystem.comparisonSeries[0], window.EdifyChartSystem.comparisonSeries[1], 'var(--edify-chart-green)'];

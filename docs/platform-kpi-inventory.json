@@ -2462,7 +2462,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 233,
+   "line": 232,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",
@@ -4048,7 +4048,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1389,
+   "line": 1400,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -12578,7 +12578,7 @@
   {
    "audit_id": "KPI-SURFACE-014",
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 63,
+   "line": 68,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -13382,7 +13382,7 @@
   {
    "audit_id": "KPI-SURFACE-042",
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 36,
+   "line": 40,
    "source_pattern": "shared-component",
    "items_expression": "analytics_kpis",
    "presentation": "context",
@@ -13754,7 +13754,7 @@
   {
    "audit_id": "KPI-SURFACE-054",
    "template": "templates/pages/projects/index.html",
-   "line": 111,
+   "line": 108,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -13783,7 +13783,7 @@
   {
    "audit_id": "KPI-SURFACE-055",
    "template": "templates/pages/projects/index.html",
-   "line": 135,
+   "line": 132,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14069,7 +14069,7 @@
   {
    "audit_id": "KPI-SURFACE-065",
    "template": "templates/pages/work_plan/index.html",
-   "line": 205,
+   "line": 199,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -15139,7 +15139,7 @@
   {
    "audit_id": "KPI-SURFACE-106",
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 7,
+   "line": 8,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -15951,7 +15951,7 @@
   {
    "audit_id": "KPI-SURFACE-137",
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 97,
+   "line": 99,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -16069,7 +16069,7 @@
   {
    "audit_id": "KPI-SURFACE-141",
    "template": "templates/partials/partners/engagement_register.html",
-   "line": 29,
+   "line": 30,
    "source_pattern": "shared-component",
    "items_expression": "engagement.metrics",
    "presentation": "context",
@@ -16393,7 +16393,7 @@
   {
    "audit_id": "KPI-SURFACE-153",
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 54,
+   "line": 50,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -16422,7 +16422,7 @@
   {
    "audit_id": "KPI-SURFACE-154",
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 35,
+   "line": 39,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -40407,7 +40407,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1133,
+   "line": 1147,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -40433,7 +40433,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1549,
+   "line": 1563,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

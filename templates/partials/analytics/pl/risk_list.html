@@ -8,7 +8,7 @@
     </div>
     <button type="button" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="inline-flex min-h-6 items-center edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View full risk list &rarr;</button>
+       class="edify-band-glyph" aria-label="View full risk list" title="View full risk list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
   </div>
   <div class="overflow-x-auto -mx-1">
     {% paginate risk_list.rows "risk_list_rows_page" as risk_list_rows_pager %}

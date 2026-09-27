@@ -31,11 +31,7 @@ to the page where it is acted on; nothing is decided here.
         <h2 id="pl-coaching-title" class="rpl-card__title">Performance and coaching by officer</h2>
         <span class="rpl-card__subtitle">{{ coaching_totals.reviews_waiting }} review{{ coaching_totals.reviews_waiting|pluralize }} waiting on you · {{ coaching_totals.catch_up }} catch-up plan{{ coaching_totals.catch_up|pluralize }} · {{ coaching_totals.pd_to_review }} development request{{ coaching_totals.pd_to_review|pluralize }} to review · FY {{ fy }}</span>
       </div>
-      <div class="rpl-card__actions">
-        <a class="rpl-card__link" href="{{ coaching_links.reviews }}">Performance Reviews</a>
-        <a class="rpl-card__link" href="{{ coaching_links.recovery }}">Recovery Plans</a>
-        <a class="rpl-card__link" href="{{ coaching_links.development }}">Professional Development</a>
-      </div>
+      {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
     </header>
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Performance and coaching by officer; scroll sideways for more columns">
       {% paginate coaching_rows "coaching_rows_page" as coaching_rows_pager %}

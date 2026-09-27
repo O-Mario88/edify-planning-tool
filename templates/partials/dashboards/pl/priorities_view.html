@@ -41,7 +41,7 @@ verified SSA, and the guidance the lead has issued to the team.
             <h2 id="pl-distribution-title" class="rpl-card__title">Target distribution</h2>
             <span class="rpl-card__subtitle">Each team target shared across you and your officers{% if distribution.spreads_waiting %} · {{ distribution.spreads_waiting }} quarterly spread{{ distribution.spreads_waiting|pluralize }} waiting on you{% endif %}</span>
           </div>
-          <a class="rpl-card__link" href="{{ distribution.url }}">Target Distribution <span aria-hidden="true">&rarr;</span></a>
+          {# No link in a table's title band (owner, 2026-09-27); Target Distribution is a tab of Priorities. #}
         </header>
         <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Target distribution; scroll sideways for more columns">
           {% paginate distribution.rows "distribution_rows_page" as distribution_rows_pager %}

@@ -152,9 +152,11 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertContains(filtered, "Leadership Growth Project")
         self.assertNotContains(filtered, "Reading project coaching")
         self.assertContains(filtered, f"/projects/my-plan?project={self.project_b.id}")
-        self.assertContains(
-            filtered, 'More<span class="edify-filter-more__long"> filters</span>'
-        )
+        # Every filter is a field of the row (owner, 2026-09-27): no "More
+        # filters · active" disclosure; the row's own More takes the overflow.
+        self.assertNotContains(filtered, "spp-more-filters")
+        self.assertNotContains(filtered, " · active")
+        self.assertContains(filtered, 'name="activity_type"')
 
         htmx = self.client.get("/projects/planning?tab=ready", HTTP_HX_REQUEST="true")
         self.assertEqual(htmx.status_code, 200)

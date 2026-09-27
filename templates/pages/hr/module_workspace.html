@@ -8,7 +8,7 @@ every authenticated page.
 {% endcomment %}
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260913hractions1">
-{% if workspace.key == "analytics" %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260923srscroll1">{% endif %}
+{% if workspace.key == "analytics" %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endif %}
 {% endblock %}
 
 {% block title %}{{ title }} · Edify{% endblock %}
@@ -26,11 +26,11 @@ every authenticated page.
 
   <header class="edify-page-header hcos-hero">
     <div class="hcos-hero__copy edify-page-header__lead">
-      <span class="hcos-eyebrow">{{ eyebrow|default:"Human Capital Operations" }}</span>
+      <span class="hcos-eyebrow edify-page-eyebrow">{{ eyebrow|default:"Human Capital Operations" }}</span>
       <h1 id="hcos-title" class="edify-page-title edify-page-header__title">{{ title }}</h1>
       <p class="edify-page-header__description">{{ description }}</p>
     </div>
-    <div class="hcos-hero__actions">
+    <div class="hcos-hero__actions edify-page-header__controls">
       {% comment %}
       Several roles share a register without sharing the pages its buttons
       open: the RVP reads Workforce Planning but not Recruitment, so "Request

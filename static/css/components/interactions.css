@@ -1631,12 +1631,16 @@ main .edify-filter-row > label.edify-filter-row__field {
     flex: 0 0 auto !important;
     inline-size: auto !important;
     min-inline-size: 0 !important;
-    block-size: 2.25rem !important;
-    min-block-size: 2.25rem !important;
+    /* The phone action height and type (owner, 2026-09-27: "making mobile
+       buttons ... smaller to match and fit the mobile screens perfectly"):
+       the shared 2rem token and 12px, like every other phone button, not a
+       36px/13px header size of its own. Touch stays 44px (micro-ux.js). */
+    block-size: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
     padding-block: 0 !important;
     padding-inline: 0.75rem !important;
     gap: 0.375rem !important;
-    font-size: 0.8125rem !important;
+    font-size: 0.75rem !important;
     white-space: nowrap !important;
   }
 
@@ -1808,41 +1812,46 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
    Tablets too (owner, 2026-09-27: "move export button on the same row as
    the school directory header"). */
 @media (max-width: 63.999rem) {
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    grid-template-areas: "eyebrow eyebrow" "title actions" "text text" !important;
+  /* A wrapping row rather than a two-column grid: the title keeps its one-line
+     width and the actions take the rest of its line when they fit, and move
+     under the title, from the left, when they do not. The grid gave the
+     actions all the width they asked for and slid long labels ("Distribute
+     to my team", "Record an observation") over the title (2026-09-27 sweep). */
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) {
+    display: flex !important;
+    flex-flow: row wrap !important;
     align-items: center !important;
     column-gap: 0.75rem !important;
-    row-gap: 0 !important;
+    row-gap: 0.25rem !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead {
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead {
     display: contents !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > * {
-    grid-column: 1 / -1 !important;
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead > * {
+    flex: 1 1 100% !important;
+    order: 3 !important;
+    margin-block-start: 0 !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > .edify-page-eyebrow {
-    grid-area: eyebrow !important;
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead > :is(.edify-page-eyebrow, .edify-page-header__eyebrow) {
+    order: 0 !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > :is(h1, .edify-page-title) {
-    grid-area: title !important;
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead > :is(h1, .edify-page-title) {
+    flex: 1 0 auto !important;
+    order: 1 !important;
+    max-inline-size: 100% !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__lead > .edify-page-header__description {
-    grid-area: text !important;
-    margin-block-start: 0.25rem !important;
-  }
-
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, h1, .edify-page-title, .edify-page-header__description, [hidden]))) > .edify-page-header__controls {
-    grid-area: actions !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-end !important;
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__controls {
+    flex: 0 1 auto !important;
+    order: 2 !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
     inline-size: auto !important;
+    max-inline-size: 100% !important;
   }
 }
 
@@ -2103,4 +2112,129 @@ main :is([data-edify-filter-row], .school-filters-form, .school-filter-canvas, [
   min-block-size: 1.5rem !important;
   max-block-size: 1.5rem !important;
   padding-block: 0 !important;
+}
+
+/* ─── A TABLE'S ONE ACTION IN ITS TITLE BAND (owner, 2026-09-27) ────────────
+   "Basically all buttons on the table header may not be necessary. If you
+   MUST put it, then maybe use an icon so the counters dont wrap." Shortcuts to
+   other pages left the bands; an action that belongs to the table itself
+   (record one, open the whole list) stays as one 24px icon, named for screen
+   readers and in its tooltip, in the band's own colour (white on the blue
+   band). Its touch target is micro-ux.js's invisible 44px square. */
+main .edify-band-glyph.edify-band-glyph {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  inline-size: 1.5rem !important;
+  block-size: 1.5rem !important;
+  min-inline-size: 1.5rem !important;
+  min-block-size: 1.5rem !important;
+  padding: 0 !important;
+  border: 1px solid currentColor !important;
+  border-radius: var(--edify-radius-control) !important;
+  background: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+main .edify-band-glyph.edify-band-glyph > svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+}
+
+main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, currentColor 14%, transparent) !important;
+}
+
+/* ─── CORE SCHOOL ROWS TAKE PLANNING'S TYPE TOO (owner, 2026-09-27) ──────────
+   "school directory should have the same typography as planning ... could
+   you apply the same everywhere." Core Schools shares the directory's record
+   row, so it takes the same steps: the compact ID chip, the name at the table
+   step on one line (an ellipsis when longer), and its package figures as
+   wrapping "Label: value" rows at one type size — the table step, the micro
+   step on a phone. The figures stay open: they are what this list is for. */
+:root main .core-school-row.core-school-row.school-record-row .school-record-row__school-id {
+  min-block-size: 0 !important;
+  padding: 0.0625rem 0.375rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 1.3 !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row .school-record-row__title {
+  display: block !important;
+  min-inline-size: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  -webkit-line-clamp: none !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row .school-record-row__title > .school-record-row__link {
+  display: inline !important;
+  font: inherit !important;
+  white-space: nowrap !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 0.25rem 1.25rem !important;
+  margin: 0 !important;
+  padding: 0.125rem 0 0.25rem !important;
+  grid-template-columns: none !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata > div {
+  display: inline-flex !important;
+  flex: 0 1 auto !important;
+  align-items: baseline !important;
+  gap: 0.3rem !important;
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  grid-template-columns: none !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata :is(dt, dd) {
+  margin: 0 !important;
+  font-size: var(--edify-text-table-size) !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata dt {
+  color: var(--edify-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata dd {
+  font-weight: 600 !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata a[href]:not(#edify-filter-none) {
+  display: inline !important;
+  min-block-size: 0 !important;
+  min-inline-size: 0 !important;
+}
+
+:root main .core-school-row.core-school-row.school-record-row .row-menu__trigger {
+  font-size: var(--edify-text-table-size) !important;
+}
+
+@media (max-width: 47.999rem) {
+  :root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata {
+    column-gap: 0.875rem !important;
+  }
+
+  :root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata :is(dt, dd) {
+    font-size: var(--edify-text-micro-size) !important;
+  }
 }

@@ -1153,7 +1153,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2552,
+      "bytes": 2576,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1480,7 +1480,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7872,
+      "bytes": 7320,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1597,7 +1597,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8135,
+      "bytes": 8169,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1703,7 +1703,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5032,
+      "bytes": 4952,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1725,7 +1725,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4447,
+      "bytes": 4203,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1936,7 +1936,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1612,
+      "bytes": 1637,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2094,7 +2094,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2970,
+      "bytes": 2994,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2226,8 +2226,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3157,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3301,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2273,7 +2275,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1634,
+      "bytes": 1658,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2319,7 +2321,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20599,
+      "bytes": 21032,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2506,7 +2508,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6277,
+      "bytes": 6534,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3512,7 +3514,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6205,
+      "bytes": 5822,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3525,8 +3527,7 @@
       "purpose": "Reusable filters interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/core_schools/filters.html",
@@ -3924,7 +3925,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2275,
+      "bytes": 2552,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -4341,7 +4342,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3593,
+      "bytes": 3604,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -4463,7 +4464,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 34460,
+      "bytes": 34744,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -4563,7 +4564,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 50235,
+      "bytes": 50303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -4912,7 +4913,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7359,
+      "bytes": 7168,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5026,7 +5027,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10196,
+      "bytes": 10180,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5833,7 +5834,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 12581,
+      "bytes": 12607,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -6222,7 +6223,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3347,
+      "bytes": 3348,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -6390,7 +6391,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1415,
+      "bytes": 1477,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/export-drawer"
@@ -7616,7 +7617,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28337,
+      "bytes": 28418,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8886,7 +8887,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2572,
+      "bytes": 1504,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -9486,7 +9487,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11805,
+      "bytes": 11967,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -9828,7 +9829,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5565,
+      "bytes": 5845,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/",
@@ -10706,7 +10707,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 18035,
+      "bytes": 18089,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -10737,7 +10738,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12377,
+      "bytes": 12409,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -10765,7 +10766,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19304,
+      "bytes": 19290,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -11094,7 +11095,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12058,
+      "bytes": 11814,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -11143,9 +11144,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 18668,
+      "bytes": 18726,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -12494,7 +12496,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2327,
+      "bytes": 2745,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -12617,7 +12619,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 584,
+      "bytes": 582,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -22278,7 +22280,7 @@
       "permission_key": "cd_analytics",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "One of the CD's five country CSVs, for the cockpit's current period.",
+      "purpose": "The CD's country export, for the cockpit's current period.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -22647,7 +22649,7 @@
       "permission_key": "analytics",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Download the caller's current role-scoped analytics KPIs as CSV.",
+      "purpose": "Download the caller's current role-scoped analytics KPIs, as an Excel workbook (owner, 2026-09-27); ``?format=csv`` still answers as CSV.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -44515,7 +44517,7 @@
       "permission_key": "ia_verification_analytics",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The decisions behind the analytics, as CSV, for the same window.",
+      "purpose": "The decisions behind the analytics, for the same window: an Excel workbook (owner, 2026-09-27), or CSV with ``?format=csv``.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -64024,7 +64026,7 @@
       "permission_key": "partner_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "The current partner view, as CSV. Same scope, same period, same rows.",
+      "purpose": "The current partner view, as CSV or (``format=xlsx``) as a workbook. Same scope, same period, same rows.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -65363,7 +65365,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "partner_assignments",
-      "primary_action": "Open My Plan",
+      "primary_action": "Schedule",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "\u00a74 Assigned Activities \u2014 cluster/group work awaiting the decision.",
       "remediation": "No automated remediation outstanding",
@@ -65458,7 +65460,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "partner_schools",
-      "primary_action": "Open My Plan",
+      "primary_action": "Schedule",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "\u00a73 Assigned Schools \u2014 school-based work awaiting the partner's Schedule-or-Return decision. One click opens the assignment detail.",
       "remediation": "No automated remediation outstanding",
@@ -65552,7 +65554,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "partner_assignments",
-      "primary_action": "Open My Plan",
+      "primary_action": "Schedule",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Assigned Activities \u2014 the partner's home. Everything assigned to their organisation: what still needs scheduling (with the schedule drawer), and what is already scheduled (which lives on in My Plan).",
       "remediation": "No automated remediation outstanding",
@@ -73133,8 +73135,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /projects/create",
-        "GET /projects/filter",
-        "GET /projects/filters-drawer"
+        "GET /projects/filter"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -74240,8 +74241,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /projects/create",
-        "GET /projects/filter",
-        "GET /projects/filters-drawer"
+        "GET /projects/filter"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",

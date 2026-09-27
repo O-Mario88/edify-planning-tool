@@ -234,6 +234,18 @@ class AccountantJourneyFlowTest(BaseFlowTest):
         r = self.client.get("/finance/fund-allocation")
         self.assertEqual(r.status_code, 200)
 
+    def test_fund_allocation_exports_excel_and_still_csv(self):
+        """Owner, 2026-09-27: "It should be export in excel not csv"."""
+        from apps.core.excel import XLSX_CONTENT_TYPE
+
+        book = self.client.get("/finance/fund-allocation", {"export": "xlsx"})
+        self.assertEqual(book.status_code, 200)
+        self.assertEqual(book["Content-Type"], XLSX_CONTENT_TYPE)
+        sheet = self.client.get("/finance/fund-allocation", {"export": "csv"})
+        self.assertEqual(sheet.status_code, 200)
+        self.assertTrue(sheet["Content-Type"].startswith("text/csv"))
+        self.assertTrue(sheet.content.decode().startswith("Staff,"))
+
 
 class ImpactAssessmentJourneyFlowTest(BaseFlowTest):
     """The IA verification queue and dashboard."""

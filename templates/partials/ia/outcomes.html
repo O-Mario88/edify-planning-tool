@@ -161,7 +161,7 @@ was measured. Tables are plain text: a status is a word with a tone.
           <h3 id="ia-area-table-title" class="rpl-card__title">By outcome area and SSA domain</h3>
           <span class="rpl-card__subtitle">Evidence: {{ pf.grade.label }}</span>
         </div>
-        <a class="rpl-row-link rounded-control" href="/declining-schools?fy={{ pf.fy }}">Open Declining Schools</a>
+        {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
       </header>
       <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="School change by outcome area; scroll sideways for more columns">
         {% paginate pf.rows "pf_rows_page" as pf_rows_pager %}
@@ -198,7 +198,7 @@ was measured. Tables are plain text: a status is a word with a tone.
         <h2 id="ia-evidence-title" class="rpl-card__title">Student learning, discipleship and EdTech</h2>
         <span class="rpl-card__subtitle">FY{{ ev.fy }} · confirmed school evidence only; pending records wait for a second verifier</span>
       </div>
-      <a class="rpl-row-link rounded-control" href="/ia/school-evidence/">Open School Evidence</a>
+      {# No links in a table's title band (owner, 2026-09-27: "remove all the buttons" on the table header); the destination is in the sidebar. #}
     </header>
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Evidence beyond the SSA; scroll sideways for more columns">
       <table class="rpl-table" data-mobile-table="scroll">

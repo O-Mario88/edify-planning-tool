@@ -158,6 +158,50 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("hover:bg-slate-50", legend_controls)
         self.assertNotIn("border border-slate-200 edify-surface", legend_controls)
 
+    def test_school_key_keeps_one_aligned_rhythm(self):
+        """Owner, 2026-09-27: "the legends are poorly aligned and spaced".
+
+        The platform's shared button rules centred each entry in a 40px cell
+        and micro-ux.js read the bold <p> heading with buttons beside it as a
+        page heading row, centring the whole key. The key now carries its own
+        layout: the heading is a div, the entries are start-aligned 28px rows,
+        two columns on a phone and one line beside the heading from 48rem."""
+        template = _regional_source()
+        layout = _read("static/css/pages/analytics-dashboard.css")
+
+        self.assertIn(
+            '<div class="sr-key mt-3 border-t border-slate-100 pt-3">', template
+        )
+        self.assertIn('<div id="school-map-legend-title"', template)
+        self.assertNotIn('<p id="school-map-legend-title"', template)
+        key = template[
+            template.index('class="sr-key ') : template.index("sr-distribution-panel")
+        ]
+        self.assertIn('class="sr-key-item rounded-control', key)
+        # min-h-8 is what the phone action-height rule keys on.
+        self.assertNotIn("min-h-8", key)
+        self.assertIn("justify-content: flex-start !important;", layout)
+        self.assertIn("height: 1.75rem !important;", layout)
+        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr));", layout)
+
+    def test_phone_and_tablet_sheet_is_as_tall_as_the_drawing(self):
+        """Owner, 2026-09-27: "There is a huge space above and below the map
+        in mobile mode... fix it also in tablet mode". Below desktop width
+        the sheet is square like the drawing's viewBox, capped by the room
+        under the chrome, with a floor for landscape phones."""
+        layout = _read("static/css/pages/analytics-dashboard.css")
+        start = layout.index(
+            "@media (max-width: 63.999rem) {\n  .analytics-geo-card .sr-map-viewport"
+        )
+        block = layout[start : layout.index("}\n}", start)]
+        self.assertIn("aspect-ratio: 1 / 1 !important;", block)
+        self.assertIn("height: auto !important;", block)
+        self.assertIn("min-height: 0 !important;", block)
+        self.assertIn(
+            "max-height: max(17.5rem, min(600px, calc(100svh - var(--sr-map-chrome)))) !important;",
+            block,
+        )
+
     def test_country_totals_sit_below_the_distribution_heading(self):
         template = _regional_source()
 

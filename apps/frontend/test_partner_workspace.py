@@ -138,6 +138,19 @@ class PartnerWorkspaceTests(TestCase):
         # The agreed cost line travels in the export, where it always did.
         export = self.client.get(f"/partner-oversight/export?fy={self.fy}")
         self.assertIn("120000", b"".join(export.streaming_content).decode())
+        # The page's one Export button is the workbook (owner, 2026-09-27).
+        self.assertContains(response, "&amp;format=xlsx")
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        book = self.client.get(f"/partner-oversight/export?fy={self.fy}&format=xlsx")
+        values = [
+            cell.value
+            for row in load_workbook(BytesIO(book.content)).active.iter_rows()
+            for cell in row
+        ]
+        self.assertIn(120000, values)
 
     def test_the_merge_kept_the_partners_contact_details(self):
         """The directory was the only place a supervisor could find who to

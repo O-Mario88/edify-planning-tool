@@ -317,13 +317,25 @@
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
 }
+/* A label that wraps keeps its swatch on its first line and its second line
+   under its first word (owner, 2026-09-27: "the legends are poorly aligned
+   and spaced"); a phone lists the five one under another rather than
+   wrapping them ragged. */
 .plwk-legend__item {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.375rem;
+}
+@media (max-width: 47.999rem) {
+  .plwk-legend {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .plwk-legend__item::before {
   content: "";
+  flex: 0 0 auto;
+  margin-block-start: 0.1875rem;
   inline-size: 0.75rem;
   block-size: 0.75rem;
   border: 1px solid var(--plw-line);

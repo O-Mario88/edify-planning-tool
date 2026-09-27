@@ -21,7 +21,8 @@ since; each opens the record drawer with the observation linked.
       <span class="rpl-card__subtitle">Meetings, orientations and quality follow-ups that build the partner's capacity</span>
     </div>
     {% if engagement.can_record %}
-    <a href="{{ engagement.new_page }}" class="btn btn-primary h-8" hx-get="{{ engagement.new_drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-partner-engagement-new>Record engagement</a>
+    {# The register's own action, as one icon in its title band (owner, 2026-09-27). #}
+    <a href="{{ engagement.new_page }}" class="edify-band-glyph" hx-get="{{ engagement.new_drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-partner-engagement-new aria-label="Record engagement" title="Record engagement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
     {% endif %}
   </header>
 

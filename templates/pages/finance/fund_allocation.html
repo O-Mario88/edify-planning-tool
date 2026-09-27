@@ -27,11 +27,11 @@
         <button type="button"
                 hx-get="/finance/fund-allocation/admin-budget-drilldown?month={{ admin_month_name }}&fy={{ fy }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
-                class="rounded-control border border-slate-200 edify-surface px-3 py-2 text-[12px] font-semibold edify-text shadow-sm hover:opacity-90 transition-opacity">Admin Budget Breakdown</button>
+                class="btn btn-secondary h-8">Admin Budget Breakdown</button>
         <button type="button"
                 hx-get="/finance/fund-allocation/export-drawer?month={{ admin_month_name }}&fy={{ fy }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
-                class="rounded-control edify-surface edify-text px-3 py-2 text-[12px] font-bold shadow-sm hover:opacity-90 transition-opacity inline-flex items-center gap-1.5">
+                class="btn btn-secondary h-8 inline-flex items-center gap-1.5">
           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
           Export
         </button>

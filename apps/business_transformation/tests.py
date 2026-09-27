@@ -656,12 +656,12 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                     self.assertIn(
                         Permission.BUSINESS_TRANSFORMATION_EXPORT.value, permissions
                     )
-                    self.assertContains(response, "Export loan records")
+                    self.assertContains(response, "data-loans-export")
                 else:
                     self.assertNotIn(
                         Permission.BUSINESS_TRANSFORMATION_EXPORT.value, permissions
                     )
-                    self.assertNotContains(response, "Export loan records")
+                    self.assertNotContains(response, "data-loans-export")
 
                 if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
                     self.assertIn(

@@ -260,6 +260,26 @@
       /* Every cell carries the marker the row rhythm hangs its rules on, so a
          page stylesheet with a class selector cannot out-rank the rhythm. */
       cell.classList.add('edify-cell');
+      /* A row's identity whose name is bare text gets a span, so the identity
+         measure holds when the column pins (responsive-system.css caps the
+         cell's first element): "School Name" and "User" cells were 306px of
+         a 330px phone table, over every column after them (2026-09-27
+         sweep). The identity is the row's first cell, or the one after a
+         selection box; a cell Alpine writes (x-text) is left alone. */
+      var row = cell.parentElement;
+      var prev = cell.previousElementSibling;
+      var identity = row && (cell === row.firstElementChild ||
+        (prev === row.firstElementChild && prev.querySelector('input[type="checkbox"], input[type="radio"], .edify-table-choice')));
+      if (identity && !cell.hasAttribute('x-text') && !cell.hasAttribute('x-html')) {
+        var lead = [];
+        for (var node = cell.firstChild; node && node.nodeType !== 1; node = node.nextSibling) lead.push(node);
+        if (lead.some(function (n) { return n.nodeType === 3 && n.textContent.trim(); })) {
+          var name = document.createElement('span');
+          name.className = 'edify-cell-name';
+          cell.insertBefore(name, lead[0]);
+          lead.forEach(function (n) { name.appendChild(n); });
+        }
+      }
       var hiddenChildren = read.hidden;
       Array.from(cell.children).forEach(function (child, index) {
         child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);

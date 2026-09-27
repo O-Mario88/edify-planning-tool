@@ -10,8 +10,8 @@ method="GET"
 action="/finance/fund-allocation"
 class="space-y-4 text-[12px] text-slate-600"
 >
-<!-- Force CSV trigger -->
-<input type="hidden" name="export" value="csv">
+<!-- One Excel export (owner, 2026-09-27: "It should be export in excel not csv") -->
+<input type="hidden" name="export" value="xlsx">
 <!-- Retain month/fy context -->
 <input type="hidden" name="month" value="{{ selected_month }}">
 <input type="hidden" name="fy" value="{{ selected_fy }}">
@@ -36,7 +36,7 @@ type="submit"
 @click="setTimeout(() => $dispatch('close-drawer'), 150)"
 class="btn btn-primary h-8"
 >
-Download CSV
+Download Excel
 </button>
 </div>
 </form>

@@ -19,7 +19,7 @@ Context a section view supplies:
 {% endcomment %}
 {% block title %}{{ panel_title|default:"Analytics" }} · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260923srscroll1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 pt-5 pb-5 space-y-3 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
@@ -30,8 +30,7 @@ Context a section view supplies:
     <p class="edify-page-header__description">Program performance, field execution, SSA improvement, and impact.</p>
   </div>
 
-  <div class="analytics-header-actions flex flex-wrap items-center gap-2">
-    <span id="analytics-panel-updating" class="htmx-indicator edify-text-caption text-slate-400" role="status">Updating…</span>
+  <div class="analytics-header-actions edify-page-header__controls flex flex-wrap items-center gap-2">
     {% comment %}
     The SSA section renders this shell for every role, including partner, BT
     and MFI readers the Analytics routes refuse: each control is drawn only
@@ -40,10 +39,10 @@ Context a section view supplies:
     {% url 'frontend:analytics_export' as analytics_export_url %}
     {% if request.user|can_open:analytics_export_url %}
     <a href="{{ analytics_export_url }}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
-      class="btn btn-ghost h-8">
+      class="btn btn-ghost h-8" aria-label="Export to Excel" title="Export to Excel">
       <svg aria-hidden="true" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
-      <span class="analytics-action-label--desktop">Download CSV</span>
-      <span class="analytics-action-label--mobile">Export</span>
+      {# One Excel export (owner, 2026-09-27: "It should be export in excel not csv"). #}
+      <span>Export</span>
     </a>
     {% endif %}
     {% if request.user|can_open:"/analytics/schedule-report" %}
@@ -64,6 +63,8 @@ Context a section view supplies:
     {% endif %}
   </div>
 </header>
+{# Out of the header's actions, so a phone keeps them on the title's line (owner, 2026-09-27). #}
+<span id="analytics-panel-updating" class="htmx-indicator edify-text-caption text-slate-400" role="status">Updating…</span>
 
 
 <div id="analytics-scope" class="space-y-3">

@@ -429,9 +429,11 @@ class CDAnalyticsTest(TestCase):
         rows = S.export_rows(self.cd, fy=FY)
         self.assertEqual({r["name"] for r in rows}, {"PL Ada", "PL Bola"})
         self.client.force_login(self.cd)
+        # The page's Export is one workbook (owner, 2026-09-27); the CSV of the
+        # first dataset still answers ``format=csv``.
         response = self.client.get(
             "/analytics/country-director/export",
-            {"fy": FY},
+            {"fy": FY, "format": "csv"},
         )
         self.assertEqual(response.status_code, 200)
         header = response.content.decode().splitlines()[0]

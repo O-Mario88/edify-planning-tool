@@ -28,9 +28,11 @@ resolving a hand-back opens its own governed drawer.
     {% comment %}The export route refuses a role without data export; so does
     the button, rather than offering a download that lands on a refusal.{% endcomment %}
     <a class="edify-action-button secondary h-9 partner-plan-toolbar__export"
-       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
+       href="/partner-oversight/export?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}&amp;format=xlsx"
+       aria-label="Export to Excel" title="Export to Excel">
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-      Export CSV
+      {# One Excel export (owner, 2026-09-27: "It should be export in excel not csv"). #}
+      Export
     </a>
     {% endif %}
   </div>
