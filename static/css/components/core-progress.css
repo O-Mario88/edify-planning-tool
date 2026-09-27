@@ -22,7 +22,7 @@
   padding: 0 0.3rem;
   border: 1px solid var(--edify-border);
   border-radius: 0.3rem;
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.15rem;
   text-align: center;
