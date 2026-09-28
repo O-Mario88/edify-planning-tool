@@ -125,9 +125,9 @@ and every gap count opens the list of the schools behind it.
 
   {% if monitor_gap %}
   {% paginate monitor.gap_schools "gap_page" as gap_pager %}
-  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-gap-title" data-monitor-gap="{{ monitor_gap }}">
+  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-list-title" data-monitor-gap="{{ monitor_gap }}">
     <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="monitor-gap-title">{{ monitor_gap_label }}</h3>
+      <h3 id="monitor-list-title">{{ monitor_gap_label }}</h3>
       <span class="tabular-nums">{{ gap_pager.total|intcomma }} school{{ gap_pager.total|pluralize }}</span>
     </header>
     <div class="overflow-x-auto">

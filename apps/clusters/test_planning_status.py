@@ -95,7 +95,7 @@ class ClusterPlanningStatusTest(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn("data-cluster-planning-status", html)
-        self.assertIn(f'data-cluster-status="{self.idle.id}"', html)
+        self.assertIn(f'data-cluster-plan-row="{self.idle.id}"', html)
         self.assertIn("Group Trainings Planned", html)
         ids = {row["id"] for row in response.context["group_trainings"]}
         self.assertEqual(ids, {self.training.id})

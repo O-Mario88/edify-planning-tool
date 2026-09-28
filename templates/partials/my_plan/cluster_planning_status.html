@@ -24,7 +24,7 @@ or Not planned — clusters with nothing planned first
 </div>
 </div>
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate cluster_planning.rows "cluster_status_page" 20 as cluster_status_pager %}
+{% paginate cluster_planning.rows "cluster_plan_page" 20 as cluster_plan_pager %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
@@ -37,8 +37,8 @@ or Not planned — clusters with nothing planned first
 </tr>
 </thead>
 <tbody>
-{% for row in cluster_status_pager.rows %}
-<tr data-cluster-status="{{ row.id }}">
+{% for row in cluster_plan_pager.rows %}
+<tr data-cluster-plan-row="{{ row.id }}">
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="{{ row.url }}" class="hover:underline">{{ row.name }}</a></td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
 <td class="text-center tabular-nums" data-label="Schools">{{ row.schools }}</td>
@@ -56,7 +56,7 @@ or Not planned — clusters with nothing planned first
 {% endfor %}
 </tbody>
 </table>
-{% include "components/table_pager.html" with pager=cluster_status_pager param="cluster_status_page" pagination_label="Cluster planning pages" %}
+{% include "components/table_pager.html" with pager=cluster_plan_pager param="cluster_plan_page" pagination_label="Cluster planning pages" %}
 </div>
 </div>
 {% endif %}
