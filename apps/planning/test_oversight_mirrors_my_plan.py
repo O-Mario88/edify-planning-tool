@@ -273,6 +273,56 @@ class PlanningOversightMirrorsMyPlanTest(MirrorFixture):
             set(),
         )
 
+    def test_the_operational_year_reads_forward_into_next_year_plans(self):
+        """Owner, 2026-09-28: "Activities planned by the CCEOs/Staffs are not
+        showing all to the PL or their manager." From 15 September staff
+        date most new plans into the next fiscal year; the Team Plan for the
+        operational year must hold them, as My Plan does."""
+        self.client.force_login(self.pl_user)
+        response = self.client.get("/team-planning-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            self.james_next_fy.id,
+            self._ids_under(response.context["groups"], self.james),
+        )
+        self.assertEqual(
+            response.context["period_label"], f"FY {self.fy}–{self.next_fy}"
+        )
+
+    def test_the_manager_s_team_view_reads_forward_too(self):
+        self.client.force_login(self.cd_user)
+        response = self.client.get(f"/country-planning-oversight/team/{self.pl.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            self.james_next_fy.id,
+            self._ids_under(response.context["owner_groups"], self.james),
+        )
+
+    def test_work_of_staff_with_no_lead_opens_under_unassigned(self):
+        """The Unassigned group's rows used to load empty: its panel asked for
+        the team of a lead called "None" (owner, 2026-09-28)."""
+        orphan_user, orphan = _user("orphan@mirror.test", "Orphan", EdifyRole.CCEO)
+        school = self._school("MIR-9", "Orphan Client", orphan_user.id)
+        work = self._activity("school_visit", orphan.id, school=school)
+        ia_user, _ = _user("ia@mirror.test", "Assessor", EdifyRole.IMPACT_ASSESSMENT)
+        for reader in (self.cd_user, ia_user):
+            with self.subTest(reader=reader.active_role):
+                self.client.force_login(reader)
+                response = self.client.get("/country-planning-oversight/team/None")
+                self.assertEqual(response.status_code, 200)
+                ids = {
+                    item.activity_id
+                    for group in response.context["owner_groups"]
+                    for item in group["items"]
+                }
+                self.assertIn(work.id, ids)
+                # A lead's own team is not repeated there.
+                self.assertNotIn(self.james_work[0].id, ids)
+
+    def test_a_month_stays_inside_the_chosen_year(self):
+        groups = self._team_groups(period="month", month=10)
+        self.assertNotIn(self.james_next_fy.id, self._ids_under(groups, self.james))
+
     def test_the_country_page_files_each_team_under_its_lead(self):
         self.client.force_login(self.cd_user)
         response = self.client.get(
@@ -284,6 +334,70 @@ class PlanningOversightMirrorsMyPlanTest(MirrorFixture):
             with self.subTest(person=user.name):
                 expected = my_plan_ids(user, fy=self.fy, period="fy")
                 self.assertEqual(expected - self._ids_under(groups, profile), set())
+
+
+class TheTablesCountWhatMyPlanCountsTest(MirrorFixture):
+    """Owner, 2026-09-28: "a cceo may have 300 visits planned but the PL is
+    seeing like 100 ... make sure the PL are seeing exactly the number ...
+    planned by the CCEO". Every visit on an officer's My Plan is a visit on
+    the lead's Team Plan tables, and nothing else is."""
+
+    def _tables(self, person):
+        self.client.force_login(self.pl_user)
+        response = self.client.get(
+            "/team-planning-oversight/", {"fy": self.fy, "owner": person.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        [group] = response.context["panel_groups"]
+        return {
+            key: {item.activity_id for item in group[key]}
+            for key in (
+                "client_school_visits",
+                "core_school_visits",
+                "cluster_meetings",
+                "planned_trainings",
+            )
+        }
+
+    def test_training_follow_ups_and_core_trained_visits_are_visits(self):
+        follow_up = self._activity(
+            "training_follow_up_visit", self.james.id, school=self.client_school
+        )
+        trained_school = self._school(
+            "MIR-8", "Mirror Trained", self.james_user.id, school_type="core_trained"
+        )
+        trained_visit = self._activity(
+            "school_visit", self.james.id, school=trained_school
+        )
+        tables = self._tables(self.james)
+
+        self.assertIn(follow_up.id, tables["client_school_visits"])
+        self.assertNotIn(follow_up.id, tables["planned_trainings"])
+        self.assertIn(trained_visit.id, tables["client_school_visits"])
+        self.assertNotIn(trained_visit.id, tables["core_school_visits"])
+        # Trainings stay trainings.
+        in_school_training, cluster_training = self.james_work[3], self.james_work[5]
+        self.assertIn(in_school_training.id, tables["planned_trainings"])
+        self.assertIn(cluster_training.id, tables["planned_trainings"])
+
+    def test_the_visit_count_is_my_plan_s_visit_count(self):
+        from apps.core.activity_types import VISIT_TYPES
+
+        self._activity(
+            "training_follow_up_visit", self.james.id, school=self.client_school
+        )
+        tables = self._tables(self.james)
+        context = get_frontend_context(self.james_user, {"fy": self.fy, "period": "fy"})
+        my_plan_visits = {
+            row["id"]
+            for key in ("school_visits", "core_school_visits")
+            for row in context[key]
+            if row["activity_type"] in VISIT_TYPES
+        }
+        oversight_visits = tables["client_school_visits"] | tables["core_school_visits"]
+        self.assertTrue(my_plan_visits)
+        self.assertEqual(my_plan_visits - oversight_visits, set())
+        self.assertFalse(oversight_visits & tables["planned_trainings"])
 
 
 class ClusterOversightMirrorsMyPlanTest(MirrorFixture):

@@ -256,6 +256,18 @@ def my_plan_view(request):
         context["partner_invoice_tracker"] = partner_payment_tracker(request.user)
         return render(request, "pages/partner/my_plan.html", context)
 
+    # Which of the reader's clusters have a group training and a cluster
+    # meeting planned (owner, 2026-09-28), for the Cluster Planning Status card.
+    from apps.clusters.planning_status import cluster_planning_status
+    from apps.core.fy import get_operational_fy
+
+    context["cluster_planning"] = cluster_planning_status(
+        request.user, fy=context.get("fy") or get_operational_fy()
+    )
+    context["can_plan_clusters"] = RolePermissionService.can_view_page(
+        request.user, "planning"
+    ) and RolePermissionService.can_schedule_activity(request.user)
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
     return render(request, "pages/my_plan/index.html", context)

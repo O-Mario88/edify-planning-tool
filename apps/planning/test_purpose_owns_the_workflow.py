@@ -86,38 +86,6 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
             "catalogue item it no longer uses.",
         )
 
-    def test_a_school_visit_pin_does_not_turn_the_purpose_into_a_school_visit(self):
-        """A School Visit the SSA ranks first is no purpose's own kind, so it
-        used to stay pinned whatever the planner chose: each of these saved as
-        a school_visit, used the client school's one support visit, and the
-        next one planned there was refused (2026-09-28)."""
-        pinned = self.item("STANDARD_SCHOOL_VISIT")
-        self.assertEqual(pinned.workflow_kind, "school_visit")
-
-        for purpose, kind in (
-            ("donor_visit", "donor_visit"),
-            ("story_gathering", "story_gathering_visit"),
-            ("school_invitation", "school_invitation"),
-            ("social_visit", "social_visit"),
-            ("ssa_support", "school_visit_ssa_collection"),
-            ("training_follow_up", "training_follow_up_visit"),
-        ):
-            with self.subTest(purpose=purpose):
-                response = self._post(
-                    purpose_of_visit=purpose,
-                    catalogue_item_id=pinned.id,
-                    recommendation_reason="SSA recommends a School Visit.",
-                )
-
-                self.assertIn(response.status_code, (200, 204))
-                activity = Activity.objects.filter(purpose_type=purpose).first()
-                self.assertIsNotNone(activity, response.content.decode()[:400])
-                self.assertEqual(activity.activity_type, kind)
-                self.assertEqual(activity.catalogue_item.workflow_kind, kind)
-                self.assertNotIn(
-                    "SSA recommends a School Visit", activity.recommendation_reason
-                )
-
     def test_ssa_support_and_a_donor_visit_leave_the_support_visit_open(self):
         """The owner's two counts (2026-09-28) are read by activity type: SSA
         Support is counted apart, and a donor visit is in neither count."""
@@ -135,7 +103,7 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
         self.assertTrue(gate.staff_can_schedule, gate.staff_reason)
 
     def test_a_pin_of_the_purposes_own_kind_is_left_alone(self):
-        """The control for the rule above: a pin that already is the
+        """The control for the generic-pin rule: a pin that already is the
         purpose's kind keeps its row and its SSA reason."""
         pinned = self.item("STANDARD_SCHOOL_VISIT_SSA_COLLECTION")
 
@@ -185,4 +153,38 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
             activity.recommendation_reason,
             "SSA recommends in-school training.",
             "A matching priority activity must keep the governed SSA provenance.",
+        )
+
+    def test_a_generic_visit_pin_does_not_turn_outreach_into_the_support_visit(self):
+        """The same defect through a generic pin. A BT follow-up or standard
+        school visit carries the kind ``school_visit``, which names no
+        purpose, so the conflict test let it stand: a Donor Visit was saved
+        as a ``school_visit`` and used up the client school's one staff
+        support visit, and the SSA support visit after it was refused (the
+        partner-supported-schools browser journey J2)."""
+        pinned = self.item("STANDARD_SCHOOL_VISIT")
+        self.assertEqual(pinned.workflow_kind, "school_visit")
+        day = _schedulable_date(room=1)
+        expected = {
+            "donor_visit": "donor_visit",
+            "story_gathering": "story_gathering_visit",
+            "ssa_support": "school_visit_ssa_collection",
+        }
+        for purpose, activity_type in expected.items():
+            with self.subTest(purpose=purpose):
+                response = self._post(
+                    purpose_of_visit=purpose,
+                    catalogue_item_id=pinned.id,
+                    scheduled_date=day.isoformat(),
+                    recommendation_reason="SSA recommends a follow-up visit.",
+                )
+                self.assertIn(response.status_code, (200, 204))
+                self.assertNotIn(b"staff support visit for", response.content)
+                activity = Activity.objects.order_by("-created_at").first()
+                self.assertEqual(activity.activity_type, activity_type)
+                self.assertEqual(activity.catalogue_item.workflow_kind, activity_type)
+        self.assertFalse(
+            Activity.objects.filter(
+                school=self.school, activity_type="school_visit"
+            ).exists()
         )

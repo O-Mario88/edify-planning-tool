@@ -19,8 +19,11 @@
  *
  * My Plan's tables became record tables on 2026-09-19 and a record table
  * scrolls instead of taking a plan (micro-ux.js, 2026-09-20), so the journey
- * reads the Country Director's operations dashboard, whose Who's Online and
- * Programme Lead tables still take a plan at 1440px with a control per row.
+ * reads the Country Director's operations dashboard, whose Who's Online table
+ * takes a plan at 1440px. Its groups start folded (owner, 2026-09-25), and a
+ * folded table has only headings to plan from, so the journey opens the
+ * first group as a reader does; the panel asks for a fresh plan when a group
+ * opens.
  *
  * Asserted on the rendered geometry, not the plan: a heading that fits its
  * own box, and a control the reader can actually get to.
@@ -34,6 +37,10 @@ test('planned columns show their headings and keep their controls reachable', as
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto('/dashboard?view=operations');
   await expect(page.locator('main table').first()).toBeVisible();
+  await page
+    .locator('[data-admin-presence] tbody.presence-group:has(tr.presence-row) [data-presence-toggle]')
+    .first()
+    .click();
   await page.waitForTimeout(600);
 
   const planned = page.locator('main table.edify-table--truncate');

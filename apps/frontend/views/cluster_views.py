@@ -953,6 +953,16 @@ def cluster_detail_view(request, cluster_id):
         "support_rule": support_visibility_enabled(request.user),
     }
     context.update(_catchment_context(request.user, _cluster_row))
+    if _cluster_row is not None:
+        # Planned and completed work with its actions (owner, 2026-09-28).
+        from apps.activities import profile_activities as profile_acts
+
+        context["profile_activities"] = profile_acts.profile_activities(
+            request,
+            profile_acts.for_cluster(_cluster_row),
+            param="cluster_acts",
+            subject="auto",
+        )
     return render(request, "pages/clusters/detail.html", context)
 
 

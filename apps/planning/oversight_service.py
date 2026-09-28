@@ -1116,7 +1116,11 @@ def _activity_item(
     participants_count = int(
         activity.participants_per_school or activity.expected_participants or 0
     )
-    is_training = (
+    # A Training Follow Up is a VISIT (VISIT_TYPES), whatever its name says
+    # and whichever course it follows up; only work that is not a visit is
+    # read as a training here (owner, 2026-09-28).
+    is_visit = activity.activity_type in VISIT_TYPES and not is_in_school
+    is_training = not is_visit and (
         activity.activity_type in TRAINING_TYPES
         or "training" in str(activity.activity_type or "").lower()
         or is_in_school

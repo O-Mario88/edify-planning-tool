@@ -4,8 +4,10 @@ __pycache__/
 *.egg-info/
 .eggs/
 
-# Virtualenv
-.venv/
+# Virtualenv. No trailing slash: a worktree's .venv is a symlink to the
+# main checkout's, and `.venv/` matches only a directory, which is how one
+# was committed (7dc1be1a).
+.venv
 venv/
 env/
 
@@ -36,7 +38,7 @@ htmlcov/
 # `npm ci` possible and the CSS build reproducible, and without it every
 # install resolves the tree afresh — so the bundle CI verifies is not
 # necessarily the bundle anyone else would produce.
-node_modules/
+node_modules
 playwright-report/
 test-results/
 

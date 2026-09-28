@@ -658,8 +658,30 @@
 
   function scrollStateOf(region) {
     var reach = region.scrollWidth - region.clientWidth;
-    return reach <= 1 ? 'none'
-      : (region.scrollLeft <= 1 ? 'start' : (region.scrollLeft >= reach - 1 ? 'end' : 'middle'));
+    if (reach <= 1) {
+      /* A pinned table can fit only BECAUSE it is pinned: the overflowing
+         states cap the identity and restyle its first cells, and that can
+         take back the few pixels the table was over. Letting go then made it
+         overflow again, which pinned it again — the state flipped every
+         frame and the table shook (the cluster card's school list at 1280px
+         and 150% display scaling, owner 2026-09-28: "the cluster expanded
+         detail (list of schools) are shaking on some computers"). So a
+         pinned table lets go only when it would fit unpinned too, and until
+         then reads as scrolled to its end: all of it is in view. */
+      var pinned = region.dataset.scrollState && region.dataset.scrollState !== 'none';
+      return pinned && overflowsUnpinned(region) ? 'end' : 'none';
+    }
+    return region.scrollLeft <= 1 ? 'start' : (region.scrollLeft >= reach - 1 ? 'end' : 'middle');
+  }
+
+  /* One synchronous measurement without the overflow styling, restored
+     before anything paints, so no observer ever sees the probe. */
+  function overflowsUnpinned(region) {
+    var state = region.dataset.scrollState;
+    region.dataset.scrollState = 'none';
+    var reach = region.scrollWidth - region.clientWidth;
+    region.dataset.scrollState = state;
+    return reach > 1;
   }
 
   function updateScrollState(region) {

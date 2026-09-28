@@ -1,0 +1,57 @@
+{% load frontend_filters row_actions %}
+{% comment %}
+One tab of the profile activities section (profile_activities.html). Each
+row's actions are decided by apps.activities.profile_activities: View on
+every row; Complete, Reschedule and Cancel only where the reader may run the
+work, so the menu never offers what the endpoint would refuse.
+{% endcomment %}
+<div class="overflow-x-auto mt-3">
+  <table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse whitespace-nowrap"
+         aria-label="{% if kind == 'completed' %}Completed activities{% else %}Planned activities{% endif %}"
+         data-mobile-table="scroll" data-pinned-actions>
+    <thead>
+      <tr>
+        <th scope="col" class="px-4 py-2.5">{% if kind == 'completed' %}Delivered{% else %}Planned Date{% endif %}</th>
+        <th scope="col" class="px-4 py-2.5">Activity</th>
+        <th scope="col" class="px-4 py-2.5">{{ subject_label|default:"Where" }}</th>
+        <th scope="col" class="px-4 py-2.5">Executor</th>
+        <th scope="col" class="px-4 py-2.5">Status</th>
+        <th scope="col" class="px-4 py-2.5">Purpose</th>
+        <th scope="col" class="px-4 py-2.5 text-right w-px">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[var(--edify-border)]">
+      {% for row in pager.rows %}
+      <tr data-activity-row="{{ row.id }}">
+        <td class="px-4 py-3 tabular-nums" data-label="{% if kind == 'completed' %}Delivered{% else %}Planned Date{% endif %}">{% if row.day %}{{ row.day|date:"j M Y" }}{% if row.end_day %} – {{ row.end_day|date:"j M" }}{% endif %}{% else %}<span class="edify-text-muted">Not dated</span>{% endif %}</td>
+        <td class="px-4 py-3 font-semibold" data-record-title>{{ row.title }}</td>
+        <td class="px-4 py-3" data-label="{{ subject_label|default:'Where' }}">{% if row.subject_url %}<a href="{{ row.subject_url }}" class="hover:underline">{{ row.subject }}</a>{% else %}{{ row.subject }}{% endif %}</td>
+        <td class="px-4 py-3" data-label="Executor">{{ row.executor }}</td>
+        <td class="px-4 py-3" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ row.status_tone }}">{{ row.status_label }}</span></td>
+        <td class="px-4 py-3 whitespace-normal" data-label="Purpose">{{ row.purpose|default:"—"|truncatechars:60 }}</td>
+        <td class="px-4 py-3 text-right" data-record-action data-label="Actions">
+          {% row_actions row.title %}
+            <button type="button" class="row-menu__item" role="menuitem"
+                    hx-get="/my-plan/{{ row.id }}" hx-target="#drawer-container" hx-swap="innerHTML">View activity</button>
+            {% if row.may_complete %}
+            <button type="button" class="row-menu__item" role="menuitem"
+                    hx-get="/my-plan/{{ row.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML">{{ row.complete_label }}</button>
+            {% endif %}
+            {% if row.may_reschedule %}
+            <button type="button" class="row-menu__item" role="menuitem" data-reschedule-trigger
+                    hx-get="/my-plan/{{ row.id }}/reschedule-drawer" hx-trigger="click consume" hx-target="#drawer-container" hx-swap="innerHTML">Reschedule</button>
+            {% endif %}
+            {% if row.may_cancel %}
+            <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" data-cancel-trigger
+                    hx-get="/my-plan/{{ row.id }}/cancel-drawer" hx-trigger="click consume" hx-target="#drawer-container" hx-swap="innerHTML">Cancel activity</button>
+            {% endif %}
+          {% endrow_actions %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-4 py-6 text-center edify-text-muted">{% if kind == 'completed' %}No completed activities yet.{% else %}No planned activities.{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/table_pager.html" with pager=pager param=param pagination_label=kind|title|add:" activities" %}

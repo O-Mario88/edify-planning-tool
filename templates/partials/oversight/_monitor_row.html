@@ -1,0 +1,22 @@
+{% load frontend_filters %}
+{% comment %}
+One row of the Planning Monitor: a CCEO (OfficerMonitor), or a Programme Lead
+or country subtotal (LeadMonitor, which sums the same figures). Gap counts on
+an officer's row open the list of the schools behind them.
+{% endcomment %}
+<tr{% if is_subtotal %} class="font-semibold" data-monitor-subtotal{% endif %}>
+  <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if is_subtotal %}{{ label }}{% else %}{{ row.name }}{% if row.target_is_set %} <span class="edify-text-muted" title="Target set by the Country Director">· own target</span>{% endif %}{% endif %}</th>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Schools" title="{{ row.core_schools }} Core · {{ row.client_schools }} Client and Core Trained">{{ row.school_count|intcomma }}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Visits planned"><span class="edify-status-text" data-edify-tone="{{ row.visit_tone }}">{{ row.staff_visits|intcomma }}</span><span class="edify-text-muted"> / {{ row.visits_target|intcomma }}{% if row.visit_progress is not None %} · {{ row.visit_progress }}%{% endif %}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Core visits">{{ row.core_visits|intcomma }}<span class="edify-text-muted"> / {{ row.core_visit_target|intcomma }}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Client visits">{{ row.client_visits|intcomma }}<span class="edify-text-muted"> / {{ row.client_visit_target|intcomma }}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="With a partner">{{ row.partner_schools|intcomma }}<span class="edify-text-muted"> / {{ row.partner_needed|intcomma }}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Schools visited">{{ row.schools_with_visit|intcomma }}<span class="edify-text-muted"> / {{ row.school_count|intcomma }}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Training planned" title="{{ row.schools_group_training }} group training · {{ row.schools_meeting }} cluster meeting">{{ row.schools_with_training|intcomma }}<span class="edify-text-muted"> / {{ row.school_count|intcomma }}</span></td>
+  {% for gap, count in row.gap_cells %}
+  <td class="px-3 py-2 text-right tabular-nums" data-label="{{ gap.label }}">{% if count and is_officer %}<a href="{{ monitor_url }}&gap={{ gap.key }}&officer={{ row.key }}{% if selected_program_lead %}&program_lead={{ selected_program_lead }}{% endif %}" hx-get="{{ monitor_url }}&gap={{ gap.key }}&officer={{ row.key }}{% if selected_program_lead %}&program_lead={{ selected_program_lead }}{% endif %}" hx-target="#oversight-workspace" hx-push-url="true" class="edify-status-text hover:underline" data-edify-tone="{{ gap.tone }}">{{ count|intcomma }}</a>{% elif count %}<span class="edify-status-text" data-edify-tone="{{ gap.tone }}">{{ count|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+  {% endfor %}
+  <td class="px-3 py-2 text-right tabular-nums" data-label="In projects">{{ row.in_projects|intcomma }}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Visits delivered">{{ row.visits_done|intcomma }}<span class="edify-text-muted"> / {{ row.staff_visits|intcomma }}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Schools trained">{{ row.schools_trained|intcomma }}<span class="edify-text-muted"> / {{ row.schools_with_training|intcomma }}</span></td>
+</tr>

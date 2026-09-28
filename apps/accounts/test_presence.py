@@ -316,15 +316,20 @@ class PresenceSurfaceTest(TestCase):
         html = self.client.get("/dashboard?view=operations").content.decode()
         self.assertIn("data-admin-presence", html)
         self.assertIn("Cara", html)
-        # The table: status light, name, duration, working on, section.
-        for column in (
+        # The columns the owner listed on 2026-09-28, in order.
+        headings = [
             "Staff name",
-            "Sign-ins",
-            "Duration",
-            "Working on what",
-            "Part of the system accessed",
-        ):
-            self.assertIn(column, html)
+            "Title",
+            "# of<br>logins",
+            "Login day,<br>date &amp; time",
+            "Page<br>accessed",
+            "Working<br>on what",
+            "Duration<br>online",
+            "Other parts<br>accessed",
+            "Overall<br>time",
+        ]
+        positions = [html.index(f">{heading}</th>") for heading in headings]
+        self.assertEqual(positions, sorted(positions))
         # The Admin's copy links each person's sign-ins to their own record.
         self.assertIn(f'href="/admin-panel/users/{self.cceo.id}"', html)
         # Cara is online: a pulsing green light. Root, who has never signed in,
@@ -333,7 +338,9 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn("admin-presence-light--online", html)
         self.assertIn('data-presence="offline"', html)
         self.assertIn("admin-presence-light--offline", html)
-        self.assertIn("never signed in", html)
+        # Never signed in: a dash in the figures, said in words beside them.
+        self.assertIn('title="Never signed in">—</span>', html)
+        self.assertIn("Never signed in", html)
         self.assertIn("data-admin-logins", html)
         self.assertIn("1 today", html)
 
@@ -366,10 +373,10 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn("Who's Online", html)
         self.assertIn("Cara", html)
         self.assertIn('data-presence="online"', html)
-        self.assertIn("Part of the system accessed", html)
-        # The same Sign-ins column, but as plain text: the admin panel is not
+        self.assertIn("Page<br>accessed", html)
+        # The same logins column, but as plain text: the admin panel is not
         # the Country Director's to open, so it is never linked here.
-        self.assertIn("Sign-ins", html)
+        self.assertIn("# of<br>logins", html)
         self.assertNotIn("/admin-panel/users/", html)
         # Cara folds under Paula, whose own row leads the group.
         self.assertIn("PL · Paula", html)

@@ -400,7 +400,11 @@ def _program_lead_dashboard(request, avatar_initials: str):
         # a panel they do not draw.
         from apps.accounts.presence import presence_summary, team_user_ids
 
-        context["presence"] = presence_summary(only_user_ids=team_user_ids(user))
+        from apps.accounts.presence import presence_filters
+
+        context["presence"] = presence_summary(
+            only_user_ids=team_user_ids(user), **presence_filters(request)
+        )
         context["presence_scope_label"] = "your team"
     if tab_swap:
         response = render(
@@ -688,9 +692,9 @@ def dashboard_view(request):
         else:
             # Who is using the system (owner, 2026-09-15): the Admin's Who's
             # Online table, on the CD's Operations view as well.
-            from apps.accounts.presence import presence_summary
+            from apps.accounts.presence import presence_filters, presence_summary
 
-            context["presence"] = presence_summary()
+            context["presence"] = presence_summary(**presence_filters(request))
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
             response = render(
                 request,
@@ -1558,7 +1562,11 @@ def dashboard_view(request):
         # but they are diagnostic context, not Admin's own scorecard.
         from apps.admin_ops.services import AdminOpsDashboardService
 
-        admin_ops = AdminOpsDashboardService.summary(request.user)
+        from apps.accounts.presence import presence_filters
+
+        admin_ops = AdminOpsDashboardService.summary(
+            request.user, presence_filters=presence_filters(request)
+        )
         context["admin_ops"] = admin_ops
         context["admin_ops_kpi_items"] = [
             render_kpi_item(
@@ -1663,6 +1671,41 @@ def program_lead_dashboard_view(request):
 
         return HttpResponseForbidden("Program Lead only.")
     return dashboard_view.__wrapped__(request)
+
+
+@require_page_permission("dashboard")
+def whos_online_view(request):
+    """Who's Online for another period (owner, 2026-09-28: "add the filter of
+    day, week, month, quarter and FY"). The panel's filter and its pager ask
+    here instead of rebuilding the dashboard around it.
+
+    The readers are the dashboards that draw the panel: the Admin (country,
+    with links to each user record), the Country Director (country) and a
+    Programme Lead (their own reporting line and nobody else's).
+    """
+    from django.http import HttpResponseForbidden
+
+    from apps.accounts.presence import (
+        presence_filters,
+        presence_summary,
+        team_user_ids,
+    )
+
+    role = request.user.active_role
+    context = {"presence_fragment": True}
+    if role == "Admin":
+        context["staff_links"] = True
+        context["presence"] = presence_summary(**presence_filters(request))
+    elif role == "CountryDirector":
+        context["presence"] = presence_summary(**presence_filters(request))
+    elif role == "Program Lead":
+        context["presence"] = presence_summary(
+            only_user_ids=team_user_ids(request.user), **presence_filters(request)
+        )
+        context["presence_scope_label"] = "your team"
+    else:
+        return HttpResponseForbidden("Who's Online is for the Admin, CD and PLs.")
+    return render(request, "partials/dashboards/_whos_online.html", context)
 
 
 # ── Program Lead Command Dashboard — drill-downs + inline approve ────────────

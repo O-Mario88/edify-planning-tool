@@ -1609,8 +1609,10 @@ def school_detail_view(request, school_id):
 
     ssa_progress = school_progress(school)
     latest_ssa = ssa_progress["latest"]
-    activities = school.activities.filter(deleted_at__isnull=True).order_by(
-        "-planned_date"
+    from apps.activities import profile_activities as profile_acts
+
+    activities = profile_acts.profile_activities(
+        request, profile_acts.for_school(school), param="school_acts", subject="auto"
     )
 
     # The ring carries the same four states the status pill does, so the two
@@ -1708,7 +1710,7 @@ def school_detail_view(request, school_id):
         "business_transformation": business_transformation,
         "latest_ssa": latest_ssa,
         "ssa_progress": ssa_progress,
-        "activities": activities,
+        "profile_activities": activities,
         "visit_feedback": visit_feedback,
         "quality_gauge": quality_gauge,
         # Deletion is Admin-only (enforced server-side by delete_school; this

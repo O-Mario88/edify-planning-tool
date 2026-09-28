@@ -255,6 +255,11 @@ urlpatterns = [
         name="pl_dashboard",
     ),
     path(
+        "dashboard/whos-online",
+        dashboard_views.whos_online_view,
+        name="whos_online",
+    ),
+    path(
         "dashboard/pl-drilldown",
         dashboard_views.pl_dashboard_drilldown_view,
         name="pl_dashboard_drilldown",

@@ -80,7 +80,7 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260927typeorient1">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260927mapkey1">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260928steady1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260927mobile4">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260926district1">
@@ -106,7 +106,7 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260927coretones2">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260927mapkey1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260928steady1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -117,7 +117,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20260927mapkey2">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260927mapkey1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260928steady1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -244,7 +244,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260927mapkey1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260928steady1"></script>
 <script defer src="{% static 'js/date-picker.js' %}?v=20260927layer1"></script>
 
 {% comment %}

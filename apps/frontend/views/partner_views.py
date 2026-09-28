@@ -993,6 +993,12 @@ def partner_detail_view(request, partner_id):
         context["engagement_autoload"] = partner_engagement_views.autoload_drawer(
             request, partner_id=partner.id
         )
+    # Planned and completed work with its actions (owner, 2026-09-28).
+    from apps.activities import profile_activities as profile_acts
+
+    context["profile_activities"] = profile_acts.profile_activities(
+        request, profile_acts.for_partner(partner.id), param="partner_acts"
+    )
     return render(request, "pages/partners/detail.html", context)
 
 
