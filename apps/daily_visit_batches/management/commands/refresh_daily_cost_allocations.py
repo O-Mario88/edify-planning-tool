@@ -64,6 +64,7 @@ class Command(BaseCommand):
                 locked += 1
                 self.stdout.write(f"Skipped {batch.id}: {exc}")
         from apps.activities.models import Activity
+        from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
         from apps.activities.services import _funding_owner_id
         from apps.accounts.models import User
         from apps.daily_visit_batches.pricing import (
@@ -73,15 +74,18 @@ class Command(BaseCommand):
 
         # Older individually priced work (including core visits) must join its
         # owner's existing day before its neighbours can receive the correct share.
-        unbatched = Activity.objects.filter(
-            daily_visit_batch__isnull=True,
-            deleted_at__isnull=True,
-            status__in=["planned", "scheduled", "rescheduled"],
-            delivery_type="staff",
-            planned_date__isnull=False,
-            activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES | DAY_POOL_EXTRA_TYPES,
-            paired_in_school_training__isnull=True,
-        ).select_related("school__district", "cluster__district", "event_district")
+        unbatched = (
+            Activity.objects.filter(
+                daily_visit_batch__isnull=True,
+                deleted_at__isnull=True,
+                status__in=["planned", "scheduled", "rescheduled"],
+                delivery_type="staff",
+                planned_date__isnull=False,
+                activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES | DAY_POOL_EXTRA_TYPES,
+            )
+            .exclude(UNCOSTED_PAIR_TRAINING)
+            .select_related("school__district", "cluster__district", "event_district")
+        )
         if options["fy"]:
             unbatched = unbatched.filter(fy=options["fy"])
         unattached = attached = skipped = 0

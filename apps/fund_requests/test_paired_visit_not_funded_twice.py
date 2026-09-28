@@ -1,12 +1,16 @@
-"""The paired School Visit is not independently fundable (FUND-01).
+"""A paired in-school Training is not independently fundable (FUND-01).
 
 One in-school Training decision creates two governed records: a TS- Training
-and an SVE- School Visit. They describe the same delivery — the visit is the
-Training's evidence and Salesforce twin, not a second piece of work. The
-Training carries the visit-equivalent cost, so funding the twin as well claims
-the same money twice.
+and an SVE- School Visit. They describe the same delivery. The School Visit
+carries the visit cost and the Training costs 0, "since it is part of school
+visit" (owner, 2026-09-28; until then it was the other way round), so funding
+the Training as well claims the same money twice.
 
 `fund_requests.services.submit` enforces that with one line:
+
+    qs = qs.exclude(UNCOSTED_PAIR_TRAINING)
+
+Before 2026-09-28 the same line excluded the visit:
 
     qs = qs.exclude(paired_in_school_training__isnull=False)
 
@@ -80,7 +84,8 @@ class PairedVisitIsNotFundedTwiceTest(TestCase):
         cls.training.save(update_fields=["paired_school_visit", "updated_at"])
 
         # Both carry cost lines. That is the point: if the exclusion goes, the
-        # visit's line is real money the request would ask for a second time.
+        # Training's line is real money the request would ask for a second
+        # time.
         cls.training_line = cls._line(cls.training, "Training delivery", TRAINING_COST)
         cls.visit_line = cls._line(cls.visit, "Visit transport", VISIT_COST)
 
@@ -122,31 +127,31 @@ class PairedVisitIsNotFundedTwiceTest(TestCase):
         items = FundRequestItem.objects.filter(fund_request_id=result["id"])
         return result, items
 
-    def test_the_twin_visit_never_enters_the_request(self):
+    def test_the_paired_training_never_enters_the_request(self):
         result, items = self._submit()
 
         funded_activity_ids = set(items.values_list("activity_id", flat=True))
-        self.assertIn(self.training.id, funded_activity_ids)
+        self.assertIn(self.visit.id, funded_activity_ids)
         self.assertNotIn(
-            self.visit.id,
+            self.training.id,
             funded_activity_ids,
-            "the paired School Visit was funded as if it were separate work — "
-            "its cost is already inside the Training's",
+            "the paired Training was funded as if it were separate work — "
+            "it is part of the School Visit, which carries the cost",
         )
 
-    def test_the_total_is_the_training_alone(self):
+    def test_the_total_is_the_visit_alone(self):
         """Asserted on the money, not only on membership.
 
-        The id check above would still pass if the visit's line were attributed
-        to the training. The sum is what the accountant releases.
+        The id check above would still pass if the Training's line were
+        attributed to the visit. The sum is what the accountant releases.
         """
         result, _items = self._submit()
 
-        self.assertEqual(result["totalAmount"], TRAINING_COST)
+        self.assertEqual(result["totalAmount"], VISIT_COST)
         self.assertNotEqual(
             result["totalAmount"],
             TRAINING_COST + VISIT_COST,
-            "the twin's cost was added to the request",
+            "the Training's cost was added to the request",
         )
 
     def test_an_unpaired_visit_is_still_funded(self):
@@ -161,4 +166,15 @@ class PairedVisitIsNotFundedTwiceTest(TestCase):
         result, items = self._submit()
 
         self.assertIn(solo.id, set(items.values_list("activity_id", flat=True)))
-        self.assertEqual(result["totalAmount"], TRAINING_COST + VISIT_COST)
+        self.assertEqual(result["totalAmount"], VISIT_COST + VISIT_COST)
+
+    def test_an_unpaired_in_school_training_is_still_funded(self):
+        """A Core Schools training or a partner's dated assignment has no
+        companion visit: it is the only record of its journey and is funded."""
+        solo = self._activity("in_school_training", date.today())
+        self._line(solo, "Solo training visit day", TRAINING_COST)
+
+        result, items = self._submit()
+
+        self.assertIn(solo.id, set(items.values_list("activity_id", flat=True)))
+        self.assertEqual(result["totalAmount"], VISIT_COST + TRAINING_COST)

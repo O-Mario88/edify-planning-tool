@@ -321,14 +321,17 @@ def batch_poolable(activity) -> bool:
     """Whether this activity's personal per-diems belong to the day pool.
     Multi-day field events keep their standalone per-day recipe — they own
     whole away-days by definition."""
+    from apps.activities.pair_costing import is_uncosted_pair_training
+
     from .pricing import DAILY_BATCH_ELIGIBLE_TYPES, DAY_POOL_EXTRA_TYPES
 
     if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES:
-        # A paired Salesforce visit is evidence for the training, not another trip.
-        return bool(activity.school_id) and not hasattr(
-            activity, "paired_in_school_training"
-        )
+        # An in-school training's School Visit is the trip and shares the day
+        # like any other visit; its Training is part of it and costs nothing.
+        return bool(activity.school_id)
     if activity.activity_type not in DAY_POOL_EXTRA_TYPES:
+        return False
+    if is_uncosted_pair_training(activity):
         return False
     end = getattr(activity, "end_date", None)
     if end and activity.planned_date and end > activity.planned_date:

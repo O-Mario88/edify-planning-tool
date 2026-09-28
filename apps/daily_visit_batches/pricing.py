@@ -32,8 +32,8 @@ DAILY_BATCH_ELIGIBLE_TYPES = {
 # trainings, cluster sessions and single-day field events join the same day
 # pool as visits. In-school training uses the visit recipe; other training adds
 # participant meals and venue costs, while cluster training also adds
-# facilitation. An automatically paired School Visit is an evidence/Salesforce
-# twin, not another funded journey. Multi-day
+# facilitation. An in-school training scheduled with its School Visit costs
+# nothing: the visit is the journey (apps.activities.pair_costing). Multi-day
 # field events stay on their standalone per-day recipe — they own their whole
 # away-days by definition.
 DAY_POOL_EXTRA_TYPES = {

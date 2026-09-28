@@ -526,12 +526,27 @@ class BoundaryTest(TestCase):
 
         from apps.core.fy import get_operational_fy, get_quarter_for_date
 
-        sep30 = datetime(2026, 9, 30, 23, 59, tzinfo=dt_tz.utc)
-        oct1 = datetime(2026, 10, 1, 0, 0, tzinfo=dt_tz.utc)
+        from django.utils import timezone
+
+        # The year turns at midnight where the platform works (Africa/Nairobi),
+        # which is 21:00 UTC on 30 September. It used to turn at midnight UTC,
+        # so a visit picked for 1 October — stored as local midnight — was
+        # filed under the year before.
+        sep30 = timezone.make_aware(datetime(2026, 9, 30, 23, 59))
+        oct1 = timezone.make_aware(datetime(2026, 10, 1, 0, 0))
         self.assertEqual(get_operational_fy(sep30), "2026")
         self.assertEqual(get_operational_fy(oct1), "2027")
         self.assertEqual(get_quarter_for_date(sep30), "Q4")
         self.assertEqual(get_quarter_for_date(oct1), "Q1")
+        # The same two instants as UTC read the same way.
+        self.assertEqual(get_operational_fy(sep30.astimezone(dt_tz.utc)), "2026")
+        self.assertEqual(get_operational_fy(oct1.astimezone(dt_tz.utc)), "2027")
+        self.assertEqual(
+            get_operational_fy(datetime(2026, 9, 30, 20, 59, tzinfo=dt_tz.utc)), "2026"
+        )
+        self.assertEqual(
+            get_operational_fy(datetime(2026, 9, 30, 21, 0, tzinfo=dt_tz.utc)), "2027"
+        )
 
     def test_a_reschedule_across_the_fy_boundary_carries_the_money_with_it(self):
         """The money follows the date, across the year boundary and within it.

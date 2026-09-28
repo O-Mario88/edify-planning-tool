@@ -21,8 +21,10 @@ from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget.governance_service import carry_forward_rate_card
+from apps.budget.models import CostCatalogue, RateCardKind, RateCardStatus
 from apps.budget.reference import ensure_active_catalogue, ensure_cost_reference
 from apps.clusters.models import Cluster
+from apps.core.fy import get_operational_fy
 from apps.planning.test_standard_support_scheduling import (
     StandardSupportBase,
     _schedulable_date,
@@ -36,7 +38,7 @@ def _month_query(day):
     quarter and month now, and groups its rows by month (owner, 2026-09-17).
     """
     return {
-        "fy": "2027" if day >= datetime.date(2026, 10, 1) else "2026",
+        "fy": get_operational_fy(day),
         "month": str(day.month),
         "period": "month",
     }
@@ -152,15 +154,29 @@ class ClusterMeetingInMyPlanTest(StandardSupportBase):
             active_role="CountryDirector",
             password="x",
         )
-        carry_forward_rate_card(cd, "2027")
-        october = datetime.date(2026, 10, 6)
+        # A date in FY2027 the calendar still accepts: 6 October 2026 until it
+        # has passed, the next schedulable day after that.
+        october = max(datetime.date(2026, 10, 6), _schedulable_date())
+        if get_operational_fy(october) != "2027":
+            self.skipTest("FY2027 has ended")
+        # Its rate card is carried forward while FY2027 is the year ahead;
+        # from 1 October it is the running year's, already published.
+        if not CostCatalogue.objects.filter(
+            country="Uganda",
+            fy="2027",
+            kind=RateCardKind.OPERATIONAL,
+            status=RateCardStatus.PUBLISHED,
+            is_active=True,
+        ).exists():
+            carry_forward_rate_card(cd, "2027")
         _response, meeting = self._schedule(october)
         self.assertEqual(meeting.fy, "2027")
         context = get_frontend_context(self.user, _month_query(october))
         self.assertIn("2027", context["fy_options"])
         self.assertIn(meeting.id, {r["id"] for r in context["cluster_meetings_all"]})
         page = self.client.get(
-            "/my-plan?fy=2027&month=10&period=month", HTTP_HX_REQUEST="true"
+            f"/my-plan?fy=2027&month={october.month}&period=month",
+            HTTP_HX_REQUEST="true",
         )
         self.assertContains(page, 'value="2027" selected')
 
