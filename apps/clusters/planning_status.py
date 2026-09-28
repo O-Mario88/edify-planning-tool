@@ -155,7 +155,7 @@ def cluster_planning_status(principal, *, fy: str) -> dict:
     # Clusters with nothing planned first: they are the work.
     rows.sort(
         key=lambda r: (
-            r.training.is_planned and r.meeting.is_planned,
+            int(r.training.is_planned) + int(r.meeting.is_planned),
             r.training.is_planned,
             r.name.casefold(),
         )
