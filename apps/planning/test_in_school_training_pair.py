@@ -137,24 +137,107 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertEqual(training.ssa_alignment, "not_applicable")
         self.assertEqual(visit.ssa_alignment, "not_applicable")
 
-    def test_pair_carries_one_visit_equivalent_cost_on_the_training(self):
+    def test_pair_carries_one_visit_cost_on_the_visit(self):
+        """Owner, 2026-09-28: the in-school training "use[s] the visit cost"
+        and its own cost is 0, "since it is part of school visit"."""
         self.cost_snapshot.side_effect = apply_real_cost_snapshot
         result = schedule_in_school_training_pair(self.payload(), self.user)
         training = Activity.objects.get(id=result["id"])
         visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
 
-        training_lines = list(
-            ActivityScheduleCostLine.objects.filter(activity=training)
-        )
-        self.assertTrue(training_lines)
+        visit_lines = list(ActivityScheduleCostLine.objects.filter(activity=visit))
+        self.assertTrue(visit_lines)
         self.assertEqual(
-            {line.cost_setting_key for line in training_lines},
+            {line.cost_setting_key for line in visit_lines},
             {"primary_transport_per_day", "lunch_per_day"},
         )
+        self.assertGreater(visit.est_cost_cents, 0)
+        self.assertIsNotNone(visit.daily_visit_batch_id)
         self.assertFalse(
-            ActivityScheduleCostLine.objects.filter(activity=visit).exists()
+            ActivityScheduleCostLine.objects.filter(activity=training).exists()
         )
-        self.assertEqual(visit.est_cost_cents, 0)
+        self.assertEqual(training.est_cost_cents, 0)
+        self.assertFalse(training.cost_missing)
+        self.assertIsNone(training.daily_visit_batch_id)
+        self.assertEqual(visit.planned_date, training.planned_date)
+        self.assertEqual(missing_cost_lines_count(), 0)
+
+    def test_training_needs_no_participant_count(self):
+        """The in-school drawer asks for no participants. The Training used
+        to be priced, and a Training priced as a group session was refused
+        with "Enter the planned participant count"; unpriced, it cannot be."""
+        from apps.budget import costing_service
+
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        real_preview = costing_service.preview
+        gated = []
+
+        def record(input, **kwargs):
+            gated.append(input["activityType"])
+            return real_preview(input, **kwargs)
+
+        with patch.object(costing_service, "preview", side_effect=record):
+            result = schedule_in_school_training_pair(self.payload(), self.user)
+        self.assertEqual(gated, ["school_visit"])
+        self.assertTrue(result["pairedSchoolVisitId"])
+
+    def test_repricing_the_training_keeps_it_at_zero(self):
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        visit_total = Activity.objects.get(
+            id=result["pairedSchoolVisitId"]
+        ).est_cost_cents
+
+        apply_real_cost_snapshot(training, {})
+
+        training.refresh_from_db()
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        self.assertEqual(training.est_cost_cents, 0)
+        self.assertFalse(
+            ActivityScheduleCostLine.objects.filter(activity=training).exists()
+        )
+        self.assertEqual(visit.est_cost_cents, visit_total)
+
+    def test_a_pair_scheduled_before_the_change_moves_its_cost_to_the_visit(self):
+        """Pairs made before 2026-09-28 carry the cost on the Training."""
+        from apps.activities.pair_costing import (
+            find_pair_trainings_carrying_cost,
+            move_pair_costs_to_visits,
+        )
+        from apps.budget.costing import ActivityCost
+        from apps.budget.costing_service import apply_to_activity
+        from apps.daily_visit_batches.services import remove_school
+
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        # Rebuild the old shape: the visit unpriced, the Training priced.
+        visit_total = visit.est_cost_cents
+        remove_school(activity_id=visit.id)
+        visit.refresh_from_db()
+        apply_to_activity(
+            visit, {"activityType": "school_visit"}, precomputed_cost=ActivityCost()
+        )
+        apply_to_activity(
+            training,
+            {
+                "activityType": "in_school_training",
+                "deliveryType": "staff",
+                "districtType": "primary",
+            },
+        )
+        self.assertEqual(find_pair_trainings_carrying_cost(), [training.id])
+
+        moved = move_pair_costs_to_visits(write=lambda _line: None)
+
+        self.assertEqual(moved, {"moved": [training.id], "skipped": []})
+        training.refresh_from_db()
+        visit.refresh_from_db()
+        self.assertEqual(training.est_cost_cents, 0)
+        self.assertEqual(visit.est_cost_cents, visit_total)
+        self.assertEqual(find_pair_trainings_carrying_cost(), [])
         self.assertEqual(missing_cost_lines_count(), 0)
 
     def test_a_failure_creating_visit_rolls_back_training(self):
