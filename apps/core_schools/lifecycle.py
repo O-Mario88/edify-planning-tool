@@ -153,8 +153,8 @@ def programme_sections(user, filters, *, lens="direct", params=None, per_page=15
             {
                 "kind": kind,
                 "label": label,
-                # Champion and Core Graduate: donor and story visits only, no
-                # training or assessment (owner, 2026-09-25).
+                # Champion: donor and story visits only, no training or
+                # assessment (owner, 2026-09-25).
                 "outreach_only": kind in OUTREACH_ONLY_SCHOOL_TYPES,
                 "page": page,
                 "param": param,

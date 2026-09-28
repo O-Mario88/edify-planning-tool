@@ -30,7 +30,7 @@ from apps.core.fy import fy_options, get_operational_fy
 from apps.core.rbac import Permission
 from apps.core.scoping import cluster_queryset, resolve_user_scope
 from apps.geography.models import District, SubCounty
-from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
+from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary
 from apps.ssa.models import SsaRecord, SsaScore
@@ -838,7 +838,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
         # Champion and Core Graduate schools have their own tables on Core
         # Schools and take no cluster training (owner, 2026-09-25).
-        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         .select_related("district", "sub_county", "parish")
         .prefetch_related(
             Prefetch(
@@ -1075,7 +1075,7 @@ def active_school_count(cluster_id: str) -> int:
             # A closed school is no longer a member anyone can invite or price.
             operational_status__in=OPERATING_STATUSES,
         )
-        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         .count()
     )
 
@@ -1098,7 +1098,7 @@ def active_schools(cluster_id: str):
             # A closed school is no longer a member anyone can invite or price.
             operational_status__in=OPERATING_STATUSES,
         )
-        .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         .order_by("name")
     )
 
@@ -1626,7 +1626,7 @@ class ClusterDashboardService:
         # Graduate schools are not on it (owner, 2026-09-25).
         cluster_schools_qs = School.objects.filter(
             cluster_id__in=cluster_ids, deleted_at__isnull=True
-        ).exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+        ).exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
 
         schools_count_by_cluster: dict[str, int] = {}
         staff_by_cluster: dict[str, set] = {}

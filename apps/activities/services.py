@@ -1142,8 +1142,9 @@ def _assert_schedule_entitlement(
     """
     if not school:
         return
-    # A Champion or Core Graduate school is planned for a donor or story
-    # visit only, by any role and from any page (owner, 2026-09-25).
+    # A Champion school is planned for a donor or story visit only, by any
+    # role and from any page (owner, 2026-09-25; Core Graduate joined the
+    # client rule on 2026-09-28).
     from apps.planning.visit_gate import assert_outreach_activity_allowed
 
     assert_outreach_activity_allowed(school, activity_type)
@@ -1157,7 +1158,7 @@ def _assert_schedule_entitlement(
     from apps.planning.visit_gate import (
         assert_partner_may_schedule_visit,
         assert_staff_may_schedule_visit,
-        is_gated_visit,
+        client_visit_pool,
         rule_for,
     )
 
@@ -1166,7 +1167,8 @@ def _assert_schedule_entitlement(
         # A visit request waits for the owner; the rule is applied when they
         # approve it (apps.planning.visit_requests.approve).
         return
-    if not is_gated_visit(rule, activity_type, catalogue_item, data.get("purposeType")):
+    pool = client_visit_pool(activity_type, catalogue_item, data.get("purposeType"))
+    if pool is None:
         return
     partner_delivery = data.get("deliveryType") == "partner" or bool(
         data.get("assignedPartnerId")
@@ -1174,7 +1176,7 @@ def _assert_schedule_entitlement(
     if partner_delivery:
         assert_partner_may_schedule_visit(school, fy)
     else:
-        assert_staff_may_schedule_visit(school, fy)
+        assert_staff_may_schedule_visit(school, fy, pool=pool)
 
 
 def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:

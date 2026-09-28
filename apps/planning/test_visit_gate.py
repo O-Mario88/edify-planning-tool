@@ -10,12 +10,15 @@ So what these tests hold:
 * the COUNTS are unchanged — which work uses a client school's follow-up
   visit, which is in-school work that never did, how a core school's visits
   split between staff and partner, and what a live partner assignment means;
-* at a CLIENT-rule school (client, and the Programme types) one staff support
-  visit a year closes the follow-up purposes — `staff_can_schedule` — while
-  the row's Schedule button stays live for every other purpose, and the
-  partner side is counted but never capped;
-* Core Trained schools may be handed to a partner like client schools;
-  Champion and Core Graduate schools, which take donor and story visits only,
+* at a CLIENT-rule school (client, and the Programme types) staff visits are
+  counted in two pools (owner, later the same day): one support visit a year
+  — a Training Follow Up or an In-school Training — closes the support
+  purposes (`staff_can_schedule`), and one SSA Support a year closes SSA
+  Support (`ssa_can_schedule`); donor, story, invitation and social visits
+  have no limit, the row's Schedule button stays live, and the partner side
+  is counted but never capped;
+* Core Trained and Core Graduate schools may be handed to a partner like
+  client schools; Champion schools, which take donor and story visits only,
   may not;
 * at a CORE school staff hold two visits while the partner has a core visit
   planned there, and may take more while it has none; the partner side and
@@ -223,29 +226,69 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertTrue(gate.staff_can_schedule)
         self.assertEqual(gate.total_visits, 0)
 
-    def test_in_school_work_and_social_visits_are_not_the_visit(self):
+    def test_outreach_and_the_companion_visit_have_no_limit(self):
+        """Owner, 2026-09-28: "donor visits and content gathering can be
+        scheduled as many as possible. no limit on those" — and, asked, no
+        limit on social visits and invitations either."""
         school = self._school("VG-6")
-        self._visit(school, kind="in_school_training")
-        self._visit(school, kind="in_school_coaching_visit")
-        self._visit(school, kind="donor_visit")
-        self._visit(school, kind="story_gathering_visit")
+        for kind in (
+            "donor_visit",
+            "donor_visit",
+            "story_gathering_visit",
+            "story_gathering_visit",
+            "social_visit",
+            "school_invitation",
+        ):
+            self._visit(school, kind=kind)
         # The companion visit an in-school training pair records.
         companion = self._visit(school, kind="school_visit")
         companion.purpose_type = "in_school_training_delivery_visit"
         companion.save(update_fields=["purpose_type"])
         gate = visit_gate(school)
         self.assertTrue(gate.staff_can_schedule)
+        self.assertTrue(gate.ssa_can_schedule)
         self.assertEqual(gate.total_visits, 0)
+        self.assertEqual(gate.staff_ssa_visits, 0)
 
-    def test_a_follow_up_or_ssa_visit_counts(self):
+    def test_an_in_school_training_is_the_support_visit(self):
+        """ "after the support visits (follow up or in-school training)": one
+        in total, so an In-school Training closes the Training Follow Up."""
+        for code, kind in (
+            ("VG-6d", "in_school_training"),
+            ("VG-6e", "in_school_coaching_visit"),
+            ("VG-6f", "training_follow_up_visit"),
+        ):
+            school = self._school(code)
+            self._visit(school, kind=kind)
+            gate = visit_gate(school)
+            self.assertEqual(gate.staff_visits, 1, kind)
+            self.assertFalse(gate.staff_can_schedule, kind)
+            self.assertTrue(gate.ssa_can_schedule, kind)
+
+    def test_ssa_support_is_counted_apart_one_a_year(self):
         school = self._school("VG-6b")
-        self._spend_client_visits(
-            school, kind="training_follow_up_visit", delivery="partner"
-        )
-        self.assertEqual(visit_gate(school).partner_visits, CLIENT_VISIT_CAP)
-        other = self._school("VG-6c")
-        self._spend_client_visits(other, kind="school_visit_ssa_collection")
-        self.assertEqual(visit_gate(other).staff_visits, CLIENT_VISIT_CAP)
+        self._visit(school, kind="school_visit_ssa_collection")
+        gate = visit_gate(school)
+        self.assertEqual(gate.staff_ssa_visits, 1)
+        self.assertEqual(gate.staff_visits, 0)
+        self.assertFalse(gate.ssa_can_schedule)
+        self.assertIn("SSA Support visit", gate.ssa_reason)
+        # The support visit is still open beside it.
+        self.assertTrue(gate.staff_can_schedule)
+        self._visit(school, kind="training_follow_up_visit")
+        gate = visit_gate(school)
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertEqual(gate.staff_ssa_visits, 1)
+
+    def test_partner_follow_up_and_ssa_visits_are_counted_not_capped(self):
+        school = self._school("VG-6c")
+        self._visit(school, kind="training_follow_up_visit", delivery="partner")
+        self._visit(school, kind="school_visit_ssa_collection", delivery="partner")
+        gate = visit_gate(school)
+        self.assertEqual(gate.partner_visits, 1)
+        self.assertEqual(gate.partner_ssa_visits, 1)
+        self.assertTrue(gate.staff_can_schedule)
+        self.assertTrue(gate.ssa_can_schedule)
 
     def test_a_school_with_a_partner_is_named_not_closed(self):
         """The partner holding a school is worth SAYING on the row.
@@ -298,19 +341,19 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
             self.assertEqual(gate.total_visits, CLIENT_VISIT_CAP, school.school_type)
             self.assertFalse(gate.staff_can_schedule, school.school_type)
 
-    def test_champion_and_graduate_schools_are_never_assigned_to_a_partner(self):
+    def test_champion_schools_are_never_assigned_to_a_partner(self):
         """They take donor and story visits only (owner, 2026-09-25), which
-        no partner delivers. Core Trained is planned like a client school,
-        partner support included (owner, 2026-09-28)."""
-        for index, school_type in enumerate(("champion", "core_graduate")):
-            school = self._school(f"VG-P{index}", school_type=school_type)
+        no partner delivers. Core Trained and Core Graduate are planned like
+        client schools, partner support included (owner, 2026-09-28)."""
+        gate = visit_gate(self._school("VG-P0", school_type="champion"))
+        self.assertFalse(gate.can_assign_partner)
+        self.assertFalse(gate.partner_can_schedule)
+        self.assertIn("never assigned to a partner", gate.assign_reason)
+        for index, school_type in enumerate(("core_trained", "core_graduate")):
+            school = self._school(f"VG-P{7 + index}", school_type=school_type)
             gate = visit_gate(school)
-            self.assertFalse(gate.can_assign_partner, school_type)
-            self.assertFalse(gate.partner_can_schedule, school_type)
-            self.assertIn("never assigned to a partner", gate.assign_reason)
-        trained = visit_gate(self._school("VG-P7", school_type="core_trained"))
-        self.assertTrue(trained.can_assign_partner)
-        self.assertTrue(trained.partner_can_schedule)
+            self.assertTrue(gate.can_assign_partner, school_type)
+            self.assertTrue(gate.partner_can_schedule, school_type)
 
     def test_the_partner_creation_door_refuses_a_programme_school(self):
         """The drawers grey the control; the one creation door refuses it, so
@@ -423,14 +466,33 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
 
         _assert_schedule_entitlement("school_visit", school, str(int(self.fy) + 1), {})
 
-    def test_the_first_visit_and_in_school_work_pass(self):
+    def test_after_the_support_visit_ssa_and_outreach_pass(self):
         from apps.activities.services import _assert_schedule_entitlement
+        from apps.core.exceptions import BadRequest
 
         school = self._school("VG-S2")
         self._entitlement(school)
         self._visit(school)
-        _assert_schedule_entitlement("in_school_training", school, self.fy, {})
-        _assert_schedule_entitlement("donor_visit", school, self.fy, {})
+        # The support visit is one in total: an In-school Training is refused
+        # after a follow-up, as a follow-up is after an In-school Training.
+        with self.assertRaisesMessage(BadRequest, "staff support visit"):
+            _assert_schedule_entitlement("in_school_training", school, self.fy, {})
+        # SSA Support once, and donor, story, invitation and social visits
+        # without limit.
+        _assert_schedule_entitlement("school_visit_ssa_collection", school, self.fy, {})
+        self._visit(school, kind="school_visit_ssa_collection")
+        with self.assertRaisesMessage(BadRequest, "SSA Support visit"):
+            _assert_schedule_entitlement(
+                "school_visit_ssa_collection", school, self.fy, {}
+            )
+        for kind in (
+            "donor_visit",
+            "story_gathering_visit",
+            "school_invitation",
+            "social_visit",
+        ):
+            self._visit(school, kind=kind)
+            _assert_schedule_entitlement(kind, school, self.fy, {})
         # The training pair's companion visit is the training, not a visit.
         _assert_schedule_entitlement(
             "school_visit",
@@ -534,13 +596,15 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('name="purpose_of_visit"', html)
-        # The year the visit was spent in is carried, and the two support
-        # purposes are bound to it; every other purpose stays open.
-        reasons = json.loads(response.context["visit_locked_reasons_json"])
-        self.assertIn(self.fy, reasons)
-        self.assertIn('value="ssa_support" ', html)
-        self.assertRegex(html, r'value="ssa_support"[^>]*data-visit-locked="true"')
-        self.assertNotRegex(html, r'value="in_school_training"[^>]*disabled')
+        # The year the support visit was spent in is carried for its two
+        # purposes; SSA Support and every other purpose stay open.
+        locks = json.loads(response.context["visit_locks_json"])
+        self.assertEqual(set(locks), {"training_follow_up", "in_school_training"})
+        self.assertIn(self.fy, locks["training_follow_up"])
+        self.assertRegex(
+            html, r'value="in_school_training"[^>]*data-visit-locked="true"'
+        )
+        self.assertNotRegex(html, r'value="ssa_support"[^>]*data-visit-locked')
         self.assertNotRegex(html, r'value="donor_visit"[^>]*disabled')
         # And the assign drawer likewise.
         response = self.client.get(

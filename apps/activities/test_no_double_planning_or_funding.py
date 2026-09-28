@@ -97,13 +97,17 @@ class ClientEntitlementHoldsTest(TestCase):
             CLIENT_VISIT_CAP,
         )
 
-    def test_a_second_client_training_is_still_allowed(self):
+    def test_an_in_school_training_is_the_spent_support_visit(self):
+        """Owner, 2026-09-28: the support visit is a Training Follow Up or an
+        In-school Training — one in total — so a spent visit refuses both,
+        while a donor visit still passes."""
         from apps.activities.services import _assert_schedule_entitlement
 
         self._spend_the_entitlement()
-        _assert_schedule_entitlement(
-            "in_school_training", self.school, get_operational_fy(_next_monday()), {}
-        )
+        fy = get_operational_fy(_next_monday())
+        with self.assertRaisesMessage(BadRequest, "staff support visit"):
+            _assert_schedule_entitlement("in_school_training", self.school, fy, {})
+        _assert_schedule_entitlement("donor_visit", self.school, fy, {})
 
     def test_the_first_visit_is_allowed(self):
         self._schedule_another()  # must not raise

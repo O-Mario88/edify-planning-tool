@@ -1210,17 +1210,19 @@ def _schedule_modal(request):
             "partials/schools/drawer_error.html",
             {"error": _gate.staff_locked_reason},
         )
-    # The support purposes a client-rule school's one staff visit a year
-    # governs (owner, 2026-09-28). The year is the scheduled date's, and the
-    # date is chosen below the purpose, so the drawer carries every year the
-    # visit is already used in — this one, and the next once it is open for
-    # planning — and greys the purposes for a date in one of them. With the
-    # visit used in every open year they grey from the start. A core school's
-    # follow-up purposes are general support outside the package.
+    # A client-rule school's staff visits a year (owner, 2026-09-28): one
+    # support visit (Training Follow Up or In-school Training) and one SSA
+    # Support. The year is the scheduled date's, and the date is chosen below
+    # the purpose, so the drawer carries, per purpose, every year its visit is
+    # already used in — this one, and the next once it is open for planning —
+    # and greys the purpose for a date in one of them. A purpose used in every
+    # open year greys from the start. A core school's follow-up purposes are
+    # general support outside the package.
     from apps.planning.fy_policy import next_open_fy
-    from apps.planning.visit_gate import FOLLOW_UP_PURPOSES
+    from apps.planning.visit_gate import POOL_PURPOSES, SSA_POOL, SUPPORT_POOL
 
-    visit_locked_reasons: dict[str, str] = {}
+    visit_locks: dict[str, dict[str, str]] = {}
+    open_years: list[str] = []
     if _gate.rule == "client":
         open_years = [_gate.fy]
         upcoming = next_open_fy()
@@ -1228,18 +1230,30 @@ def _schedule_modal(request):
             open_years.append(upcoming)
         for year in open_years:
             year_gate = _gate if year == _gate.fy else visit_gate(school, year)
-            if not year_gate.staff_can_schedule:
-                visit_locked_reasons[year] = year_gate.staff_reason
-    else:
-        open_years = []
-    visit_locked_every_year = bool(open_years) and len(visit_locked_reasons) == len(
-        open_years
-    )
-    locked_visit_purposes = list(FOLLOW_UP_PURPOSES) if visit_locked_reasons else []
-    locked_visit_reason = (
-        visit_locked_reasons.get(_gate.fy) or next(iter(visit_locked_reasons.values()))
-        if visit_locked_reasons
-        else ""
+            for pool, used, reason in (
+                (
+                    SUPPORT_POOL,
+                    not year_gate.staff_can_schedule,
+                    year_gate.staff_reason,
+                ),
+                (SSA_POOL, not year_gate.ssa_can_schedule, year_gate.ssa_reason),
+            ):
+                if used:
+                    for purpose in POOL_PURPOSES[pool]:
+                        visit_locks.setdefault(purpose, {})[year] = reason
+    locked_visit_purposes = list(visit_locks)
+    purposes_locked_every_year = [
+        purpose
+        for purpose, years in visit_locks.items()
+        if open_years and len(years) == len(open_years)
+    ]
+    # The sentences shown with the purpose list from the start: each used
+    # count's reason for this year, or for the next where this one is open.
+    locked_visit_reasons = list(
+        dict.fromkeys(
+            years.get(_gate.fy) or next(iter(years.values()))
+            for years in visit_locks.values()
+        )
     )
     # In-school Training at a Core School may be scheduled here too (owner,
     # 2026-09-28: "lift all restrictions"). It still counts on the package:
@@ -1247,9 +1261,9 @@ def _schedule_modal(request):
     # slot once it is saved, wherever it was booked.
     package_locked_purposes: list[str] = []
     package_locked_reason = ""
-    # A Champion or Core Graduate school is planned for a Donor Visit or a
-    # Content/Story Collection visit only (owner, 2026-09-25): the drawer
-    # offers just those two, and the service refuses anything else.
+    # A Champion school is planned for a Donor Visit or a Content/Story
+    # Collection visit only (owner, 2026-09-25): the drawer offers just those
+    # two, and the service refuses anything else.
     from apps.planning.visit_gate import (
         OUTREACH_ACTIVITY_TYPES,
         OUTREACH_ONLY_SCHOOL_TYPES,
@@ -1474,10 +1488,12 @@ def _schedule_modal(request):
             else ""
         ),
         "locked_visit_purposes": locked_visit_purposes,
-        "locked_visit_reason": locked_visit_reason,
-        "visit_locked_every_year": visit_locked_every_year,
-        "visit_locked_reasons_json": json.dumps(visit_locked_reasons),
-        "follow_up_purposes_json": json.dumps(list(FOLLOW_UP_PURPOSES)),
+        "locked_visit_reasons": locked_visit_reasons,
+        "purposes_locked_every_year": purposes_locked_every_year,
+        "all_visit_locks_every_year": bool(visit_locks)
+        and len(purposes_locked_every_year) == len(visit_locks),
+        "visit_locks_json": json.dumps(visit_locks),
+        "purposes_locked_every_year_json": json.dumps(purposes_locked_every_year),
         "package_locked_purposes": package_locked_purposes,
         "package_locked_reason": package_locked_reason,
         "recommended_visit_purpose": (
@@ -1486,7 +1502,7 @@ def _schedule_modal(request):
             else ""
             if recommended_visit_purpose
             in (
-                *(locked_visit_purposes if visit_locked_every_year else ()),
+                *purposes_locked_every_year,
                 *package_locked_purposes,
             )
             else recommended_visit_purpose

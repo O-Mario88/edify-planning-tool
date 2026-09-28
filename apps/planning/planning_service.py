@@ -1,7 +1,7 @@
 from apps.core.metrics import PresentationKpi, render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.planning.owner_groups import group_label as _group_label
-from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
+from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import ActivityStatus, SsaIntervention
@@ -293,8 +293,9 @@ class PlanningDashboardService:
 
         # Tab-specific filters for the table view
         # Core Trained schools are planned as client schools, without the
-        # Core package; Champion and Core Graduate schools are not planned
-        # here at all (owner, 2026-09-25; see the exclusion below).
+        # Core package; Champion and Core Graduate schools are planned from
+        # their own tables on Core Schools, not here (owner, 2026-09-25; see
+        # the exclusion below).
         if active_tab == "client":
             table_schools_qs = _without_active_work(
                 schools_qs.filter(school_type__in=["client", "core_trained"])
@@ -368,9 +369,8 @@ class PlanningDashboardService:
             )
             .exclude(cluster_id="")
             # Champion and Core Graduate schools have their own tables on
-            # Core Schools, for donor and story visits only (owner,
-            # 2026-09-25), so no Planning tab lists them.
-            .exclude(school_type__in=OUTREACH_ONLY_SCHOOL_TYPES)
+            # Core Schools (owner, 2026-09-25), so no Planning tab lists them.
+            .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         )
 
         # 2. Pagination and query based on active tab
