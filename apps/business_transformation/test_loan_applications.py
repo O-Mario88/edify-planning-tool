@@ -265,6 +265,15 @@ class LoanApplicationWorkflowTests(TestCase):
 
     def test_monthly_and_termly_loans_generate_frequency_based_reminders(self):
         today = timezone.localdate()
+        # The payment falls due in the reminder window (today to a week
+        # ahead) on a day every month has: today up to the 28th, else the 1st
+        # of next month — capping today's day at 28 put the due date in the
+        # past on the 29th to 31st, and the job rightly said nothing.
+        due = (
+            today
+            if today.day <= 28
+            else (today.replace(day=28) + timedelta(days=4)).replace(day=1)
+        )
         for frequency, months in (("monthly", 1), ("termly", 3)):
             school = (
                 self.school
@@ -278,11 +287,11 @@ class LoanApplicationWorkflowTests(TestCase):
             case = TransformationCase.objects.create(
                 school=school, opened_fy="2026", owner_staff_id=self.cceo_profile.id
             )
-            disbursed_on = today
+            disbursed_on = due
             for _ in range(months):
                 disbursed_on = (
                     disbursed_on.replace(day=1) - timedelta(days=1)
-                ).replace(day=min(today.day, 28))
+                ).replace(day=due.day)
             MfiLoan.objects.create(
                 mfi=self.mfi,
                 school=school,

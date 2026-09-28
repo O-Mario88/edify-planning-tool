@@ -51,6 +51,29 @@ def parse_date(d_str: str) -> date:
         raise BadRequest(f"Invalid date format: {d_str}") from exc
 
 
+def _page_fy(request) -> str:
+    """The fiscal year a Fund Requests page reads.
+
+    The one asked for, else the year of the week named: a weekly request is
+    filed under the year of its Monday (apps.fund_requests.weekly_service), so
+    a link to a week from 1 October onward opened the running year's page and
+    found no request — the PL's accountability approval included — until the
+    year rolled over (2026-09-28). Neither given, the running year.
+    """
+    fy = (request.GET.get("fy") or "").strip()
+    if fy:
+        return fy
+    week = (request.GET.get("week") or "").strip()
+    if week:
+        try:
+            day = parse_date(week)
+        except BadRequest:
+            day = None
+        if day:
+            return get_operational_fy(day - timedelta(days=day.weekday()))
+    return get_operational_fy()
+
+
 def get_weeks_of_month(year, month):
     cal = calendar.Calendar(firstweekday=0)
     month_days = cal.monthdatescalendar(year, month)
@@ -461,7 +484,7 @@ def _build_fund_requests_context(request):
     )
 
     # 1. Filters & Defaults
-    fy = request.GET.get("fy", get_operational_fy()).strip()
+    fy = _page_fy(request)
     quarter = request.GET.get("quarter", "").strip()
     month_name = request.GET.get("month", "").strip()
     # (2026-08-20 tab audit: the page's old `tab` state was vestigial — no
@@ -1526,7 +1549,7 @@ def _build_fund_requests_context(request):
 def weekly_fund_requests_view(request):
     if request.GET.get("period_tab") in ("month", "quarter", "fy"):
         return _budget_redirect(request, period=request.GET["period_tab"])
-    fy = request.GET.get("fy", get_operational_fy()).strip()
+    fy = _page_fy(request)
 
     # CSV export of the currently filtered requests (same pattern as /clusters).
     if request.GET.get("export", "").strip() == "csv":
