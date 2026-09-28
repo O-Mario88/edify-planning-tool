@@ -4,10 +4,10 @@ Owner rule, 2026-09-23. These tests hold the rule end to end:
 
 * the school stays on Planning and in the Cluster School List, with its staff
   owner, and a Responsible column naming Staff or Partner from live records;
-* at a Partner-supported school staff may plan Data Gathering, Content
-  Gathering and Donor Visits directly, and Cluster Meetings and Group Training
-  through Cluster Planning — the server refuses everything else, whatever the
-  browser sends;
+* at a Partner-supported school staff may plan any purpose directly (owner,
+  2026-09-28: "lift all restrictions" — it was Data Gathering, Content
+  Gathering and Donor Visits only), and the drawer names the Partner and its
+  live plans so nobody schedules on top of them unseen;
 * Partner-delivered work is the Partner's: never on a staff My Plan, never in
   a staff fund request, never a staff target credit;
 * the shared Visit and Training Status badges count Partner work where the
@@ -433,26 +433,22 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
             "partner",
         )
 
-    def test_other_direct_school_support_is_refused_with_the_reason(self):
-        for code in (
-            "STANDARD_SCHOOL_VISIT",
-            "STANDARD_IN_SCHOOL_SUPPORT",
-            "STANDARD_SOCIAL_VISIT",
-            "STANDARD_IN_SCHOOL_COACHING_VISIT",
-        ):
+    def test_other_direct_school_support_is_allowed_too(self):
+        """Owner, 2026-09-28: "lift all restrictions". A support visit and a
+        social visit are planned beside the Partner's work."""
+        for code in ("STANDARD_SCHOOL_VISIT", "STANDARD_SOCIAL_VISIT"):
             with self.subTest(code=code):
-                with self.assertRaisesMessage(
-                    BadRequest, "This school is currently supported by Ozeki"
-                ):
-                    self.staff_activity(code, focusIntervention="leadership")
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
-        self.assertFalse(
-            ActivityScheduleCostLine.objects.filter(
-                activity__school=self.school
-            ).exists()
-        )
+                result = self.staff_activity(
+                    code,
+                    focusIntervention="leadership",
+                    scheduledDate=_at(
+                        _later_date(0 if code == "STANDARD_SCHOOL_VISIT" else 1)
+                    ).isoformat(),
+                )
+                activity = Activity.objects.get(id=result["id"])
+                self.assertEqual(activity.delivery_type, "staff")
 
-    def test_in_school_training_is_refused_and_leaves_nothing_behind(self):
+    def test_in_school_training_is_allowed(self):
         from apps.activity_catalogue.availability import (
             in_school_training_course_options,
         )
@@ -461,19 +457,22 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
         courses = in_school_training_course_options(school=self.school)
         if not courses:
             self.skipTest("no governed in-school course in this catalogue")
-        with self.assertRaises(BadRequest):
-            schedule_in_school_training_pair(
-                {
-                    "schoolId": self.school.school_id,
-                    "catalogueItemId": courses[0]["id"],
-                    "scheduledDate": _at(_schedulable_date()).isoformat(),
-                    "responsibleStaffId": self.staff.id,
-                },
-                self.user,
-            )
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
+        schedule_in_school_training_pair(
+            {
+                "schoolId": self.school.school_id,
+                "catalogueItemId": courses[0]["id"],
+                "scheduledDate": _at(_schedulable_date()).isoformat(),
+                "responsibleStaffId": self.staff.id,
+            },
+            self.user,
+        )
+        self.assertTrue(
+            Activity.objects.filter(
+                school=self.school, activity_type="in_school_training"
+            ).exists()
+        )
 
-    def test_the_api_refuses_a_manipulated_selection(self):
+    def test_the_api_accepts_a_staff_visit_there(self):
         client = Client()
         client.force_login(self.user)
 
@@ -483,37 +482,16 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
                 "catalogueItemId": self.item("STANDARD_SCHOOL_VISIT").id,
                 "schoolId": self.school.school_id,
                 "scheduledDate": _at(_schedulable_date()).isoformat(),
-                "activityPurposeText": "Crafted request",
+                "activityPurposeText": "Planned beside the Partner",
                 "focusIntervention": "leadership",
             },
             content_type="application/json",
         )
 
-        self.assertNotEqual(response.status_code, 201)
-        self.assertIn("supported by Ozeki", response.content.decode())
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
+        self.assertEqual(response.status_code, 201, response.content[:300])
+        self.assertTrue(Activity.objects.filter(school=self.school).exists())
 
-    def test_the_drawer_post_refuses_a_manipulated_purpose(self):
-        client = Client()
-        client.force_login(self.user)
-
-        response = client.post(
-            "/planning/schedule-action",
-            {
-                "school_id": self.school.school_id,
-                "scheduled_date": _schedulable_date().isoformat(),
-                "purpose_of_visit": "social_visit",
-                "activity_purpose_text": "Crafted purpose",
-                "require_catalogue": "yes",
-            },
-            HTTP_HX_REQUEST="true",
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("supported by Ozeki", response.content.decode())
-        self.assertFalse(Activity.objects.filter(school=self.school).exists())
-
-    def test_the_drawer_offers_only_the_whitelisted_purposes(self):
+    def test_the_drawer_names_the_partner_and_locks_no_purpose(self):
         client = Client()
         client.force_login(self.user)
 
@@ -523,27 +501,8 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
 
         self.assertIn("data-partner-support-notice", html)
         self.assertIn("This school is supported by Ozeki Foundation", html)
-        self.assertIn(
-            "Staff may directly plan Data Gathering, Content Gathering, or Donor Visits",
-            html,
-        )
-        for locked in (
-            "in_school_training",
-            "training_follow_up",
-            "social_visit",
-            "school_invitation",
-        ):
-            with self.subTest(locked=locked):
-                self.assertIn(
-                    f'<option value="{locked}" disabled data-purpose-locked="partner"',
-                    html,
-                )
-        for open_purpose in ("ssa_support", "donor_visit", "story_gathering"):
-            with self.subTest(open=open_purpose):
-                self.assertNotIn(
-                    f'<option value="{open_purpose}" disabled data-purpose-locked="partner"',
-                    html,
-                )
+        self.assertNotIn('data-purpose-locked="partner"', html)
+        self.assertNotIn("data-partner-lock-reason", html)
 
     def test_a_role_without_the_grant_cannot_plan_there(self):
         director = User.objects.create_user(
@@ -1077,11 +1036,27 @@ class FinanceAndAchievementTest(PartnerSchoolFixture):
         )
 
     def test_a_refused_plan_creates_no_activity_and_no_cost(self):
+        """The one staff support visit a year (owner, 2026-09-28) is the
+        refusal left at a client school; a refused plan leaves nothing."""
         self.hand_to_partner()
+        # Two days in one fiscal year: the rule is counted per year.
+        first = _schedulable_date(room=4)
+        second = first + datetime.timedelta(days=1)
+        while second.weekday() == 6:
+            second += datetime.timedelta(days=1)
+        self.staff_activity(
+            "STANDARD_SCHOOL_VISIT",
+            focusIntervention="leadership",
+            scheduledDate=_at(first).isoformat(),
+        )
         before = (Activity.objects.count(), ActivityScheduleCostLine.objects.count())
 
         with self.assertRaises(BadRequest):
-            self.staff_activity("STANDARD_SCHOOL_VISIT", focusIntervention="leadership")
+            self.staff_activity(
+                "STANDARD_SCHOOL_VISIT",
+                focusIntervention="leadership",
+                scheduledDate=_at(second).isoformat(),
+            )
 
         self.assertEqual(
             before,

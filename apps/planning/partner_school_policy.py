@@ -141,28 +141,22 @@ class PartnerSupportedSchoolPlanningPolicy:
             return allowed
 
         partner = responsibility.responsible_name
-        code = getattr(catalogue_item, "stable_code", "") or ""
-        whitelisted = code in DIRECT_STAFF_ACTIVITY_CODES or (
-            catalogue_item is None and kind in allowed_workflow_kinds()
-        )
-        if whitelisted:
-            if principal is not None and not _may(
-                principal, "PARTNER_SCHOOL_DIRECT_PLAN"
-            ):
-                return PolicyResult(
-                    PlanningDecision.NOT_ALLOWED,
-                    f"This school is currently supported by {partner}, and your "
-                    "role does not plan directly at Partner-supported schools.",
-                    partner,
-                )
-            return allowed
-        # Anything else — including a group activity attempted against the one
-        # school rather than planned for its cluster — is the Partner's.
-        return PolicyResult(
-            PlanningDecision.PARTNER_WORKFLOW_REQUIRED,
-            restriction_message(partner),
-            partner,
-        )
+        # Owner, 2026-09-28: "lift all restrictions. the only restriction is
+        # for client schools to have one visit from the staff." A Partner
+        # supporting the school no longer narrows what staff may plan there to
+        # the Data Gathering / Content Gathering / Donor Visit whitelist
+        # (DIRECT_STAFF_ACTIVITY_CODES): every purpose is open, and the
+        # drawer names the Partner and its live plans so nobody schedules on
+        # top of them unseen. Planning directly at such a school stays a
+        # role's grant.
+        if principal is not None and not _may(principal, "PARTNER_SCHOOL_DIRECT_PLAN"):
+            return PolicyResult(
+                PlanningDecision.NOT_ALLOWED,
+                f"This school is currently supported by {partner}, and your "
+                "role does not plan directly at Partner-supported schools.",
+                partner,
+            )
+        return allowed
 
     @staticmethod
     def assert_direct_staff_activity_allowed(school, catalogue_item, **kwargs) -> None:

@@ -1,7 +1,9 @@
 """The combined Core Trained / Core Graduate / Champion list, and its rules.
 
-Owner, 2026-09-21: the three belong together, take everything a client school
-takes, and are never assigned to a partner.
+Owner, 2026-09-21: the three belong together and take everything a client
+school takes. Owner, 2026-09-28: Core Trained is planned exactly like a client
+school, partner support included; Champion and Core Graduate, which take donor
+and story visits only, are never a partner's.
 """
 
 from __future__ import annotations
@@ -96,9 +98,14 @@ class EveryRowCarriesItsTwoRulesTest(_Fixture):
             self.assertEqual(row.visits_allowed, CLIENT_VISIT_CAP, row.school_id)
             self.assertTrue(row.can_schedule, row.school_id)
 
-    def test_each_row_says_a_partner_can_never_take_it(self):
+    def test_only_champion_and_graduate_rows_refuse_a_partner(self):
         for row in programme_schools(self.user).rows:
-            self.assertIn("never assigned to a partner", row.partner_reason)
+            if row.school_type == "core_trained":
+                self.assertEqual(row.partner_reason, "", row.school_id)
+            else:
+                self.assertIn(
+                    "never assigned to a partner", row.partner_reason, row.school_id
+                )
 
 
 class ThePageRendersForItsReadersTest(_Fixture):
@@ -109,7 +116,7 @@ class ThePageRendersForItsReadersTest(_Fixture):
         html = response.content.decode()
         self.assertIn("Programme Schools", html)
         self.assertIn("School PS-CHAMP", html)
-        self.assertIn("never assigned to a partner", html)
+        self.assertIn("planned exactly like client schools", html)
         self.assertNotIn("School PS-CLIENT", html)
 
     def test_a_partner_cannot_open_it(self):

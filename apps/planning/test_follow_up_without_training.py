@@ -69,41 +69,32 @@ class FollowUpWithoutTrainingTest(StandardSupportBase):
         with self.assertRaises(BadRequest):
             self.follow_up(sourceActivityId="does-not-exist")
 
-    def test_follow_ups_past_the_client_allowance_are_scheduled_and_counted(self):
-        """The allowance stopped being a ceiling on 2026-09-21.
-
-        It is still counted, and the count is still what the pages show, so
-        this walks past CLIENT_VISIT_CAP and checks the visits are there
-        rather than that the next one was refused.
-        """
+    def test_a_second_follow_up_in_the_year_is_refused(self):
+        """A client school takes one staff support visit a year (owner,
+        2026-09-28), a follow-up without a training included."""
         import datetime
 
+        from apps.core.exceptions import BadRequest
+        from apps.core.fy import get_operational_fy
         from apps.planning.test_standard_support_scheduling import (
             _at,
             _schedulable_date,
         )
-        from apps.planning.visit_gate import CLIENT_VISIT_CAP
+        from apps.planning.visit_gate import CLIENT_VISIT_CAP, visit_gate
 
-        # Distinct dates: two identical visits on one day are refused by the
-        # duplicate-activity guard, which is a different rule from this one.
-        from apps.core.fy import get_operational_fy
-
-        day = _schedulable_date(room=2 * (CLIENT_VISIT_CAP + 1))
+        # Distinct dates in one fiscal year: two identical visits on one day
+        # are refused by the duplicate-activity guard, a different rule.
+        day = _schedulable_date(room=4)
         year = get_operational_fy(day)
-        for _ in range(CLIENT_VISIT_CAP):
-            while day.weekday() == 6:
-                day += datetime.timedelta(days=1)
-            self.follow_up(scheduledDate=_at(day).isoformat())
-            day += datetime.timedelta(days=1)
+        self.follow_up(scheduledDate=_at(day).isoformat())
+        day += datetime.timedelta(days=1)
         while day.weekday() == 6:
             day += datetime.timedelta(days=1)
-        self.follow_up(scheduledDate=_at(day).isoformat())  # no BadRequest
-
-        from apps.planning.visit_gate import visit_gate
-
-        self.assertEqual(
-            visit_gate(self.school, year).total_visits, CLIENT_VISIT_CAP + 1
-        )
+        self.assertEqual(get_operational_fy(day), year)
+        with self.assertRaises(BadRequest) as ctx:
+            self.follow_up(scheduledDate=_at(day).isoformat())
+        self.assertIn("staff support visit", str(ctx.exception.detail))
+        self.assertEqual(visit_gate(self.school, year).total_visits, CLIENT_VISIT_CAP)
 
     def test_an_out_of_portfolio_school_is_scheduled_all_the_same(self):
         """The portfolio stopped gating the visit on 2026-09-21: a CCEO

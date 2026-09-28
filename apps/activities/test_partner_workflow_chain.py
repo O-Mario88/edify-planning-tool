@@ -164,13 +164,14 @@ class PartnerWorkflowChainTest(TestCase):
 
     # ── §F: the allowance never counts an assignment's own activity ─────────
 
-    def test_allowance_excludes_the_assignments_own_linked_activity(self):
+    def test_the_allowance_refuses_nothing_since_it_was_lifted(self):
+        """Owner, 2026-09-28: "lift all restrictions" — a second partner
+        activity at a school is allowed, with or without the assignment's
+        own activity excluded."""
         a = self._partner_activity(status="completed")
-        with self.assertRaises(BadRequest):
-            assert_partner_activity_allowance(
-                self.partner.id, self.school.id, "in_school_training", "2026"
-            )
-        # The same count, excluding the assignment's own activity — passes.
+        assert_partner_activity_allowance(
+            self.partner.id, self.school.id, "in_school_training", "2026"
+        )
         assert_partner_activity_allowance(
             self.partner.id,
             self.school.id,

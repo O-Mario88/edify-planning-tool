@@ -1,4 +1,10 @@
-"""No duplicate Core School visit on one day (owner, 2026-09-27).
+"""Duplicate Core School visits on one day (owner, 2026-09-27; lifted 2026-09-28).
+
+The rule below was the owner's on 2026-09-27 and was lifted the next day with
+every other scheduling restriction but the client school's one staff visit
+("lift all restrictions"). The finder still answers what a duplicate is, for
+anyone who shows it; an exact repeat of one submission is still refused by
+the identical-activity guard every activity passes.
 
 "No core visits duplicate on the same day. Right new we are planning for next
 fy so that is fine but no duplicate visit for the same day same intervention
@@ -18,7 +24,6 @@ from django.test import TestCase
 
 from apps.activities.duplicate_visits import existing_same_day_core_visit
 from apps.activities.models import Activity
-from apps.core.exceptions import BadRequest
 from apps.core_schools.test_core_visit_purposes import _CoreFixture, _today
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -139,7 +144,7 @@ class TheCoreDrawerRefusesTheSecondCopyTest(_CoreFixture):
             1,
         )
 
-    def test_the_service_refuses_it_by_any_door(self):
+    def test_the_service_no_longer_refuses_it(self):
         from apps.activities.duplicate_visits import assert_not_duplicate_core_visit
 
         Activity.objects.create(
@@ -153,12 +158,12 @@ class TheCoreDrawerRefusesTheSecondCopyTest(_CoreFixture):
             responsible_staff_id=self.cceo_sp.id,
             focus_intervention="leadership",
         )
-        with self.assertRaises(BadRequest):
-            assert_not_duplicate_core_visit(
-                self.school,
-                activity_type="school_visit",
-                day=DAY,
-                focus_intervention="leadership",
-                delivery_type="staff",
-                staff_id=self.cceo_sp.id,
-            )
+        kwargs = {
+            "activity_type": "school_visit",
+            "day": DAY,
+            "focus_intervention": "leadership",
+            "delivery_type": "staff",
+            "staff_id": self.cceo_sp.id,
+        }
+        self.assertIsNotNone(existing_same_day_core_visit(self.school, **kwargs))
+        assert_not_duplicate_core_visit(self.school, **kwargs)  # no BadRequest

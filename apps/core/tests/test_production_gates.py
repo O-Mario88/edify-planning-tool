@@ -199,37 +199,17 @@ class PartnerAllowanceTest(TestCase):
             planned_date=timezone.now().date() + timedelta(days=days),
         )
 
-    def test_default_one_per_school_enforced_and_grant_extends(self):
-        from apps.partners.models import PartnerActivityAllowance
+    def test_the_default_allowance_is_lifted(self):
+        """Owner, 2026-09-28: "lift all restrictions. the only restriction is
+        for client schools to have one visit from the staff." A partner may
+        be given as much work at a school as it is asked to deliver."""
         from apps.partners.services import assert_partner_activity_allowance
 
-        # No activities yet — allowed.
-        assert_partner_activity_allowance(
-            self.partner.id, self.school.id, "partner_activity", self.fy
-        )
-        self._partner_activity()
-        # Second non-core activity — blocked by default allowance.
-        with self.assertRaises(BadRequest):
+        for day in range(3):
             assert_partner_activity_allowance(
                 self.partner.id, self.school.id, "partner_activity", self.fy
             )
-        # Auditable grant unlocks exactly one more.
-        PartnerActivityAllowance.objects.create(
-            partner=self.partner,
-            school=self.school,
-            fy=self.fy,
-            additional_activities=1,
-            granted_by="cd-user",
-            reason="Donor-funded extra training",
-        )
-        assert_partner_activity_allowance(
-            self.partner.id, self.school.id, "partner_activity", self.fy
-        )
-        self._partner_activity(days=1)
-        with self.assertRaises(BadRequest):
-            assert_partner_activity_allowance(
-                self.partner.id, self.school.id, "partner_activity", self.fy
-            )
+            self._partner_activity(days=day)
 
     def test_core_types_exempt(self):
         from apps.partners.services import assert_partner_activity_allowance
@@ -633,20 +613,29 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_a_visit_past_the_client_allowance_is_scheduled_and_counted(self):
-        """A client school's CLIENT_VISIT_CAP visits a year are counted and,
-        since the owner lifted the restriction on 2026-09-21, not enforced.
+    def test_a_second_staff_visit_in_the_year_is_refused(self):
+        """A client school takes one staff support visit a year (owner,
+        2026-09-28). Both visits are dated in one fiscal year: near 30
+        September the next schedulable days can straddle it."""
+        from datetime import datetime
 
-        Counted from the constant so the day the number moves again this
-        still asserts the gate rather than the figure.
-        """
         from apps.planning.visit_gate import CLIENT_VISIT_CAP, visit_gate
 
-        made = [self._schedule_visit(5 + day) for day in range(CLIENT_VISIT_CAP)]
-        made.append(self._schedule_visit(5 + CLIENT_VISIT_CAP))  # no BadRequest
-        for visit in made:
-            self.assertEqual(Activity.objects.get(id=visit["id"]).status, "scheduled")
-        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP + 1)
+        def fy_of(days):
+            return get_operational_fy(
+                datetime.strptime(self._schedulable_date(days), "%Y-%m-%d").date()
+            )
+
+        first = 5
+        while fy_of(first) != fy_of(first + 1):
+            first += 1
+        made = self._schedule_visit(first)
+        with self.assertRaises(BadRequest) as ctx:
+            self._schedule_visit(first + 1)
+        self.assertIn("staff support visit", str(ctx.exception.detail))
+        self.assertEqual(
+            visit_gate(self.school, made["fy"]).total_visits, CLIENT_VISIT_CAP
+        )
 
     def test_additional_client_training_is_allowed(self):
         first = self._schedule_training(5)

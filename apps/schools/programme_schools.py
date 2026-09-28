@@ -180,7 +180,10 @@ def programme_schools(
         training = coverage[school.id]
         average = averages.get(school.id)
         _band, _hex, tone = ssa_score_band(average)
-        may_schedule = school.id in writable_ids and gate.staff_can_schedule
+        # The row's Schedule opens the drawer, which greys only the purposes
+        # the rule has no room for; the whole button closes only when the
+        # school is locked (owner, 2026-09-28: one staff support visit).
+        may_schedule = school.id in writable_ids and not gate.staff_locked
         result.rows.append(
             ProgrammeSchoolRow(
                 id=school.id,
@@ -192,7 +195,7 @@ def programme_schools(
                 owner=owners.get(school.account_owner_id, ""),
                 ssa_average=average,
                 ssa_tone=tone,
-                visits_used=gate.total_visits,
+                visits_used=gate.staff_visits,
                 visits_allowed=gate.staff_cap,
                 visit_status_label=status.label,
                 visit_status_tone=status.tone,

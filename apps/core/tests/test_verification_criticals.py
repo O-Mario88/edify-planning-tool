@@ -252,9 +252,13 @@ class StaffCoreAnnualCapTests(TestCase):
             CorePackageSchedulingService,
         )
 
+        # Since 2026-09-28 the two apply only while the partner has a core
+        # visit planned at the school ("staff may plan more core schools
+        # visits but only if the partner has not planned"); where they apply
+        # they are still counted on the package.
         source = inspect.getsource(CorePackageSchedulingService.assert_can_schedule)
-        self.assertIn("STAFF_CAP = 2", source)
-        cap_block = source.split("STAFF_CAP = 2")[1]
+        self.assertIn("CORE_STAFF_VISIT_CAP", source)
+        cap_block = source.split(".partner_visits:")[1]
         # Counted on the package. Neither the quarter nor the year narrows it.
         self.assertIn("core_plan=plan", cap_block)
         self.assertNotIn("quarter=", cap_block)
