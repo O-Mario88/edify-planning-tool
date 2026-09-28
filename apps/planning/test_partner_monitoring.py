@@ -188,6 +188,48 @@ class RoleScopeTest(MonitoringFixture):
         )
 
 
+class OpenHandoversOfEarlierYearsTest(MonitoringFixture):
+    """Owner, 2026-09-28: Partner oversight "should also show exactly the
+    number of schools assigned to the partner". A handover made in an earlier
+    year that the partner has not dated, or handed back and nobody decided,
+    is still a school assigned to the partner."""
+
+    def _made_last_year(self, assignment):
+        from django.utils import timezone
+
+        made = timezone.now() - timedelta(days=500)
+        PartnerAssignment.objects.filter(id=assignment.id).update(created_at=made)
+        return assignment
+
+    def test_a_waiting_handover_from_an_earlier_year_is_listed(self):
+        from apps.planning.fy_policy import planning_horizon
+
+        waiting = self._made_last_year(self.assign())
+        returned = self._made_last_year(
+            self.assign(school=self.second_school, status="returned_to_staff")
+        )
+        director = self._staff(
+            "cd-open@m.test",
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.COUNTRY_DIRECTOR,
+        )[0]
+        for user in (self.pl_user, director):
+            with self.subTest(role=user.active_role):
+                items = svc.build_items(user, fy=self.fy, fys=planning_horizon(self.fy))
+                self.assertIn(waiting.id, self.ids(items))
+                self.assertIn(returned.id, self.ids(items))
+
+    def test_a_decided_return_from_an_earlier_year_is_not(self):
+        from django.utils import timezone
+
+        returned = self._made_last_year(self.assign(status="returned_to_staff"))
+        PartnerAssignment.objects.filter(id=returned.id).update(
+            resolved_at=timezone.now() - timedelta(days=400)
+        )
+        items = svc.build_items(self.pl_user, fy=self.fy)
+        self.assertNotIn(returned.id, self.ids(items))
+
+
 class FiltersAndTotalsTest(MonitoringFixture):
     def setUp(self):
         super().setUp()

@@ -599,8 +599,17 @@ def build_items(
     if years:
         from apps.core.fy import get_operational_fy
 
+        # A handover still open — the partner has not dated it, or handed it
+        # back and staff have not decided what happens next — is a school
+        # assigned to the partner today, whichever year it was made in. Filed
+        # under its handover year, one made in June 2025 and still waiting
+        # disappeared from the page the day it read FY2026 (owner,
+        # 2026-09-28: "show exactly the number of schools assigned to the
+        # partner").
         assignments = [
-            a for a in assignments if _assignment_fy(a, get_operational_fy) in years
+            a
+            for a in assignments
+            if _still_open(a) or _assignment_fy(a, get_operational_fy) in years
         ]
 
     activity_ids = [
@@ -907,6 +916,19 @@ def _has_soft_delete() -> bool:
     from apps.partners.models import PartnerAssignment
 
     return any(f.name == "deleted_at" for f in PartnerAssignment._meta.get_fields())
+
+
+def _still_open(assignment) -> bool:
+    """Waiting on the partner's date, or returned and not yet decided."""
+    from apps.partners.models import PartnerAssignment
+
+    if assignment.scheduled_activity_id:
+        return False
+    if assignment.status in PartnerAssignment.UNSCHEDULED_STATUSES:
+        return True
+    return assignment.status == PartnerAssignment.STATUS_RETURNED_TO_STAFF and not (
+        getattr(assignment, "resolved_at", None)
+    )
 
 
 def _assignment_fy(assignment, get_operational_fy) -> str:
