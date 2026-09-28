@@ -5,9 +5,14 @@ FY runs October 1 → September 30. The FY label is the calendar year in which
 the FY ENDS (so Oct 2025 → "2026"). Quarters: Q1 Oct–Dec, Q2 Jan–Mar,
 Q3 Apr–Jun, Q4 Jul–Sep.
 
-All date math is UTC to match the legacy getUTC* usage. The pinned spec tests
-(see fy.util.spec.ts) must keep passing — especially the FY rollover at
-Sep 30 → Oct 1 and the seeded May–June window being Q3.
+Date math is on calendar days. A date is its own day; an aware datetime is
+read on its calendar day in the platform's time zone (Africa/Nairobi), because
+a date picked in the app is stored as local midnight — the year turns at 21:00
+UTC on 30 September. A naive datetime and "now" are still read in UTC, as the
+legacy getUTC* code did. The pinned boundary tests (apps/core/tests/
+test_hardening_gates.py BoundaryTest, apps/planning/test_fy2027_planning.py)
+must keep passing — especially the FY rollover at Sep 30 → Oct 1 and the
+seeded May–June window being Q3.
 """
 
 from __future__ import annotations
