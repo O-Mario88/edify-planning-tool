@@ -119,7 +119,29 @@ onPurposeChange() {
   if (!this.showFollowUpPicker) { this.sourceActivityId = ''; }
   if (this.showSsaDataGathering || (this.showFollowUpPicker && this.followUpRequiresTraining)) { this.focusIntervention = ''; }
 },
-plannedParticipants: ''
+plannedParticipants: '',
+{% comment %}A client-rule school's staff visits a year (owner, 2026-09-28):
+one support visit (Training Follow Up or In-school Training) and one SSA
+Support. The year is the scheduled date's: `visitLocks` holds, per purpose,
+each open year its visit is already used in, so the purpose greys for a date
+in one of those years and stays open for a date in another.{% endcomment %}
+scheduledDate: '{% if reschedule_mode %}{{ reschedule_activity.planned_date|date:"Y-m-d" }}{% endif %}',
+visitLocks: {{ visit_locks_json|default:'{}' }},
+purposesLockedEveryYear: {{ purposes_locked_every_year_json|default:'[]' }},
+fyOf(value) {
+  if (!value) return '';
+  const [year, month] = String(value).split('-').map(Number);
+  return String(month >= 10 ? year + 1 : year);
+},
+lockFor(purpose) {
+  const years = this.visitLocks[purpose] || {};
+  const year = this.fyOf(this.scheduledDate);
+  if (year) return years[year] || '';
+  return this.purposesLockedEveryYear.includes(purpose) ? (Object.values(years)[0] || '') : '';
+},
+get visitLockReasons() { return [...new Set(Object.keys(this.visitLocks).map(p => this.lockFor(p)).filter(Boolean))]; },
+get visitLockReason() { return this.lockFor(this.purposeOfVisit); },
+get followUpBlocked() { return !!this.visitLockReason; }
 }"
 x-init="ensureTrainingActivity()"
 >
@@ -290,14 +312,14 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select a purpose…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
+    <option value="{{ value }}" {% if value in locked_visit_purposes %}{% if value in purposes_locked_every_year %}disabled {% endif %}:disabled="!!lockFor('{{ value }}')" data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in purposes_locked_every_year %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
     {% endfor %}
   </select>
   {% if outreach_only_note %}
   <p class="edify-text-caption text-slate-600" data-outreach-only role="note">{{ outreach_only_note }}</p>
   {% endif %}
-  {% if locked_visit_reason %}
-  <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} In-school training, donor and social visits can still be scheduled.</p>
+  {% if locked_visit_reasons %}
+  <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note" x-show="visitLockReasons.length"{% if not all_visit_locks_every_year %} x-cloak{% endif %}><span x-text="visitLockReasons.join(' ')">{% if all_visit_locks_every_year %}{{ locked_visit_reasons|join:" " }}{% endif %}</span> Donor, content gathering, invitation and social visits can still be scheduled{% if not all_visit_locks_every_year %}, and a used visit on a date in another financial year{% endif %}.</p>
   {% endif %}
   {% if package_locked_reason %}
   {% comment %}In-school Training belongs to client schools (owner,
@@ -416,7 +438,8 @@ its costing on, so the costing link is derived server-side and never asked for.
 
 <div class="space-y-1">
 <label for="scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Scheduled date <span class="text-rose-500">*</span></label>
-<input id="scheduled_date" type="date" name="scheduled_date" value="{% if reschedule_mode %}{{ reschedule_activity.planned_date|date:"Y-m-d" }}{% endif %}" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+<input id="scheduled_date" type="date" name="scheduled_date" x-model="scheduledDate" value="{% if reschedule_mode %}{{ reschedule_activity.planned_date|date:"Y-m-d" }}{% endif %}" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+<p class="edify-text-caption edify-danger-text" role="alert" x-show="followUpBlocked" x-cloak data-visit-year-used>This date's financial year has already had this visit at the school. Choose a date in another financial year, or another purpose.</p>
 </div>
 {% if not reschedule_mode %}
 {% comment %}
@@ -532,7 +555,7 @@ class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focu
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="schedule-drawer-submit btn btn-primary h-8">{% if reschedule_mode %}Save new date{% else %}Schedule visit{% endif %}</button>
+<button type="submit" class="schedule-drawer-submit btn btn-primary h-8" :disabled="followUpBlocked">{% if reschedule_mode %}Save new date{% else %}Schedule visit{% endif %}</button>
 </div>
 </form>
 {% endblock %}

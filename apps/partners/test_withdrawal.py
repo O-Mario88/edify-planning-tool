@@ -368,34 +368,26 @@ class TheSupportSlotHasOneIdentityTest(WithdrawalFixture):
 
 
 class EntitlementIsNotDuplicatedTest(WithdrawalFixture):
-    def test_cancelling_the_old_activity_frees_the_allowance(self):
-        """Otherwise the replacement partner cannot schedule at all.
+    def test_withdrawal_cancels_the_old_activity(self):
+        """The school's year does not keep work nobody is doing.
 
-        `assert_partner_activity_allowance` counts one non-core partner
-        activity per school per FY, excluding cancelled. If withdrawal left the
-        old activity live, the school would have spent its entitlement on work
-        nobody is doing.
+        The partner allowance this also freed was lifted on 2026-09-28 ("lift
+        all restrictions"), so the replacement partner is never refused; what
+        still matters is that the withdrawn work stops being a live plan.
         """
         from apps.partners.services import assert_partner_activity_allowance
 
         a = self.assign()
-        self.schedule(a)
-
-        with self.assertRaises(BadRequest):
-            assert_partner_activity_allowance(
-                self.partner.id, self.school.id, "school_visit", self.fy
-            )
+        activity = self.schedule(a)
 
         svc.withdraw(
             a.id, self.payload(reason_category=WithdrawalReason.CAPACITY), self.pl_user
         )
 
-        # Freed — and for the replacement partner too.
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "cancelled")
         assert_partner_activity_allowance(
             self.replacement.id, self.school.id, "school_visit", self.fy
-        )
-        assert_partner_activity_allowance(
-            self.partner.id, self.school.id, "school_visit", self.fy
         )
 
 

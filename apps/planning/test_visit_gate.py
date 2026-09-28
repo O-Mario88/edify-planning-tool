@@ -1,33 +1,28 @@
-"""The gate counts a school's visits; since 2026-09-21 it refuses none of them.
+"""The gate: one staff support visit a year at a client school, and little else.
 
-Owner, 2026-09-21: "can you lift restriction to school visits especially
-client school visit. All restrictions. right now it is restricting returning
-error and not scheduling."
+Owner, 2026-09-28: "lift all restrictions. the only restriction is for client
+schools to have one visit from the staff. treat core trained just like client
+schools." And, asked what else stays: "staff may plan more core schools visits
+but only if the partner has not planned."
 
-So what these tests hold is the pair of statements the module now makes:
+So what these tests hold:
 
-* the COUNTS are unchanged and still right — which work uses a client school's
-  follow-up visit, which is in-school work that never did, how a core school's
-  four visits split between staff and partner, and what a live partner
-  assignment means. Every page reads those numbers to SHOW where a school's
-  visiting has reached;
-* and a CLIENT school's count is no longer a permission.
-  `staff_can_schedule`, `partner_can_schedule`, `can_assign_partner` and
-  `can_assign_visit` stay open with empty reasons however much of the year's
-  support is already scheduled, the `assert_*` helpers return instead of
-  raising, and the drawers and queues behind them offer a live button rather
-  than a greyed one with a tooltip.
-
-The CORE package is the exception, and the second class below is about
-nothing else: its 2 + 2 split rests on the owner's own later instruction of
-2026-09-17, `core_planning_services.assert_can_schedule` enforces the staff
-half and delegates the partner half to this module, and the two have to
-agree or a Core Schools row offers what the POST refuses.
-
-CLIENT_VISIT_CAP is still named and still carries the owner's number, because
-a count shown without the figure it is counted against says nothing. The
-client tests therefore count to it rather than to a literal, and assert that
-reaching it changes what the row says and not what it permits.
+* the COUNTS are unchanged — which work uses a client school's follow-up
+  visit, which is in-school work that never did, how a core school's visits
+  split between staff and partner, and what a live partner assignment means;
+* at a CLIENT-rule school (client, and the Programme types) staff visits are
+  counted in two pools (owner, later the same day): one support visit a year
+  — a Training Follow Up or an In-school Training — closes the support
+  purposes (`staff_can_schedule`), and one SSA Support a year closes SSA
+  Support (`ssa_can_schedule`); donor, story, invitation and social visits
+  have no limit, the row's Schedule button stays live, and the partner side
+  is counted but never capped;
+* Core Trained and Core Graduate schools may be handed to a partner like
+  client schools; Champion schools, which take donor and story visits only,
+  may not;
+* at a CORE school staff hold two visits while the partner has a core visit
+  planned there, and may take more while it has none; the partner side and
+  the trainings are not capped.
 
 The gate (apps.planning.visit_gate) is the one definition the buttons and the
 services share, so the tests drive it directly and then check that both
@@ -177,33 +172,36 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_spending_the_allowance_counts_it_and_refuses_nothing(self):
+    def test_the_one_staff_visit_closes_the_follow_up_purposes_only(self):
         school = self._school("VG-2")
         self._spend_client_visits(school)
         gate = visit_gate(school)
-        # The count is the point: the row can say "2 of 2" from it.
-        self.assertEqual(gate.staff_visits, CLIENT_VISIT_CAP)
-        self.assertEqual(gate.total_visits, CLIENT_VISIT_CAP)
-        self.assertEqual(gate.staff_cap, CLIENT_VISIT_CAP)
-        # And every door stays open, with nothing to put in a tooltip.
-        self.assertTrue(gate.staff_can_schedule)
+        self.assertEqual(CLIENT_VISIT_CAP, 1)
+        self.assertEqual(gate.staff_visits, 1)
+        self.assertEqual(gate.staff_cap, 1)
+        # The support visit is spent: the follow-up purposes close, with the
+        # sentence the drawer and the service both say.
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertIn("staff support visit", gate.staff_reason)
+        # The row's Schedule stays live — donor, story, invitation and social
+        # visits and In-school Training never use the visit — and the partner
+        # side is untouched.
+        self.assertFalse(gate.staff_locked)
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_visit)
         self.assertTrue(gate.can_assign_partner)
-        self.assertFalse(gate.staff_locked)
-        self.assertEqual(gate.staff_reason, "")
-        self.assertEqual(gate.partner_reason, "")
-        self.assertEqual(gate.assign_visit_reason, "")
 
-    def test_a_third_visit_past_the_allowance_is_still_open(self):
-        """Nothing closes at the cap, so nothing closes past it either."""
+    def test_partner_work_is_counted_and_never_capped(self):
         school = self._school("VG-2b")
-        self._spend_client_visits(school)
-        self._visit(school)
+        for _ in range(3):
+            self._visit(school, delivery="partner")
+        self._assign(school)
         gate = visit_gate(school)
-        self.assertEqual(gate.total_visits, CLIENT_VISIT_CAP + 1)
+        self.assertEqual(gate.partner_visits, 3)
+        self.assertTrue(gate.partner_can_schedule)
+        self.assertTrue(gate.can_assign_partner)
+        # A partner's visits are not the staff's one visit.
         self.assertTrue(gate.staff_can_schedule)
-        self.assertEqual(gate.staff_reason, "")
 
     def test_a_partners_visits_are_counted_on_their_own_side(self):
         school = self._school("VG-3")
@@ -218,7 +216,7 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self._spend_client_visits(school, status="completed")
         gate = visit_gate(school)
         self.assertEqual(gate.total_visits, CLIENT_VISIT_CAP)
-        self.assertTrue(gate.staff_can_schedule)
+        self.assertFalse(gate.staff_can_schedule)
 
     def test_a_cancelled_visit_and_last_years_visit_do_not_count(self):
         school = self._school("VG-5")
@@ -228,29 +226,69 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertTrue(gate.staff_can_schedule)
         self.assertEqual(gate.total_visits, 0)
 
-    def test_in_school_work_and_social_visits_are_not_the_visit(self):
+    def test_outreach_and_the_companion_visit_have_no_limit(self):
+        """Owner, 2026-09-28: "donor visits and content gathering can be
+        scheduled as many as possible. no limit on those" — and, asked, no
+        limit on social visits and invitations either."""
         school = self._school("VG-6")
-        self._visit(school, kind="in_school_training")
-        self._visit(school, kind="in_school_coaching_visit")
-        self._visit(school, kind="donor_visit")
-        self._visit(school, kind="story_gathering_visit")
+        for kind in (
+            "donor_visit",
+            "donor_visit",
+            "story_gathering_visit",
+            "story_gathering_visit",
+            "social_visit",
+            "school_invitation",
+        ):
+            self._visit(school, kind=kind)
         # The companion visit an in-school training pair records.
         companion = self._visit(school, kind="school_visit")
         companion.purpose_type = "in_school_training_delivery_visit"
         companion.save(update_fields=["purpose_type"])
         gate = visit_gate(school)
         self.assertTrue(gate.staff_can_schedule)
+        self.assertTrue(gate.ssa_can_schedule)
         self.assertEqual(gate.total_visits, 0)
+        self.assertEqual(gate.staff_ssa_visits, 0)
 
-    def test_a_follow_up_or_ssa_visit_counts(self):
+    def test_an_in_school_training_is_the_support_visit(self):
+        """ "after the support visits (follow up or in-school training)": one
+        in total, so an In-school Training closes the Training Follow Up."""
+        for code, kind in (
+            ("VG-6d", "in_school_training"),
+            ("VG-6e", "in_school_coaching_visit"),
+            ("VG-6f", "training_follow_up_visit"),
+        ):
+            school = self._school(code)
+            self._visit(school, kind=kind)
+            gate = visit_gate(school)
+            self.assertEqual(gate.staff_visits, 1, kind)
+            self.assertFalse(gate.staff_can_schedule, kind)
+            self.assertTrue(gate.ssa_can_schedule, kind)
+
+    def test_ssa_support_is_counted_apart_one_a_year(self):
         school = self._school("VG-6b")
-        self._spend_client_visits(
-            school, kind="training_follow_up_visit", delivery="partner"
-        )
-        self.assertEqual(visit_gate(school).partner_visits, CLIENT_VISIT_CAP)
-        other = self._school("VG-6c")
-        self._spend_client_visits(other, kind="school_visit_ssa_collection")
-        self.assertEqual(visit_gate(other).staff_visits, CLIENT_VISIT_CAP)
+        self._visit(school, kind="school_visit_ssa_collection")
+        gate = visit_gate(school)
+        self.assertEqual(gate.staff_ssa_visits, 1)
+        self.assertEqual(gate.staff_visits, 0)
+        self.assertFalse(gate.ssa_can_schedule)
+        self.assertIn("SSA Support visit", gate.ssa_reason)
+        # The support visit is still open beside it.
+        self.assertTrue(gate.staff_can_schedule)
+        self._visit(school, kind="training_follow_up_visit")
+        gate = visit_gate(school)
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertEqual(gate.staff_ssa_visits, 1)
+
+    def test_partner_follow_up_and_ssa_visits_are_counted_not_capped(self):
+        school = self._school("VG-6c")
+        self._visit(school, kind="training_follow_up_visit", delivery="partner")
+        self._visit(school, kind="school_visit_ssa_collection", delivery="partner")
+        gate = visit_gate(school)
+        self.assertEqual(gate.partner_visits, 1)
+        self.assertEqual(gate.partner_ssa_visits, 1)
+        self.assertTrue(gate.staff_can_schedule)
+        self.assertTrue(gate.ssa_can_schedule)
 
     def test_a_school_with_a_partner_is_named_not_closed(self):
         """The partner holding a school is worth SAYING on the row.
@@ -287,9 +325,8 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         before, which read as an unlimited entitlement rather than a chosen
         one.
 
-        Which rule a school is on decides what is COUNTED. Since the same
-        day's other instruction the count no longer closes the staff side,
-        so that is what is asserted here."""
+        Owner, 2026-09-28: "treat core trained just like client schools" —
+        the one staff support visit a year holds for all three."""
         schools = [
             self._school("VG-9", school_type="core_trained"),
             self._school("VG-10", school_type="champion"),
@@ -302,20 +339,21 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
             gate = gates[school.id]
             self.assertEqual(gate.rule, "client", school.school_type)
             self.assertEqual(gate.total_visits, CLIENT_VISIT_CAP, school.school_type)
-            self.assertTrue(gate.staff_can_schedule, school.school_type)
+            self.assertFalse(gate.staff_can_schedule, school.school_type)
 
-    def test_a_programme_school_is_never_assigned_to_a_partner(self):
-        """The other half of the same instruction: they "cannot be assigned to
-        partner", whatever the year's counts say. Not part of the lift — the
-        partner side of a Programme school is closed on its own grounds."""
-        for index, school_type in enumerate(
-            ("core_trained", "champion", "core_graduate")
-        ):
-            school = self._school(f"VG-P{index}", school_type=school_type)
+    def test_champion_schools_are_never_assigned_to_a_partner(self):
+        """They take donor and story visits only (owner, 2026-09-25), which
+        no partner delivers. Core Trained and Core Graduate are planned like
+        client schools, partner support included (owner, 2026-09-28)."""
+        gate = visit_gate(self._school("VG-P0", school_type="champion"))
+        self.assertFalse(gate.can_assign_partner)
+        self.assertFalse(gate.partner_can_schedule)
+        self.assertIn("never assigned to a partner", gate.assign_reason)
+        for index, school_type in enumerate(("core_trained", "core_graduate")):
+            school = self._school(f"VG-P{7 + index}", school_type=school_type)
             gate = visit_gate(school)
-            self.assertFalse(gate.can_assign_partner, school_type)
-            self.assertFalse(gate.partner_can_schedule, school_type)
-            self.assertIn("never assigned to a partner", gate.assign_reason)
+            self.assertTrue(gate.can_assign_partner, school_type)
+            self.assertTrue(gate.partner_can_schedule, school_type)
 
     def test_the_partner_creation_door_refuses_a_programme_school(self):
         """The drawers grey the control; the one creation door refuses it, so
@@ -334,21 +372,25 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertIn("never assigned to a partner", str(ctx.exception.detail))
 
 
-class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
-    """The package's halves are the one thing 2026-09-21 did NOT lift.
+class CoreSchoolStaffVisitsTest(_GateFixture, TestCase):
+    """Owner, 2026-09-28: "staff may plan more core schools visits but only if
+    the partner has not planned." The partner side is no longer capped."""
 
-    They rest on the owner's own later instruction (2026-09-17) and are
-    enforced half here and half in `core_planning_services`, which delegates
-    the partner side to this module — so these have to keep refusing or a
-    Core Schools row offers a button the POST turns away.
-    """
-
-    def test_staff_stop_at_two_visits(self):
+    def test_staff_take_more_while_the_partner_has_planned_none(self):
         school = self._school("VG-C1", school_type="core")
-        self._visit(school)
+        for _ in range(3):
+            self._visit(school)
         gate = visit_gate(school)
         self.assertEqual(gate.rule, "core")
-        self.assertEqual(gate.staff_visits, 1)
+        self.assertEqual(gate.staff_visits, 3)
+        self.assertTrue(gate.staff_can_schedule)
+        self.assertEqual(gate.staff_reason, "")
+
+    def test_staff_stop_at_two_once_the_partner_has_planned(self):
+        school = self._school("VG-C1b", school_type="core")
+        self._visit(school, delivery="partner")
+        self._visit(school)
+        gate = visit_gate(school)
         self.assertEqual(gate.staff_cap, CORE_STAFF_VISIT_CAP)
         self.assertTrue(gate.staff_can_schedule)
         self._visit(school)
@@ -356,34 +398,27 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self.assertEqual(gate.staff_visits, CORE_STAFF_VISIT_CAP)
         self.assertFalse(gate.staff_can_schedule)
         self.assertIn("Staff core visits complete", gate.staff_reason)
-        # The partner's half is untouched.
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_the_partner_half_counts_assigned_slots_as_well_as_scheduled_ones(self):
+    def test_a_handover_not_yet_dated_is_not_a_partner_plan(self):
         school = self._school("VG-C2", school_type="core")
-        self._visit(school, delivery="partner")
-        self._assign(school, support_type="Visit", visit_number="2")
+        self._assign(school, support_type="Visit", visit_number="3")
+        for _ in range(2):
+            self._visit(school)
         gate = visit_gate(school)
-        self.assertEqual(gate.partner_visits, 1)
         self.assertEqual(gate.partner_pending, 1)
-        self.assertEqual(gate.partner_held_visits, CORE_PARTNER_VISIT_CAP)
-        self.assertEqual(gate.partner_cap, CORE_PARTNER_VISIT_CAP)
-        self.assertFalse(gate.can_assign_partner)
-        self.assertIn("already assigned", gate.assign_reason)
-        # The assigned slot is still the partner's to schedule.
-        self.assertTrue(gate.partner_can_schedule)
-        # Staff are not locked out by a partner assignment at a core school.
         self.assertTrue(gate.staff_can_schedule)
 
-    def test_the_partner_stops_at_two_scheduled_visits(self):
+    def test_the_partner_side_is_never_capped(self):
         school = self._school("VG-C3", school_type="core")
-        self._visit(school, delivery="partner")
-        self._visit(school, delivery="partner")
+        for _ in range(CORE_PARTNER_VISIT_CAP + 1):
+            self._visit(school, delivery="partner")
+        self._assign(school, support_type="Visit", visit_number="4")
         gate = visit_gate(school)
-        self.assertEqual(gate.partner_visits, CORE_PARTNER_VISIT_CAP)
-        self.assertFalse(gate.partner_can_schedule)
-        self.assertIn("Partner core visits complete", gate.partner_reason)
+        self.assertEqual(gate.partner_visits, CORE_PARTNER_VISIT_CAP + 1)
+        self.assertTrue(gate.partner_can_schedule)
+        self.assertTrue(gate.can_assign_partner)
 
     def test_a_training_assignment_does_not_use_a_visit_slot(self):
         school = self._school("VG-C4", school_type="core")
@@ -393,42 +428,71 @@ class CoreSchoolHasTwoStaffAndTwoPartnerVisitsTest(_GateFixture, TestCase):
         self.assertEqual(gate.partner_pending_trainings, 1)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_trainings_are_not_visits_and_keep_their_own_entry(self):
+    def test_trainings_are_not_visits_and_are_never_capped(self):
         school = self._school("VG-C5", school_type="core")
+        self._visit(school, delivery="partner")
         self._visit(school)
         self._visit(school)
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
         self.assertEqual(gate.staff_trainings, 0)
         self.assertTrue(gate.staff_trainings_open)
-        self._visit(school, kind="core_training")
-        self._visit(school, kind="core_training")
+        for _ in range(3):
+            self._visit(school, kind="core_training")
         gate = visit_gate(school)
-        self.assertEqual(gate.staff_trainings, CORE_STAFF_VISIT_CAP)
-        self.assertFalse(gate.staff_trainings_open)
+        self.assertEqual(gate.staff_trainings, 3)
+        self.assertTrue(gate.staff_trainings_open)
 
 
 class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
-    """The two readers of the gate, agreeing that nothing is refused."""
+    """The two readers of the gate, agreeing on the one staff visit."""
 
     def _entitlement(self, school, **data):
         from apps.activities.services import _assert_schedule_entitlement
 
         _assert_schedule_entitlement("school_visit", school, self.fy, data)
 
-    def test_a_visit_past_the_allowance_is_scheduled(self):
+    def test_a_second_staff_support_visit_is_refused(self):
+        from apps.core.exceptions import BadRequest
+
         school = self._school("VG-S1")
         self._spend_client_visits(school)
-        self._entitlement(school)  # no BadRequest
-
-    def test_the_first_visit_and_in_school_work_pass(self):
+        with self.assertRaises(BadRequest) as ctx:
+            self._entitlement(school)
+        self.assertIn("staff support visit", str(ctx.exception.detail))
+        # A partner's visit, and the next year's, are still open.
+        self._entitlement(school, deliveryType="partner")
         from apps.activities.services import _assert_schedule_entitlement
+
+        _assert_schedule_entitlement("school_visit", school, str(int(self.fy) + 1), {})
+
+    def test_after_the_support_visit_ssa_and_outreach_pass(self):
+        from apps.activities.services import _assert_schedule_entitlement
+        from apps.core.exceptions import BadRequest
 
         school = self._school("VG-S2")
         self._entitlement(school)
         self._visit(school)
-        _assert_schedule_entitlement("in_school_training", school, self.fy, {})
-        _assert_schedule_entitlement("donor_visit", school, self.fy, {})
+        # The support visit is one in total: an In-school Training is refused
+        # after a follow-up, as a follow-up is after an In-school Training.
+        with self.assertRaisesMessage(BadRequest, "staff support visit"):
+            _assert_schedule_entitlement("in_school_training", school, self.fy, {})
+        # SSA Support once, and donor, story, invitation and social visits
+        # without limit.
+        _assert_schedule_entitlement("school_visit_ssa_collection", school, self.fy, {})
+        self._visit(school, kind="school_visit_ssa_collection")
+        with self.assertRaisesMessage(BadRequest, "SSA Support visit"):
+            _assert_schedule_entitlement(
+                "school_visit_ssa_collection", school, self.fy, {}
+            )
+        for kind in (
+            "donor_visit",
+            "story_gathering_visit",
+            "school_invitation",
+            "social_visit",
+        ):
+            self._visit(school, kind=kind)
+            _assert_schedule_entitlement(kind, school, self.fy, {})
         # The training pair's companion visit is the training, not a visit.
         _assert_schedule_entitlement(
             "school_visit",
@@ -437,9 +501,10 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
             {"purposeType": "in_school_training_delivery_visit"},
         )
 
-    def test_a_pending_request_neither_uses_the_visit_nor_blocks_approval(self):
-        """A request filed before the lift is still decidable, and approving
-        it no longer runs into a cap that would refuse it."""
+    def test_a_pending_request_does_not_use_the_visit_until_approved(self):
+        """A request is not a plan: it uses no visit while it waits, and the
+        rule is applied when its owner approves it."""
+        from apps.core.exceptions import BadRequest
         from apps.activities.services import _assert_schedule_entitlement
         from apps.planning import visit_requests
 
@@ -447,16 +512,19 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         # Counted in the year the visit falls in: approving files it there,
         # and from late September `_visit`'s date is in the next fiscal year.
         fy = get_operational_fy(date.today() + timedelta(days=7))
-        self._spend_client_visits(school, fy=fy)
         _assert_schedule_entitlement("school_visit", school, fy, {}, is_request=True)
-        request = self._visit(school, status=visit_requests.AWAITING, fy=fy)
-        request.approval_owner_id = self.cceo.id
-        request.save(update_fields=["approval_owner_id"])
-        # The pending request is not one of the counted visits.
-        self.assertEqual(visit_gate(school, fy).total_visits, CLIENT_VISIT_CAP)
-        approved = visit_requests.approve(request.id, self.cceo_user)
+        first = self._visit(school, status=visit_requests.AWAITING, fy=fy)
+        second = self._visit(school, status=visit_requests.AWAITING, fy=fy)
+        for request in (first, second):
+            request.approval_owner_id = self.cceo.id
+            request.save(update_fields=["approval_owner_id"])
+        # Pending requests are not counted visits.
+        self.assertEqual(visit_gate(school, fy).total_visits, 0)
+        approved = visit_requests.approve(first.id, self.cceo_user)
         self.assertEqual(approved.status, "scheduled")
-        self.assertEqual(visit_gate(school, fy).total_visits, CLIENT_VISIT_CAP + 1)
+        self.assertEqual(visit_gate(school, fy).total_visits, CLIENT_VISIT_CAP)
+        with self.assertRaises(BadRequest):
+            visit_requests.approve(second.id, self.cceo_user)
 
     def test_staff_may_schedule_a_school_that_is_with_a_partner(self):
         school = self._school("VG-S3")
@@ -492,9 +560,11 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
             self.assertTrue(rows[code]["staffCanSchedule"], code)
             self.assertTrue(rows[code]["canAssignPartner"], code)
             self.assertEqual(rows[code]["staffScheduleReason"], "", code)
-        # The follow-up purpose is open at the spent school too.
-        self.assertTrue(rows["VG-S4"]["followUpVisitOpen"])
-        self.assertEqual(rows["VG-S4"]["followUpVisitReason"], "")
+        # The spent school's follow-up purposes close, with the reason; the
+        # others stay open.
+        self.assertFalse(rows["VG-S4"]["followUpVisitOpen"])
+        self.assertIn("staff support visit", rows["VG-S4"]["followUpVisitReason"])
+        self.assertTrue(rows["VG-S5"]["followUpVisitOpen"])
 
     def test_the_planning_page_opens_the_drawer_for_a_partner_held_school(self):
         handed = self._school("VG-S7")
@@ -514,7 +584,9 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         self.assertNotIn("Only the partner can schedule it", html)
         self.assertIn('name="purpose_of_visit"', html)
 
-    def test_the_drawers_offer_the_follow_up_purposes_once_it_is_spent(self):
+    def test_the_drawer_greys_the_follow_up_purposes_for_the_spent_year(self):
+        import json
+
         visited = self._school("VG-S8")
         self._spend_client_visits(visited)
         self.client.force_login(self.cceo_user)
@@ -524,9 +596,16 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('name="purpose_of_visit"', html)
-        self.assertNotIn('value="training_follow_up" disabled', html)
-        self.assertNotIn('value="ssa_support" disabled', html)
-        self.assertNotIn('value="in_school_training" disabled', html)
+        # The year the support visit was spent in is carried for its two
+        # purposes; SSA Support and every other purpose stay open.
+        locks = json.loads(response.context["visit_locks_json"])
+        self.assertEqual(set(locks), {"training_follow_up", "in_school_training"})
+        self.assertIn(self.fy, locks["training_follow_up"])
+        self.assertRegex(
+            html, r'value="in_school_training"[^>]*data-visit-locked="true"'
+        )
+        self.assertNotRegex(html, r'value="ssa_support"[^>]*data-visit-locked')
+        self.assertNotRegex(html, r'value="donor_visit"[^>]*disabled')
         # And the assign drawer likewise.
         response = self.client.get(
             f"/planning/assign-partner-modal?school_id={visited.school_id}"

@@ -54,16 +54,10 @@ from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
 
+
 #: Said in the drawer (as the greyed option's note) and again by the POST
 #: handler, so the control and the refusal use one sentence. Owner,
 #: 2026-09-21: In-school Training "should ONLY work with Client Schools".
-CORE_TRAINING_BELONGS_TO_THE_PACKAGE = (
-    "{school} is a Core School. Its trainings are the four in its core "
-    "package — schedule one from the Core Schools page, where the slot and "
-    "the course are chosen together."
-)
-
-
 def _purpose_workflow_profiles(purposes) -> dict:
     """The Workflow Profile behind every purpose the drawer offers (§7).
 
@@ -1214,32 +1208,60 @@ def _schedule_modal(request):
             "partials/schools/drawer_error.html",
             {"error": _gate.staff_locked_reason},
         )
-    # Which visit purposes the gate says to grey — none, today. For a core
-    # school the follow-up purposes are general support outside the package
-    # anyway; the package's own visits are scheduled from the Core page.
-    from apps.planning.visit_gate import FOLLOW_UP_PURPOSES
+    # A client-rule school's staff visits a year (owner, 2026-09-28): one
+    # support visit (Training Follow Up or In-school Training) and one SSA
+    # Support. The year is the scheduled date's, and the date is chosen below
+    # the purpose, so the drawer carries, per purpose, every year its visit is
+    # already used in — this one, and the next once it is open for planning —
+    # and greys the purpose for a date in one of them. A purpose used in every
+    # open year greys from the start. A core school's follow-up purposes are
+    # general support outside the package.
+    from apps.planning.fy_policy import next_open_fy
+    from apps.planning.visit_gate import POOL_PURPOSES, SSA_POOL, SUPPORT_POOL
 
-    locked_visit_purposes = (
-        list(FOLLOW_UP_PURPOSES)
-        if _gate.rule == "client" and not _gate.staff_can_schedule
-        else []
+    visit_locks: dict[str, dict[str, str]] = {}
+    open_years: list[str] = []
+    if _gate.rule == "client":
+        open_years = [_gate.fy]
+        upcoming = next_open_fy()
+        if upcoming and upcoming != _gate.fy:
+            open_years.append(upcoming)
+        for year in open_years:
+            year_gate = _gate if year == _gate.fy else visit_gate(school, year)
+            for pool, used, reason in (
+                (
+                    SUPPORT_POOL,
+                    not year_gate.staff_can_schedule,
+                    year_gate.staff_reason,
+                ),
+                (SSA_POOL, not year_gate.ssa_can_schedule, year_gate.ssa_reason),
+            ):
+                if used:
+                    for purpose in POOL_PURPOSES[pool]:
+                        visit_locks.setdefault(purpose, {})[year] = reason
+    locked_visit_purposes = list(visit_locks)
+    purposes_locked_every_year = [
+        purpose
+        for purpose, years in visit_locks.items()
+        if open_years and len(years) == len(open_years)
+    ]
+    # The sentences shown with the purpose list from the start: each used
+    # count's reason for this year, or for the next where this one is open.
+    locked_visit_reasons = list(
+        dict.fromkeys(
+            years.get(_gate.fy) or next(iter(years.values()))
+            for years in visit_locks.values()
+        )
     )
-    locked_visit_reason = _gate.staff_reason if locked_visit_purposes else ""
-    # In-school Training works with client schools (owner, 2026-09-21). At a
-    # Core School the training is one of the package's four slots and is
-    # booked from the Core Schools page, where the slot, the course and the
-    # cap live together; scheduled from here it would create a training the
-    # package could never count (apps.core_schools.visit_routing deliberately
-    # routes visits and not trainings). The service refuses it too.
-    package_locked_purposes = ["in_school_training"] if _gate.rule == "core" else []
-    package_locked_reason = (
-        CORE_TRAINING_BELONGS_TO_THE_PACKAGE.format(school=school.name)
-        if package_locked_purposes
-        else ""
-    )
-    # A Champion or Core Graduate school is planned for a Donor Visit or a
-    # Content/Story Collection visit only (owner, 2026-09-25): the drawer
-    # offers just those two, and the service refuses anything else.
+    # In-school Training at a Core School may be scheduled here too (owner,
+    # 2026-09-28: "lift all restrictions"). It still counts on the package:
+    # apps.core_schools.package_credit gives it the package's next training
+    # slot once it is saved, wherever it was booked.
+    package_locked_purposes: list[str] = []
+    package_locked_reason = ""
+    # A Champion school is planned for a Donor Visit or a Content/Story
+    # Collection visit only (owner, 2026-09-25): the drawer offers just those
+    # two, and the service refuses anything else.
     from apps.planning.visit_gate import (
         OUTREACH_ACTIVITY_TYPES,
         OUTREACH_ONLY_SCHOOL_TYPES,
@@ -1464,7 +1486,12 @@ def _schedule_modal(request):
             else ""
         ),
         "locked_visit_purposes": locked_visit_purposes,
-        "locked_visit_reason": locked_visit_reason,
+        "locked_visit_reasons": locked_visit_reasons,
+        "purposes_locked_every_year": purposes_locked_every_year,
+        "all_visit_locks_every_year": bool(visit_locks)
+        and len(purposes_locked_every_year) == len(visit_locks),
+        "visit_locks_json": json.dumps(visit_locks),
+        "purposes_locked_every_year_json": json.dumps(purposes_locked_every_year),
         "package_locked_purposes": package_locked_purposes,
         "package_locked_reason": package_locked_reason,
         "recommended_visit_purpose": (
@@ -1473,7 +1500,7 @@ def _schedule_modal(request):
             else ""
             if recommended_visit_purpose
             in (
-                *locked_visit_purposes,
+                *purposes_locked_every_year,
                 *package_locked_purposes,
             )
             else recommended_visit_purpose
@@ -1622,21 +1649,6 @@ def schedule_action_view(request):
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if school_id and purpose_of_visit == "in_school_training":
-        # A Core School's training is package work and is booked from the
-        # Core Schools page (owner, 2026-09-21). Refused before anything is
-        # resolved, in the same sentence the greyed option carries.
-        from apps.planning.visit_gate import rule_for
-
-        _target = School.objects.filter(
-            Q(id=school_id) | Q(school_id=school_id), deleted_at__isnull=True
-        ).first()
-        if _target is not None and rule_for(_target.school_type) == "core":
-            return error_fragment(
-                BadRequest(
-                    CORE_TRAINING_BELONGS_TO_THE_PACKAGE.format(school=_target.name)
-                ),
-                status=400,
-            )
         if not catalogue_item_id:
             return error_fragment(
                 BadRequest("Select the Training to deliver."),

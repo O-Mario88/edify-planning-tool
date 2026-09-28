@@ -31,14 +31,14 @@ list of them.
 What counts, and is still read by the Planning, Cluster, Core Schools and
 Partner pages:
 
-* Client-rule schools (``client`` and the three Programme types): the
-  follow-up visit
-  — a support visit to the school in the operational fiscal year, whoever
-  delivers it. Donor visits, story gathering, invitations and social visits
-  are not it; neither is an in-school training, nor the companion visit the
-  training pair creates, nor an in-school coaching visit. A catalogue item the
-  CD has taken out of the entitlement (its rule's counts_toward_entitlement
-  off) does not count. ``partner_pending`` names a live partner assignment
+* Client-rule schools (``client`` and the three Programme types), in two
+  counts (owner, 2026-09-28): the support visit — a Training Follow Up or an
+  In-school Training (or another support visit type) — and SSA Support, each
+  in the operational fiscal year, whoever delivers it. Donor visits, story
+  gathering, invitations and social visits are in neither; nor is the
+  companion visit the training pair creates. A catalogue item the CD has
+  taken out of the entitlement (its rule's counts_toward_entitlement off)
+  does not count. ``partner_pending`` names a live partner assignment
   nobody has scheduled yet — which is worth SAYING on the row, and no longer
   closes the school to staff.
 * Core schools: ``core_visit`` activities in the fiscal year, split by
@@ -72,16 +72,36 @@ from django.db.models import Count
 # The shape of a year's support, as the pages display it — "1/2 visits" on a
 # Core Schools row, "2 of 2" beside a client school.
 #
-# CLIENT_VISIT_CAP is display only since 2026-09-21: it was the figure the
-# gate refused past (one visit a year until 2026-09-17, two after it), and it
-# is kept named, at the owner's number, because a count shown without the
-# figure it is counted against says nothing.
+# Owner, 2026-09-28: "lift all restrictions. the only restriction is for
+# client schools to have one visit from the staff. treat core trained just
+# like client schools." So CLIENT_STAFF_VISIT_CAP is enforced again — one
+# staff support visit a year at a client-rule school — and it is the only
+# cap the client rule has: partner visits are counted, never refused.
 #
-# The two CORE caps are still enforced — the package's halves, which the lift
-# did not touch. See `_decide`.
-CLIENT_VISIT_CAP = 2
+# The CORE package keeps one condition (owner, the same day): "staff may plan
+# more core schools visits but only if the partner has not planned." Staff
+# hold CORE_STAFF_VISIT_CAP visits while the partner has a core visit planned
+# at the school; with none planned, staff may take the rest. The partner side
+# and the trainings are no longer capped. See `_decide_by_rule`.
+#
+# Owner, later the same day, on what the one visit is: "other visits that are
+# allowed for clients schools and core trained, core graduate after the
+# support visits (follow up or in-school training) are SSA Support, Donor
+# Visits, Content gathering. donor visits and content gathering can be
+# scheduled as many as possible. no limit on those". Asked, the owner chose
+# one support visit in total (a Training Follow Up or an In-school Training),
+# one SSA Support a year counted apart from it, and no limit on social visits
+# and invitations either.
+CLIENT_STAFF_VISIT_CAP = 1
+CLIENT_STAFF_SSA_VISIT_CAP = 1
+#: The figure a client school's visits were once counted against. Kept for
+#: the pages and reports that still name it; nothing refuses by it.
+CLIENT_VISIT_CAP = CLIENT_STAFF_VISIT_CAP
 CORE_STAFF_VISIT_CAP = 2
 CORE_PARTNER_VISIT_CAP = 2
+#: The package's four visits, which staff may fill alone while the partner
+#: has planned none.
+CORE_PACKAGE_VISITS = CORE_STAFF_VISIT_CAP + CORE_PARTNER_VISIT_CAP
 
 # School types under the once-a-year client rule. Core schools carry the
 # package.
@@ -103,13 +123,21 @@ CORE_RULE_SCHOOL_TYPES = ("core",)
 # collection visit". They leave the Planning page and the cluster lists (and
 # every cluster session's invitations) for their own tables on Core Schools.
 # Core Trained stays on the client rule and is planned like a client school.
-OUTREACH_ONLY_SCHOOL_TYPES = ("champion", "core_graduate")
+#
+# Owner, 2026-09-28: Core Graduate now follows the client rule for its visits
+# — the one support visit, SSA Support, and donor, story, invitation and
+# social visits without limit. Champion keeps the donor/story-only rule. Both
+# keep their own tables on Core Schools, off the Planning page and the
+# cluster lists (OWN_TABLE_SCHOOL_TYPES); only where they are listed was not
+# part of the change.
+OWN_TABLE_SCHOOL_TYPES = ("champion", "core_graduate")
+OUTREACH_ONLY_SCHOOL_TYPES = ("champion",)
 OUTREACH_ACTIVITY_TYPES = ("donor_visit", "story_gathering_visit")
 OUTREACH_VISIT_PURPOSES = ("donor_visit", "story_gathering")
 
 
 def outreach_only_refusal(school_name: str, school_type: str) -> str:
-    """The one sentence every refused Champion / Core Graduate plan reads."""
+    """The one sentence every refused Champion plan reads."""
     from apps.core.enums import SchoolType
 
     label = dict(SchoolType.choices).get(school_type, "Programme")
@@ -121,8 +149,8 @@ def outreach_only_refusal(school_name: str, school_type: str) -> str:
 
 
 def assert_outreach_activity_allowed(school, activity_type: str) -> None:
-    """Refuse anything but a donor or story visit for a Champion / Core
-    Graduate school, wherever the plan comes from."""
+    """Refuse anything but a donor or story visit for a Champion school,
+    wherever the plan comes from."""
     from apps.core.exceptions import BadRequest
 
     if school is None or school.school_type not in OUTREACH_ONLY_SCHOOL_TYPES:
@@ -147,10 +175,16 @@ class VisitGate:
     rule: str = "none"  # "client" | "core" | "none"
     staff_visits: int = 0
     partner_visits: int = 0
+    # Client rule only: SSA Support visits, counted apart from the support
+    # visit (owner, 2026-09-28).
+    staff_ssa_visits: int = 0
+    partner_ssa_visits: int = 0
     partner_pending: int = 0
     partner_name: str = ""
     staff_can_schedule: bool = True
     staff_reason: str = ""
+    ssa_can_schedule: bool = True
+    ssa_reason: str = ""
     staff_locked: bool = False
     staff_locked_reason: str = ""
     partner_can_schedule: bool = True
@@ -161,6 +195,7 @@ class VisitGate:
     assign_visit_reason: str = ""
     staff_cap: int = 0
     partner_cap: int = 0
+    ssa_cap: int = 0
     # Core only: the training half of the package, tallied the same way so
     # the Core Schools row can tell when a side has nothing left to do.
     staff_trainings: int = 0
@@ -178,14 +213,14 @@ class VisitGate:
 
     @property
     def staff_trainings_open(self) -> bool:
-        """Core only: staff still have one of their two trainings to give.
+        """Core only: staff may schedule a core training.
 
-        The package's halves are not part of the 2026-09-21 lift — see
-        `_decide` — and `core_planning_services.assert_can_schedule` caps
-        staff trainings at the same figure, so this has to agree with it or
-        the row offers an entry the POST refuses.
+        Always, since 2026-09-28 ("lift all restrictions"): the training cap
+        went with the package's partner half. It stays a property so the Core
+        Schools row and `core_planning_services.assert_can_schedule` keep
+        asking one place.
         """
-        return self.rule == "core" and self.staff_trainings < CORE_STAFF_VISIT_CAP
+        return self.rule == "core"
 
     def as_dict(self) -> dict:
         data = asdict(self)
@@ -195,10 +230,10 @@ class VisitGate:
         return data
 
 
-# The follow-up visit: the support visits that use a client school's one
-# visit a year. Donor, social, story-gathering and invitation visits do not;
-# nor does an in-school coaching visit (in-school work is allowed) or the
-# core package's own visits.
+# The follow-up visit types: support visits to a school. Donor, social,
+# story-gathering and invitation visits are not; nor are the core package's
+# own visits. The duplicate-visit guard and the package credit read this
+# list; the client rule's two counts are below it.
 FOLLOW_UP_VISIT_TYPES = (
     "school_visit",
     "follow_up_visit",
@@ -213,8 +248,29 @@ FOLLOW_UP_VISIT_TYPES = (
 # mission, recorded twice for Salesforce. It is the training, not a visit.
 COMPANION_VISIT_PURPOSE = "in_school_training_delivery_visit"
 
-# Purposes in the schedule and assign drawers that ARE the follow-up visit.
-FOLLOW_UP_PURPOSES = ("training_follow_up", "ssa_support")
+# The client rule counts a school's staff visits in two pools (owner,
+# 2026-09-28). The SUPPORT visit is a Training Follow Up or an In-school
+# Training — one a year in total. SSA SUPPORT is counted apart, one a year.
+# Donor, story, invitation and social visits are in neither and have no
+# limit.
+SUPPORT_POOL = "support"
+SSA_POOL = "ssa"
+SSA_SUPPORT_VISIT_TYPES = (
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+)
+# In-school Training, and the retired In-school Coaching Visit the owner
+# called "the same as In-school training", are support visits.
+IN_SCHOOL_SUPPORT_TYPES = ("in_school_training", "in_school_coaching_visit")
+
+# The drawer purposes each pool governs.
+POOL_PURPOSES = {
+    SUPPORT_POOL: ("training_follow_up", "in_school_training"),
+    SSA_POOL: ("ssa_support",),
+}
+# Every purpose the client rule counts.
+FOLLOW_UP_PURPOSES = POOL_PURPOSES[SUPPORT_POOL] + POOL_PURPOSES[SSA_POOL]
 
 
 def _client_visit_q():
@@ -256,6 +312,38 @@ def consumes_client_visit(
     return activity_type in FOLLOW_UP_VISIT_TYPES
 
 
+def client_visit_pool(
+    activity_type: str, catalogue_item=None, purpose_type: str | None = None
+) -> str | None:
+    """Which of a client-rule school's two counts an activity of this shape
+    uses: ``SUPPORT_POOL``, ``SSA_POOL``, or None for a visit with no limit.
+    Mirrors ``_support_visit_q`` / ``_ssa_visit_q`` for a row that does not
+    exist yet."""
+    if purpose_type == COMPANION_VISIT_PURPOSE or _exempt_by_rule(catalogue_item):
+        return None
+    if activity_type in SSA_SUPPORT_VISIT_TYPES:
+        return SSA_POOL
+    if activity_type in IN_SCHOOL_SUPPORT_TYPES:
+        return SUPPORT_POOL
+    if consumes_client_visit(activity_type, catalogue_item, purpose_type):
+        return SUPPORT_POOL
+    return None
+
+
+def _support_visit_q():
+    from django.db.models import Q
+
+    return (_client_visit_q() & ~Q(activity_type__in=SSA_SUPPORT_VISIT_TYPES)) | Q(
+        activity_type__in=IN_SCHOOL_SUPPORT_TYPES
+    )
+
+
+def _ssa_visit_q():
+    from django.db.models import Q
+
+    return Q(activity_type__in=SSA_SUPPORT_VISIT_TYPES)
+
+
 def is_gated_visit(
     rule: str, activity_type: str, catalogue_item=None, purpose_type=None
 ) -> bool:
@@ -263,7 +351,9 @@ def is_gated_visit(
     if rule == "core":
         return activity_type == "core_visit"
     if rule == "client":
-        return consumes_client_visit(activity_type, catalogue_item, purpose_type)
+        return (
+            client_visit_pool(activity_type, catalogue_item, purpose_type) is not None
+        )
     return False
 
 
@@ -316,17 +406,16 @@ def visit_gates(
             setattr(gate, attr, getattr(gate, attr) + row["n"])
 
     if client_ids:
-        _tally(
+        counted = (
             live.filter(school_id__in=client_ids)
-            .filter(_client_visit_q())
             .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
             .exclude(
                 catalogue_item__counts_toward_client_visit=True,
                 catalogue_item__eligibility_rule__counts_toward_entitlement=False,
-            ),
-            "staff_visits",
-            "partner_visits",
+            )
         )
+        _tally(counted.filter(_support_visit_q()), "staff_visits", "partner_visits")
+        _tally(counted.filter(_ssa_visit_q()), "staff_ssa_visits", "partner_ssa_visits")
     if core_ids:
         from apps.core_schools.core_planning_services import (
             core_training_q,
@@ -404,31 +493,27 @@ def programme_school_partner_refusal(school_name: str, school_type: str) -> str:
 def _decide(gate: VisitGate) -> None:
     """Fill in the shape of the year's support, and say what is still refused.
 
-    Owner, 2026-09-21: "can you lift restriction to school visits especially
-    client school visit. All restrictions. right now it is restricting
-    returning error and not scheduling."
+    Owner, 2026-09-28: "lift all restrictions. the only restriction is for
+    client schools to have one visit from the staff. treat core trained just
+    like client schools." Three things are refused, and nothing else:
 
-    So on the CLIENT rule this refuses nothing. What it used to do there, and
-    no longer does:
+    * at a client-rule school (client, Core Trained and Core Graduate), a
+      second staff support visit in the year — a Training Follow Up or an
+      In-school Training — or a second SSA Support;
+    * at a Core school, a third staff core visit while the partner has one
+      planned there ("staff may plan more core schools visits but only if
+      the partner has not planned");
+    * partner work at a Champion school, which takes only donor and story
+      visits (kept by the owner the same day).
 
-    * the follow-up visit was capped at CLIENT_VISIT_CAP a year across staff
-      and partner together, and the cap greyed the purpose in the drawer and
-      refused the POST behind it;
-    * a live partner assignment locked the school away from staff entirely
-      until the partner returned it.
-
-    The counting stays, because it is what the pages SHOW: the row reads
-    "2 of 2" and names the partner holding a school. A count is information;
-    on that rule it stopped being a permission.
-
-    Two things are still refused, and neither is part of that lift. The CORE
-    package keeps its halves — see the branch below. And a Programme school
-    (core trained, core graduate, champion) is never a partner's work, which
-    is applied here, after the rule, so a rule's own sentence about a spent
-    entitlement cannot overwrite it.
+    The counting stays for everything else, because it is what the pages
+    SHOW: a count is information, and only these three are permissions.
     """
     _decide_by_rule(gate)
-    if gate.school_type in PROGRAMME_SCHOOL_TYPES:
+    # Core Trained and Core Graduate are planned exactly like a client
+    # school, partner work included (owner, 2026-09-28). Champion takes only
+    # donor and story visits, which no partner delivers.
+    if gate.school_type in OUTREACH_ONLY_SCHOOL_TYPES:
         refusal = programme_school_partner_refusal(gate.school_name, gate.school_type)
         gate.partner_can_schedule = False
         gate.partner_reason = refusal
@@ -441,63 +526,69 @@ def _decide(gate: VisitGate) -> None:
 
 def _decide_by_rule(gate: VisitGate) -> None:
     if gate.rule == "client":
-        gate.staff_cap = CLIENT_VISIT_CAP
-        gate.partner_cap = CLIENT_VISIT_CAP
+        # One staff support visit a year (a Training Follow Up or an
+        # In-school Training) and one SSA Support, and nothing else (owner,
+        # 2026-09-28). The whole Schedule button stays live: donor, story,
+        # invitation and social visits have no limit, so only a used pool's
+        # purposes grey (POOL_PURPOSES).
+        gate.staff_cap = CLIENT_STAFF_VISIT_CAP
+        gate.ssa_cap = CLIENT_STAFF_SSA_VISIT_CAP
+        gate.partner_cap = 0  # counted, never capped
+        if gate.staff_visits >= CLIENT_STAFF_VISIT_CAP:
+            gate.staff_can_schedule = False
+            gate.staff_reason = (
+                f"{gate.school_name} has had its staff support visit (a Training "
+                f"Follow Up or an In-school Training) for FY{gate.fy} "
+                f"({gate.staff_visits}/{CLIENT_STAFF_VISIT_CAP})."
+            )
+        if gate.staff_ssa_visits >= CLIENT_STAFF_SSA_VISIT_CAP:
+            gate.ssa_can_schedule = False
+            gate.ssa_reason = (
+                f"{gate.school_name} has had its SSA Support visit for "
+                f"FY{gate.fy} ({gate.staff_ssa_visits}/{CLIENT_STAFF_SSA_VISIT_CAP})."
+            )
         return
 
     if gate.rule == "core":
-        # The core package's 2 + 2 split is NOT part of the lift, and stands
-        # on the owner's own later instruction (2026-09-17, quoted in
-        # `core_planning_services.assert_can_schedule`): "Lift all FY
-        # restriction and package restrictions. Only block staff visit
-        # schedule after 2 scheduling and block partner assignment and
-        # schedule after 2 assignment and scheduling."
-        #
-        # That service enforces the staff half itself and delegates the
-        # partner half here, so dropping these would have removed the partner
-        # cap outright and left a Core Schools row offering a Schedule button
-        # the staff cap then refused. The client school's allowance is what
-        # 2026-09-21 lifted; the package is a funded 4 + 4 and keeps its
-        # halves.
-        gate.staff_cap = CORE_STAFF_VISIT_CAP
-        gate.partner_cap = CORE_PARTNER_VISIT_CAP
-        if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
-            gate.staff_can_schedule = False
-            gate.staff_reason = (
-                f"Staff core visits complete for FY{gate.fy} "
-                f"({gate.staff_visits}/{CORE_STAFF_VISIT_CAP}). The remaining "
-                "visits belong to the partner."
-            )
-        partner_held = gate.partner_held_visits
-        if gate.partner_visits >= CORE_PARTNER_VISIT_CAP:
-            gate.partner_can_schedule = False
-            gate.partner_reason = (
-                f"Partner core visits complete for FY{gate.fy} "
-                f"({gate.partner_visits}/{CORE_PARTNER_VISIT_CAP})."
-            )
-        if partner_held >= CORE_PARTNER_VISIT_CAP:
-            gate.can_assign_partner = False
-            gate.can_assign_visit = False
-            gate.assign_reason = gate.assign_visit_reason = (
-                f"Partner core visits already assigned for FY{gate.fy} "
-                f"({partner_held}/{CORE_PARTNER_VISIT_CAP})."
-            )
+        # Owner, 2026-09-28: "staff may plan more core schools visits but
+        # only if the partner has not planned." Staff keep their two while a
+        # partner core visit is planned at the school this year; with none
+        # planned, the package is theirs to fill. A handover the partner has
+        # not dated yet is not a plan. The partner side is no longer capped,
+        # and neither are trainings (`staff_trainings_open`).
+        if gate.partner_visits:
+            gate.staff_cap = CORE_STAFF_VISIT_CAP
+            if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
+                gate.staff_can_schedule = False
+                gate.staff_reason = (
+                    f"Staff core visits complete for FY{gate.fy} "
+                    f"({gate.staff_visits}/{CORE_STAFF_VISIT_CAP}). The partner "
+                    "has planned the remaining visits."
+                )
+        else:
+            gate.staff_cap = max(CORE_PACKAGE_VISITS, gate.staff_visits + 1)
+        gate.partner_cap = 0  # counted, never capped
         return
 
 
-def assert_staff_may_schedule_visit(school, fy=None, **kwargs) -> VisitGate:
-    """The school's counts, and no refusal (owner, 2026-09-21).
+def assert_staff_may_schedule_visit(
+    school, fy=None, *, pool: str = SUPPORT_POOL, **kwargs
+) -> VisitGate:
+    """Refuse a staff visit the school's rule has no room for; else its gate.
 
-    The three helpers below read the same always-open fields the buttons do,
-    so they return the gate rather than raising. They are called from the
-    scheduling services, the partner queue and the core package, and they stay
-    because the gate they return is used there — and because a restriction the
-    owner asks for again belongs at this seam, not spread back out.
+    ``pool`` is the client rule's count the visit uses (``client_visit_pool``);
+    a core school has one. The three helpers below read the same fields the
+    buttons do, so a page and the POST behind it give one answer. They are
+    called from the scheduling services, the partner queue and the core
+    package.
     """
     from apps.core.exceptions import BadRequest
 
     gate = visit_gate(school, fy, **kwargs)
-    if not gate.staff_can_schedule:
+    if gate.rule == "client" and pool == SSA_POOL:
+        if not gate.ssa_can_schedule:
+            raise BadRequest(gate.ssa_reason)
+    elif not gate.staff_can_schedule:
         raise BadRequest(gate.staff_reason)
     return gate
 

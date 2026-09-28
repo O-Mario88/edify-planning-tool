@@ -288,3 +288,29 @@ class SchoolPlanningStaysVisitsOnlyTest(TestCase):
         with self.assertRaises(BadRequest) as caught:
             create({"activityType": "training"}, principal=None)
         self.assertIn("school or cluster", str(caught.exception))
+
+
+class InSchoolCoachingIsRetired(TestCase):
+    """Owner, 2026-09-28: "remove in-school coaching from the scheduling drawer
+    because it is the same as In-school training. it is locking scheduling."
+    """
+
+    def test_no_drawer_offers_it(self):
+        self.assertNotIn(
+            "in_school_coaching", {value for value, _label in STAFF_VISIT_PURPOSES}
+        )
+
+    def test_a_new_plan_cannot_choose_it_and_is_told_what_to_choose(self):
+        from apps.core.exceptions import BadRequest
+        from apps.partners.purposes import normalise_visit_purpose
+
+        with self.assertRaises(BadRequest) as ctx:
+            normalise_visit_purpose("in_school_coaching", for_partner=False)
+        self.assertIn("In-school Training", str(ctx.exception.detail))
+
+    def test_existing_coaching_visits_keep_their_label(self):
+        from apps.partners.purposes import visit_purpose_label
+
+        self.assertEqual(
+            visit_purpose_label("in_school_coaching"), "In-school Coaching Visit"
+        )

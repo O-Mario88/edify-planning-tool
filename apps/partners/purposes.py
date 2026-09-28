@@ -35,6 +35,15 @@ STAFF_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("story_gathering", "Content/Story Collection"),
     ("school_invitation", "School Invitation"),
     ("social_visit", "Social Visit"),
+)
+
+# Purposes no drawer offers any more. Their rows still exist, so they keep
+# their label and their activity type; a new plan cannot choose them.
+#
+# In-school Coaching (owner, 2026-09-28): "remove in-school coaching from the
+# scheduling drawer because it is the same as In-school training. it is
+# locking scheduling." In-school Training is the one purpose for that work.
+RETIRED_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("in_school_coaching", "In-school Coaching Visit"),
 )
 
@@ -86,8 +95,10 @@ PURPOSE_ACTIVITY_TYPES = {
 _PARTNER_VALUES = {value for value, _label in PARTNER_VISIT_PURPOSES}
 _STAFF_VALUES = {value for value, _label in STAFF_VISIT_PURPOSES}
 _BULK_VALUES = {value for value, _label in CLUSTER_BULK_VISIT_PURPOSES}
+_RETIRED_VALUES = {value for value, _label in RETIRED_VISIT_PURPOSES}
 _LABELS = {
     **{value: label for value, label in STAFF_VISIT_PURPOSES},
+    **{value: label for value, label in RETIRED_VISIT_PURPOSES},
     "in_school_training_delivery_visit": "In-school Training Delivery Visit",
 }
 
@@ -118,6 +129,11 @@ def normalise_visit_purpose(
     allowed = _PARTNER_VALUES if for_partner else _STAFF_VALUES
     if not purpose:
         return _fallback_for_activity_type(fallback_activity_type, for_partner)
+    if purpose in _RETIRED_VALUES:
+        raise BadRequest(
+            f"{visit_purpose_label(purpose, purpose)} is no longer scheduled "
+            "on its own. Choose In-school Training for this work."
+        )
     if purpose not in allowed:
         audience = "a delivery partner" if for_partner else "a staff member"
         raise BadRequest(
@@ -173,6 +189,7 @@ __all__ = [
     "CLUSTER_BULK_VISIT_PURPOSES",
     "INTERVENTION_FREE_PURPOSES",
     "PARTNER_VISIT_PURPOSES",
+    "RETIRED_VISIT_PURPOSES",
     "STAFF_VISIT_PURPOSES",
     "normalise_cluster_bulk_purpose",
     "normalise_visit_purpose",

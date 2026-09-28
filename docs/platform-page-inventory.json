@@ -10153,7 +10153,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31483,
+      "bytes": 33453,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -63757,8 +63757,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /partner-oversight/withdraw/review",
-        "GET /partners/create",
-        "GET /partner-oversight/allowance-drawer"
+        "GET /partners/create"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",

@@ -157,9 +157,10 @@ class CoreVisitPurposeTest(_CoreFixture):
             "training_follow_up",
             "ssa_support",
             "donor_visit",
-            "in_school_coaching",
         ):
             self.assertIn(f'value="{value}"', html)
+        # Retired (owner, 2026-09-28): In-school Training is that work.
+        self.assertNotIn('value="in_school_coaching"', html)
         self.assertNotIn("data-core-first-visit", html)
         response = self._client(self.cceo).get(
             f"/core-schools/schedule-visit?school_id={self.school.school_id}"

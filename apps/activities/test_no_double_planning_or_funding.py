@@ -1,8 +1,7 @@
 """Activity planning with strict duplicate funding safeguards.
 
-A client school's visits are capped for the year (owner, 2026-09-15; the rule
-lives in
-apps.planning.visit_gate). Core activities still require reserved package
+A client school takes one staff support visit a year (owner, 2026-09-28; the
+rule lives in apps.planning.visit_gate). Core activities still require reserved package
 slots, each cost line belongs in only one weekly request, and scheduled costs
 follow the activity's week.
 """
@@ -28,14 +27,11 @@ def _next_monday(weeks: int = 1) -> date:
 
 
 class ClientEntitlementHoldsTest(TestCase):
-    """A client school's CLIENT_VISIT_CAP visits a year are COUNTED.
+    """A client school's one staff support visit a year (owner, 2026-09-28).
 
-    The cap went from one to two on 2026-09-17 and stopped refusing anything
-    on 2026-09-21, so it is counted from the constant rather than a literal
-    and what these tests pin is which work draws on the allowance, which does
-    not, and that a cancelled visit gives its place back — the numbers the
-    pages display. Nothing here asserts a refusal any more: see
-    apps.planning.test_visit_gate for the whole of that story.
+    What these tests pin is which work draws on the visit, which does not,
+    that a cancelled visit gives its place back, and that a second staff
+    support visit is refused. apps.planning.test_visit_gate holds the rest.
     """
 
     @classmethod
@@ -87,30 +83,31 @@ class ClientEntitlementHoldsTest(TestCase):
             "school_visit", self.school, get_operational_fy(_next_monday()), {}
         )
 
-    def test_a_visit_past_the_years_entitlement_is_allowed_and_counted(self):
+    def test_a_visit_past_the_years_entitlement_is_refused(self):
         from apps.planning.visit_gate import CLIENT_VISIT_CAP, visit_gate
 
         self._spend_the_entitlement()
-        self._schedule_another()  # no BadRequest since 2026-09-21
+        with self.assertRaises(BadRequest) as ctx:
+            self._schedule_another()
+        self.assertIn("staff support visit", str(ctx.exception.detail))
         # Counted in the year the visits are dated in (next Monday's), which in
         # the last days of September is already the next fiscal year.
-        self.assertGreaterEqual(
+        self.assertEqual(
             visit_gate(self.school, get_operational_fy(_next_monday())).total_visits,
             CLIENT_VISIT_CAP,
         )
 
-    def test_a_visit_still_in_hand_is_allowed(self):
-        """One visit no longer spends the allowance (cap raised 2026-09-17)."""
-        self._existing_visit()
-        self._schedule_another()  # must not raise
-
-    def test_a_second_client_training_is_still_allowed(self):
+    def test_an_in_school_training_is_the_spent_support_visit(self):
+        """Owner, 2026-09-28: the support visit is a Training Follow Up or an
+        In-school Training — one in total — so a spent visit refuses both,
+        while a donor visit still passes."""
         from apps.activities.services import _assert_schedule_entitlement
 
         self._spend_the_entitlement()
-        _assert_schedule_entitlement(
-            "in_school_training", self.school, get_operational_fy(_next_monday()), {}
-        )
+        fy = get_operational_fy(_next_monday())
+        with self.assertRaisesMessage(BadRequest, "staff support visit"):
+            _assert_schedule_entitlement("in_school_training", self.school, fy, {})
+        _assert_schedule_entitlement("donor_visit", self.school, fy, {})
 
     def test_the_first_visit_is_allowed(self):
         self._schedule_another()  # must not raise
@@ -224,30 +221,31 @@ class CatalogueEntitlementOwnershipTest(TestCase):
             catalogue_item=catalogue_item,
         )
 
-    def test_a_follow_up_past_the_allowance_is_allowed(self):
+    def test_a_follow_up_past_the_allowance_is_refused(self):
         self._spend("follow_up_visit")
-        self._assert("follow_up_visit")  # no BadRequest since 2026-09-21
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
 
     def test_the_two_kinds_draw_on_one_allowance(self):
-        """Which activities COUNT is still the point; that the count closes
-        the door is not, since 2026-09-21."""
+        """A school visit and a follow-up visit are the same one visit."""
         from apps.planning.visit_gate import CLIENT_VISIT_CAP, visit_gate
 
         self._spend("school_visit")
         self.assertEqual(
             visit_gate(self.school, self.fy).total_visits, CLIENT_VISIT_CAP
         )
-        self._assert("follow_up_visit")  # no BadRequest
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
 
     def test_the_catalogue_entitlement_flag_is_what_counts(self):
-        """The flag decides whether the item is tallied at all, which the
-        gate still reports even though it refuses nothing."""
+        """The flag decides whether the item is the year's visit."""
         from apps.planning.visit_gate import consumes_client_visit
 
         item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
         self.assertTrue(consumes_client_visit(item.workflow_kind, item))
         self._spend("follow_up_visit", catalogue_item=item)
-        self._assert(item.workflow_kind, catalogue_item=item)  # no BadRequest
+        with self.assertRaises(BadRequest):
+            self._assert(item.workflow_kind, catalogue_item=item)
 
     def test_flagless_catalogue_training_neither_blocks_nor_consumes(self):
         """Student camps carry workflow_kind ``training`` with both client
