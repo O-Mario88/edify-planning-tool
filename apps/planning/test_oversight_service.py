@@ -19,6 +19,7 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.partners.models import Partner, PartnerAssignment
@@ -31,7 +32,9 @@ class OversightFixture(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.fy = "2026"
+        # The running year: an unscheduled partner assignment has no year of
+        # its own and reads the year of the day it was made.
+        cls.fy = get_operational_fy()
         cls.region = Region.objects.create(id="reg-1", name="Central")
         cls.district = District.objects.create(
             id="dist-1", name="Kampala", region=cls.region
