@@ -41,6 +41,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 import logging
+import re
 
 from django.utils import timezone
 
@@ -66,6 +67,25 @@ PRESENCE_PERIODS: tuple[tuple[str, str], ...] = (
 )
 # Sign-in times listed per person; the count beside them is the whole period's.
 LOGIN_TIMES_SHOWN = 20
+# The Title column (owner, 2026-09-28: "Title (CCEO, PL…)"): the short name
+# people use for a role, with the full one as the cell's title.
+ROLE_TITLES = {
+    "CCEO": "CCEO",
+    "Program Lead": "PL",
+    "RegionalProgramLead": "RPL",
+    "CountryDirector": "CD",
+    "RegionalVicePresident": "RVP",
+    "ImpactAssessment": "IA",
+    "Accountant": "Accountant",
+    "HumanResources": "HR",
+    "ProjectCoordinator": "Project Coordinator",
+    "PartnerAdmin": "Partner Admin",
+    "PartnerFieldOfficer": "Partner Officer",
+    "BusinessTransformationOfficer": "BT Officer",
+    "MfiPartnerAdmin": "MFI Admin",
+    "MfiLoanOfficer": "MFI Loan Officer",
+    "Admin": "Admin",
+}
 
 
 def _day_label(day, *, year: bool = True) -> str:
@@ -187,6 +207,9 @@ _UNTRACKED_PREFIXES = (
     "/health",
     "/favicon",
     "/realtime",
+    "/sw.js",
+    "/manifest",
+    "/robots.txt",
 )
 _READ_METHODS = ("GET", "HEAD", "OPTIONS")
 
@@ -200,7 +223,10 @@ def request_footprint(request) -> tuple[str, str] | None:
     if request is None:
         return None
     path = request.path or "/"
-    if path.startswith(_UNTRACKED_PREFIXES):
+    # A file (the service worker, a manifest, a map) is the browser's
+    # machinery, not a page: "/sw.js" read as a part of the tool called
+    # "Sw.Js" and was credited the minutes of whoever's browser fetched it.
+    if path.startswith(_UNTRACKED_PREFIXES) or "." in path.rsplit("/", 1)[-1]:
         return None
     htmx = request.headers.get("HX-Request") == "true"
     current = request.headers.get("HX-Current-URL") or ""
@@ -371,11 +397,13 @@ def _person(
     # is when that sitting began.
     signin = (logins or {}).get(row["id"]) or {}
     last_login = signin.get("last_at")
-    return {
+    person = {
         **row,
         "online": online,
         "duration_seconds": duration,
-        "duration_label": format_duration(duration) if last_seen else "never",
+        # A sitting in hours and minutes, like every other time in the table
+        # ("just now" read as a duration for someone who had left).
+        "duration_label": format_minutes(duration) if last_seen else "never",
         "section": described["section"] if last_seen else "—",
         "working_on": described["working_on"] if last_seen else "Never signed in",
         "last_login_at": last_login,
@@ -388,10 +416,28 @@ def _person(
         "last_seen_label": (
             format_duration((now - last_seen).total_seconds()) if last_seen else None
         ),
+        "title": ROLE_TITLES.get(row["active_role"] or "", row["active_role"] or "—"),
         # The chosen period (owner, 2026-09-28): time on the tool, where it
         # went and what on, and the sign-ins inside the period.
         **_period_figures(spent, signins, now=now),
     }
+    # Owner, 2026-09-28: the page, what they are doing on it, then "other
+    # part of the system accessed, duration of access" — every other part
+    # the period's time went to.
+    current = person["section"]
+    # Beside its own column the page need not be said twice: "Dashboard" and
+    # "Viewing Dashboard" read as "Dashboard" and "Viewing".
+    person["working_label"] = (
+        "Viewing"
+        if person["working_on"] == f"Viewing {current}"
+        else person["working_on"]
+    )
+    person["other_sections"] = [
+        part for part in person["period_sections"] if part["section"] != current
+    ]
+    # Login day, date and time: the period's latest, else the last ever.
+    person["login_at"] = person["period_last_login"] or last_login
+    return person
 
 
 def _when_label(at, *, now) -> str | None:
@@ -555,7 +601,11 @@ def presence_groups(people: list[dict]) -> list[dict]:
                     "cceo:unled", "CCEOs without a Program Lead", "cceo", (1, "")
                 ).setdefault("members", []).append(p)
             continue
-        label = ROLE_LABELS.get(role, role.replace("_", " ").title() or "Other")
+        # A role with no plural label reads as words, not one run-together
+        # word ("BusinessTransformationOfficer" was "Businesstransformationofficer").
+        label = ROLE_LABELS.get(
+            role, re.sub(r"(?<=[a-z])(?=[A-Z])", " ", role).replace("_", " ") or "Other"
+        )
         group(f"role:{role}", label, "role", (2, label))["members"].append(p)
 
     out = []

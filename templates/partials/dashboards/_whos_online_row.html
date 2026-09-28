@@ -1,44 +1,29 @@
 <tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}" data-presence-person="presence-person-{{ person.id }}">
-  <td class="presence-table__status"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" title="{% if person.online %}Online{% else %}Offline{% endif %}"></i><span class="sr-only">{% if person.online %}Online{% else %}Offline{% endif %}</span></td>
   <td class="presence-table__name">
-    <a href="#presence-person-{{ person.id }}" role="button" class="presence-person__toggle" data-presence-person-toggle aria-expanded="false" aria-controls="presence-person-{{ person.id }}" title="Sign-in times and time by part of the tool">
-      <strong>{{ person.name }}</strong><small>{{ person.active_role|default:"—" }}{% if is_lead %} · lead{% endif %}</small>
-    </a>
+    {% comment %}The light sits inside the toggle: the platform flattens every
+    other element in a cell to plain ink (micro-ux.js marks it
+    .edify-table-plain-content), which emptied the dot; a control keeps its
+    own paint.{% endcomment %}
+    <a href="#presence-person-{{ person.id }}" role="button" class="presence-person__toggle" data-presence-person-toggle aria-expanded="false" aria-controls="presence-person-{{ person.id }}" title="Every login and the time on each part of the tool"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i><span class="sr-only">{% if person.online %}Online: {% else %}Offline: {% endif %}</span>{{ person.name }}</a>
   </td>
-  <td class="presence-table__signins">
-    {% if person.last_login_at %}
-      {% if staff_links %}
-      <a href="/admin-panel/users/{{ person.id }}" class="presence-signin" title="{{ person.name }}: {{ person.period_logins }} sign-in{{ person.period_logins|pluralize }} {{ presence.period.label }} · last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} recorded">
-      {% else %}
-      <span class="presence-signin" title="{{ person.period_logins }} sign-in{{ person.period_logins|pluralize }} {{ presence.period.label }} · last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} recorded">
-      {% endif %}
-        {% if person.period_logins %}{{ person.period_logins }}<small>{{ person.period_last_login_label }}</small>{% else %}0<small>{{ person.last_login_at|date:"d/m" }}</small>{% endif %}
-      {% if staff_links %}</a>{% else %}</span>{% endif %}
-    {% else %}
-      <span class="presence-signin presence-signin--never" title="Never signed in">—</span>
-    {% endif %}
-  </td>
-  <td class="presence-table__duration">
-    {% if person.online %}
-      <span class="presence-duration presence-duration--online" title="Time on the tool {{ presence.period.label }} · online since {{ person.online_since|date:'j M Y, H:i' }} ({{ person.duration_label }})">{{ person.period_time_label }}</span>
-    {% elif person.last_seen_at %}
-      <span class="presence-duration" title="Time on the tool {{ presence.period.label }} · last seen {{ person.last_seen_at|date:'j M Y, H:i' }} ({{ person.last_seen_label }} ago)">{{ person.period_time_label }}</span>
-    {% else %}
-      <span class="presence-duration presence-duration--never" title="Never signed in">—</span>
-    {% endif %}
-  </td>
-  <td class="presence-table__working">
-    {% if person.online %}<span class="presence-now">Now: {{ person.working_on }}</span>{% endif %}
-    {% for task in person.period_tasks|slice:":2" %}<span class="presence-spent">{{ task.working_on }} <b>{{ task.label }}</b></span>{% empty %}{% if not person.online %}<span class="presence-spent presence-spent--none">{% if person.last_seen_at %}Nothing {{ presence.period.label }}{% else %}Never signed in{% endif %}</span>{% endif %}{% endfor %}
-    {% if person.period_tasks|length > 2 %}<span class="presence-more">+{{ person.period_tasks|length|add:"-2" }} more</span>{% endif %}
-  </td>
-  <td class="presence-table__section">
-    {% for part in person.period_sections|slice:":3" %}<span class="presence-spent">{{ part.section }} <b>{{ part.label }}</b></span>{% empty %}{% if person.online %}<span class="presence-spent">{{ person.section }}</span>{% else %}<span class="presence-spent presence-spent--none">—</span>{% endif %}{% endfor %}
-    {% if person.period_sections|length > 3 %}<span class="presence-more">+{{ person.period_sections|length|add:"-3" }} more</span>{% endif %}
-  </td>
+  {% comment %}Title and Working on what are the platform's inline pills (drawn
+  as plain ink in a table): its column planner keeps a pill whole and gives
+  the room to the long Other parts list instead (owner, 2026-09-28: "working
+  on what should be clear").{% endcomment %}
+  <td class="presence-table__role" title="{{ person.active_role|default:'No role' }}"><span class="edify-cell-pill">{{ person.title }}</span></td>
+  <td class="presence-table__logins">{% if staff_links and person.last_login_at %}<a href="/admin-panel/users/{{ person.id }}" class="presence-signin" title="{{ person.name }}'s user record · {{ person.login_count }} login{{ person.login_count|pluralize }} recorded">{{ person.period_logins }}</a>{% elif person.last_login_at %}<span title="{{ person.login_count }} login{{ person.login_count|pluralize }} recorded">{{ person.period_logins }}</span>{% else %}<span class="presence-muted" title="Never signed in">—</span>{% endif %}</td>
+  {% comment %}Day, date and time, all as figures ("MON 28/09/2026 · 18:50"):
+  the platform's column planner keeps a figure column whole and cuts a text
+  one, and the time is the part a cut would lose.{% endcomment %}
+  <td class="presence-table__login">{% if person.login_at %}<span class="presence-when{% if not person.period_logins %} presence-muted{% endif %}" title="{{ person.login_at|date:'l j F Y, H:i' }}{% if not person.period_logins %} · no login {{ presence.period.label }}, so the last one{% endif %}"><span>{{ person.login_at|date:"D"|upper }} {{ person.login_at|date:"d/m/Y" }}</span> <span>{{ person.login_at|date:"H:i" }}</span></span>{% else %}<span class="presence-muted" title="Never signed in">—</span>{% endif %}</td>
+  <td class="presence-table__page">{% if person.last_seen_at %}<span{% if not person.online %} class="presence-muted" title="The last page, {{ person.last_seen_at|date:'j M Y, H:i' }}"{% endif %}>{{ person.section }}</span>{% else %}<span class="presence-muted">—</span>{% endif %}</td>
+  <td class="presence-table__working">{% if person.last_seen_at %}<span class="edify-cell-pill{% if not person.online %} presence-muted{% endif %}" title="{{ person.working_on }}">{{ person.working_label }}</span>{% else %}<span class="presence-muted" title="Never signed in">—</span>{% endif %}</td>
+  <td class="presence-table__online">{% if person.online %}<span class="presence-live" title="Online since {{ person.online_since|date:'j M Y, H:i' }}">{{ person.duration_label }}</span>{% elif person.last_seen_at %}<span class="presence-muted" title="Last sitting · last seen {{ person.last_seen_at|date:'j M Y, H:i' }} ({{ person.last_seen_label }} ago)">{{ person.duration_label }}</span>{% else %}<span class="presence-muted">—</span>{% endif %}</td>
+  <td class="presence-table__parts">{% for part in person.other_sections|slice:":2" %}<span class="presence-spent">{{ part.section }} <b>{{ part.label }}</b></span>{% empty %}<span class="presence-muted">—</span>{% endfor %}{% if person.other_sections|length > 2 %}<span class="presence-more" title="Tap the name for every part and its time">+{{ person.other_sections|length|add:"-2" }} more</span>{% endif %}</td>
+  <td class="presence-table__total"><b>{{ person.period_time_label }}</b></td>
 </tr>
 <tr class="presence-detail" id="presence-person-{{ person.id }}" hidden>
-  <td colspan="6">
+  <td colspan="9">
     <section class="presence-detail__cols" aria-label="{{ person.name }}, {{ presence.period.label }}">
       <section class="presence-detail__block">
         <h3>Sign-ins · {{ person.period_logins }}</h3>

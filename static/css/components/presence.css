@@ -4,42 +4,42 @@
 
 .admin-status.s-green { color: var(--edify-success-text); background: var(--edify-success-light); }
 
+/* The status light (owner, 2026-09-28: "the online beeping green light should
+   be pronounced and professional"). Online: a solid green dot with a soft
+   ring and a halo that breathes out from it every two seconds. Offline: a
+   hollow grey ring, so the two read apart without colour as well. */
 .admin-presence-light {
   position: relative;
   display: inline-block;
   flex: 0 0 auto;
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.7rem;
+  height: 0.7rem;
   border-radius: 50%;
-  background: var(--edify-text-subtle);
-  opacity: 0.55;
+  border: 2px solid var(--edify-text-subtle);
+  background: transparent;
+  opacity: 0.7;
   vertical-align: middle;
 }
 .admin-presence-light--online {
+  border-color: var(--edify-success);
   background: var(--edify-success);
   opacity: 1;
-  animation: admin-presence-beep 1.6s ease-out infinite;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-success) 24%, transparent);
 }
 .admin-presence-light--online::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -2px;
   border-radius: 50%;
   background: var(--edify-success);
-  animation: admin-presence-ring 1.6s ease-out infinite;
+  animation: admin-presence-halo 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
-@keyframes admin-presence-beep {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.18); }
-}
-@keyframes admin-presence-ring {
-  0% { transform: scale(1); opacity: 0.7; }
-  100% { transform: scale(2.6); opacity: 0; }
+@keyframes admin-presence-halo {
+  0% { transform: scale(1); opacity: 0.55; }
+  75%, 100% { transform: scale(2.8); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .admin-presence-light--online,
-  .admin-presence-light--online::after { animation: none; }
-  .admin-presence-light--online::after { display: none; }
+  .admin-presence-light--online::after { animation: none; display: none; }
 }
 
 .presence-panel { min-width: 0; }
@@ -62,6 +62,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
+  vertical-align: bottom;
   text-align: start;
   padding: 0.45rem 0.6rem;
   font-size: var(--edify-text-micro-size);
@@ -74,45 +75,46 @@
   white-space: nowrap;
 }
 .presence-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--edify-border); vertical-align: middle; }
-.presence-table__status { width: 1.4rem; text-align: center; }
-/* One line a row, as every record table reads (the platform flattens a
-   figure over its detail). The detail follows its figure after a middle dot:
-   run together, "00:29" and "5 today" read "00:295 today". The dot column
-   keeps to the dot, so the name has the room its role needs beside it
-   (owner, 2026-09-27: the dashboard tables read one way). */
-.presence-table td :is(.presence-signin, .presence-duration) small,
-.presence-table__name small { margin-inline-start: 0.25rem; }
-.presence-table td :is(.presence-signin, .presence-duration) small::before,
-.presence-table__name small::before { content: "· "; color: var(--edify-text-subtle); }
-main .presence-table :is(th, td).presence-table__status { width: 1%; padding-inline: 0.5rem !important; }
-main .presence-table td.presence-table__name { width: 15rem; }
-/* The platform lays record tables out fixed, so the header row sets the
-   widths: the figures keep room for "12 sign-ins · last 28 Sep, 08:12" and
-   "3h 05m · online 40m"; the two breakdown columns share what is left. */
-main .presence-table th.presence-table__name { width: 13rem; }
-main .presence-table th.presence-table__signins { width: 8.5rem; }
-main .presence-table th.presence-table__duration { width: 8.5rem; }
-.presence-table__name strong { display: block; color: var(--edify-text); font-weight: 620; white-space: nowrap; }
-.presence-table__name small { display: block; color: var(--edify-text-subtle); }
-.presence-row--lead .presence-table__name strong { font-weight: 720; }
-.presence-row[data-presence="offline"] .presence-table__name strong { color: var(--edify-text-muted); font-weight: 560; }
-.presence-table__duration { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.presence-duration--online { color: var(--edify-success-text); font-weight: 650; }
-.presence-duration small { display: block; color: var(--edify-text-subtle); font-weight: 400; }
-.presence-duration--never { color: var(--edify-text-subtle); font-style: italic; }
-/* Sign-ins: when this person last signed in, and how often (owner,
-   2026-09-16). Sits beside Duration and reads the same way — a figure with
-   its detail underneath — so the two columns scan as one block of numbers.
-   The link is the person's user record; the Country Director's copy of the
-   table renders the same cell as a span, so both spellings must look alike. */
-.presence-table__signins { white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* The columns (owner, 2026-09-28): Staff name, Title, # of logins, Last
+   login, Page accessed, Working on what, Duration online, Other parts
+   accessed, Overall time. One line each, as every record table reads; the
+   figures are tabular and never cut. */
+.presence-table__name { white-space: nowrap; }
+.presence-person__toggle .admin-presence-light { margin-inline-end: 0.6rem; vertical-align: -0.05rem; }
+.presence-person__toggle { color: var(--edify-text); font-weight: 620; text-decoration: none; cursor: pointer; }
+.presence-person__toggle:hover { text-decoration: underline; }
+.presence-person__toggle:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: 2px; border-radius: 0.25rem; }
+.presence-row--lead .presence-person__toggle { font-weight: 720; }
+.presence-row[data-presence="offline"] .presence-person__toggle { color: var(--edify-text-muted); font-weight: 560; }
+.presence-table__role { white-space: nowrap; color: var(--edify-text-muted); font-weight: 600; }
+.presence-table :is(.presence-table__logins, .presence-table__login, .presence-table__online, .presence-table__total) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.presence-table td.presence-table__logins { font-weight: 650; color: var(--edify-text); }
+.presence-table__total b { font-weight: 720; color: var(--edify-text); }
 .presence-signin { color: inherit; text-decoration: none; }
-.presence-signin small { display: block; color: var(--edify-text-subtle); font-weight: 400; }
 a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: underline; }
-.presence-signin--never { color: var(--edify-text-subtle); font-style: italic; }
+.presence-muted { color: var(--edify-text-subtle); }
+/* The platform inks every pill in a table as body text; an offline row's
+   task stays muted with the rest of its row. */
+:root table.presence-table.presence-table.presence-table.presence-table .edify-cell-pill.presence-muted { color: var(--edify-text-subtle) !important; }
+.presence-live { color: var(--edify-success-text); font-weight: 700; }
 
-.presence-table__working { min-width: 12rem; }
-.presence-table__section { white-space: nowrap; }
+/* Whoever is online is green across the whole row (owner, 2026-09-28), with
+   a green edge on the name so the row still reads as live when the table is
+   scrolled sideways. consistency.css flattens every cell of a plain table to
+   the table surface (background-color and box-shadow, !important, at
+   (0,6,3)) with no opt-out for a record row, so this selector repeats the
+   table class to outrank it — for Who's Online's online rows and nothing
+   else. */
+:root :is(main, .drawer-body) table.presence-table.presence-table.presence-table.presence-table tbody tr.presence-row[data-presence="online"] > td {
+  background-color: color-mix(in srgb, var(--edify-success) 16%, var(--edify-surface-raised)) !important;
+  color: var(--edify-success-text) !important;
+}
+:root :is(main, .drawer-body) table.presence-table.presence-table.presence-table.presence-table tbody tr.presence-row[data-presence="online"] > td:first-child {
+  box-shadow: inset 4px 0 0 var(--edify-success) !important;
+}
+:root :is(main, .drawer-body) table.presence-table.presence-table.presence-table.presence-table tbody tr.presence-row[data-presence="online"] > td :is(a, span, b) {
+  color: var(--edify-success-text) !important;
+}
 .presence-table__empty { padding: 1.4rem; text-align: center; color: var(--edify-text-subtle); font-weight: 600; }
 
 .presence-group__row td { padding: 0; background: var(--edify-surface-muted); }
@@ -148,20 +150,13 @@ tbody.presence-group[data-collapsed] .presence-row { display: none; }
 .presence-group__time { font-weight: 650; color: var(--edify-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .presence-spent b,
 .presence-detail b { font-weight: 650; color: var(--edify-text); font-variant-numeric: tabular-nums; margin-inline-start: 0.2rem; }
-.presence-table td :is(.presence-now, .presence-spent, .presence-more) + :is(.presence-spent, .presence-more)::before { content: "· "; color: var(--edify-text-subtle); margin-inline-start: 0.25rem; }
-.presence-now { color: var(--edify-success-text); font-weight: 650; }
-.presence-spent--none { color: var(--edify-text-subtle); font-style: italic; }
+.presence-table td :is(.presence-spent, .presence-more) + :is(.presence-spent, .presence-more)::before { content: "· "; color: var(--edify-text-subtle); margin-inline-start: 0.25rem; }
 .presence-more { color: var(--edify-text-subtle); }
 
 /* A person's row opens their detail: every sign-in in the period and the
    time under each part of the tool. One at a time, like the groups. */
 .presence-row[data-presence-person] { cursor: pointer; }
 .presence-row.is-open > td { background: var(--edify-surface-muted); }
-.presence-person__toggle { color: inherit; text-decoration: none; cursor: pointer; }
-.presence-person__toggle:hover strong { text-decoration: underline; }
-.presence-person__toggle strong,
-.presence-person__toggle small { display: inline; }
-.presence-person__toggle:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: 2px; border-radius: 0.25rem; }
 tbody.presence-group[data-collapsed] .presence-detail { display: none; }
 :is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td,
 :is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td.edify-cell.edify-cell {
@@ -187,6 +182,5 @@ tbody.presence-group[data-collapsed] .presence-detail { display: none; }
 .presence-detail__tasks { margin: 0.1rem 0 0; padding: 0 0 0 0.9rem; list-style: disc; color: var(--edify-text-muted); }
 
 @media (max-width: 640px) {
-  .presence-table__section, .presence-table th:last-child { display: none; }
   .presence-detail__cols { grid-template-columns: 1fr; }
 }

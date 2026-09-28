@@ -384,3 +384,101 @@ class WhosOnlineEndpointTest(TestCase):
         html = self.client.get("/dashboard?view=operations").content.decode()
         self.assertIn('data-pager-fragment="/dashboard/whos-online"', html)
         self.assertIn('hx-get="/dashboard/whos-online"', html)
+
+
+class TidyTableTest(TestCase):
+    """Owner, 2026-09-28: "page accessed should be in their own column and
+    doing what on that page on its own column" — Staff name, Title, # of
+    logins, login day & date & time, page accessed, working on what, duration
+    online, other parts accessed with their time, overall time; whoever is
+    online highlighted green across the whole row."""
+
+    def setUp(self):
+        self.admin = _user("root", "Admin")
+        self.cara = _user("cara")
+        self.lead = _user("lena", "Program Lead")
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.lead.staff_profile, supervisee=self.cara.staff_profile
+        )
+        today = timezone.localdate()
+        for section, task, seconds in (
+            ("My Plan", "Scheduling an activity", 1500),
+            ("Schools", "Viewing Schools", 600),
+        ):
+            PresenceTime.objects.create(
+                user=self.cara,
+                day=today,
+                section=section,
+                working_on=task,
+                seconds=seconds,
+            )
+        LoginEvent.objects.create(user=self.cara, role="CCEO", at=_local(today, 8, 5))
+        User.objects.filter(pk=self.cara.pk).update(
+            last_seen_at=timezone.now(),
+            online_since=timezone.now() - timedelta(minutes=40),
+            last_seen_path="/my-plan",
+            last_seen_action="",
+        )
+
+    def _cara(self):
+        summary = presence_summary()
+        return next(
+            p
+            for g in summary["groups"]
+            for p in ([g["lead"]] if g["lead"] else []) + g["members"]
+            if p["id"] == self.cara.id
+        )
+
+    def test_the_page_and_what_is_done_on_it_are_two_columns(self):
+        cara = self._cara()
+        self.assertEqual(cara["section"], "My Plan")
+        # Reading the page is "Viewing" beside it, not the page said twice.
+        self.assertEqual(cara["working_label"], "Viewing")
+        # Other parts: every part but the page they are on, with its time.
+        self.assertEqual(
+            [(p["section"], p["label"]) for p in cara["other_sections"]],
+            [("Schools", "10m")],
+        )
+        self.assertEqual(cara["title"], "CCEO")
+        self.assertEqual(cara["duration_label"], "40m")
+        self.assertEqual(cara["period_time_label"], "35m")
+
+    def test_the_row_reads_in_the_owner_s_order_and_online_is_green(self):
+        self.client.force_login(self.admin)
+        html = self.client.get(
+            "/dashboard/whos-online", HTTP_HX_REQUEST="true"
+        ).content.decode()
+        row = html.split(f'data-presence-person="presence-person-{self.cara.id}"')[0]
+        row = html[len(row) :].split("</tr>")[0]
+        # Online: the whole row is marked, and the light sits in the name.
+        self.assertIn('<tr class="presence-row" data-presence="online"', html)
+        self.assertIn("admin-presence-light--online", row)
+        cells = [
+            "Cara",
+            ">CCEO<",
+            ">1</a>",
+            f"{timezone.localdate().strftime('%a').upper()} ",
+            "My Plan",
+            ">Viewing<",
+            "40m",
+            "Schools <b>10m</b>",
+            "<b>35m</b>",
+        ]
+        positions = [row.index(cell) for cell in cells]
+        self.assertEqual(positions, sorted(positions))
+        # A lead's title is the short one, PL.
+        self.assertIn(">PL<", html)
+
+    def test_the_service_worker_is_not_a_part_of_the_tool(self):
+        from apps.accounts.presence import request_footprint
+
+        rf = RequestFactory()
+        for path in ("/sw.js", "/manifest.webmanifest", "/robots.txt", "/app.js.map"):
+            with self.subTest(path=path):
+                self.assertIsNone(request_footprint(rf.get(path)))
+        self.assertEqual(request_footprint(rf.get("/my-plan"))[0], "/my-plan")
+
+    def test_a_role_without_a_plural_label_reads_as_words(self):
+        _user("bea", "BusinessTransformationOfficer")
+        labels = [g["label"] for g in presence_summary()["groups"]]
+        self.assertIn("Business Transformation Officer", labels)
