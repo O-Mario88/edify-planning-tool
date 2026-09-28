@@ -3,8 +3,11 @@
   Who's Online (owner, 2026-09-15): who logged in, who is online, how long,
   what they were working on and which part of the system. One table for the
   Admin's Platform Operations view and the Country Director's Operations
-  view. CCEOs fold under their Program Lead, everyone else under their role,
-  so a country roster reads as a dozen groups and not a hundred rows.
+  view. CCEOs sit under their Program Lead's heading, everyone else under
+  their role's. Nothing folds (owner, 2026-09-29: "who is online table does
+  not collapse by PL. It should have every details nothing to expand and
+  collapse. everything should be visible"): the headings are plain headings,
+  and every person's detail is shown under their row.
 
   Sign-ins (owner, 2026-09-16) is each person's own column. With `staff_links`
   the cell links to that person's user record, where their history lives; the
@@ -16,9 +19,9 @@
   long, working on what, how many times they logged in, when they logged in",
   for a day, week, month, quarter or FY. Duration is the time on the tool in
   the chosen period; the two columns after it say what on and where, with the
-  minutes; tapping a person opens every sign-in time and the time under each
-  part of the tool. The owner chose to show named minutes here and only here
-  (docs/STAFF_TIME_STANDARD.md §5).
+  minutes; the row under each person lists every sign-in time and the time
+  under each part of the tool. The owner chose to show named minutes here and
+  only here (docs/STAFF_TIME_STANDARD.md §5).
 
   Tidier, the same day: "page accessed should be in their own column and doing
   what on that page on its own column" — Staff name, Title, # of logins, Login
@@ -84,15 +87,12 @@
       </thead>
       {% for group in presence_groups_pager.rows %}
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
-        <tr class="presence-group__row">
-          <td colspan="9">
-            <button type="button" class="presence-group__toggle" data-presence-toggle aria-expanded="false" aria-controls="presence-group-{{ forloop.counter }}">
-              <span class="presence-group__chevron" aria-hidden="true"></span>
-              <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
-              <span class="presence-group__time" title="Time on the tool, {{ presence.period.label }}">{{ group.period_time_label }}</span>
-              <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
-            </button>
-          </td>
+        <tr class="edify-group-head">
+          <th colspan="9" scope="colgroup">
+            <span class="edify-group-head__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
+            <span class="edify-group-head__count" title="Time on the tool, {{ presence.period.label }}">{{ group.period_time_label }}</span>
+            <span class="edify-group-head__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i> {{ group.online }} of {{ group.total }} online</span>
+          </th>
         </tr>
         {% if group.lead %}{% with person=group.lead is_lead=True %}{% include "partials/dashboards/_whos_online_row.html" %}{% endwith %}{% endif %}
         {% for person in group.members %}{% include "partials/dashboards/_whos_online_row.html" with is_lead=False %}{% endfor %}
@@ -103,64 +103,5 @@
     </table>
     {% include "components/table_pager.html" with pager=presence_groups_pager param="presence_groups_page" %}
   </div>
-  <script>
-    (function () {
-      /* Every group starts folded and one opens at a time (owner,
-         2026-09-25: details expand only when their row is tapped, and close
-         when another is tapped or the same one is tapped again). A person's
-         details follow the same rule inside their group. The toggles are
-         plain DOM so the table works with or without Alpine on the page. */
-      document.querySelectorAll('[data-admin-presence]:not([data-presence-bound])').forEach(function (table) {
-        table.setAttribute('data-presence-bound', '');
-        var groups = Array.prototype.slice.call(table.querySelectorAll('tbody.presence-group'));
-        var people = Array.prototype.slice.call(table.querySelectorAll('tr[data-presence-person]'));
-        /* The platform plans a table's columns from the rows it can see, and
-           a folded panel shows none, so the figures were planned to their
-           headings' width and cut. Opening rows asks for a fresh plan. */
-        function refit() {
-          if (window.EdifyMicroUX && window.EdifyMicroUX.enhance) window.EdifyMicroUX.enhance(table);
-        }
-        function setPerson(row, open) {
-          var detail = document.getElementById(row.getAttribute('data-presence-person'));
-          var toggle = row.querySelector('[data-presence-person-toggle]');
-          if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-          row.classList.toggle('is-open', open);
-          if (detail) detail.hidden = !open;
-        }
-        function setOpen(group, open) {
-          var toggle = group.querySelector('[data-presence-toggle]');
-          if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-          group.toggleAttribute('data-collapsed', !open);
-          /* `hidden`, not only the stylesheet: inside a workspace the
-             platform's table rule sets every row to table-row !important,
-             which unfolded the Admin's and the CD's groups. */
-          group.querySelectorAll('tr.presence-row').forEach(function (row) { row.hidden = !open; });
-          if (!open) group.querySelectorAll('tr[data-presence-person]').forEach(function (row) { setPerson(row, false); });
-        }
-        groups.forEach(function (group) {
-          var toggle = group.querySelector('[data-presence-toggle]');
-          if (!toggle) return;
-          setOpen(group, false);
-          toggle.addEventListener('click', function () {
-            var open = toggle.getAttribute('aria-expanded') !== 'true';
-            groups.forEach(function (other) { if (other !== group) setOpen(other, false); });
-            setOpen(group, open);
-            refit();
-          });
-        });
-        people.forEach(function (row) {
-          row.addEventListener('click', function (event) {
-            var own = event.target.closest('[data-presence-person-toggle]');
-            if (own) event.preventDefault();
-            else if (event.target.closest('a, input, select, textarea, label')) return;
-            var open = !row.classList.contains('is-open');
-            people.forEach(function (other) { if (other !== row) setPerson(other, false); });
-            setPerson(row, open);
-            refit();
-          });
-        });
-      });
-    })();
-  </script>
 </section>
 {% if not presence_fragment %}</div>{% endif %}

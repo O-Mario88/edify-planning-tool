@@ -1,10 +1,11 @@
 <tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}" data-presence-person="presence-person-{{ person.id }}">
   <td class="presence-table__name">
-    {% comment %}The light sits inside the toggle: the platform flattens every
-    other element in a cell to plain ink (micro-ux.js marks it
-    .edify-table-plain-content), which emptied the dot; a control keeps its
-    own paint.{% endcomment %}
-    <a href="#presence-person-{{ person.id }}" role="button" class="presence-person__toggle" data-presence-person-toggle aria-expanded="false" aria-controls="presence-person-{{ person.id }}" title="Every login and the time on each part of the tool"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i><span class="sr-only">{% if person.online %}Online: {% else %}Offline: {% endif %}</span>{{ person.name }}</a>
+    {% comment %}Nothing to open (owner, 2026-09-29): the person's detail is
+    the row under this one. micro-ux.js keeps the light's paint, as it does a
+    planning badge's, where it flattens a cell's other content to ink. The
+    light carries "Online"/"Offline" itself: a hidden span before the name
+    drew the platform's "·" between two spans of a cell.{% endcomment %}
+    <span class="presence-person__name"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" role="img" aria-label="{% if person.online %}Online{% else %}Offline{% endif %}"></i>{{ person.name }}</span>
   </td>
   {% comment %}Title and Working on what are the platform's inline pills (drawn
   as plain ink in a table): its column planner keeps a pill whole and gives
@@ -19,10 +20,10 @@
   <td class="presence-table__page">{% if person.last_seen_at %}<span{% if not person.online %} class="presence-muted" title="The last page, {{ person.last_seen_at|date:'j M Y, H:i' }}"{% endif %}>{{ person.section }}</span>{% else %}<span class="presence-muted">—</span>{% endif %}</td>
   <td class="presence-table__working">{% if person.last_seen_at %}<span class="edify-cell-pill{% if not person.online %} presence-muted{% endif %}" title="{{ person.working_on }}">{{ person.working_label }}</span>{% else %}<span class="presence-muted" title="Never signed in">—</span>{% endif %}</td>
   <td class="presence-table__online">{% if person.online %}<span class="presence-live" title="Online since {{ person.online_since|date:'j M Y, H:i' }}">{{ person.duration_label }}</span>{% elif person.last_seen_at %}<span class="presence-muted" title="Last sitting · last seen {{ person.last_seen_at|date:'j M Y, H:i' }} ({{ person.last_seen_label }} ago)">{{ person.duration_label }}</span>{% else %}<span class="presence-muted">—</span>{% endif %}</td>
-  <td class="presence-table__parts">{% for part in person.other_sections|slice:":2" %}<span class="presence-spent">{{ part.section }} <b>{{ part.label }}</b></span>{% empty %}<span class="presence-muted">—</span>{% endfor %}{% if person.other_sections|length > 2 %}<span class="presence-more" title="Tap the name for every part and its time">+{{ person.other_sections|length|add:"-2" }} more</span>{% endif %}</td>
+  <td class="presence-table__parts">{% for part in person.other_sections %}<span class="presence-spent">{{ part.section }} <b>{{ part.label }}</b></span>{% empty %}<span class="presence-muted">—</span>{% endfor %}</td>
   <td class="presence-table__total"><b>{{ person.period_time_label }}</b></td>
 </tr>
-<tr class="presence-detail" id="presence-person-{{ person.id }}" hidden>
+<tr class="presence-detail" id="presence-person-{{ person.id }}">
   <td colspan="9">
     <section class="presence-detail__cols" aria-label="{{ person.name }}, {{ presence.period.label }}">
       <section class="presence-detail__block">

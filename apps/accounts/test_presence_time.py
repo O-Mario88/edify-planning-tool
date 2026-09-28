@@ -138,6 +138,72 @@ class TimeIsCreditedBetweenBeatsTest(TestCase):
         self.client.get("/dashboard")
         self.assertIn(("Clusters", "Viewing Clusters"), self._slots())
 
+    def test_a_page_stored_on_the_service_worker_is_credited_to_no_part(self):
+        """Production, 2026-09-29: the page stored before the service worker
+        was left out was "/sw.js", and the next beat credited its minutes to
+        a part of the tool called "Sw.Js"."""
+        self.client.force_login(self.cara)
+        _seen(self.cara, ago=timedelta(minutes=2), path="/sw.js")
+        self.client.get("/dashboard")
+        self.assertEqual(self._slots(), {})
+        self.cara.refresh_from_db()
+        self.assertEqual(self.cara.last_seen_path, "/dashboard")
+
+    def test_the_defect_beacon_is_not_what_the_person_was_doing(self):
+        """The page posts the beacon on its own when a script throws; it read
+        as "Viewing Support · client defect" and took the next minutes."""
+        self.client.force_login(self.cara)
+        _seen(self.cara, ago=timedelta(minutes=2), path="/planning")
+        self.client.post(
+            "/support/client-defect",
+            data='{"kind": "js_error", "route": "/planning", "component": "table"}',
+            content_type="application/json",
+        )
+        self.cara.refresh_from_db()
+        self.assertEqual(self.cara.last_seen_path, "/planning")
+        self.assertIn(("Planning", "Viewing Planning"), self._slots())
+        self.assertNotIn("Support", {section for section, _task in self._slots()})
+
+    def test_no_part_of_the_tool_is_ever_the_browser_s_machinery(self):
+        for path in ("/sw.js", "/manifest.webmanifest", "/support/client-defect"):
+            with self.subTest(path=path):
+                credit_presence_time(self.cara.pk, timezone.now(), path, "", seconds=60)
+        self.assertEqual(PresenceTime.objects.count(), 0)
+
+    def test_a_page_stored_on_the_service_worker_reads_as_no_page(self):
+        _seen(self.cara, ago=timedelta(minutes=1), path="/sw.js")
+        cara = next(
+            person
+            for group in presence_summary()["groups"]
+            for person in [group.get("lead"), *group["members"]]
+            if person and person["id"] == self.cara.id
+        )
+        self.assertEqual((cara["section"], cara["working_on"]), ("—", "—"))
+
+    def test_the_migration_forgets_the_machinery_already_recorded(self):
+        import importlib
+
+        from django.apps import apps
+
+        _seen(self.cara, ago=timedelta(minutes=1), path="/sw.js")
+        today = timezone.localdate()
+        for section, task in (
+            ("Sw.Js", "Viewing Sw.Js"),
+            ("Support", "Viewing Support · client defect"),
+            ("Planning", "Viewing Planning"),
+        ):
+            PresenceTime.objects.create(
+                user=self.cara, day=today, section=section, working_on=task, seconds=120
+            )
+
+        importlib.import_module(
+            "apps.accounts.migrations.0033_forget_browser_machinery_presence"
+        ).forget(apps, None)
+
+        self.assertEqual(self._slots(), {("Planning", "Viewing Planning"): 120})
+        self.cara.refresh_from_db()
+        self.assertEqual(self.cara.last_seen_path, "")
+
     def test_the_credit_lands_on_the_day_of_the_beat(self):
         yesterday = timezone.localdate() - timedelta(days=1)
         credit_presence_time(
@@ -378,6 +444,16 @@ class WhosOnlineEndpointTest(TestCase):
         self.assertIn('class="presence-detail"', html)
         self.assertIn("Scheduling an activity <b>25m</b>", html)
         self.assertIn("My Plan <b>25m</b>", html)
+
+    def test_every_detail_is_shown_and_nothing_folds(self):
+        """Owner, 2026-09-29: "everything should be visible"."""
+        html = self._get(self.lead, "?presence_period=month").content.decode()
+        self.assertIn('<tr class="edify-group-head">', html)
+        self.assertNotIn("aria-expanded", html)
+        self.assertIn(
+            f'<tr class="presence-detail" id="presence-person-{self.mine.id}">', html
+        )
+        self.assertIn("Scheduling an activity <b>25m</b>", html)
 
     def test_the_dashboard_panel_is_a_fragment_host_for_the_pager(self):
         self.client.force_login(self.admin)
