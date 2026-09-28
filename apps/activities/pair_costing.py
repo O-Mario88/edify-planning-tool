@@ -22,8 +22,9 @@ companion visit (the Core Schools training drawer, a partner's dated
 assignment) is still the only record of its journey and keeps the visit cost.
 
 ``find_pair_trainings_carrying_cost`` and ``move_pair_costs_to_visits`` move
-pairs scheduled before the change (activities migration 0061, and the
-``move_in_school_training_cost_to_visit`` command for a dry run).
+pairs scheduled before the change (activities migration 0061, within the
+deploy's time limit, and the ``move_in_school_training_cost_to_visit`` command
+for a dry run or whatever the migration left).
 """
 
 from __future__ import annotations
@@ -76,13 +77,19 @@ def find_pair_trainings_carrying_cost(apps=None) -> list[str]:
     )
 
 
-def move_pair_costs_to_visits(ids=None, *, write=print) -> dict:
+def move_pair_costs_to_visits(ids=None, *, write=print, deadline=None) -> dict:
     """Re-price each pair Training: it drops to 0 and its School Visit takes
     the visit cost (``_apply_schedule_cost_snapshot`` does both).
 
     A pair whose money has already moved, or whose day has left draft, is
     refused by the cost writer's finance locks; it is reported and left as
-    it is rather than failing the rest."""
+    it is rather than failing the rest.
+
+    ``deadline`` is a ``time.monotonic()`` value after which no further pair
+    is started; the pairs not reached are returned as ``left`` and still
+    carry their cost, so a later run finds them again."""
+    import time
+
     from django.db import transaction
 
     from apps.activities.models import Activity
@@ -92,7 +99,11 @@ def move_pair_costs_to_visits(ids=None, *, write=print) -> dict:
     ids = find_pair_trainings_carrying_cost() if ids is None else list(ids)
     moved: list[str] = []
     skipped: list[str] = []
+    left: list[str] = []
     for training in Activity.objects.filter(id__in=ids).order_by("id"):
+        if deadline is not None and time.monotonic() >= deadline:
+            left.append(training.id)
+            continue
         try:
             with transaction.atomic():
                 reprice_activity(training)
@@ -105,4 +116,4 @@ def move_pair_costs_to_visits(ids=None, *, write=print) -> dict:
             continue
         moved.append(training.id)
         write(f"  moved {training.id} -> visit {training.paired_school_visit_id}")
-    return {"moved": moved, "skipped": skipped}
+    return {"moved": moved, "skipped": skipped, "left": left}
