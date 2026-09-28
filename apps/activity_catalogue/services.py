@@ -150,22 +150,38 @@ def resolve_item_for_workflow_kind(
     governance question for the Country Director, and silently picking the
     first would put money against an activity nobody chose.
     """
-    if not workflow_kind:
-        return None
-    workflow_kind = COSTED_AS.get(workflow_kind, workflow_kind)
-    standard = list(
-        effective_items(on_date)
-        .filter(workflow_kind=workflow_kind, standard_support=True)
-        .order_by("stable_code")[:2]
+    return resolve_items_for_workflow_kinds([workflow_kind], on_date=on_date).get(
+        workflow_kind
     )
-    if len(standard) == 1:
-        return standard[0]
-    matches = list(
-        effective_items(on_date)
-        .filter(workflow_kind=workflow_kind)
-        .order_by("stable_code")[:2]
-    )
-    return matches[0] if len(matches) == 1 else None
+
+
+def resolve_items_for_workflow_kinds(
+    workflow_kinds, *, on_date=None
+) -> dict[str, ActivityCatalogueItem | None]:
+    """`resolve_item_for_workflow_kind` for several kinds, in one query.
+
+    The scheduling drawer resolves one item per purpose it offers, and asked
+    the catalogue once or twice per purpose to do it. The rule is the same:
+    the one standard-support item, else the one item, else None.
+    """
+    costed = {kind: COSTED_AS.get(kind, kind) for kind in workflow_kinds if kind}
+    by_kind: dict[str, list[ActivityCatalogueItem]] = {}
+    if costed:
+        for item in (
+            effective_items(on_date)
+            .filter(workflow_kind__in=set(costed.values()))
+            .order_by("stable_code")
+        ):
+            by_kind.setdefault(item.workflow_kind, []).append(item)
+    resolved: dict[str, ActivityCatalogueItem | None] = {}
+    for kind, costed_kind in costed.items():
+        items = by_kind.get(costed_kind, [])
+        standard = [item for item in items if item.standard_support]
+        if len(standard) == 1:
+            resolved[kind] = standard[0]
+        else:
+            resolved[kind] = items[0] if len(items) == 1 else None
+    return resolved
 
 
 def _latest_version(item: ActivityCatalogueItem) -> ActivityCatalogueVersion:

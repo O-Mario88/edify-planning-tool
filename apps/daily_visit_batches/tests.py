@@ -1040,6 +1040,76 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
 
 
+class OneFundRequestRebuildPerDayTest(DailyVisitBatchTestCase):
+    """A day's weekly request and monthly draft are totals over the owner's
+    week and month, so re-pricing the day rebuilds each of them once, not
+    once for every school already on it (2026-09-28: those per-school
+    rebuilds made the fifth visit of a day twice as slow to save as the
+    first) — and both still carry every member's re-priced share."""
+
+    def test_joining_a_day_rebuilds_each_request_once_and_both_carry_the_day(self):
+        from unittest import mock
+
+        from apps.activities.services import create as create_activity
+        from apps.fund_requests import monthly_service, weekly_service
+        from apps.fund_requests.fundable import fundable_lines
+        from apps.fund_requests.models import FundRequest, WeeklyFundRequest
+
+        day = date(2026, 8, 5)
+        self._schedule(["BATCH-P-1", "BATCH-P-2"], day, reason="two first")
+
+        with (
+            mock.patch.object(
+                weekly_service,
+                "generate_weekly_fund_request",
+                wraps=weekly_service.generate_weekly_fund_request,
+            ) as weekly,
+            mock.patch.object(
+                monthly_service,
+                "_fundable_lines",
+                wraps=monthly_service._fundable_lines,
+            ) as monthly,
+        ):
+            third = create_activity(
+                {
+                    **self.base_fields,
+                    "schoolId": "BATCH-P-3",
+                    "scheduledDate": f"{day.isoformat()}T09:00:00+03:00",
+                },
+                self.principal,
+            )
+
+        self.assertEqual(weekly.call_count, 1)
+        self.assertEqual(monthly.call_count, 1)
+
+        members = Activity.objects.filter(
+            daily_visit_batch__visit_date=day, deleted_at__isnull=True
+        )
+        self.assertEqual(members.count(), 3)
+        self.assertIn(third["id"], {a.id for a in members})
+        lines = list(
+            fundable_lines(
+                ActivityScheduleCostLine.objects.filter(activity__in=members)
+            )
+        )
+        self.assertEqual({line.activity_id for line in lines}, {a.id for a in members})
+        day_total = sum(line.amount for line in lines)
+        self.assertGreater(day_total, 0)
+
+        weekly_request = WeeklyFundRequest.objects.get(
+            responsible_user=self.staff_user.id, week_start_date=date(2026, 8, 3)
+        )
+        self.assertEqual(weekly_request.total_amount, day_total)
+        self.assertEqual(weekly_request.lines.count(), len(lines))
+        monthly_draft = FundRequest.objects.get(
+            submitted_by_user_id=self.staff_user.id,
+            period_key=f"{lines[0].fiscal_year}-M8",
+            scope="own",
+        )
+        self.assertEqual(monthly_draft.total_amount, day_total)
+        self.assertEqual(monthly_draft.activity_count, 3)
+
+
 class ConfiguredStaffDailyShareTest(DailyVisitBatchTestCase):
     def _four_visits(self, *, secondary=False):
         from datetime import datetime

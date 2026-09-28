@@ -77,12 +77,16 @@ def _purpose_workflow_profiles(purposes) -> dict:
     purpose resolves to an activity type, and the activity type to the one
     standard-support Catalogue item that prices it.
     """
-    from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+    from apps.activity_catalogue.services import resolve_items_for_workflow_kinds
 
+    purposes = list(purposes)
+    items = resolve_items_for_workflow_kinds(
+        [purpose_activity_type(value) for value, _label in purposes]
+    )
     profiles = {}
     for value, label in purposes:
         workflow_kind = purpose_activity_type(value)
-        item = resolve_item_for_workflow_kind(workflow_kind)
+        item = items.get(workflow_kind)
         if item is None:
             # No single costing for this purpose. Say so in the profile so
             # the drawer can disable the option with a reason, instead of
@@ -995,6 +999,15 @@ def _cluster_need_groups(ssa_need) -> list[dict]:
 
 @require_any_page_permission("planning", "visit_requests")
 def schedule_modal_view(request):
+    from apps.ssa.recommendation_engine import rankings_held
+
+    # Opening the drawer writes nothing, and asks the school's SSA ranking
+    # from three places: rank it once.
+    with rankings_held():
+        return _schedule_modal(request)
+
+
+def _schedule_modal(request):
     if not _may_open_schedule_drawer(request.user):
         return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 

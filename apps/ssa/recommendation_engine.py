@@ -31,6 +31,9 @@ Guarantees:
 
 from __future__ import annotations
 
+import copy
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
 
 from apps.analytics.platform_engine import engine_metadata, trend_analysis
@@ -375,6 +378,28 @@ def _composite_priority(components: dict[str, dict[str, Any]]) -> float:
     return round(num / denom * 100.0, 1)
 
 
+# A read-only view can ask one school's ranking from several places — the
+# scheduling drawer did from three (its "performing poorly" list, the
+# catalogue recommendations, the plan-alignment check), each re-reading the
+# SSA history and recomputing every trend. Inside rankings_held() a school is
+# ranked once. Held for that block only, never the request, so a request that
+# confirms an SSA or schedules support and then ranks sees its own write.
+_held_rankings: ContextVar[dict | None] = ContextVar("held_ssa_rankings", default=None)
+
+
+@contextmanager
+def rankings_held():
+    """Rank each school at most once for this block."""
+    if _held_rankings.get() is not None:
+        yield
+        return
+    token = _held_rankings.set({})
+    try:
+        yield
+    finally:
+        _held_rankings.reset(token)
+
+
 def prioritized_interventions(school, *, n: int | None = None) -> list[dict[str, Any]]:
     """Analytically-ranked interventions for a school, most urgent first.
 
@@ -382,6 +407,18 @@ def prioritized_interventions(school, *, n: int | None = None) -> list[dict[str,
     ranking. Deterministic: sorted by descending priority then ascending
     intervention key.
     """
+    held = _held_rankings.get()
+    if held is None:
+        ranked = _rank_interventions(school)
+    else:
+        if school.pk not in held:
+            held[school.pk] = _rank_interventions(school)
+        # Copies, so no caller can change what the next one is handed.
+        ranked = copy.deepcopy(held[school.pk])
+    return ranked[:n] if n is not None else ranked
+
+
+def _rank_interventions(school) -> list[dict[str, Any]]:
     records = _confirmed_history(school)
     if not records:
         return []
@@ -427,7 +464,7 @@ def prioritized_interventions(school, *, n: int | None = None) -> list[dict[str,
         )
 
     ranked.sort(key=lambda r: (-r["priority"], r["intervention"]))
-    return ranked[:n] if n is not None else ranked
+    return ranked
 
 
 def school_recommendation(school, *, n: int = 2) -> dict[str, Any]:
