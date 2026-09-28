@@ -559,11 +559,14 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         day = date(2026, 8, 5)
         self._schedule(["BATCH-P-1"], day, reason="visit first")
 
+        # At the neighbouring school: a school's support visit a year is a
+        # visit OR an in-school training (owner, 2026-09-28), and the pool is
+        # the officer's day, not the school's.
         result = create_activity(
             {
                 "activityType": "in_school_training",
                 "deliveryType": "staff",
-                "schoolId": "BATCH-P-1",
+                "schoolId": "BATCH-P-2",
                 "scheduledDate": f"{day.isoformat()}T11:00:00+03:00",
                 "activityPurposeText": "Same-day training",
                 "focusIntervention": "leadership",
