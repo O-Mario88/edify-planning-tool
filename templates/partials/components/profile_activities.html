@@ -1,0 +1,44 @@
+{% load frontend_filters %}
+{% comment %}
+Planned and completed activities on a profile (owner, 2026-09-28: "add list
+of planned and completed activities on every profile (Cluster, school,
+organization...) with the action button to complete, view activity,
+reschedule and cancel activities").
+
+`acts` is apps.activities.profile_activities.ProfileActivities: two paged
+tables behind the platform tab rail. The tab and each table's page are query
+parameters of their own (prefixed by `acts.param`), so paging one profile's
+table never pages another's and the chosen tab survives the pager's link
+(tabState registers it with table-pagination.js).
+
+Optional: `heading` (default "Planned & Completed Activities"), `caption`,
+`subject_label` (the Where column's heading, default "Where").
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden"
+         data-profile-activities="{{ acts.param }}"
+         aria-labelledby="{{ acts.param }}-title"
+         x-data="tabState('actsTab', '{{ acts.tab_param }}', ['planned', 'completed'], '{{ acts.active_tab }}')">
+  <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+    <h3 id="{{ acts.param }}-title">{{ heading|default:"Planned & Completed Activities" }}</h3>
+    <span class="tabular-nums">{{ acts.planned_total }} planned · {{ acts.completed_total }} completed{% if acts.overdue %} · {{ acts.overdue }} overdue{% endif %}</span>
+  </header>
+  <div class="px-4 pt-3">
+    <div data-edify-tablist role="group" aria-label="{{ heading|default:'Activities' }} view" class="max-w-full">
+      <button type="button" data-edify-tab class="edify-tab" @click="pick('planned')"
+              :aria-pressed="actsTab === 'planned' ? 'true' : 'false'"
+              aria-pressed="{% if acts.active_tab == 'planned' %}true{% else %}false{% endif %}"
+              aria-controls="{{ acts.param }}-planned">Planned <span data-edify-tab-count>{{ acts.planned_total }}</span></button>
+      <button type="button" data-edify-tab class="edify-tab" @click="pick('completed')"
+              :aria-pressed="actsTab === 'completed' ? 'true' : 'false'"
+              aria-pressed="{% if acts.active_tab == 'completed' %}true{% else %}false{% endif %}"
+              aria-controls="{{ acts.param }}-completed">Completed <span data-edify-tab-count>{{ acts.completed_total }}</span></button>
+    </div>
+    {% if caption %}<p class="mt-2 edify-text-caption edify-text-muted">{{ caption }}</p>{% endif %}
+  </div>
+  <div id="{{ acts.param }}-planned" x-show="actsTab === 'planned'"{% if acts.active_tab != 'planned' %} x-cloak{% endif %}>
+    {% include "partials/components/profile_activity_table.html" with pager=acts.planned param=acts.planned_param kind="planned" %}
+  </div>
+  <div id="{{ acts.param }}-completed" x-show="actsTab === 'completed'"{% if acts.active_tab != 'completed' %} x-cloak{% endif %}>
+    {% include "partials/components/profile_activity_table.html" with pager=acts.completed param=acts.completed_param kind="completed" %}
+  </div>
+</section>

@@ -913,6 +913,16 @@ def district_detail_view(request, district_id):
         "total_schools": schools.count(),
         "district_progress": district_progress,
     }
+    # Planned and completed work with its actions (owner, 2026-09-28), as far
+    # as the reader's scope reaches.
+    from apps.activities import profile_activities as profile_acts
+
+    context["profile_activities"] = profile_acts.profile_activities(
+        request,
+        profile_acts.visible_to(profile_acts.for_district(district.id), request.user),
+        param="district_acts",
+        subject="auto",
+    )
     return render(request, "pages/districts/detail.html", context)
 
 
@@ -3182,6 +3192,15 @@ def project_detail_view(request, project_id):
         "can_edit_project": can_edit_project,
         "delete_block": delete_block,
     }
+    # Planned and completed project work with its actions (owner, 2026-09-28).
+    from apps.activities import profile_activities as profile_acts
+
+    context["profile_activities"] = profile_acts.profile_activities(
+        request,
+        profile_acts.for_project(project.id),
+        param="project_acts",
+        subject="auto",
+    )
     return render(request, "pages/projects/detail.html", context)
 
 

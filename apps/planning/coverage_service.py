@@ -427,8 +427,14 @@ def training_coverage(
     date_start=None,
     date_end=None,
     limit: int = ROW_LIMIT,
+    fys: tuple[str, ...] | None = None,
 ) -> dict:
-    """Schools with a planned cluster session in the period, and those without."""
+    """Schools with a planned cluster session in the period, and those without.
+
+    ``fys`` is the planning horizon a whole operational year reads (owner,
+    2026-09-28: "nothing hidden"): a session planned in September for October
+    is a plan, and the school is not reported as missing training.
+    """
     from apps.activities.models import Activity, ClusterActivityAttendance
 
     schools = _schools_in_oversight_scope(principal)
@@ -449,11 +455,16 @@ def training_coverage(
         date_start=date_start,
         date_end=date_end,
     )
+    years = tuple(str(y) for y in (fys or (fy,)))
+    if len(years) > 1 and period == "fy":
+        from apps.core.fy import get_fy_date_range
+
+        end = get_fy_date_range(years[-1])[1].date() - timedelta(days=1)
 
     sessions = Activity.objects.filter(
         activity_type__in=CLUSTER_SESSION_TYPES,
         deleted_at__isnull=True,
-        fy=str(fy),
+        fy__in=years,
     ).exclude(status__in=DEAD_STATUSES)
     sessions = sessions.filter(
         Q(planned_date__range=(start, end))
@@ -475,12 +486,15 @@ def training_coverage(
 
     planned_page = list(planned_qs.order_by("name")[:limit])
     missing_page = list(missing_qs.order_by("name")[:limit])
+    # Across several years the dates bound the read and the year filter
+    # stands aside; within one year both apply, as before.
+    status_fy = fy if len(years) == 1 else None
     coverage = cluster_training_coverage(
-        planned_page + missing_page, fy=fy, date_start=start, date_end=end
+        planned_page + missing_page, fy=status_fy, date_start=start, date_end=end
     )
     visits = visit_statuses(
         [school.id for school in planned_page + missing_page],
-        fy=fy,
+        fy=status_fy,
         date_start=start,
         date_end=end,
     )

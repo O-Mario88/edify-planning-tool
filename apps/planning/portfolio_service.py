@@ -211,17 +211,25 @@ def _staff_directory(owner_ids) -> dict[str, dict]:
 def _planning_by_school(school_ids, *, fy: str) -> dict[str, dict]:
     """What each school has planned this fiscal year, in two queries.
 
+    The operational year reads forward through the planning horizon
+    (``fy_policy.planning_horizon``), as Team Plan does: a school planned in
+    September for October is planned, not "Nothing planned all year"
+    (owner, 2026-09-28: "nothing hidden").
+
     Counted from the canonical activity rows, and costed from the canonical
     cost lines, so the portfolio and the budget cannot disagree about what a
     school's plan is worth.
     """
     from apps.activities.models import Activity, ActivityScheduleCostLine
 
+    from apps.planning.fy_policy import planning_horizon
+
     if not school_ids:
         return {}
+    fys = planning_horizon(fy)
     rows = (
         Activity.objects.filter(
-            school_id__in=school_ids, fy=str(fy), deleted_at__isnull=True
+            school_id__in=school_ids, fy__in=fys, deleted_at__isnull=True
         )
         .exclude(status__in=DEAD_STATUSES)
         .values("school_id")
@@ -255,7 +263,7 @@ def _planning_by_school(school_ids, *, fy: str) -> dict[str, dict]:
     costs = (
         ActivityScheduleCostLine.objects.filter(
             activity__school_id__in=school_ids,
-            activity__fy=str(fy),
+            activity__fy__in=fys,
             activity__deleted_at__isnull=True,
         )
         .exclude(activity__status__in=DEAD_STATUSES)

@@ -498,6 +498,15 @@ def staff_profile_view(request, user_id):
         "back_label": back_label,
         "supervision": _supervision_panel(request, member, profile),
     }
+    # Planned and completed work with its actions (owner, 2026-09-28).
+    from apps.activities import profile_activities as profile_acts
+
+    context["profile_activities"] = profile_acts.profile_activities(
+        request,
+        profile_acts.for_staff(owner_ids(member) + ([profile.id] if profile else [])),
+        param="staff_acts",
+        subject="auto",
+    )
     return render(request, "pages/staff/detail.html", context)
 
 

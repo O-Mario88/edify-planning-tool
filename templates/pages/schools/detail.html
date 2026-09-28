@@ -323,46 +323,8 @@ not proof it caused the change. Built by apps.analytics.ia_workflow.school_progr
 </section>
 {% endif %}
 
-<!-- Activities History -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--edify-border)]">
-<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Recent Field Work</h3>
-</div>
-<div class="divide-y divide-[var(--edify-border)] text-[12px]">
-{% if activities %}
-{% for act in activities %}
-<div class="p-4 flex justify-between hover:bg-slate-50/50 transition-colors">
-<div>
-<h4 class="font-semibold text-slate-800">{{ act.activity_type|title|replace_underscore }}</h4>
-<p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">Planned for {{ act.planned_date }} &bull; Staff: {{ act.responsible_staff.name }}</p>
-{% if act.activity_purpose_text %}
-<p class="text-[12px] text-slate-400 mt-1 italic leading-normal">"{{ act.activity_purpose_text }}"</p>
-{% endif %}
-</div>
-<div class="text-right flex items-center">
-<span class="inline-flex items-center gap-1.5 text-[12px] font-bold">
-{% if act.status == 'completed' or act.status == 'ia_verified' or act.status == 'confirmed' %}
-<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
-<span>Completed</span>
-{% elif act.status == 'rejected' or act.status == 'returned' %}
-<span class="w-1.5 h-1.5 rounded-pill bg-rose-500"></span>
-<span>Returned</span>
-{% elif act.status == 'cancelled' %}
-<span class="w-1.5 h-1.5 rounded-pill bg-slate-400"></span>
-<span>Cancelled</span>
-{% else %}
-<span class="w-1.5 h-1.5 rounded-pill bg-[var(--edify-primary)] animate-pulse"></span>
-<span class="capitalize">{{ act.status|replace_underscore }}</span>
-{% endif %}
-</span>
-</div>
-</div>
-{% endfor %}
-{% else %}
-<div class="p-8 text-center edify-danger-text font-semibold">No planned or completed activities recorded.</div>
-{% endif %}
-</div>
-</div>
+<!-- Planned and completed activities (owner, 2026-09-28) -->
+{% include "partials/components/profile_activities.html" with acts=profile_activities caption="Visits and trainings at this school, and the cluster sessions it is invited to." %}
 
 {% comment %}
 Partner Support. The CCEO handed this school's support to a partner and keeps

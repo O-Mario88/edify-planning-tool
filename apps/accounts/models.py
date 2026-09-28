@@ -976,3 +976,37 @@ class LoginEvent(models.Model):
         db_table = "login_event"
         ordering = ["-at"]
         indexes = [models.Index(fields=["user", "at"], name="login_event_user_at")]
+
+
+class PresenceTime(models.Model):
+    """Time a person spent on one part of the tool, doing one thing, on a day.
+
+    Owner, 2026-09-28: Who's Online's Duration "should show a record of how
+    long the user spend on the planning tool. Which part of the tool they
+    accessed and for how long - Working on What should be clear", filtered by
+    day, week, month, quarter and FY. The owner chose to carve Who's Online
+    out of the Staff Time Standard's aggregate-only rule for this
+    (docs/STAFF_TIME_STANDARD.md §5); the telemetry instrument itself stays
+    aggregate. Accrued by ``apps.accounts.presence.touch_presence`` from the
+    once-a-minute presence beat: the time between two beats of one sitting
+    belongs to the page and task the person was on.
+    """
+
+    id = CuidField()
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="presence_times"
+    )
+    day = models.DateField()
+    section = models.CharField(max_length=64)
+    working_on = models.CharField(max_length=128)
+    seconds = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "presence_time"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "day", "section", "working_on"],
+                name="uniq_presence_time_slot",
+            )
+        ]
+        indexes = [models.Index(fields=["day", "user"], name="presence_time_day_user")]

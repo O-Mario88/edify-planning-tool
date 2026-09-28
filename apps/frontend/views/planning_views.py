@@ -927,6 +927,8 @@ def _partner_support_drawer_context(school, principal) -> dict:
     context["responsible"] = responsible.as_dict()
     if not responsible.is_partner:
         return context
+    # No purpose is locked any more (owner, 2026-09-28: "lift all
+    # restrictions"); the notice still names the Partner and its plans.
     for activity in (
         Activity.objects.filter(
             school=school,
@@ -1737,17 +1739,29 @@ def schedule_action_view(request):
             from apps.activity_catalogue.services import (
                 resolve_item_for_workflow_kind,
             )
-            from apps.partners.purposes import PURPOSE_ACTIVITY_TYPES
+            from apps.partners.purposes import (
+                INTERVENTION_FREE_PURPOSES,
+                PURPOSE_ACTIVITY_TYPES,
+            )
 
             purpose_of_kind = {
                 kind: purpose for purpose, kind in PURPOSE_ACTIVITY_TYPES.items()
             }
             pinned = ActivityCatalogueItem.objects.filter(id=catalogue_item_id).first()
+            # A purpose that moves no SSA intervention (SSA support, donor,
+            # story, invitation, social) is never the SSA recommendation's to
+            # cost: a generic `school_visit` pin names no purpose, so it slipped
+            # past the test below and a Donor Visit was saved as a BT follow-up
+            # `school_visit` — which also used up a client school's one staff
+            # support visit for the year.
             conflicting = (
                 pinned is not None
                 and pinned.workflow_kind != activity_type
-                and purpose_of_kind.get(pinned.workflow_kind)
-                not in (None, purpose_of_visit)
+                and (
+                    purpose_of_visit in INTERVENTION_FREE_PURPOSES
+                    or purpose_of_kind.get(pinned.workflow_kind)
+                    not in (None, purpose_of_visit)
+                )
             )
             if conflicting:
                 resolved = resolve_item_for_workflow_kind(activity_type)

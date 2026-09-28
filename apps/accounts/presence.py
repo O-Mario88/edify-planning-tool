@@ -41,14 +41,124 @@ from __future__ import annotations
 from datetime import timedelta
 
 import logging
+import re
 
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
 ONLINE_WINDOW = timedelta(minutes=10)
+# What the last beat of a sitting is worth: the page after it was read for a
+# while that no request can show (the telemetry method's final-action credit).
+FINAL_BEAT_SECONDS = 30
 # The panel is a glance, not a directory: the most recently seen people first.
 PRESENCE_LIST_LIMIT = 50
+
+
+# The Who's Online filter (owner, 2026-09-28: "add the filter of day, week,
+# month, quarter and FY"). A period is a run of calendar days in the platform's
+# time zone; quarters and years are the operational ones (apps.core.fy).
+PRESENCE_PERIODS: tuple[tuple[str, str], ...] = (
+    ("day", "Day"),
+    ("week", "Week"),
+    ("month", "Month"),
+    ("quarter", "Quarter"),
+    ("fy", "Financial year"),
+)
+# Sign-in times listed per person; the count beside them is the whole period's.
+LOGIN_TIMES_SHOWN = 20
+# The Title column (owner, 2026-09-28: "Title (CCEO, PL…)"): the short name
+# people use for a role, with the full one as the cell's title.
+ROLE_TITLES = {
+    "CCEO": "CCEO",
+    "Program Lead": "PL",
+    "RegionalProgramLead": "RPL",
+    "CountryDirector": "CD",
+    "RegionalVicePresident": "RVP",
+    "ImpactAssessment": "IA",
+    "Accountant": "Accountant",
+    "HumanResources": "HR",
+    "ProjectCoordinator": "Project Coordinator",
+    "PartnerAdmin": "Partner Admin",
+    "PartnerFieldOfficer": "Partner Officer",
+    "BusinessTransformationOfficer": "BT Officer",
+    "MfiPartnerAdmin": "MFI Admin",
+    "MfiLoanOfficer": "MFI Loan Officer",
+    "Admin": "Admin",
+}
+
+
+def _day_label(day, *, year: bool = True) -> str:
+    return f"{day.day} {day.strftime('%b')}" + (f" {day.year}" if year else "")
+
+
+def presence_period(period: str | None = None, on=None, *, today=None) -> dict:
+    """The days a Who's Online period covers: ``start`` and ``end`` (both
+    included), the key, the day it was chosen from and a label. An unknown
+    period is a day; an unreadable date is today."""
+    from datetime import date
+
+    from apps.core.fy import (
+        get_fy_date_range,
+        get_operational_fy,
+        get_quarter_date_range,
+        get_quarter_for_date,
+    )
+
+    today = today or timezone.localdate()
+    key = period if period in dict(PRESENCE_PERIODS) else "day"
+    if isinstance(on, str):
+        try:
+            on = date.fromisoformat(on.strip())
+        except ValueError:
+            on = None
+    on = on or today
+    if key == "week":
+        start = on - timedelta(days=on.weekday())  # Monday
+        end = start + timedelta(days=6)
+        if start.year != end.year:
+            label = f"week of {_day_label(start)} – {_day_label(end)}"
+        elif start.month != end.month:
+            label = f"week of {_day_label(start, year=False)} – {_day_label(end)}"
+        else:
+            label = f"week of {start.day}–{_day_label(end)}"
+    elif key == "month":
+        start = on.replace(day=1)
+        end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        label = start.strftime("%B %Y")
+    elif key in ("quarter", "fy"):
+        fy = get_operational_fy(on)
+        if key == "quarter":
+            quarter = get_quarter_for_date(on)
+            first, after = get_quarter_date_range(fy, quarter)
+            name = f"{quarter} FY{fy}"
+        else:
+            first, after = get_fy_date_range(fy)
+            name = f"FY{fy}"
+        start, end = first.date(), after.date() - timedelta(days=1)
+        label = f"{name} ({start.strftime('%b %Y')} – {end.strftime('%b %Y')})"
+    else:
+        start = end = on
+        label = "today" if on == today else f"{on.strftime('%a')} {_day_label(on)}"
+    return {
+        "key": key,
+        "on": on,
+        "start": start,
+        "end": end,
+        "label": label,
+        "is_default": key == "day" and on == today,
+    }
+
+
+def presence_filters(request) -> dict:
+    """The period and day a Who's Online request asked for, as keyword
+    arguments for ``presence_summary``."""
+    if request is None:
+        return {}
+    return {
+        "period": request.GET.get("presence_period") or None,
+        "on": request.GET.get("presence_on") or None,
+    }
 
 
 def client_address(request) -> str | None:
@@ -97,6 +207,9 @@ _UNTRACKED_PREFIXES = (
     "/health",
     "/favicon",
     "/realtime",
+    "/sw.js",
+    "/manifest",
+    "/robots.txt",
 )
 _READ_METHODS = ("GET", "HEAD", "OPTIONS")
 
@@ -110,7 +223,10 @@ def request_footprint(request) -> tuple[str, str] | None:
     if request is None:
         return None
     path = request.path or "/"
-    if path.startswith(_UNTRACKED_PREFIXES):
+    # A file (the service worker, a manifest, a map) is the browser's
+    # machinery, not a page: "/sw.js" read as a part of the tool called
+    # "Sw.Js" and was credited the minutes of whoever's browser fetched it.
+    if path.startswith(_UNTRACKED_PREFIXES) or "." in path.rsplit("/", 1)[-1]:
         return None
     htmx = request.headers.get("HX-Request") == "true"
     current = request.headers.get("HX-Current-URL") or ""
@@ -162,10 +278,70 @@ def touch_presence(user, request=None) -> None:
     footprint = request_footprint(request)
     if footprint:
         values["last_seen_path"], values["last_seen_action"] = footprint
+    # The beat before this one, as the request loaded it (no extra read). The
+    # time since it belongs to the page and task it recorded (owner,
+    # 2026-09-28: how long, on which part, working on what).
+    previous_seen = getattr(user, "last_seen_at", None)
+    previous_path = getattr(user, "last_seen_path", None) or ""
+    previous_action = getattr(user, "last_seen_action", None) or ""
     try:
-        User.objects.filter(pk=user_pk).update(**values)
+        rows = User.objects.filter(pk=user_pk)
+        # Guarded on the beat it read, so two requests at once cannot both
+        # credit the same minutes: the second finds the beat moved and only
+        # updates the presence.
+        won = (
+            rows.filter(last_seen_at=previous_seen).update(**values)
+            if previous_seen and previous_path
+            else 0
+        )
+        if not won:
+            rows.update(**values)
+            return
+        credit_presence_time(
+            user_pk,
+            previous_seen,
+            previous_path,
+            previous_action,
+            seconds=_credit_for((now - previous_seen).total_seconds()),
+        )
     except DatabaseError:
         return
+
+
+def _credit_for(gap: float) -> int:
+    """Seconds a gap between two beats is worth: all of it inside a sitting,
+    the final-beat credit when the sitting had ended in between."""
+    if gap <= 0:
+        return 0
+    if gap <= ONLINE_WINDOW.total_seconds():
+        return int(gap)
+    return FINAL_BEAT_SECONDS
+
+
+def credit_presence_time(user_pk, at, path: str, action: str, *, seconds: int) -> None:
+    """Add seconds to the person's day, part of the tool and task at ``at``."""
+    from django.db import IntegrityError, transaction
+    from django.db.models import F
+
+    from .models import PresenceTime
+    from .presence_labels import describe
+
+    if seconds <= 0:
+        return
+    described = describe(path, action)
+    slot = {
+        "user_id": user_pk,
+        "day": timezone.localtime(at).date(),
+        "section": described["section"][:64],
+        "working_on": described["working_on"][:128],
+    }
+    if PresenceTime.objects.filter(**slot).update(seconds=F("seconds") + seconds):
+        return
+    try:
+        with transaction.atomic():
+            PresenceTime.objects.create(**slot, seconds=seconds)
+    except IntegrityError:
+        PresenceTime.objects.filter(**slot).update(seconds=F("seconds") + seconds)
 
 
 def format_duration(seconds: float | None) -> str:
@@ -184,7 +360,27 @@ def format_duration(seconds: float | None) -> str:
     return f"{minutes}m"
 
 
-def _person(row: dict, *, now, online: bool, logins: dict | None = None) -> dict:
+def format_minutes(seconds: float | None) -> str:
+    """Time on the tool, in hours and minutes (owner, 2026-09-28: "show
+    minutes"). Never days: a financial year's hours read as hours."""
+    seconds = int(seconds or 0)
+    if seconds <= 0:
+        return "0m"
+    if seconds < 60:
+        return "<1m"
+    hours, minutes = divmod(seconds // 60, 60)
+    return f"{hours}h {minutes:02d}m" if hours else f"{minutes}m"
+
+
+def _person(
+    row: dict,
+    *,
+    now,
+    online: bool,
+    logins: dict | None = None,
+    spent: dict | None = None,
+    signins: dict | None = None,
+) -> dict:
     from .presence_labels import describe
 
     last_seen = row["last_seen_at"]
@@ -201,11 +397,23 @@ def _person(row: dict, *, now, online: bool, logins: dict | None = None) -> dict
     # is when that sitting began.
     signin = (logins or {}).get(row["id"]) or {}
     last_login = signin.get("last_at")
-    return {
+    person = {
         **row,
         "online": online,
         "duration_seconds": duration,
-        "duration_label": format_duration(duration) if last_seen else "never",
+        # A sitting in hours and minutes, like every other time in the table
+        # ("just now" read as a duration for someone who had left). A sitting
+        # under a minute is "<1m" from its first second, so a page read twice
+        # a second apart says the same thing.
+        "duration_label": (
+            "never"
+            if not last_seen
+            else "—"
+            if duration is None
+            else "<1m"
+            if duration < 60
+            else format_minutes(duration)
+        ),
         "section": described["section"] if last_seen else "—",
         "working_on": described["working_on"] if last_seen else "Never signed in",
         "last_login_at": last_login,
@@ -215,6 +423,84 @@ def _person(row: dict, *, now, online: bool, logins: dict | None = None) -> dict
         "last_login_label": (
             format_duration((now - last_login).total_seconds()) if last_login else None
         ),
+        "last_seen_label": (
+            format_duration((now - last_seen).total_seconds()) if last_seen else None
+        ),
+        "title": ROLE_TITLES.get(row["active_role"] or "", row["active_role"] or "—"),
+        # The chosen period (owner, 2026-09-28): time on the tool, where it
+        # went and what on, and the sign-ins inside the period.
+        **_period_figures(spent, signins, now=now),
+    }
+    # Owner, 2026-09-28: the page, what they are doing on it, then "other
+    # part of the system accessed, duration of access" — every other part
+    # the period's time went to.
+    current = person["section"]
+    # Beside its own column the page need not be said twice: "Dashboard" and
+    # "Viewing Dashboard" read as "Dashboard" and "Viewing".
+    person["working_label"] = (
+        "Viewing"
+        if person["working_on"] == f"Viewing {current}"
+        else person["working_on"]
+    )
+    person["other_sections"] = [
+        part for part in person["period_sections"] if part["section"] != current
+    ]
+    # Login day, date and time: the period's latest, else the last ever.
+    person["login_at"] = person["period_last_login"] or last_login
+    return person
+
+
+def _when_label(at, *, now) -> str | None:
+    """A sign-in time as short as it can be read: the time alone today, the
+    day and month before it otherwise. All figures, so the table keeps the
+    column whole instead of cutting the time off."""
+    if not at:
+        return None
+    local = timezone.localtime(at)
+    if local.date() == timezone.localtime(now).date():
+        return local.strftime("%H:%M")
+    return local.strftime("%d/%m %H:%M")
+
+
+def _period_figures(spent: dict | None, signins: dict | None, *, now) -> dict:
+    spent = spent or {}
+    signins = signins or {}
+    seconds = spent.get("seconds", 0)
+    sections = sorted(
+        (
+            {
+                "section": section,
+                "seconds": total,
+                "label": format_minutes(total),
+            }
+            for section, total in (spent.get("sections") or {}).items()
+        ),
+        key=lambda item: (-item["seconds"], item["section"]),
+    )
+    tasks = sorted(
+        (
+            {
+                "working_on": working_on,
+                "section": section,
+                "seconds": total,
+                "label": format_minutes(total),
+            }
+            for (section, working_on), total in (spent.get("tasks") or {}).items()
+        ),
+        key=lambda item: (-item["seconds"], item["working_on"]),
+    )
+    for item in sections:
+        item["tasks"] = [task for task in tasks if task["section"] == item["section"]]
+    return {
+        "period_seconds": seconds,
+        "period_time_label": format_minutes(seconds),
+        "period_sections": sections,
+        "period_tasks": tasks,
+        "period_logins": signins.get("count", 0),
+        "period_first_login": signins.get("first"),
+        "period_last_login": signins.get("last"),
+        "period_last_login_label": _when_label(signins.get("last"), now=now),
+        "period_login_times": signins.get("times", []),
     }
 
 
@@ -325,7 +611,11 @@ def presence_groups(people: list[dict]) -> list[dict]:
                     "cceo:unled", "CCEOs without a Program Lead", "cceo", (1, "")
                 ).setdefault("members", []).append(p)
             continue
-        label = ROLE_LABELS.get(role, role.replace("_", " ").title() or "Other")
+        # A role with no plural label reads as words, not one run-together
+        # word ("BusinessTransformationOfficer" was "Businesstransformationofficer").
+        label = ROLE_LABELS.get(
+            role, re.sub(r"(?<=[a-z])(?=[A-Z])", " ", role).replace("_", " ") or "Other"
+        )
         group(f"role:{role}", label, "role", (2, label))["members"].append(p)
 
     out = []
@@ -334,14 +624,20 @@ def presence_groups(people: list[dict]) -> list[dict]:
         everyone = ([g["lead"]] if g["lead"] else []) + g["members"]
         g["total"] = len(everyone)
         g["online"] = sum(1 for p in everyone if p["online"])
+        g["period_seconds"] = sum(p.get("period_seconds", 0) for p in everyone)
+        g["period_time_label"] = format_minutes(g["period_seconds"])
         g["open"] = g["online"] > 0
         out.append(g)
     out.sort(key=lambda g: (g["order"][0], -g["online"], g["order"][1]))
     return out
 
 
-def presence_summary(*, now=None, only_user_ids=None) -> dict:
+def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> dict:
     """Who is online and how often people signed in.
+
+    *period* (day, week, month, quarter, fy) and *on*, a day inside it, choose
+    the stretch the time and sign-in columns cover (owner, 2026-09-28); the
+    default is today. Online now is always now.
 
     With *only_user_ids* the whole panel is about those people: the roster, the
     online count, the sign-in totals and the fourteen-day chart. A Programme
@@ -350,14 +646,15 @@ def presence_summary(*, now=None, only_user_ids=None) -> dict:
     team of nobody, and is answered as such rather than falling back to the
     country.
     """
-    from django.db.models import Count, F, Max, Q
-    from django.db.models.functions import TruncDate
+    from django.db.models import Count, F, Max, Min, Q, Sum, Window
+    from django.db.models.functions import RowNumber, TruncDate
 
-    from .models import LoginEvent, User
+    from .models import LoginEvent, PresenceTime, User
 
     now = now or timezone.now()
     local_now = timezone.localtime(now)
     today = local_now.date()
+    chosen = presence_period(period, on, today=today)
     week_start = today - timedelta(days=today.weekday())  # Monday
     since_online = now - ONLINE_WINDOW
 
@@ -386,6 +683,69 @@ def presence_summary(*, now=None, only_user_ids=None) -> dict:
         )
     }
 
+    # The period's sign-ins: how many, the first and last, and the latest
+    # times themselves (two queries for the whole roster).
+    tz = timezone.get_current_timezone()
+    period_from = timezone.make_aware(
+        timezone.datetime.combine(chosen["start"], timezone.datetime.min.time()), tz
+    )
+    period_to = timezone.make_aware(
+        timezone.datetime.combine(
+            chosen["end"] + timedelta(days=1), timezone.datetime.min.time()
+        ),
+        tz,
+    )
+    in_period = events.filter(at__gte=period_from, at__lt=period_to)
+    signins_by_user = {
+        row["user_id"]: {"count": row["n"], "first": row["first"], "last": row["last"]}
+        for row in in_period.values("user_id").annotate(
+            n=Count("id"), first=Min("at"), last=Max("at")
+        )
+    }
+    latest = (
+        in_period.annotate(
+            nth=Window(RowNumber(), partition_by=F("user_id"), order_by=F("at").desc())
+        )
+        .filter(nth__lte=LOGIN_TIMES_SHOWN)
+        .order_by("user_id", "-at")
+        .values_list("user_id", "at")
+    )
+    for user_id, at in latest:
+        signins_by_user.setdefault(user_id, {}).setdefault("times", []).append(at)
+
+    # Time on the tool in the period, by part of the tool and task, summed in
+    # the database (one row per person, part and task).
+    spent_rows = PresenceTime.objects.filter(
+        day__gte=chosen["start"],
+        day__lte=chosen["end"],
+        user__deleted_at__isnull=True,
+    )
+    if only_user_ids is not None:
+        spent_rows = spent_rows.filter(user_id__in=list(only_user_ids))
+    spent_by_user: dict[str, dict] = {}
+    for row in spent_rows.values("user_id", "section", "working_on").annotate(
+        total=Sum("seconds")
+    ):
+        spent = spent_by_user.setdefault(
+            row["user_id"], {"seconds": 0, "sections": {}, "tasks": {}}
+        )
+        total = row["total"] or 0
+        spent["seconds"] += total
+        spent["sections"][row["section"]] = (
+            spent["sections"].get(row["section"], 0) + total
+        )
+        spent["tasks"][(row["section"], row["working_on"])] = total
+
+    def person(row, *, online):
+        return _person(
+            row,
+            now=now,
+            online=online,
+            logins=logins_by_user,
+            spent=spent_by_user.get(row["id"]),
+            signins=signins_by_user.get(row["id"]),
+        )
+
     roster = User.objects.filter(is_active=True, deleted_at__isnull=True)
     if only_user_ids is not None:
         roster = roster.filter(id__in=list(only_user_ids))
@@ -400,31 +760,27 @@ def presence_summary(*, now=None, only_user_ids=None) -> dict:
         "last_seen_action",
     )
     online = [
-        _person(person, now=now, online=True, logins=logins_by_user)
-        for person in people.filter(last_seen_at__gte=since_online).order_by(
+        person(row, online=True)
+        for row in people.filter(last_seen_at__gte=since_online).order_by(
             "-last_seen_at"
         )[:PRESENCE_LIST_LIMIT]
     ]
     # Offline: seen before the window, or never. Most recently seen first, and
     # the people who have never signed in last.
     offline = [
-        _person(person, now=now, online=False, logins=logins_by_user)
-        for person in people.exclude(last_seen_at__gte=since_online).order_by(
+        person(row, online=False)
+        for row in people.exclude(last_seen_at__gte=since_online).order_by(
             F("last_seen_at").desc(nulls_last=True), "name"
         )[:PRESENCE_LIST_LIMIT]
     ]
     # The table: everyone, folded by Program Lead and role (no cap — the
     # groups are what keep it short).
     everyone = [
-        _person(
-            person,
-            now=now,
-            online=bool(
-                person["last_seen_at"] and person["last_seen_at"] >= since_online
-            ),
-            logins=logins_by_user,
+        person(
+            row,
+            online=bool(row["last_seen_at"] and row["last_seen_at"] >= since_online),
         )
-        for person in people.order_by("name")
+        for row in people.order_by("name")
     ]
     groups = presence_groups(everyone)
 
@@ -462,6 +818,11 @@ def presence_summary(*, now=None, only_user_ids=None) -> dict:
             }
         )
     return {
+        "period": chosen,
+        "period_options": PRESENCE_PERIODS,
+        "period_logins": sum(p["period_logins"] for p in everyone),
+        "period_seconds": sum(p["period_seconds"] for p in everyone),
+        "period_time_label": format_minutes(sum(p["period_seconds"] for p in everyone)),
         "online": online,
         "online_count": len(online),
         "offline": offline,
