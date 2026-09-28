@@ -212,15 +212,23 @@ class SchoolLocationParserService:
                 )
                 tokens, area = [], None
 
-        SchoolLocationConfidence.objects.update_or_create(
-            school_id=school.id,
-            defaults={
-                "source_used": source,
-                "confidence": confidence,
-                "tokens": tokens,
-                "area_label": area,
-            },
-        )
+        cached = {
+            "source_used": source,
+            "confidence": confidence,
+            "tokens": tokens,
+            "area_label": area,
+        }
+        # Every save on a day re-resolves every school on it, and the answer
+        # rarely changes: read the cached row and write only when it differs.
+        if (
+            SchoolLocationConfidence.objects.filter(school_id=school.id)
+            .values(*cached)
+            .first()
+            != cached
+        ):
+            SchoolLocationConfidence.objects.update_or_create(
+                school_id=school.id, defaults=cached
+            )
         return {
             "school_id": school.id,
             "source": source,

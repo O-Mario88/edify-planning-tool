@@ -2449,3 +2449,29 @@
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
 }
+
+/* ── Opening frame ─────────────────────────────────────────────────────────
+   drawer-background.js shows a drawer's frame the moment it is asked for and
+   the drawer's own markup replaces it when the server answers (2026-09-28).
+   The frame is a drawer surface with a loading body, shown by its own class
+   rather than `.active`: `.drawer-surface.active` keeps meaning a drawer that
+   arrived, which is what the browser suites look for and measure. These rules
+   give the frame the active look, a drawer's height, and a fade out from
+   under the drawer that replaces it. */
+.opening-frame__lines {
+  align-content: start;
+  min-block-size: 14rem;
+  padding-block: 0.25rem 0.75rem;
+}
+
+.opening-frame.opening-frame--shown > :is(.drawer-backdrop, .drawer-surface) {
+  opacity: 1;
+}
+
+.opening-frame:is(.opening-frame--shown, .opening-frame--leaving) > .drawer-surface {
+  transform: none !important;
+}
+
+.opening-frame.opening-frame--leaving {
+  pointer-events: none;
+}

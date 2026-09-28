@@ -41,6 +41,7 @@
 
   var HOST_ID = "drawer-container";
   var RECEDE_CLASS = "edify-drawer-recede";
+  var OPENING_ATTR = "data-opening-frame";
   var locked = false;
   var nodes = [];
   var states = [];
@@ -55,7 +56,8 @@
     return Array.prototype.filter.call(
       hostNode.parentElement.children,
       function (node) {
-        return node !== hostNode;
+        /* A leaving frame is the drawer's, not the page's. */
+        return node !== hostNode && !node.hasAttribute(OPENING_ATTR);
       }
     );
   }
@@ -129,12 +131,114 @@
     },
   };
 
+  /* ── The drawer answers the click, not the server ───────────────────────
+     Until a drawer's HTML arrived a click showed nothing (interaction-pending
+     leaves GETs alone), so a slow Schedule looked like a dead button (owner,
+     2026-09-28). A drawer opening over nothing shows its frame at once; the
+     drawer that arrives fades in over it. The frame takes neither the lock
+     nor focus, so the arriving drawer still records where focus returns. */
+  var opening = null;
+  var FRAME =
+    '<div class="drawer-backdrop type-center"></div>' +
+    '<div class="drawer-surface size-md type-center" role="dialog" aria-modal="true" aria-busy="true" aria-label="Loading">' +
+    '<header class="drawer-header"><div class="drawer-header__identity"><div class="drawer-header__copy">' +
+    '<p class="drawer-header__eyebrow">Edify workspace</p><div class="drawer-header__title-row"><h3></h3></div>' +
+    '<p class="drawer-header__subtitle" role="status">Loading…</p></div></div>' +
+    '<button type="button" class="drawer-close-btn" aria-label="Cancel"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></header>' +
+    '<div class="drawer-body"><div class="platform-skeleton opening-frame__lines" aria-hidden="true">' +
+    "<span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div></div>";
+
+  /* The asking control's own name ("Schedule activity for Kasubi Primary");
+     a form or a load trigger has none worth reading back. */
+  function labelFor(trigger) {
+    if (!trigger || !trigger.getAttribute) return "";
+    var text = trigger.getAttribute("aria-label") || trigger.getAttribute("title");
+    if (!text && /^(A|BUTTON)$/.test(trigger.tagName)) text = trigger.textContent;
+    text = (text || "").replace(/\s+/g, " ").trim();
+    return text.length <= 90 ? text : "";
+  }
+
+  function showOpening(hostNode, trigger) {
+    var frame = document.createElement("div");
+    frame.className = "edify-drawer-root opening-frame relative z-50";
+    frame.setAttribute(OPENING_ATTR, "");
+    frame.innerHTML = FRAME;
+    frame.querySelector("h3").textContent = labelFor(trigger) || "Opening";
+    frame.querySelector(".drawer-backdrop").addEventListener("click", cancelOpening);
+    frame.querySelector(".drawer-close-btn").addEventListener("click", cancelOpening);
+    hostNode.appendChild(frame);
+    /* Laid out closed, then shown: the same entrance as a drawer. Not
+       `.active`, which means a drawer that arrived (drawers.css). */
+    void frame.offsetWidth;
+    frame.classList.add("opening-frame--shown");
+    opening = { frame: frame, trigger: trigger };
+  }
+
+  function dropOpening() {
+    if (!opening) return;
+    var frame = opening.frame;
+    opening = null;
+    if (frame.parentNode) frame.parentNode.removeChild(frame);
+    syncToContainer();
+  }
+
+  /* Escape, the backdrop or ✕. Aborted, so a late answer cannot open it. */
+  function cancelOpening() {
+    if (!opening) return;
+    var trigger = opening.trigger;
+    dropOpening();
+    if (trigger && window.htmx) window.htmx.trigger(trigger, "htmx:abort");
+  }
+
+  /* The answer arrived: the frame steps out beside the container, stops
+     being a dialog, and fades under the drawer's entrance. */
+  function handOff(hostNode) {
+    if (!opening || opening.frame.parentNode !== hostNode) return;
+    var frame = opening.frame;
+    opening = null;
+    hostNode.parentNode.insertBefore(frame, hostNode);
+    var surface = frame.querySelector(".drawer-surface");
+    surface.removeAttribute("role");
+    surface.removeAttribute("aria-modal");
+    frame.setAttribute("aria-hidden", "true");
+    frame.classList.remove("opening-frame--shown");
+    frame.classList.add("opening-frame--leaving");
+    setTimeout(function () {
+      if (frame.parentNode) frame.parentNode.removeChild(frame);
+    }, 320);
+  }
+
+  /* beforeSend: a request cancelled at beforeRequest never answers. */
+  document.addEventListener("htmx:beforeSend", function (event) {
+    var detail = event.detail || {};
+    var hostNode = host();
+    if (!hostNode || detail.target !== hostNode || opening) return;
+    var verb = (detail.requestConfig && detail.requestConfig.verb) || "get";
+    if (String(verb).toLowerCase() !== "get") return;
+    if (hostNode.children.length) return;
+    showOpening(hostNode, detail.elt);
+  });
+
+  /* An error, an abort, or nothing swapped here: never strand the frame. */
+  ["htmx:afterRequest", "htmx:sendError", "htmx:timeout"].forEach(function (name) {
+    document.addEventListener(name, function () {
+      if (opening && opening.frame.parentNode === host()) dropOpening();
+    });
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (opening && event.key === "Escape") cancelOpening();
+  });
+
   /* A swap INTO the container replaces whatever drawer is there. Releasing
      first means the incoming drawer locks from a clean baseline instead of
      inheriting the outgoing one's state as its "original". */
   document.addEventListener("htmx:beforeSwap", function (event) {
     var target = event.detail && event.detail.target;
-    if (target && target.id === HOST_ID) release();
+    if (target && target.id === HOST_ID) {
+      handOff(target);
+      release();
+    }
   });
 
   document.addEventListener("htmx:afterSwap", function (event) {

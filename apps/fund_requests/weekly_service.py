@@ -171,10 +171,28 @@ def trigger_generate_for_activity(
     the weekly request silently never materialises — so callers that know the
     scheduling principal should pass it explicitly.
     """
-    owner = responsible_user_id or activity.responsible_staff_id
-    if activity.scheduled_date and owner and activity.status != "cancelled":
-        planned_date = timezone.localtime(activity.scheduled_date).date()
-        week_start = planned_date - timedelta(days=planned_date.weekday())
+    trigger_generate_for_activities([activity], responsible_user_id=responsible_user_id)
+
+
+def trigger_generate_for_activities(
+    activities, responsible_user_id: str | None = None
+) -> None:
+    """`trigger_generate_for_activity` for several activities at once, each
+    owner-week generated once.
+
+    The request is a total over the owner's whole week, so activities sharing
+    a week share one regeneration. A day's visit batch is the case that
+    matters: every member is the same owner on the same day, and regenerating
+    per member rebuilt the same request once for every school on the day.
+    """
+    buckets = {}
+    for activity in activities:
+        owner = responsible_user_id or activity.responsible_staff_id
+        if activity.scheduled_date and owner and activity.status != "cancelled":
+            planned_date = timezone.localtime(activity.scheduled_date).date()
+            week_start = planned_date - timedelta(days=planned_date.weekday())
+            buckets[(owner, week_start)] = None
+    for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 
 
@@ -185,6 +203,13 @@ def sync_weekly_requests_for_activity(activity: Activity, *, prior_buckets=()) -
     old and new line buckets makes the new owner's request appear immediately
     and removes an emptied old draft instead of leaving a stale total behind.
     """
+    sync_weekly_requests_for_activities([activity], prior_buckets=prior_buckets)
+
+
+def sync_weekly_requests_for_activities(activities, *, prior_buckets=()) -> None:
+    """`sync_weekly_requests_for_activity` for several activities, each
+    owner-week regenerated once. With no activities it refreshes only
+    ``prior_buckets`` — the weeks an activity's old lines sat in."""
     buckets = {
         (owner, week_start)
         for owner, _fy, _month, week_start in prior_buckets
@@ -193,7 +218,7 @@ def sync_weekly_requests_for_activity(activity: Activity, *, prior_buckets=()) -
     buckets.update(
         (owner, week_start)
         for owner, week_start in ActivityScheduleCostLine.objects.filter(
-            activity=activity
+            activity_id__in=[activity.pk for activity in activities]
         ).values_list("responsible_user", "week_start_date")
         if owner and week_start
     )
