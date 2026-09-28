@@ -51,5 +51,8 @@
 {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></p><p class="text-[14px] font-bold text-slate-600">No schools in this district</p></div>{% endif %}
 </div>
 
+<!-- Planned and completed activities (owner, 2026-09-28) -->
+{% include "partials/components/profile_activities.html" with acts=profile_activities caption="Visits, trainings and cluster sessions in this district that your role oversees." %}
+
 </div>
 {% endblock %}

@@ -105,45 +105,8 @@ running three kinds of work was described here by one.{% endcomment %}
 {% endif %}
 </div>
 
-<!-- Activity history -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--edify-border)]">
-<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Activity history</h3>
-<p class="edify-text-caption text-slate-400 font-medium mt-0.5">School visits, trainings, assessments and every other activity this organisation has been given, newest first.</p>
-</div>
-{% if history %}
-{% paginate history "history_page" as history_pager %}
-<div class="overflow-x-auto">
-<table class="edify-record-table w-full text-[12px] border-collapse">
-<thead>
-<tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Date</th>
-<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Kind</th>
-<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Activity</th>
-<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School / cluster</th>
-<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Delivered by</th>
-<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 font-medium">
-{% for row in history_pager.rows %}
-<tr>
-<td class="px-5 py-3 tabular-nums text-slate-600">{{ row.activity.planned_date|date:"d M Y"|default:"—" }}</td>
-<td class="px-4 py-3 text-slate-700">{{ row.kind }}</td>
-<td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.activity.activity_type|title|replace_underscore }}</td>
-<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{% school_identity row.activity.school.name row.activity.school.id %}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
-<td class="px-4 py-3 text-slate-600">{% firstof row.delivered_by row.staff_name "—" %}</td>
-<td class="px-4 py-3"><span class="edify-status-text" data-edify-tone="{% if row.state == 'completed' %}success{% elif row.state == 'incomplete' %}danger{% else %}info{% endif %}">{{ row.activity.status|replace_underscore }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-{% include "components/table_pager.html" with pager=history_pager param="history_page" %}
-{% else %}
-{% include "components/empty_state.html" with message="No activities have been assigned to this organisation yet." %}
-{% endif %}
-</div>
+<!-- Planned and completed activities (owner, 2026-09-28) -->
+{% include "partials/components/profile_activities.html" with acts=profile_activities subject_label="School / cluster" caption="Visits, trainings, assessments and every other activity this organisation delivers or facilitates." %}
 
 {% comment %}The partnership log for this organisation (owner, 2026-09-13):
 present for the roles that record engagements and for readers who have some to
