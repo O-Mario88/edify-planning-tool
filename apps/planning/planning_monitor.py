@@ -54,6 +54,7 @@ from dataclasses import dataclass, field
 from django.db.models import Count, Q
 
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.metrics import percentage
 
 #: The visits a CCEO plans in a year when no target has been set for them.
 DEFAULT_VISITS_TARGET = 560
@@ -206,11 +207,11 @@ class OfficerMonitor:
 
     @property
     def visit_progress(self) -> int | None:
-        return _pct(self.staff_visits, self.visits_target)
+        return percentage(self.staff_visits, self.visits_target)
 
     @property
     def delivery_progress(self) -> int | None:
-        return _pct(self.visits_done, self.staff_visits)
+        return percentage(self.visits_done, self.staff_visits)
 
     # ── The partner's share ──
     @property
@@ -295,11 +296,11 @@ class LeadMonitor:
 
     @property
     def visit_progress(self) -> int | None:
-        return _pct(self.staff_visits, self.visits_target)
+        return percentage(self.staff_visits, self.visits_target)
 
     @property
     def delivery_progress(self) -> int | None:
-        return _pct(self.visits_done, self.staff_visits)
+        return percentage(self.visits_done, self.staff_visits)
 
     @property
     def visit_tone(self) -> str:
@@ -312,10 +313,6 @@ class LeadMonitor:
     @property
     def gap_cells(self) -> list[tuple[dict, int]]:
         return _gap_cells(self)
-
-
-def _pct(part: int, whole: int) -> int | None:
-    return round(100 * part / whole) if whole else None
 
 
 def _tone(progress: int | None) -> str:

@@ -373,30 +373,52 @@ class SameDayVisitGuardTest(StandardSupportBase):
         )
 
     def test_a_second_planner_cannot_book_the_same_visit_that_day(self):
+        """Refused — since 2026-09-28 by the school's one staff support visit
+        a year, which a second copy on the same day always meets first."""
         day = _schedulable_date(room=10)
         self._plan(self.user, day)
 
-        with self.assertRaisesMessage(BadRequest, "already has this visit on"):
+        with self.assertRaises(BadRequest):
             self._plan(self.other_user, day)
+        self.assertEqual(
+            Activity.objects.filter(school=self.school, planned_date=day).count(), 1
+        )
 
-    def test_another_day_is_still_open(self):
+    def test_another_day_meets_the_one_visit_rule_not_this_guard(self):
         day = _schedulable_date(room=10)
         self._plan(self.user, day)
         next_day = day + datetime.timedelta(days=1)
         if next_day.weekday() == 6:
             next_day += datetime.timedelta(days=1)
 
-        self._plan(self.other_user, next_day)
+        with self.assertRaisesMessage(BadRequest, "staff support visit"):
+            self._plan(self.other_user, next_day)
 
     def test_a_reschedule_cannot_move_onto_a_taken_day(self):
         from apps.activities.services import reschedule
 
         day = _schedulable_date(room=10)
-        self._plan(self.user, day)
+        first = self._plan(self.user, day)
         other_day = day + datetime.timedelta(days=1)
         if other_day.weekday() == 6:
             other_day += datetime.timedelta(days=1)
-        moved = self._plan(self.user, other_day)
+        # A second copy the one-visit rule would now refuse, as older data
+        # still holds: rescheduling it onto the first one's day is refused.
+        original = Activity.objects.get(id=first["id"])
+        moved = {
+            "id": Activity.objects.create(
+                activity_type=original.activity_type,
+                catalogue_item=original.catalogue_item,
+                school=self.school,
+                fy=original.fy,
+                quarter=original.quarter,
+                planned_date=other_day,
+                scheduled_date=_at(other_day),
+                status="scheduled",
+                delivery_type="staff",
+                responsible_staff_id=original.responsible_staff_id,
+            ).id
+        }
 
         with self.assertRaisesMessage(BadRequest, "already has this visit on"):
             reschedule(

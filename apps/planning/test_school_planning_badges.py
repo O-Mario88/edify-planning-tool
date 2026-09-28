@@ -569,13 +569,20 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         return day
 
     def test_a_school_with_planned_visits_can_receive_another(self):
+        """The badge refuses nothing. The one staff support visit a year
+        (owner, 2026-09-28) is the visit rule's, so the further visits here
+        are a donor visit and a story visit, which never use it."""
         day = _schedulable_date(room=7)
         year = get_operational_fy(day)
         self._visit(day)
         self.assertEqual(self._counts(year).visits.planned_count, 1)
-        day = self._next_day(day)
-        self._visit(day)
-        self._visit(self._next_day(day))
+        for code in ("STANDARD_DONOR_VISIT", "STANDARD_STORY_GATHERING_VISIT"):
+            day = self._next_day(day)
+            self.schedule(
+                schoolId=self.school.school_id,
+                catalogueItemId=self.item(code).id,
+                scheduledDate=_at(day).isoformat(),
+            )
         self.assertEqual(self._counts(year).visits.planned_count, 3)
 
     def test_a_school_with_completed_training_can_receive_another(self):

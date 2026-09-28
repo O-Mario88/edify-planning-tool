@@ -530,27 +530,25 @@ class CoreSchoolsPlanningTest(TestCase):
             ).exists()
         )
 
-    def test_staff_core_support_is_capped_at_two_and_nothing_else(self):
-        """Owner, 2026-09-17: "Lift all FY restriction and package
-        restrictions. Only block staff visit schedule after 2 scheduling."
-
-        Two staff visits go through whatever the calendar says — they used to
-        be released one per operational quarter, so the second was refused on
-        the same day as the first. The third is the cap, and the cap is the
-        only thing left that refuses.
-        """
-        # Different dates: two visits to one school on one day is a duplicate,
-        # which is a separate guard and stays. What changed is that the second
-        # is no longer refused for being in the same QUARTER as the first.
+    def test_staff_take_a_third_visit_only_while_the_partner_has_none(self):
+        """Owner, 2026-09-28: "staff may plan more core schools visits but
+        only if the partner has not planned." Two staff visits go through
+        whatever the calendar says; a third goes through while no partner
+        visit is planned at the school, and is refused once one is."""
         first = self._schedule_visit(seq="1", when="2026-04-21")
         self.assertIn(first.status_code, (200, 302), first.content[:200])
-
         second = self._schedule_visit(seq="2", when="2026-04-28")
         self.assertIn(second.status_code, (200, 302), second.content[:200])
-
         third = self._schedule_visit(seq="3", when="2026-05-05")
-        self.assertEqual(third.status_code, 400)
-        self.assertIn("at most 2 core visits", third.content.decode())
+        self.assertIn(third.status_code, (200, 302), third.content[:200])
+
+        partner = self._schedule_visit(
+            seq="4", when="2026-06-09", partner_id=self.partner.id
+        )
+        self.assertIn(partner.status_code, (200, 302), partner.content[:200])
+        fourth = self._schedule_visit(seq="5", when="2026-06-16")
+        self.assertEqual(fourth.status_code, 400)
+        self.assertIn("at most 2 core visits", fourth.content.decode())
 
     def test_a_partner_may_still_take_the_package_beyond_the_staff_cap(self):
         """The cap is the staff share, not the school's need."""
