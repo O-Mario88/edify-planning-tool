@@ -563,7 +563,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         # modal hierarchy and focus separation of an active workflow.
         self.assertIn(":is(.theme-blue, .theme-dark) .drawer-surface", consistency)
         self.assertIn("box-shadow: var(--drawer-shadow) !important", consistency)
-        self.assertIn("20260906float1", base)
+        self.assertIn("20260928opening3", base)
 
     def test_blue_primary_actions_use_white_ink_on_saturated_blue(self):
         components = _read("static/css/components.css")

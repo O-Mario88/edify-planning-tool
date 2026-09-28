@@ -23,6 +23,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget import costing_service, services
 from apps.budget.allocation_service import MonthlyFundAllocationService
 from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -70,6 +71,7 @@ class _BaseData(TestCase):
         responsible="staff-aud-1",
         deleted_at=None,
         quarter="Q1",
+        fy=FY,
     ):
         return Activity.objects.create(
             activity_type="school_visit",
@@ -77,7 +79,7 @@ class _BaseData(TestCase):
             delivery_type="staff",
             status=status,
             responsible_staff_id=responsible,
-            fy=FY,
+            fy=fy,
             month=month,
             quarter=quarter,
             planned_date=planned,
@@ -107,7 +109,7 @@ class _BaseData(TestCase):
             unit_cost=amount // max(1, qty),
             quantity=qty,
             amount=amount,
-            fiscal_year=FY,
+            fiscal_year=activity.fy,
             month=month,
             week_start_date=week_start,
             planned_date=activity.planned_date,
@@ -305,29 +307,36 @@ class MyPlanBudgetTotalTests(_BaseData):
         # My Plan lists upcoming work only (2026-09-20), so the rows are
         # planned ahead of today rather than on a fixed past date.
         first = date.today() + timedelta(days=1)
-        second = date.today() + timedelta(days=2)
+        second = first + timedelta(days=1)
+        # Both days in one fiscal year, filed under it: from 30 September
+        # tomorrow is already the next year (the FY starts 1 October).
+        if get_operational_fy(first) != get_operational_fy(second):
+            first, second = second, second + timedelta(days=1)
+        fy = get_operational_fy(first)
         with_lines = self._activity(
             responsible=self.cceo.id,
             planned=first,
             sched=_aware(first.year, first.month, first.day),
             est_cost=999_999,  # stale estimate that must NOT win
+            fy=fy,
         )
-        self._line(with_lines, amount=50_000, owner=self.cceo.id)
+        self._line(with_lines, amount=50_000, owner=self.cceo.id, month=first.month)
         no_lines = self._activity(
             responsible=self.cceo.id,
             planned=second,
             sched=_aware(second.year, second.month, second.day),
             est_cost=70_000,  # only source available → fallback
+            fy=fy,
         )
 
-        ctx = get_frontend_context(self.cceo, {"period": "fy", "fy": FY})
+        ctx = get_frontend_context(self.cceo, {"period": "fy", "fy": fy})
         by_id = {row["id"]: row for row in ctx["school_visits_all"]}
         self.assertIsNone(by_id[with_lines.id]["budget_total"])
         self.assertIsNone(by_id[no_lines.id]["budget_total"])
         from apps.budget.services import budget_workspace
 
         budget = budget_workspace(
-            self.cceo, {"fy": FY, "date": first.isoformat(), "period": "fy"}
+            self.cceo, {"fy": fy, "date": first.isoformat(), "period": "fy"}
         )
         self.assertEqual(budget["total"], 50_000)
 

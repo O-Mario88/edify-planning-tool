@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 718,
+   "line": 758,
    "label": null,
    "keys": [
     "amount",
@@ -2485,7 +2485,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 996,
+   "line": 1019,
    "label": null,
    "keys": [
     "label",
@@ -9609,7 +9609,7 @@
    "audit_id": "KPI-SOURCE-533",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 464,
+   "line": 474,
    "label": "Undated",
    "keys": [
     "at_risk",
@@ -9631,7 +9631,7 @@
    "audit_id": "KPI-SOURCE-534",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 455,
+   "line": 465,
    "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
@@ -9653,7 +9653,7 @@
    "audit_id": "KPI-SOURCE-535",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 581,
+   "line": 591,
    "label": null,
    "keys": [
     "cost",
@@ -9672,7 +9672,7 @@
    "audit_id": "KPI-SOURCE-536",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 692,
+   "line": 702,
    "label": null,
    "keys": [
     "amount",
@@ -40345,7 +40345,7 @@
   {
    "audit_id": "KPI-PAYLOAD-009",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 714,
+   "line": 737,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,

@@ -17,6 +17,9 @@ is reused unchanged; this service wraps it with catalogue resolution + persisten
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -32,6 +35,37 @@ from .models import (
     RateCardStatus,
 )
 from .reference import CANONICAL_RATE_KEYS
+
+
+# ── Rate cards held for one pricing run ──────────────────────────────────────
+# Re-pricing a day re-prices every visit on it, and each visit resolved the
+# same published cards and read the same rate rows again: four queries a
+# visit, for values that cannot change while the run lasts. They are held for
+# the run that asks (rate_cards_held) and no longer — never for the request,
+# so a request that edits the catalogue and then prices still reads the edit.
+_held_cards: ContextVar[dict | None] = ContextVar("held_rate_cards", default=None)
+
+
+@contextmanager
+def rate_cards_held():
+    """Resolve each rate card and read its rates once for this block."""
+    if _held_cards.get() is not None:
+        yield
+        return
+    token = _held_cards.set({})
+    try:
+        yield
+    finally:
+        _held_cards.reset(token)
+
+
+def _held(key, compute):
+    held = _held_cards.get()
+    if held is None:
+        return compute()
+    if key not in held:
+        held[key] = compute()
+    return held[key]
 
 
 # ── Catalogue + rate resolution ──────────────────────────────────────────────
@@ -72,7 +106,10 @@ def active_catalogue(
             Q(effective_from__isnull=True) | Q(effective_from__lte=on_date),
             Q(effective_to__isnull=True) | Q(effective_to__gte=on_date),
         )
-    return qs.order_by("-fy", "-version").first()
+    return _held(
+        ("catalogue", country, kind, on_date),
+        lambda: qs.order_by("-fy", "-version").first(),
+    )
 
 
 def _rate_card(
@@ -86,7 +123,10 @@ def _rate_card(
     """
     if catalogue is None:
         return {}, {}
+    return _held(("rates", catalogue.pk), lambda: _read_rate_card(catalogue))
 
+
+def _read_rate_card(catalogue: CostCatalogue):
     from apps.budget.reference import RATE_ALIASES
     from apps.budget.services import pricing_rates
 
