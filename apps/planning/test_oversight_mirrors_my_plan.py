@@ -273,6 +273,35 @@ class PlanningOversightMirrorsMyPlanTest(MirrorFixture):
             set(),
         )
 
+    def test_the_operational_year_reads_forward_into_next_year_plans(self):
+        """Owner, 2026-09-28: "Activities planned by the CCEOs/Staffs are not
+        showing all to the PL or their manager." From 15 September staff
+        date most new plans into the next fiscal year; the Team Plan for the
+        operational year must hold them, as My Plan does."""
+        self.client.force_login(self.pl_user)
+        response = self.client.get("/team-planning-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            self.james_next_fy.id,
+            self._ids_under(response.context["groups"], self.james),
+        )
+        self.assertEqual(
+            response.context["period_label"], f"FY {self.fy}–{self.next_fy}"
+        )
+
+    def test_the_manager_s_team_view_reads_forward_too(self):
+        self.client.force_login(self.cd_user)
+        response = self.client.get(f"/country-planning-oversight/team/{self.pl.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            self.james_next_fy.id,
+            self._ids_under(response.context["owner_groups"], self.james),
+        )
+
+    def test_a_month_stays_inside_the_chosen_year(self):
+        groups = self._team_groups(period="month", month=10)
+        self.assertNotIn(self.james_next_fy.id, self._ids_under(groups, self.james))
+
     def test_the_country_page_files_each_team_under_its_lead(self):
         self.client.force_login(self.cd_user)
         response = self.client.get(

@@ -1461,6 +1461,206 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "queue rather than opening a TeamAction against an individual."
         ),
     ),
+    # ── The planning monitor ─────────────────────────────────────────────────
+    # Each CCEO's year against the visits it should hold (owner, 2026-09-28):
+    # 560 visits, two per Core school and the rest client visits, the partner
+    # share beyond, training coverage and the schools not yet planned.
+    MetricSpec(
+        key="monitor_visits_planned_share",
+        label="Visits Planned Against Target",
+        definition=(
+            "Staff visits planned in the fiscal year at the reader's Core, "
+            "Client and Core Trained schools, against the sum of each CCEO's "
+            "visit target — their own target where the Country Director set "
+            "one, else 560. Each target holds two visits per Core school; the "
+            "rest are client visits."
+        ),
+        question="How far is the team's plan from the visits it is expected to hold?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Live staff visits planned in the fiscal year",
+        denominator="The CCEOs' visit targets, summed",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="monitor_schools_with_visit",
+        label="Schools With A Visit Planned",
+        definition=(
+            "Unique Core, Client and Core Trained schools with at least one "
+            "live visit planned in the fiscal year, by staff or by a partner."
+        ),
+        question="How many different schools will be visited this year?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Schools with one or more live visits in the fiscal year",
+        denominator="Core, Client and Core Trained schools in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor&gap=no_visit",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="monitor_schools_with_training",
+        label="Schools Planned For Training",
+        definition=(
+            "Schools invited to a live group training or cluster meeting in "
+            "the fiscal year, or given an in-school training. Every school is "
+            "to be trained."
+        ),
+        question="How many schools will be trained this year?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=(
+            "schools.School",
+            "activities.Activity",
+            "activities.ClusterActivityAttendance",
+        ),
+        numerator="Schools invited to a live cluster session or given an in-school training",
+        denominator="Core, Client and Core Trained schools in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor&gap=no_training",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="monitor_schools_unplanned",
+        label="Schools With No Visit Or Training",
+        definition=(
+            "Schools with neither a live visit nor a training planned in the "
+            "fiscal year — the list the CD and IA follow up first."
+        ),
+        question="Which schools has nobody planned anything for?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Schools with no live visit and no planned training",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor&gap=no_both",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="monitor_schools_not_clustered",
+        label="Schools Not Clustered",
+        definition=(
+            "Core, Client and Core Trained schools with no cluster. A school "
+            "outside a cluster cannot be invited to a group training or a "
+            "cluster meeting."
+        ),
+        question="Which schools cannot be trained with a cluster yet?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Active schools with no cluster",
+        date_basis=DateBasis.NOT_TIME_BOUND,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor&gap=not_clustered",
+        refresh_events=("school_clustered", "school_unclustered"),
+    ),
+    MetricSpec(
+        key="monitor_schools_in_projects",
+        label="Schools In Special Projects",
+        definition=(
+            "Schools enrolled in an open Special Project. The Project "
+            "Monitoring page follows each one."
+        ),
+        question="How much of the portfolio is carried by Special Projects?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "projects.ProjectSchoolAssignment"),
+        numerator="Schools with an enrolment in an open project",
+        date_basis=DateBasis.NOT_TIME_BOUND,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/projects/monitoring",
+        refresh_events=("project_school_assigned",),
+    ),
+    MetricSpec(
+        key="monitor_visits_delivered_share",
+        label="Planned Visits Delivered",
+        definition=(
+            "Staff visits in the fiscal year already delivered — submitted, "
+            "awaiting verification or verified — against the staff visits "
+            "planned."
+        ),
+        question="How much of the plan has happened?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=("schools.School", "activities.Activity"),
+        numerator="Staff visits delivered in the fiscal year",
+        denominator="Staff visits planned in the fiscal year",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor",
+        refresh_events=("activity_completed", "activity_verified"),
+    ),
+    MetricSpec(
+        key="monitor_partner_share",
+        label="Client Schools With A Partner",
+        definition=(
+            "Client and Core Trained schools with partner work — a dated "
+            "partner visit or a handover not yet dated — against the schools "
+            "beyond what each CCEO's client visits can reach, which are the "
+            "partner's."
+        ),
+        question="Is the work beyond staff reach handed to partners?",
+        category=Category.PROGRESS,
+        unit=Unit.COUNT,
+        service="apps.planning.planning_monitor.planning_monitor",
+        source_models=(
+            "schools.School",
+            "activities.Activity",
+            "partners.PartnerAssignment",
+        ),
+        numerator="Client-rule schools with partner work in the fiscal year",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=monitor&gap=no_partner",
+        refresh_events=("partner_assigned", "activity_scheduled"),
+    ),
     # ── The country portfolio lens ───────────────────────────────────────────
     # Every school under the Programme Lead and the CCEO who hold it, and
     # whether anything is planned for it this year (owner, 2026-09-16). The

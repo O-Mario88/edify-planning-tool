@@ -11,7 +11,7 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
@@ -56,6 +56,8 @@
     <div id="oversight-workspace">
       {% if active_oversight_view == "portfolio" %}
         {% include "partials/oversight/portfolio_workspace.html" %}
+      {% elif active_oversight_view == "monitor" %}
+        {% include "partials/oversight/monitor_workspace.html" %}
       {% elif active_oversight_view == "coverage" %}
         {% include "partials/oversight/coverage_workspace.html" %}
       {% elif country_lens %}

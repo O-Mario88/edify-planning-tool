@@ -1403,6 +1403,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             "id": a.id,
             "activity_type": a.activity_type,
             "activity_type_label": a.get_activity_type_display(),
+            # The governed course or item planned — the Group Trainings card
+            # names the training by it.
+            "activity_name": a.activity_name_snapshot or "",
             "status": a.status,
             "planned_date": a.planned_date,
             "quarter": a.quarter,
@@ -1645,6 +1648,12 @@ def get_frontend_context(principal, query: dict) -> dict:
         for row in cluster_trainings_list
         if row.get("cluster_id") and not row.get("school_id")
     ]
+    # The group trainings themselves, one row per session and cluster, as the
+    # Cluster Meetings card lists meetings (owner, 2026-09-28: "CCEOs don't
+    # have the cluster group training planned table like cluster meeting").
+    # Copied before the list below is expanded into one row per invited
+    # school, which is how the Trainings card reads them.
+    group_trainings_list = [dict(row) for row in _cluster_act_rows]
     if _cluster_act_rows:
         _cluster_act_ids = [r["id"] for r in _cluster_act_rows if r.get("id")]
         _cluster_ids = list(
@@ -1986,6 +1995,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     _plan_tables = [
         school_visits_list,
         cluster_trainings_list,
+        group_trainings_list,
         cluster_meetings_list,
         core_school_visits_list,
         core_school_trainings_list,
@@ -2098,6 +2108,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         "cluster_trainings_all": cluster_trainings_list,
         "cluster_meetings": cluster_meetings_list,
         "cluster_meetings_all": cluster_meetings_list,
+        "group_trainings": group_trainings_list,
         "programme_activities": programme_activities_list,
         "programme_activities_all": programme_activities_list,
         "waiting_on_me": waiting_on_me_list,

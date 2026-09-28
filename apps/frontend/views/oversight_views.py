@@ -241,6 +241,35 @@ def _service_period(period: dict) -> dict:
     }
 
 
+def _plan_period(period: dict) -> dict:
+    """The period a Team or Country Plan read covers.
+
+    Owner, 2026-09-28: "Activities planned by the CCEOs/Staffs are not
+    showing all to the PL or their manager." Staff plan forward into whichever
+    year the date lands — from 15 September 2026 that is mostly FY2027 — and
+    these two lenses read the page year alone, so a Programme Lead's Team Plan
+    for FY2026 left out everything their CCEOs had dated from 1 October while
+    My Plan listed it. The whole operational year now reads forward through
+    the planning horizon (``fy_policy.planning_horizon``), as Cluster, Core
+    School and Partner oversight already do. A month, a quarter or a week is
+    a slice of the chosen year and stays in it.
+    """
+    from apps.planning.fy_policy import planning_horizon
+
+    service = _service_period(period)
+    if period["period"] == "fy":
+        service["fys"] = planning_horizon(period["fy"])
+    return service
+
+
+def _plan_period_label(period: dict) -> str:
+    """The period label for a plan read: "FY 2026–2027" when it reads ahead."""
+    from apps.planning.fy_policy import horizon_label
+
+    fys = _plan_period(period).get("fys")
+    return horizon_label(fys) if fys else period["period_label"]
+
+
 # ── Program Lead ─────────────────────────────────────────────────────────────
 def _items_owned_by(items, *people) -> list[list]:
     """Staff and partner work attributed to each person, in either id space.
@@ -325,6 +354,7 @@ def _lens_tabs(
             "planning",
             "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
         ),
+        ("monitor", "Planning Monitor"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
@@ -370,6 +400,134 @@ def _portfolio_context(request, period: dict, *, base_url: str) -> dict:
         "portfolio_url": f"{base_url}?view=portfolio",
         "kpis": _portfolio_kpis(totals, base_url=base_url),
     }
+
+
+def _monitor_context(request, period: dict, *, base_url: str) -> dict:
+    """The Planning Monitor lens (owner, 2026-09-28): each CCEO's year
+    against the 560 visits it should hold, training coverage, and the schools
+    not yet planned, under their Programme Lead."""
+    from apps.planning.fy_policy import next_open_fy
+    from apps.planning.planning_monitor import (
+        DEFAULT_VISITS_TARGET,
+        GAP_LABELS,
+        GAPS,
+        planning_monitor,
+    )
+
+    # The year being planned, as the Work Plan opens on it: the next fiscal
+    # year once it is open for planning, else the running one. Any year the
+    # selector offers may be chosen, to follow execution.
+    fy = (request.GET.get("fy") or "").strip() or next_open_fy() or period["fy"]
+    selected_lead = (request.GET.get("program_lead") or "").strip()
+    gap = (request.GET.get("gap") or "").strip()
+    gap = gap if gap in GAP_LABELS else ""
+    officer = (request.GET.get("officer") or "").strip()
+    monitor = planning_monitor(
+        request.user,
+        fy=fy,
+        program_lead_id=selected_lead or None,
+        gap=gap or None,
+        officer_id=officer or None,
+    )
+    monitor_url = f"{base_url}?view=monitor&fy={fy}"
+    return {
+        "fy": fy,
+        "monitor": monitor,
+        "monitor_totals": monitor["totals"],
+        "monitor_url": monitor_url,
+        "monitor_gaps": GAPS,
+        "monitor_gap": gap,
+        "monitor_gap_label": GAP_LABELS.get(gap, ""),
+        "monitor_officer": officer,
+        "selected_program_lead": selected_lead,
+        "default_visits_target": DEFAULT_VISITS_TARGET,
+        "kpis": _monitor_kpis(monitor["totals"], monitor_url=monitor_url),
+    }
+
+
+def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
+    """The monitor's tiles, each folded from the officer rows below them."""
+
+    def share(key, part, whole, *, helper, icon, drill=None, empty="No schools"):
+        return render_kpi_item(
+            key,
+            (
+                MetricValue.ratio(part, whole)
+                if whole
+                else MetricValue.absent(DataState.NOT_YET_MEASURABLE, note=empty)
+            ),
+            helper=helper,
+            icon=icon,
+            drilldown_url=drill,
+        )
+
+    schools = totals.school_count
+    return [
+        share(
+            "monitor_visits_planned_share",
+            totals.staff_visits,
+            totals.visits_target,
+            helper=f"{totals.staff_visits:,} of {totals.visits_target:,} visits · "
+            f"{totals.core_visits:,} core, {totals.client_visits:,} client",
+            icon="target",
+            empty="No CCEOs in scope",
+        ),
+        share(
+            "monitor_schools_with_visit",
+            totals.schools_with_visit,
+            schools,
+            helper=f"{totals.schools_with_visit:,} of {schools:,} schools",
+            icon="school",
+            drill=f"{monitor_url}&gap=no_visit",
+        ),
+        share(
+            "monitor_schools_with_training",
+            totals.schools_with_training,
+            schools,
+            helper=f"{totals.schools_group_training:,} group training · "
+            f"{totals.schools_meeting:,} cluster meeting",
+            icon="users",
+            drill=f"{monitor_url}&gap=no_training",
+        ),
+        render_kpi_item(
+            "monitor_schools_unplanned",
+            MetricValue.measured(totals.no_both),
+            helper="No visit and no training planned",
+            tone="danger" if totals.no_both else "neutral",
+            icon="warning",
+            drilldown_url=f"{monitor_url}&gap=no_both",
+        ),
+        render_kpi_item(
+            "monitor_schools_not_clustered",
+            MetricValue.measured(totals.not_clustered),
+            helper="Cannot join a group training yet",
+            tone="warning" if totals.not_clustered else "neutral",
+            icon="warning",
+            drilldown_url=f"{monitor_url}&gap=not_clustered",
+        ),
+        render_kpi_item(
+            "monitor_partner_share",
+            MetricValue.measured(totals.partner_schools),
+            helper=f"of {totals.partner_needed:,} beyond staff reach",
+            icon="users",
+            drilldown_url=f"{monitor_url}&gap=no_partner",
+        ),
+        render_kpi_item(
+            "monitor_schools_in_projects",
+            MetricValue.measured(totals.in_projects),
+            helper="Enrolled in an open Special Project",
+            icon="clipboard",
+            drilldown_url="/projects/monitoring",
+        ),
+        share(
+            "monitor_visits_delivered_share",
+            totals.visits_done,
+            totals.staff_visits,
+            helper=f"{totals.visits_done:,} of {totals.staff_visits:,} planned visits",
+            icon="check",
+            empty="Nothing planned yet",
+        ),
+    ]
 
 
 def _portfolio_kpis(totals, *, base_url: str) -> list[dict]:
@@ -1013,22 +1171,26 @@ def team_planning_oversight_view(request):
         return response
     active_view = (
         requested_view
-        if requested_view in {"targets", "coverage", "portfolio"}
+        if requested_view in {"targets", "coverage", "portfolio", "monitor"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
     if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
-    if active_view == "portfolio" and not can_view_portfolio:
+    if active_view in ("portfolio", "monitor") and not can_view_portfolio:
         active_view = "planning"
-    if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
+    if (
+        active_view in ("planning", "coverage", "portfolio", "monitor")
+        and not can_view_planning
+    ):
         active_view = "targets"
 
     available_lenses = {
         key
         for key, allowed in (
             ("planning", can_view_planning),
+            ("monitor", can_view_portfolio),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
@@ -1061,6 +1223,24 @@ def team_planning_oversight_view(request):
 
     period = _period_filters(request)
 
+    if active_view == "monitor":
+        context = {
+            **period,
+            **_monitor_context(request, period, base_url=TEAM_OVERSIGHT_PATH),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": TEAM_OVERSIGHT_PATH,
+            "monitor_is_country": country_reader,
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
+            "fy_options": fy_options(),
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(request, "partials/oversight/monitor_workspace.html", context)
+        return render(request, "pages/oversight/team_planning.html", context)
+
     # The portfolio and cluster lenses stand on the school and cluster records,
     # not on the period's planning items. Answering them before `build_items`
     # keeps the expensive one out of the way: these are independent lenses, and
@@ -1089,7 +1269,7 @@ def team_planning_oversight_view(request):
 
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
-    available_items = oversight.build_items(request.user, **_service_period(period))
+    available_items = oversight.build_items(request.user, **_plan_period(period))
     items = oversight.apply_filters(available_items, advanced)
     if active_view == "coverage":
         # The school lens: which schools have planned work in the period, which
@@ -1190,6 +1370,7 @@ def team_planning_oversight_view(request):
         )
     context = {
         **period,
+        "period_label": _plan_period_label(period),
         "country_lens": country_lens,
         "is_team_lens": not country_lens,
         "tabs": tabs,
@@ -1358,10 +1539,26 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    active_view = requested_view if requested_view in {"portfolio"} else "planning"
-    lens_tabs = _lens_tabs(
-        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "portfolio"}
+    active_view = (
+        requested_view if requested_view in {"portfolio", "monitor"} else "planning"
     )
+    lens_tabs = _lens_tabs(
+        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "monitor", "portfolio"}
+    )
+
+    if active_view == "monitor":
+        context = {
+            **period,
+            **_monitor_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": COUNTRY_OVERSIGHT_PATH,
+            "monitor_is_country": True,
+            "fy_options": fy_options(),
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(request, "partials/oversight/monitor_workspace.html", context)
+        return render(request, "pages/oversight/country_planning.html", context)
 
     if active_view == "portfolio":
         context_data = _portfolio_context(
@@ -1389,7 +1586,7 @@ def country_planning_oversight_view(request):
     available_items = oversight.build_items(
         request.user,
         program_lead_id=program_lead_id,
-        **_service_period(period),
+        **_plan_period(period),
     )
     items = oversight.apply_filters(available_items, advanced)
 
@@ -1415,6 +1612,7 @@ def country_planning_oversight_view(request):
         group["autoload"] = str(group.get("id")) == open_lead
     context = {
         **period,
+        "period_label": _plan_period_label(period),
         "program_lead": program_lead_id,
         "selected_lead": open_lead,
         "summary": summary,
@@ -1471,7 +1669,7 @@ def country_planning_send_action_view(request):
     items = oversight.build_items(
         request.user,
         program_lead_id=program_lead_id,
-        **_service_period(period),
+        **_plan_period(period),
     )
     if not items:
         return _action_response(
@@ -1634,7 +1832,7 @@ def team_planning_export_view(request):
         request.user,
         staff_id=(request.GET.get("team_member") or "").strip() or None,
         filters=oversight.read_filters(request),
-        **_service_period(period),
+        **_plan_period(period),
     )
     scope = oversight.resolve_oversight_scope(request.user)
     if scope.is_country:
@@ -1665,7 +1863,7 @@ def country_planning_export_view(request):
         request.user,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
         filters=oversight.read_filters(request),
-        **_service_period(period),
+        **_plan_period(period),
     )
     return _export_response(
         items,
@@ -1885,7 +2083,7 @@ def country_planning_team_view(request, staff_id: str):
     """
     period = _period_filters(request)
     items = oversight.build_items(
-        request.user, program_lead_id=staff_id, **_service_period(period)
+        request.user, program_lead_id=staff_id, **_plan_period(period)
     )
     # Partner work stays on Partner Monitoring (owner, 2026-09-26), as on
     # Team Oversight: these are the team's own planned activities.
@@ -1913,6 +2111,7 @@ def country_planning_team_view(request, staff_id: str):
         "partials/oversight/cd_team_detail.html",
         {
             **period,
+            "period_label": _plan_period_label(period),
             "staff_id": staff_id,
             "program_lead_name": program_lead_name,
             "summary": oversight.summarize(items),
@@ -2148,8 +2347,6 @@ def partner_oversight_view(request):
         ),
         "partners": partner_pairs,
         "fy_options": fy_options(),
-        "can_grant_allowance": request.user.active_role
-        in ("CountryDirector", "Program Lead", "Admin"),
         "can_resolve_returns": has_permission(
             request.user, Permission.PARTNER_RETURN_RESOLVE.value
         ),

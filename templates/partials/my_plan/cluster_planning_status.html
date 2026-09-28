@@ -1,0 +1,62 @@
+{% load frontend_filters table_pagination row_actions %}
+{% comment %}
+Cluster Planning Status (owner, 2026-09-28: "CCEOs don't have the cluster group
+training planned table like cluster meeting. can you add that to make sure
+they can know which cluster has been planned and which ones have not been
+planned"). One row per cluster the reader is responsible for, with its group
+training and cluster meeting for the year — the next planned date, delivered,
+or Not planned — clusters with nothing planned first
+(apps.clusters.planning_status).
+{% endcomment %}
+{% if cluster_planning.rows %}
+<div class="card overflow-hidden" data-cluster-planning-status>
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3">
+<div class="flex items-center gap-2 min-w-0">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Planning Status</h2>
+</div>
+<div class="flex items-center gap-1.5 shrink-0 edify-text-caption font-semibold tabular-nums">
+<span>{{ cluster_planning.rows|length }} cluster{{ cluster_planning.rows|length|pluralize }}</span>
+<span aria-hidden="true">·</span>
+<span>{{ cluster_planning.trainings_missing }} without a group training</span>
+<span aria-hidden="true">·</span>
+<span>{{ cluster_planning.meetings_missing }} without a meeting</span>
+</div>
+</div>
+<div class="overflow-x-auto edify-record-table-wrap">
+{% paginate cluster_planning.rows "cluster_status_page" 20 as cluster_status_pager %}
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
+<thead>
+<tr>
+<th class="min-w-[180px]">Cluster Name</th>
+<th class="min-w-[120px]">District</th>
+<th class="text-center min-w-[80px]">Schools</th>
+<th class="min-w-[170px]">Group Training</th>
+<th class="min-w-[170px]">Cluster Meeting</th>
+{% if can_plan_clusters %}<th class="text-right min-w-[90px]">Actions</th>{% endif %}
+</tr>
+</thead>
+<tbody>
+{% for row in cluster_status_pager.rows %}
+<tr data-cluster-status="{{ row.id }}">
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title><a href="{{ row.url }}" class="hover:underline">{{ row.name }}</a></td>
+<td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
+<td class="text-center tabular-nums" data-label="Schools">{{ row.schools }}</td>
+<td data-label="Group Training"><span class="edify-status-text" data-edify-tone="{{ row.training.tone }}">{{ row.training.label }}</span></td>
+<td data-label="Cluster Meeting"><span class="edify-status-text" data-edify-tone="{{ row.meeting.tone }}">{{ row.meeting.label }}</span></td>
+{% if can_plan_clusters %}
+<td class="text-right" data-record-action data-label="Actions">
+{% row_actions row.name %}
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/schedule-modal?cluster_id={{ row.id }}&action=training" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule Group Training for {{ row.name }}">Schedule Group Training</button>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="/planning/schedule-modal?cluster_id={{ row.id }}&action=meeting" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule a Cluster Meeting for {{ row.name }}">Schedule Cluster Meeting</button>
+{% endrow_actions %}
+</td>
+{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=cluster_status_pager param="cluster_status_page" pagination_label="Cluster planning pages" %}
+</div>
+</div>
+{% endif %}

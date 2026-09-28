@@ -1,0 +1,169 @@
+{% load frontend_filters school_identity table_pagination %}
+{% comment %}
+The Planning Monitor (owner, 2026-09-28): each CCEO's year against the visits
+it should hold — 560 unless the CD set the officer's own target, two at each
+Core school and the rest at Client and Core Trained schools, with the client
+schools beyond that the partner's — the schools planned for training through
+group trainings and cluster meetings, the schools not clustered or not
+planned for, and the schools in Special Projects. Planned and delivered side
+by side, so the same table follows execution as it happens.
+
+Read-only, like every supervision lens: the acting is done through the people
+it names. Every number is folded from the school rows under it
+(apps.planning.planning_monitor), so a lead's subtotal and its officers agree,
+and every gap count opens the list of the schools behind it.
+{% endcomment %}
+<section class="space-y-4" data-planning-monitor>
+
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title=monitor_is_country|yesno:"Country planning monitor,Team planning monitor" %}
+
+  <form class="edify-filter-bar oversight-portfolio-filters"
+        aria-label="Planning monitor filters"
+        hx-get="{{ lens_base_url }}"
+        hx-target="#oversight-workspace"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        hx-push-url="true">
+    <input type="hidden" name="view" value="monitor">
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+      <select name="fy" aria-label="Financial year">
+        {% for option in fy_options %}
+        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if monitor.lead_options|length > 1 %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
+      <select name="program_lead" aria-label="Programme Lead">
+        <option value="">All leads</option>
+        {% for lead in monitor.lead_options %}
+        <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Schools</span>
+      <select name="gap" aria-label="Schools to list">
+        <option value="">Choose a gap to list</option>
+        {% for key, label in monitor_gaps %}
+        <option value="{{ key }}" {% if monitor_gap == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if monitor_gap %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">CCEO</span>
+      <select name="officer" aria-label="CCEO">
+        <option value="">Every CCEO</option>
+        {% for officer in monitor.officer_options %}
+        <option value="{{ officer.id }}" {% if monitor_officer == officer.id %}selected{% endif %}>{{ officer.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </form>
+
+  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-cceo-title">
+    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+      <h3 id="monitor-cceo-title">CCEO planning against target · FY {{ fy }}</h3>
+      <span class="tabular-nums">{{ monitor_totals.officer_count }} CCEO{{ monitor_totals.officer_count|pluralize }} · {{ monitor_totals.school_count|intcomma }} schools</span>
+    </header>
+    <p class="px-4 pt-3 edify-text-caption edify-text-muted">Each CCEO plans {{ default_visits_target }} visits a year unless the Country Director set their own target: two at each Core school, the rest at Client and Core Trained schools. Client schools beyond those visits are the partner's. Training counts a school invited to a group training or cluster meeting, or given an in-school training. Champion and Core Graduate schools are followed on Programme Schools.</p>
+    {% if monitor.leads %}
+    <div class="overflow-x-auto mt-2">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-monitor-table>
+        <caption class="sr-only">Each CCEO's schools, visits planned against their target, partner share, training coverage, planning gaps and delivery, grouped by Programme Lead.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="px-3 py-2">CCEO</th>
+            <th scope="col" class="px-3 py-2 text-right">Schools</th>
+            <th scope="col" class="px-3 py-2 text-right">Visits planned</th>
+            <th scope="col" class="px-3 py-2 text-right">Core visits</th>
+            <th scope="col" class="px-3 py-2 text-right">Client visits</th>
+            <th scope="col" class="px-3 py-2 text-right">With a partner</th>
+            <th scope="col" class="px-3 py-2 text-right">Schools visited</th>
+            <th scope="col" class="px-3 py-2 text-right">Training planned</th>
+            <th scope="col" class="px-3 py-2 text-right">Not clustered</th>
+            <th scope="col" class="px-3 py-2 text-right">No visit</th>
+            <th scope="col" class="px-3 py-2 text-right">No training</th>
+            <th scope="col" class="px-3 py-2 text-right">Neither</th>
+            <th scope="col" class="px-3 py-2 text-right">In projects</th>
+            <th scope="col" class="px-3 py-2 text-right">Visits delivered</th>
+            <th scope="col" class="px-3 py-2 text-right">Schools trained</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lead in monitor.leads %}
+          <tr class="edify-group-head">
+            <th colspan="15" scope="colgroup">
+              <span class="edify-group-head__label">{{ lead.name }}</span>
+              <span class="edify-group-head__count">{{ lead.officer_count }} CCEO{{ lead.officer_count|pluralize }} · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
+            </th>
+          </tr>
+          {% for officer in lead.officers %}
+          {% include "partials/oversight/_monitor_row.html" with row=officer is_officer=True %}
+          {% endfor %}
+          {% if lead.officer_count > 1 %}
+          {% include "partials/oversight/_monitor_row.html" with row=lead is_subtotal=True label=lead.name|add:" total" %}
+          {% endif %}
+          {% endfor %}
+        </tbody>
+        {% if monitor.leads|length > 1 %}
+        <tfoot>
+          {% include "partials/oversight/_monitor_row.html" with row=monitor_totals is_subtotal=True label=monitor_is_country|yesno:"Country total,Team total" %}
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with message="No Core, Client or Core Trained schools in your scope." %}
+    {% endif %}
+  </section>
+
+  {% if monitor_gap %}
+  {% paginate monitor.gap_schools "gap_page" as gap_pager %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-gap-title" data-monitor-gap="{{ monitor_gap }}">
+    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+      <h3 id="monitor-gap-title">{{ monitor_gap_label }}</h3>
+      <span class="tabular-nums">{{ gap_pager.total|intcomma }} school{{ gap_pager.total|pluralize }}</span>
+    </header>
+    <div class="overflow-x-auto">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+        <caption class="sr-only">Schools: {{ monitor_gap_label|lower }}, with their CCEO, cluster and planning state.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="px-3 py-2">School</th>
+            <th scope="col" class="px-3 py-2">Type</th>
+            <th scope="col" class="px-3 py-2">CCEO</th>
+            <th scope="col" class="px-3 py-2">District</th>
+            <th scope="col" class="px-3 py-2">Cluster</th>
+            <th scope="col" class="px-3 py-2">Visit</th>
+            <th scope="col" class="px-3 py-2">Training</th>
+            <th scope="col" class="px-3 py-2">Project</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for school in gap_pager.rows %}
+          <tr>
+            <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{% school_identity school.name school.code %}</a></td>
+            <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% else %}Client{% endif %}</td>
+            <td class="px-3 py-2" data-label="CCEO">{{ school.officer_name }}</td>
+            <td class="px-3 py-2" data-label="District">{{ school.district|default:"—" }}</td>
+            <td class="px-3 py-2" data-label="Cluster">{% if school.clustered and school.cluster_url %}<a href="{{ school.cluster_url }}" class="hover:underline">{{ school.cluster_name|default:"Cluster" }}</a>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not clustered</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Training">{% if school.training_done %}<span class="edify-status-text" data-edify-tone="success">Trained</span>{% elif school.group_training %}<span class="edify-status-text" data-edify-tone="info">Group training</span>{% elif school.meeting %}<span class="edify-status-text" data-edify-tone="info">Cluster meeting</span>{% elif school.in_school_training %}<span class="edify-status-text" data-edify-tone="info">In-school</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Project">{% if school.in_project %}Yes{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=gap_pager param="gap_page" pagination_label=monitor_gap_label %}
+  </section>
+  {% endif %}
+</section>
