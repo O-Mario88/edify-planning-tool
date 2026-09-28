@@ -117,6 +117,10 @@
           var toggle = group.querySelector('[data-presence-toggle]');
           if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           group.toggleAttribute('data-collapsed', !open);
+          /* `hidden`, not only the stylesheet: inside a workspace the
+             platform's table rule sets every row to table-row !important,
+             which unfolded the Admin's and the CD's groups. */
+          group.querySelectorAll('tr.presence-row').forEach(function (row) { row.hidden = !open; });
           if (!open) group.querySelectorAll('tr[data-presence-person]').forEach(function (row) { setPerson(row, false); });
         }
         groups.forEach(function (group) {

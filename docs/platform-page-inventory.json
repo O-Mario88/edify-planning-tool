@@ -4104,7 +4104,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9184,
+      "bytes": 9495,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4130,7 +4130,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5590,
+      "bytes": 5589,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",

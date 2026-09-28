@@ -171,6 +171,12 @@ tbody.presence-group[data-collapsed] .presence-detail { display: none; }
   padding: 0.6rem 0.9rem 0.8rem !important;
   background: var(--edify-surface-muted);
 }
+/* Everything in a table cell is held to one line by the platform
+   (consistency.css and mobile-micro-ux.css, both !important). The detail row
+   is not a record but the record's breakdown — prose and lists — so it
+   wraps; the selector outranks those two for this row only. */
+:is(main, .drawer-surface) table.presence-table tr.presence-detail > td :is(.presence-detail__cols, .presence-detail__cols *) { white-space: normal !important; }
+.presence-detail__cols > * { min-width: 0; }
 .presence-detail__cols { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 2fr); gap: 0.75rem 1.5rem; }
 .presence-detail__block h3 { margin: 0 0 0.35rem; font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--edify-text-subtle); }
 .presence-detail__times { margin: 0; padding: 0; list-style: none; columns: 2 10rem; column-gap: 1rem; font-variant-numeric: tabular-nums; color: var(--edify-text); }

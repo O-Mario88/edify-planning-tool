@@ -41,7 +41,7 @@
   <td colspan="6">
     <section class="presence-detail__cols" aria-label="{{ person.name }}, {{ presence.period.label }}">
       <section class="presence-detail__block">
-        <h3>Sign-ins · {{ presence.period.label }}</h3>
+        <h3>Sign-ins · {{ person.period_logins }}</h3>
         {% if person.period_login_times %}
         <ol class="presence-detail__times">
           {% for at in person.period_login_times %}<li>{{ at|date:"D j M Y, H:i" }}</li>{% endfor %}
