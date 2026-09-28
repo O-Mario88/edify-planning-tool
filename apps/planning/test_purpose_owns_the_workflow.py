@@ -119,3 +119,37 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
             "SSA recommends in-school training.",
             "A matching priority activity must keep the governed SSA provenance.",
         )
+
+    def test_a_generic_visit_pin_does_not_turn_outreach_into_the_support_visit(self):
+        """The same defect through a generic pin. A BT follow-up or standard
+        school visit carries the kind ``school_visit``, which names no
+        purpose, so the conflict test let it stand: a Donor Visit was saved
+        as a ``school_visit`` and used up the client school's one staff
+        support visit, and the SSA support visit after it was refused (the
+        partner-supported-schools browser journey J2)."""
+        pinned = self.item("STANDARD_SCHOOL_VISIT")
+        self.assertEqual(pinned.workflow_kind, "school_visit")
+        day = _schedulable_date(room=1)
+        expected = {
+            "donor_visit": "donor_visit",
+            "story_gathering": "story_gathering_visit",
+            "ssa_support": "school_visit_ssa_collection",
+        }
+        for purpose, activity_type in expected.items():
+            with self.subTest(purpose=purpose):
+                response = self._post(
+                    purpose_of_visit=purpose,
+                    catalogue_item_id=pinned.id,
+                    scheduled_date=day.isoformat(),
+                    recommendation_reason="SSA recommends a follow-up visit.",
+                )
+                self.assertIn(response.status_code, (200, 204))
+                self.assertNotIn(b"staff support visit for", response.content)
+                activity = Activity.objects.order_by("-created_at").first()
+                self.assertEqual(activity.activity_type, activity_type)
+                self.assertEqual(activity.catalogue_item.workflow_kind, activity_type)
+        self.assertFalse(
+            Activity.objects.filter(
+                school=self.school, activity_type="school_visit"
+            ).exists()
+        )
