@@ -402,8 +402,18 @@ def _person(
         "online": online,
         "duration_seconds": duration,
         # A sitting in hours and minutes, like every other time in the table
-        # ("just now" read as a duration for someone who had left).
-        "duration_label": format_minutes(duration) if last_seen else "never",
+        # ("just now" read as a duration for someone who had left). A sitting
+        # under a minute is "<1m" from its first second, so a page read twice
+        # a second apart says the same thing.
+        "duration_label": (
+            "never"
+            if not last_seen
+            else "—"
+            if duration is None
+            else "<1m"
+            if duration < 60
+            else format_minutes(duration)
+        ),
         "section": described["section"] if last_seen else "—",
         "working_on": described["working_on"] if last_seen else "Never signed in",
         "last_login_at": last_login,
