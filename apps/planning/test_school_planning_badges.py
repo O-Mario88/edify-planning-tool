@@ -596,8 +596,17 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
             focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
             teachersAttended=6,
         )
-        counts = self._counts().trainings
-        self.assertEqual((counts.planned_count, counts.verified_count), (1, 1))
+        # Each training is counted in the fiscal year it is dated in: the
+        # completed one in this year, the new one in the year it was
+        # scheduled into — the next one in the last days of September.
+        completed_in = get_operational_fy()
+        scheduled_in = get_operational_fy(_schedulable_date())
+        self.assertEqual(self._counts(completed_in).trainings.verified_count, 1)
+        planned = self._counts(scheduled_in).trainings.planned_count
+        self.assertEqual(planned, 1)
+        if scheduled_in == completed_in:
+            counts = self._counts(completed_in).trainings
+            self.assertEqual((counts.planned_count, counts.verified_count), (1, 1))
 
     def test_an_exact_double_click_is_still_refused(self):
         day = _schedulable_date()
@@ -606,4 +615,4 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         with self.assertRaises(BadRequest):
             self._visit(day)
         self.assertEqual(Activity.objects.count(), before)
-        self.assertEqual(self._counts().visits.planned_count, 1)
+        self.assertEqual(self._counts(get_operational_fy(day)).visits.planned_count, 1)

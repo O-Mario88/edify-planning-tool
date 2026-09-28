@@ -191,21 +191,29 @@ class CompletionMustNameTheTrainingTest(StandardSupportBase):
         )
         return Activity.objects.get(id=result["id"])
 
-    def _completed_training(self, *, attended=True):
+    def _completed_training(self, *, attended=True, visit=None):
+        """A completed training in the fiscal year of the ``visit`` that
+        follows it up: a follow-up names a session of its own year, and in
+        the last days of September the visit is scheduled into the next one.
+        Without a visit, this year's."""
         import datetime
 
         from django.utils import timezone
 
         from apps.activities.models import Activity
 
+        fy = str(visit.fy) if visit is not None else get_operational_fy()
+        planned = timezone.localdate() - datetime.timedelta(days=30)
+        if visit is not None and get_operational_fy(planned) != fy:
+            planned = visit.planned_date
         training = Activity.objects.create(
             activity_type="in_school_training",
             school=self.school,
-            fy=get_operational_fy(),
+            fy=fy,
             quarter="Q1",
             status="completed",
             focus_intervention="financial_health",
-            planned_date=timezone.localdate() - datetime.timedelta(days=30),
+            planned_date=planned,
             teachers_attended=6 if attended else 0,
         )
         return training
@@ -248,7 +256,7 @@ class CompletionMustNameTheTrainingTest(StandardSupportBase):
         visit = self._follow_up()
         visit.status = "completion_started"
         visit.save(update_fields=["status"])
-        training = self._completed_training()
+        training = self._completed_training(visit=visit)
         self._complete(visit, followUpOfActivityId=training.id)
         visit = Activity.objects.get(id=visit.id)
         self.assertEqual(visit.follow_up_of_activity_id, training.id)
