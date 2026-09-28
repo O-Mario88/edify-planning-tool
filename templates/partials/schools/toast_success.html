@@ -4,11 +4,13 @@
 <div
 x-data="{ show: true }"
 x-show="show"
-x-init="setTimeout(() => show = false, 4000)"
+x-init="setTimeout(() => show = false, {% if undo_ids %}20000{% else %}4000{% endif %})"
 x-transition
+data-undo-toast
 class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold bg-emerald-50 text-emerald-700 border-emerald-200"
 >
 <span>{{ message }}</span>
+{% if undo_ids %}{% include "partials/planning/undo_button.html" %}{% endif %}
 <button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100" aria-label="Dismiss notification">&times;</button>
 </div>
 </div>

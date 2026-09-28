@@ -3794,7 +3794,7 @@
    "audit_id": "KPI-SOURCE-200",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3566,
+   "line": 3582,
    "label": null,
    "keys": [
     "label",
@@ -3849,7 +3849,7 @@
    "audit_id": "KPI-SOURCE-203",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3472,
+   "line": 3488,
    "label": "About",
    "keys": [
     "label",
@@ -3866,7 +3866,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3473,
+   "line": 3489,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3883,7 +3883,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3474,
+   "line": 3490,
    "label": "Flag",
    "keys": [
     "label",
@@ -3900,7 +3900,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3475,
+   "line": 3491,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -13629,7 +13629,7 @@
   {
    "audit_id": "KPI-SURFACE-050",
    "template": "templates/pages/planning/index.html",
-   "line": 207,
+   "line": 220,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -40484,7 +40484,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3772,
+   "line": 3788,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

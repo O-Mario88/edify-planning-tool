@@ -1,0 +1,16 @@
+{% comment %}
+Undo on a save's confirmation. Posts exactly what that save made — every row
+of a bulk batch — to apps.planning.undo, which checks each one again (the
+Partner may have scheduled it since) and answers with a card that takes this
+card's place. `undo_kind` is partner, project or cluster; `undo_ids` the
+comma-separated rows.
+{% endcomment %}
+<button
+  type="button"
+  hx-post="/planning/undo"
+  hx-vals='{"kind": "{{ undo_kind|escapejs }}", "ids": "{{ undo_ids|escapejs }}"}'
+  hx-target="closest [data-undo-toast]"
+  hx-swap="outerHTML"
+  data-undo-press
+  class="shrink-0 underline font-bold hover:no-underline"
+>Undo</button>

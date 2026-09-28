@@ -6,19 +6,19 @@
    "browser-rendered": 751,
    "none": 294,
    "page-tested": 1319,
-   "request-tested": 1070
+   "request-tested": 1073
   },
   "by_kind": {
-   "button": 1151,
+   "button": 1154,
    "disclosure": 63,
    "field": 1185,
    "link": 968,
    "tab": 67
   },
-  "controls": 3434,
+  "controls": 3437,
   "high_consequence": 189,
-  "state_changing": 419,
-  "templates_scanned": 547,
+  "state_changing": 421,
+  "templates_scanned": 549,
   "unresolved_destinations": 0,
   "untested": 294,
   "untested_state_changing": 24
@@ -733,6 +733,7 @@
     "/pl/review-queue/<str:activity_id>/drawer",
     "/pl/review-queue/<str:activity_id>/return-drawer",
     "/planning/assign-partner-modal",
+    "/planning/recent-changes",
     "/planning/schedule-modal",
     "/priorities/guidance/<str:guidance_id>",
     "/priorities/guidance/<str:guidance_id>/acknowledge",
@@ -899,6 +900,7 @@
     "/partner/schools",
     "/partners/<str:partner_id>",
     "/pl/review-queue",
+    "/planning/recent-changes",
     "/planning/visit-requests",
     "/priorities/guidance",
     "/priorities/guidance/inbox",
@@ -8380,9 +8382,19 @@
     "PROJECT_COORDINATOR"
    ]
   },
-  "partials/planning/saved_toast.html": {
-   "pages": [],
-   "roles": []
+  "partials/planning/recent_changes_list.html": {
+   "pages": [
+    "/planning/recent-changes"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ]
   },
   "partials/planning/schedule_cluster_drawer.html": {
    "pages": [
@@ -8454,6 +8466,33 @@
     "IA",
     "PL",
     "PROJECT_COORDINATOR"
+   ]
+  },
+  "partials/planning/toast_card.html": {
+   "pages": [],
+   "roles": []
+  },
+  "partials/planning/undo_button.html": {
+   "pages": [
+    "/analytics/customize-dashboard",
+    "/analytics/schedule-report",
+    "/clusters/<str:cluster_id>/bulk-assign-drawer",
+    "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
+    "/projects/<str:project_id>/schools/bulk-assign-drawer",
+    "/schools/<str:school_id>/add-to-cluster",
+    "/schools/<str:school_id>/assign-to-project"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
    ]
   },
   "partials/planning/view_controls.html": {
@@ -10404,24 +10443,25 @@
   {"accessible_name": "NoYes", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0A5CF700B9B5", "kind": "field", "line": 72, "method": "", "selector": "#follow-up-rule", "state_changing": false, "tag": "select", "template": "pages/planning/fiscal_years.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-74414A57534C", "kind": "field", "line": 73, "method": "", "selector": "#open-notes", "state_changing": false, "tag": "input", "template": "pages/planning/fiscal_years.html"},
   {"accessible_name": "Open FY{{ next_fy }}", "destination": "/planning/fiscal-years", "destination_route": "/planning/fiscal-years", "evidence": "request-tested", "high_consequence": false, "id": "INT-79AAD66CF3A8", "kind": "button", "line": 74, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/planning/fiscal_years.html"},
-  {"accessible_name": "Export", "destination": "                              ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7CE3A4AD8F6E", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/planning/index.html"},
-  {"accessible_name": "Plan Field Event", "destination": "/work-plan/add", "destination_route": "/work-plan/add", "evidence": "request-tested", "high_consequence": false, "id": "INT-63DB59322F9E", "kind": "button", "line": 53, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
-  {"accessible_name": "Filters · {{ active_filter_count }} active Year, quarter, district, staff and planning status⌄", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6FF922A1515A", "kind": "disclosure", "line": 87, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "pages/planning/index.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FFF1272388F7", "kind": "field", "line": 108, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Quarter", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D07C3B901448", "kind": "field", "line": 118, "method": "", "selector": "select[name=quarter]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "District", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-90463E384D4E", "kind": "field", "line": 128, "method": "", "selector": "select[name=district]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-836763B9A28D", "kind": "field", "line": 139, "method": "", "selector": "select[name=staff]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Group schools", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6E40F3CC2657", "kind": "field", "line": 154, "method": "", "selector": "select[name=group]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Planning readiness", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D25BCF9E0379", "kind": "field", "line": 163, "method": "", "selector": "select[name=planning_readiness]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Support and planning status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4823C6CEB10C", "kind": "field", "line": 176, "method": "", "selector": "select[name=support]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "SSA status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9DC522275A72", "kind": "field", "line": 186, "method": "", "selector": "select[name=ssa_status]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Clear Filters", "destination": "/planning", "destination_route": "/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-114C01173A0F", "kind": "link", "line": 196, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/planning/index.html"},
-  {"accessible_name": "Assign", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-572572A26E1D", "kind": "button", "line": 256, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
-  {"accessible_name": "Export Selected", "destination": "/planning/bulk-action", "destination_route": "/planning/bulk-action", "evidence": "request-tested", "high_consequence": false, "id": "INT-008E3B58B26E", "kind": "button", "line": 271, "method": "POST", "selector": "button[name=action]", "state_changing": true, "tag": "button", "template": "pages/planning/index.html"},
-  {"accessible_name": "×", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E5AB700EFFEF", "kind": "button", "line": 299, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
-  {"accessible_name": "Partner ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1E8AEA299F34", "kind": "field", "line": 319, "method": "", "selector": "select[name=partner_id]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
-  {"accessible_name": "Scheduled date", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1C72AF833F79", "kind": "field", "line": 328, "method": "", "selector": "input[name=scheduled_date]", "state_changing": false, "tag": "input", "template": "pages/planning/index.html"},
-  {"accessible_name": "Confirm Handoff", "destination": "/planning/bulk-action", "destination_route": "/planning/bulk-action", "evidence": "request-tested", "high_consequence": true, "id": "INT-F41E1B7B75D9", "kind": "button", "line": 332, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "Export", "destination": "                              ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7CE3A4AD8F6E", "kind": "link", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/planning/index.html"},
+  {"accessible_name": "Plan Field Event", "destination": "/work-plan/add", "destination_route": "/work-plan/add", "evidence": "request-tested", "high_consequence": false, "id": "INT-63DB59322F9E", "kind": "button", "line": 54, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "Recent changes", "destination": "/planning/recent-changes", "destination_route": "/planning/recent-changes", "evidence": "request-tested", "high_consequence": false, "id": "INT-1F115EE1F999", "kind": "button", "line": 67, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "Filters · {{ active_filter_count }} active Year, quarter, district, staff and planning status⌄", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6FF922A1515A", "kind": "disclosure", "line": 100, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "pages/planning/index.html"},
+  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FFF1272388F7", "kind": "field", "line": 121, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Quarter", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D07C3B901448", "kind": "field", "line": 131, "method": "", "selector": "select[name=quarter]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "District", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-90463E384D4E", "kind": "field", "line": 141, "method": "", "selector": "select[name=district]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-836763B9A28D", "kind": "field", "line": 152, "method": "", "selector": "select[name=staff]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Group schools", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6E40F3CC2657", "kind": "field", "line": 167, "method": "", "selector": "select[name=group]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Planning readiness", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D25BCF9E0379", "kind": "field", "line": 176, "method": "", "selector": "select[name=planning_readiness]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Support and planning status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4823C6CEB10C", "kind": "field", "line": 189, "method": "", "selector": "select[name=support]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "SSA status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9DC522275A72", "kind": "field", "line": 199, "method": "", "selector": "select[name=ssa_status]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Clear Filters", "destination": "/planning", "destination_route": "/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-114C01173A0F", "kind": "link", "line": 209, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/planning/index.html"},
+  {"accessible_name": "Assign", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-572572A26E1D", "kind": "button", "line": 269, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "Export Selected", "destination": "/planning/bulk-action", "destination_route": "/planning/bulk-action", "evidence": "request-tested", "high_consequence": false, "id": "INT-008E3B58B26E", "kind": "button", "line": 284, "method": "POST", "selector": "button[name=action]", "state_changing": true, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "×", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E5AB700EFFEF", "kind": "button", "line": 312, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/planning/index.html"},
+  {"accessible_name": "Partner ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1E8AEA299F34", "kind": "field", "line": 332, "method": "", "selector": "select[name=partner_id]", "state_changing": false, "tag": "select", "template": "pages/planning/index.html"},
+  {"accessible_name": "Scheduled date", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1C72AF833F79", "kind": "field", "line": 341, "method": "", "selector": "input[name=scheduled_date]", "state_changing": false, "tag": "input", "template": "pages/planning/index.html"},
+  {"accessible_name": "Confirm Handoff", "destination": "/planning/bulk-action", "destination_route": "/planning/bulk-action", "evidence": "request-tested", "high_consequence": true, "id": "INT-F41E1B7B75D9", "kind": "button", "line": 345, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/planning/index.html"},
   {"accessible_name": "Type a School ID or name", "destination": "/planning/schedule/schools", "destination_route": "/planning/schedule/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-AB06B4ED3973", "kind": "field", "line": 54, "method": "GET", "selector": "#school_id", "state_changing": false, "tag": "input", "template": "pages/planning/schedule.html"},
   {"accessible_name": "Select Cluster... {{ c.name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A91ABFF69D37", "kind": "field", "line": 78, "method": "", "selector": "#cluster_id", "state_changing": false, "tag": "select", "template": "pages/planning/schedule.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BBB1BF69519E", "kind": "field", "line": 95, "method": "", "selector": "#scheduled_date", "state_changing": false, "tag": "input", "template": "pages/planning/schedule.html"},
@@ -12172,8 +12212,7 @@
   {"accessible_name": "Select a training this school did…", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FE76921F05BF", "kind": "field", "line": 94, "method": "", "selector": "#partner_source_activity", "state_changing": false, "tag": "select", "template": "partials/planning/assign_partner_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2EA35CFAA6F0", "kind": "button", "line": 136, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/assign_partner_drawer.html"},
   {"accessible_name": "Assign to partner", "destination": "/planning/assign-partner-action", "destination_route": "/planning/assign-partner-action", "evidence": "request-tested", "high_consequence": false, "id": "INT-15624A7B1692", "kind": "button", "line": 137, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/planning/assign_partner_drawer.html"},
-  {"accessible_name": "{{ plan_link_label|default:\"Open My Plan\" }}", "destination": "{{ plan_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-ADDDB88B6F88", "kind": "link", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/planning/saved_toast.html"},
-  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E3C751902E3B", "kind": "button", "line": 28, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/saved_toast.html"},
+  {"accessible_name": "Undo: {{ change.summary }}", "destination": "/planning/undo", "destination_route": "/planning/undo", "evidence": "request-tested", "high_consequence": false, "id": "INT-FFF7513A9337", "kind": "button", "line": 21, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/planning/recent_changes_list.html"},
   {"accessible_name": "training", "destination": "/planning/schedule-modal?cluster_id={{ cluster.id }}&action=training                               &priority_allocation={{ priority_allocation_id }}                                     &pick=1           ", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-A3846EBFFC84", "kind": "field", "line": 26, "method": "GET", "selector": "#planning-activity-training", "state_changing": false, "tag": "input", "template": "partials/planning/schedule_cluster_drawer.html"},
   {"accessible_name": "meeting", "destination": "/planning/schedule-modal?cluster_id={{ cluster.id }}&action=meeting                               &priority_allocation={{ priority_allocation_id }}                                     &pick=1           ", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-ED1A537DFC38", "kind": "field", "line": 39, "method": "GET", "selector": "#planning-activity-meeting", "state_changing": false, "tag": "input", "template": "partials/planning/schedule_cluster_drawer.html"},
   {"accessible_name": "Cluster", "destination": "/planning/schedule-modal", "destination_route": "/planning/schedule-modal", "evidence": "request-tested", "high_consequence": false, "id": "INT-E50971688157", "kind": "field", "line": 69, "method": "GET", "selector": "#cluster-picker", "state_changing": false, "tag": "select", "template": "partials/planning/schedule_cluster_drawer.html"},
@@ -12233,6 +12272,9 @@
   {"accessible_name": "Clusters", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C2FA2F302D30", "kind": "tab", "line": 34, "method": "", "selector": "#planning-tab-clusters", "state_changing": false, "tag": "button", "template": "partials/planning/tabs.html"},
   {"accessible_name": "Assigned to Partner", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-97613435C2B6", "kind": "tab", "line": 47, "method": "", "selector": "#planning-tab-partner", "state_changing": false, "tag": "button", "template": "partials/planning/tabs.html"},
   {"accessible_name": "Scheduled / In My Plan", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E7DABB435C88", "kind": "tab", "line": 60, "method": "", "selector": "#planning-tab-scheduled", "state_changing": false, "tag": "button", "template": "partials/planning/tabs.html"},
+  {"accessible_name": "{{ plan_link_label|default:\"Open My Plan\" }}", "destination": "{{ plan_url }}", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E98DFD6F10F5", "kind": "link", "line": 21, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/planning/toast_card.html"},
+  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-7CC1874D54E6", "kind": "button", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/toast_card.html"},
+  {"accessible_name": "Undo", "destination": "/planning/undo", "destination_route": "/planning/undo", "evidence": "request-tested", "high_consequence": false, "id": "INT-E02A0AA341F3", "kind": "button", "line": 8, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/planning/undo_button.html"},
   {"accessible_name": "List View", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2C69CFCFE6B0", "kind": "button", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/view_controls.html"},
   {"accessible_name": "Calendar View", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2039EE72FF9A", "kind": "button", "line": 12, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/view_controls.html"},
   {"accessible_name": "FY{{ year }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-90C63F349CC3", "kind": "field", "line": 51, "method": "", "selector": "#ia-master-fy", "state_changing": false, "tag": "select", "template": "partials/priorities/distribution_view.html"},
@@ -12665,7 +12707,7 @@
   {"accessible_name": "Clustered {{ clustered_count }}", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-B89C83C72241", "kind": "tab", "line": 44, "method": "GET", "selector": "#schools-tab-clustered", "state_changing": false, "tag": "button", "template": "partials/schools/tabs.html"},
   {"accessible_name": "Not Assigned to Project {{ not_assigned_count }}", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-27804B57C192", "kind": "tab", "line": 64, "method": "GET", "selector": "#schools-tab-not-assigned", "state_changing": false, "tag": "button", "template": "partials/schools/tabs.html"},
   {"accessible_name": "Assigned to Project {{ assigned_count }}", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-6C326E91BFC2", "kind": "tab", "line": 84, "method": "GET", "selector": "#schools-tab-assigned", "state_changing": false, "tag": "button", "template": "partials/schools/tabs.html"},
-  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3368908AA6B2", "kind": "button", "line": 12, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/toast_success.html"},
+  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3368908AA6B2", "kind": "button", "line": 14, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/schools/toast_success.html"},
   {"accessible_name": "{{ option.label }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-0B27BFBF1120", "kind": "field", "line": 14, "method": "", "selector": "#sp-fy", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "{{ option.1 }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-16521BC72313", "kind": "field", "line": 22, "method": "", "selector": "#sp-quarter", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "All districts {{ district.district__name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-AECBA5C008E7", "kind": "field", "line": 30, "method": "", "selector": "#sp-district", "state_changing": false, "tag": "select", "template": "partials/ssa/performance_workspace.html"},

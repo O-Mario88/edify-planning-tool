@@ -263,7 +263,12 @@ def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
 
 
 def _saved_without_leaving(
-    message: str, *, plan_url: str = "", plan_link_label: str = ""
+    message: str,
+    *,
+    plan_url: str = "",
+    plan_link_label: str = "",
+    undo_kind: str = "",
+    undo_ids=(),
 ) -> HttpResponse:
     """Confirm a save and stay on the page the planner is working on.
 
@@ -285,7 +290,9 @@ def _saved_without_leaving(
       none — a queued message would surface on whatever page the planner
       opened next, long after it stopped meaning anything.
 
-    The toast carries the link to My Plan rather than following it.
+    The toast carries the link to My Plan rather than following it, and —
+    given ``undo_kind`` and the rows the save made — an Undo that reverses
+    exactly those rows (owner, 2026-09-28; apps.planning.undo).
     """
     html = render_to_string(
         "partials/planning/saved_toast.html",
@@ -293,6 +300,8 @@ def _saved_without_leaving(
             "message": message,
             "plan_url": plan_url,
             "plan_link_label": plan_link_label,
+            "undo_kind": undo_kind if undo_ids else "",
+            "undo_ids": ",".join(str(value) for value in undo_ids if value),
         },
     )
     response = HttpResponse(html)
@@ -511,7 +520,7 @@ def special_projects_bulk_partner_view(request):
             for_partner=True,
             fallback_activity_type=catalogue_item.workflow_kind,
         )
-        created = 0
+        created = []
         skipped = 0
         with transaction.atomic():
             for assignment in assignments:
@@ -523,7 +532,7 @@ def special_projects_bulk_partner_view(request):
                 if PartnerAssignment.has_open_assignment(assignment.school, partner):
                     skipped += 1
                     continue
-                partner_services.create_assignment(
+                handover = partner_services.create_assignment(
                     school=assignment.school,
                     partner=partner,
                     assigning_staff_id=(
@@ -544,8 +553,10 @@ def special_projects_bulk_partner_view(request):
                     scheduled_date=parsed_date,
                     notes=f"Project: {assignment.project.name}",
                 )
-                created += 1
-        message = f"Assigned {created} project school activities to {partner.name}."
+                created.append(handover.id)
+        message = (
+            f"Assigned {len(created)} project school activities to {partner.name}."
+        )
         if skipped:
             message += (
                 f" {skipped} school{'s were' if skipped != 1 else ' was'} "
@@ -555,6 +566,8 @@ def special_projects_bulk_partner_view(request):
             message,
             plan_url="/projects/my-plan",
             plan_link_label="Open My Plan",
+            undo_kind="partner",
+            undo_ids=created,
         )
     except Exception as exc:
         return error_fragment(exc, action="Could not assign the selection", status=400)
@@ -2394,6 +2407,9 @@ def assign_partner_action_view(request):
             )
             return qs.order_by("-created_at").first()
 
+        # What this save hands over, for the confirmation's Undo.
+        created_ids = []
+
         if school_id:
             school = get_operational_school_or_404(
                 request.user, Q(id=school_id) | Q(school_id=school_id)
@@ -2448,7 +2464,7 @@ def assign_partner_action_view(request):
             ):
                 assert_may_assign_partner_visit(school)
             with transaction.atomic():
-                partner_services.create_assignment(
+                handover = partner_services.create_assignment(
                     school=school,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
@@ -2468,6 +2484,7 @@ def assign_partner_action_view(request):
                     scheduled_date=expected_date,
                     notes=notes,
                 )
+                created_ids.append(handover.id)
 
         if cluster_id:
             cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
@@ -2480,7 +2497,7 @@ def assign_partner_action_view(request):
                 return response
             with transaction.atomic():
                 # Create PartnerAssignment for cluster
-                partner_services.create_assignment(
+                handover = partner_services.create_assignment(
                     cluster=cluster,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
@@ -2497,6 +2514,7 @@ def assign_partner_action_view(request):
                     scheduled_date=expected_date,
                     notes=notes,
                 )
+                created_ids.append(handover.id)
 
         # Close the drawer and refresh the list in place rather than reloading
         # the page or leaving it: an assigner works through a list of schools,
@@ -2508,6 +2526,8 @@ def assign_partner_action_view(request):
             plan_link_label=(
                 "Open My Plan" if project_id else "Open partner assignments"
             ),
+            undo_kind="partner",
+            undo_ids=created_ids,
         )
     except Exception as e:
         return error_fragment(e, status=400)
@@ -2596,12 +2616,15 @@ def bulk_action_view(request):
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
         )
+        created_ids = []
+        skipped = 0
         try:
             with transaction.atomic():
                 for s in schools:
                     # Already waiting with this partner: skipped, not
                     # assigned a second time (owner, 2026-09-24).
                     if PartnerAssignment.has_open_assignment(s, partner):
+                        skipped += 1
                         continue
                     result = recommend_activities(
                         school=s,
@@ -2619,7 +2642,7 @@ def bulk_action_view(request):
                     item = ActivityCatalogueItem.objects.get(
                         id=recommendation["catalogueItemId"]
                     )
-                    partner_services.create_assignment(
+                    handover = partner_services.create_assignment(
                         school=s,
                         partner=partner,
                         assigning_staff_id=monitored_by_staff_id,
@@ -2637,9 +2660,29 @@ def bulk_action_view(request):
                             "Bulk Partner Assignment · final schedule and cost pending"
                         ),
                     )
-            return HttpResponse("<script>window.location.reload();</script>")
+                    created_ids.append(handover.id)
         except Exception as exc:
             return error_fragment(exc, status=400)
+        # A confirmation in place of the reload this used to answer with, so
+        # the whole batch can be undone in one press if the wrong partner was
+        # picked (owner, 2026-09-28). `planning-saved` refreshes the list and
+        # clears the selection.
+        count = len(created_ids)
+        message = (
+            f"Assigned {count} school{'s' if count != 1 else ''} to {partner.name}."
+        )
+        if skipped:
+            message += (
+                f" {skipped} {'were' if skipped != 1 else 'was'} already waiting "
+                "with this partner and left as they were."
+            )
+        return _saved_without_leaving(
+            message,
+            plan_url="/partner-assignments",
+            plan_link_label="Open partner assignments",
+            undo_kind="partner",
+            undo_ids=created_ids,
+        )
 
     elif action == "schedule":
         # Retired to the cluster (owner, 2026-09-21: bulk scheduling "should
