@@ -2082,15 +2082,34 @@ def country_planning_team_view(request, staff_id: str):
     than by trusting the id in the URL to be one the caller may read.
     """
     period = _period_filters(request)
-    items = oversight.build_items(
-        request.user, program_lead_id=staff_id, **_plan_period(period)
-    )
+    # The Unassigned group — work whose owner reports to no Programme Lead —
+    # has no lead id, and its panel asks for ".../team/None". Filtering on a
+    # lead called "None" returned nothing, so the Country Director and IA saw
+    # the group's count and none of its rows (owner, 2026-09-28: "PL, IA and
+    # CD dont see everything planned by the CCEO or Planned By PL"). It is
+    # the items group_by_program_lead files there, by the same rule.
+    unassigned = staff_id in ("None", "unassigned")
+    if unassigned:
+        lead_ids = {
+            str(pid) for pl in oversight.system_program_leads() for pid in pl["ids"]
+        }
+        items = [
+            i
+            for i in oversight.build_items(request.user, **_plan_period(period))
+            if not (i.supervising_pl_id and str(i.supervising_pl_id) in lead_ids)
+        ]
+    else:
+        items = oversight.build_items(
+            request.user, program_lead_id=staff_id, **_plan_period(period)
+        )
     # Partner work stays on Partner Monitoring (owner, 2026-09-26), as on
     # Team Oversight: these are the team's own planned activities.
     items = [i for i in items if not i.is_partner_work]
 
-    program_lead_name = next(
-        (i.supervising_pl_name for i in items if i.supervising_pl_name), ""
+    program_lead_name = (
+        "Unassigned"
+        if unassigned
+        else next((i.supervising_pl_name for i in items if i.supervising_pl_name), "")
     )
     if not program_lead_name:
         from apps.accounts.models import StaffProfile
@@ -2102,7 +2121,8 @@ def country_planning_team_view(request, staff_id: str):
             )
 
     owner_groups = oversight.group_by_owner(
-        items, owners=oversight.program_lead_members(staff_id)
+        items,
+        owners=None if unassigned else oversight.program_lead_members(staff_id),
     )
     _partition_owner_groups_by_stream(owner_groups, request.user)
 

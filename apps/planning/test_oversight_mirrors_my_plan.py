@@ -298,6 +298,27 @@ class PlanningOversightMirrorsMyPlanTest(MirrorFixture):
             self._ids_under(response.context["owner_groups"], self.james),
         )
 
+    def test_work_of_staff_with_no_lead_opens_under_unassigned(self):
+        """The Unassigned group's rows used to load empty: its panel asked for
+        the team of a lead called "None" (owner, 2026-09-28)."""
+        orphan_user, orphan = _user("orphan@mirror.test", "Orphan", EdifyRole.CCEO)
+        school = self._school("MIR-9", "Orphan Client", orphan_user.id)
+        work = self._activity("school_visit", orphan.id, school=school)
+        ia_user, _ = _user("ia@mirror.test", "Assessor", EdifyRole.IMPACT_ASSESSMENT)
+        for reader in (self.cd_user, ia_user):
+            with self.subTest(reader=reader.active_role):
+                self.client.force_login(reader)
+                response = self.client.get("/country-planning-oversight/team/None")
+                self.assertEqual(response.status_code, 200)
+                ids = {
+                    item.activity_id
+                    for group in response.context["owner_groups"]
+                    for item in group["items"]
+                }
+                self.assertIn(work.id, ids)
+                # A lead's own team is not repeated there.
+                self.assertNotIn(self.james_work[0].id, ids)
+
     def test_a_month_stays_inside_the_chosen_year(self):
         groups = self._team_groups(period="month", month=10)
         self.assertNotIn(self.james_next_fy.id, self._ids_under(groups, self.james))
