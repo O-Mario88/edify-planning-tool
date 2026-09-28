@@ -998,6 +998,17 @@ def _apply_schedule_cost_snapshot(
         batch_poolable,
         remove_school,
     )
+    from apps.activities.pair_costing import is_uncosted_pair_training
+
+    if is_uncosted_pair_training(activity):
+        _price_pair_training_at_zero(
+            activity,
+            data,
+            responsible=responsible,
+            prior_buckets=prior_buckets,
+            principal=principal,
+        )
+        return
 
     pooled = (
         bool(responsible)
@@ -1030,6 +1041,50 @@ def _apply_schedule_cost_snapshot(
         repriced_here = []
     sync_weekly_requests_for_activities(repriced_here, prior_buckets=prior_buckets)
     sync_monthly_drafts_for_activities(repriced_here, prior_buckets=prior_buckets)
+
+
+def _price_pair_training_at_zero(
+    activity: Activity, data: dict, *, responsible, prior_buckets, principal
+) -> None:
+    """An in-school Training with its School Visit costs nothing: the visit is
+    the journey and carries the visit cost (apps.activities.pair_costing).
+
+    Written through the same writer as any price, so its finance locks still
+    refuse a Training whose money has moved. A pair scheduled before
+    2026-09-28 has its cost on the Training and none on the visit; the visit
+    is priced here as the Training drops to 0, so the day's money moves
+    rather than vanishing."""
+    from apps.activities.pair_costing import MOVABLE_STATUSES
+    from apps.budget.costing import ActivityCost
+    from apps.budget.costing_service import apply_to_activity
+    from apps.daily_visit_batches.services import remove_school
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activities
+
+    if activity.daily_visit_batch_id:
+        remove_school(activity_id=activity.id)
+        activity.refresh_from_db(fields=["daily_visit_batch"])
+    apply_to_activity(
+        activity,
+        _costing_input(activity, data),
+        responsible_user_id=responsible,
+        precomputed_cost=ActivityCost(),
+    )
+    sync_weekly_requests_for_activities([activity], prior_buckets=prior_buckets)
+    sync_monthly_drafts_for_activities([activity], prior_buckets=prior_buckets)
+
+    visit = (
+        Activity.objects.filter(
+            id=activity.paired_school_visit_id,
+            deleted_at__isnull=True,
+            scheduled_date__isnull=False,
+            status__in=MOVABLE_STATUSES,
+        )
+        .exclude(schedule_cost_lines__isnull=False)
+        .first()
+    )
+    if visit is not None:
+        _apply_schedule_cost_snapshot(visit, {}, principal=principal)
 
 
 # A client school's package is one visit and one training per fiscal year.
