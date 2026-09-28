@@ -178,6 +178,9 @@ class VerdictIsVisibleTest(StandardSupportBase):
         page = self.client.get(f"/my-plan/{result['id']}")
         self.assertContains(page, 'data-ssa-verdict="off_priority"')
         self.assertContains(page, "Requested by the proprietor.")
-        plan = self.client.get("/work-plan", {"view": "fy", "fy": get_operational_fy()})
+        # The visit's own year: three days ahead is the next fiscal year in
+        # the last days of September.
+        fy = Activity.objects.get(id=result["id"]).fy
+        plan = self.client.get("/work-plan", {"view": "fy", "fy": fy})
         self.assertEqual(plan.status_code, 200)
         self.assertContains(plan, 'data-ssa-verdict="off_priority"')

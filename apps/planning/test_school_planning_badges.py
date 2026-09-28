@@ -579,24 +579,36 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         self.assertEqual(self._counts(year).visits.planned_count, 3)
 
     def test_a_school_with_completed_training_can_receive_another(self):
+        from apps.core.fy import get_fy_date_range
+
+        # Both trainings in the year the new one is scheduled into: three
+        # days ahead is the next fiscal year in the last days of September.
+        # The new one goes a day after the first schedulable date, so it never
+        # shares a day with the completed one (the duplicate guard's rule).
+        day = self._next_day(_schedulable_date(room=3))
+        year = get_operational_fy(day)
         Activity.objects.create(
             activity_type="in_school_training",
             school=self.school,
-            fy=get_operational_fy(),
+            fy=year,
             quarter="Q1",
-            planned_date=timezone.localdate() - datetime.timedelta(days=20),
+            planned_date=max(
+                timezone.localdate() - datetime.timedelta(days=20),
+                get_fy_date_range(year)[0].date(),
+            ),
             status="ia_verified",
             delivery_type="staff",
             responsible_staff_id=self.staff.id,
         )
-        self.assertEqual(self._counts().trainings.verified_count, 1)
+        self.assertEqual(self._counts(year).trainings.verified_count, 1)
         self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
             focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
             teachersAttended=6,
+            scheduledDate=_at(day).isoformat(),
         )
-        counts = self._counts().trainings
+        counts = self._counts(year).trainings
         self.assertEqual((counts.planned_count, counts.verified_count), (1, 1))
 
     def test_an_exact_double_click_is_still_refused(self):
@@ -606,4 +618,4 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         with self.assertRaises(BadRequest):
             self._visit(day)
         self.assertEqual(Activity.objects.count(), before)
-        self.assertEqual(self._counts().visits.planned_count, 1)
+        self.assertEqual(self._counts(get_operational_fy(day)).visits.planned_count, 1)

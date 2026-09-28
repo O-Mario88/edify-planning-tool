@@ -92,7 +92,12 @@ class ClientEntitlementHoldsTest(TestCase):
 
         self._spend_the_entitlement()
         self._schedule_another()  # no BadRequest since 2026-09-21
-        self.assertGreaterEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP)
+        # Counted in the year the visits are filed under: in the last week of
+        # September next Monday is already the new fiscal year.
+        fy = get_operational_fy(_next_monday())
+        self.assertGreaterEqual(
+            visit_gate(self.school, fy).total_visits, CLIENT_VISIT_CAP
+        )
 
     def test_a_visit_still_in_hand_is_allowed(self):
         """One visit no longer spends the allowance (cap raised 2026-09-17)."""
@@ -229,7 +234,11 @@ class CatalogueEntitlementOwnershipTest(TestCase):
         from apps.planning.visit_gate import CLIENT_VISIT_CAP, visit_gate
 
         self._spend("school_visit")
-        self.assertEqual(visit_gate(self.school).total_visits, CLIENT_VISIT_CAP)
+        # The year the activities are filed under, which is next year in the
+        # last week of September.
+        self.assertEqual(
+            visit_gate(self.school, self.fy).total_visits, CLIENT_VISIT_CAP
+        )
         self._assert("follow_up_visit")  # no BadRequest
 
     def test_the_catalogue_entitlement_flag_is_what_counts(self):

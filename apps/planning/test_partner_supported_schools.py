@@ -95,7 +95,9 @@ class PartnerSchoolFixture(StandardSupportBase):
         cls.third_partner = Partner.objects.create(
             name="Learning Bridge", active_status=True
         )
-        cls.fy = get_operational_fy()
+        # The year the fixture's work lands in: it is scheduled three days
+        # ahead, which in the last days of September is the next fiscal year.
+        cls.fy = get_operational_fy(_schedulable_date())
         cls.members = list(
             School.objects.filter(school_id__startswith="STD-MEM-").order_by(
                 "school_id"

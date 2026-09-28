@@ -191,21 +191,30 @@ class CompletionMustNameTheTrainingTest(StandardSupportBase):
         )
         return Activity.objects.get(id=result["id"])
 
-    def _completed_training(self, *, attended=True):
+    def _completed_training(self, *, attended=True, fy=None):
+        """A completed session in ``fy`` (the visit's year; a follow-up names a
+        session from its own year). Near 30 September the visit lands in the
+        next fiscal year, so the session is dated no earlier than its start."""
         import datetime
 
         from django.utils import timezone
 
         from apps.activities.models import Activity
+        from apps.core.fy import get_fy_date_range
 
+        fy = str(fy or get_operational_fy())
+        planned = max(
+            timezone.localdate() - datetime.timedelta(days=30),
+            get_fy_date_range(fy)[0].date(),
+        )
         training = Activity.objects.create(
             activity_type="in_school_training",
             school=self.school,
-            fy=get_operational_fy(),
+            fy=fy,
             quarter="Q1",
             status="completed",
             focus_intervention="financial_health",
-            planned_date=timezone.localdate() - datetime.timedelta(days=30),
+            planned_date=planned,
             teachers_attended=6 if attended else 0,
         )
         return training
@@ -248,7 +257,7 @@ class CompletionMustNameTheTrainingTest(StandardSupportBase):
         visit = self._follow_up()
         visit.status = "completion_started"
         visit.save(update_fields=["status"])
-        training = self._completed_training()
+        training = self._completed_training(fy=visit.fy)
         self._complete(visit, followUpOfActivityId=training.id)
         visit = Activity.objects.get(id=visit.id)
         self.assertEqual(visit.follow_up_of_activity_id, training.id)
@@ -268,18 +277,19 @@ class CompletionMustNameTheTrainingTest(StandardSupportBase):
             district=self.district,
             school_type="client",
         )
+        visit = self._follow_up()
+        visit.status = "completion_started"
+        visit.save(update_fields=["status"])
+        # The visit's own year, so the only thing wrong is the school.
         stranger = Activity.objects.create(
             activity_type="in_school_training",
             school=elsewhere,
-            fy=get_operational_fy(),
+            fy=visit.fy,
             quarter="Q1",
             status="completed",
             planned_date=timezone.localdate() - datetime.timedelta(days=30),
         )
-        visit = self._follow_up()
-        visit.status = "completion_started"
-        visit.save(update_fields=["status"])
-        with self.assertRaises(BadRequest):
+        with self.assertRaisesMessage(BadRequest, "a different School"):
             self._complete(visit, followUpOfActivityId=stranger.id)
 
     def test_an_ordinary_visit_is_not_asked_for_a_training(self):
